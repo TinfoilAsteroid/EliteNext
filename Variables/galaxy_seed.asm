@@ -1,40 +1,33 @@
 GALAXYSEED DB "GALAXYSEED"
-copy_galaxy_to_system:
-		ld		hl,GalaxySeeds
-		ld		de,SystemSeed
-copy_seed:		
-		ldi
-		ldi
-		ldi
-		ldi
-		ldi
-		ldi
-		ret
+copy_galaxy_to_system:  ld		hl,GalaxySeeds
+                        ld		de,SystemSeed
+copy_seed:		        ldi
+                        ldi
+                        ldi
+                        ldi
+                        ldi
+                        ldi
+                        ret
 
-copy_system_to_galaxy:
-		ld		hl,SystemSeed
-		ld		de,GalaxySeeds
-		jr		copy_seed
+copy_system_to_galaxy:  ld		hl,SystemSeed
+                        ld		de,GalaxySeeds
+                        jr		copy_seed
 
-copy_galaxy_to_working:
-		ld		hl,GalaxySeeds
-		ld		de,WorkingSeeds
-		jr		copy_seed
+copy_galaxy_to_working: ld		hl,GalaxySeeds
+                        ld		de,WorkingSeeds
+                        jr		copy_seed
 
-copy_working_to_galaxy:
-		ld		hl,WorkingSeeds
-		ld		de,GalaxySeeds
-		jr		copy_seed
+copy_working_to_galaxy: ld		hl,WorkingSeeds
+                        ld		de,GalaxySeeds
+                        jr		copy_seed
 
-copy_working_to_system:
-		ld		hl,WorkingSeeds
-		ld		de,SystemSeed
-		jr		copy_seed
+copy_working_to_system: ld		hl,WorkingSeeds
+                        ld		de,SystemSeed
+                        jr		copy_seed
 
-copy_system_to_working:
-		ld		hl,SystemSeed
-		ld		de,WorkingSeeds
-		jr		copy_seed
+copy_system_to_working: ld		hl,SystemSeed
+                        ld		de,WorkingSeeds
+                        jr		copy_seed
 
 next_system_seed:							;.TT20	\ -> &2B0E  \ TWIST on QQ15 to next system
 		call	.NextStep					; This logic means we hard code x4
@@ -108,9 +101,8 @@ working_distX	DB 50
 working_distY	DB 50
 current_distY	DB 0
 
-find_present_system:
-	xor		a
-	ld		(XSAV),a
+find_present_system:    xor		a
+                        ld		(XSAV),a
 .CounterLoop:
 	ld		a,(SystemSeed+1)				; QQ15+1 \ seed Ycoord of star
 	ld		c,a

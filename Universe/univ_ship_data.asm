@@ -1,4 +1,3 @@
-xlo
 ; In  flight ship data tables
 ; In  flight ship data tables
 ; There can be upto &12 objects in flight.
@@ -337,81 +336,12 @@ OrthagCountdown             DB  12
 UBnkShipCopy                equ UBnkHullVerticies               ; Buffer for copy of ship data, for speed will copy to a local memory block, Cobra is around 400 bytes on creation of a new ship so should be plenty
 UBnk_Data_len               EQU $ - StartOfUniv
 
-;UBnkHullUnivObjectId   equ UBnkHullCopy            ; This corresponds to universe object i.e. bank minus base offset
-;UBnkHullShipType       equ UBnkHullCopy+1          ; Just in case we ever have to refer back to it.
-;UBnkHullScoopInfo      equ UBnkHullCopy+2          ; hull byte#0 high nibble is scoop info, lower nibble is debris spin info
-;*UBnkHullMissileLock       equ UBnkHullCopy+1          ; byte#1-2 area for missile lock, lo, hi
-;                                                    ; We done need edges data offset or faces data offset as these are now fixed in bank
-;UBnkHullFaceCountLo    equ UBnkHullCopy+4          ; Used when working out how many normals to process (e.g. exploding ship)
-;*UBnkHullGunVertex     equ UBnkHullCopy+6          ; byte#6   gun vertex*4
-;*UBnkHullExplosionCount    equ UBnkHullCopy+7          ; byte#7   explosion count e.g. &2A = 4*n+6
-;*UBnkHullFacePointCount    equ UBnkHullCopy+8          ; byte#8   vertices*6
-;*UBnkHullBounty            equ UBnkHullCopy+10         ; bytes#10-11 bounty lo hi
-;*UBnkHullFaceCount         equ UBnkHullCopy+4          ; byte#12  faces*4 , or number of normals
-;*UBnkHullDotDistance       equ UBnkHullCopy+13         ; byte#13  dot beyond distance
-;*UBnkHullEnergy            equ UBnkHullCopy+14         ; hull byte#14  energy
-;UBnkHullMaxEnergy      equ UBnkHullCopy            ; Copy for ship Energy max
-;*UBnkHullSpeed         equ UBnkHullCopy+15         ; speed (end of 4th row)
-;*UBnkHullQScalingNormals equ UBnkHullCopy+18           ; byte#18  Q% scaling of normals to make large objects' normals flare out further away
-;*UBnkHullLaserMissile  equ UBnkHullCopy+19         ; byte#19  laser|missile(=lower 3 bits)
-;UBnkHullFaceVisible        equ FaceLimitPerShip            ; used to get list of faces to draw
-;UBnkHullLineVisible        equ LineLimitPerShip            ; used to get list of lines to draw based on Faces
-
-
-; Associated assembler routines
-;;;RequAby256DivQ:
-;;;AdivQLL31:              sla     a                       ; sla ignores incomming carry flag
-;;;                        jp      c,AdivQLL29
-;;;                        ld      hl,varQ
-;;;                        cp      (hl)
-;;;                        jr      c, AdivQSkipSub         ; z80 jump on carry 6502 jump on not carry
-;;;                        sbc     a,(hl)                  ; note 6502 carry works opposite to z80, so borrow = not (carry)
-;;;AdivQSkipSub:           ClearCarryFlag                  ; entering here carry should be 0
-;;;                        ld      hl,varR
-;;;                        rl      (hl)
-;;;                        jr      c,AdivQLL31             
-;;;                        scf                             ; z80 end here on nc 6502 would be c
-;;;                        ret
-;;;AdivQLL29:              ld      hl,varQ                 ; entering here on 6502 carry would be clear
-;;;                        ClearCarryFlag
-;;;                        sbc     a,(hl)                  ; so sbc would be bringing in borrow bit
-;;;                        scf                             ; set carry to rotate into R
-;;;                        ld      hl,varR
-;;;                        rl      (hl)
-;;;                        jp      c,AdivQLL31
-;;;                        scf
-;;;                        ret
 
 RequAby256DivQOLD:      ld      b,a ;.LL28  BFRDIV R=A*256/Q   byte from remainder of division 
                         ld      a,(varQ)
                         ld      c,a
                         ld      a,b
-;;;RequALL28Loop:
-;;;;   JumpIfAGTENusng c,LL28RequTooBig        ; c is used as VarQ is a >= Q
-;;;;   ld      b,$FE                       else C is clear \ LL28+4 \ remainder R for AofQ *256/Q, b used as working R
-;;;RequALL31RollRLoop:     sla     a
-;;;                        jr      c,ReqReduce                 ; if carry then reduce
-;;;                        JumpIfALTNusng  c,RequSkipSub           ; if a < q don't skip
-;;;                        sbc     a,c                         ; a = a - q
-;;;RequSkipSub:            rl      b                           ; shift next bit of R
-;;;                        jp      c,RequALL31RollRLoop
-;;;                        ld      c,a
-;;;                        ld      a,b
-;;;                        ld      (varR),a
-;;;                        ld      a,c
-;;;                        ret
-;;;ReqReduce:              sub     c
-;;;                        scf
-;;;                        rl      b                           ; shift next bit of R
-;;;                        jp      c,RequALL31RollRLoop
-;;;                        ld      c,a
-;;;                        ld      a,b
-;;;                        ld      (varR),a
-;;;                        ld      a,c
-;;;                        ret
-;;;LL28RequTooBig:         ld      a,$FF
-;;;                        ld      (varR),a
-;;;                        ret
+
 
 ResetUBnkData:          ld      hl,StartOfUniv
                         ld      de,UBnk_Data_len
@@ -565,45 +495,7 @@ ADDHLDEsBCOppInvert:    NegHL                         ; if result was zero then 
                         ld      a,b
                         xor     SignOnly8Bit                ; flip sign bit
                         ret     
- 
-;;;ADDHLDESignBC:
-;;;       ld      a,b
-;;;       and     SignOnly8Bit
-;;;       xor     c                           ;if b sign and c sign were different then bit 7 of a will be 1 which means 
-;;;       JumpIfNegative ADDHLDEsBCOppSGN     ;Signs are opposite there fore we can subtract to get difference
-;;;ADDHLDEsBCSameSigns:
-;;;       ld      a,b
-;;;       or      c
-;;;       JumpIfNegative ADDHLDEsBCSameNeg        ; optimisation so we can just do simple add if both positive
-;;;       add     hl,de                       ; both positive so a will already be zero
-;;;       ret
-;;;ADDHLDEsBCSameNeg:     
-;;;       add     hl,de
-;;;        ld      a,h
-;;;        or      l
-;;;        ret     z                           ; if result was zero then set sign to zero (which doing h or l will give us for free)
-;;;       ld      a,b
-;;;       or      c                           ; now set bit for negative value, we won't bother with overflow for now TODO
-;;;       ret
-;;;ADDHLDEsBCOppSGN:                              ; here HL and DE are opposite 
-;;;       or      a
-;;;       sbc     hl,de
-;;;       jr      c,ADDHLDEsBCOppInvert
-;;;ADDHLDEsBCOppSGNNoCarry:                       ; we got here so hl > de therefore we can just take hl's previous sign bit
-;;;        ld      a,h
-;;;        or      l
-;;;        ret     z                           ; if result was zero then set sign to zero (which doing h or l will give us for free)
-;;;       ld      a,b
-;;;       ret
-;;;ADDHLDEsBCOppInvert:                           ; we need to flip the sign and 2'c the Hl result
-;;;       NegHL
-;;;        ld      a,h
-;;;        or      l
-;;;        ret     z                           ; if result was zero then set sign to zero (which doing h or l will give us for free)
-;;;       ld      a,b
-;;;       xor     SignOnly8Bit                ; flip sign bit
-;;;       ret     
-       
+
 ADDHLDESignedv3:        ld      a,h
                         and     SignOnly8Bit
                         ld      b,a                         ;save sign bit in b
@@ -689,44 +581,7 @@ SUBHLDEOppSGN:          or      a                                               
                         or      h
                         ld      h,a                         ; set the previou sign value
                         ret
-    
-;;;ADDHLDESignedv2:
-;;;addhldeTestHL:
-;;;        JumpOnBitSet h,7,AddhldehlNeg
-;;;AddhldehlPos:
-;;;        JumpOnBitSet d,7,AddhldehlPosDeNeg
-;;;AddhldehlPosDePos:
-;;;        add     hl,de
-;;;        ret     
-;;;AddhldehlPosDeNeg
-;;;        or      a
-;;;        res     7,d
-;;;        sbc     hl,de                       ; ignore overflow for now will sort later TODO
-;;;        JumpIfNegative  AddhldehlPosDeNeg2C:
-;;;        set     7,d
-;;;        ret
-;;;AddhldehlPosDeNeg2C:
-;;;        NegHL
-;;;        set     7,h
-;;;        set     7,d
-;;;        ret
-;;;AddhldehlNeg:
-;;;        res     7,h
-;;;        JumpOnBitSet d,7,AddhldehlNegdeNeg
-;;;AddhldehlNegdePos:
-;;;        or      a
-;;;        sbc     hl,de
-;;;        JumpIfNegative  AddhldehlNegdePosNeg2C:
-;;;        set     7,h                         ; ignore overflow for now will sort later TODO
-;;;        ret
-;;;AddhldehlNegdePosNeg2C:
-;;;        NegHL
-;;;        ret
-;;;AddhldehlNegdeNeg:
-;;;        or      a
-;;;        add     hl,de
-;;;        set     7,h                         ; ignore overflow for now will sort later TODO
-;;;        ret
+
     
 SBCHLDESigned:          JumpOnBitSet h,7,SBCHLDEhlNeg
 SBCHLDEhlPos:           JumpOnBitSet h,7,SBCHLDEhlNeg
