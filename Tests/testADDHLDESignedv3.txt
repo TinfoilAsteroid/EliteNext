@@ -1,0 +1,23 @@
+TestAdd:
+	ld		hl,$3000
+	ld		de,$3000
+	call	ADDHLDESignedv3		; got 6000 , good
+	ld		hl,$3000
+	ld		de,$9000
+	call	ADDHLDESignedv3		; Shoudld be 2000, good
+	ld		hl,$3010
+	ld		de,$8100
+	call	ADDHLDESignedv3		; should be 2F10, good
+	ld		hl,$8100
+	ld		de,$3000
+	call	ADDHLDESignedv3		; Shoudl be 2F00, good
+	ld		hl,$8100
+	ld		de,$8200
+	call	ADDHLDESignedv3		; shoudl get -300, good 8300
+	ld		hl,$8200
+	ld		de,$8100
+	call	ADDHLDESignedv3		; should get - 300 good 8300
+	ld		hl,$A002
+	ld		de,$B001
+	call	ADDHLDESignedv3		; shoudl get D003, good
+	

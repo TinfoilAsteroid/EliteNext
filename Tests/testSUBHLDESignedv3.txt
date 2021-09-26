@@ -1,0 +1,31 @@
+TestSub:
+	ld		hl,$3000
+	ld		de,$3000
+	call	SUBHLDESignedv3		; 0, good
+	ld		hl,$3000
+	ld		de,$4000
+	call	SUBHLDESignedv3		; -1000 good
+	ld		hl,$3000
+	ld		de,$B000
+	call	SUBHLDESignedv3		; 3000good
+	ld		hl,$3000
+	ld		de,$9000
+	call	SUBHLDESignedv3		; 4000, good
+	ld		hl,$3010
+	ld		de,$8100
+	call	SUBHLDESignedv3		;  3110, good
+	ld		hl,$0100
+	ld		de,$3000
+	call	SUBHLDESignedv3		; AF00, good
+	ld		hl,$8100
+	ld		de,$3000
+	call	SUBHLDESignedv3		; -2F00 or B100, good
+	ld		hl,$8100
+	ld		de,$8200
+	call	SUBHLDESignedv3		; 100 good
+	ld		hl,$8200
+	ld		de,$8100
+	call	SUBHLDESignedv3		; 100 good
+	ld		hl,$A002
+	ld		de,$B001
+	call	SUBHLDESignedv3		; 0fff good

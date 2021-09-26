@@ -1,0 +1,529 @@
+;BLINE etc. waiting for (X1,Y1), (X2,Y2) to draw a line. 
+;Before clipping,  XX15(0,1) was x1.  XX15(2,3) was y1. XX15(4,5) was x2. XX12(0,1) was y2.
+; ---------------------------------------------------------------------------------------------------------------------------------
+; Clip pre test - Assumes a comes in with X2
+; XReg = screenheigth
+; if ( X2 hi OR Y2 Hi are 0 ) AND  Y2 lo < screen height then
+;     XReg = 0
+; endif
+; LL107: yClip = XReg
+; if (x1 hi or y1 hi <> 0) or (y1 > screen height) got LL83
+; if yClip =  0 the
+;    no clipping needed go to Visible LL147
+; end if
+; LL108:
+; yClip /= 2   
+; LL83:
+; if yClip < 128 goto LL115
+; if X1 hi and X2 hi > 128 GOTO Not Visible
+; if Y1 hi and Y2 hi > 128 GOTO Not Visible
+; a = x1 hi - 1
+; XX2p2 = x2 hi - 1
+; if x1 hi-1 or x2 hi-1 > 128 GOTO Not Visible
+; if y1 lo > screen height y1 hi --
+; if y2 lo > screen height y2 hi --
+; if y1 hi -1 or y2 hi - 1 are > 0 goto Not Visible
+; LL115
+		
+		
+; LL146: Visible
+;     copy x1y1 x2y2 into new clipped
+;     set carry flag for success
+;     return
+; LL109: Not Visible
+;     set carry flag for fail
+;     return
+;............................................
+;----------------------------------------------------------------------------------------------------------------------------------
+; TODO add in optimisations e.g. if X1 and X2 abs(lo) are the same then its a horizontal line. if Y1 and Y2 abs(lo) are the same then its a vertical line
+TrimX1Y1ToGradient:
+LL118:
+; Is X1Hi Positive?
+		ld		a,(UBnKx1Hi)				; X1 Hi
+		JumpOnBitClear a,7,X1HiPositiveTrim	; if positive go to LL119
+X1NegativeTrim:
+; write X1Hi to VarS ready for calculation
+		ld		(varS),a					; s = a
+; Caculate X1_Lo (signed) * Gradient/256
+		call	XYeqyx1loSmulMdiv256	    ; LL120 X.Y = x1_lo.S *  M/256 i.e. XY = X1 * M / 256
+		ld		c,ixl
+		ld		b,iyl						; bc = X.Y
+		ld		hl,(UbnKy1Lo)				; hl = Y1
+		add		hl,bc						; hl = Y1 + X.Y so Y1 = Y1 + X1*Gradient/256
+; Y1 = Y1 +/- X1*Gradient - Not exactly but that is the result.
+		ld		(UbnKy1Lo),hl
+		xor		a							;
+; X1 = 0		
+		ld		(UBnKx1Lo),a				;
+		ld		(UBnKx1Hi),a				; X1 = 0
+; Force a skip to Y Trim
+		ld		ixh,a						; Set the new XReg to 0, use ixh as LL120 sets ixl
+X1HiPositiveTrim:
+;LL119:										;x1 hi +ve from LL118
+		IfAIsZeroGoto LL134					; if x1 hi = 0 skip to Ytrim as we don't need to trim
+		ld		hl,varS						;
+		ld		a,(hl)						; a = varS
+		dec		(hl)						; S = X1hi - 1, e.g. working X1 = X1 - 256
+		call	XYeqyx1loSmulMdiv256		; LL120 X.Y = x1_lo.S *  M/256
+		ld		c,ixl						;
+		ld		b,iyl						; bc = X.Y
+		ld		c,b	; DEBUGADD
+		ld		b,0;DEBUGADD
+		ld		hl,(UbnKy1Lo)				; hl = Y1
+		add		hl,bc						; hl = Y1 + X.Y
+;Y1 = Y1 +/- X1Lo * Gradient
+		ld		(UbnKy1Lo),hl				; Y1 = Y1 + X.Y
+;X1 = last Column
+		ld		hl,ViewLastCol				;
+		ld		(UBnKx1Lo),hl				; X1Lo = ViewLastCol.0 or 255
+; Now fall into Y1 trim
+Y1Trim:
+LL134:										; Ytrim
+		ld		bc,(UbnKy1Lo)				; bc = Y1
+		ld		a,b							
+		JumpOnBitClear b,7,Y1HiPositiveTrim ; if Y1Hi positive
+Y1HiNegativeTrim:
+		ld		(varR),bc					; varR.varS = C.B
+		call	LL123						; X.Y=R.S*256/M (M=grad.)   \where 256/M is gradient
+		ld		c,ixl
+		ld		b,iyl						; bc = X.Y
+		ld		hl,(UBnKx1Lo)				
+		add		hl,bc
+		ld		(UBnKx1Lo),hl				; X1 = X1 + X.Y
+		xor		a
+; Y1 = 0
+		ld		(UbnKy1Lo),a
+		ld		(UBnkY1Hi),a				; Y1 = 0
+Y1HiPositiveTrim:
+LL135:										; y1 hi +ve from LL134
+		ld		hl,(UbnKy1Lo)				; hl = Y1
+		ClearCarryFlag
+		ld		c,ViewHeight
+		ld		b,0
+		sbc		hl,bc						; Y1 = Y1 - ViewHeight
+		ld		(varR),hl					; varR.varS = Y1 - ViewHeight
+		jp		c,LL135SAllDoneScreen
+LL139:
+		call	LL123						; LL123	 \ X.Y=R.S*256/M (M=grad.)   \where 256/M is gradient
+		ld		c,ixl
+		ld		b,iyl
+		ld		hl,(UBnKx1Lo)
+		add		hl,bc
+		ld		(UBnKx1Lo),a				; X1 = X1 + X.Y
+; Y1 = Last Row
+		ld		a,ViewLastRow
+		ld		(UbnKy1Lo),a
+		xor		a
+		ld		(UBnkY1Hi),a				; Y1 = ViewLastRow
+LL135SAllDoneScreen:
+		ClearCarryFlag
+		ret
+LL135StilloffScreen:
+		scf
+		ret
+;----------------------------------------------------------------------------------------------------------------------------------
+LL155DeltaX:
+CalculateDeltaX:
+; Calcualte the Deltas as ABS values and set varS as relationship via XOR
+; Calculate DeltaX
+        ld      hl,(UBnkX2Lo)               ; XX15+4 x2 lo
+        ld      de,(UBnKx1Lo)               ; XX15+0
+        ClearCarryFlag
+        sbc     hl,de                       ; UBnkX2Lo - (UBnKx1Lo))
+        ld      (UBnkDeltaXLo),hl           ; DeltaX = UBnkX2 - (UBnkX1)
+        ld      b,h                         ; save a copy of DeltaX hi
+        ld      c,l                         ; save a copy of DeltaX lo
+		ret
+;----------------------------------------------------------------------------------------------------------------------------------
+LL155DeltaY:
+CalculateDeltaY:
+; Calculate DeltaY
+        ld      hl,(UbnKy2Lo)               ; XX12+0 y2 lo
+        ld      de,(UbnKy1Lo)               ; XX15+2
+        ClearCarryFlag
+        sbc     hl,de                       ; UbnKy2Lo - (UbnKy1Lo)
+        ld      (UBnkDeltaYLo),hl           ; DeltaY = UBnkY2 - (UBnkY1)
+		ret
+;----------------------------------------------------------------------------------------------------------------------------------
+; entering here bc = dX, hl = dY, output varS will be quadrant relationship which means bit 7 will be 0 if both + or - or 1 if they are different, bc = ABS(dX), hl = ABS(dY)		
+; Now set varS to quadrant relationship for gradient based on Delta Y and Delta X hi, these will currently be 2's compliment 
+CalculateQuadrants:     ld      a,h                         ; delta_y hi
+                        xor     b                           ; XX12+3 delta_x hi
+                        ld      (varS),a                    ; S = deltaXSign Xor deltaY Sign so set if signs are different
+; Is DeltaY Negative?		
+                        ld      a,h                         ; XX12+5 delta_y hi retrieved from h
+                        JumpOnBitClear a,7,DeltaYAlreadyPos	; LL110 hop down if delta_y positive
+; if DeltaY was neative do 2'c compliment to make positive, varS holds the quadrant relationship for sign bits, e.g. same or different		
+ABSDeltaY:              ld      hl,(UBnkDeltaYLo)
+                        macronegate16hl                     ;   else flip sign of delta_y
+                        ld      (UBnkDeltaYLo),hl           ; delta y = abs (deltay)
+;LL110:                                                     ; delta_y positive
+DeltaYAlreadyPos:       ReturnOnBitClear b,7		        ; if b is positive, then there is no need to ABS it so can return
+ABSDeltaX:              macronegate16bc                     ; delta x = abs (deltax) (bc is a copy from earlier in the code to save a fetch)
+                        ld      (UBnkDeltaXLo),bc           ; else flip sign of delta_x
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+;LL111:	                                    ; roll Acc  delta_x hi
+; Leaved HL as deltaX and BC as Delta Y, VarR as gradient, VarQ as deltaY Lo, varT is steep or shallow 0 = Steep i.e. gradient is dX/dY, for shallow its dY/dX
+; Get gradient for and trim down so that hi bytes are zero in both delta X and delta Y
+; Just keep on dividing by 2 until both deltas are 8 bit values
+; get Gradient for trimming reduce down until delta x or y is 0
+GETRgradHLBC:           break
+                        ld      a,b                         ; delta_x hi previously cached in bc
+                        or      h
+                        jr      z,.TrimmedBothDeltaHi           ; LL112 skip if delta_x hi and delete y hi not zero
+;LL112:                  ; skipped as delta_x hi not zero
+.StillTrimming:         ShiftBCRight1                       ; delta_x /=2
+                        ShiftHLRight1                       ; delta_y /=2
+                        jp      GETRgradHLBC
+;LL113:                  ; Exited as both delta hi zero for trimming
+; Deltas are now set so save them
+.TrimmedBothDeltaHi:    ld      (UBnkDeltaYLo),hl           ; write back both deltas
+                        ld      (UBnkDeltaXLo),bc           ; write back both deltas
+SteepOrShallowGradient:	xor 	a							; delta_y hi must be zero if we hit this point 0 so we wont copy from YHi
+                        ld      (varT),a                    ; T = 0
+; Now we calcualte the gradient based on the larger of delta x low and delta y low
+; if its a shallow gradient T = 0 else T = FF		
+; Determine if Steep Gradient
+                        ld      a,c                         ; delta_x lo
+                        JumpIfALTNusng l,STEEPGradient      ; LL114 hop to STEEP gradient as delta x lo  < Delta y lo 
+; Delta X > Delta Y so its shallow calculate R as delta Y / delta X ; c is currently x lo so no need to change
+SHALLOWGradient:		ld      a,l                         ; a =  delta_y lo still in l
+                        push	hl
+                        push	bc
+                        push	de		
+                        call    DIV16Amul256dCUNDOC   		; LL28 Optimised BFRDIV R=A*256/Q = delta_y / delta_x Use Y/X grad. as not steep
+                        ld      a,c
+                        ld      (varR),a
+                        pop		de
+                        pop		bc
+                        pop		hl							; bc gets wrecked by BFRDIV
+                        ;DEBBUG
+                    ; ld      d,c
+                    ; ld      e,0
+                    ; ld      b,l
+                    ; ld      c,0
+                    ; call    BC_Div_DE
+                        ret                                 ; LL116 gradient now known, go a few lines down
+;LL114:                                      ; else STEEP
+ ;For steep gradient then we need to calcualte R as delta x/delta Y
+STEEPGradient:          
+;        push    af                         ; protect offset
+                        ld      a,c                         ; a needs to be delta x lo
+                        ld      c,l                         ; c needs to be delta Y lo
+;        ld      a,l                         ; XX12+4 delta_y lo cached
+;		ld		(varQ),a					; q = delta y lo
+;        ld      a,c                         ; XX12+2 delta_x lo cached
+                        push	hl
+                        push	bc
+                        push	de		
+                        ld		c,l
+                        call    DIV16Amul256dCUNDOC		    ; LL28 Optimised BFRDIV R=A*256/Q = delta_y / delta_x Use Y/X grad. as not steep
+                        ld      a,c
+                        ld      (varR),a
+                        pop		de
+                        pop		bc
+                        pop		hl							; bc gets wrecked by BFRDIV
+                        ld      hl,varT
+                        dec     (hl)                        ; T steep toggle updated T = #&FF
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+;LL145	 CLIP  XX15 XX12 line BLINE etc. waiting for (X1,Y1), (X2,Y2) to draw a line. 
+; Before clipping,  XX15(0,1) was x1.  XX15(2,3) was y1. XX15(4,5) was x2. XX12(0,1) was y2.
+ClipStatus      DB      0
+;;LL145: CLIP  XX15 XX12 line
+CLIP:                   break
+ClipXX15XX12Line:       xor		a
+                        ld		(varSWAP),a                         ; flip points flag
+                        ld		a,(UBnkX2Hi)                        ; a = POint 2 X High bute
+; On entry Point 1 and Point 2 are 2'c compliment
+; Are X2 and Y2 Hi both populated with a non zero? if negative then 2'c will put FF in high
+LL147:                  ld		ixh,ViewLastRow				        ; Set up so that if clipped hits LL107 with last row value for ClipStatus
+                        ld		ixh,$BF						        ; TODO bodge for now to match BBC screen as the logic assumes such
+.CheckIfX2Y2HighBits:   ld		bc,(UBnkY2)                         ; bc = P2Y
+                        or		b							        ; Check if Y2Hi and a (X2Hi) are both zero or not if they have a value then its either a negative value (2's c)  or > screen edge
+                        jr		nz,.X2Y12HighBitsPresent            ; if neither are zero then skipYclipReset
+.CheckIfY2OffWindow:    ld		a,ScreenLastRow				
+                        JumpIfALTNusng	c,.X2Y12HighBitsPresent	; if Screen Last Row < Y2Lo skip clip reset
+; If we got here then Point 2 X2 Y2 on screen else ClipStatus gets loaded wtih ViewLastRow from ixh  Need to check if the value in ixh is vaid for this as it may be optimised to just set 1 bit on BBC
+.NoX2Y2ClippingNeeded:   ld      ixh,0                       ; Initialise YClip to 0 for X2Y2 being on screen ; else yClip = 0 ixl = x reg
+;LL107:
+.X2Y12HighBitsPresent:  ld		a,ixh                               ; skipped yClip ; Set up yClip
+                        ld      (ClipStatus),a                      ; ixh goes into ClipStatus yClip
+.LL107GetX1Y1:           ld      hl,(UBnKx1Lo)                       ; get x1 hi lo
+                        ld      bc,(UbnKy1Lo)                       ; get y1 hi lo
+; Check if Point 1 X1Y1 has any high bits		
+.CheckIfX1Y1HighBits:   ld      a,h                                 ; x1 hi
+                        or      b                                   ; y1 hi
+                        jr      nz,.X1Y11HighBitsPresent            ; LL83 no hi bits in coord 1 present
+.CheckIfY1OffWindow:    ld      a,ScreenLastRow                     ; ; Now see if Y1 is in view port, not just on screen #Y*2-1  screen height
+                        JumpIfALTNusng c,.X1Y11HighBitsPresent      ; LL83 if screen height < y1 lo skip A top then treat as clip needed
+.X1Y1OnScreen:           ld      a,(ClipStatus)                      ; get yClip and see if X1X2 generated any need for clipping
+                        IfAIsZeroGoto  .FinishedClipping            ; LL108 hop down, yClip not zero else finished, this would mean all evaluation at clip 2 said Y2 was onscreen and no high bits
+; LL108: SomethingNeedsClipping
+.X1Y1NoClipX2Y2Clip:     ShiftMem8Right1 ClipStatus                  ; arrived as yClip not zero in LL107 clipping ; ClipStatus yClip = Ymid
+.X1Y11HighBitsPresent:   ld      a,(ClipStatus)                      ; LL83: also arrive from LL107 if bits in hi present or y1_lo > screen height, A top; ClipStatus		\ yClip
+                        JumpOnBitClear a,7,.YclipLT128               ; yClip < 128
+.LL83CheckX1X2HiNeg:	ld      a,(UBnKx1Hi)                        ; XX15+1 x1 hi ; Test if X1X2 are both -ve therefore off the left side of screen
+                        ld      hl,UBnkX2Hi
+                        and     (hl)                                ; XX15+5 x2 hi
+                        JumpOnBitSet a,7,.ClippedNotVisible         ; LL109 clipped line Not visible - X1 and X2 both < 0
+; Test if Y1Y2 are both -ve therefore off the left side of screen
+.LL83CheckY1Y2BothHiNeg:ld      a,(UBnkY1Hi)                        ; XX15+3 y1 hi
+                        ld      hl,UBnkY2Hi
+                        and     (hl)                                ; XX12+1 y2 hi
+                        JumpOnBitSet a,7,.ClippedNotVisible         ; LL109 clipped line Not visible - Y1 and Y2 both < 0
+; Test if X1X2 are both positive this assumes we won't have a value of -128 for a coord as that would be way too big and hence the other coord would be neagtive too
+.LL83CheckX1X2Huge:     ld      a,(UBnKx1Hi)                        ; XX15+1 x1 hi
+                        dec     a                                   ; Acc = x1 hi -1	so if it was 0 it would go negative, if negative stay negative, if > 0 would leave bit 7 clear
+                        ld      c,a                                 ; c = x1 hi - 1
+                        ld      a,(UBnkX2Hi)                        ; XX15+5 x2 hi
+                        dec		a							        ; so if it was 0 it would go negative, if negative stay negative, if > 0 would leave bit 7 clear
+                        or		c							        ; combine the two. If neither DEC resulted in a bit 7 set then they must both have been > 0
+                        JumpOnBitClear a,7,.ClippedNotVisible       ; LL109 clipped line Not visible - X1 and X2 both > 0
+; Test if Y1Y2 are both positive usign the same logic as above but then also check screen height
+.LL83CheckY1Y2Huge:     ld      a,(UBnkY1Hi)                        ; XX15+1 y1 hi
+                        dec     a                                   ; Acc = y1 hi -1	so if it was 0 it would go negative, if negative stay negative, if > 0 would leave bit 7 clear
+                        ld      c,a                                 ; c = y1 hi - 1
+                        ld      a,(UBnkY2Hi)                        ; y2 hi
+                        dec		a							        ; so if it was 0 it would go negative, if negative stay negative, if > 0 would leave bit 7 clear
+                        or		c							        ; combine the two. If neither DEC resulted in a bit 7 set then they must both have been > 0
+                        JumpOnBitClear a,7,.ClippedNotVisible       ; LL109 clipped line Not visible - Y1 and Y2 both > 0
+.LL83CheckY1Y2InWindow: ld		a,(UbnKy1Lo)
+                        JumpIfALTNusng	ViewHeight,.YclipLT128		; if we have at least one Y ccord on screen then we can clip
+                        ld		a,(UbnKy2Lo)
+                        JumpIfAGTENusng	ViewHeight,.ClippedNotVisible ; if we have at least one Y ccord on screen then we can clip else we can't
+; LL115: We get here if X1Y1 X2Y2 span the screen and require at least one point to be clipped
+; also arrive from LL83 with yClip < 128 need to trim. We don't touch iy so no need to push to stack
+; Calcualte the Deltas as ABS values and set varS as relationship via XOR
+; Calculate DeltaX
+.YclipLT128:             call	CalculateDeltaX
+                        call	CalculateDeltaY
+                        call	CalculateQuadrants
+                        call	GETRgradHLBC
+;LL116:                                      ; arrive here for both options with known gradient in varR, var T = Steep or not, varS = quadrant info
+; Set Delta XLow = gradient calculated from above
+.KnownGradient:         ldCopy2Byte  varR,UBnkDeltaXLo      ; gradient and quadrant copied from VarR and VarS as both vars are coniguous in memory
+                        ld      a,(ClipStatus)                    ; ClipStatus is the flag to determine if either co-ord was off screen, if yClip was not zero then Point 2 needs to go to Point1 so it can be clipped
+; If Y Clip is 0 or 191 skip node swap check
+                        IfAIsZeroGoto .NoNeedtoSwapNodes     ; yClip = 0 or 191?, skip bpl		
+; If yClip +ve swap nodes over		
+                        JumpOnBitClear a,7,.SwapOverNodes    ; yClip+ve, swop nodes
+.NoNeedtoSwapNodes:
+; So now we have nodes correct and X1Y1 needs to be fit into bounding box
+.LL138:                                      ; yClip = 0 or or >127   need to fit x1,y1 into bounding box
+; trim X1Y1
+                        call    TrimX1Y1ToGradient          ; LL118		\ Trim XX15,XX15+2 to screen grad=XX12+2
+; Now 
+                        ld      a,(ClipStatus)                    ; ClipStatus
+                        JumpOnBitClear a,7,.FinishedClipping ; yClip+ve, finish clip
+.LL117:                                      ; yClip > 127
+; Test to see if we have any high bits in X1Y1
+                        ld      hl,(UBnKx1Lo)               ; h = x1 hi
+                        ld      bc,(UbnKy1Lo)               ; b = y1 hi
+                        ld      a,h
+                        or      b
+; If after calcualtion Y1 is not in view port or we still have high bits then there is no line to draw		
+                        IfANotZeroGoto .AfterCalcNotVisible  ; some hi bits present, no line.
+                        ld      a,c                         ; XX15+2 y1 lo
+                        JumpIfAGTENusng ScreenHeight,.AfterCalcNotVisible   ; LL137 if y1 lo >= Yscreen,  no line.
+;.LLX117:                                     ; yClip+ve from LL116, swop nodes then trim nodes, XX12+2 = gradient, XX12+3 = quadrant info.
+.SwapOverNodes:         ld      hl,(UBnKx1Lo)               ; XX15+0	\ x1 lo
+                        ld      bc,(UBnkX2Lo)               ; XX15+4	\ x2 lo
+                        ld      (UBnKx1Lo),bc               ; swap over X
+                        ld      (UBnkX2Lo),hl               ; the two X values
+                        ld      hl,(UbnKy1Lo)               ; XX15+0	\ x1 lo
+                        ld      bc,(UbnKy2Lo)               ; XX15+4	\ x2 lo
+                        ld      (UbnKy1Lo),bc               ; swap over Y
+                        ld      (UbnKy2Lo),hl               ; the two X values 
+                ;       finished swop of (x1 y1) and (x2 y2)
+                        call    TrimX1Y1ToGradient          ; LL118		\ Trim XX15,XX15+2 to screen grad=XX12+2
+                        ld      hl,varSWAP
+                        dec     (hl)
+.ReadyToFinishClipping:
+.LL124:                                      ; also yClip+ve from LL138, finish clip, no need to restore IY as its not used
+        jp      .FinishedClipping            ; LL146 up, Finished clipping, Shuffle XX15 down to (x1,y1) (x2,y2)
+.AfterCalcNotVisible:
+.LL137:                                      ; no line, no need to restore iy as its not modified
+        scf                                 ; carry set, not visible
+        ret                                 ; -- Finished clipping
+;LL146:; Finished clipping, Shuffle XX15 down to (X1,Y1) (X2,Y2)
+.FinishedClipping:      ldCopyByte  UbnKy1Lo,UBnkNewY1      ; NewY1 = Y1Lo We dont need to move NewX1 as its already X15+0
+                        ldCopyByte  UBnkX2Lo,UBnkNewX2      ; NewX2 = X2Lo
+                        ldCopyByte  UbnKy2Lo,UBnkNewY2      ; NewY2 = Y2Lo
+                        ClearCarryFlag                      ; carry is clear so valid to plot is in XX15(0to3)
+                        ret                                 ; 2nd pro different, it swops based on swop flag around here.
+;LL109:        
+.ClippedNotVisible:     scf                                 ; carry flag set as not visible
+                        ret
+;............................................
+
+
+		
+		
+	
+	
+;/ / x1 , y1 , x2 , y2 , xmin , ymax , xmax , ymin / /
+;if not ( x1<xmin and x2<xmin ) and not ( x1>xmax and x2>xmax ) then
+;	if not ( y1<ymin and y2<ymin ) and not ( y1>ymax and y2>ymax ) then
+;		x [1] = x1
+;		y [1] = y1
+;		x [2] = x2
+;		y [2] = y2
+;		i =1
+;		repeat
+;			if x[ i ] < xmin then
+;				x [ i ] = xmin
+;				y [ i ] = ( ( y2−y1 ) / ( x2−x1 ) )* ( xmin−x1 )+ y1
+;			else if x [ i ] > xmax then
+;				x [ i ] = xmax
+;				y [ i ] = ( ( y2−y1 ) / ( x2−x1 ) )*( xmax−x1 )+ y1
+;			end if
+;			if y [ i ] < ymin then
+;				y [ i ] = ymin
+;				x [ i ] = ( ( x2−x1 ) / ( y2−y1 ) )*( ymin−y1 )+ x1
+;			else if y [ i ] > ymax then
+;				y [ i ] = ymax
+;				x [ i ] = ( ( x2−x1 ) / ( y2−y1 ) )*( ymax−y1 )+ x1
+;			end i f
+;			i = i + 1
+;		until i>2
+;		if not ( x[1]<xmin and x[2]<xmin ) then
+;			if not ( x[1]>xmax and x[2]>xmax ) then
+;				d awLi ne ( x [ 1 ] , y [ 1 ] , x [ 2 ] , y [ 2 ] )
+;			end i f
+;		end if
+;	end if
+;end if
+;
+
+
+;;;;;;;;.TestXHiBothZero:
+;;;;;;;;	ld		ixl,0					   	; ixl is the flag to clip or not
+;;;;;;;;    ld      a,(UBnKx1Hi)               	; get x1 hi lo
+;;;;;;;;	ld		b,a
+;;;;;;;;    ld      a,(UbnkX2Hi)               	; get x2 hi lo
+;;;;;;;;	ld		c,a
+;;;;;;;;	or		c						   	; if a or c is zero then nothing to worry about
+;;;;;;;;	jp		z,.X1X2Good
+;;;;;;;;.TestX1HiClip:
+;;;;;;;;	ld		a,b
+;;;;;;;;	IfAIsZeroGoto	.SkipX1NeedsClip
+;;;;;;;;	ld		ixl,1						; x1 is off screen
+;;;;;;;;.SkipSetX1NeedsClip:
+;;;;;;;;	ld		a,c
+;;;;;;;;	IfAIsZeroGoto	.TestXHiPositive
+;;;;;;;;	ld		a,ixl
+;;;;;;;;	or		2
+;;;;;;;;	ld		ixl,a						; 2 is off screen
+;;;;;;;;.TestXHiPositive:
+;;;;;;;;	ld		a,b							; now check sign. And together and test result of bit 7
+;;;;;;;;	JumpOnBitClear a,7,X1HiPositive
+;;;;;;;;.X1HiNegative:							; Negative X1 here
+;;;;;;;;	ld		a,c
+;;;;;;;;	JumpOnBitClear a,7,.X1X2Good		; so signs are opposite therefore spans screen
+;;;;;;;;	jp		.TestYHi
+;;;;;;;;.X1HiPositive:
+;;;;;;;;	ld		a,c
+;;;;;;;;	JumpOnBitSet a,7,.X1X2Good			; so signs are opposite therefore spans screen
+;;;;;;;;.X1X2OffScreen:
+;;;;;;;;	jp		ClippedNotVisible
+;;;;;;;;.X1X2Good:	
+;;;;;;;;TestYHiBothZero:
+;;;;;;;;    ld      a,(UBnkY1Hi)               	; get y1 hi lo
+;;;;;;;;	ld		b,a	
+;;;;;;;;    ld      a,(UbnkY2Hi)               	; get x2 hi lo
+;;;;;;;;	ld		c,a	
+;;;;;;;;	or		c						   	; if a or c is zero then nothing to worry about
+;;;;;;;;	jp		z,.Y1Y2Good
+;;;;;;;;.TestY1HiClip:
+;;;;;;;;	ld		a,b
+;;;;;;;;	IfAIsZeroGoto	.SkipY1NeedsClip
+;;;;;;;;	ld		a,ixl
+;;;;;;;;	or		4
+;;;;;;;;	ld		ixl,a						; y1 is off screen
+;;;;;;;;.SkipSetY1NeedsClip:
+;;;;;;;;	ld		a,c
+;;;;;;;;	IfAIsZeroGoto	.TestYHiPositive
+;;;;;;;;	ld		a,ixl
+;;;;;;;;	or		8
+;;;;;;;;	ld		ixl,a						; y3 is off screen
+;;;;;;;;; At this point ixl tells you which coordinate value needs an off screen clip
+;;;;;;;;.TestYHiPositive:
+;;;;;;;;	ld		a,b							; now check sign. And together and test result of bit 7
+;;;;;;;;	JumpOnBitClear a,7,Y1HiPositive
+;;;;;;;;.Y1HiNegative:							; Negative Y1 here
+;;;;;;;;	ld		a,c
+;;;;;;;;	JumpOnBitClear a,7,.Y1Y2Good		; so signs are opposite therefore spans screen
+;;;;;;;;	jp		.Y1Y2Good
+;;;;;;;;.Y1HiPositive:
+;;;;;;;;	ld		a,c
+;;;;;;;;	JumpOnBitSet a,7,.Y1Y2Good			; so signs are opposite therefore spans screen
+;;;;;;;;.Y1Y2OffScreen:
+;;;;;;;;	jp		ClippedNotVisible
+;;;;;;;;.Y1Y2Good:								; now we have somethign viable that may need clipping
+;;;;;;;;	ld		a,ixl
+;;;;;;;;	IfANotZeroGoto .NeedToClip			; so ixl is not zero so at least one coorrd is off screen
+;;;;;;;;.Y1Y2Console:
+;;;;;;;;	ld		a,(UbnKy1Lo)
+;;;;;;;;	JumpIfALTNusng	ViewHeight,.TestY2Console
+;;;;;;;;	ld		a,ixl
+;;;;;;;;	or		4
+;;;;;;;;	ld		ixl,a						; y3 is off screen
+;;;;;;;;	jp		.NeedToClip
+;;;;;;;;.TestY2Console:
+;;;;;;;;	ld		a,(UbnKy2Lo)
+;;;;;;;;	JumpIfALTNusng	ViewHeight,.FinishedClipping	; Its all already on screen
+;;;;;;;;	ld		a,ixl
+;;;;;;;;	or		8
+;;;;;;;;	ld		ixl,a						; y3 is off screen
+;;;;;;;;.NeedToClip:
+;;;;;;;;.CalcDeltaX
+;;;;;;;;        ld      hl,(UBnKx1Lo)               ; XX15+4 x2 lo
+;;;;;;;;		ld		de,(UBnkX2Lo)
+;;;;;;;;		sbc		hl,de
+;;;;;;;;		bit 	7,h
+;;;;;;;;		call	nz,negate16hl
+;;;;;;;;		ex		de,hl
+;;;;;;;;		ld		(DeltaX),de					; save for gradient calcs
+;;;;;;;;.CalcDeltaY
+;;;;;;;;        ld      hl,(UbnKy1Lo)               ; XX15+4 x2 lo
+;;;;;;;;		ld		bc,(UbnKy2Lo)
+;;;;;;;;		sbc		hl,bc
+;;;;;;;;		bit 	7,h
+;;;;;;;;		call	nz,negate16hl
+;;;;;;;;		ld		(DeltaY),hl
+;;;;;;;;.CalcGradDyDivDx:							; could calc on demand but likley will need both
+;;;;;;;;		ld		b,h							; now de = delta x
+;;;;;;;;		ld		c,l							; bc	 = delta y
+;;;;;;;;		push	bc							; we will need them again
+;;;;;;;;		push	de							; we will need them again
+;;;;;;;;		call	BC_Div_DE					; so here ists delta y div delta x
+;;;;;;;;		ld		(GaradientYX),bc
+;;;;;;;;		pop		bc							; reverse the pop so now de = delta y
+;;;;;;;;		pop		de							; 						bc	 = delta x
+;;;;;;;;		call	BC_Div_DE					; so here ists delta y div delta x
+;;;;;;;;		ld		(GaradientXY),bc
+;;;;;;;;.CalcGradDxDivDy:
+;;;;;;;;		
+;;;;;;;;        ld      de,(UbnKy1Lo)               ; XX15+0
+;;;;;;;;		ld		a,ixl
+;;;;;;;;		JumpOnBitClear a,0,.NoX1Clip
+;;;;;;;;.ClipX1:
+;;;;;;;;		bit		7,h							; is hl negative
+;;;;;;;;		jr		nz,.X1OffLeftSideOfScreen
+;;;;;;;;.X1OffRightSideOfScreen:
+;;;;;;;;		ld		hl,
+;;;;;;;;		ld		bc,ViewWidth				; get as 16 bit
+;;;;;;;;		sbc		hl,bc						; hl = delta (width - x1)
+		
+		
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,30 @@
+.PROJ	\ -> &3856 \ Project K+INWK(x,y)/z to K3,K4 for center to screen
+A5 46                   LDA &46	\ INWK+0 \ xlo
+85 1B                   STA &1B		 \ P
+A5 47                   LDA &47	\ INWK+1 \ xhi
+85 1C                   STA &1C		 \ P+1
+A5 48                   LDA &48	\ INWK+2 \ xsg
+20 FA 3C                JSR &3CFA \ PLS6 \ Klo.Xhi = P.A/INWK_z, C set if big
+B0 28                   BCS PL2-1	 \ rts as x big 
+A5 40                   LDA &40		 \ K
+69 80                   ADC #&80	 \ add xcenter
+85 D2                   STA &D2		 \ K3
+8A                      TXA 		 \ xhi
+69 00                   ADC #0		 \ K3 is xcenter of planet
+85 D3                   STA &D3		 \ K3+1 
+A5 49                   LDA &49	\ INWK+3 \ ylo
+85 1B                   STA &1B		 \ P
+A5 4A                   LDA &4A	\ INWK+4 \ yhi
+85 1C                   STA &1C		 \ P+1
+A5 4B                   LDA &4B	\ INWK+5 \ ysg
+49 80                   EOR #&80	 \ flip yscreen
+20 FA 3C                JSR &3CFA \ PLS6 \ Klo.Xhi = P.A/INWK_z, C set if big
+B0 0C                   BCS PL2-1	 \ rts as y big
+A5 40                   LDA &40		 \ K
+69 60                   ADC #&60	 \ #Y for add ycenter
+85 E0                   STA &E0		 \ K4
+8A                      TXA 		 \ y hi
+69 00                   ADC #0		 \ K4 is ycenter of planet
+85 E1                   STA &E1	 	 \ K4+1 
+18                      CLC		 \ carry clear is center is on screen
+60                      RTS 		 \ PL2-1

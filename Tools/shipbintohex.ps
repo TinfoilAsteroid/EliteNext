@@ -1,0 +1,13 @@
+$sourceFile="C:\Users\Richard\OneDrive\elite-beebasm-master\elite-beebasm-master\data\SHIPS.bin"
+$hexFile='C:\Users\Richard\OneDrive\EliteNext\Data\Ships.hex'
+$targetFile='C:\Users\Richard\OneDrive\EliteNext\Data\Ships.asm'
+$bytes = [System.IO.FIle]::ReadAllBytes($sourceFile)
+$hexString = (($bytes|ForEach-Object ToString X2)) -join ',$'
+$hexString = "`$" + $hexString
+$replaceString = '$1' + [Environment]::NewLine
+$hexString =$hexString -replace '(................................................................)','$1:'
+$hexString = $hexString -replace ',:', [Environment]::NewLine
+$hexString = $hexString -replace ([Environment]::NewLine) , ([Environment]::NewLine + '           DB ')
+$hexString = 'MESSAGE "Ships\.asm"'+([Environment]::NewLine)+'.shipData: DB ' + $hexString 
+$bert =  ($hexString -replace "," , ",`$")
+Set-Content -Path $targetFile -Value $hexString
