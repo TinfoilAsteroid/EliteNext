@@ -1,7 +1,7 @@
     ld      a,CobraTablePointer
     MMUSelectUniverseN 0                          ; load up register into universe bank
     call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
-    MMUSelectShipModels
+    MMUSelectShipModelsA
 	ld		a,CobraTablePointer
     call    CopyShipDataToUBnk
 

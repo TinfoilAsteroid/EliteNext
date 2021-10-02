@@ -1739,36 +1739,39 @@ ApplyMyRollToRoofvY:    ld  a,(ALP1)
                         
 
 
-; (-a)-(-b)=  if ABS(a)> ABS(B), (ABS(a)-abs(b))*-1 Else (ABS(b)-abs(a))
-; (+a)-(+b)=  if ABS(a) > ABS(B), ABS(a)- abs (B)   else (ABS(B) - abs(A) * -1
-; (-a)-(+b)=  (ABS(a) + ABS(b)) * -1
-; (+a)-(-b)=  ABS(a) + ABS(b)
-AHLequUbnkYminusAHL:    ld      b,a
-                        ex      de,hl
-                        ld      hl,(UBnKylo)        ; hl = unsigned Y
+; 1> (-a)-(-b)=  if ABS(a)> ABS(B), 1A> (ABS(a)-abs(b))*-1 Else 1B> (ABS(b)-abs(a))
+; 2> (+a)-(+b)=  if ABS(a) > ABS(B),2A>  ABS(a)- abs (B)   else 2B> (ABS(B) - abs(A) * -1
+; 3> (-a)-(+b)=  3A> (ABS(a) + ABS(b)) * -1
+; 4> (+a)-(-b)=  4A> ABS(a) + ABS(b)
+AHLequUbnkYminusAHL:    ld      b,a                 ; b =sign of subtraction
+                        ex      de,hl               ; de = amount to subtract
+                        ld      hl,(UBnKylo)        ; hl = unsigned Y position
                         ld      a,(UBnKysgn)        ; ahl = signed Y corrodinate
-                        xor     b                   ; now we need to see if signs were different or same
-                        JumpIfNegative .SignsDifferent
-.SignsTheSame:          call    compare16HLDE
-                        jr      c,.HLLessThanDE
-.HLGreaterDE:           sub     hl,de               ; sub hl from de and leave sign the same
-                        ld      a,b
-                        jr      .WasResultZero
-.HLLessThanDE:          ex      de,hl
-                        sub     hl,de
-                        xor     $80                  ; flip sign bit
-                        jr      .WasResultZero
-.SignsDifferent:        add     hl,de
-                        JumpOnBitClear  b,7,.UbnkNegative
-                        xor     a
-                        jr      .WasResultZero
-.UbnkNegative:          ld      a,$80
-.WasResultZero:         ld      b,a                 ; but zero can result in -0
+                        xor     b                   ; now we need to see if signs were different or same                       
+                        JumpIfNegative .SignsDifferent  ; if zer fk==
+.SignsTheSame:          call    compare16HLDE       ; if signs were the saem tehn
+                        jr      c,.HLLessThanDE     ; if abs(y) < ABS (hl) then do scenario 2B
+.HLGreaterDE:           sub     hl,de               ; Scenario 1A> & 2A> sub hl from de and leave sign the same
                         ld      a,h
                         or      l
-                        ld      a,$80
-                        ret     nz
-.ResultWasZero:         xor     a
+                        jr      z,.HLGTDEZero
+                        ld      a,b
+                        ret
+.HLGTDEZero:            xor     a
+                        ret                         ; if the result was zero set sign to zero too
+.HLLessThanDE:          ex      de,hl               ; if signs were same but DE > ypos then cover secnario 1B and 2B
+                        sub     hl,de               ; 
+                        ld      b,a
+                        ld      a,h
+                        or      l
+                        jr      z,.HLLTDEZero
+                        ld      a,b
+                        xor     $80                 ; flip sign bit to cover 1B> and 2B?
+                        ret
+.HLLTDEZero:            xor     a
+                        ret     
+.SignsDifferent:        add     hl,de               ; if they are oppos
+                        ld      a,(UBnKysgn)
                         ret    
 
 ; 1. K2 = y - alpha * x
@@ -1815,25 +1818,36 @@ ApplyMyRollToPosition:  ld      a,(ALP1)
                         ld      a,(UBnKysgn)        ; a = position sign
                         xor     b                   ; xor so if opposite then 
                         and     $80                 ; so -*- = +, +*+ = + opposite signes = negative                
-                        ld      c,a
-                        ex      de,hl
-                        ld      hl,(UBnKxlo) 
-                        ld      a,(UBnKxsgn)
-                        or      h
-                        ld      h,a
-                        ld      a,b
-                        or      d
-                        ld      d,a
-                        call    ADDHLDESignedv3
+                        ld      c,a                 ; save sign in c
+                        ex      de,hl               ; de = alpha & y, c = sign
+                        ld      hl,(UBnKxlo)        ; hl = x
+                        ld      a,(UBnKxsgn)        ; a x sign
+                        ld      b,a
+;XX                        ld      h,a                 
+;XX                        or      h                   ; hl - xpos S15 format
+;XX                        ld      a,c; was b?
+;XX                        or      d
+;XX                        ld      d,a
+                        
+                        ;; calcs HLB + DEC where B and C are signs
+;; result HL with A as sign
+;; special handling if result is zero forcign sign bit to be zero
+                        call    ADDHLDESignBC:
+
+
+                        ;call    ADDHLDESignedv3 *** THIS DOES NOT WORK
                         ld      (UBnKxlo), hl
-                        ld      a,h
+;XX                        ld      a,h
                         and     $80
                         ld      (UBnKxsgn), a
                         ret
+
+
 ;----------------------------------------------------------------------------------------------------------------------------------
 ApplyMyRollAndPitch:    ld      a,(ALP1)
                         cp      0
                         jr      z,.NoRotation
+                      ;  break
                         call    ApplyMyRollToPosition
         ;                call    ApplyMyRollToNosevY
         ;                call    ApplyMyRollToSidevY

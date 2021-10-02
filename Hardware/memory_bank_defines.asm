@@ -26,7 +26,7 @@ LaunchShipAddr          equ $c000
 membank7 			    equ $e000
 L1membankAddr   	    equ $e000
 L2membankAddr   	    equ $e000
-ShipmodelbankAddr	    equ $e000
+ShipModelsAddr	        equ $e000
 SpritemembankAddr       equ $e000
 ResetUniverseAddr       equ $e000
 StockTableAddr	        equ $e000
@@ -69,7 +69,7 @@ BankStockTable          equ 55
 BankCmdrData            equ 56
 BankLAYER2              equ 57
 BankLAYER1              equ 58
-BankSHIPMODELS          equ 59
+BankShipModelsA         equ 59
 BankSPRITE              equ 60
 BankConsole             equ 61
 BankFrontView           equ 62
@@ -77,6 +77,8 @@ BankMenuStatus          equ 63
 BankMenuEquipS          equ 64
 BankLaunchShip          equ 65
 BankDispMarket          equ 66
+BankShipModelsB         equ 67
+BankShipModelsC         equ 68
 
 BankUNIVDATA0           equ 70
 BankUNIVDATA1           equ 71

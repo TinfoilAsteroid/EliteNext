@@ -222,7 +222,7 @@ TestText:               xor			a
 InitialiseDemoShip:     ld      a,CobraTablePointer
                         MMUSelectUniverseN 0                          ; load up register into universe bank
                         call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
-                        MMUSelectShipModels
+                        MMUSelectShipModelsA
                         ld		a,CobraTablePointer
                         call    CopyShipDataToUBnk
                         ld      a,3
@@ -269,6 +269,7 @@ UpdateUniverseSpeed:    MMUSelectUniverseN 0
                         ld      (UBnKzsgn),a
                         call    ApplyMyRollAndPitch
 ;                        call    DEBUGSETNODES
+                        call    DEBUGSETPOS
                         call   ProcessNodes
 DrawShipTest:           MMUSelectLayer1
                         ld     a,$DF
@@ -348,7 +349,11 @@ DEBUGSETNODES:          ld      hl,DEBUGUBNKDATA
                         ld      bc,6*3
                         ldir
                         ret
-
+DEBUGSETPOS:            ld      hl,DEBUGUBNKDATA
+                        ld      de,UBnKxlo
+                        ld      bc,9
+                        ldir
+                        ret
 ; FAILS due to sharp angle, OK now
 ;DEBUGUBNKDATA:          db      $39,	$01,	$00,	$43,	$01,	$00,	$EF,	$03,	$00
 ;DEBUGROTMATDATA:        db      $01,	$2F,	$B2,	$CC,	$4C,	$27
@@ -387,10 +392,12 @@ DEBUGSETNODES:          ld      hl,DEBUGUBNKDATA
 ;                        db      $73,    $C4,    $BC,    $1E,    $96,    $C4
 ;                        db      $55,    $B9,    $35,    $D1,    $80,    $0F
 ; top left off right issue
-DEBUGUBNKDATA:          db      $39,    $01,    $00,    $43,    $01,    $00,    $2F,    $03,    $00
+;DEBUGUBNKDATA:          db      $39,    $01,    $00,    $43,    $01,    $00,    $2F,    $03,    $00
 DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
                         db      $73,    $B7,    $98,    $C8,    $80,    $A3
                         db      $E6,    $01,    $81,    $AD,    $B0,    $55
+
+DEBUGUBNKDATA:          db      $39,    $00,    $00,    $43,    $00,    $00,    $2F,    $04,    $00
            
 
 ; UBNKPOs example 39,01,00,43,01,00,f4,03,00
@@ -868,10 +875,24 @@ SeedGalaxy0Loop:        push    ix
     INCLUDE "layer1_cls.asm"
     INCLUDE "layer1_print_at.asm"
 ; Bank 59  ------------------------------------------------------------------------------------------------------------------------
-    SLOT    ShipmodelbankAddr
-    PAGE    BankSHIPMODELS
-	ORG     ShipmodelbankAddr, BankSHIPMODELS
-  
+    SLOT    ShipModelsAddr
+    PAGE    BankShipModelsA
+	ORG     ShipModelsAddr, BankShipModelsA
+    DEFINE  SHIPBANKA 1
+    INCLUDE "ShipModels.asm"
+; Bank 67  ------------------------------------------------------------------------------------------------------------------------
+    SLOT    ShipModelsAddr
+    PAGE    BankShipModelsB
+	ORG     ShipModelsAddr, BankShipModelsB
+    UNDEFINE SHIPBANKA
+    DEFINE   SHIPBANKB 1  
+    INCLUDE "ShipModels.asm"
+; Bank 68  ------------------------------------------------------------------------------------------------------------------------
+    SLOT    ShipModelsAddr
+    PAGE    BankShipModelsC
+	ORG     ShipModelsAddr, BankShipModelsC
+    UNDEFINE SHIPBANKB
+    DEFINE   SHIPBANKC 1  
     INCLUDE "ShipModels.asm"
 ; Bank 60  ------------------------------------------------------------------------------------------------------------------------
     SLOT    SpritemembankAddr

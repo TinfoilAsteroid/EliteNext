@@ -614,14 +614,14 @@ TestTIDY:
 TestRollLoop:
     ld      a,(RollLoop)
     dec     a
-    JumpIfALTNusng $80 , ItsRoll
+    JumpIfALTNusng $40 , ItsRoll
     ld      (RollLoop),a
   	call	TestPitchPos
     jp     SkipTidyUp
 ItsRoll;    
     cp      0
     jr      nz,DontReset
-    ld      a,$B0    
+    ld      a,$60    
     ld      (RollLoop),a
     call    TestRollPos
     jp      SkipTidyUp
