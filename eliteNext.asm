@@ -168,8 +168,7 @@ L1InvLowlight           EQU                  L1ColourPaperBlack | L1ColourInkWhi
 ;seg     GALAXYDATASEG7, BankGalaxyData7:StartOfBank, GalaxyDataAddr
 
 charactersetaddr		equ 15360
-STEPDEBUG equ 1
-
+STEPDEBUG               equ 1
 
 
                         ORG         $8000
@@ -219,11 +218,11 @@ TestText:               xor			a
                             call  l2_flip_buffers
                         ENDIF    
 
-InitialiseDemoShip:     ld      a,CobraTablePointer
+InitialiseDemoShip:     ld      a,(currentDemoShip)
                         MMUSelectUniverseN 0                          ; load up register into universe bank
                         call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
                         MMUSelectShipModelsA
-                        ld		a,CobraTablePointer
+                        ld		a,(currentDemoShip)
                         call    CopyShipDataToUBnk
                         ld      a,3
                         ld      (MenuIdMax),a
@@ -236,6 +235,7 @@ InitialiseDemoShip:     ld      a,CobraTablePointer
 ;..................................................................................................................................
 MainLoop:	            call    doRandom                            ; redo the seeds every frame
                         call    scan_keyboard
+DemoOfShipsDEBUG:       call    TestForNextShip
 ScreenTransBlock:       ld      a,$0
                         cp      1
                         jp      z,CheckIfViewUpdate                 ; as we are in a transition the whole update AI is skipped
@@ -317,6 +317,23 @@ DoubleBufferCheck:      ld      a,00
                         jp MainLoop
 ;..................................................................................................................................
 	;call		keyboard_main_loop
+    
+TestForNextShip:        ld      a,c_Pressed_Quit
+                        call    is_key_pressed
+                        ret     nz
+                        ld      a,(currentDemoShip)
+                        inc     a
+                        cp      44
+                        jr      nz,.TestOK
+                        xor     a
+.TestOK:                ld      (currentDemoShip),a
+                        MMUSelectUniverseN 0
+                        call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
+                        ld      a,(currentDemoShip)
+                        MMUSelectShipModelsA
+                        call    CopyShipDataToUBnk
+                        call    SetInitialShipPosition
+                        ret
 
 TestPauseMode:          ld      a,(GamePaused)
                         cp      0
@@ -339,6 +356,8 @@ TestPauseMode:          ld      a,(GamePaused)
 TestQuit:               ld      a,c_Pressed_Quit
                         call    is_key_pressed
                         ret
+currentDemoShip:        DB 0
+
 
 DEBUGSETNODES:          ld      hl,DEBUGUBNKDATA
                         ld      de,UBnKxlo
@@ -348,12 +367,14 @@ DEBUGSETNODES:          ld      hl,DEBUGUBNKDATA
                         ld      de,UBnkrotmatSidevX
                         ld      bc,6*3
                         ldir
+                        
                         ret
 DEBUGSETPOS:            ld      hl,DEBUGUBNKDATA
                         ld      de,UBnKxlo
                         ld      bc,9
                         ldir
                         ret
+
 ; FAILS due to sharp angle, OK now
 ;DEBUGUBNKDATA:          db      $39,	$01,	$00,	$43,	$01,	$00,	$EF,	$03,	$00
 ;DEBUGROTMATDATA:        db      $01,	$2F,	$B2,	$CC,	$4C,	$27
