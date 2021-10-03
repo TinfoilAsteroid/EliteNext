@@ -39,3 +39,5 @@ F to get Find input on galactic chart
 D to centralise cursor on nearest star
 L Launch ship, in which case Q A are dive/climb, OP are roll, W S are throttle
 Pause and resume are there but I have forgot they keys as the moment, its all in keyboard.asm :)
+
+I'm doing updates, generally about weekly, of udpates so far on Youtube - https://www.youtube.com/channel/UCFPWRIEGUjcGhZV2rRWU5DA
