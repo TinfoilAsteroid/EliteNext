@@ -462,7 +462,7 @@ TransposeXX12ByShipToXX15:
         and     $7F
         ld      h,a
         ;110921 debugld      h,0
-		ld		de,(UbnKzlo)
+		ld		de,(UBnKzlo)
 		ld		a,(UBnKzsgn)
 		and		$80									; make sure we only have bit 7
 		ld		c,a

@@ -261,11 +261,6 @@ ALP2					DB  0				; 32		ALP2	Roll Sign
 ALP2FLIP				DB  0				; 33		ALP2	negated roll sign
 ALP1MAXR                DB  31               ;   Maximum roll, added becuase we may allow different ship types
 ALP1MAXL                DB  -31             ;   Maximum roll, added becuase we may allow different ship types
-varK					DB	0				; 40
-varKp1					DB	0				; 41
-varKp2					DB	0				; 42
-varKp3					DB	0				; 43
-
 
 MissileTarget			DW	0				; 45
 IndexedWork				DS	37				; General purpose work space when doing temp arrays
@@ -346,6 +341,12 @@ varSWAP                 DB  0               ; 90 , general purpose swap variable
 varCNT                  DB  0               ; 93
 varRAT                  DB  0               ; 99
 varRAT2                 DB  0               ; 9A
+
+varK					DB	0				; 40
+varKp1					DB	0				; 41
+varKp2					DB	0				; 42
+varKp3					DB	0				; 43
+
 varK2                   DB  0               ; 9B
 varK2p1                 DB  0               ; 9C K2 plus 1
 varK2p2                 DB  0               ; 9D K2 plus 2
@@ -355,9 +356,11 @@ Point                   DB  0               ; 9F      POINT
 
 varT					DB	0				; D1
 
-varK3					DS	2				; D2
+varK3					DS	4				; D2
+varK3p2					DB	0				; 42
+varK3p3					DB	0				; 43
 varK3p1					equ varK3+1			; D3
-varK4					DS	2				; E0
+varK4					DS	4				; E0
 varK4p1					equ varK4+1			; D3
 
 ;PlayerData:

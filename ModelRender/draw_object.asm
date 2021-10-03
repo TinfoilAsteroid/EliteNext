@@ -39,7 +39,7 @@ MakeBothGunNodesVisible:
                         ENDM
 
 JumpIfTooFarAway:       MACRO   target
-                        ld		hl,(UbnKzlo)                    ; hl = z position, by this point it must be positive
+                        ld		hl,(UBnKzlo)                    ; hl = z position, by this point it must be positive
                         ShiftHLDiv8                             ; z position / 8
                         ld      a,h                             ; 
                         IfANotZeroGoto target                       ; LL13 - hop as far , i.e. zhi not 0 after divide by 8

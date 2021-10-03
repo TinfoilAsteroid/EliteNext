@@ -1,4 +1,5 @@
  DEVICE ZXSPECTRUMNEXT
+ DEVICE ZXSPECTRUMNEXT
  CSPECTMAP eliteNext.map
  OPT --zxnext=cspect --syntax=a
 
@@ -260,16 +261,16 @@ UpdateUniverseSpeed:    MMUSelectUniverseN 0
                         ld      a,(DELTA)
                         ld      d,0
                         ld      e,a
-                        ld      hl,(UbnKzlo)
+                        ld      hl,(UBnKzlo)
                         ld      a,(UBnKzsgn)
                         ld      b,a
                         ld      c,$80
                         call    ADDHLDESignBC
-                        ld      (UbnKzlo),hl
+                        ld      (UBnKzlo),hl
                         ld      (UBnKzsgn),a
                         call    ApplyMyRollAndPitch
 ;                        call    DEBUGSETNODES
-                        call    DEBUGSETPOS
+                        ;call    DEBUGSETPOS
                         call   ProcessNodes
 DrawShipTest:           MMUSelectLayer1
                         ld     a,$DF
@@ -369,9 +370,9 @@ DEBUGSETNODES:          ld      hl,DEBUGUBNKDATA
                         ldir
                         
                         ret
-DEBUGSETPOS:            ld      hl,DEBUGUBNKDATA
-                        ld      de,UBnKxlo
-                        ld      bc,9
+DEBUGSETPOS:            ld      hl,DEBUGUBNKDATA 
+                        ld      de,UBnKxlo 
+                        ld      bc,9 - 3
                         ldir
                         ret
 
@@ -428,6 +429,7 @@ DEBUGUBNKDATA:          db      $39,    $00,    $00,    $43,    $00,    $00,    
 ;TODO Optimisation
 ; Need this table to handle differnet events 
 ; 1-main loop update - just general updates specfic to that screen that are not galaxy or stars, e.g. update heat, console
+; cursor key, joystick press
 ; cursor key, joystick press
 ; non cursor keys presses
 ;
@@ -542,12 +544,12 @@ NotReadNextKey:         ld      de,ScreenMapRow
                         djnz    ViewScanLoop
                         ret
 
-SetInitialShipPosition: ld      hl,$0139
+SetInitialShipPosition: ld      hl,$0000
                         ld      (UBnKxlo),hl
-                        ld      hl,$0143
+                        ld      hl,$0000
                         ld      (UBnKylo),hl
-                        ld      hl,$3830
-                        ld      (UbnKzlo),hl
+                        ld      hl,$0F04
+                        ld      (UBnKzlo),hl
                         xor     a
                         ld      (UBnKxsgn),a
                         ld      (UBnKysgn),a

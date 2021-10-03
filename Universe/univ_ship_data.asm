@@ -20,7 +20,7 @@ UBnKxsgn                    DB  0                       ; INWK+2
 UBnKylo                     DB  0                       ; INWK+3 \ ylo
 UbnKyhi                     DB  0                       ; INWK+4 \ yHi
 UBnKysgn                    DB  0                       ; INWK +5
-UbnKzlo                     DB  0                       ; INWK +6
+UBnKzlo                     DB  0                       ; INWK +6
 UBnKzhi                     DB  0                       ; INWK +7
 UBnKzsgn                    DB  0                       ; INWK +8
 ;-Rotation Matrix of Ship----------------------------------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ INWKxsgn                    equ UBnKzsgn                ; INWK+2
 INWKyLo                     equ UBnKylo                 ; INWK+3 \ ylo
 INWKyhi                     equ UbnKyhi                 ; Y Hi???
 INWKysgn                    equ UBnKysgn                ; INWK +5
-INWKzlo                     equ UbnKzlo                 ; INWK +6
+INWKzlo                     equ UBnKzlo                 ; INWK +6
 INWKzhi                     equ UBnKzhi                 ; INWK +7
 INWKzsgn                    equ UBnKzsgn                ; INWK +8
 ; Orientation Matrix [nosev x y z ] nose vector ( forward) 19 to 26
@@ -378,7 +378,7 @@ PROJDIV16UNDOCSKIP:     djnz    PROJDIV16UNDOCLOOP
 ;INPUTS:    bhl = dividend  cde = divisor where b and c are sign bytes
 ;OUTPUTS:   cahl = quotient cde = divisor
 DVID3B2:                ld      (varPhi2),a                     ;DVID3B2 \ Divide 3 bytes by 2, K = [P(HiLo).A]/[INWK_z HiLo], for planet radius, Xreg protected. ; P+2    \ num sg
-                        ldCopy2Byte UbnKzlo, varQ               ; [QR} = Ubnk zlohi  (i.e. Inwk_z HiLo)
+                        ldCopy2Byte UBnKzlo, varQ               ; [QR} = Ubnk zlohi  (i.e. Inwk_z HiLo)
                         ld      a,(UBnKzsgn)                    ; 
                         ld      (varS),a                        ; S = inkw z sign 
 DVID3B:                 ld      de,(varP)                       ; K (3bytes)=P(Lo Hi Hi2)/S.R.Q approx  Acc equiv K(0).; get P and P+1 into de
@@ -1371,7 +1371,7 @@ LL55:                                                   ; Both y signs arrive he
         ld          a,(UBnkXX12zSign)                   ; XX12+5    \ rotated znode hi                                              ;;;
         JumpOnBitSet a,7,NegativeNodeZ                    ; LL56 -ve Z node                                                           ;;;
         ld          a,(UBnkXX12zLo)                     ; XX12+4 \ rotated znode lo                                                 ;;;
-        ld          hl,(UbnKzlo)                        ; INWK+6    \ zorg lo                                                       ;;;
+        ld          hl,(UBnKzlo)                        ; INWK+6    \ zorg lo                                                       ;;;
         add         hl,a                                ; hl = INWKZ + XX12z                                                        ;;;
         ld          a,l
         ld          (varT),a                            ;                                                                           ;;;
@@ -1381,7 +1381,7 @@ LL55:                                                   ; Both y signs arrive he
 ; Doing additions and scalings for each visible node around here                                                                    ;;;
 NegativeNodeZ:
 LL56:                                                   ; Enter XX12+5 -ve Z node case  from above                                  ;;;
-        ld          hl,(UbnKzlo)                        ; INWK+6 \ z org lo                                                         ;;;
+        ld          hl,(UBnKzlo)                        ; INWK+6 \ z org lo                                                         ;;;
         ld          bc,(UBnkXX12zLo)                    ; XX12+4    \ rotated z node lo                                                 ......................................................
         ld          b,0                                 ; upper byte will be garbage
         ClearCarryFlag
@@ -1747,6 +1747,7 @@ AHLequUbnkYminusAHL:    ld      b,a                 ; b =sign of subtraction
                         ex      de,hl               ; de = amount to subtract
                         ld      hl,(UBnKylo)        ; hl = unsigned Y position
                         ld      a,(UBnKysgn)        ; ahl = signed Y corrodinate
+                        ld      c,a                 ; we may need the sign later
                         xor     b                   ; now we need to see if signs were different or same                       
                         JumpIfNegative .SignsDifferent  ; if zer fk==
 .SignsTheSame:          call    compare16HLDE       ; if signs were the saem tehn
@@ -1755,29 +1756,97 @@ AHLequUbnkYminusAHL:    ld      b,a                 ; b =sign of subtraction
                         ld      a,h
                         or      l
                         jr      z,.HLGTDEZero
-                        ld      a,b
+                        ld      a,c                 ; get back ubnkysign as hl > de we use y sign
                         ret
 .HLGTDEZero:            xor     a
                         ret                         ; if the result was zero set sign to zero too
 .HLLessThanDE:          ex      de,hl               ; if signs were same but DE > ypos then cover secnario 1B and 2B
                         sub     hl,de               ; 
-                        ld      b,a
                         ld      a,h
                         or      l
                         jr      z,.HLLTDEZero
-                        ld      a,b
+                        ld      a,c
                         xor     $80                 ; flip sign bit to cover 1B> and 2B?
                         ret
 .HLLTDEZero:            xor     a
                         ret     
 .SignsDifferent:        add     hl,de               ; if they are oppos
-                        ld      a,(UBnKysgn)
+                        ld      a,h
+                        or      l
+                        jr      z,.HLLTDEZero
+                        ld      a,c                 ; then we always use the sign of y even if hl > de or de < hl
                         ret    
 
-; 1. K2 = y - alpha * x
-; 2. z = z + beta * K2
-; 3. y = K2 - beta * z
-; 4. x = x + alpha * y
+;----------------------------------------------------------------------------------------------------------
+AHLequKminusAHL:        ld      b,a                 ; b =sign of subtraction
+                        ex      de,hl               ; de = amount to subtract
+                        ld      hl,(varKp1)         ; Ahl = K
+                        ld      a,(varKp3)          ; 
+                        ld      c,a                 ; we may need the sign later
+                        xor     b                   ; now we need to see if signs were different or same                       
+                        JumpIfNegative .SignsDifferent  ; if zer fk==
+.SignsTheSame:          call    compare16HLDE       ; if signs were the saem tehn
+                        jr      c,.HLLessThanDE     ; if abs(y) < ABS (hl) then do scenario 2B
+.HLGreaterDE:           sub     hl,de               ; Scenario 1A> & 2A> sub hl from de and leave sign the same
+                        ld      a,h
+                        or      l
+                        jr      z,.HLGTDEZero
+                        ld      a,c                 ; get back ubnkysign as hl > de we use y sign
+                        ret
+.HLGTDEZero:            xor     a
+                        ret                         ; if the result was zero set sign to zero too
+.HLLessThanDE:          ex      de,hl               ; if signs were same but DE > ypos then cover secnario 1B and 2B
+                        sub     hl,de               ; 
+                        ld      a,h
+                        or      l
+                        jr      z,.HLLTDEZero
+                        ld      a,c
+                        xor     $80                 ; flip sign bit to cover 1B> and 2B?
+                        ret
+.HLLTDEZero:            xor     a
+                        ret     
+.SignsDifferent:        add     hl,de               ; if they are oppos
+                        ld      a,h
+                        or      l
+                        jr      z,.HLLTDEZero
+                        ld      a,c                 ; then we always use the sign of y even if hl > de or de < hl
+                        ret    
+;-------------------------------------------------------------------------------------------------------------
+
+AHLequUbnkZplusAHL:     ld      b,a                 ; b =sign of subtraction
+                        ex      de,hl               ; de = amount to subtract
+                        ld      hl,(UBnKzlo)        ; hl = unsigned Y position
+                        ld      a,(UBnKzsgn)        ; ahl = signed Y corrodinate
+                        ld      c,a                 ; we may need the sign later
+                        xor     b                   ; now we need to see if signs were different or same                       
+                        JumpIfNegative .SignsDifferent  ; if zer fk==
+.SignsTheSame:          add     hl,de
+                        ld      a,h
+                        or      l
+                        jr      z,.HLGTDEZero
+                        ld      a,c                 ; get back ubnkysign as hl > de we use y sign
+                        ret
+.HLGTDEZero:            xor     a
+                        ret                         ; if the result was zero set sign to zero too
+.HLLTDEZero:            xor     a
+                        ret     
+.SignsDifferent:        call    compare16HLDE       ; if signs were the saem tehn
+                        jr      c,.HLLessThanDE     ; if abs(y) < ABS (hl) then do scenario 2B
+.HLGreaterDE:           sub     hl,de               ; Scenario 1A> & 2A> sub hl from de and leave sign the same
+                        ld      a,h
+                        or      l
+                        jr      z,.HLGTDEZero
+                        ld      a,c                 ; get back ubnkysign as hl > de we use y sign
+                        ret
+.HLLessThanDE:          ex      de,hl               ; if signs were same but DE > ypos then cover secnario 1B and 2B
+                        sub     hl,de               ; 
+                        ld      a,h
+                        or      l
+                        jr      z,.HLLTDEZero
+                        ld      a,c
+                        xor     $80                 ; flip sign bit to cover 1B> and 2B?
+                        ret
+
 
 
 ; Test roll only so beta will be 0 therefore:
@@ -1785,7 +1854,12 @@ AHLequUbnkYminusAHL:    ld      b,a                 ; b =sign of subtraction
 ; 2. z = z + 0 * K2     so z in untouched
 ; 3. y = K2 * z
 ; 4. x = x + alpha * y
-
+; Full version
+; 1. K2 = y - alpha * x
+; 2. z = z + beta * K2
+; 3. y = K2 - beta * z
+; 4. x = x + alpha * y
+;------1. K2 = y - alpha * x
 ApplyMyRollToPosition:  ld      a,(ALP1)            
                         ld      d,0
                         ld      e,a                 ; de = unsigned roll magnitude
@@ -1801,11 +1875,40 @@ ApplyMyRollToPosition:  ld      a,(ALP1)
                         call    AHLequUbnkYminusAHL
                         ld      (varKp1),hl
                         ld      (varKp3),a          ; Kp = y - alph * x as 16 bit + sign bit
-.ZEquZPlusBetaMulK2:    nop                         ; for now as beta is not conisdered
-.YEquK2MinusBetaMulZ:   ld      hl,(varKp1)
-                        ld      (UBnKylo),hl
-                        ld      a,(varKp3)
-                        ld      (UBnKysgn),a        ; for now as beta = 0
+;------2. z = z + beta * K2 and store in K2p
+.ZEquZPlusBetaMulK2:    ld      a,(BET1)            
+                        ld      d,0
+                        ld      e,a
+                        call    mulDEbyHL
+                        ld      a,(varKp3)          ; get k2 sign back
+                        ld      c,a
+                        ld      a,(BET2)
+                        xor     c                   ; AHL = beta * k2
+                        and     $80
+                        call    AHLequUbnkZplusAHL  ; AHL = z + beta * k2
+                        ld      (varK2p1),hl
+                        ld      (varK2p3),a          ; K2 = z + beta * K2
+                        ld      (UBnKzlo),hl; DEBUG
+                        ld      (UBnKzsgn),a
+;------3. y = K2 - beta * z and store in K3p
+.YEquK2MinusBetaMulZ:   ld      a,(BET1)            
+                        ld      d,0
+                        ld      e,a
+                        ld      hl,(UBnKzlo)        ; hl = position X unsigned
+                        ld      l,h
+                        ld      h,0
+                        call    mulDEbyHL
+                        ld      a,(BET2)
+                        ld      b,a                 ; b = sign
+                        ld      a,(UBnKzsgn)        ; a = position sign
+                        xor     b                   ; xor so if opposite then 
+                        and     $80                 ; so -*- = +, +*+ = + opposite signes = negative
+                        call    AHLequKminusAHL
+                        ld      (UBnKylo),hl; DEBUG
+                        ld      (UBnKysgn),a
+                        ld      (varK3p1),hl
+                        ld      (varK3p3),a          ; Kp =  y = K2 - beta * z
+;------4. x = x + alpha * y                      
 .XequXPlusAlphaMulY:    ld      a,(ALP1)            
                         ld      d,0
                         ld      e,a                 ; de = unsigned roll magnitude
@@ -1840,11 +1943,23 @@ ApplyMyRollToPosition:  ld      a,(ALP1)
 ;XX                        ld      a,h
                         and     $80
                         ld      (UBnKxsgn), a
+;.SaveZPos               ld      hl,(varK2p1)
+;                        ld      (UBnKzlo),a
+;                        ld      a,(varK2p3)
+;                        ld      (UBnKzsgn),a
+;.SaveYPos               ld      hl,(varK3p1)
+;                        ld      (UBnKylo),a
+;                        ld      a,(varK3p3)
+;                        ld      (UBnKysgn),a
+                        
+                        
                         ret
 
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ApplyMyRollAndPitch:    ld      a,(ALP1)
+                        ld      hl,BET1
+                        or      (hl)
                         cp      0
                         jr      z,.NoRotation
                       ;  break
@@ -1943,7 +2058,7 @@ MoveY1PointToXX15:
 SetX2PointToXX15:
         ld          bc,0                                ; set X2 to 0
         ld          (UBnkX2),bc
-        ld          a,(UbnKzlo)
+        ld          a,(UBnKzlo)
         ld          c,a
 SetY2PointToXX15:
         ld          (UBnkY2),bc                         ; set Y2to 0
