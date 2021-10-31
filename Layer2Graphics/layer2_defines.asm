@@ -12,7 +12,6 @@ IO_SPRITE_ATTRIBUTES_PORT    equ 87
 
 LAYER2_VISIBLE_MASK 		equ $02
 ; DEBUG 0 for always write to primary 08 for double buffering
-    DEFINE  DOUBLEBUFFER 1
     IFDEF DOUBLEBUFFER
 LAYER2_SHADOW_SCREEN_MASK 	equ $08
     ELSE

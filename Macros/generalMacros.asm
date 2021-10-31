@@ -204,63 +204,63 @@ popdebc:		MACRO
 	ENDM
 
 pushhlde:		MACRO
-	push	hl
-	push	de
-	ENDM
-
+                push	hl
+                push	de
+                ENDM
+            
 popdehl:		MACRO
-	pop		de
-	pop		hl
-	ENDM
+                pop		de
+                pop		hl
+                ENDM
 
 pushbcdeaf:		MACRO
-	push	bc
-	push	de
-	push	af
-	ENDM
+                push	bc
+                push	de
+                push	af
+                ENDM
 	
 popafdebc:		MACRO
-	pop		af
-	pop		de
-	pop		bc
-	ENDM
+                pop		af
+                pop		de
+                pop		bc
+                ENDM
 
 NegIY:			MACRO
-	xor a
-	sub iyl
-	ld iyl,a
-	sbc a,a
-	sub iyh
-	ld iyh,a
-	ENDM
+                xor a
+                sub iyl
+                ld iyl,a
+                sbc a,a
+                sub iyh
+                ld iyh,a
+                ENDM
 
 NegHL:			MACRO
-	xor a
-	sub l
-	ld l,a
-	sbc a,a
-	sub h
-	ld h,a
-	ENDM
+                xor a
+                sub l
+                ld l,a
+                sbc a,a
+                sub h
+                ld h,a
+                ENDM
 
 NegDE:			MACRO
-	xor a
-	sub e
-	ld e,a
-	sbc a,a
-	sub d
-	ld d,a
-	ENDM
+                xor a
+                sub e
+                ld e,a
+                sbc a,a
+                sub d
+                ld d,a
+                ENDM
 
 
 NegBC:			MACRO
-	xor a
-	sub c
-	ld c,a
-	sbc a,a
-	sub  b
-	ld b,a
-	ENDM
+                xor a
+                sub c
+                ld c,a
+                sbc a,a
+                sub  b
+                ld b,a
+                ENDM
     
 FourLDIInstrunctions:   MACRO
                         ldi

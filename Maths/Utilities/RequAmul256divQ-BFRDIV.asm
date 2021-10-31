@@ -72,8 +72,10 @@ HL_DivC_Skip:
         ld  (varR),a
         ret
 
-LL28:
-RequAmul256divQ:				; Entry point if varQ is populated with demoninator
+
+
+; Entry point if varQ is populated with demoninator
+RequAmul256divQ:	    
 BFRDIV:
 		push	af
 		ld		a,(varQ)

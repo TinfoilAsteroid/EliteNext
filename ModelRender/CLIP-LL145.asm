@@ -50,6 +50,8 @@
 ;     if x2 < 0 then x2 = 0
 ;        else if x2 high byte set just use low byte
 ;     clipping DONE
+; ******************************************************************
+; Another optimisation to add, if the difference between DX and DY is large enougg just go horizonal or vertical
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; All the code is unwrapped where ever possible as this routine will be called for every line on every frame draw
 ; it still needs some optimisation as its repeatedly checking bounds so assumptions can be made
@@ -182,6 +184,16 @@ ClipV2:                 ld      bc,(UbnkPreClipY1)
                         ld      (clipDy),hl                         ; now we have signed Dy
 ; If the angle is extreme then it will be clamped at +/- 127.255 - given it has to fit on the screen from 3d maths is it unlikley to hit extremes
 ; note as we sort then dxy must always be +ve
+.DivideDxDy:            ld      hl,(clipDx)
+                        ld      de,(clipDy)
+.DivideDxDyLoop:        ld      a,h
+                        or      d
+                        jr      z,.DivideDxDyDone:
+                        ShiftDERight1
+                        ShiftHLRight1
+                        jr      .DivideDxDyLoop
+.DivideDxDyDone:        ld      (clipDx),hl
+                        ld      (clipDy),de     
 .CalcDxy:               ld      hl,(clipDx)
                         ld      de,(clipDy)
 .PosXCalcDxy:           ld      a,d                                 ; is Dy positive or negative

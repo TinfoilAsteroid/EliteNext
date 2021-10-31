@@ -18,7 +18,56 @@
 ;;;    rla
 ;;;    cpl
 ;;;    ret
-	
+
+;;Inputs: DE is the numerator, BC is the divisor
+;;Outputs: DE is the result
+;;         A is a copy of E
+;;         HL is the remainder
+;;         BC is not changed
+;; so DE = DE /BC
+;140 bytes
+;145cc	
+
+MacroDEDivBC:       MACRO
+                    rla
+                    adc     hl,hl
+                    sbc     hl,bc
+                    jr      nc,$+3
+                    add     hl,bc
+                    ENDM
+
+DEequDEDivBC:    
+    xor a 
+    sbc hl,hl
+    ld a,d
+    MacroDEDivBC
+    MacroDEDivBC
+    MacroDEDivBC
+    MacroDEDivBC
+    MacroDEDivBC
+    MacroDEDivBC
+    MacroDEDivBC
+    MacroDEDivBC
+    rla 
+    cpl 
+    ld d,a
+
+    ld a,e
+    MacroDEDivBC
+    MacroDEDivBC
+    MacroDEDivBC
+    MacroDEDivBC
+    MacroDEDivBC
+    MacroDEDivBC
+    MacroDEDivBC
+    MacroDEDivBC
+    rla
+    cpl 
+    ld e,a
+    ret
+    
+    
+    
 ;divdide by 16 using undocumented instrunctions
 ;Input: BC = Dividend, DE = Divisor, HL = 0
 ;Output: BC = Quotient, HL = Remainder

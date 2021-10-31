@@ -301,6 +301,7 @@ varU                    DB  0               ;   80
 varQ					DB  0 				;	81		
 varR					DB  0 				;	82		
 varS					DB  0 				;	83		
+varRS                   equ varR
 
 varU16                  DW  0               ; 16 bit variant on varU as I can't use above for this
 
@@ -412,14 +413,10 @@ TransporterPresent		DB	0				; &0328	MANY + 10 (or #SHU + 1)
 				        DB	0				; &033C	MANY + 30 Thargoids 
 				        DB	0				; &033D	MANY + 31 Constrictor?
 JunkCount				DB  0				; $033E
-AutoDocking				DB	0				; $033F						
-PlayerECM				DB	0				; $0340				
 PlayerMisJump			DB	0				; $0341 witchspace misjump
 CabinTemp				DB	0				; $0342
-Laser2					DB	0				; 0343 laser Power? Not sure 
 MissileArmedStatus		DB	0				; 0344 MSAR  
 View					DB	0				; 0345 Index for laser mount and screen view, 1 = front 2 = aft = 4 left 8 = right
-LaserCount				DB	0				; 0346  LASCT  \ laser count =9 for pulse, cooled off?
 GunTemperature			DB	0				; 0347	GNTMP 
 HyperSpaceFX			DB	0				; 0348 HFX (probabyl BBC specific
 ExtraVessels			DB	0				; 0349 EV Use d by cops, extra vessels still to spawn?
@@ -436,28 +433,9 @@ VarTP					DB	0				; 0358 TP? The Plan  \ mission uses lower 4 bits
 PresentSystemX			DB	0				; 0359 - 035A QQ0 X Y
 PresentSystemY			DB  0
 GalaxySeeds				DS	6				; 035B - 0360 QQ21
-Cash					DB  0,0,0,0			; 0361 - 0364 Cash now litte endian
-Fuel					DB	25				; 0365  QQ14
 COK						DB	0				; 0366 Competition Byte what ? Does some file check and accelleration check
 Galaxy      			DB	0				; 0367 Galaxy (incremented with galactiv drive
-LaserList				DB	5,2,3,1			; View Lasers $0368 to $036B
 ;036C to D???
-CargoBaySize			DB	70				; 036E
-CargoRunningLoad        DB  0
-CargoTonnes             DB  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-;CargoTonnes		    DB	16,1,2,3,4,5,6,7,6,9,10,11,12,13,14,15			; 036F - 037F	QQ20
-SlaveCargoTonnes		equ CargoTonnes+3
-NarcoticsCargoTonnes	equ CargoTonnes+6
-FirearmsCargoTonnes		equ CargoTonnes+10
-QQ20                    equ CargoTonnes
-EquipmentFitted         DS  EQ_ITEM_COUNT    ; Series of flags for if each item is fitted
-ECMPresent				EQU EquipmentFitted + EQ_ECM				; 0380
-EnergyBomb				EQU EquipmentFitted + EQ_ENERGY_BOMB		; 0382	Also random hyperspeace in Elite A
-ExtraEnergyUnit			EQU EquipmentFitted + EQ_ENERGY_UNIT        ; 0383
-DockingComputer 		EQU EquipmentFitted + EQ_DOCK_COMP    		; 0384
-GalacticHyperDrive		EQU EquipmentFitted + EQ_GAL_DRIVE   		; 0385
-EscapePod				EQU EquipmentFitted + EQ_ESCAPE_POD  		; 0386
-FuelScoopsBarrelStatus	DB	1				; 0381
 DampingKeys				DS  7				; 0387 - 038D
 ;  #&6 Does K toggle keyboard/joystick control -  03CD certainly makes keyboard not work anymore.
 ;  #&5 Does J reverse both joystick channels

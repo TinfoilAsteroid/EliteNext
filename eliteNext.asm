@@ -1,5 +1,6 @@
  DEVICE ZXSPECTRUMNEXT
  DEVICE ZXSPECTRUMNEXT
+ DEFINE  DOUBLEBUFFER 1
  CSPECTMAP eliteNext.map
  OPT --zxnext=cspect --syntax=a
 
@@ -24,84 +25,8 @@ ScreenLeft      EQU ScreenAft+2
 ScreenRight     EQU ScreenLeft+3
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Colour Defines
-L2ColourBLACK           EQU   0
-L2ColourRED             EQU 224
-L2ColourRED_MED         EQU 128
-L2ColourRED_DRK         EQU  32
-L2ColourRED_1           EQU L2ColourRED_MED
-L2ColourRED_2           EQU  96
-L2ColourRED_3           EQU  64
-L2ColourRED_4           EQU L2ColourRED_DRK
-L2ColourDARK_RED        EQU L2ColourRED_DRK
-L2ColourYELLOW          EQU 252
-L2ColourYELLOW_MED      EQU 144
-L2ColourYELLOW_DRK      EQU  72
-L2ColourYELLOW_1	    EQU L2ColourYELLOW_MED
-L2ColourYELLOW_2        EQU L2ColourYELLOW_DRK
-L2ColourGREEN           EQU  29
-L2ColourGREEN_MED       EQU  16
-L2ColourGREEN_DRK       EQU   8
-L2ColourGREEN_1		    EQU L2ColourGREEN
-L2ColourGREEN_2		    EQU L2ColourGREEN_MED
-L2ColourGREEN_3		    EQU L2ColourGREEN_DRK
-L2ColourWHITE           EQU 255
-L2ColourWHITE_MED       EQU 146
-L2ColourWHITE_DRK       EQU  73
-L2ColourWHITE_1         EQU L2ColourWHITE_MED
-L2ColourWHITE_2         EQU L2ColourWHITE_DRK
-L2ColourGREY_1		    EQU 146
-L2ColourGREY_2		    EQU 109
-L2ColourGREY_3		    EQU  73
-L2ColourGREY_4		    EQU  37
-L2ColourMAGENTA         EQU 218
-L2ColourMAGENTA_MED     EQU 130
-L2ColourMAGENTA_DRK     EQU  65
-L2ColourORANGE          EQU 236
-L2ColourORANGE_MED      EQU 168
-L2ColourORANGE_DRK      EQU  68
-L2ColourBLUE            EQU   3
-L2ColourBLUE_MED        EQU   2
-L2ColourBLUE_DRK        EQU   1
-L2ColourBLUE_1          EQU 111
-L2ColourBLUE_2		    EQU  39
-L2ColourBLUE_3		    EQU L2ColourBLUE_MED
-L2ColourBLUE_4		    EQU L2ColourBLUE_DRK
-L2ColourCYAN            EQU  31
-L2ColourCYAN_MED        EQU  18
-L2ColourCYAN_DRK        EQU   9
-L2ColourPURPLE          EQU 109
-L2ColourPURPLE_MED      EQU  66
-L2ColourPURPLE_DRK      EQU  33
-L2ColourPINK_1		    EQU 231
-L2ColourPINK_2		    EQU 226
-L2ColourPINK_3		    EQU 225
-L2ColourPINK_4		    EQU 224
-L2ColourTRANSPARENT     EQU $E3
-
-                                     
-L1ColourInkBlack        EQU %00000000
-L1ColourInkBlue         EQU %00000001
-L1ColourInkRed          EQU %00000010
-L1ColourInkMagenta      EQU %00000011
-L1ColourInkGreen        EQU %00000100
-L1ColourInkCyan         EQU %00000101
-L1ColourInkYellow       EQU %00000110
-L1ColourInkWhite        EQU %00000111
-L1ColourPaperBlack      EQU %00000000
-L1ColourPaperBlue       EQU %00001000
-L1ColourPaperRed        EQU %00010000
-L1ColourPaperMagenta    EQU %00011000
-L1ColourPaperGreen      EQU %00100000
-L1ColourPaperCyan       EQU %00101000
-L1ColourPaperYellow     EQU %00110000
-L1ColourPaperWhite      EQU %00111000
-L1ColourFlash           EQU %10000000
-L1ColourBright          EQU %01000000
-
-;----------------------------------------------------------------------------------------------------------------------------------
-; Screen Specific Colour Defines
-L1InvHighlight          EQU L1ColourBright | L1ColourPaperRed   | L1ColourInkYellow
-L1InvLowlight           EQU                  L1ColourPaperBlack | L1ColourInkWhite
+    INCLUDE "./Hardware/L2ColourDefines.asm"
+    INCLUDE "./Hardware/L1ColourDefines.asm"
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Total screen list
 ; Local Chart
@@ -117,10 +42,10 @@ L1InvLowlight           EQU                  L1ColourPaperBlack | L1ColourInkWhi
 ; byint and selling equipment
 ; bying and selling stock
 
-    INCLUDE "Hardware/register_defines.asm"
-    INCLUDE "layer2_defines.asm"
-    INCLUDE	"memory_bank_defines.asm"
-    INCLUDE "screen_equates.asm"
+    INCLUDE "./Hardware/register_defines.asm"
+    INCLUDE "./Layer2Graphics/layer2_defines.asm"
+    INCLUDE	"./Hardware/memory_bank_defines.asm"
+    INCLUDE "./Hardware/screen_equates.asm"
     
     INCLUDE "./Macros/MMUMacros.asm"
     INCLUDE "./Macros/ShiftMacros.asm"
@@ -128,45 +53,7 @@ L1InvLowlight           EQU                  L1ColourPaperBlack | L1ColourInkWhi
     INCLUDE "./Macros/GeneralMacros.asm"
     INCLUDE "./Macros/ldCopyMacros.asm"
     INCLUDE "./Macros/ldIndexedMacros.asm"
-; SNASM Elite  Next
 
-;seg     CODE_SEG,       4:              $0000,       $8000                 ; flat address
-;seg     RESETUNIVSEG,   BankResetUniv:  StartOfBank, ResetUniverseAddr
-;seg     MENUSHRCHTSEG,  BankMenuShrCht: StartOfBank, MenuShrChtAddr
-;seg     MENUGALCHTSEG,  BankMenuGalCht: StartOfBank, MenuGalChtAddr
-;seg     MENUINVENTSEG,  BankMenuInvent: StartOfBank, MenuInventAddr
-;seg     MENUSYSTEMSEG,  BankMenuSystem: StartOfBank, MenuSystemAddr
-;seg     MENUMARKETSEG,  BankMenuMarket: StartOfBank, MenuMarketAddr
-;seg     MENUSTATUSSEG,  BankMenuStatus: StartOfBank, MenuStatusAddr
-;seg     STOCKTABLESEG,  BankStockTable: StartOfBank, StockTableAddr
-;seg     VIEWFRONTSEG,   BankFrontView:  StartOfBank, ViewFrontAddr
-;seg     CMDRDATASEG,    BankCmdrData:   StartOfBank, CMDRDATAAddr        
-;seg     LAYER2SEG,      BankLAYER2:     StartOfBank, LAYER2Addr          
-;seg     LAYER1SEG,      BankLAYER1:     StartOfBank, LAYER1Addr          
-;seg     SHIPMODELSSEG,  BankSHIPMODELS: StartOfBank, ShipmodelbankAddr
-;seg     SPRITESEG,      BankSPRITE:     StartOfBank, SPRITEAddr             ; flat address
-;seg     CONSOLESEG,     BankConsole:    StartOfBank, ConsoleImageAddr       ; flat address
-;seg     UNIVDATASEG0,   BankUNIVDATA0:  StartOfBank, UniverseBankAddr       ; Univese also uses bank 7
-;seg     UNIVDATASEG1,   BankUNIVDATA1:  StartOfBank, UniverseBankAddr       ; Univese also uses bank 7
-;seg     UNIVDATASEG2,   BankUNIVDATA2:  StartOfBank, UniverseBankAddr       ; Univese also uses bank 7
-;seg     UNIVDATASEG3,   BankUNIVDATA3:  StartOfBank, UniverseBankAddr       ; Univese also uses bank 7
-;seg     UNIVDATASEG4,   BankUNIVDATA4:  StartOfBank, UniverseBankAddr       ; Univese also uses bank 7
-;seg     UNIVDATASEG5,   BankUNIVDATA5:  StartOfBank, UniverseBankAddr       ; Univese also uses bank 7
-;seg     UNIVDATASEG6,   BankUNIVDATA6:  StartOfBank, UniverseBankAddr       ; Univese also uses bank 7
-;seg     UNIVDATASEG7,   BankUNIVDATA7:  StartOfBank, UniverseBankAddr       ; Univese also uses bank 7
-;seg     UNIVDATASEG8,   BankUNIVDATA8:  StartOfBank, UniverseBankAddr       ; Univese also uses bank 7
-;seg     UNIVDATASEG9,   BankUNIVDATA9:  StartOfBank, UniverseBankAddr       ; Univese also uses bank 7
-;seg     UNIVDATASEG10,  BankUNIVDATA10: StartOfBank, UniverseBankAddr       ; Univese also uses bank 7
-;seg     UNIVDATASEG11,  BankUNIVDATA11: StartOfBank, UniverseBankAddr       ; Univese also uses bank 7
-;seg     UNIVDATASEG12,  BankUNIVDATA12: StartOfBank, UniverseBankAddr       ; Univese also uses bank 7
-;seg     GALAXYDATASEG0, BankGalaxyData0:StartOfBank, GalaxyDataAddr
-;seg     GALAXYDATASEG1, BankGalaxyData1:StartOfBank, GalaxyDataAddr
-;seg     GALAXYDATASEG2, BankGalaxyData2:StartOfBank, GalaxyDataAddr
-;seg     GALAXYDATASEG3, BankGalaxyData3:StartOfBank, GalaxyDataAddr
-;seg     GALAXYDATASEG4, BankGalaxyData4:StartOfBank, GalaxyDataAddr
-;seg     GALAXYDATASEG5, BankGalaxyData5:StartOfBank, GalaxyDataAddr
-;seg     GALAXYDATASEG6, BankGalaxyData6:StartOfBank, GalaxyDataAddr
-;seg     GALAXYDATASEG7, BankGalaxyData7:StartOfBank, GalaxyDataAddr
 
 charactersetaddr		equ 15360
 STEPDEBUG               equ 1
@@ -269,7 +156,7 @@ UpdateUniverseSpeed:    MMUSelectUniverseN 0
                         ld      (UBnKzlo),hl
                         ld      (UBnKzsgn),a
                         call    ApplyMyRollAndPitch
-;                        call    DEBUGSETNODES
+                        call    DEBUGSETNODES
                         ;call    DEBUGSETPOS
                         call   ProcessNodes
 DrawShipTest:           MMUSelectLayer1
@@ -415,13 +302,18 @@ DEBUGSETPOS:            ld      hl,DEBUGUBNKDATA
 ;                        db      $55,    $B9,    $35,    $D1,    $80,    $0F
 ; top left off right issue
 ;DEBUGUBNKDATA:          db      $39,    $01,    $00,    $43,    $01,    $00,    $2F,    $03,    $00
+;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
+;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
+;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
+
+;DEBUGUBNKDATA:          db      $39,    $00,    $00,    $43,    $00,    $00,    $2F,    $04,    $00
+           
 DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
                         db      $73,    $B7,    $98,    $C8,    $80,    $A3
                         db      $E6,    $01,    $81,    $AD,    $B0,    $55
 
-DEBUGUBNKDATA:          db      $39,    $00,    $00,    $43,    $00,    $00,    $2F,    $04,    $00
-           
-
+DEBUGUBNKDATA:          db      $00,    $00,    $00,    $00,    $00,    $00,    $1F,    $00,    $00
+      
 ; UBNKPOs example 39,01,00,43,01,00,f4,03,00
 ; rotmat  example b1, 83,ae,5d,b0,1a,5e,de,82,8a,69,16,70,99,52,19,dd,d9
 
@@ -464,7 +356,7 @@ ScreenMapRow        EQU ScreenKeyGalactic - ScreenKeyMap
 ScreenMapLen        EQU ($ - ScreenKeyMap) / ScreenMapRow
 ScreenViewsStart    EQU (ScreenKeyFront - ScreenKeyMap)/ScreenMapRow
 ScreenTransitionForced  DB $FF    
-    INCLUDE "GameEngine/resetUniverse.asm"
+    INCLUDE "./GameEngine/resetUniverse.asm"
 
     
 InitialiseCommander:    ld      a,(ScreenCmdr+1)
@@ -734,73 +626,75 @@ SeedGalaxy0Loop:        push    ix
 
 
             
-    include "ModelRender/testdrawing.asm"
-    include "Universe/StarRoutines.asm"
+    include "./ModelRender/testdrawing.asm"
+    include "./Universe/StarRoutines.asm"
 ;    include "Universe/move_object-MVEIT.asm"
-    include "ModelRender/draw_object.asm"
-    include "ModelRender/draw_ship_point.asm"
-    include "ModelRender/drawforwards-LL17.asm"
+    include "./ModelRender/draw_object.asm"
+    include "./ModelRender/draw_ship_point.asm"
+    include "./ModelRender/drawforwards-LL17.asm"
     
-    INCLUDE	"Hardware/memfill_dma.asm"
-    INCLUDE	"Hardware/memcopy_dma.asm"
-    INCLUDE "Hardware/keyboard.asm"
+    INCLUDE	"./Hardware/memfill_dma.asm"
+    INCLUDE	"./Hardware/memcopy_dma.asm"
+    INCLUDE "./Hardware/keyboard.asm"
     
-    INCLUDE "Variables/constant_equates.asm"
-    INCLUDE "Variables/general_variables.asm"
+    INCLUDE "./Variables/constant_equates.asm"
+    INCLUDE "./Variables/general_variables.asm"
+    INCLUDE "./Variables/EquipmentVariables.asm"
     
-    INCLUDE "Variables/random_number.asm"
-    INCLUDE "Variables/galaxy_seed.asm"
-    INCLUDE "Tables/text_tables.asm"
-    INCLUDE "Tables/dictionary.asm"
-    INCLUDE "Tables/name_digrams.asm"
+    INCLUDE "./Variables/random_number.asm"
+    INCLUDE "./Variables/galaxy_seed.asm"
+    INCLUDE "./Tables/text_tables.asm"
+    INCLUDE "./Tables/dictionary.asm"
+    INCLUDE "./Tables/name_digrams.asm"
 ;INCLUDE "Tables/inwk_table.asm" This is no longer needed as we will write to univer object bank
 
 ; Include all maths libraries to test assembly
-    INCLUDE "Maths/addhldesigned.asm"
-    INCLUDE "Maths/addhlasigned.asm"
-    INCLUDE "Maths/multiply.asm"
-    INCLUDE "Maths/asm_square.asm"
-    INCLUDE "Maths/asm_sqrt.asm"
-    INCLUDE "Maths/asm_divide.asm"
-    INCLUDE "Maths/asm_unitvector.asm"
-    INCLUDE "Maths/compare16.asm"
-    INCLUDE "Maths/negate16.asm"
-    INCLUDE "Maths/normalise96.asm"
-    INCLUDE "Maths/binary_to_decimal.asm"
+    INCLUDE "./Maths/addhldesigned.asm"
+    INCLUDE "./Maths/addhlasigned.asm"
+    INCLUDE "./Maths/Utilities/AddDEtoCash.asm"
+    INCLUDE "./Maths/multiply.asm"
+    INCLUDE "./Maths/asm_square.asm"
+    INCLUDE "./Maths/asm_sqrt.asm"
+    INCLUDE "./Maths/asm_divide.asm"
+    INCLUDE "./Maths/asm_unitvector.asm"
+    INCLUDE "./Maths/compare16.asm"
+    INCLUDE "./Maths/negate16.asm"
+    INCLUDE "./Maths/normalise96.asm"
+    INCLUDE "./Maths/binary_to_decimal.asm"
 ;INCLUDE "badd_ll38.asm"
 ;;INCLUDE "XX12equXX15byXX16.asm"
-    INCLUDE "AequAdivQmul96-TIS2.asm"
-    INCLUDE "AequAmulQdiv256-FMLTU.asm"
-    INCLUDE "PRequSpeedDivZZdiv8-DV42-DV42IYH.asm"
-    INCLUDE "AequDmulEdiv256usgn-DEFMUTL.asm"
+    INCLUDE "./Maths/Utilities/AequAdivQmul96-TIS2.asm"
+    INCLUDE "./Maths/Utilities/AequAmulQdiv256-FMLTU.asm"
+    INCLUDE "./Maths/Utilities/PRequSpeedDivZZdiv8-DV42-DV42IYH.asm"
+    INCLUDE "./Maths/Utilities/AequDmulEdiv256usgn-DEFMUTL.asm"
 ;INCLUDE "AP2equAPmulQunsgEorP-MLTU2.asm"
 ;INCLUDE "APequPmulQUnsg-MULTU.asm"
 ;INCLUDE "APequPmulX-MU11.asm"
-    INCLUDE "APequQmulA-MULT1.asm"
-    INCLUDE "badd_ll38.asm"
-    INCLUDE "moveship4-MVS4.asm"
+    INCLUDE "./Maths/Utilities/APequQmulA-MULT1.asm"
+    INCLUDE "./Maths/Utilities/badd_ll38.asm"
+    INCLUDE "./Maths/Utilities/moveship4-MVS4.asm"
 ;INCLUDE "MoveShip5-MVS5.asm"
 ;INCLUDE "PAequAmulQusgn-MLU2.asm"
 ;INCLUDE "PAequDustYIdxYmulQ-MLU1.asm"
 ;INCLUDE "PlanetP12addInwkX-MVT6.asm"
-    INCLUDE "RequAmul256divQ-BFRDIV.asm"
-    INCLUDE "Maths/Utilities/RequAdivQ-LL61.asm"
-    INCLUDE "RSequABSrs-LL129.asm"
-    INCLUDE "RSequQmulA-MULT12.asm"
+    INCLUDE "./Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
+    INCLUDE "./Maths/Utilities/RequAdivQ-LL61.asm"
+    INCLUDE "./Maths/Utilities/RSequABSrs-LL129.asm"
+    INCLUDE "./Maths/Utilities/RSequQmulA-MULT12.asm"
 ;INCLUDE "SwapRotmapXY-PUS1.asm"
-    INCLUDE "tidy.asm"
-    INCLUDE "XAequMinusXAPplusRSdiv96-TIS1.asm"
+    INCLUDE "./Maths/Utilities/tidy.asm"
+    INCLUDE "./Maths/Utilities/XAequMinusXAPplusRSdiv96-TIS1.asm"
 ;INCLUDE "XAequQmuilAaddRS-MAD-ADD.asm"
 ;INCLUDE "XHiYLoequPA-gc3.asm"
 ;INCLUDE "XHiYLoequPmulAmul4-gc2.asm"
 ;INCLUDE "XLoYHiequPmulQmul4-gcash.asm"
 ;INCLUDE "XX12equXX15byXX16-LL51.asm"
-    INCLUDE "XYeqyx1loSmulMdiv256-Ll120-LL123.asm"
+    INCLUDE "./Maths/Utilities/XYeqyx1loSmulMdiv256-Ll120-LL123.asm"
 
 
-    INCLUDE "Drive/drive_access.asm"
+    INCLUDE "./Drive/drive_access.asm"
 
-    INCLUDE "common_menu.asm"
+    INCLUDE "./Menus/common_menu.asm"
 ; ARCHIVED INCLUDE "Menus/draw_fuel_and_crosshair.asm"
 ;INCLUDE "./title_page.asm"
 
@@ -811,7 +705,7 @@ SeedGalaxy0Loop:        push    ix
 ;seg     RESETUNIVSEG,   BankResetUniv:  StartOfBank, ResetUniverseAddr      
 
 ;	ORG ResetUniverseAddr
-;INCLUDE "GameEngine/resetUniverse.asm"
+;INCLUDE "./GameEngine/resetUniverse.asm"
 ; Bank 50
          
 
@@ -819,47 +713,47 @@ SeedGalaxy0Loop:        push    ix
     SLOT    MenuShrChtAddr
     PAGE    BankMenuShrCht
 	ORG     MenuShrChtAddr,BankMenuShrCht
-    INCLUDE "short_range_chart_menu.asm"
+    INCLUDE "./Menus/short_range_chart_menu.asm"
 ; Bank 51
 
     SLOT    MenuGalChtAddr
     PAGE    BankMenuGalCht
 	ORG     MenuGalChtAddr
-    INCLUDE "Menus/galactic_chart_menu.asm"
+    INCLUDE "./Menus//galactic_chart_menu.asm"
 ; Bank 52
 
     SLOT    MenuInventAddr
     PAGE    BankMenuInvent
 	ORG     MenuInventAddr
-    INCLUDE "inventory_menu.asm"        
+    INCLUDE "./Menus/inventory_menu.asm"        
 
 ; Bank 53
 
     SLOT    MenuSystemAddr
     PAGE    BankMenuSystem
 	ORG     MenuSystemAddr
-    INCLUDE "system_data_menu.asm"
+    INCLUDE "./Menus/system_data_menu.asm"
 
 ; Bank 54	
 
     SLOT    MenuMarketAddr
     PAGE    BankMenuMarket
     ORG     MenuMarketAddr
-    INCLUDE "market_prices_menu.asm"
+    INCLUDE "./Menus/market_prices_menu.asm"
 
 ; Bank 66	
 
     SLOT    DispMarketAddr
     PAGE    BankDispMarket
     ORG     DispMarketAddr
-    INCLUDE "market_prices_disp.asm"
+    INCLUDE "./Menus/market_prices_disp.asm"
 
 ; Bank 55
 
     SLOT    StockTableAddr
     PAGE    BankStockTable
     ORG     StockTableAddr  
-    INCLUDE "Tables/stock_table.asm"
+    INCLUDE "./Tables/stock_table.asm"
 
 ; Bank 57
 
@@ -867,98 +761,99 @@ SeedGalaxy0Loop:        push    ix
     PAGE    BankLAYER2
     ORG     LAYER2Addr
      
-    INCLUDE "layer2_bank_select.asm"
-    INCLUDE "layer2_cls.asm"
-    INCLUDE "layer2_initialise.asm"
-    INCLUDE "layer2_plot_pixel.asm"
-    INCLUDE "layer2_print_character.asm"
-    INCLUDE "layer2_draw_box.asm"
-    INCLUDE "asm_l2_plot_horizontal.asm"
-    INCLUDE "asm_l2_plot_vertical.asm"
-    INCLUDE "layer2_plot_diagonal.asm"
-    INCLUDE "asm_l2_plot_triangle.asm"
-    INCLUDE "asm_l2_fill_triangle.asm"
-    INCLUDE "layer2_plot_circle.asm"
-    INCLUDE "layer2_plot_circle_fill.asm"
-    INCLUDE "l2_draw_any_line.asm"
-    INCLUDE "clearLines-LL155.asm"
-    INCLUDE "l2_draw_line_v2.asm"
+    INCLUDE "./Layer2Graphics/layer2_bank_select.asm"
+    INCLUDE "./Layer2Graphics/layer2_cls.asm"
+    INCLUDE "./Layer2Graphics/layer2_initialise.asm"
+    INCLUDE "./Layer2Graphics/l2_flip_buffers.asm"
+    INCLUDE "./Layer2Graphics/layer2_plot_pixel.asm"
+    INCLUDE "./Layer2Graphics/layer2_print_character.asm"
+    INCLUDE "./Layer2Graphics/layer2_draw_box.asm"
+    INCLUDE "./Layer2Graphics/asm_l2_plot_horizontal.asm"
+    INCLUDE "./Layer2Graphics/asm_l2_plot_vertical.asm"
+    INCLUDE "./Layer2Graphics/layer2_plot_diagonal.asm"
+    INCLUDE "./Layer2Graphics/asm_l2_plot_triangle.asm"
+    INCLUDE "./Layer2Graphics/asm_l2_fill_triangle.asm"
+    INCLUDE "./Layer2Graphics/layer2_plot_circle.asm"
+    INCLUDE "./Layer2Graphics/layer2_plot_circle_fill.asm"
+    INCLUDE "./Layer2Graphics/l2_draw_any_line.asm"
+    INCLUDE "./Layer2Graphics/clearLines-LL155.asm"
+    INCLUDE "./Layer2Graphics/l2_draw_line_v2.asm"
 ; Bank 56  ------------------------------------------------------------------------------------------------------------------------
     SLOT    CMDRDATAAddr
     PAGE    BankCmdrData
     ORG     CMDRDATAAddr, BankCmdrData
-    INCLUDE "CommanderData.asm"
-    INCLUDE "zero_player_cargo.asm"
+    INCLUDE "./Commander/CommanderData.asm"
+    INCLUDE "./Commander/zero_player_cargo.asm"
 ; Bank 58  ------------------------------------------------------------------------------------------------------------------------
     SLOT    LAYER1Addr
     PAGE    BankLAYER1
     ORG     LAYER1Addr, BankLAYER1
 
-    INCLUDE "layer1_attr_utils.asm"
-    INCLUDE "layer1_cls.asm"
-    INCLUDE "layer1_print_at.asm"
+    INCLUDE "./Layer1Graphics/layer1_attr_utils.asm"
+    INCLUDE "./Layer1Graphics/layer1_cls.asm"
+    INCLUDE "./Layer1Graphics/layer1_print_at.asm"
 ; Bank 59  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ShipModelsAddr
     PAGE    BankShipModelsA
 	ORG     ShipModelsAddr, BankShipModelsA
     DEFINE  SHIPBANKA 1
-    INCLUDE "ShipModels.asm"
+    INCLUDE "./Data/ShipModels.asm"
 ; Bank 67  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ShipModelsAddr
     PAGE    BankShipModelsB
 	ORG     ShipModelsAddr, BankShipModelsB
     UNDEFINE SHIPBANKA
     DEFINE   SHIPBANKB 1  
-    INCLUDE "ShipModels.asm"
+    INCLUDE "./Data/ShipModels.asm"
 ; Bank 68  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ShipModelsAddr
     PAGE    BankShipModelsC
 	ORG     ShipModelsAddr, BankShipModelsC
     UNDEFINE SHIPBANKB
     DEFINE   SHIPBANKC 1  
-    INCLUDE "ShipModels.asm"
+    INCLUDE "./Data/ShipModels.asm"
 ; Bank 60  ------------------------------------------------------------------------------------------------------------------------
     SLOT    SpritemembankAddr
     PAGE    BankSPRITE
 	ORG     SpritemembankAddr, BankSPRITE
-    INCLUDE "sprite_routines.asm"
-    INCLUDE "sprite_load.asm"
-    INCLUDE "SpriteSheet.asm"
+    INCLUDE "./Layer3Sprites/sprite_routines.asm"
+    INCLUDE "./Layer3Sprites/sprite_load.asm"
+    INCLUDE "./Layer3Sprites/SpriteSheet.asm"
 ; Bank 61  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ConsoleImageAddr
     PAGE    BankConsole
 	ORG     ConsoleImageAddr, BankConsole
 
-    INCLUDE "ConsoleImageData.asm"
+    INCLUDE "./Images/ConsoleImageData.asm"
 ; Bank 62  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ViewFrontAddr
     PAGE    BankFrontView
     ORG     ViewFrontAddr  
-    INCLUDE "Views/Front_View.asm"    
+    INCLUDE "./Views/Front_View.asm"    
 ; Bank 63  ------------------------------------------------------------------------------------------------------------------------
     SLOT    MenuStatusAddr
     PAGE    BankMenuStatus
     ORG     MenuStatusAddr
-    INCLUDE "status_menu.asm"
+    INCLUDE "./Menus/status_menu.asm"
 
 ; Bank 64  ------------------------------------------------------------------------------------------------------------------------
 
     SLOT    MenuEquipSAddr
     PAGE    BankMenuEquipS
     ORG     MenuEquipSAddr  
-    INCLUDE "Menus/equip_ship_menu.asm"    
+    INCLUDE "./Menus/equip_ship_menu.asm"    
 
 
     SLOT    LaunchShipAddr
     PAGE    BankLaunchShip
     ORG     LaunchShipAddr
-    INCLUDE "Transitions/launch_ship.asm"
+    INCLUDE "./Transitions/launch_ship.asm"
 
 ; Bank 70  ------------------------------------------------------------------------------------------------------------------------
     SLOT    UniverseBankAddr
     PAGE    BankUNIVDATA0
 	ORG	    UniverseBankAddr,BankUNIVDATA0
-    INCLUDE "univ_ship_data.asm"
+    INCLUDE "./Universe/univ_ship_data.asm"
     
     SLOT    UniverseBankAddr
     PAGE    BankUNIVDATA1
@@ -1035,7 +930,7 @@ UNIVDATABlock12     DB $FF
     SLOT    GalaxyDataAddr
     PAGE    BankGalaxyData0
 	ORG GalaxyDataAddr, BankGalaxyData0
-    INCLUDE "galaxy_data.asm"                                                            
+    INCLUDE "./Universe/galaxy_data.asm"                                                            
     
     DISPLAY "Galaxy Data - Bytes free ",/D, $2000 - ($- GalaxyDataAddr)
 

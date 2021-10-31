@@ -1,17 +1,17 @@
 Rattler:	DB $02, $17, $70
-	DW RattlerEdges
-	DB RattlerEdgesSize
-	DB $00, $2A
-	DB RattlerVertSize
-	DB RattlerEdgesCnt
-	DB $00, $96
-	DB RattlerNormalsSize
-	DB $0A, $71, $1F
-	DW RattlerNormals
-	DB $01, $22
-	DW RattlerVertices
+            DW RattlerEdges
+            DB RattlerEdgesSize
+            DB $00, $2A
+            DB RattlerVertSize
+            DB RattlerEdgesCnt
+            DB $00, $96
+            DB RattlerNormalsSize
+            DB $0A, $71, $1F
+            DW RattlerNormals
+            DB $01, $22
+            DW RattlerVertices
 
-	
+
 RattlerVertices:	DB $00, $00, $3C, $1F, $89, $23
 	DB $28, $00, $28, $1F, $9A, $34
 	DB $28, $00, $28, $9F, $78, $12
@@ -29,8 +29,7 @@ RattlerVertices:	DB $00, $00, $3C, $1F, $89, $23
 	DB $14, $00, $28, $2A, $CC, $CC
 
 RattlerVertSize: equ $ - RattlerVertices	
-	
-	
+
 	
 RattlerEdges:	DB $1F, $06, $10, $18
 	DB $1F, $17, $08, $10
