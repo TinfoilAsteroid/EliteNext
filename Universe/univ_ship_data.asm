@@ -2068,7 +2068,7 @@ LL74DecX2:
         ld          a,$FF
         ld          (UBnkX2Lo),a                        ; rather than dec (hl) just load with 255 as it will always be that at this code point
 LL74SkipDec:        
-        call        ClipXX15XX12Line                    ; LL145 \ clip test on XX15 XX12 vector, returns carry 
+        call        ClipLine                            ; LL145 \ clip test on XX15 XX12 vector, returns carry 
         jr          c,CalculateNewLines                 ; LL170 clip returned carry set so not visibile if carry set skip the rest (laser not firing)
 ; Here we are usign hl to replace VarU as index        
         ld          hl,(varU16)

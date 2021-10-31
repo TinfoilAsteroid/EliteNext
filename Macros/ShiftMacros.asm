@@ -21,7 +21,7 @@ ShiftBCRight1: MACRO
 			   srl b
 			   rr  c
 			   ENDM
-			   
+
 
 			   
 ShiftHLDiv8:   MACRO
@@ -42,6 +42,12 @@ ShiftDELeft1:  MACRO
 			   sla e
 			   rl  d
 			   ENDM
+
+
+RollDELeft1:   MACRO			   
+               rl  e
+               rl   d
+               ENDM
 			   
 ShiftBCLeft1:  MACRO
 			   sla b

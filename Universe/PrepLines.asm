@@ -3,14 +3,11 @@
     INCLUDE "./ModelRender/getVertexNodeAtAToX2Y2.asm"
     INCLUDE "./ModelRender/GetFaceAtA.asm"
 ;--------------------------------------------------------------------------------------------------------
-; Goes through each edge in to determine if they are on a visible face, if so load start and end to line array as clipped lines
-
+; LL72 Goes through each edge in to determine if they are on a visible face, if so load start and end to line array as clipped lines
+ ;   DEFINE NOBACKFACECULL 1
 PLEDGECTR           DB          0
 
 PrepLines:
-EdgeTotal:
-ProcessLines:
-LL72:
 ; FOR NOW BRUTE FORCE IF OFF SCREEN
 
 ; TODO add in onced DOEXP is finished
@@ -87,7 +84,7 @@ VisibileEdge:                                           ; Now we need to node id
         call        getVertexNodeAtAToX1Y1              ; get the points X1Y1 from node
         ld          a,(IY+3)
         call        getVertexNodeAtAToX2Y2              ; get the points X2Y2 from node
-        call        CLIP
+        call        ClipLine
         jr          c,LL78EdgeNotVisible                ; LL78 edge not visible
 LL80:                                                   ; ll80 \ Shove visible edge onto XX19 ship lines heap counter U
         ld          de,(varU16)                         ; clipped edges heap address

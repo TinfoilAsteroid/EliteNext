@@ -1,5 +1,6 @@
  DEVICE ZXSPECTRUMNEXT
  DEVICE ZXSPECTRUMNEXT
+ DEVICE ZXSPECTRUMNEXT
  DEFINE  DOUBLEBUFFER 1
  CSPECTMAP eliteNext.map
  OPT --zxnext=cspect --syntax=a
@@ -156,8 +157,8 @@ UpdateUniverseSpeed:    MMUSelectUniverseN 0
                         ld      (UBnKzlo),hl
                         ld      (UBnKzsgn),a
                         call    ApplyMyRollAndPitch
-                        call    DEBUGSETNODES
-                        ;call    DEBUGSETPOS
+                       call    DEBUGSETNODES
+                      ;  call    DEBUGSETPOS
                         call   ProcessNodes
 DrawShipTest:           MMUSelectLayer1
                         ld     a,$DF
@@ -268,7 +269,7 @@ DEBUGSETPOS:            ld      hl,DEBUGUBNKDATA
 ;DEBUGROTMATDATA:        db      $01,	$2F,	$B2,	$CC,	$4C,	$27
 ;                        db      $17,	$46,	$87,	$3C,	$95,	$20
 ;                        db      $E2,	$32,	$31,	$8C,	$EF,	$D1
-; Passes as python and cobra
+; TOP RIGHT CORNER Passes as python and cobra
 ;DEBUGUBNKDATA:          db      $39,	$01,	$00,	$43,	$01,	$00,	$5B,	$04,	$00
 ;DEBUGROTMATDATA:        db      $E2,	$03,	$3A,	$16,	$F5,	$60
 ;                        db      $D3,	$CE,	$F3,	$BA,	$4E,	$0F
@@ -305,15 +306,65 @@ DEBUGSETPOS:            ld      hl,DEBUGUBNKDATA
 ;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
 ;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
 ;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
-
-;DEBUGUBNKDATA:          db      $39,    $00,    $00,    $43,    $00,    $00,    $2F,    $04,    $00
-           
+; test middle of screen
+;DEBUGUBNKDATA:          db      $00,    $00,    $00,    $00,    $00,    $00,    $20,    $01,    $00
+;          
+;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
+;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
+;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
+; test middle of screen futher away
+DEBUGUBNKDATA:          db      $00,    $00,    $00,    $00,    $00,    $00,    $20,    $02,    $00
+          
 DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
                         db      $73,    $B7,    $98,    $C8,    $80,    $A3
                         db      $E6,    $01,    $81,    $AD,    $B0,    $55
 
-DEBUGUBNKDATA:          db      $00,    $00,    $00,    $00,    $00,    $00,    $1F,    $00,    $00
-      
+; Test left center clip still warping
+;DEBUGUBNKDATA:          db      $80,    $00,    $80,    $00,    $00,    $00,    $20,    $01,    $00
+;          
+;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
+;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
+;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
+; Test right center clip - seems to be warping values towards bottom of screen on clip
+;DEBUGUBNKDATA:          db      $80,    $00,    $00,    $00,    $00,    $00,    $20,    $01,    $00
+;          
+;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
+;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
+;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
+; Test top center clip test 1 - good test many ships fail
+;DEBUGUBNKDATA:          db      $19,    $00,    $00,    $50,    $00,    $00,    $20,    $01,    $00
+;          
+;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
+;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
+;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
+; Test top center clip test 2 - Poss 2nd ship has an issue with a small line
+;*DEBUGUBNKDATA:          db      $19,    $00,    $00,    $60,    $00,    $00,    $2F,    $01,    $00
+;*          
+;*DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
+;*                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
+;*                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
+; Test bottom center clip ; complet shambles as if its forcing cip to below 128
+; looks better now may have some clipping issues maybe ship data
+;DEBUGUBNKDATA:          db      $19,    $00,    $00,    $50,    $00,    $80,    $20,    $01,    $00
+;          
+;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
+;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
+;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
+; Test left top center clip
+
+; Test right top center clip
+; Test left bottom center clip
+; Test right bottom center clip
+
+; Tests with no clip
+;DEBUGUBNKDATA:          db      $39,    $00,    $00,    $43,    $00,    $00,    $2F,    $04,    $00
+;          
+;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
+;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
+;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
+;
+;DEBUGUBNKDATA:          db      $00,    $00,    $00,    $00,    $00,    $00,    $1F,    $00,    $00
+;      
 ; UBNKPOs example 39,01,00,43,01,00,f4,03,00
 ; rotmat  example b1, 83,ae,5d,b0,1a,5e,de,82,8a,69,16,70,99,52,19,dd,d9
 
@@ -679,17 +730,18 @@ SeedGalaxy0Loop:        push    ix
 ;INCLUDE "PlanetP12addInwkX-MVT6.asm"
     INCLUDE "./Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
     INCLUDE "./Maths/Utilities/RequAdivQ-LL61.asm"
-    INCLUDE "./Maths/Utilities/RSequABSrs-LL129.asm"
+;    INCLUDE "./Maths/Utilities/RSequABSrs-LL129.asm"
     INCLUDE "./Maths/Utilities/RSequQmulA-MULT12.asm"
 ;INCLUDE "SwapRotmapXY-PUS1.asm"
     INCLUDE "./Maths/Utilities/tidy.asm"
+    INCLUDE "./Maths/Utilities/LL28AequAmul256DivD.asm"    
     INCLUDE "./Maths/Utilities/XAequMinusXAPplusRSdiv96-TIS1.asm"
 ;INCLUDE "XAequQmuilAaddRS-MAD-ADD.asm"
 ;INCLUDE "XHiYLoequPA-gc3.asm"
 ;INCLUDE "XHiYLoequPmulAmul4-gc2.asm"
 ;INCLUDE "XLoYHiequPmulQmul4-gcash.asm"
 ;INCLUDE "XX12equXX15byXX16-LL51.asm"
-    INCLUDE "./Maths/Utilities/XYeqyx1loSmulMdiv256-Ll120-LL123.asm"
+  ;  INCLUDE "./Maths/Utilities/XYeqyx1loSmulMdiv256-Ll120-LL123.asm"
 
 
     INCLUDE "./Drive/drive_access.asm"

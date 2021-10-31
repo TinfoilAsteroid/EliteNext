@@ -1,2 +1,2 @@
-CSpect.exe -brk -debug -s28 -map=clipTst.map -rewind -sound -w3 -zxnext -mmc=.\ cliptst.nex
+CSpect.exe -brk -debug -s28 -map=eliteNext.map -rewind -sound -w3 -zxnext -mmc=.\ eliteN.nex
 
