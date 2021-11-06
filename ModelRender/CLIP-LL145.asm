@@ -19,40 +19,43 @@ clipXX13                 DB      0
 
 ; bounds check and the start to avoid dxy calcs if off screen, eliminating off screens first saves a lot of uncessary mul/div
 ;ClipXX15XX12Line:
-ClipLine:               ld      bc,(UbnkPreClipY1)
-                        ld      ix,(UbnkPreClipY2)
-                        ld      hl,(UbnkPreClipX1)
-                        ld      de,(UbnkPreClipX2)
+ClipLine:               ld      bc,(UbnkPreClipY1)          ; bc - XX15(2,3)
+                        ld      ix,(UbnkPreClipY2)          ; ix - XX12(0,1)
+                        ld      hl,(UbnkPreClipX1)          ; hl - XX15(0,1)
+                        ld      de,(UbnkPreClipX2)          ; de - XX15(4,5)
                         xor     a
                         ld      (SWAP),a                    ; SWAP = 0
                         ld      a,d                         ; A = X2Hi
-.LL147:                 ld      iyh,191                     ; we need to be 191 as its 128 + another bit set from 0 to 6, we are using iyh as regX
+.LL147:                 ld      iyh,$BF                     ; we need to be 191 as its 128 + another bit set from 0 to 6, we are using iyh as regX
                                 push    af
                                 ld      a,iyh
                                 ld      (regX),a
                                 pop     af
-                        or      ixh                         ; if (X2Hi L-OR Y2 Hi <> 0) or (Y2 > 191) set XX13 to 191, goto LL107             -- X2Y2 off screen
+                        or      ixh                         ; if (X2Hi L-OR Y2 Hi <> 0) goto LL107             -- X2Y2 off screen
                         jr      nz, .LL107
                         ld      a,ixl
-                        test    $80
+                        test    $80                         ; if screen hight < y2 lo, i.e y2 lo >127 goto LL107,
                         jr      nz,.LL107
-                        ld      iyh, 0                      ; regX = 0                                                                        -- X2Y2 on screen                                
+                        ld      iyh, 0                      ; else iyh = regX = 0                                                                        -- X2Y2 on screen                                
                                 push    af
                                 ld      a,iyh
                                 ld      (regX),a
                                 pop     af
 ; XX13 = regX (i.e. iyh)      ( if XX13 = XX13 is 191 if (x2, y2) is off-screen else 0) we bin XX13 as not needed
 ; so XX13 = 0 if x2_hi = y2_hi = 0, y2_lo is on-screen,  XX13 = 191 if x2_hi or y2_hi are non-zero or y2_lo is off the bottom of the screen                       
-.LL107                  ld      a,h                         ; If (X1 hi L-OR Y1) hi  goto LL83                   -- X1Y1 off screen and maybe X2Y2
-                        or      b
-                        jr      nz,.LL83
+.LL107                  ld      a,iyh
+                        ld      (clipXX13),a                ; debug copy iyh to xx13
+                        ld      a,h                         ; If (X1 hi L-OR Y1) hi  goto LL83                   -- X1Y1 off screen and maybe X2Y2
+                        or      b                           ;
+                        jr      nz,.LL83                    ;
                         ld      a,c                         ; or (y1 lo > bottom of screen)
-                        test    $80
+                        test    $80                         ; i.e  screen height < y1)
                         jr      nz,.LL83
 ; If we get here, (x1, y1) is on-screen
                         ld      a,iyh                       ; iyh = xx13 at this point if  XX13 <> 0 goto LL108                                                        -- X1Y1 on screen, if we flagged X2Y2 off screen goto LL108 
                         cp      0
                         jr      nz, .LL108
+; Finished clipping exit point ----------------------------------------------------------------------------------------
 .ClipDone:              ld      a,c                         ; LL146 (Clip Done)               Y1 = y1 lo, x2 = x2 lo, x1 = x1 lo y1 = y1 lo                                   -- Nothing off screen
                         ld      (UBnkNewY1),a
                         ld      a,ixl
@@ -63,6 +66,7 @@ ClipLine:               ld      bc,(UbnkPreClipY1)
                         ld      (UBnkNewX2),a
                         ClearCarryFlag                      ; carry is clear so valid to plot is in XX15(0to3)
                         ret                                 ; 2nd pro different, it swops based on swop flag around here.                       
+; Finished out of bounds exit point -----------------------------------------------------------------------------------
 .PointsOutofBounds:     scf                                 ; LL109 (ClipFailed) carry flag set as not visible
                         ret      
 .LL108:                 ld      a,iyh
@@ -74,14 +78,14 @@ ClipLine:               ld      bc,(UbnkPreClipY1)
                                 ld      (regX),a
                                 pop     af
 .LL83:                  ld      a,iyh                       ; (Line On screen Test)      if XX13 < 128 then only 1 point is on screen so goto LL115                      -- We only need to deal with X2Y2                                
-                        test    $80
-                        jr      z, .LL115
+                        test    $80                         ;
+                        jr      z, .LL115                   ;
                         ld      a,h                         ; If both x1_hi and x2_hi have bit 7 set, jump to LL109  to return from the subroutine with the C flag set, as the entire line is above the top of the screen
                         and     d
-                        jr      nz, .PointsOutofBounds
+                        JumpIfNegative  .PointsOutofBounds
                         ld      a,b                         ; If both y1_hi and y2_hi have bit 7 set, jump to LL109  to return from the subroutine with the C flag set, as the entire line is above the top of the screen
-                        or      ixh
-                        jr      nz, .PointsOutofBounds
+                        and     ixh
+                        JumpIfNegative  .PointsOutofBounds
                         ld      a,h                         ; If neither (x1_hi - 1) or (x2_hi - 1) have bit 7 set, jump to LL109 to return from the subroutine with the C  flag set, as the line doesn't fit on-screen
                         dec     a
                         ld      iyl,a                       ; using iyl as XX12+2 var
@@ -89,39 +93,53 @@ ClipLine:               ld      bc,(UbnkPreClipY1)
                                 ld      a,iyl
                                 ld      (varXX12p2),a
                                 pop     af                        
-                        ld      a,d
+                        ld      a,d                         ; a = x2 hi
                         dec     a
-                        or      iyl                         ; using iyl as XX12+2 var
-                        jp      p, .PointsOutofBounds       
-                        ld      a,c                         ; If y1_lo < y-coordinate of screen bottom, clear the C flag, otherwise set it
+                        or      iyl                         ; (x2 hi -1 ) or (x1 hi -1)
+                        JumpIfPositive .PointsOutofBounds   ; if both x1 and x2hi were > 0 then subtracting 1 would result in 0..254 so either being negative means it was 0 before
+;by here we have eliminated -ve Y1 bounds so can just test for positive high and bit 7 of lo
+                        ld      a,ixh
+                        dec     a
+                        ld      iyl,a
+                        ld      a,b
+                        dec     a
+                        or      iyl
+                        JumpIfPositive .PointsOutofBounds   ; if both x1 and x2hi were > 0 then subtracting 1 would result in 0..254 so either being negative means it was 0 before                        
+                        ld      a,c
                         and     ixl
-                        test    $80
-                        jp      nz, .PointsOutofBounds      ;Both are positive but are they both > 127
-;                        cp      $80
-;                        ccf                                 ; flip carry flag for the sbc
-;                        ld      a,b                         ; We do this subtraction because we are only interested in trying to move the points up by a screen if that might move the point into the space view portion of the screen, i.e. if y1_lo is on-screen
-;                        sbc     0
-;                        or      ixl                         ; If neither XX12+1 (ixk or Y2 low) or XX12+2 (ixh or Y2 high) have bit 7 set, jump to If neither XX12+1 or XX12+2 have bit 7 set, jump to If neither XX12+1 or XX12+2 have bit 7 set, jump to
-;                        jp      p, .PointsOutofBounds
+                        JumpIfNegative .PointsOutofBounds   ; really if both are > 127
 ; Clip line: calulate the line's gradient                   
 ; here as an optimisation we make sure X1 is always < X2  later on  
 .LL115:                 ClearCarryFlag
-                        ld      a,e
-                        sbc     a,l
-                        ld      (clipDx),a
-                        ld      a,d
-                        sbc     a,h
-                        ld      (clipDxHigh),a                ; later we will just move to sub hl,de
-                        ld      (clipDxHighNonABS),a          ; it looks liek we need this later post scale loop
-                        ClearCarryFlag
-                        ld      a,ixl
-                        sbc     c
-                        ld      (clipDy),a
-                        ld      a,ixh
-                        sbc     a,b
-                        ld      (clipDyHigh),a              ; so A = sign of deltay in effect
+.CalcDX:                push    hl,,de
+                        ex      hl,de                       ; so hl is x2 and de = x1
+                        sbc     hl,de
+                        pop     de                          ; we need de back
+                        ld      (clipDx),hl
+                        ld      a,h
+                        ld      (clipDxHighNonABS),a
+                       ; ld      a,e                         ;a = x2 lo
+                       ; sbc     a,l                         ;a= a - x1
+                       ; ld      (clipDx),a
+                       ; ld      a,d
+                       ; sbc     a,h
+                       ; ld      (clipDxHigh),a                ; later we will just move to sub hl,de
+                       ; ld      (clipDxHighNonABS),a          ; it looks liek we need this later post scale loop
+.CalcDy:                ClearCarryFlag
+                        ld      hl,ix
+                        sbc     hl,bc
+                        ld      (clipDy),hl
+.CalcQuadrant:          ld      a,h                         
+                       ; ld      a,ixl
+                       ; sbc     c
+                       ; ld      (clipDy),a
+                       ; ld      a,ixh
+                       ; sbc     a,b
+                       ; ld      (clipDyHigh),a              ; so A = sign of deltay in effect
+                       ; pop     hl
+
 ;So we now have delta_x in XX12(3 2), delta_y in XX12(5 4)  where the delta is (x1, y1) - (x2, y2))
-                        push    hl                          ; Set S = the sign of delta_x * the sign of delta_y, so if bit 7 of S is set, the deltas have different signs
+                      ;  push    hl                          ; Set S = the sign of delta_x * the sign of delta_y, so if bit 7 of S is set, the deltas have different signs
                         ld      hl,clipDxHigh
                         xor     (hl)                        ; now a = sign dx xor sign dy
                         ld      (varS),a                    ; DEBGU putting it in var S too for now
@@ -152,20 +170,20 @@ ClipLine:               ld      bc,(UbnkPreClipY1)
 ; By now, the high bytes of both |delta_x| and |delta_y| are zero We know that h and d are both = 0 as that's what we tested with a BEQ
 .LL113:                 xor     a
                         ld      (varT),a                    ; t = 0
-                        ld      a,(clipDx)                  ; If delta_x_lo < delta_y_lo, so our line is more vertical than horizontal, jump to LL114
-                        ld      hl,clipDy
-                        JumpIfALTNusng  (hl), .LL114
-; Here Dx >= Dy (we need an optimisation for pure horizontal and vert adding back in again)                        
+                        ld      a,l                         ; If delta_x_lo < delta_y_lo, so our line is more vertical than horizontal, jump to LL114
+                        JumpIfALTNusng  e, .LL114           ;
+; Here Dx >= Dy sp calculate Delta Y / delta X
 .DxGTEDy:               ld      (varQ),a                    ; Set Q = delta_x_lo
                         ld      d,a                         ; d = also Q for calc
-                        ld      a,(clipDy)                  ; Set A = delta_y_lo
+                        ld      a,e                         ; Set A = delta_y_lo
                         call    LL28Amul256DivD             ; Call LL28 to calculate:  R (actually a reg) = 256 * A / Q   = 256 * delta_y_lo / delta_x_lo
                         ld      (varR),a                    ;
                         jr      .LL116                      ; Jump to LL116, as we now have the line's gradient in R
-.LL114:                 ld      a,(clipDy)                  ; Set Q = delta_y_lo
+; Here Delta Y > Delta X so calulate delta X / delta Y
+.LL114:                 ld      a,e                         ; Set Q = delta_y_lo
                         ld      d,a
                         ld      (varQ),a
-                        ld      a,(clipDx)                  ; Set A = delta_x_lo
+                        ld      a,l                         ; Set A = delta_x_lo
                         call    LL28Amul256DivD             ; Call LL28 to calculate: R = 256 * A / Q  = 256 * delta_x_lo / delta_y_lo
                         ld      (varR),a                    ;
                         ld      hl,varT                     ; T was set to 0 above, so this sets T = &FF
@@ -194,11 +212,10 @@ ClipLine:               ld      bc,(UbnkPreClipY1)
                         jr      z,.LL124
 ; If we get here, XX13 = 191 (both coordinates are off-screen)
 .LL117:                 ld      a,h                         ; If either of x1_hi or y1_hi are non-zero, jump to
-                        or      c                           ; LL137 to return from the subroutine with the C flag
+                        or      b                           ; LL137 to return from the subroutine with the C flag
                         jp      nz, .PointsOutofBounds      ; set, as the line doesn't fit on-screen
-                        ld      a,ixl                       ; If y1_lo > y-coordinate of the bottom of the screen
-                        test    $80                         ; jump to LL137 to return from the subroutine with the
-                        jp      nz,.PointsOutofBounds       ; C flag set, as the line doesn't fit on-screen
+                        or      c                           ; if x1 and y1 hi are both zero test bit 8 or Y1 to see if its > 128
+                        jp      m, .PointsOutofBounds       ; set, as the line doesn't fit on-screen
 ; If we get here, XX13 = 95 or 191, and in both cases (x2, y2) is off-screen, so we now need to swap the (x1, y1) and (x2, y2) coordinates around before doing
 ; the actual clipping, because we need to clip (x2, y2) but the clipping routine at LL118 only clips (x1, y1)
 .LLX117:                ex      de,hl                       ;  swap X1 and X2
@@ -206,7 +223,7 @@ ClipLine:               ld      bc,(UbnkPreClipY1)
                         push    bc
                         pop     ix
                         pop     bc
-                        call    .LL138                       ;  Call LL118 to move (x1, y1) along the line onto the screen, i.e. clip the line at the (x1, y1) end
+                        call    ClipPointHLBC               ;  Call LL118 to move (x1, y1) along the line onto the screen, i.e. clip the line at the (x1, y1) end
                         ld      a,(SWAP)
                         dec     a
                         ld      (SWAP),a                    ; Set SWAP = &FF to indicate that we just clipped the line at the (x2, y2) end by swapping the coordinates (the DEC does this as we set SWAP to 0 at the start of this subroutine)
@@ -240,31 +257,33 @@ ClipPointHLBC:          ld      a,h                         ; If x1_hi is positi
                                                             ;                           (Y X) = (S x1_lo) / XX12+2      if T <> 0 = (x1 - 256) / gradient
                                                             ;  with the sign of (Y X) set to the opposite of theline's direction of slope
                         pop     hl,,de,,bc
-                        push    de                          ; Set y1 = y1 + (Y X)
+                      ;  push    de                          ; Set y1 = y1 + (Y X)
                         ld      hl,(varYX)
-                        ex      hl,de
-                        ld      hl,bc                       
-                        add     hl,bc                       ; y1 = y1 + varYX
+                      ; ex      de,hl
+                        add     hl,bc
+                        ld      bc,hl
+                      ; ex      hl,de
+                      ; ld      hl,bc                       
+                      ; add     hl,de                       ; y1 = y1 + varYX
                         ld      hl,255                      ; Set x1 = 255
-                        pop     de
+                      ;  pop     de
 ; We have moved the point so the x-coordinate is on screen (i.e. in the range 0-255), so now for they-coordinate
-.LL134:                 ld      a,b                         ; If y1_hi is positive, jump down to LL119 to skip the following
-                        test    $80
-                        jr      z,.LL135
-                        ld      a,b
-                        ld      (varS),a                    ;  Otherwise y1_hi is negative, i.e. off the top of the screen, so set S = y1_hi
-                        ld      a,c                         ;  Set R = y1_lo
-                        ld      (varR),a                    
+.LL134:                 ld      a,b                         ; If y1_hi is positive, jump down to LL135  to skip the following
+                        test    $80                         ; 
+                        jr      z,.LL135                    ; 
+                        ld      (varS),a                    ; Otherwise y1_hi is negative, i.e. off the top of the screen, so set S = y1_hi
+                        ld      a,c                         ; Set R = y1_lo
+                        ld      (varR),a                    ;
                         push    hl,,de,,bc
                         call    LL123                       ;  Call LL123 to calculate: (Y X) = (S R) / XX12+2      if T = 0  = y1 / gradient
                                                             ;                           (Y X) = (S R) * XX12+2      if T <> 0 = y1 * gradient
                                                             ;  with the sign of (Y X) set to the opposite of the line's direction of slope
                         pop     hl,,de,,bc
                         push    de                                    
-                        ex      hl,de
-                        ld      hl,(varYX)
+                        ex      hl,de                       ; de = x1
+                        ld      hl,(varYX)                  ; hl = varYX
                         add     hl,de                       ; we don't need to swap back as its an add, Set x1 = x1 + (Y X)
-                        pop     de
+                        pop     de                          ; de = x2 again
                         ld      bc,0                        ; Set y1 = 0
 .LL135:                 ld      a,c                         ; if bc < 128 then no work to do
                         and     $80
@@ -290,7 +309,7 @@ ClipPointHLBC:          ld      a,h                         ; If x1_hi is positi
                         ex      hl,de
                         ld      hl,(varYX)
                         add     hl,de                       ; we don't need to swap back as its an add, Set x1 = x1 + (Y X)
-                        ld      bc,128                      ; set bc to 128 bottom of screen
+                        ld      bc,127                      ; set bc to 127 bottom of screen
                         pop     de
 .LL136:                 ret                                 ;  Return from the subroutine
 
@@ -326,12 +345,11 @@ LL122:                  ld      a,(clipGradient)
 ; Other entry points:      LL121                Calculate (Y X) = (S R) / Q and set the sign to the opposite of the top byte on the stack
 ;                          LL133                Negate (Y X) and return from the subroutine
 ;                          LL128                Contains an RTS
-
-LL123:                  call    LL129           ;  Call LL129 to do the following: Q = XX12+2   = line gradient  A = S EOR XX12+3 = S EOR slope direction (S R) = |S R| So A contains the sign of S * slope direction
-                        push    af                           ;  Store A on the stack so we can use it later
+LL123:                  call    LL129                       ; Call LL129 to do the following: Q = XX12+2   = line gradient  A = S EOR XX12+3 = S EOR slope direction (S R) = |S R| So A contains the sign of S * slope direction
+                        push    af                          ; Store A on the stack so we can use it later
                         push    bc                          ; If T is non-zero, so it's more horizontal than vertical, jump down to LL121 to calculate this
                         ld      b,a
-                        ld      a,(varT)                     ; instead : (Y X) = (S R) * Q
+                        ld      a,(varT)                    ; instead : (Y X) = (S R) * Q *** this looks to be the wrong way roudn for Y!!!!
                         cp      0
                         ld      a,b
                         pop     bc

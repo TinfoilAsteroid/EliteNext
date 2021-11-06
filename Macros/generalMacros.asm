@@ -1,9 +1,9 @@
 JumpIfPositive:	        MACRO target
-                        jp		p,target
+                        jp		p, target
                         ENDM
         
 JumpIfNegative:	        MACRO target
-                        jp		m,target 
+                        jp		m, target 
                         ENDM
         
 JumpOnMemBitSet:        MACRO mem, bitnbr, target

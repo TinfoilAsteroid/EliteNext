@@ -313,11 +313,11 @@ DEBUGSETPOS:            ld      hl,DEBUGUBNKDATA
 ;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
 ;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
 ; test middle of screen futher away
-DEBUGUBNKDATA:          db      $00,    $00,    $00,    $00,    $00,    $00,    $20,    $02,    $00
-          
-DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
-                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
-                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
+;DEBUGUBNKDATA:          db      $00,    $00,    $00,    $00,    $00,    $00,    $20,    $02,    $00
+;          
+;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
+;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
+;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
 
 ; Test left center clip still warping
 ;DEBUGUBNKDATA:          db      $80,    $00,    $80,    $00,    $00,    $00,    $20,    $01,    $00
@@ -332,24 +332,24 @@ DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
 ;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
 ;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
 ; Test top center clip test 1 - good test many ships fail
-;DEBUGUBNKDATA:          db      $19,    $00,    $00,    $50,    $00,    $00,    $20,    $01,    $00
+DEBUGUBNKDATA:          db      $19,    $00,    $00,    $50,    $00,    $00,    $20,    $01,    $00
+          
+DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
+                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
+                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
+; Test top center clip test 2 - Poss 2nd ship has an issue with a small line
+;DEBUGUBNKDATA:          db      $19,    $00,    $00,    $60,    $00,    $00,    $2F,    $01,    $00
 ;          
 ;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
 ;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
 ;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
-; Test top center clip test 2 - Poss 2nd ship has an issue with a small line
-;*DEBUGUBNKDATA:          db      $19,    $00,    $00,    $60,    $00,    $00,    $2F,    $01,    $00
-;*          
-;*DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
-;*                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
-;*                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
 ; Test bottom center clip ; complet shambles as if its forcing cip to below 128
 ; looks better now may have some clipping issues maybe ship data
 ;DEBUGUBNKDATA:          db      $19,    $00,    $00,    $50,    $00,    $80,    $20,    $01,    $00
 ;          
 ;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
 ;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
-;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
+                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
 ; Test left top center clip
 
 ; Test right top center clip

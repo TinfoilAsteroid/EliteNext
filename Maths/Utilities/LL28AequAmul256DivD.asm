@@ -19,4 +19,3 @@ LL28Amul256DivD:        JumpIfAGTENusng  d, .Ll28Exit255
                         ret
 .Ll28Exit255:           ld  a,255                           ; Fail with FF as result
                         ret
-
