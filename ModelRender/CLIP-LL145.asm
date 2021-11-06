@@ -12,8 +12,8 @@ clipXGTY                DB      0
 clipFlags               DB      0
 SWAP                    DB      0
 varYX                   DW      0
-varRegX                 DB      0
-varXX12p2               DB      0
+;varRegX                 DB      0
+;varXX12p2               DB      0
 clipXX13                 DB      0
 
 
@@ -27,20 +27,20 @@ ClipLine:               ld      bc,(UbnkPreClipY1)          ; bc - XX15(2,3)
                         ld      (SWAP),a                    ; SWAP = 0
                         ld      a,d                         ; A = X2Hi
 .LL147:                 ld      iyh,$BF                     ; we need to be 191 as its 128 + another bit set from 0 to 6, we are using iyh as regX
-                                push    af
-                                ld      a,iyh
-                                ld      (regX),a
-                                pop     af
+                        ;       push    af
+                        ;       ld      a,iyh
+                        ;       ld      (regX),a
+                        ;       pop     af
                         or      ixh                         ; if (X2Hi L-OR Y2 Hi <> 0) goto LL107             -- X2Y2 off screen
                         jr      nz, .LL107
                         ld      a,ixl
                         test    $80                         ; if screen hight < y2 lo, i.e y2 lo >127 goto LL107,
                         jr      nz,.LL107
                         ld      iyh, 0                      ; else iyh = regX = 0                                                                        -- X2Y2 on screen                                
-                                push    af
-                                ld      a,iyh
-                                ld      (regX),a
-                                pop     af
+                        ;        push    af
+                        ;        ld      a,iyh
+                        ;        ld      (regX),a
+                        ;        pop     af
 ; XX13 = regX (i.e. iyh)      ( if XX13 = XX13 is 191 if (x2, y2) is off-screen else 0) we bin XX13 as not needed
 ; so XX13 = 0 if x2_hi = y2_hi = 0, y2_lo is on-screen,  XX13 = 191 if x2_hi or y2_hi are non-zero or y2_lo is off the bottom of the screen                       
 .LL107                  ld      a,iyh
@@ -73,10 +73,10 @@ ClipLine:               ld      bc,(UbnkPreClipY1)          ; bc - XX15(2,3)
                         or      a
                         rra
                         ld      iyh,a                       ; (X2Y2 Off Screen)         XX13 = 95 (i.e. divide it by 2)                                                 -- X1Y1 on screen X2Y2 off screen
-                                push    af
-                                ld      a,iyh
-                                ld      (regX),a
-                                pop     af
+                        ;        push    af                  ;OPTIMISATION 6/11/21 commented out
+                        ;        ld      a,iyh               ;OPTIMISATION 6/11/21 commented out
+                        ;        ld      (regX),a            ;OPTIMISATION 6/11/21 commented out
+                        ;        pop     af                  ;OPTIMISATION 6/11/21 commented out
 .LL83:                  ld      a,iyh                       ; (Line On screen Test)      if XX13 < 128 then only 1 point is on screen so goto LL115                      -- We only need to deal with X2Y2                                
                         test    $80                         ;
                         jr      z, .LL115                   ;
@@ -89,10 +89,10 @@ ClipLine:               ld      bc,(UbnkPreClipY1)          ; bc - XX15(2,3)
                         ld      a,h                         ; If neither (x1_hi - 1) or (x2_hi - 1) have bit 7 set, jump to LL109 to return from the subroutine with the C  flag set, as the line doesn't fit on-screen
                         dec     a
                         ld      iyl,a                       ; using iyl as XX12+2 var
-                                push    af
-                                ld      a,iyl
-                                ld      (varXX12p2),a
-                                pop     af                        
+                        ;        push    af                 ;OPTIMISATION 6/11/21 commented out
+                        ;        ld      a,iyl              ;OPTIMISATION 6/11/21 commented out
+                        ;        ld      (varXX12p2),a      ;OPTIMISATION 6/11/21 commented out
+                        ;        pop     af                 ;OPTIMISATION 6/11/21 commented out      
                         ld      a,d                         ; a = x2 hi
                         dec     a
                         or      iyl                         ; (x2 hi -1 ) or (x1 hi -1)
@@ -114,7 +114,7 @@ ClipLine:               ld      bc,(UbnkPreClipY1)          ; bc - XX15(2,3)
 .CalcDX:                push    hl,,de
                         ex      hl,de                       ; so hl is x2 and de = x1
                         sbc     hl,de
-                        pop     de                          ; we need de back
+                       ; pop     de                          ; we need de back
                         ld      (clipDx),hl
                         ld      a,h
                         ld      (clipDxHighNonABS),a
@@ -128,7 +128,8 @@ ClipLine:               ld      bc,(UbnkPreClipY1)          ; bc - XX15(2,3)
 .CalcDy:                ClearCarryFlag
                         ld      hl,ix
                         sbc     hl,bc
-                        ld      (clipDy),hl
+                        ld      de,hl           ;;OPTIMISATION 6/11/21
+                        ld      (clipDy),hl     ;OPTIMISATION 6/11/21 commented out
 .CalcQuadrant:          ld      a,h                         
                        ; ld      a,ixl
                        ; sbc     c
@@ -147,26 +148,27 @@ ClipLine:               ld      bc,(UbnkPreClipY1)          ; bc - XX15(2,3)
 .AbsDy:                 ld      a,(clipDyHigh)
                         test    $80
                         jr      z,.LL110                    ; If delta_y_hi is positive, jump down to LL110 to skip the following
-                        ld      hl,(clipDy)                 
-                        macronegate16hl                     ; Otherwise flip the sign of delta_y to make it  positive, starting with the low bytes
-                        ld      (clipDy),hl                 
-.LL110:                 ld      a,(clipDxHigh)
+                        ld      hl,(clipDy)                 ;OPTIMISATION 6/11/21 commented out
+                        macronegate16de                     ; Otherwise flip the sign of delta_y to make it  positive, starting with the low bytes
+                        ld      (clipDy),hl                 ;OPTIMISATION 6/11/21 commented out
+.LL110:                 ld      hl,(clipDx)
+                        ld      a,(clipDxHigh)
                         test    $80                         ; is it a negative X
                         jr      z,.LL111                    ; If delta_x_hi is positive, jump down to LL110 to skip the following
-                        ld      hl,(clipDx)                 
+                        ;ld      hl,(clipDx)                 ;OPTIMISATION 6/11/21 commented out
                         macronegate16hl                     ; Otherwise flip the sign of delta_y to make it  positive, starting with the low bytes
-                        ld      (clipDx),hl                 ; we still retain the old sign in NonABS version
-.LL111:                 push    de
-                        ld      hl,(clipDx)
-                        ld      de,(clipDy)
+                       ; ld      (clipDx),hl                 ;OPTIMISATION 6/11/21 commented out; we still retain the old sign in NonABS version
+.LL111:               ;  push    de
+                       ; ld      hl,(clipDx)                 ;OPTIMISATION 6/11/21 commented out
+                       ; ld      de,(clipDy)                 ;OPTIMISATION 6/11/21 commented out
 .ScaleLoop:             ld      a,h                         ; At this point DX and DY are ABS values
                         or      d
                         jr      z,.CalculateDelta:
                         ShiftDERight1
                         ShiftHLRight1
                         jr      .ScaleLoop                  ; scaled down Dx and Dy to 8 bit, Dy may have been negative
-.CalculateDelta:        ld      (clipDx),hl
-                        ld      (clipDy),de     
+.CalculateDelta:        ;ld      (clipDx),hl                ;OPTIMISATION 6/11/21 commented out
+                        ;ld      (clipDy),de                ;OPTIMISATION 6/11/21 commented out
 ; By now, the high bytes of both |delta_x| and |delta_y| are zero We know that h and d are both = 0 as that's what we tested with a BEQ
 .LL113:                 xor     a
                         ld      (varT),a                    ; t = 0
@@ -193,10 +195,10 @@ ClipLine:               ld      bc,(UbnkPreClipY1)          ; bc - XX15(2,3)
                         ld      a,(varR)                    ; Store the gradient in XX12+2 this can be optimised later
                         ld      (clipGradient),a
                         ld      iyl,a   
-                                push    af
-                                ld      a,iyl
-                                ld      (varXX12p2),a
-                                pop     af
+                        ;       push    af                   ;OPTIMISATION 6/11/21 commented out
+                        ;       ld      a,iyl                ;OPTIMISATION 6/11/21 commented out
+                        ;       ld      (varXX12p2),a        ;OPTIMISATION 6/11/21 commented out
+                        ;       pop     af                   ;OPTIMISATION 6/11/21 commented out
                         ld      a,(varS)
                         ld      (clipDxySign),a             ;  Store the type of slope in XX12+3, bit 7 clear means ?Not needed as clipDxySign is used for varS earlier?
                                                             ; top left to bottom right, bit 7 set means top right to bottom left **CODE IS WRONG HERE A TEST IS BL to TR
@@ -259,11 +261,11 @@ ClipPointHLBC:          ld      a,h                         ; If x1_hi is positi
                         pop     hl,,de,,bc
                       ;  push    de                          ; Set y1 = y1 + (Y X)
                         ld      hl,(varYX)
-                      ; ex      de,hl
-                        add     hl,bc
-                        ld      bc,hl
-                      ; ex      hl,de
-                      ; ld      hl,bc                       
+                      ; ex      de,hl                       ;OPTIMISATION 6/11/21 commented out
+                        add     hl,bc                        ;OPTIMISATION 6/11/21 simplfied post debug
+                        ld      bc,hl                        ;OPTIMISATION 6/11/21 simplfied post debug
+                      ; ex      hl,de                       ;OPTIMISATION 6/11/21 commented out
+                      ; ld      hl,bc                       ;OPTIMISATION 6/11/21 commented out
                       ; add     hl,de                       ; y1 = y1 + varYX
                         ld      hl,255                      ; Set x1 = 255
                       ;  pop     de
