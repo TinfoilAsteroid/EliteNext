@@ -1860,110 +1860,229 @@ AHLequUbnkZplusAHL:     ld      b,a                 ; b =sign of subtraction
 ; 3. y = K2 - beta * z
 ; 4. x = x + alpha * y
 ;------1. K2 = y - alpha * x
-ApplyMyRollToPosition:  ld      a,(ALP1)            
-                        ld      d,0
-                        ld      e,a                 ; de = unsigned roll magnitude
-                        ld      hl,(UBnKxlo)        ; hl = position X unsigned
-                        ld      l,h
-                        ld      h,0
-                        call    mulDEbyHL          ; hl = de * hl
-                        ld      a,(ALP2)
-                        ld      b,a                 ; b = sign
-                        ld      a,(UBnKxsgn)        ; a = position sign
-                        xor     b                   ; xor so if opposite then 
-                        and     $80                 ; so -*- = +, +*+ = + opposite signes = negative
-                        call    AHLequUbnkYminusAHL
-                        ld      (varKp1),hl
-                        ld      (varKp3),a          ; Kp = y - alph * x as 16 bit + sign bit
-;------2. z = z + beta * K2 and store in K2p
-.ZEquZPlusBetaMulK2:    ld      a,(BET1)            
-                        ld      d,0
-                        ld      e,a
-                        call    mulDEbyHL
-                        ld      a,(varKp3)          ; get k2 sign back
-                        ld      c,a
-                        ld      a,(BET2)
-                        xor     c                   ; AHL = beta * k2
-                        and     $80
-                        call    AHLequUbnkZplusAHL  ; AHL = z + beta * k2
-                        ld      (varK2p1),hl
-                        ld      (varK2p3),a          ; K2 = z + beta * K2
-                        ld      (UBnKzlo),hl; DEBUG
-                        ld      (UBnKzsgn),a
-;------3. y = K2 - beta * z and store in K3p
-.YEquK2MinusBetaMulZ:   ld      a,(BET1)            
-                        ld      d,0
-                        ld      e,a
-                        ld      hl,(UBnKzlo)        ; hl = position X unsigned
-                        ld      l,h
-                        ld      h,0
-                        call    mulDEbyHL
-                        ld      a,(BET2)
-                        ld      b,a                 ; b = sign
-                        ld      a,(UBnKzsgn)        ; a = position sign
-                        xor     b                   ; xor so if opposite then 
-                        and     $80                 ; so -*- = +, +*+ = + opposite signes = negative
-                        call    AHLequKminusAHL
-                        ld      (UBnKylo),hl; DEBUG
-                        ld      (UBnKysgn),a
-                        ld      (varK3p1),hl
-                        ld      (varK3p3),a          ; Kp =  y = K2 - beta * z
-;------4. x = x + alpha * y                      
-.XequXPlusAlphaMulY:    ld      a,(ALP1)            
-                        ld      d,0
-                        ld      e,a                 ; de = unsigned roll magnitude
-                        ld      hl,(UBnKylo)        ; hl = position X unsigned
-                        ld      l,h
-                        ld      h,0
-                        call    mulDEbyHL          ; hl = de * hl
-                        ld      a,(ALP2)
-                        ld      b,a                 ; b = sign
-                        ld      a,(UBnKysgn)        ; a = position sign
-                        xor     b                   ; xor so if opposite then 
-                        and     $80                 ; so -*- = +, +*+ = + opposite signes = negative                
-                        ld      c,a                 ; save sign in c
-                        ex      de,hl               ; de = alpha & y, c = sign
-                        ld      hl,(UBnKxlo)        ; hl = x
-                        ld      a,(UBnKxsgn)        ; a x sign
-                        ld      b,a
-;XX                        ld      h,a                 
-;XX                        or      h                   ; hl - xpos S15 format
-;XX                        ld      a,c; was b?
-;XX                        or      d
-;XX                        ld      d,a
+;;;ApplyMyRollToPosition:  ld      a,(ALP1)            
+;;;                        ld      d,0
+;;;                        ld      e,a                 ; de = unsigned roll magnitude
+;;;                        ld      hl,(UBnKxlo)        ; hl = position X unsigned
+;;;                        ld      l,h
+;;;                        ld      h,0
+;;;                        call    mulDEbyHL          ; hl = de * hl
+;;;                        ld      a,(ALP2)
+;;;                        ld      b,a                 ; b = sign
+;;;                        ld      a,(UBnKxsgn)        ; a = position sign
+;;;                        xor     b                   ; xor so if opposite then 
+;;;                        and     $80                 ; so -*- = +, +*+ = + opposite signes = negative
+;;;                        call    APPequYPosPlusAPP
+;;;                        ld      (varKp1),hl
+;;;                        ld      (varKp3),a          ; Kp = y - alph * x as 16 bit + sign bit
+;;;;------2. z = z + beta * K2 and store in K2p
+;;;.ZEquZPlusBetaMulK2:    ld      a,(BET1)            
+;;;                        ld      d,0
+;;;                        ld      e,a
+;;;                        call    mulDEbyHL
+;;;                        ld      a,(varKp3)          ; get k2 sign back
+;;;                        ld      c,a
+;;;                        ld      a,(BET2)
+;;;                        xor     c                   ; AHL = beta * k2
+;;;                        and     $80
+;;;                        call    APPequZPosPlusAPP  ; AHL = z + beta * k2
+;;;                        ld      (varK2p1),hl
+;;;                        ld      (varK2p3),a          ; K2 = z + beta * K2
+;;;                        ld      (UBnKzlo),hl; DEBUG
+;;;                        ld      (UBnKzsgn),a
+;;;;------3. y = K2 - beta * z and store in K3p
+;;;.YEquK2MinusBetaMulZ:   ld      a,(BET1)            
+;;;                        ld      d,0
+;;;                        ld      e,a
+;;;                        ld      hl,(UBnKzlo)        ; hl = position X unsigned
+;;;                        ld      l,h
+;;;                        ld      h,0
+;;;                        call    mulDEbyHL
+;;;                        ld      a,(BET2)
+;;;                        ld      b,a                 ; b = sign
+;;;                        ld      a,(UBnKzsgn)        ; a = position sign
+;;;                        xor     b                   ; xor so if opposite then 
+;;;                        and     $80                 ; so -*- = +, +*+ = + opposite signes = negative
+;;;                        call    AHLequKminusAHL
+;;;                        ld      (UBnKylo),hl; DEBUG
+;;;                        ld      (UBnKysgn),a
+;;;                        ld      (varK3p1),hl
+;;;                        ld      (varK3p3),a          ; Kp =  y = K2 - beta * z
+;;;;------4. x = x + alpha * y                      
+;;;.XequXPlusAlphaMulY:    ld      a,(ALP1)            
+;;;                        ld      d,0
+;;;                        ld      e,a                 ; de = unsigned roll magnitude
+;;;                        ld      hl,(UBnKylo)        ; hl = position X unsigned
+;;;                        ld      l,h
+;;;                        ld      h,0
+;;;                        call    mulDEbyHL          ; hl = de * hl
+;;;                        ld      a,(ALP2)
+;;;                        ld      b,a                 ; b = sign
+;;;                        ld      a,(UBnKysgn)        ; a = position sign
+;;;                        xor     b                   ; xor so if opposite then 
+;;;                        and     $80                 ; so -*- = +, +*+ = + opposite signes = negative                
+;;;                        ld      c,a                 ; save sign in c
+;;;                        ex      de,hl               ; de = alpha & y, c = sign
+;;;                        ld      hl,(UBnKxlo)        ; hl = x
+;;;                        ld      a,(UBnKxsgn)        ; a x sign
+;;;                        ld      b,a
+;;;;XX                        ld      h,a                 
+;;;;XX                        or      h                   ; hl - xpos S15 format
+;;;;XX                        ld      a,c; was b?
+;;;;XX                        or      d
+;;;;XX                        ld      d,a
                         
                         ;; calcs HLB + DEC where B and C are signs
 ;; result HL with A as sign
 ;; special handling if result is zero forcign sign bit to be zero
-                        call    ADDHLDESignBC:
+;                        call    ADDHLDESignBC:
+;
+;
+;                        ;call    ADDHLDESignedv3 *** THIS DOES NOT WORK
+;                        ld      (UBnKxlo), hl
+;;XX                        ld      a,h
+;                        and     $80
+;                        ld      (UBnKxsgn), a
+;;.SaveZPos               ld      hl,(varK2p1)
+;;                        ld      (UBnKzlo),a
+;;                        ld      a,(varK2p3)
+;;                        ld      (UBnKzsgn),a
+;;.SaveYPos               ld      hl,(varK3p1)
+;;                        ld      (UBnKylo),a
+;;                        ld      a,(varK3p3)
+;;                        ld      (UBnKysgn),a
+;                        
+;                        
+;                        ret
+;
 
-
-                        ;call    ADDHLDESignedv3 *** THIS DOES NOT WORK
-                        ld      (UBnKxlo), hl
-;XX                        ld      a,h
-                        and     $80
-                        ld      (UBnKxsgn), a
-;.SaveZPos               ld      hl,(varK2p1)
-;                        ld      (UBnKzlo),a
-;                        ld      a,(varK2p3)
-;                        ld      (UBnKzsgn),a
-;.SaveYPos               ld      hl,(varK3p1)
-;                        ld      (UBnKylo),a
-;                        ld      a,(varK3p3)
-;                        ld      (UBnKysgn),a
-                        
-                        
+                        MACRO   APPequPosPlusAPP Position, PositionSign
+                        push    bc
+                        ld      c,a                         ; save original value of a into c
+                        ld      a,(PositionSign)
+                        ld      b,a
+                        ld      a,c
+                        xor     b                           ; a = a xor x postition sign
+                        jp      m,.MV50                     ; if the sign is negative then A and X are both opposite signs
+; Signs are the same to we just add and take which ever sign 
+                        ld      de,(varPp1)                  ; Note we take p+2,p+1 we we did a previous 24 bit mulitple
+                        ld      hl,(Position)
+                        add     hl,de
+                        ld      (varPp1),hl                  ; now we have P1 and p2 with lo hi and
+                        ld      a,c                         ; and a = original sign as they were both the same
+                        pop     bc
                         ret
+; Signs are opposite so we subtract
+.MV50:                  ld      de,(varPp1)
+                        ld      hl,(Position)
+                        or      a
+                        sbc     hl,de
+                        jr      c,.MV51                     ; if the result was negative then negate result
+                        ld      a,6
+                        ld      (varPp1),hl                  ; save result
+                        xor     SignOnly8Bit                ; flip sign and exit
+                        pop     bc
+                        ret
+.MV51:                  NegHL
+                        ld      (varPp1),hl
+                        ld      a,c                         ; the original sign will still be good
+                        pop     bc
+                        ret
+                        ENDM
 
+
+APPequXPosPlusAPP:     APPequPosPlusAPP UBnKxlo, UBnKxsgn
+
+APPequYPosPlusAPP:     APPequPosPlusAPP UBnKylo, UBnKysgn
+                        
+APPequZPosPlusAPP:     APPequPosPlusAPP UBnKzlo, UBnKzsgn
+              
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-ApplyMyRollAndPitch:    ld      a,(ALP1)
-                        ld      hl,BET1
+; based on MVEIT part 4 of 9
+ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
+                        ld      hl,BET1                     ; and pitch
                         or      (hl)
-                        cp      0
-                        jr      z,.NoRotation
+                        cp      0                           ; if both zero then don't compute
+                        jp      z,.NoRotation
+                        break
+; P[210] = x * alph (we use P[2]P[1] later as result/256
+                        ld      e,a                         ; e = roll magnitude
+                        ld      hl,(UBnKxlo)                ; hl = ship x pos
+                        call    AHLequHLmulE                ; AHL = UbnkXlo * Alp1 both unsigned
+                        ld      (varPhi2),a                 ; set P[2] to high byte to help with ./256
+                        ld      (varP),hl                   ; P (2 1 0) = UbnkXlo * Alph1
+; A = Flip sign                         
+                        ld      a,(ALP2FLIP)                ; flip the current roll angle alpha and xor with x sign
+                        ld      hl,UBnKxsgn                 ; and xor with x pos sign
+                        xor     (hl)                        ; so now  (A P+2 P+1) = - (x_sign x_hi x_lo) * alpha / 256
+; AP[2]P[1] =Y + AP[2]P[1] (i.e. Previous APP/256)
+                        call    APPequYPosPlusAPP           ; calculate APP = y - (x * alpha / 256)
+; K2 = AP[2][1]
+                        ld      (varK2p3),a                 ; k2+3 = sign of result
+                        ld      (varK2p1),hl                ; k2+1,2 = result
+; P[210] = K2[2 1] * Beta 
+                        ld      a,(BET1)                    ; a = magnitude of pitch
+                        ld      e,a
+                        call    AHLequHLmulE                ; AHL = (P+2 P+1) * BET1 or by now ((UbnkXlo * Alph1)/256 * Bet1)
+                        ld      (varPp2),a                   ; save highest byte in P2
+; Fetch sign of previosu cal and xor with BETA inverted
+                        ld      a,(varK2p3)
+                        ld      e,a
+                        ld      a,(BET2)
+                        xor     e                           ; so we get the sign of K3 and xor with pitch sign inverted
+; Z = P[210] =Z + APP
+                        call    APPequZPosPlusAPP
+                        ld      (UBnKzsgn),a                ; save result back into z
+                        ld      (UBnKzlo),hl       
+; A[P1]P[0] = z * Beta                      
+                        ld      a,(BET1)                    ; get pitch back again for mulitply
+                        ld      e,a
+                        call    AHLequHLmulE                ; P2 P1 was already in hl (A P+1 P) = (z_hi z_lo) * beta
+                        ld      (varPp2),a                  ; P2 = high byte of result
+                        ld      (varP),hl                   ; P (2 1 0) = UbnkXlo & Alph1
+; A xor BET2,Zsign
+                        ld      a,(varKp3)                  ; get K3 (sign of y) and store it in y pos
+                        ld      (UBnKysgn),a                ; save result back into y
+                        ld      e,a                         ; a = y sign Xor pitch rate sign
+                        ld      a,(BET2)                    ;
+                        xor     e                           ;
+                        ld      e,a                         ; now xor it with z sign too
+                        ld      a,(UBnKzsgn)                ;
+                        xor     e                           ; so now a = sign of y * beta * sign y * sign z
+                        jp      p,.MV43                     ; if result is pve beta * z and y have differetn signs
+                        ld      hl,(varPp1)
+                        ld      de,(varK2p1)
+                        or      a
+                        add     hl,de
+                        jp      .MV44
+.MV43:                  ld      hl,(varK2p1)
+                        ld      de,(varPp1)
+                        or      a
+                        sbc     hl,de                       ; (y_hi y_lo) = K2(2 1) - P(2 1)
+                        jr      nc,.MV44                    ; if there was no over flow carry on
+                        NegHL
+; by here we have (y_sign y_hi y_lo) = K2(2 1) - P(2 1) = K2 - beta * z
+.MV44:                  ld      (UBnKylo),hl                ; we do save here to avoid two writes if MV43 ended up with a 2s'c conversion
+                        ld      a,(ALP1)                    ; get roll magnitude
+                        ld      e,a
+                        ld      hl,(UBnKylo)
+                        call    AHLequHLmulE                ; AHL = (y_hi y_lo) * alpha
+                        ld      (varPp2),a                  ; store high byte P(2 1 0) = (y_hi y_lo) * alpha
+                        ld      (varP),hl  
+                        ld      a,(ALP2)
+                        ld      e,a
+                        ld      a,(UBnKysgn)
+                        xor     e                           ; a = sign of roll xor y so now we have (A P+2 P+1) = (y_sign y_hi y_lo) * alpha / 256
+                        call    APPequXPosPlusAPP           ; Set (A P+2 P+1) = (x_sign x_hi x_lo) + (A P+2 P+1) = x + y * alpha / 256   
+                        ld      (UBnKxsgn),a                ; save resutl stright into X pos
+                        ld      (UBnKxlo),hl                
+                        break
+                        ret
+                        
+                        
                       ;  break
-                        call    ApplyMyRollToPosition
+                       ; call    ApplyMyRollToPosition
         ;                call    ApplyMyRollToNosevY
         ;                call    ApplyMyRollToSidevY
         ;                call    ApplyMyRollToRoofvY

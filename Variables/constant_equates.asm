@@ -21,7 +21,7 @@ MaxVisibility		equ $1F
 FarInFront			equ $C0
 
 ; Universe Managment
-MaxNumberOfStars	equ 18
+MaxNumberOfStars	equ 11
 FreeListSize		equ	$12
 ShipTypeSize		equ	32 			;??????? just a guess for now
 ShipSST				equ 4			; its a space station

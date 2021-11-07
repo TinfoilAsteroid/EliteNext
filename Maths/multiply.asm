@@ -91,11 +91,91 @@ madXAAddHLDESigned:     ld      a,h
                         ld      h,a                         ; recover sign
                         ret 
 
+   
+    ; multiplication of 16-bit number and 8-bit number into a 24-bit product
+    ;
+    ; enter : hl = 16-bit multiplier   = x
+    ;          e =  8-bit multiplicand = y
+    ;
+    ; exit  : ahl = 24-bit product
+    ;         carry reset
+    ;
+    ; uses  : af, de, hl
+AHLequHLmulE:           ld d,h                      ; xh
+                        ld h,e                      ; yl
+                        mul de                      ; xh*yl
+                        ex de,hl
+                        mul de                      ; yl*xl, hl = xh*yl
+                    
+                        ld  a,d                     ; sum products
+                        add a,l
+                        ld  d,a
+                        ex de,hl
+                    
+                        ld  a,d
+                        adc a,0
+                        ret
+
+
+
+   ; multiplication of two 16-bit numbers into a 32-bit product
+   ;
+   ; enter : de = 16-bit multiplicand = y
+   ;         hl = 16-bit multiplicand = x
+   ;
+   ; exit  : dehl = 32-bit product
+   ;         carry reset
+   ;
+   ; uses  : af, bc, de, hl
+   
+   
+
+DEHLequDEmulHL:         ld b,l                      ; x0
+                        ld c,e                      ; y0
+                        ld e,l                      ; x0
+                        ld l,d
+                        push hl                     ; x1 y1
+                        ld l,c                      ; y0
+; bc = x0 y0, de = y1 x0,  hl = x1 y0,  stack = x1 y1
+                        mul de                      ; y1*x0
+                        ex de,hl
+                        mul de                      ; x1*y0
+                        
+                        xor a                       ; zero A
+                        add hl,de                   ; sum cross products p2 p1
+                        adc a,a                     ; capture carry p3
+                        
+                        ld e,c                      ; x0
+                        ld d,b                      ; y0
+                        mul de                      ; y0*x0
+                        
+                        ld b,a                      ; carry from cross products
+                        ld c,h                      ; LSB of MSW from cross products
+                        
+                        ld a,d
+                        add a,l
+                        ld h,a
+                        ld l,e                      ; LSW in HL p1 p0
+                        
+                        pop de
+                        mul de                      ; x1*y1
+                        
+                        ex de,hl
+                        adc hl,bc
+                        ex de,hl                    ; de = final MSW
+                        
+                        ret
+   
 ; multiplication of two 16-bit numbers into a 16-bit product
 ; enter : de = 16-bit multiplicand
 ;         hl = 16-bit multiplicand
 ; exit  : hl = 16-bit product
 ;         carry reset
+; maths is 
+;        hl = y , de= x
+;        hl = xhi,ylo + (yhigh * xlow)
+;        hl = yhih & xlo + x
+;
 ;
 ; uses  : af, bc, de, hl	
 mulDEbyHL:              push    bc
@@ -119,6 +199,7 @@ mulDEbyHL:              push    bc
                         xor a                       ; reset carry
                         pop     bc
                         ret
+                        
 ; multiplication of two S156-bit numbers into a 16-bit 2'd compliment product
 ; enter : de = 16-bit multiplicand
 ;         hl = 16-bit multiplicand

@@ -480,7 +480,7 @@ TargetPlanetX			DB	0               ; 03C1
 TargetPlanetY			DB	0               ; 03C2
 SRCTargetPlanetX		DB	0               ; Used for short range chart cursor
 SRCTargetPlanetY		DB	0               ; then divided down to target planet for compatibilit with galactic chart routines
-NubmerOfStarsNOSTM		DB	0				; 03C3 NOSTM  \ number of stars, dust.
+NumberOfStarsNOSTM		DB	0				; 03C3 NOSTM  \ number of stars, dust.
 
 CompassColor			DB	0				; 03C5
 SoundToggle				DB	0				; 03C6

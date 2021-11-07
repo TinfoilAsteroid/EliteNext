@@ -6,7 +6,7 @@
 ; We can cheat here, Speed is always 0 or positive
 ; z postion will always be positive if we can see it 
 
-InitStartAtHL:          ex      de,hl
+InitStarAtHL:           ex      de,hl
                         call    doRND
                         ex      de,hl
                         or      8
@@ -136,16 +136,16 @@ StarsADDHLDESigned:     ld      a,h
                         ld      h,a                         ; recover sign
                         ret 
 ;----------------------------------------------------------------------------------------------------------------------------------        
-InitialiseStars:        ld      b,$0B
+InitialiseStars:        ld      b,MaxNumberOfStars
                         ld      a,b
-                        ld      (NubmerOfStarsNOSTM),a
+                        ld      (NumberOfStarsNOSTM),a
                         ld      hl,varDust
-InitStarsLoop:          call    InitStartAtHL
+InitStarsLoop:          call    InitStarAtHL
                         djnz    InitStarsLoop
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 StarsForward:          ; break
-                        ld      a,(NubmerOfStarsNOSTM)
+                        ld      a,(NumberOfStarsNOSTM)
                         ld      b,a                                 ; get the number of stars to process
                         ld      iy,varDust                          ; hl is now a pointer to the dust array
 StarProcessLoop:        push    bc                                  ; save counter +1
@@ -336,14 +336,14 @@ NextStarLoop2:          push    hl                                      ; +1
 ResetStar:              ;break
                         ;pop     de
                         pop     bc                                      ; 0
-                        ld      a,(NubmerOfStarsNOSTM)
+                        ld      a,(NumberOfStarsNOSTM)
                         sub     b
                         ld      d,a
                         ld      e,6
                         mul
                         ld      hl,varDust
                         add     hl,de
-                        call    InitStartAtHL
+                        call    InitStarAtHL
                         jp      NextStarLoop2
 ;----------------------------------------------------------------------------------------------------------------------------------               
 ProjectStarXToScreen:   ld      c,(iy+0)

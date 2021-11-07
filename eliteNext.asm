@@ -145,7 +145,7 @@ HandleBankSelect:       ld      a,$00
 CallCursorRoutine:      call    $0000
 ; need to optimise so not looping over agint for all universe doign ingle updates
 UpdateUniverseSpeed:    MMUSelectUniverseN 0
-                        call    TestRollLoop
+                        ;call    TestRollLoop
                         ld      a,(DELTA)
                         ld      d,0
                         ld      e,a
@@ -157,8 +157,8 @@ UpdateUniverseSpeed:    MMUSelectUniverseN 0
                         ld      (UBnKzlo),hl
                         ld      (UBnKzsgn),a
                         call    ApplyMyRollAndPitch
-                       call    DEBUGSETNODES
-                      ;  call    DEBUGSETPOS
+                        ;       call    DEBUGSETNODES
+                        ;       call    DEBUGSETPOS
                         call   ProcessNodes
 DrawShipTest:           MMUSelectLayer1
                         ld     a,$DF
