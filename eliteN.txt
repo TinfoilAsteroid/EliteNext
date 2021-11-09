@@ -1202,7 +1202,7 @@
  146  80C4              ; need to optimise so not looping over agint for all universe doign ingle updates
  147  80C4              UpdateUniverseSpeed:    MMUSelectUniverseN 0
  147  80C4 ED 91 56 46 >                     nextreg UniverseMMU,       BankUNIVDATA0+0
- 148  80C8                                      ;call    TestRollLoop
+ 148  80C8                                      ; call    TestRollLoop
  149  80C8 3A 65 92                             ld      a,(DELTA)
  150  80CB 16 00                                ld      d,0
  151  80CD 5F                                   ld      e,a
@@ -1216,7 +1216,7 @@
  159  80E0 CD 39 D8                             call    ApplyMyRollAndPitch
  160  80E3                                      ;       call    DEBUGSETNODES
  161  80E3                                      ;       call    DEBUGSETPOS
- 162  80E3 CD F0 D8                             call   ProcessNodes
+ 162  80E3 CD F8 D8                             call   ProcessNodes
  163  80E6              DrawShipTest:           MMUSelectLayer1
  163  80E6 ED 91 57 3A >					 nextreg L1memMMU,		    BankLAYER1
  164  80EA 3E DF                                ld     a,$DF
@@ -1226,7 +1226,7 @@
  168  80F3 28 21                                jr      z, MenusLoop; This will change as more screens are added TODO
  169  80F5              SpecificCodeWhenInView: ;call   SetAllFacesVisible
  170  80F5 CD 98 D3                             call   BackFaceCull				; culling but over aggressive backface assumes all 0 up front TOFIX
- 171  80F8 CD C2 D9                             call   PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
+ 171  80F8 CD CA D9                             call   PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
  172  80FB                                      MMUSelectLayer2
  172  80FB ED 91 57 39 >					 nextreg L2memMMU,		    BankLAYER2
  173  80FF CD C9 E0                             call   l2_cls
@@ -1527,7 +1527,7 @@
   11+ 8295 F5           	push	af
   12+ 8296 21 00 C0     	ld		hl,UniverseBankAddr
   13+ 8299 11 00 00     	ld		de,dmaCopySrcAddr
-  14+ 829C 01 7C 1A     	ld		bc,UnivBankSize
+  14+ 829C 01 84 1A     	ld		bc,UnivBankSize
   15+ 829F CD 9B 8E     	call	memcopy_dma
   16+ 82A2 F1           	pop		af
   17+ 82A3 C1           	pop		bc
@@ -3684,9 +3684,9 @@
   54+ 8E55 CD 3B D0             call    InverseXX16
   55+ 8E58
   56+ 8E58
-  57+ 8E58 CD F0 D8             call    ProcessNodes                ; Loop through and determine visibility based on faces and position
+  57+ 8E58 CD F8 D8             call    ProcessNodes                ; Loop through and determine visibility based on faces and position
   58+ 8E5B              DrawResults:
-  59+ 8E5B CD C2 D9             call    PrepLines                   ; LL72, process lines and clip
+  59+ 8E5B CD CA D9             call    PrepLines                   ; LL72, process lines and clip
   60+ 8E5E CD F9 8D             call    DrawLines                   ; Need to plot all lines
   61+ 8E61 C9                   ret
   62+ 8E62
@@ -27473,689 +27473,586 @@
 1849+ D78B
 1850+ D78B
 1851+ D78B
-1852+ D78B              ; Test roll only so beta will be 0 therefore:
+1852+ D78B              ; Full version
 1853+ D78B              ; 1. K2 = y - alpha * x
-1854+ D78B              ; 2. z = z + 0 * K2     so z in untouched
-1855+ D78B              ; 3. y = K2 * z
+1854+ D78B              ; 2. z = z + beta * K2
+1855+ D78B              ; 3. y = K2 - beta * z
 1856+ D78B              ; 4. x = x + alpha * y
-1857+ D78B              ; Full version
-1858+ D78B              ; 1. K2 = y - alpha * x
-1859+ D78B              ; 2. z = z + beta * K2
-1860+ D78B              ; 3. y = K2 - beta * z
-1861+ D78B              ; 4. x = x + alpha * y
-1862+ D78B              ;------1. K2 = y - alpha * x
-1863+ D78B              ;;;ApplyMyRollToPosition:  ld      a,(ALP1)
-1864+ D78B              ;;;                        ld      d,0
-1865+ D78B              ;;;                        ld      e,a                 ; de = unsigned roll magnitude
-1866+ D78B              ;;;                        ld      hl,(UBnKxlo)        ; hl = position X unsigned
-1867+ D78B              ;;;                        ld      l,h
-1868+ D78B              ;;;                        ld      h,0
-1869+ D78B              ;;;                        call    mulDEbyHL          ; hl = de * hl
-1870+ D78B              ;;;                        ld      a,(ALP2)
-1871+ D78B              ;;;                        ld      b,a                 ; b = sign
-1872+ D78B              ;;;                        ld      a,(UBnKxsgn)        ; a = position sign
-1873+ D78B              ;;;                        xor     b                   ; xor so if opposite then
-1874+ D78B              ;;;                        and     $80                 ; so -*- = +, +*+ = + opposite signes = negative
-1875+ D78B              ;;;                        call    APPequYPosPlusAPP
-1876+ D78B              ;;;                        ld      (varKp1),hl
-1877+ D78B              ;;;                        ld      (varKp3),a          ; Kp = y - alph * x as 16 bit + sign bit
-1878+ D78B              ;;;;------2. z = z + beta * K2 and store in K2p
-1879+ D78B              ;;;.ZEquZPlusBetaMulK2:    ld      a,(BET1)
-1880+ D78B              ;;;                        ld      d,0
-1881+ D78B              ;;;                        ld      e,a
-1882+ D78B              ;;;                        call    mulDEbyHL
-1883+ D78B              ;;;                        ld      a,(varKp3)          ; get k2 sign back
-1884+ D78B              ;;;                        ld      c,a
-1885+ D78B              ;;;                        ld      a,(BET2)
-1886+ D78B              ;;;                        xor     c                   ; AHL = beta * k2
-1887+ D78B              ;;;                        and     $80
-1888+ D78B              ;;;                        call    APPequZPosPlusAPP  ; AHL = z + beta * k2
-1889+ D78B              ;;;                        ld      (varK2p1),hl
-1890+ D78B              ;;;                        ld      (varK2p3),a          ; K2 = z + beta * K2
-1891+ D78B              ;;;                        ld      (UBnKzlo),hl; DEBUG
-1892+ D78B              ;;;                        ld      (UBnKzsgn),a
-1893+ D78B              ;;;;------3. y = K2 - beta * z and store in K3p
-1894+ D78B              ;;;.YEquK2MinusBetaMulZ:   ld      a,(BET1)
-1895+ D78B              ;;;                        ld      d,0
-1896+ D78B              ;;;                        ld      e,a
-1897+ D78B              ;;;                        ld      hl,(UBnKzlo)        ; hl = position X unsigned
-1898+ D78B              ;;;                        ld      l,h
-1899+ D78B              ;;;                        ld      h,0
-1900+ D78B              ;;;                        call    mulDEbyHL
-1901+ D78B              ;;;                        ld      a,(BET2)
-1902+ D78B              ;;;                        ld      b,a                 ; b = sign
-1903+ D78B              ;;;                        ld      a,(UBnKzsgn)        ; a = position sign
-1904+ D78B              ;;;                        xor     b                   ; xor so if opposite then
-1905+ D78B              ;;;                        and     $80                 ; so -*- = +, +*+ = + opposite signes = negative
-1906+ D78B              ;;;                        call    AHLequKminusAHL
-1907+ D78B              ;;;                        ld      (UBnKylo),hl; DEBUG
-1908+ D78B              ;;;                        ld      (UBnKysgn),a
-1909+ D78B              ;;;                        ld      (varK3p1),hl
-1910+ D78B              ;;;                        ld      (varK3p3),a          ; Kp =  y = K2 - beta * z
-1911+ D78B              ;;;;------4. x = x + alpha * y
-1912+ D78B              ;;;.XequXPlusAlphaMulY:    ld      a,(ALP1)
-1913+ D78B              ;;;                        ld      d,0
-1914+ D78B              ;;;                        ld      e,a                 ; de = unsigned roll magnitude
-1915+ D78B              ;;;                        ld      hl,(UBnKylo)        ; hl = position X unsigned
-1916+ D78B              ;;;                        ld      l,h
-1917+ D78B              ;;;                        ld      h,0
-1918+ D78B              ;;;                        call    mulDEbyHL          ; hl = de * hl
-1919+ D78B              ;;;                        ld      a,(ALP2)
-1920+ D78B              ;;;                        ld      b,a                 ; b = sign
-1921+ D78B              ;;;                        ld      a,(UBnKysgn)        ; a = position sign
-1922+ D78B              ;;;                        xor     b                   ; xor so if opposite then
-1923+ D78B              ;;;                        and     $80                 ; so -*- = +, +*+ = + opposite signes = negative
-1924+ D78B              ;;;                        ld      c,a                 ; save sign in c
-1925+ D78B              ;;;                        ex      de,hl               ; de = alpha & y, c = sign
-1926+ D78B              ;;;                        ld      hl,(UBnKxlo)        ; hl = x
-1927+ D78B              ;;;                        ld      a,(UBnKxsgn)        ; a x sign
-1928+ D78B              ;;;                        ld      b,a
-1929+ D78B              ;;;;XX                        ld      h,a
-1930+ D78B              ;;;;XX                        or      h                   ; hl - xpos S15 format
-1931+ D78B              ;;;;XX                        ld      a,c; was b?
-1932+ D78B              ;;;;XX                        or      d
-1933+ D78B              ;;;;XX                        ld      d,a
-1934+ D78B
-1935+ D78B                                      ;; calcs HLB + DEC where B and C are signs
-1936+ D78B              ;; result HL with A as sign
-1937+ D78B              ;; special handling if result is zero forcign sign bit to be zero
-1938+ D78B              ;                        call    ADDHLDESignBC:
-1939+ D78B              ;
-1940+ D78B              ;
-1941+ D78B              ;                        ;call    ADDHLDESignedv3 *** THIS DOES NOT WORK
-1942+ D78B              ;                        ld      (UBnKxlo), hl
-1943+ D78B              ;;XX                        ld      a,h
-1944+ D78B              ;                        and     $80
-1945+ D78B              ;                        ld      (UBnKxsgn), a
-1946+ D78B              ;;.SaveZPos               ld      hl,(varK2p1)
-1947+ D78B              ;;                        ld      (UBnKzlo),a
-1948+ D78B              ;;                        ld      a,(varK2p3)
-1949+ D78B              ;;                        ld      (UBnKzsgn),a
-1950+ D78B              ;;.SaveYPos               ld      hl,(varK3p1)
-1951+ D78B              ;;                        ld      (UBnKylo),a
-1952+ D78B              ;;                        ld      a,(varK3p3)
-1953+ D78B              ;;                        ld      (UBnKysgn),a
-1954+ D78B              ;
-1955+ D78B              ;
-1956+ D78B              ;                        ret
-1957+ D78B              ;
-1958+ D78B
-1959+ D78B                                      MACRO   APPequPosPlusAPP Position, PositionSign
-1960+ D78B ~                                    push    bc
-1961+ D78B ~                                    ld      c,a                         ; save original value of a into c
-1962+ D78B ~                                    ld      a,(PositionSign)
-1963+ D78B ~                                    ld      b,a
-1964+ D78B ~                                    ld      a,c
-1965+ D78B ~                                    xor     b                           ; a = a xor x postition sign
-1966+ D78B ~                                    jp      m,.MV50                     ; if the sign is negative then A and X are both opposite signs
-1967+ D78B ~            ; Signs are the same to we just add and take which ever sign
-1968+ D78B ~                                    ld      de,(varPp1)                  ; Note we take p+2,p+1 we we did a previous 24 bit mulitple
-1969+ D78B ~                                    ld      hl,(Position)
-1970+ D78B ~                                    add     hl,de
-1971+ D78B ~                                    ld      (varPp1),hl                  ; now we have P1 and p2 with lo hi and
-1972+ D78B ~                                    ld      a,c                         ; and a = original sign as they were both the same
-1973+ D78B ~                                    pop     bc
-1974+ D78B ~                                    ret
-1975+ D78B ~            ; Signs are opposite so we subtract
-1976+ D78B ~            .MV50:                  ld      de,(varPp1)
-1977+ D78B ~                                    ld      hl,(Position)
-1978+ D78B ~                                    or      a
-1979+ D78B ~                                    sbc     hl,de
-1980+ D78B ~                                    jr      c,.MV51                     ; if the result was negative then negate result
-1981+ D78B ~                                    ld      a,c                         ; get back the original sign
-1982+ D78B ~                                    ld      (varPp1),hl                 ; and save result to P[2][1]
-1983+ D78B ~                                    xor     SignOnly8Bit                ; flip sign and exit A = flip of a
-1984+ D78B ~                                    pop     bc
-1985+ D78B ~                                    ret
-1986+ D78B ~            .MV51:                  NegHL
-1987+ D78B ~                                    ld      (varPp1),hl
-1988+ D78B ~                                    ld      a,c                         ; the original sign will still be good
-1989+ D78B ~                                    pop     bc
-1990+ D78B ~                                    ret
-1991+ D78B                                      ENDM
-1992+ D78B
-1993+ D78B
-1994+ D78B              APPequXPosPlusAPP:     APPequPosPlusAPP UBnKxlo, UBnKxsgn
-1994+ D78B C5          >                        push    bc
-1994+ D78C 4F          >                        ld      c,a                         ; save original value of a into c
-1994+ D78D 3A 0D C0    >                        ld      a,(UBnKxsgn)
-1994+ D790 47          >                        ld      b,a
-1994+ D791 79          >                        ld      a,c
-1994+ D792 A8          >                        xor     b                           ; a = a xor x postition sign
-1994+ D793 FA A4 D7    >                        jp      m,.MV50                     ; if the sign is negative then A and X are both opposite signs
-1994+ D796             >; Signs are the same to we just add and take which ever sign
-1994+ D796 ED 5B 10 92 >                        ld      de,(varPp1)                  ; Note we take p+2,p+1 we we did a previous 24 bit mulitple
-1994+ D79A 2A 0B C0    >                        ld      hl,(UBnKxlo)
-1994+ D79D 19          >                        add     hl,de
-1994+ D79E 22 10 92    >                        ld      (varPp1),hl                  ; now we have P1 and p2 with lo hi and
-1994+ D7A1 79          >                        ld      a,c                         ; and a = original sign as they were both the same
-1994+ D7A2 C1          >                        pop     bc
-1994+ D7A3 C9          >                        ret
-1994+ D7A4             >; Signs are opposite so we subtract
-1994+ D7A4 ED 5B 10 92 >.MV50:                  ld      de,(varPp1)
-1994+ D7A8 2A 0B C0    >                        ld      hl,(UBnKxlo)
-1994+ D7AB B7          >                        or      a
-1994+ D7AC ED 52       >                        sbc     hl,de
-1994+ D7AE 38 08       >                        jr      c,.MV51                     ; if the result was negative then negate result
-1994+ D7B0 79          >                        ld      a,c                         ; get back the original sign
-1994+ D7B1 22 10 92    >                        ld      (varPp1),hl                 ; and save result to P[2][1]
-1994+ D7B4 EE 80       >                        xor     SignOnly8Bit                ; flip sign and exit A = flip of a
-1994+ D7B6 C1          >                        pop     bc
-1994+ D7B7 C9          >                        ret
-1994+ D7B8             >.MV51:                  NegHL
-1994+ D7B8 AF          >                xor a
-1994+ D7B9 95          >                sub l
-1994+ D7BA 6F          >                ld l,a
-1994+ D7BB 9F          >                sbc a,a
-1994+ D7BC 94          >                sub h
-1994+ D7BD 67          >                ld h,a
-1994+ D7BE 22 10 92    >                        ld      (varPp1),hl
-1994+ D7C1 79          >                        ld      a,c                         ; the original sign will still be good
-1994+ D7C2 C1          >                        pop     bc
-1994+ D7C3 C9          >                        ret
-1995+ D7C4
-1996+ D7C4              APPequYPosPlusAPP:     APPequPosPlusAPP UBnKylo, UBnKysgn
-1996+ D7C4 C5          >                        push    bc
-1996+ D7C5 4F          >                        ld      c,a                         ; save original value of a into c
-1996+ D7C6 3A 10 C0    >                        ld      a,(UBnKysgn)
-1996+ D7C9 47          >                        ld      b,a
-1996+ D7CA 79          >                        ld      a,c
-1996+ D7CB A8          >                        xor     b                           ; a = a xor x postition sign
-1996+ D7CC FA DD D7    >                        jp      m,.MV50                     ; if the sign is negative then A and X are both opposite signs
-1996+ D7CF             >; Signs are the same to we just add and take which ever sign
-1996+ D7CF ED 5B 10 92 >                        ld      de,(varPp1)                  ; Note we take p+2,p+1 we we did a previous 24 bit mulitple
-1996+ D7D3 2A 0E C0    >                        ld      hl,(UBnKylo)
-1996+ D7D6 19          >                        add     hl,de
-1996+ D7D7 22 10 92    >                        ld      (varPp1),hl                  ; now we have P1 and p2 with lo hi and
-1996+ D7DA 79          >                        ld      a,c                         ; and a = original sign as they were both the same
-1996+ D7DB C1          >                        pop     bc
-1996+ D7DC C9          >                        ret
-1996+ D7DD             >; Signs are opposite so we subtract
-1996+ D7DD ED 5B 10 92 >.MV50:                  ld      de,(varPp1)
-1996+ D7E1 2A 0E C0    >                        ld      hl,(UBnKylo)
-1996+ D7E4 B7          >                        or      a
-1996+ D7E5 ED 52       >                        sbc     hl,de
-1996+ D7E7 38 08       >                        jr      c,.MV51                     ; if the result was negative then negate result
-1996+ D7E9 79          >                        ld      a,c                         ; get back the original sign
-1996+ D7EA 22 10 92    >                        ld      (varPp1),hl                 ; and save result to P[2][1]
-1996+ D7ED EE 80       >                        xor     SignOnly8Bit                ; flip sign and exit A = flip of a
-1996+ D7EF C1          >                        pop     bc
-1996+ D7F0 C9          >                        ret
-1996+ D7F1             >.MV51:                  NegHL
-1996+ D7F1 AF          >                xor a
-1996+ D7F2 95          >                sub l
-1996+ D7F3 6F          >                ld l,a
-1996+ D7F4 9F          >                sbc a,a
-1996+ D7F5 94          >                sub h
-1996+ D7F6 67          >                ld h,a
-1996+ D7F7 22 10 92    >                        ld      (varPp1),hl
-1996+ D7FA 79          >                        ld      a,c                         ; the original sign will still be good
-1996+ D7FB C1          >                        pop     bc
-1996+ D7FC C9          >                        ret
-1997+ D7FD
-1998+ D7FD              APPequZPosPlusAPP:     APPequPosPlusAPP UBnKzlo, UBnKzsgn
-1998+ D7FD C5          >                        push    bc
-1998+ D7FE 4F          >                        ld      c,a                         ; save original value of a into c
-1998+ D7FF 3A 13 C0    >                        ld      a,(UBnKzsgn)
-1998+ D802 47          >                        ld      b,a
-1998+ D803 79          >                        ld      a,c
-1998+ D804 A8          >                        xor     b                           ; a = a xor x postition sign
-1998+ D805 FA 16 D8    >                        jp      m,.MV50                     ; if the sign is negative then A and X are both opposite signs
-1998+ D808             >; Signs are the same to we just add and take which ever sign
-1998+ D808 ED 5B 10 92 >                        ld      de,(varPp1)                  ; Note we take p+2,p+1 we we did a previous 24 bit mulitple
-1998+ D80C 2A 11 C0    >                        ld      hl,(UBnKzlo)
-1998+ D80F 19          >                        add     hl,de
-1998+ D810 22 10 92    >                        ld      (varPp1),hl                  ; now we have P1 and p2 with lo hi and
-1998+ D813 79          >                        ld      a,c                         ; and a = original sign as they were both the same
-1998+ D814 C1          >                        pop     bc
-1998+ D815 C9          >                        ret
-1998+ D816             >; Signs are opposite so we subtract
-1998+ D816 ED 5B 10 92 >.MV50:                  ld      de,(varPp1)
-1998+ D81A 2A 11 C0    >                        ld      hl,(UBnKzlo)
-1998+ D81D B7          >                        or      a
-1998+ D81E ED 52       >                        sbc     hl,de
-1998+ D820 38 08       >                        jr      c,.MV51                     ; if the result was negative then negate result
-1998+ D822 79          >                        ld      a,c                         ; get back the original sign
-1998+ D823 22 10 92    >                        ld      (varPp1),hl                 ; and save result to P[2][1]
-1998+ D826 EE 80       >                        xor     SignOnly8Bit                ; flip sign and exit A = flip of a
-1998+ D828 C1          >                        pop     bc
-1998+ D829 C9          >                        ret
-1998+ D82A             >.MV51:                  NegHL
-1998+ D82A AF          >                xor a
-1998+ D82B 95          >                sub l
-1998+ D82C 6F          >                ld l,a
-1998+ D82D 9F          >                sbc a,a
-1998+ D82E 94          >                sub h
-1998+ D82F 67          >                ld h,a
-1998+ D830 22 10 92    >                        ld      (varPp1),hl
-1998+ D833 79          >                        ld      a,c                         ; the original sign will still be good
-1998+ D834 C1          >                        pop     bc
-1998+ D835 C9          >                        ret
-1999+ D836
-2000+ D836              ; rollWork holds Alpha intermidate results
-2001+ D836 00 00 00     rollWork      DS 3
-2002+ D839              rollWorkp1    equ rollWork
-2003+ D839              rollWorkp2    equ rollWork+1
-2004+ D839              rollWorkp3    equ rollWork+2
-2005+ D839
-2006+ D839
-2007+ D839              ;----------------------------------------------------------------------------------------------------------------------------------
-2008+ D839              ; based on MVEIT part 4 of 9
-2009+ D839 3A 28 92     ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
-2010+ D83C 21 1C 92                             ld      hl,BET1                     ; and pitch
-2011+ D83F B6                                   or      (hl)
-2012+ D840 CA E9 D8                             jp      z,.NoRotation               ; if both zero then don't compute
-2013+ D843                                      ;break
-2014+ D843              ; P[210] = x * alph (we use P[2]P[1] later as result/256
-2015+ D843 5F                                   ld      e,a                         ; e = roll magnitude
-2016+ D844 2A 0B C0                             ld      hl,(UBnKxlo)                ; hl = ship x pos
-2017+ D847 CD 8F 9F                             call    AHLequHLmulE                ; MULTU2-2 AHL = UbnkXlo * Alp1 both unsigned
-2018+ D84A 32 11 92                             ld      (varPhi2),a                 ; set P[2] to high byte to help with ./256
-2019+ D84D 22 0F 92                             ld      (varP),hl                   ; P (2 1 0) = UbnkXlo * Alph1
-2020+ D850              ; A = Flip sign
-2021+ D850 3A 2A 92                             ld      a,(ALP2FLIP)                ; flip the current roll angle alpha and xor with x sign
-2022+ D853 21 0D C0                             ld      hl,UBnKxsgn                 ; and xor with x pos sign
-2023+ D856 AE                                   xor     (hl)                        ; so now  (A P+2 P+1) = - (x_sign x_hi x_lo) * alpha / 256
-2024+ D857              ; AP[2]P[1] =Y + AP[2]P[1] (i.e. Previous APP/256)
-2025+ D857 CD C4 D7                             call    APPequYPosPlusAPP           ; MVT6 calculate APP = y - (x * alpha / 256)
-2026+ D85A              ; K2 = AP[2][1] K2(3 2 1) = (A P+2 P+1) = y - x * alpha / 256
-2027+ D85A 32 38 D8                             ld      (rollWorkp3),a               ; k2+3 = sign of result
-2028+ D85D 22 36 D8                             ld      (rollWorkp1),hl             ; k2+1,2 = result
-2029+ D860              ; P[210] = K2[2 1] * Beta  = (A ~P) * X
-2030+ D860 3A 1C 92                             ld      a,(BET1)                    ; a = magnitude of pitch
-2031+ D863 5F                                   ld      e,a
-2032+ D864 CD 8F 9F                             call    AHLequHLmulE                ; MLTU2-2 AHL = (P+2 P+1) * BET1 or by now ((UbnkXlo * Alph1)/256 * Bet1)
-2033+ D867 32 11 92                             ld      (varPp2),a                   ; save highest byte in P2
-2034+ D86A 22 0F 92                             ld      (varP),hl
-2035+ D86D              ; Fetch sign of previosu cal and xor with BETA inverted
-2036+ D86D 3A 38 D8                             ld      a,(rollWorkp3)
-2037+ D870 5F                                   ld      e,a
-2038+ D871 3A 1D 92                             ld      a,(BET2)
-2039+ D874 AB                                   xor     e                           ; so we get the sign of K3 and xor with pitch sign
-2040+ D875              ; Z = P[210] =Z + APP
-2041+ D875 CD FD D7                             call    APPequZPosPlusAPP           ; MVT6
-2042+ D878 32 13 C0                             ld      (UBnKzsgn),a                ; save result back into z
-2043+ D87B 22 11 C0                             ld      (UBnKzlo),hl
-2044+ D87E              ; A[P1]P[0] = z * Beta
-2045+ D87E 3A 1C 92                             ld      a,(BET1)                    ; get pitch back again for mulitply in original it was kept in Q so no fetch needed
-2046+ D881 5F                                   ld      e,a
-2047+ D882 CD 8F 9F                             call    AHLequHLmulE                ; MULTU2 P2 P1 was already in hl (A P+1 P) = (z_hi z_lo) * beta
-2048+ D885 32 11 92                             ld      (varPp2),a                  ; P2 = high byte of result
-2049+ D888 22 0F 92                             ld      (varP),hl                   ; P (2 1 0) = UbnkXlo & Alph1
-2050+ D88B              ; A xor BET2,Zsign
-2051+ D88B 3A 38 D8                             ld      a,(rollWorkp3)               ; get K3 (sign of y) and store it in y pos
-2052+ D88E 32 10 C0                             ld      (UBnKysgn),a                ; save result back into y
-2053+ D891 5F                                   ld      e,a                         ; a = y sign Xor pitch rate sign
-2054+ D892 3A 1D 92                             ld      a,(BET2)                    ;
-2055+ D895 AB                                   xor     e                           ;
-2056+ D896 5F                                   ld      e,a                         ; now xor it with z sign too
-2057+ D897 3A 13 C0                             ld      a,(UBnKzsgn)                ;
-2058+ D89A AB                                   xor     e                           ; so now a = sign of y * beta * sign y * sign z
-2059+ D89B F2 AA D8                             jp      p,.MV43                     ; if result is pve beta * z and y have differetn signs
-2060+ D89E 2A 10 92                             ld      hl,(varPp1)
-2061+ D8A1 ED 5B 36 D8                          ld      de,(rollWorkp1)
-2062+ D8A5 B7                                   or      a
-2063+ D8A6 19                                   add     hl,de
-2064+ D8A7 C3 C4 D8                             jp      .MV44
-2065+ D8AA 2A 36 D8     .MV43:                  ld      hl,(rollWorkp1)
-2066+ D8AD ED 5B 10 92                          ld      de,(varPp1)
-2067+ D8B1 B7                                   or      a
-2068+ D8B2 ED 52                                sbc     hl,de                       ; (y_hi y_lo) = K2(2 1) - P(2 1)
-2069+ D8B4 30 0E                                jr      nc,.MV44                    ; if there was no over flow carry on
-2070+ D8B6                                      NegHL
-2070+ D8B6 AF          >                xor a
-2070+ D8B7 95          >                sub l
-2070+ D8B8 6F          >                ld l,a
-2070+ D8B9 9F          >                sbc a,a
-2070+ D8BA 94          >                sub h
-2070+ D8BB 67          >                ld h,a
-2071+ D8BC 3A 10 C0                             ld      a,(UBnKysgn)                ; flip sign bit
-2072+ D8BF EE 80                                xor     SignOnly8Bit
-2073+ D8C1 32 10 C0                             ld      (UBnKysgn),a
-2074+ D8C4              ; by here we have (y_sign y_hi y_lo) = K2(2 1) - P(2 1) = K2 - beta * z
-2075+ D8C4 22 0E C0     .MV44:                  ld      (UBnKylo),hl                ; we do save here to avoid two writes if MV43 ended up with a 2s'c conversion
-2076+ D8C7 3A 28 92                             ld      a,(ALP1)                    ; get roll magnitude
-2077+ D8CA 5F                                   ld      e,a
-2078+ D8CB 2A 0E C0                             ld      hl,(UBnKylo)
-2079+ D8CE CD 8F 9F                             call    AHLequHLmulE                ; MLTU2-2 AHL = (y_hi y_lo) * alpha
-2080+ D8D1 32 11 92                             ld      (varPp2),a                  ; store high byte P(2 1 0) = (y_hi y_lo) * alpha
-2081+ D8D4 22 0F 92                             ld      (varP),hl
-2082+ D8D7 3A 29 92                             ld      a,(ALP2)
-2083+ D8DA 5F                                   ld      e,a
-2084+ D8DB 3A 10 C0                             ld      a,(UBnKysgn)
-2085+ D8DE AB                                   xor     e                           ; a = sign of roll xor y so now we have (A P+2 P+1) = (y_sign y_hi y_lo) * alpha / 256
-2086+ D8DF CD 8B D7                             call    APPequXPosPlusAPP           ; MVT6 Set (A P+2 P+1) = (x_sign x_hi x_lo) + (A P+2 P+1) = x + y * alpha / 256
-2087+ D8E2 32 0D C0                             ld      (UBnKxsgn),a                ; save resutl stright into X pos
-2088+ D8E5 22 0B C0                             ld      (UBnKxlo),hl
-2089+ D8E8                                      ;break
-2090+ D8E8 C9                                   ret
-2091+ D8E9
-2092+ D8E9
-2093+ D8E9                                    ;  break
-2094+ D8E9                                     ; call    ApplyMyRollToPosition
-2095+ D8E9                      ;                call    ApplyMyRollToNosevY
-2096+ D8E9                      ;                call    ApplyMyRollToSidevY
-2097+ D8E9                      ;                call    ApplyMyRollToRoofvY
-2098+ D8E9 C9           .NoRotation:            ret
-2099+ D8EA              ; .....................................................
-2100+ D8EA              ; Process Nodes does the following:
-2101+ D8EA              ; for each node:
-2102+ D8EA              ;     see if node >
-2103+ D8EA 00           PNXX20DIV6          DB      0
-2104+ D8EB 00 00        PNVERTEXPTR         DW      0   ; DEBUG WILL USE LATER
-2105+ D8ED 00 00        PNNODEPRT           DW      0   ; DEBUG WILL USE LATER
-2106+ D8EF 00           PNLASTNORM          DB      0
-2107+ D8F0              ProcessNodes:
-2108+ D8F0 AF               xor     a
-2109+ D8F1 32 F1 C2         ld      (UbnkLineArrayLen),a
-2110+ D8F4 CD 73 CF         call    CopyRotmatToTransMat             ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
-2111+ D8F7 CD 30 85         call    ScaleXX16Matrix197               ;#02; Normalise XX16
-2112+ D8FA CD 22 D0         call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
-2113+ D8FD CD 3B D0         call    InverseXX16                      ;#11; Invert rotation matrix
-2114+ D900 21 14 C3         ld      hl,UBnkHullVerticies
-2115+ D903 3A 06 C3         ld      a,(VertexCtX6Addr)               ; get Hull byte#8 = number of vertices *6                                   ;;;
-2116+ D906              GetActualVertexCount:
-2117+ D906 4F               ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
-2118+ D907 4F               ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
-2119+ D908 16 06            ld      d,6
-2120+ D90A CD 28 A1         call    asm_div8                         ; asm_div8 C_Div_D - C is the numerator, D is the denominator, A is the remainder, B is 0, C is the result of C/D,D,E,H,L are not changed"
-2121+ D90D 41               ld      b,c                              ; c = number of vertices
-2122+ D90E FD 21 BF C0      ld      iy,UBnkNodeArray
-2123+ D912              LL48:
-2124+ D912              PointLoop:
-2125+ D912 C5           	push	bc                                  ; save counters
-2126+ D913 E5           	push	hl                                  ; save verticies list pointer
-2127+ D914 FD E5        	push	iy                                  ; save Screen plot array pointer
-2128+ D916 78               ld      a,b
-2129+ D917                  ;break
-2130+ D917 CD 94 D5         call    CopyNodeToXX15                      ; copy verices at hl to xx15
-2131+ D91A 3A 76 C0     	ld		a,(UBnkXScaledSign)
-2132+ D91D CD A5 87     	call    XX12EquNodeDotOrientation
-2133+ D920 CD D6 87     	call    TransposeXX12ByShipToXX15
-2134+ D923 CD B1 85     	call	ScaleNodeTo8Bit					    ; scale to 8 bit values, why don't we hold the magnitude here?x
-2135+ D926 FD E1        	pop		iy                                  ; get back screen plot array pointer
-2136+ D928 CD 17 D6     	call    ProjectNodeToEye                     ; set up screen plot list entry
-2137+ D92B                 ; ld      hl,UbnkLineArrayLen
-2138+ D92B                ;  inc     (hl)                                ; another node done
-2139+ D92B              ReadyForNextPoint:
-2140+ D92B FD E5        	push	iy                                  ; copy screen plot pointer to hl
-2141+ D92D E1           	pop		hl
-2142+ D92E 3E 04        	ld		a,4
-2143+ D930 ED 31        	add		hl,a
-2144+ D932 E5           	push	hl                                  ; write it back at iy + 4
-2145+ D933 FD E1        	pop		iy								    ; and put it in iy again
-2146+ D935 E1           	pop		hl                                  ; get hl back as vertex list
-2147+ D936 3E 06        	ld		a,6
-2148+ D938 ED 31        	add 	hl,a                                ; and move to next vertex
-2149+ D93A C1           	pop		bc                                  ; get counter back
-2150+ D93B 10 D5        	djnz	PointLoop
-2151+ D93D              ; ......................................................
-2152+ D93D C9               ret
-2153+ D93E              ;-LL49-----------------------------------------------------------------------------------------------------------------------------
-2154+ D93E              ;  Entering Here we have the following:
-2155+ D93E              ;  XX15(1 0) = vertex x-coordinate but sign not populated
-2156+ D93E              ;  XX15(3 2) = vertex y-coordinate but sign not populated
-2157+ D93E              ;  XX15(5 4) = vertex z-coordinate but sign not populated
-2158+ D93E              ;
-2159+ D93E              ;  XX16(  1 0)sidev_x   (3 2)roofv_x   (5 4)nosev_x
-2160+ D93E              ;  XX16(  7 6)sidev_y   (9 8)roofv_y (11 10)nosev_y
-2161+ D93E              ;  XX16(13 12)sidev_z (15 14)roofv_z (17 16)nosev_z
-2162+ D93E              ;--------------------------------------------------------------------------------------------------------
-2163+ D93E              AddLaserBeamLine:
-2164+ D93E              ; this code is a bag of shit and needs re-writing
-2165+ D93E              GetGunVertexNode:
-2166+ D93E 3A 04 C3             ld          a,(GunVertexAddr)                   ; Hull byte#6, gun vertex*4 (XX0),Y
-2167+ D941 21 BF C0             ld          hl,UBnkNodeArray                    ; list of lines to read
-2168+ D944 ED 31                add         hl,a                                ; HL = address of GunVertexOnNodeArray
-2169+ D946 FD 2E 00             ld          iyl,0
-2170+ D949              MoveX1PointToXX15:
-2171+ D949 4E                   ld          c,(hl)                              ;
-2172+ D94A 23                   inc         hl
-2173+ D94B 46                   ld          b,(hl)                              ; bc = x1 of gun vertex
-2174+ D94C 23                   inc         hl
-2175+ D94D ED 43 75 C0          ld          (UBnkX1),bc
-2176+ D951 0C                   inc         c
-2177+ D952 C8                   ret         z                                   ; was c 255?
-2178+ D953 04                   inc         b
-2179+ D954 C8                   ret         z                                   ; was c 255?
-2180+ D955              MoveY1PointToXX15:
-2181+ D955 4E                   ld          c,(hl)                              ;
-2182+ D956 23                   inc         hl
-2183+ D957 46                   ld          b,(hl)                              ; bc = y1 of gun vertex
-2184+ D958 23                   inc         hl
-2185+ D959 ED 43 77 C0          ld          (UBnkY1),bc
-2186+ D95D              SetX2PointToXX15:
-2187+ D95D 01 00 00             ld          bc,0                                ; set X2 to 0
-2188+ D960 ED 43 79 C0          ld          (UBnkX2),bc
-2189+ D964 3A 11 C0             ld          a,(UBnKzlo)
-2190+ D967 4F                   ld          c,a
-2191+ D968              SetY2PointToXX15:
-2192+ D968 ED 43 7B C0          ld          (UBnkY2),bc                         ; set Y2to 0
-2193+ D96C 3A 0D C0             ld          a,(UBnKxsgn)
-2194+ D96F                      JumpOnBitClear a,7,LL74SkipDec
-2194+ D96F CB 7F       >                        bit 	7,a
-2194+ D971 CA 79 D9    >                        jp      z,LL74SkipDec
-2195+ D974              LL74DecX2:
-2196+ D974 3E FF                ld          a,$FF
-2197+ D976 32 79 C0             ld          (UBnkX2Lo),a                        ; rather than dec (hl) just load with 255 as it will always be that at this code point
-2198+ D979              LL74SkipDec:
-2199+ D979 CD 1D CD             call        ClipLine                            ; LL145 \ clip test on XX15 XX12 vector, returns carry
-2200+ D97C 38 71                jr          c,CalculateNewLines                 ; LL170 clip returned carry set so not visibile if carry set skip the rest (laser not firing)
-2201+ D97E              ; Here we are usign hl to replace VarU as index
-2202+ D97E 2A 6C 92             ld          hl,(varU16)
-2203+ D981 3A 75 C0             ld          a,(UBnKx1Lo)
-2204+ D984 77                   ld          (hl),a
-2205+ D985 23                   inc         hl
-2206+ D986 3A 77 C0             ld          a,(UbnKy1Lo)
-2207+ D989 77                   ld          (hl),a
-2208+ D98A 23                   inc         hl
-2209+ D98B 3A 79 C0             ld          a,(UBnkX2Lo)
-2210+ D98E 77                   ld          (hl),a
-2211+ D98F 23                   inc         hl
-2212+ D990 3A 7B C0             ld          a,(UbnKy2Lo)
-2213+ D993 77                   ld          (hl),a
-2214+ D994 FD 2C                inc         iyl                                 ; iyl holds as a counter to iterations
-2215+ D996 23                   inc         hl
-2216+ D997 FD 2C                inc         iyl                                 ; ready for next byte
-2217+ D999 22 6C 92             ld          (varU16),hl
-2218+ D99C C9                   ret
-2219+ D99D
-2220+ D99D                  INCLUDE "PrepLines.asm"
+1857+ D78B
+1858+ D78B
+1859+ D78B                                      MACRO   APPequPosPlusAPP Position, PositionSign
+1860+ D78B ~                                    push    bc
+1861+ D78B ~                                    ld      c,a                         ; save original value of a into c
+1862+ D78B ~                                    ld      a,(PositionSign)
+1863+ D78B ~                                    ld      b,a
+1864+ D78B ~                                    ld      a,c
+1865+ D78B ~                                    xor     b                           ; a = a xor x postition sign
+1866+ D78B ~                                    jp      m,.MV50                     ; if the sign is negative then A and X are both opposite signs
+1867+ D78B ~            ; Signs are the same to we just add and take which ever sign
+1868+ D78B ~                                    ld      de,(varPp1)                  ; Note we take p+2,p+1 we we did a previous 24 bit mulitple
+1869+ D78B ~                                    ld      hl,(Position)
+1870+ D78B ~                                    add     hl,de
+1871+ D78B ~                                    ld      (varPp1),hl                  ; now we have P1 and p2 with lo hi and
+1872+ D78B ~                                    ld      a,c                         ; and a = original sign as they were both the same
+1873+ D78B ~                                    pop     bc
+1874+ D78B ~                                    ret
+1875+ D78B ~            ; Signs are opposite so we subtract
+1876+ D78B ~            .MV50:                  ld      de,(varPp1)
+1877+ D78B ~                                    ld      hl,(Position)
+1878+ D78B ~                                    or      a
+1879+ D78B ~                                    sbc     hl,de
+1880+ D78B ~                                    jr      c,.MV51                     ; if the result was negative then negate result
+1881+ D78B ~                                    ld      a,c                         ; get back the original sign
+1882+ D78B ~                                    ld      (varPp1),hl                 ; and save result to P[2][1]
+1883+ D78B ~                                    xor     SignOnly8Bit                ; flip sign and exit A = flip of a
+1884+ D78B ~                                    pop     bc
+1885+ D78B ~                                    ret
+1886+ D78B ~            .MV51:                  NegHL
+1887+ D78B ~                                    ld      (varPp1),hl
+1888+ D78B ~                                    ld      a,c                         ; the original sign will still be good
+1889+ D78B ~                                    pop     bc
+1890+ D78B ~                                    ret
+1891+ D78B                                      ENDM
+1892+ D78B
+1893+ D78B
+1894+ D78B              APPequXPosPlusAPP:     APPequPosPlusAPP UBnKxlo, UBnKxsgn
+1894+ D78B C5          >                        push    bc
+1894+ D78C 4F          >                        ld      c,a                         ; save original value of a into c
+1894+ D78D 3A 0D C0    >                        ld      a,(UBnKxsgn)
+1894+ D790 47          >                        ld      b,a
+1894+ D791 79          >                        ld      a,c
+1894+ D792 A8          >                        xor     b                           ; a = a xor x postition sign
+1894+ D793 FA A4 D7    >                        jp      m,.MV50                     ; if the sign is negative then A and X are both opposite signs
+1894+ D796             >; Signs are the same to we just add and take which ever sign
+1894+ D796 ED 5B 10 92 >                        ld      de,(varPp1)                  ; Note we take p+2,p+1 we we did a previous 24 bit mulitple
+1894+ D79A 2A 0B C0    >                        ld      hl,(UBnKxlo)
+1894+ D79D 19          >                        add     hl,de
+1894+ D79E 22 10 92    >                        ld      (varPp1),hl                  ; now we have P1 and p2 with lo hi and
+1894+ D7A1 79          >                        ld      a,c                         ; and a = original sign as they were both the same
+1894+ D7A2 C1          >                        pop     bc
+1894+ D7A3 C9          >                        ret
+1894+ D7A4             >; Signs are opposite so we subtract
+1894+ D7A4 ED 5B 10 92 >.MV50:                  ld      de,(varPp1)
+1894+ D7A8 2A 0B C0    >                        ld      hl,(UBnKxlo)
+1894+ D7AB B7          >                        or      a
+1894+ D7AC ED 52       >                        sbc     hl,de
+1894+ D7AE 38 08       >                        jr      c,.MV51                     ; if the result was negative then negate result
+1894+ D7B0 79          >                        ld      a,c                         ; get back the original sign
+1894+ D7B1 22 10 92    >                        ld      (varPp1),hl                 ; and save result to P[2][1]
+1894+ D7B4 EE 80       >                        xor     SignOnly8Bit                ; flip sign and exit A = flip of a
+1894+ D7B6 C1          >                        pop     bc
+1894+ D7B7 C9          >                        ret
+1894+ D7B8             >.MV51:                  NegHL
+1894+ D7B8 AF          >                xor a
+1894+ D7B9 95          >                sub l
+1894+ D7BA 6F          >                ld l,a
+1894+ D7BB 9F          >                sbc a,a
+1894+ D7BC 94          >                sub h
+1894+ D7BD 67          >                ld h,a
+1894+ D7BE 22 10 92    >                        ld      (varPp1),hl
+1894+ D7C1 79          >                        ld      a,c                         ; the original sign will still be good
+1894+ D7C2 C1          >                        pop     bc
+1894+ D7C3 C9          >                        ret
+1895+ D7C4
+1896+ D7C4              APPequYPosPlusAPP:     APPequPosPlusAPP UBnKylo, UBnKysgn
+1896+ D7C4 C5          >                        push    bc
+1896+ D7C5 4F          >                        ld      c,a                         ; save original value of a into c
+1896+ D7C6 3A 10 C0    >                        ld      a,(UBnKysgn)
+1896+ D7C9 47          >                        ld      b,a
+1896+ D7CA 79          >                        ld      a,c
+1896+ D7CB A8          >                        xor     b                           ; a = a xor x postition sign
+1896+ D7CC FA DD D7    >                        jp      m,.MV50                     ; if the sign is negative then A and X are both opposite signs
+1896+ D7CF             >; Signs are the same to we just add and take which ever sign
+1896+ D7CF ED 5B 10 92 >                        ld      de,(varPp1)                  ; Note we take p+2,p+1 we we did a previous 24 bit mulitple
+1896+ D7D3 2A 0E C0    >                        ld      hl,(UBnKylo)
+1896+ D7D6 19          >                        add     hl,de
+1896+ D7D7 22 10 92    >                        ld      (varPp1),hl                  ; now we have P1 and p2 with lo hi and
+1896+ D7DA 79          >                        ld      a,c                         ; and a = original sign as they were both the same
+1896+ D7DB C1          >                        pop     bc
+1896+ D7DC C9          >                        ret
+1896+ D7DD             >; Signs are opposite so we subtract
+1896+ D7DD ED 5B 10 92 >.MV50:                  ld      de,(varPp1)
+1896+ D7E1 2A 0E C0    >                        ld      hl,(UBnKylo)
+1896+ D7E4 B7          >                        or      a
+1896+ D7E5 ED 52       >                        sbc     hl,de
+1896+ D7E7 38 08       >                        jr      c,.MV51                     ; if the result was negative then negate result
+1896+ D7E9 79          >                        ld      a,c                         ; get back the original sign
+1896+ D7EA 22 10 92    >                        ld      (varPp1),hl                 ; and save result to P[2][1]
+1896+ D7ED EE 80       >                        xor     SignOnly8Bit                ; flip sign and exit A = flip of a
+1896+ D7EF C1          >                        pop     bc
+1896+ D7F0 C9          >                        ret
+1896+ D7F1             >.MV51:                  NegHL
+1896+ D7F1 AF          >                xor a
+1896+ D7F2 95          >                sub l
+1896+ D7F3 6F          >                ld l,a
+1896+ D7F4 9F          >                sbc a,a
+1896+ D7F5 94          >                sub h
+1896+ D7F6 67          >                ld h,a
+1896+ D7F7 22 10 92    >                        ld      (varPp1),hl
+1896+ D7FA 79          >                        ld      a,c                         ; the original sign will still be good
+1896+ D7FB C1          >                        pop     bc
+1896+ D7FC C9          >                        ret
+1897+ D7FD
+1898+ D7FD              APPequZPosPlusAPP:     APPequPosPlusAPP UBnKzlo, UBnKzsgn
+1898+ D7FD C5          >                        push    bc
+1898+ D7FE 4F          >                        ld      c,a                         ; save original value of a into c
+1898+ D7FF 3A 13 C0    >                        ld      a,(UBnKzsgn)
+1898+ D802 47          >                        ld      b,a
+1898+ D803 79          >                        ld      a,c
+1898+ D804 A8          >                        xor     b                           ; a = a xor x postition sign
+1898+ D805 FA 16 D8    >                        jp      m,.MV50                     ; if the sign is negative then A and X are both opposite signs
+1898+ D808             >; Signs are the same to we just add and take which ever sign
+1898+ D808 ED 5B 10 92 >                        ld      de,(varPp1)                  ; Note we take p+2,p+1 we we did a previous 24 bit mulitple
+1898+ D80C 2A 11 C0    >                        ld      hl,(UBnKzlo)
+1898+ D80F 19          >                        add     hl,de
+1898+ D810 22 10 92    >                        ld      (varPp1),hl                  ; now we have P1 and p2 with lo hi and
+1898+ D813 79          >                        ld      a,c                         ; and a = original sign as they were both the same
+1898+ D814 C1          >                        pop     bc
+1898+ D815 C9          >                        ret
+1898+ D816             >; Signs are opposite so we subtract
+1898+ D816 ED 5B 10 92 >.MV50:                  ld      de,(varPp1)
+1898+ D81A 2A 11 C0    >                        ld      hl,(UBnKzlo)
+1898+ D81D B7          >                        or      a
+1898+ D81E ED 52       >                        sbc     hl,de
+1898+ D820 38 08       >                        jr      c,.MV51                     ; if the result was negative then negate result
+1898+ D822 79          >                        ld      a,c                         ; get back the original sign
+1898+ D823 22 10 92    >                        ld      (varPp1),hl                 ; and save result to P[2][1]
+1898+ D826 EE 80       >                        xor     SignOnly8Bit                ; flip sign and exit A = flip of a
+1898+ D828 C1          >                        pop     bc
+1898+ D829 C9          >                        ret
+1898+ D82A             >.MV51:                  NegHL
+1898+ D82A AF          >                xor a
+1898+ D82B 95          >                sub l
+1898+ D82C 6F          >                ld l,a
+1898+ D82D 9F          >                sbc a,a
+1898+ D82E 94          >                sub h
+1898+ D82F 67          >                ld h,a
+1898+ D830 22 10 92    >                        ld      (varPp1),hl
+1898+ D833 79          >                        ld      a,c                         ; the original sign will still be good
+1898+ D834 C1          >                        pop     bc
+1898+ D835 C9          >                        ret
+1899+ D836
+1900+ D836              ; rollWork holds Alpha intermidate results
+1901+ D836 00 00 00     rollWork      DS 3
+1902+ D839              rollWorkp1    equ rollWork
+1903+ D839              rollWorkp2    equ rollWork+1
+1904+ D839              rollWorkp3    equ rollWork+2
+1905+ D839
+1906+ D839
+1907+ D839              ;----------------------------------------------------------------------------------------------------------------------------------
+1908+ D839              ; based on MVEIT part 4 of 9
+1909+ D839 3A 28 92     ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
+1910+ D83C 21 1C 92                             ld      hl,BET1                     ; and pitch
+1911+ D83F B6                                   or      (hl)
+1912+ D840 CA F1 D8                             jp      z,.NoRotation               ; if both zero then don't compute
+1913+ D843                                      ;break
+1914+ D843              ; P[210] = x * alph (we use P[2]P[1] later as result/256
+1915+ D843 5F                                   ld      e,a                         ; e = roll magnitude
+1916+ D844 2A 0B C0                             ld      hl,(UBnKxlo)                ; hl = ship x pos
+1917+ D847 CD 8F 9F                             call    AHLequHLmulE                ; MULTU2-2 AHL = UbnkXlo * Alp1 both unsigned
+1918+ D84A 32 11 92                             ld      (varPhi2),a                 ; set P[2] to high byte to help with ./256
+1919+ D84D 22 0F 92                             ld      (varP),hl                   ; P (2 1 0) = UbnkXlo * Alph1
+1920+ D850              ; A = Flip sign
+1921+ D850 3A 2A 92                             ld      a,(ALP2FLIP)                ; flip the current roll angle alpha and xor with x sign
+1922+ D853 21 0D C0                             ld      hl,UBnKxsgn                 ; and xor with x pos sign
+1923+ D856 AE                                   xor     (hl)                        ; so now  (A P+2 P+1) = - (x_sign x_hi x_lo) * alpha / 256
+1924+ D857              ; AP[2]P[1] =Y + AP[2]P[1] (i.e. Previous APP/256)
+1925+ D857 CD C4 D7                             call    APPequYPosPlusAPP           ; MVT6 calculate APP = y - (x * alpha / 256)
+1926+ D85A              ; K2 = AP[2][1] K2(3 2 1) = (A P+2 P+1) = y - x * alpha / 256
+1927+ D85A 32 38 D8                             ld      (rollWorkp3),a               ; k2+3 = sign of result
+1928+ D85D 22 36 D8                             ld      (rollWorkp1),hl             ; k2+1,2 = result
+1929+ D860              ; P[210] = K2[2 1] * Beta  = (A ~P) * X
+1930+ D860 3A 1C 92                             ld      a,(BET1)                    ; a = magnitude of pitch
+1931+ D863 5F                                   ld      e,a
+1932+ D864 CD 8F 9F                             call    AHLequHLmulE                ; MLTU2-2 AHL = (P+2 P+1) * BET1 or by now ((UbnkXlo * Alph1)/256 * Bet1)
+1933+ D867 32 11 92                             ld      (varPp2),a                   ; save highest byte in P2
+1934+ D86A 22 0F 92                             ld      (varP),hl
+1935+ D86D              ; Fetch sign of previosu cal and xor with BETA inverted
+1936+ D86D 3A 38 D8                             ld      a,(rollWorkp3)
+1937+ D870 5F                                   ld      e,a
+1938+ D871 3A 1D 92                             ld      a,(BET2)
+1939+ D874 AB                                   xor     e                           ; so we get the sign of K3 and xor with pitch sign
+1940+ D875              ; Z = P[210] =Z + APP
+1941+ D875 CD FD D7                             call    APPequZPosPlusAPP           ; MVT6
+1942+ D878 32 13 C0                             ld      (UBnKzsgn),a                ; save result back into z
+1943+ D87B 22 11 C0                             ld      (UBnKzlo),hl
+1944+ D87E              ; A[P1]P[0] = z * Beta
+1945+ D87E 3A 1C 92                             ld      a,(BET1)                    ; get pitch back again for mulitply in original it was kept in Q so no fetch needed
+1946+ D881 5F                                   ld      e,a
+1947+ D882 CD 8F 9F                             call    AHLequHLmulE                ; MULTU2 P2 P1 was already in hl (A P+1 P) = (z_hi z_lo) * beta
+1948+ D885 32 11 92                             ld      (varPp2),a                  ; P2 = high byte of result
+1949+ D888 22 0F 92                             ld      (varP),hl                   ; P (2 1 0) = UbnkXlo & Alph1
+1950+ D88B              ; A xor BET2,Zsign
+1951+ D88B 3A 38 D8                             ld      a,(rollWorkp3)               ; get K3 (sign of y) and store it in y pos
+1952+ D88E 32 10 C0                             ld      (UBnKysgn),a                ; save result back into y
+1953+ D891 5F                                   ld      e,a                         ; a = y sign Xor pitch rate sign
+1954+ D892 3A 1D 92                             ld      a,(BET2)                    ;
+1955+ D895 AB                                   xor     e                           ;
+1956+ D896 5F                                   ld      e,a                         ; now xor it with z sign too
+1957+ D897 3A 13 C0                             ld      a,(UBnKzsgn)                ;
+1958+ D89A AB                                   xor     e                           ; so now a = sign of y * beta * sign y * sign z
+1959+ D89B F2 AA D8                             jp      p,.MV43                     ; if result is pve beta * z and y have differetn signs
+1960+ D89E 2A 10 92                             ld      hl,(varPp1)
+1961+ D8A1 ED 5B 36 D8                          ld      de,(rollWorkp1)
+1962+ D8A5 B7                                   or      a
+1963+ D8A6 19                                   add     hl,de
+1964+ D8A7 C3 C4 D8                             jp      .MV44
+1965+ D8AA 2A 36 D8     .MV43:                  ld      hl,(rollWorkp1)
+1966+ D8AD ED 5B 10 92                          ld      de,(varPp1)
+1967+ D8B1 B7                                   or      a
+1968+ D8B2 ED 52                                sbc     hl,de                       ; (y_hi y_lo) = K2(2 1) - P(2 1)
+1969+ D8B4 30 0E                                jr      nc,.MV44                    ; if there was no over flow carry on
+1970+ D8B6                                      NegHL
+1970+ D8B6 AF          >                xor a
+1970+ D8B7 95          >                sub l
+1970+ D8B8 6F          >                ld l,a
+1970+ D8B9 9F          >                sbc a,a
+1970+ D8BA 94          >                sub h
+1970+ D8BB 67          >                ld h,a
+1971+ D8BC 3A 10 C0                             ld      a,(UBnKysgn)                ; flip sign bit
+1972+ D8BF EE 80                                xor     SignOnly8Bit
+1973+ D8C1 32 10 C0                             ld      (UBnKysgn),a
+1974+ D8C4              ; by here we have (y_sign y_hi y_lo) = K2(2 1) - P(2 1) = K2 - beta * z
+1975+ D8C4 22 0E C0     .MV44:                  ld      (UBnKylo),hl                ; we do save here to avoid two writes if MV43 ended up with a 2s'c conversion
+1976+ D8C7 3A 28 92                             ld      a,(ALP1)                    ; get roll magnitude
+1977+ D8CA 5F                                   ld      e,a
+1978+ D8CB 2A 0E C0                             ld      hl,(UBnKylo)
+1979+ D8CE CD 8F 9F                             call    AHLequHLmulE                ; MLTU2-2 AHL = (y_hi y_lo) * alpha
+1980+ D8D1 32 11 92                             ld      (varPp2),a                  ; store high byte P(2 1 0) = (y_hi y_lo) * alpha
+1981+ D8D4 22 0F 92                             ld      (varP),hl
+1982+ D8D7 3A 29 92                             ld      a,(ALP2)
+1983+ D8DA 5F                                   ld      e,a
+1984+ D8DB 3A 10 C0                             ld      a,(UBnKysgn)
+1985+ D8DE AB                                   xor     e                           ; a = sign of roll xor y so now we have (A P+2 P+1) = (y_sign y_hi y_lo) * alpha / 256
+1986+ D8DF CD 8B D7                             call    APPequXPosPlusAPP           ; MVT6 Set (A P+2 P+1) = (x_sign x_hi x_lo) + (A P+2 P+1) = x + y * alpha / 256
+1987+ D8E2 32 0D C0                             ld      (UBnKxsgn),a                ; save resutl stright into X pos
+1988+ D8E5 22 0B C0                             ld      (UBnKxlo),hl
+1989+ D8E8                                      ;break
+1990+ D8E8
+1991+ D8E8
+1992+ D8E8 CD 6E D6                             call    ApplyMyRollToNosevY
+1993+ D8EB CD 9B D6                             call    ApplyMyRollToSidevY
+1994+ D8EE CD C8 D6                             call    ApplyMyRollToRoofvY
+1995+ D8F1 C9           .NoRotation:            ret
+1996+ D8F2              ; .....................................................
+1997+ D8F2              ; Process Nodes does the following:
+1998+ D8F2              ; for each node:
+1999+ D8F2              ;     see if node >
+2000+ D8F2 00           PNXX20DIV6          DB      0
+2001+ D8F3 00 00        PNVERTEXPTR         DW      0   ; DEBUG WILL USE LATER
+2002+ D8F5 00 00        PNNODEPRT           DW      0   ; DEBUG WILL USE LATER
+2003+ D8F7 00           PNLASTNORM          DB      0
+2004+ D8F8              ProcessNodes:
+2005+ D8F8 AF               xor     a
+2006+ D8F9 32 F1 C2         ld      (UbnkLineArrayLen),a
+2007+ D8FC CD 73 CF         call    CopyRotmatToTransMat             ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
+2008+ D8FF CD 30 85         call    ScaleXX16Matrix197               ;#02; Normalise XX16
+2009+ D902 CD 22 D0         call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
+2010+ D905 CD 3B D0         call    InverseXX16                      ;#11; Invert rotation matrix
+2011+ D908 21 14 C3         ld      hl,UBnkHullVerticies
+2012+ D90B 3A 06 C3         ld      a,(VertexCtX6Addr)               ; get Hull byte#8 = number of vertices *6                                   ;;;
+2013+ D90E              GetActualVertexCount:
+2014+ D90E 4F               ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
+2015+ D90F 4F               ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
+2016+ D910 16 06            ld      d,6
+2017+ D912 CD 28 A1         call    asm_div8                         ; asm_div8 C_Div_D - C is the numerator, D is the denominator, A is the remainder, B is 0, C is the result of C/D,D,E,H,L are not changed"
+2018+ D915 41               ld      b,c                              ; c = number of vertices
+2019+ D916 FD 21 BF C0      ld      iy,UBnkNodeArray
+2020+ D91A              LL48:
+2021+ D91A              PointLoop:
+2022+ D91A C5           	push	bc                                  ; save counters
+2023+ D91B E5           	push	hl                                  ; save verticies list pointer
+2024+ D91C FD E5        	push	iy                                  ; save Screen plot array pointer
+2025+ D91E 78               ld      a,b
+2026+ D91F                  ;break
+2027+ D91F CD 94 D5         call    CopyNodeToXX15                      ; copy verices at hl to xx15
+2028+ D922 3A 76 C0     	ld		a,(UBnkXScaledSign)
+2029+ D925 CD A5 87     	call    XX12EquNodeDotOrientation
+2030+ D928 CD D6 87     	call    TransposeXX12ByShipToXX15
+2031+ D92B CD B1 85     	call	ScaleNodeTo8Bit					    ; scale to 8 bit values, why don't we hold the magnitude here?x
+2032+ D92E FD E1        	pop		iy                                  ; get back screen plot array pointer
+2033+ D930 CD 17 D6     	call    ProjectNodeToEye                     ; set up screen plot list entry
+2034+ D933                 ; ld      hl,UbnkLineArrayLen
+2035+ D933                ;  inc     (hl)                                ; another node done
+2036+ D933              ReadyForNextPoint:
+2037+ D933 FD E5        	push	iy                                  ; copy screen plot pointer to hl
+2038+ D935 E1           	pop		hl
+2039+ D936 3E 04        	ld		a,4
+2040+ D938 ED 31        	add		hl,a
+2041+ D93A E5           	push	hl                                  ; write it back at iy + 4
+2042+ D93B FD E1        	pop		iy								    ; and put it in iy again
+2043+ D93D E1           	pop		hl                                  ; get hl back as vertex list
+2044+ D93E 3E 06        	ld		a,6
+2045+ D940 ED 31        	add 	hl,a                                ; and move to next vertex
+2046+ D942 C1           	pop		bc                                  ; get counter back
+2047+ D943 10 D5        	djnz	PointLoop
+2048+ D945              ; ......................................................
+2049+ D945 C9               ret
+2050+ D946              ;-LL49-----------------------------------------------------------------------------------------------------------------------------
+2051+ D946              ;  Entering Here we have the following:
+2052+ D946              ;  XX15(1 0) = vertex x-coordinate but sign not populated
+2053+ D946              ;  XX15(3 2) = vertex y-coordinate but sign not populated
+2054+ D946              ;  XX15(5 4) = vertex z-coordinate but sign not populated
+2055+ D946              ;
+2056+ D946              ;  XX16(  1 0)sidev_x   (3 2)roofv_x   (5 4)nosev_x
+2057+ D946              ;  XX16(  7 6)sidev_y   (9 8)roofv_y (11 10)nosev_y
+2058+ D946              ;  XX16(13 12)sidev_z (15 14)roofv_z (17 16)nosev_z
+2059+ D946              ;--------------------------------------------------------------------------------------------------------
+2060+ D946              AddLaserBeamLine:
+2061+ D946              ; this code is a bag of shit and needs re-writing
+2062+ D946              GetGunVertexNode:
+2063+ D946 3A 04 C3             ld          a,(GunVertexAddr)                   ; Hull byte#6, gun vertex*4 (XX0),Y
+2064+ D949 21 BF C0             ld          hl,UBnkNodeArray                    ; list of lines to read
+2065+ D94C ED 31                add         hl,a                                ; HL = address of GunVertexOnNodeArray
+2066+ D94E FD 2E 00             ld          iyl,0
+2067+ D951              MoveX1PointToXX15:
+2068+ D951 4E                   ld          c,(hl)                              ;
+2069+ D952 23                   inc         hl
+2070+ D953 46                   ld          b,(hl)                              ; bc = x1 of gun vertex
+2071+ D954 23                   inc         hl
+2072+ D955 ED 43 75 C0          ld          (UBnkX1),bc
+2073+ D959 0C                   inc         c
+2074+ D95A C8                   ret         z                                   ; was c 255?
+2075+ D95B 04                   inc         b
+2076+ D95C C8                   ret         z                                   ; was c 255?
+2077+ D95D              MoveY1PointToXX15:
+2078+ D95D 4E                   ld          c,(hl)                              ;
+2079+ D95E 23                   inc         hl
+2080+ D95F 46                   ld          b,(hl)                              ; bc = y1 of gun vertex
+2081+ D960 23                   inc         hl
+2082+ D961 ED 43 77 C0          ld          (UBnkY1),bc
+2083+ D965              SetX2PointToXX15:
+2084+ D965 01 00 00             ld          bc,0                                ; set X2 to 0
+2085+ D968 ED 43 79 C0          ld          (UBnkX2),bc
+2086+ D96C 3A 11 C0             ld          a,(UBnKzlo)
+2087+ D96F 4F                   ld          c,a
+2088+ D970              SetY2PointToXX15:
+2089+ D970 ED 43 7B C0          ld          (UBnkY2),bc                         ; set Y2to 0
+2090+ D974 3A 0D C0             ld          a,(UBnKxsgn)
+2091+ D977                      JumpOnBitClear a,7,LL74SkipDec
+2091+ D977 CB 7F       >                        bit 	7,a
+2091+ D979 CA 81 D9    >                        jp      z,LL74SkipDec
+2092+ D97C              LL74DecX2:
+2093+ D97C 3E FF                ld          a,$FF
+2094+ D97E 32 79 C0             ld          (UBnkX2Lo),a                        ; rather than dec (hl) just load with 255 as it will always be that at this code point
+2095+ D981              LL74SkipDec:
+2096+ D981 CD 1D CD             call        ClipLine                            ; LL145 \ clip test on XX15 XX12 vector, returns carry
+2097+ D984 38 71                jr          c,CalculateNewLines                 ; LL170 clip returned carry set so not visibile if carry set skip the rest (laser not firing)
+2098+ D986              ; Here we are usign hl to replace VarU as index
+2099+ D986 2A 6C 92             ld          hl,(varU16)
+2100+ D989 3A 75 C0             ld          a,(UBnKx1Lo)
+2101+ D98C 77                   ld          (hl),a
+2102+ D98D 23                   inc         hl
+2103+ D98E 3A 77 C0             ld          a,(UbnKy1Lo)
+2104+ D991 77                   ld          (hl),a
+2105+ D992 23                   inc         hl
+2106+ D993 3A 79 C0             ld          a,(UBnkX2Lo)
+2107+ D996 77                   ld          (hl),a
+2108+ D997 23                   inc         hl
+2109+ D998 3A 7B C0             ld          a,(UbnKy2Lo)
+2110+ D99B 77                   ld          (hl),a
+2111+ D99C FD 2C                inc         iyl                                 ; iyl holds as a counter to iterations
+2112+ D99E 23                   inc         hl
+2113+ D99F FD 2C                inc         iyl                                 ; ready for next byte
+2114+ D9A1 22 6C 92             ld          (varU16),hl
+2115+ D9A4 C9                   ret
+2116+ D9A5
+2117+ D9A5                  INCLUDE "PrepLines.asm"
 # file opened: ./Universe/PrepLines.asm
-   1++D99D              ;--------------------------------------------------------------------------------------------------------
-   2++D99D                  INCLUDE "./ModelRender/getVertexNodeAtAToX1Y1.asm"
+   1++D9A5              ;--------------------------------------------------------------------------------------------------------
+   2++D9A5                  INCLUDE "./ModelRender/getVertexNodeAtAToX1Y1.asm"
 # file opened: ././ModelRender/getVertexNodeAtAToX1Y1.asm
-   1++D99D              ;--------------------------------------------------------------------------------------------------------
-   2++D99D              ; a = byteoffset to node array as its pre computed to x4 bytes
-   3++D99D 21 BF C0     getVertexNodeAtAToX1Y1: ld          hl,UBnkNodeArray                    ; hl = edgelist  current pointer
-   4++D9A0 ED 31                                add         hl,a                                ; hl = address of Node
-   5++D9A2 7E                                   ld          a,(hl)                              ; get edge list nbr 1 edge
-   6++D9A3 11 75 C0                             ld          de,UBnkX1
-   7++D9A6 ED A0                                ldi                                             ; x1 lo
-   8++D9A8 ED A0                                ldi                                             ; x1 hi
-   9++D9AA ED A0                                ldi                                             ; y1 lo
-  10++D9AC ED A0                                ldi                                             ; y1 hi
-  11++D9AE C9                                   ret
-  12++D9AF
+   1++D9A5              ;--------------------------------------------------------------------------------------------------------
+   2++D9A5              ; a = byteoffset to node array as its pre computed to x4 bytes
+   3++D9A5 21 BF C0     getVertexNodeAtAToX1Y1: ld          hl,UBnkNodeArray                    ; hl = edgelist  current pointer
+   4++D9A8 ED 31                                add         hl,a                                ; hl = address of Node
+   5++D9AA 7E                                   ld          a,(hl)                              ; get edge list nbr 1 edge
+   6++D9AB 11 75 C0                             ld          de,UBnkX1
+   7++D9AE ED A0                                ldi                                             ; x1 lo
+   8++D9B0 ED A0                                ldi                                             ; x1 hi
+   9++D9B2 ED A0                                ldi                                             ; y1 lo
+  10++D9B4 ED A0                                ldi                                             ; y1 hi
+  11++D9B6 C9                                   ret
+  12++D9B7
 # file closed: ././ModelRender/getVertexNodeAtAToX1Y1.asm
-   3++D9AF                  INCLUDE "./ModelRender/getVertexNodeAtAToX2Y2.asm"
+   3++D9B7                  INCLUDE "./ModelRender/getVertexNodeAtAToX2Y2.asm"
 # file opened: ././ModelRender/getVertexNodeAtAToX2Y2.asm
-   1++D9AF              ;--------------------------------------------------------------------------------------------------------
-   2++D9AF              ; a = byteoffset to node array as its pre computed to x4 bytes
-   3++D9AF 21 BF C0     getVertexNodeAtAToX2Y2: ld          hl,UBnkNodeArray                    ; hl = edgelist  current pointer
-   4++D9B2 ED 31                                add         hl,a                                ; hl = address of Node
-   5++D9B4 7E                                   ld          a,(hl)                              ; get edge list nbr 1 edge
-   6++D9B5 11 79 C0                             ld          de,UBnkX2
-   7++D9B8 ED A0                                ldi                                             ; x1 lo
-   8++D9BA ED A0                                ldi                                             ; x1 hi
-   9++D9BC ED A0                                ldi                                             ; y1 lo
-  10++D9BE ED A0                                ldi                                             ; y1 hi
-  11++D9C0 C9                                   ret
+   1++D9B7              ;--------------------------------------------------------------------------------------------------------
+   2++D9B7              ; a = byteoffset to node array as its pre computed to x4 bytes
+   3++D9B7 21 BF C0     getVertexNodeAtAToX2Y2: ld          hl,UBnkNodeArray                    ; hl = edgelist  current pointer
+   4++D9BA ED 31                                add         hl,a                                ; hl = address of Node
+   5++D9BC 7E                                   ld          a,(hl)                              ; get edge list nbr 1 edge
+   6++D9BD 11 79 C0                             ld          de,UBnkX2
+   7++D9C0 ED A0                                ldi                                             ; x1 lo
+   8++D9C2 ED A0                                ldi                                             ; x1 hi
+   9++D9C4 ED A0                                ldi                                             ; y1 lo
+  10++D9C6 ED A0                                ldi                                             ; y1 hi
+  11++D9C8 C9                                   ret
 # file closed: ././ModelRender/getVertexNodeAtAToX2Y2.asm
-   4++D9C1                  INCLUDE "./ModelRender/GetFaceAtA.asm"
+   4++D9C9                  INCLUDE "./ModelRender/GetFaceAtA.asm"
 # file opened: ././ModelRender/GetFaceAtA.asm
-   1++D9C1              ;--------------------------------------------------------------------------------------------------------
-   2++D9C1              GetFaceAtA:         MACRO
-   3++D9C1 ~                                ld          hl,UbnkFaceVisArray
-   4++D9C1 ~                                add         hl,a
-   5++D9C1 ~                                ld          a,(hl)                              ; get face visibility
-   6++D9C1                                  ENDM
-   7++D9C1
+   1++D9C9              ;--------------------------------------------------------------------------------------------------------
+   2++D9C9              GetFaceAtA:         MACRO
+   3++D9C9 ~                                ld          hl,UbnkFaceVisArray
+   4++D9C9 ~                                add         hl,a
+   5++D9C9 ~                                ld          a,(hl)                              ; get face visibility
+   6++D9C9                                  ENDM
+   7++D9C9
 # file closed: ././ModelRender/GetFaceAtA.asm
-   5++D9C1              ;--------------------------------------------------------------------------------------------------------
-   6++D9C1              ; LL72 Goes through each edge in to determine if they are on a visible face, if so load start and end to line array as clipped lines
-   7++D9C1               ;   DEFINE NOBACKFACECULL 1
-   8++D9C1 00           PLEDGECTR           DB          0
-   9++D9C2
-  10++D9C2              PrepLines:
-  11++D9C2              ; FOR NOW BRUTE FORCE IF OFF SCREEN
-  12++D9C2
-  13++D9C2              ; TODO add in onced DOEXP is finished
-  14++D9C2              ;        ld          a,(UBnkexplDsp)                     ; INWK+31  \ display/exploding state|missiles
-  15++D9C2              ;        JumpOnBitClear  a,5,EE31                        ; bit5 of mask, if zero no explosion
-  16++D9C2              ;        or          8
-  17++D9C2              ;        ld          (UBnkexplDsp),a                     ; else else set bit3 to erase old line
-  18++D9C2              ;        jp          DOEXP                               ; erase using Do Explosion and use implicit return
-  19++D9C2              ;EE31:                                                   ; no explosion
-  20++D9C2              ;        JumpOnBitClear  a,3,LL74                        ; clear is hop to do New lines
-  21++D9C2              ;        call        ClearLine                           ; LL155    \ else erase lines in XX19 heap at LINEstr down
-  22++D9C2              ;        ld          a, $08                              ; set bit 3 of a and fall into LL74
-  23++D9C2              ;
-  24++D9C2              ;--------------------------------------------------------------------------------------------------------
-  25++D9C2              InitialiseLineRead:
-  26++D9C2                      ;break
-  27++D9C2                      ldWriteZero UbnkLineArrayLen                    ; current line array index = 0
-  27++D9C2 AF          >               xor      a
-  27++D9C3 32 F1 C2    >               ld       (UbnkLineArrayLen),a
-  28++D9C6                      ldWriteZero UbnkLineArrayBytes                  ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
-  28++D9C6 AF          >               xor      a
-  28++D9C7 32 F2 C2    >               ld       (UbnkLineArrayBytes),a
-  29++D9CA                      ldWriteZero PLEDGECTR
-  29++D9CA AF          >               xor      a
-  29++D9CB 32 C1 D9    >               ld       (PLEDGECTR),a
-  30++D9CE 3A 07 C3             ld          a,(EdgeCountAddr)
-  31++D9D1 DD 67                ld          ixh,a                               ; ixh = XX17 = Total number of edges to traverse
-  32++D9D3 FD 2E 00             ld          iyl,0                               ; ixl = current edge index
-  33++D9D6 21 FF C1             ld          hl,UbnkLineArray                    ; head of array
-  34++D9D9 22 6C 92             ld          (varU16),hl                         ; store current line array pointer un varU16
-  35++D9DC                      ldCopyByte  EdgeCountAddr, XX17                 ; XX17  = total number of edges to traverse edge counter
-  35++D9DC 3A 07 C3    >               ld       a,(EdgeCountAddr)
-  35++D9DF 32 70 92    >               ld       (XX17),a
-  36++D9E2 3A 2A C0             ld          a,(UBnkexplDsp)                     ; get explosion status
-  37++D9E5                      JumpOnBitClear a,6,CalculateNewLines            ; LL170 bit6 of display state clear (laser not firing) \ Calculate new lines
-  37++D9E5 CB 77       >                        bit 	6,a
-  37++D9E7 CA EF D9    >                        jp      z,CalculateNewLines
-  38++D9EA E6 BF                and         $BF                                 ; else laser is firing, clear bit6.
-  39++D9EC 32 2A C0             ld          (UBnkexplDsp),a                     ; INWK+31
-  40++D9EF              ;   TODO commentedout as teh subroutine is a mess   call        AddLaserBeamLine                    ; add laser beam line to draw list
-  41++D9EF              ; NOw we can calculate hull after including laser line
-  42++D9EF              CalculateNewLines:
-  43++D9EF              LL170:                                                  ;(laser not firing) \ Calculate new lines   \ their comment
-  44++D9EF              CheckEdgesForVisibility:
-  45++D9EF 21 40 C4             ld          hl,UBnkHullEdges
-  46++D9F2                      ; TODO change heap to 3 separate arrays and break them down during copy of ship hull data
-  47++D9F2 22 14 92             ld          (varV),hl                           ; V \ is pointer to where edges data start
-  48++D9F5 3A 03 C3             ld          a,(LineX4Addr)
-  49++D9F8 47                   ld          b,a                                 ; nbr of bytes of edge data
-  50++D9F9              LL75Loop:                                               ; count Visible edges
-  51++D9F9              IsEdgeInVisibilityRange:
-  52++D9F9 2A 14 92             ld          hl,(varV)
-  53++D9FC E5                   push        hl
-  54++D9FD FD E1                pop         iy
-  55++D9FF                      IFDEF NOBACKFACECULL
-  56++D9FF ~                        jp          VisibileEdge; DEBUGTODO
-  57++D9FF                      ENDIF
-  58++D9FF 3A A0 91             ld          a,(LastNormalVisible)               ; XX4 is visibility range
-  59++DA02 57                   ld          d,a                                 ; d holds copy of XX4
-  60++DA03              ; Get Edge Byte 0
-  61++DA03 FD 7E 00             ld          a,(IY+0)                            ; edge data byte#0 is visibility distance
-  62++DA06                      JumpIfALTNusng d,LL78EdgeNotVisible             ; XX4   \ visibility LLx78 edge not visible
-  62++DA06 BA          >                        cp      d
-  62++DA07 DA 5B DA    >                        jp		c,LL78EdgeNotVisible
-  63++DA0A              EdgeMayBeVisibile:
-  64++DA0A              ; Get Edge Byte 1
-  65++DA0A              IsFace1Visibile:                                        ; edges have 2 faces to test
-  66++DA0A FD 7E 01             ld          a,(IY+1)                            ; (V),Y \ edge data byte#1 bits 0 to 3 face 1 4 to 7 face 2
-  67++DA0D 4F                   ld          c,a                                 ;  c = a copy of byte 1
-  68++DA0E E6 0F                and         $0F                                 ;
-  69++DA10                      GetFaceAtA
-  69++DA10 21 A1 C0    >                    ld          hl,UbnkFaceVisArray
-  69++DA13 ED 31       >                    add         hl,a
-  69++DA15 7E          >                    ld          a,(hl)                              ; get face visibility
-  70++DA16              ;       jp  VisibileEdge; DEBUG BODGE TEST TODO
-  71++DA16                      IfANotZeroGoto VisibileEdge                     ; LL70 visible edge
-  71++DA16 FE 00       >				cp	0
-  71++DA18 C2 2D DA    >				jp	nz,VisibileEdge
-  72++DA1B              IsFace2Visibile:
-  73++DA1B 79                   ld          a,c                                 ; restore byte 1 from c register
-  74++DA1C ED 23                swapnib                                         ;
-  75++DA1E E6 0F                and         $0F                                 ; swap high byte into low byte
-  76++DA20 E5                   push        hl
-  77++DA21                      GetFaceAtA
-  77++DA21 21 A1 C0    >                    ld          hl,UbnkFaceVisArray
-  77++DA24 ED 31       >                    add         hl,a
-  77++DA26 7E          >                    ld          a,(hl)                              ; get face visibility
-  78++DA27 E1                   pop         hl
-  79++DA28                      IfAIsZeroGoto LL78EdgeNotVisible                ; edge not visible
-  79++DA28 FE 00       >				cp	0
-  79++DA2A CA 5B DA    >				jp	z,LL78EdgeNotVisible
-  80++DA2D              VisibileEdge:                                           ; Now we need to node id from bytes 2 - start and 3 - end
-  81++DA2D              ;LL79--Visible edge--------------------------------------
-  82++DA2D              ; Get Edge Byte 2
-  83++DA2D FD 7E 02             ld          a,(IY+2)                            ; get Node id
-  84++DA30 CD 9D D9             call        getVertexNodeAtAToX1Y1              ; get the points X1Y1 from node
-  85++DA33 FD 7E 03             ld          a,(IY+3)
-  86++DA36 CD AF D9             call        getVertexNodeAtAToX2Y2              ; get the points X2Y2 from node
-  87++DA39 CD 1D CD             call        ClipLine
-  88++DA3C 38 1D                jr          c,LL78EdgeNotVisible                ; LL78 edge not visible
-  89++DA3E              LL80:                                                   ; ll80 \ Shove visible edge onto XX19 ship lines heap counter U
-  90++DA3E ED 5B 6C 92          ld          de,(varU16)                         ; clipped edges heap address
-  91++DA42 21 75 C0             ld          hl,UBnkNewX1
-  92++DA45                      FourLDIInstrunctions
-  92++DA45 ED A0       >                        ldi
-  92++DA47 ED A0       >                        ldi
-  92++DA49 ED A0       >                        ldi
-  92++DA4B ED A0       >                        ldi
-  93++DA4D ED 53 6C 92          ld          (varU16),de                         ; update U16 with current address
-  94++DA51 21 F1 C2             ld          hl,UbnkLineArrayLen                 ; we have loaded one line
-  95++DA54 34                   inc         (hl)
-  96++DA55 7E                   ld          a,(hl)
-  97++DA56                      JumpIfAGTENusng LineArraySize,CompletedLineGeneration   ; have we hit max lines for a model hop over jmp to Exit edge data loop
-  97++DA56 FE 32       >                        cp     LineArraySize
-  97++DA58 D2 71 DA    >                        jp		nc,CompletedLineGeneration
-  98++DA5B              ; If we hit here we skip the write of line arryay u16
-  99++DA5B              LL78EdgeNotVisible:                                     ; also arrive here if Edge not visible, loop next data edge.
- 100++DA5B              LL78:
- 101++DA5B 2A 14 92             ld          hl,(varV)                           ; varV is current edge address
- 102++DA5E 3E 04                ld          a,4
- 103++DA60 ED 31                add         hl,a
- 104++DA62 22 14 92             ld          (varV),hl
- 105++DA65 21 C1 D9             ld          hl,PLEDGECTR                        ;
- 106++DA68 34                   inc         (hl)                                ;
- 107++DA69 7E                   ld          a,(hl)                              ; current edge index ++
- 108++DA6A                      JumpIfANEMemusng XX17,LL75Loop                  ; compare with total number of edges
- 108++DA6A 21 70 92    >                  ld    hl,XX17
- 108++DA6D BE          >                  cp    (hl)
- 108++DA6E C2 F9 D9    >                  jp      nz,LL75Loop
- 109++DA71              CompletedLineGeneration:
- 110++DA71              LL81:
- 111++DA71              LL81SHPPT:                                              ; SHPPT ship is a point arrives here with Acc=2, bottom entry in heap
- 112++DA71 3A F1 C2             ld          a,(UbnkLineArrayLen)                ; UbnkLineArrayLen = nbr of lines loaded
- 113++DA74 CB 27                sla         a
- 114++DA76 CB 27                sla         a                                   ; multiple by 4 to equal number of bytes
- 115++DA78 32 F2 C2             ld          (UbnkLineArrayBytes),a              ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
- 116++DA7B              ExitEdgeDataLoop:
- 117++DA7B C9                   ret
- 118++DA7C
+   5++D9C9              ;--------------------------------------------------------------------------------------------------------
+   6++D9C9              ; LL72 Goes through each edge in to determine if they are on a visible face, if so load start and end to line array as clipped lines
+   7++D9C9               ;   DEFINE NOBACKFACECULL 1
+   8++D9C9 00           PLEDGECTR           DB          0
+   9++D9CA
+  10++D9CA              PrepLines:
+  11++D9CA              ; FOR NOW BRUTE FORCE IF OFF SCREEN
+  12++D9CA
+  13++D9CA              ; TODO add in onced DOEXP is finished
+  14++D9CA              ;        ld          a,(UBnkexplDsp)                     ; INWK+31  \ display/exploding state|missiles
+  15++D9CA              ;        JumpOnBitClear  a,5,EE31                        ; bit5 of mask, if zero no explosion
+  16++D9CA              ;        or          8
+  17++D9CA              ;        ld          (UBnkexplDsp),a                     ; else else set bit3 to erase old line
+  18++D9CA              ;        jp          DOEXP                               ; erase using Do Explosion and use implicit return
+  19++D9CA              ;EE31:                                                   ; no explosion
+  20++D9CA              ;        JumpOnBitClear  a,3,LL74                        ; clear is hop to do New lines
+  21++D9CA              ;        call        ClearLine                           ; LL155    \ else erase lines in XX19 heap at LINEstr down
+  22++D9CA              ;        ld          a, $08                              ; set bit 3 of a and fall into LL74
+  23++D9CA              ;
+  24++D9CA              ;--------------------------------------------------------------------------------------------------------
+  25++D9CA              InitialiseLineRead:
+  26++D9CA                      ;break
+  27++D9CA                      ldWriteZero UbnkLineArrayLen                    ; current line array index = 0
+  27++D9CA AF          >               xor      a
+  27++D9CB 32 F1 C2    >               ld       (UbnkLineArrayLen),a
+  28++D9CE                      ldWriteZero UbnkLineArrayBytes                  ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
+  28++D9CE AF          >               xor      a
+  28++D9CF 32 F2 C2    >               ld       (UbnkLineArrayBytes),a
+  29++D9D2                      ldWriteZero PLEDGECTR
+  29++D9D2 AF          >               xor      a
+  29++D9D3 32 C9 D9    >               ld       (PLEDGECTR),a
+  30++D9D6 3A 07 C3             ld          a,(EdgeCountAddr)
+  31++D9D9 DD 67                ld          ixh,a                               ; ixh = XX17 = Total number of edges to traverse
+  32++D9DB FD 2E 00             ld          iyl,0                               ; ixl = current edge index
+  33++D9DE 21 FF C1             ld          hl,UbnkLineArray                    ; head of array
+  34++D9E1 22 6C 92             ld          (varU16),hl                         ; store current line array pointer un varU16
+  35++D9E4                      ldCopyByte  EdgeCountAddr, XX17                 ; XX17  = total number of edges to traverse edge counter
+  35++D9E4 3A 07 C3    >               ld       a,(EdgeCountAddr)
+  35++D9E7 32 70 92    >               ld       (XX17),a
+  36++D9EA 3A 2A C0             ld          a,(UBnkexplDsp)                     ; get explosion status
+  37++D9ED                      JumpOnBitClear a,6,CalculateNewLines            ; LL170 bit6 of display state clear (laser not firing) \ Calculate new lines
+  37++D9ED CB 77       >                        bit 	6,a
+  37++D9EF CA F7 D9    >                        jp      z,CalculateNewLines
+  38++D9F2 E6 BF                and         $BF                                 ; else laser is firing, clear bit6.
+  39++D9F4 32 2A C0             ld          (UBnkexplDsp),a                     ; INWK+31
+  40++D9F7              ;   TODO commentedout as teh subroutine is a mess   call        AddLaserBeamLine                    ; add laser beam line to draw list
+  41++D9F7              ; NOw we can calculate hull after including laser line
+  42++D9F7              CalculateNewLines:
+  43++D9F7              LL170:                                                  ;(laser not firing) \ Calculate new lines   \ their comment
+  44++D9F7              CheckEdgesForVisibility:
+  45++D9F7 21 40 C4             ld          hl,UBnkHullEdges
+  46++D9FA                      ; TODO change heap to 3 separate arrays and break them down during copy of ship hull data
+  47++D9FA 22 14 92             ld          (varV),hl                           ; V \ is pointer to where edges data start
+  48++D9FD 3A 03 C3             ld          a,(LineX4Addr)
+  49++DA00 47                   ld          b,a                                 ; nbr of bytes of edge data
+  50++DA01              LL75Loop:                                               ; count Visible edges
+  51++DA01              IsEdgeInVisibilityRange:
+  52++DA01 2A 14 92             ld          hl,(varV)
+  53++DA04 E5                   push        hl
+  54++DA05 FD E1                pop         iy
+  55++DA07                      IFDEF NOBACKFACECULL
+  56++DA07 ~                        jp          VisibileEdge; DEBUGTODO
+  57++DA07                      ENDIF
+  58++DA07 3A A0 91             ld          a,(LastNormalVisible)               ; XX4 is visibility range
+  59++DA0A 57                   ld          d,a                                 ; d holds copy of XX4
+  60++DA0B              ; Get Edge Byte 0
+  61++DA0B FD 7E 00             ld          a,(IY+0)                            ; edge data byte#0 is visibility distance
+  62++DA0E                      JumpIfALTNusng d,LL78EdgeNotVisible             ; XX4   \ visibility LLx78 edge not visible
+  62++DA0E BA          >                        cp      d
+  62++DA0F DA 63 DA    >                        jp		c,LL78EdgeNotVisible
+  63++DA12              EdgeMayBeVisibile:
+  64++DA12              ; Get Edge Byte 1
+  65++DA12              IsFace1Visibile:                                        ; edges have 2 faces to test
+  66++DA12 FD 7E 01             ld          a,(IY+1)                            ; (V),Y \ edge data byte#1 bits 0 to 3 face 1 4 to 7 face 2
+  67++DA15 4F                   ld          c,a                                 ;  c = a copy of byte 1
+  68++DA16 E6 0F                and         $0F                                 ;
+  69++DA18                      GetFaceAtA
+  69++DA18 21 A1 C0    >                    ld          hl,UbnkFaceVisArray
+  69++DA1B ED 31       >                    add         hl,a
+  69++DA1D 7E          >                    ld          a,(hl)                              ; get face visibility
+  70++DA1E              ;       jp  VisibileEdge; DEBUG BODGE TEST TODO
+  71++DA1E                      IfANotZeroGoto VisibileEdge                     ; LL70 visible edge
+  71++DA1E FE 00       >				cp	0
+  71++DA20 C2 35 DA    >				jp	nz,VisibileEdge
+  72++DA23              IsFace2Visibile:
+  73++DA23 79                   ld          a,c                                 ; restore byte 1 from c register
+  74++DA24 ED 23                swapnib                                         ;
+  75++DA26 E6 0F                and         $0F                                 ; swap high byte into low byte
+  76++DA28 E5                   push        hl
+  77++DA29                      GetFaceAtA
+  77++DA29 21 A1 C0    >                    ld          hl,UbnkFaceVisArray
+  77++DA2C ED 31       >                    add         hl,a
+  77++DA2E 7E          >                    ld          a,(hl)                              ; get face visibility
+  78++DA2F E1                   pop         hl
+  79++DA30                      IfAIsZeroGoto LL78EdgeNotVisible                ; edge not visible
+  79++DA30 FE 00       >				cp	0
+  79++DA32 CA 63 DA    >				jp	z,LL78EdgeNotVisible
+  80++DA35              VisibileEdge:                                           ; Now we need to node id from bytes 2 - start and 3 - end
+  81++DA35              ;LL79--Visible edge--------------------------------------
+  82++DA35              ; Get Edge Byte 2
+  83++DA35 FD 7E 02             ld          a,(IY+2)                            ; get Node id
+  84++DA38 CD A5 D9             call        getVertexNodeAtAToX1Y1              ; get the points X1Y1 from node
+  85++DA3B FD 7E 03             ld          a,(IY+3)
+  86++DA3E CD B7 D9             call        getVertexNodeAtAToX2Y2              ; get the points X2Y2 from node
+  87++DA41 CD 1D CD             call        ClipLine
+  88++DA44 38 1D                jr          c,LL78EdgeNotVisible                ; LL78 edge not visible
+  89++DA46              LL80:                                                   ; ll80 \ Shove visible edge onto XX19 ship lines heap counter U
+  90++DA46 ED 5B 6C 92          ld          de,(varU16)                         ; clipped edges heap address
+  91++DA4A 21 75 C0             ld          hl,UBnkNewX1
+  92++DA4D                      FourLDIInstrunctions
+  92++DA4D ED A0       >                        ldi
+  92++DA4F ED A0       >                        ldi
+  92++DA51 ED A0       >                        ldi
+  92++DA53 ED A0       >                        ldi
+  93++DA55 ED 53 6C 92          ld          (varU16),de                         ; update U16 with current address
+  94++DA59 21 F1 C2             ld          hl,UbnkLineArrayLen                 ; we have loaded one line
+  95++DA5C 34                   inc         (hl)
+  96++DA5D 7E                   ld          a,(hl)
+  97++DA5E                      JumpIfAGTENusng LineArraySize,CompletedLineGeneration   ; have we hit max lines for a model hop over jmp to Exit edge data loop
+  97++DA5E FE 32       >                        cp     LineArraySize
+  97++DA60 D2 79 DA    >                        jp		nc,CompletedLineGeneration
+  98++DA63              ; If we hit here we skip the write of line arryay u16
+  99++DA63              LL78EdgeNotVisible:                                     ; also arrive here if Edge not visible, loop next data edge.
+ 100++DA63              LL78:
+ 101++DA63 2A 14 92             ld          hl,(varV)                           ; varV is current edge address
+ 102++DA66 3E 04                ld          a,4
+ 103++DA68 ED 31                add         hl,a
+ 104++DA6A 22 14 92             ld          (varV),hl
+ 105++DA6D 21 C9 D9             ld          hl,PLEDGECTR                        ;
+ 106++DA70 34                   inc         (hl)                                ;
+ 107++DA71 7E                   ld          a,(hl)                              ; current edge index ++
+ 108++DA72                      JumpIfANEMemusng XX17,LL75Loop                  ; compare with total number of edges
+ 108++DA72 21 70 92    >                  ld    hl,XX17
+ 108++DA75 BE          >                  cp    (hl)
+ 108++DA76 C2 01 DA    >                  jp      nz,LL75Loop
+ 109++DA79              CompletedLineGeneration:
+ 110++DA79              LL81:
+ 111++DA79              LL81SHPPT:                                              ; SHPPT ship is a point arrives here with Acc=2, bottom entry in heap
+ 112++DA79 3A F1 C2             ld          a,(UbnkLineArrayLen)                ; UbnkLineArrayLen = nbr of lines loaded
+ 113++DA7C CB 27                sla         a
+ 114++DA7E CB 27                sla         a                                   ; multiple by 4 to equal number of bytes
+ 115++DA80 32 F2 C2             ld          (UbnkLineArrayBytes),a              ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
+ 116++DA83              ExitEdgeDataLoop:
+ 117++DA83 C9                   ret
+ 118++DA84
 # file closed: ./Universe/PrepLines.asm
-2221+ DA7C
-2222+ DA7C              UnivBankSize  EQU $ - StartOfUniv
-2223+ DA7C
+2118+ DA84
+2119+ DA84              UnivBankSize  EQU $ - StartOfUniv
+2120+ DA84
 # file closed: ./Universe/univ_ship_data.asm
- 909  DA7C
- 910  DA7C                  SLOT    UniverseBankAddr
- 911  DA7C                  PAGE    BankUNIVDATA1
- 912  DA7C              	ORG	UniverseBankAddr,BankUNIVDATA1
+ 909  DA84
+ 910  DA84                  SLOT    UniverseBankAddr
+ 911  DA84                  PAGE    BankUNIVDATA1
+ 912  DA84              	ORG	UniverseBankAddr,BankUNIVDATA1
  913  C000 FF           UNIVDATABlock1      DB $FF
  914  C001 00 00 00...                      DS $1FFF                 ; just allocate 8000 bytes for now
  915  E000

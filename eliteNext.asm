@@ -145,7 +145,7 @@ HandleBankSelect:       ld      a,$00
 CallCursorRoutine:      call    $0000
 ; need to optimise so not looping over agint for all universe doign ingle updates
 UpdateUniverseSpeed:    MMUSelectUniverseN 0
-                        ;call    TestRollLoop
+                        ; call    TestRollLoop
                         ld      a,(DELTA)
                         ld      d,0
                         ld      e,a

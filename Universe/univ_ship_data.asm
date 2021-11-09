@@ -1849,112 +1849,12 @@ AHLequUbnkZplusAHL:     ld      b,a                 ; b =sign of subtraction
 
 
 
-; Test roll only so beta will be 0 therefore:
-; 1. K2 = y - alpha * x
-; 2. z = z + 0 * K2     so z in untouched
-; 3. y = K2 * z
-; 4. x = x + alpha * y
 ; Full version
 ; 1. K2 = y - alpha * x
 ; 2. z = z + beta * K2
 ; 3. y = K2 - beta * z
 ; 4. x = x + alpha * y
-;------1. K2 = y - alpha * x
-;;;ApplyMyRollToPosition:  ld      a,(ALP1)            
-;;;                        ld      d,0
-;;;                        ld      e,a                 ; de = unsigned roll magnitude
-;;;                        ld      hl,(UBnKxlo)        ; hl = position X unsigned
-;;;                        ld      l,h
-;;;                        ld      h,0
-;;;                        call    mulDEbyHL          ; hl = de * hl
-;;;                        ld      a,(ALP2)
-;;;                        ld      b,a                 ; b = sign
-;;;                        ld      a,(UBnKxsgn)        ; a = position sign
-;;;                        xor     b                   ; xor so if opposite then 
-;;;                        and     $80                 ; so -*- = +, +*+ = + opposite signes = negative
-;;;                        call    APPequYPosPlusAPP
-;;;                        ld      (varKp1),hl
-;;;                        ld      (varKp3),a          ; Kp = y - alph * x as 16 bit + sign bit
-;;;;------2. z = z + beta * K2 and store in K2p
-;;;.ZEquZPlusBetaMulK2:    ld      a,(BET1)            
-;;;                        ld      d,0
-;;;                        ld      e,a
-;;;                        call    mulDEbyHL
-;;;                        ld      a,(varKp3)          ; get k2 sign back
-;;;                        ld      c,a
-;;;                        ld      a,(BET2)
-;;;                        xor     c                   ; AHL = beta * k2
-;;;                        and     $80
-;;;                        call    APPequZPosPlusAPP  ; AHL = z + beta * k2
-;;;                        ld      (varK2p1),hl
-;;;                        ld      (varK2p3),a          ; K2 = z + beta * K2
-;;;                        ld      (UBnKzlo),hl; DEBUG
-;;;                        ld      (UBnKzsgn),a
-;;;;------3. y = K2 - beta * z and store in K3p
-;;;.YEquK2MinusBetaMulZ:   ld      a,(BET1)            
-;;;                        ld      d,0
-;;;                        ld      e,a
-;;;                        ld      hl,(UBnKzlo)        ; hl = position X unsigned
-;;;                        ld      l,h
-;;;                        ld      h,0
-;;;                        call    mulDEbyHL
-;;;                        ld      a,(BET2)
-;;;                        ld      b,a                 ; b = sign
-;;;                        ld      a,(UBnKzsgn)        ; a = position sign
-;;;                        xor     b                   ; xor so if opposite then 
-;;;                        and     $80                 ; so -*- = +, +*+ = + opposite signes = negative
-;;;                        call    AHLequKminusAHL
-;;;                        ld      (UBnKylo),hl; DEBUG
-;;;                        ld      (UBnKysgn),a
-;;;                        ld      (varK3p1),hl
-;;;                        ld      (varK3p3),a          ; Kp =  y = K2 - beta * z
-;;;;------4. x = x + alpha * y                      
-;;;.XequXPlusAlphaMulY:    ld      a,(ALP1)            
-;;;                        ld      d,0
-;;;                        ld      e,a                 ; de = unsigned roll magnitude
-;;;                        ld      hl,(UBnKylo)        ; hl = position X unsigned
-;;;                        ld      l,h
-;;;                        ld      h,0
-;;;                        call    mulDEbyHL          ; hl = de * hl
-;;;                        ld      a,(ALP2)
-;;;                        ld      b,a                 ; b = sign
-;;;                        ld      a,(UBnKysgn)        ; a = position sign
-;;;                        xor     b                   ; xor so if opposite then 
-;;;                        and     $80                 ; so -*- = +, +*+ = + opposite signes = negative                
-;;;                        ld      c,a                 ; save sign in c
-;;;                        ex      de,hl               ; de = alpha & y, c = sign
-;;;                        ld      hl,(UBnKxlo)        ; hl = x
-;;;                        ld      a,(UBnKxsgn)        ; a x sign
-;;;                        ld      b,a
-;;;;XX                        ld      h,a                 
-;;;;XX                        or      h                   ; hl - xpos S15 format
-;;;;XX                        ld      a,c; was b?
-;;;;XX                        or      d
-;;;;XX                        ld      d,a
-                        
-                        ;; calcs HLB + DEC where B and C are signs
-;; result HL with A as sign
-;; special handling if result is zero forcign sign bit to be zero
-;                        call    ADDHLDESignBC:
-;
-;
-;                        ;call    ADDHLDESignedv3 *** THIS DOES NOT WORK
-;                        ld      (UBnKxlo), hl
-;;XX                        ld      a,h
-;                        and     $80
-;                        ld      (UBnKxsgn), a
-;;.SaveZPos               ld      hl,(varK2p1)
-;;                        ld      (UBnKzlo),a
-;;                        ld      a,(varK2p3)
-;;                        ld      (UBnKzsgn),a
-;;.SaveYPos               ld      hl,(varK3p1)
-;;                        ld      (UBnKylo),a
-;;                        ld      a,(varK3p3)
-;;                        ld      (UBnKysgn),a
-;                        
-;                        
-;                        ret
-;
+
 
                         MACRO   APPequPosPlusAPP Position, PositionSign
                         push    bc
@@ -2087,14 +1987,11 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         ld      (UBnKxsgn),a                ; save resutl stright into X pos
                         ld      (UBnKxlo),hl                
                         ;break
-                        ret
-                        
-                        
-                      ;  break
-                       ; call    ApplyMyRollToPosition
-        ;                call    ApplyMyRollToNosevY
-        ;                call    ApplyMyRollToSidevY
-        ;                call    ApplyMyRollToRoofvY
+              
+                       
+                        call    ApplyMyRollToNosevY
+                        call    ApplyMyRollToSidevY
+                        call    ApplyMyRollToRoofvY
 .NoRotation:            ret
 ; .....................................................
 ; Process Nodes does the following:
