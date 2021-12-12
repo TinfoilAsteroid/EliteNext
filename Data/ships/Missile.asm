@@ -10,6 +10,7 @@ Missile:	DB $00, $06, $40
 	DW MissileNormals
 	DB $02, $00
 	DW MissileVertices
+                        DB 0,0                      ; Type and Tactics
 
 MissileVertices:	DB $00, $00, $44, $1F, $10, $32
 	DB $08, $08, $24, $5F, $21, $54

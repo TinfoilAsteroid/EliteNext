@@ -255,8 +255,8 @@ OuterHyperCount			DB 	0				; 2E		TODO Replace with 16 bit counter later
 InnerHyperCount			DB 	0				; 2F
 ECMActive				DB 	0				; 30		ECM Active flag
 JSTX                    DW  0               ;           Joystick analog value
-
-ALP1					DB 	0				; 31		ALP1	Roll magnitude
+ALPHA					DB	0				; 8D        Alpha with bit 7 sign
+ALP1					DB 	0				; 31		ALP1	Roll magnitude Also Apha
 ALP2					DB  0				; 32		ALP2	Roll Sign
 ALP2FLIP				DB  0				; 33		ALP2	negated roll sign
 ALP1MAXR                DB  31               ;   Maximum roll, added becuase we may allow different ship types
@@ -335,7 +335,6 @@ ZZDust					DB	0				;	88		ZZDust (Poss 16 bit need to check)
 XX13                    DB  0               ;   89
 MCNT					DB 	0				; 8A
 TYPE					DB	0				; 8C used for ship type in drawing
-ALPHA					DB	0				; 8D
 DockedFlag				DB	0				; 8E
 GamePaused              DB  0
 varSWAP                 DB  0               ; 90 , general purpose swap variable

@@ -153,7 +153,10 @@ StarProcessLoop:        push    bc                                  ; save count
                         ld      e,a
                         ld      d,0                                 ; de = zhi/256
                         ld      a,(DELTA)
-                        ld      b,a
+                        cp      0
+                        jr      nz,.NormalSpeed
+                        inc     a                                   ; so the is at lest some dust movement
+.NormalSpeed:           ld      b,a
                         ld      c,0                                 ; bc = delta * 256
                         call    BC_Div_DE                           ; BC = BC.DE , HL = remainder
                         ShiftHLRight1

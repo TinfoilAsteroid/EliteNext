@@ -10,6 +10,7 @@ Rock_Hermit:	DB $07, $19, $00
 	DW Rock_HermitNormals
 	DB $01, $02
 	DW Rock_HermitVertices
+                        DB 0,0                      ; Type and Tactics
 
 	
 Rock_HermitVertices:	DB $00, $50, $00, $1F, $FF, $FF

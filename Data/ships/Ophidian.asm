@@ -10,6 +10,8 @@ Ophidian:	            DB $02, $0E, $88
                         DW OphidianNormals
                         DB $01, $1A
                         DW OphidianVertices
+                        DB 0,0                      ; Type and Tactics
+                        
 OphidianVertices:	    DB $14, $00, $46, $9F, $68, $02
                         DB $14, $00, $46, $1F, $67, $01
                         DB $00, $0A, $28, $1F, $22, $01

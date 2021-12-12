@@ -10,6 +10,8 @@ Splinter:	            DB $B0, $01, $00
                         DW SplinterNormals
                         DB $05, $00
                         DW SplinterVertices
+                        DB 0,0                      ; Type and Tactics
+
 SplinterVertices:	    DB $18, $19, $10, $DF, $12, $33
                         DB $00, $0C, $0A, $3F, $02, $33
                         DB $0B, $06, $02, $5F, $01, $33

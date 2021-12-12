@@ -10,6 +10,7 @@ TransportType10:	DB $00, $09, $C4
 	DW TransportType10Normals
 	DB $02, $00
 	DW TransportType10Vertices
+                        DB 0,0                      ; Type and Tactics
 
 TransportType10Vertices:	DB $00, $0A, $1A, $3F, $06, $77
 	DB $19, $04, $1A, $BF, $01, $77

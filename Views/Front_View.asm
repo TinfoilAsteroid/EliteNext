@@ -1,5 +1,26 @@
 front_page_page_marker  DB "FrontView   PG62"    
 
+draw_front_calc_alpha:  ld      b,a
+                        and     $80
+                        ld      (ALP2),a                            ; set sign 
+                        ld      c,a                                 ; save sign
+                        xor     $80
+                        ld      (ALP2FLIP),a                        ; and oppsite sign
+                        ld      a,(JSTX)
+                        test    $80
+                        jr      z,  .PositiveRoll
+.NegativeRoll:          neg
+.PositiveRoll           srl     a                                   ; divide sign by 4
+                        srl     a                                  
+                        cp      8
+                        jr      c,.NotIncreasedDamp                 ; if a < 8 divide by 2 again
+.IncreasedDamp          srl     a
+.NotIncreasedDamp:      ld      (ALP1),a
+                        or      c
+                        ld      (ALPHA),a                           ; a = signed bit alph1
+                        ret
+                        
+; Do the same for pitch                        
 
 draw_front_view:        MMUSelectLayer1
                         call    l1_cls
@@ -61,20 +82,7 @@ TestLeftPressed:        ld      hl,(addr_Pressed_RollLeft)
                         ;break
                         dec     a                                   ; increase joystick roll
                         ld      (JSTX),a
-                        ld      b,a                                 ; b = current roll
-                        and     $80                                 ; a= sign of current rol
-                        ld      (ALP2),a                            ; set sign 
-                        xor     $80
-                        ld      (ALP2FLIP),a                        ; and oppsite sign
-                        ld      a,(JSTX)
-                        JumpOnBitClear a,7,.PositiveRoll
-.NegativeRoll:          neg
-.PositiveRoll           srl     a
-                        srl     a
-                        cp      8
-                        jr      c,.NotIncreasedDamp
-.IncreasedDamp          srl     a
-.NotIncreasedDamp:      ld      (ALP1),a
+                        call    draw_front_calc_alpha
 TestRightPressed:       ld      hl,(addr_Pressed_RollRight)
                         ld      a,(hl)
                         IfAIsZeroGoto   .DampenRoll
@@ -85,21 +93,7 @@ TestRightPressed:       ld      hl,(addr_Pressed_RollRight)
                         ;break
                         inc     a                                   ; increase joystick roll
 .UpdateAlphRoll:        ld      (JSTX),a
-                        ld      b,a                                 ; b = current roll
-                        and     $80                                 ; a= sign of current rol
-                        ld      (ALP2),a                            ; set sign 
-                        xor     $80
-                        ld      (ALP2FLIP),a                        ; and oppsite sign
-                        ld      a,(JSTX)
-                        test    $80
-                        jr      z,  .PositiveRoll
-.NegativeRoll:          neg
-.PositiveRoll           srl     a
-                        srl     a
-                        cp      8
-                        jr      c,.NotIncreasedDamp
-.IncreasedDamp          srl     a
-.NotIncreasedDamp:      ld      (ALP1),a
+                        call    draw_front_calc_alpha
                         jr      TestDivePressed
 .DampenRoll:            ld      hl,dampenRcounter
                         dec     (hl)
@@ -125,7 +119,7 @@ TestDivePressed:        ld      hl,(addr_Pressed_Dive)
                         jr      z,TestClimbPressed
                         ;break
                         dec     a                                   ; increase joystick roll
-                       ld      (JSTY),a
+                        ld      (JSTY),a
                         ld      b,a                                 ; b = current roll
                         and     $80                                 ; a= sign of current rol
                         ld      (BET2),a                            ; set sign 

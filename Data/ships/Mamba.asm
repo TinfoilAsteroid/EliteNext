@@ -10,6 +10,7 @@ Mamba:	DB $01, $13, $24
 	DW MambaNormals
 	DB $02, $12
 	DW MambaVertices
+                        DB 0,0                      ; Type and Tactics
 
 MambaVertices:	DB $00, $00, $40, $1F, $10, $32
 	DB $40, $08, $20, $FF, $20, $44

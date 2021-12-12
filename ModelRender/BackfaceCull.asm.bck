@@ -1,0 +1,151 @@
+CurrentNormIdx  DB 0
+; SomeFacesVisible:   
+; EE29:                                      
+BackFaceCull:
+;debug:jp debug                       
+; DEBUG  force for now
+;                        ld     a,MaxVisibility                 ; max visibility                                               ;;;; default max visibility
+;                        ld     (LastNormalVisible),a           ; XX4                                                          ;;;;                                    
+;
+; DEBUG        
+.ShipPosToXX18:         ld  hl,UBnKxlo                      ; Copy ship pos to camera work vector XX18
+                        ld  de,UBnkDrawCam0xLo
+                        ld  bc,9
+                        ldir
+                        ReturnIfMemisZero FaceCtX4Addr      ; get number of faces * 4      FaceCntX4 &  return if no faces
+                       ; break
+.BackfaceLoop:          ld      a,(QAddr)                   ; a = ship normal scale factor
+                        ld      iyl,a                       ; iyl = scale factor
+.ScaleNormal:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then we have scaled XX18
+                        IfAIsZeroGoto .ScaleDone            ; 
+                        ld      hl,(UBnkDrawCam0xLo)        ; pull postition into registers
+                        ld      de,(UBnkDrawCam0yLo)        ; we only pull in if needed to save fetches
+                        ld      bc,(UBnkDrawCam0zLo)        ;
+.ScaleNormalLoop:       inc     iyl                         ; Q goes up by one
+                        ShiftHLRight1                       ; divide cam position by 2
+                        ShiftDERight1                       ;
+                        ShiftBCRight1                       ;
+                        ld      a,b                         ; loop if not scaled down
+                        IfANotZeroGoto .ScaleNormalLoop     ;
+                        ld      (UBnkDrawCam0xLo),hl        ; save position back to XX18
+                        ld      (UBnkDrawCam0yLo),de        ;
+                        ld      (UBnkDrawCam0zLo),bc        ;
+; By this point XX18 = scaled draw cam and iyl = scale factor
+.ScaleDone:             ld      a,iyl
+                        ld      (varXX17),a                  ; XX17 = normal scale factor for current ship adjusted for camera
+    call    CopyRotmatToTransMat             ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
+    call    ScaleXX16Matrix197               ;#02; Normalise XX16
+;    call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
+    call    InverseXX16                      ;#11; Invert rotation matrix
+                        
+                        
+                        
+                        call    CopyXX18toXX15              ; copy DrawCam to Xx15
+                        call    XX12EquNodeDotOrientation   ; Xx12 = XX15 (face normal) dot rotation matrix
+                        call    CopyXX12ScaledToXX18              ; now XX18 = dot product
+.ProcessNormals:        ld      hl,UBnkHullNormals                                                                                                 ;;; V = address of Normal start
+                        ld      (varV),hl  
+                        ld      a,(FaceCtX4Addr)                                        ; For each face
+                        srl     a                                                       ;
+                        srl     a                                                       ;
+                        ld      b,a                                                     ;
+                        xor     a
+                        ld      (CurrentNormIdx),a                                                   ; used to increment up face incdex as b decrements
+.ProcessNormalsLoop:    push    hl
+                        push    bc
+                        ld      a,(hl)                                                  ;     Get Face sign and visibility distance byte 
+                        and     $1F                                                     ;     if normal visibility range  < XX4
+                        ;JumpIfAGTENusng c,FaceVisible                                   ; commented out for debuggging the skip 
+.CheckFaceVisibility:   call    CopyFaceToXX12              ; Get Face data into XX12
+                        ld      a,(varXX17)                  ; if scale factor < 4 then skip next bit
+                        JumpIfALTNusng 4,.LL92              
+.LargeScaleFactor:      call    CopyXX18toXX15
+                        jp      .LL89
+.Ovflw:                 ld      a,(XX18)
+                        srl     a
+                        ld      (XX18),a
+                        ld      a,(XX18+6)
+                        srl     a
+                        ld      (XX18+6),a
+                        ld      a,(XX18+3)
+                        srl     a
+                        ld      (XX18+3),a
+                        ld      a,1                        ; set scale to 1 so when we fall through into LL92, we divide the normal vector by 2 as well
+.LL92:                  ld      b,a
+                        ldCopyByte  XX12,   UBnkXScaled
+                        ldCopyByte  XX12+2, UBnkYScaled
+                        ldCopyByte  XX12+4, UBnkZScaled
+.LL93                   dec     b
+                        jp      m, .LL94
+.LL93Loop:              ShiftMem8Right1 UBnkXScaled
+                        ShiftMem8Right1 UBnkYScaled
+                        ShiftMem8Right1 UBnkZScaled
+                        dec     b
+                        jp      p,.LL93Loop
+.LL94:                  ldCopyByte  UBnkZScaled,     varR
+                        ldCopyByte  UBnkYScaled,     varS
+                        ldCopyByte  UBnkDrawCam0zLo, varQ
+                        ld      a,(XX18+8)
+                        call    SAEquSRPlusAQ
+                        jp      c,.Ovflw
+                        ld      (UBnkZScaled),a
+                        ldCopyByte  varS,            UBnkZScaledSign
+                        ldCopyByte  UBnkXScaled,     varR
+                        ldCopyByte  UBnkXScaledSign, varS
+                        ldCopyByte  UBnkDrawCam0xLo, varQ
+                        ld      a,(UBnkDrawCam0xSgn)
+                        call    SAEquSRPlusAQ
+                        jp      c,.Ovflw
+                        ld      (UBnkXScaled),a
+                        ldCopyByte  varS,            UBnkXScaledSign
+                        ldCopyByte  UBnkYScaled,     varR
+                        ldCopyByte  UBnkYScaledSign, varS
+                        ld      a,(UBnkDrawCam0ySgn)
+                        call    SAEquSRPlusAQ
+                        jp      c,.Ovflw
+                        ld      (UBnkYScaled),a
+                        ldCopyByte   varS, UBnkYScaledSign
+.LL89:                  ldCopyByte  UBnkXX12xLo, varQ
+                        ld      a,(UBnkXScaled)
+                        call    AequAmulQdiv256
+                        ld      (varT),a
+                        ld      a,(UBnkXX12xSign)
+                        ld      hl,UBnkXScaledSign
+                        xor     (hl)
+                        ld      (varS),a
+                        ldCopyByte  UBnkXX12yLo, varQ
+                        ld      a,(UBnkYScaled)
+                        call    AequAmulQdiv256
+                        ld      (varQ),a
+                        ldCopyByte  varT,varR
+                        ld      a,  (UBnkXX12ySign)
+                        ld      hl, UBnkYScaledSign
+                        xor     (hl)
+                        call    SAEquSRPlusAQ
+                        ld      (varT),a
+                        ldCopyByte  UBnkXX12zLo, varQ
+                        ld      a,  (UBnkZScaled)
+                        call    AequAmulQdiv256
+                        ld      (varQ),a
+                        ldCopyByte  varT, varR
+                        ld      a,  (UBnkZScaledSign)
+                        ld      hl, UBnkXX12zSign
+                        xor     (hl)
+                        call    SAEquSRPlusAQ           ; now A = dot product
+                        test    $80
+                        jr      nz,.FaceVisible
+.FaceNotVisible:        ld      a,(CurrentNormIdx)
+                        call    SetFaceAHidden                                      ;           set face invisible
+                        jp      .ProcessNormalLoopEnd                                ;        end if
+.FaceVisible:           ld      a,(CurrentNormIdx)
+                        call    SetFaceAVisible
+.ProcessNormalLoopEnd:   ld      hl, CurrentNormIdx
+                        inc         (hl)                    ; move index pointer up by one
+                        pop         bc
+                        pop         hl                      ; get normal data pointer back
+                        ld          a,4
+                        add         hl,a                    ; move to next normal entry
+                        ld          (varV),hl               ; save as we need it again
+                        dec         b
+                        jp          nz,.ProcessNormalsLoop
+                        ret                                 ; If Y >= XX20 all normals' visibilities set, onto Transpose. return

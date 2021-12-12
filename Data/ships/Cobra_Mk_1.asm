@@ -10,7 +10,7 @@ Cobra_Mk_1:	            DB $03, $26, $49
                         DW Cobra_Mk_1Normals
                         DB $02, $22
                         DW Cobra_Mk_1Vertices
-
+                        DB 0,0                      ; Type and Tactics
 Cobra_Mk_1Vertices:	    DB $12, $01, $32, $DF, $01, $23
                         DB $12, $01, $32, $5F, $01, $45
                         DB $42, $00, $07, $9F, $23, $88
@@ -22,7 +22,6 @@ Cobra_Mk_1Vertices:	    DB $12, $01, $32, $DF, $01, $23
                         DB $00, $0C, $06, $34, $02, $46
                         DB $00, $01, $32, $42, $01, $11
                         DB $00, $01, $3C, $5F, $01, $11
-
 Cobra_Mk_1VertSize:     equ $ - Cobra_Mk_1Vertices
 Cobra_Mk_1Edges:	    DB $1F, $01, $04, $00
                         DB $1F, $23, $00, $08
@@ -42,7 +41,6 @@ Cobra_Mk_1Edges:	    DB $1F, $01, $04, $00
                         DB $14, $13, $00, $18
                         DB $14, $15, $04, $1C
                         DB $02, $01, $28, $24
-
 Cobra_Mk_1EdgesSize:    equ $ - Cobra_Mk_1Edges
 Cobra_Mk_1EdgesCnt:     equ Cobra_Mk_1EdgesSize/4
 Cobra_Mk_1Normals:	    DB $1F, $00, $29, $0A
@@ -55,6 +53,5 @@ Cobra_Mk_1Normals:	    DB $1F, $00, $29, $0A
                         DB $3F, $00, $00, $9A
                         DB $BF, $79, $6F, $3E
                         DB $3F, $79, $6F, $3E
-
 Cobra_Mk_1NormalsSize:  equ $ - Cobra_Mk_1Normals
 Cobra_Mk_1Len:          equ $ - Cobra_Mk_1

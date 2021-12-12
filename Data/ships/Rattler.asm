@@ -10,6 +10,7 @@ Rattler:	DB $02, $17, $70
             DW RattlerNormals
             DB $01, $22
             DW RattlerVertices
+                        DB 0,0                      ; Type and Tactics
 
 
 RattlerVertices:	DB $00, $00, $3C, $1F, $89, $23

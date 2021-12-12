@@ -10,6 +10,8 @@ Moray:	                DB $01, $03, $84
                         DW MorayNormals
                         DB $02, $2A
                         DW MorayVertices
+                        DB 0,0                      ; Type and Tactics
+                        
 MorayVertices:	        DB $0F, $00, $41, $1F, $02, $78
                         DB $0F, $00, $41, $9F, $01, $67
                         DB $00, $12, $28, $31, $FF, $FF

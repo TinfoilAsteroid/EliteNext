@@ -1,24 +1,16 @@
-Worm:	DB $00, $26, $49
-	DW WormEdges
-	DB WormEdgesSize
-	DB $00, $12
-	DB WormVertSize
-	DB WormEdgesCnt
-	DB $00, $00
-	DB WormNormalsSize
-	DB $13, $1E, $17
-	DW WormNormals
-	DB $03, $08
-	DW WormVertices
-	
-	
-	
-	
-	
-	
-	
-	
-	
+Worm:	                DB $00, $26, $49
+                        DW WormEdges
+                        DB WormEdgesSize
+                        DB $00, $12
+                        DB WormVertSize
+                        DB WormEdgesCnt
+                        DB $00, $00
+                        DB WormNormalsSize
+                        DB $13, $1E, $17
+                        DW WormNormals
+                        DB $03, $08
+                        DW WormVertices
+                        DB 0,0                      ; Type and Tactics
 WormVertices:	DB $0A, $0A, $23, $5F, $02, $77
 	DB $0A, $0A, $23, $DF, $03, $77
 	DB $05, $06, $0F, $1F, $01, $24

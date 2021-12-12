@@ -19,35 +19,36 @@ HLeqyHLmulAdiv256:      push    bc,,de
                         ret
 
 
-                   ; .MAD	\ -> &22AD  \ Multiply and Add  (DE also) X.A(Lo.Hi) = Q*A + R.S (Lo.Hi)
-madXAequQmulAaddRS:     ld      ixh,a
-                        and		$7F
-                        ld      e,a
+MacroDEEquQmulASigned:  MACRO
+                        ld      d,a                         ; save a into d
                         ld      a,(varQ)
-                        ld		ixl,a
-                        and		$7F
+                        ld      e,a
+                        xor     d                           ; a = a xor var Q
+                        and     $80
+                        ld      b,a                         ; b = sign of a xor q
+                        ld      a,d                         ; d = abs d (or a reg)
+                        and     $7F 
+                        ld      d,a                     
+                        ld      a,e                         ; e = abs e (or varQ)
+                        and     $7F
+                        ld      e,a 
+                        mul                                 ; de = a * Q
+                        ld      a,d
+                        or      b                           ; de = a * Q leading sign bit 
                         ld      d,a
-madDEequDmulA
-    mul                                 ;de = d * e
-	ld		a,ixh
-	xor		ixl
-	and		$80
-	or		d
-	ld		d,a
-madDEaddRS:
-	ld		hl,(varR)
-    ;ld      a,(varR)
-    ;ld      l,a
-    ;ld      a,(varS)
-    ;ld      h,a
-	call	madXAAddHLDESigned
-;
-;   add     hl,de                       ; hl = R.S + DE
-    ex      de,hl                       ; de = R.S + DE
-    ClearCarryFlag
-    ld      ixl,e
-    ld      a,d
-    ret
+                        ENDM
+
+                        
+
+                   ; .MAD	\ -> &22AD  \ Multiply and Add  (DE also) X.A(Lo.Hi) = Q*A + R.S (Lo.Hi)
+madXAequQmulAaddRS:     MacroDEEquQmulASigned
+madDEaddRS:             ld		hl,(varR)
+                        call	madXAAddHLDESigned
+                        ex      de,hl                       ; de = R.S + DE
+                        ClearCarryFlag
+                        ld      ixl,e
+                        ld      a,d
+                        ret
 
 
 madXAAddHLDESigned:     ld      a,h

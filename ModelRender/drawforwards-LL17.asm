@@ -47,7 +47,7 @@ LL41:                                       ; visibilities now set in XX2,X Tran
 ; ......................................................                                                                            ;;; 
 CullBackFaces:
 EE29Entry:
-        call    BackFaceCull
+        call    CullV2
 ;-- All normals' visibilities now set in XX2,X                                                                                      ;;;
 TransposeMatrix:
 LL42:	                                    ; DO nodeX-Ycoords their comment  \  TrnspMat                                           ;;; ......................................................

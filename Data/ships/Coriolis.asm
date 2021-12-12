@@ -10,6 +10,7 @@ Coriolis:	            DB $00, $64, $00
                         DW CoriolisNormals
                         DB $00, $06
                         DW CoriolisVertices
+                        DB 2,0                      ; Type and Tactics                        
 CoriolisVertices:	    DB $A0, $00, $A0, $1F, $10, $62
                         DB $00, $A0, $A0, $1F, $20, $83
                         DB $A0, $00, $A0, $9F, $30, $74
@@ -71,5 +72,5 @@ CoriolisNormals:	    DB $1F, $00, $00, $A0
                         DB $3F, $6B, $6B, $6B
                         DB $BF, $6B, $6B, $6B
                         DB $3F, $00, $00, $A0
-CoriolisNormalsSize:    equ $ - CoriolisNormals	
+CoriolisNormalsSize:    equ $ - CoriolisNormals
 CoriolisLen:            equ $ - Coriolis	

@@ -10,6 +10,7 @@ Cougar:	                DB $03, $13, $24
                         DW CougarNormals
                         DB $02, $34
                         DW CougarVertices
+                        DB 0,0                      ; Type and Tactics                        
 CougarVertices:	        DB $00, $05, $43, $1F, $02, $44
                         DB $14, $00, $28, $9F, $01, $22
                         DB $28, $00, $28, $BF, $01, $55

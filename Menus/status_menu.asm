@@ -152,21 +152,21 @@ STAT_expand_name:       ld      a,(hl)
                         inc     hl                  ; on to next word
                         jr      STAT_expand_name
 
-STAT_First_Item         EQU     2
+STAT_First_Item         EQU     EQ_CARGO_BAY
 STAT_buffer_list:       ld      a,(Galaxy)       ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
-                        ld      hl,STAT_display_buffer                    ; hl - target buffer
+                        ld      hl,STAT_display_buffer                      ; hl - target buffer
                         ld      a,1                                         ; so it will still skip them on printing
                         ld      de, STAT_display_buff_len
                         call    memfill_dma                                 ; full buffer with ASCII 1 (unprintable character)
                         ld      hl,STAT_display_buffer+STAT_buffer_row_len-1
                         ld      de,STAT_buffer_row_len
-                        ld      b,EQ_ITEM_COUNT
+                        ld      b,EQ_ITEM_COUNT - EQ_CARGO_BAY
                         xor     a
 .EoLLoop:               ld      (hl),a                                      ; fix all buffer lines with a null
                         add     hl,de
                         djnz    .EoLLoop
-                        ld      b,EQ_ITEM_COUNT                             ; CurrentGameMaxEquipment
+                        ld      b,EQ_ITEM_COUNT - EQ_CARGO_BAY              ; CurrentGameMaxEquipment but minus fuel and missiles
                         ld      ix,EquipmentFitted + STAT_First_Item        ; ix = equipment master table, ignore missiles
                         ld      iy,STAT_display_buffer                      ; iy = target buffer
                         ld      c,0                                         ; Current Row
@@ -320,27 +320,27 @@ get_cmdr_condition:     ld			a,(DockedFlag)
 .PlayerIsDocked:        xor			a
                         ret
 
-PrintEquipment:         ld		a,(hl)
-                        cp		0
-                        ret		z
-                        ld		a,b
-PrintEquipmentDirect:	call	expandTokenToString
-                        ld		hl,TextBuffer
-                        ld		de,(equipment_cursor)
-                        call	l1_print_at
-                        ld		bc,(equipment_cursor)
-                        ld		a,b
-                        add		a,8
-                        ld		b,a
-                        ld		(equipment_cursor),bc
-                        cp		equipmax_row
-                        jr		c,.SkipColUpdate
-.ColUpdate:             ld		hl,equipment_position2
-                        ld		(equipment_cursor),hl
-                        ret
-.SkipColUpdate:	        ld		a,b
-                        ld		(equipment_cursor+1), a
-                        ret
+;;;PrintEquipment:         ld		a,(hl)
+;;;                        cp		0
+;;;                        ret		z
+;;;                        ld		a,b
+;;;PrintEquipmentDirect:	call	expandTokenToString
+;;;                        ld		hl,TextBuffer
+;;;                        ld		de,(equipment_cursor)
+;;;                        call	l1_print_at
+;;;                        ld		bc,(equipment_cursor)
+;;;                        ld		a,b
+;;;                        add		a,8
+;;;                        ld		b,a
+;;;                        ld		(equipment_cursor),bc
+;;;                        cp		equipmax_row
+;;;                        jr		c,.SkipColUpdate
+;;;.ColUpdate:             ld		hl,equipment_position2
+;;;                        ld		(equipment_cursor),hl
+;;;                        ret
+;;;.SkipColUpdate:	        ld		a,b
+;;;                        ld		(equipment_cursor+1), a
+;;;                        ret
 
 draw_status_menu:       INCLUDE "Menus/clear_screen_inline_no_double_buffer.asm"	
                         ld		a,8

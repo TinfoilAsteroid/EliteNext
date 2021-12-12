@@ -1,0 +1,14 @@
+;-- XX25 --------------------------------------------------------------------------------------------------------------------------
+UbnkProjxLo                 DB  0
+UbnkProjxHi                 DB  0
+UbnkProjxSgn                DB  0
+UbnkProjx                   EQU UbnkProjxLo
+UbnkProjyLo                 DB  0
+UbnkProjyHi                 DB  0
+UbnkProjySgn                DB  0
+UbnkProjy                   EQU UbnkProjyLo
+UbnkProjzLo                 DB  0
+UbnkProjzHi                 DB  0
+UbnkProjzSgn                DB  0
+UbnkProjz                   EQU UbnkProjzLo
+XX25                        EQU UbnkProjxLo

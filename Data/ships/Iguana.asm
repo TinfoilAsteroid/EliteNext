@@ -10,6 +10,7 @@ Iguana:	DB $01, $0D, $AC
 	DW IguanaNormals
 	DB $01, $23
 	DW IguanaVertices
+                        DB 0,0                      ; Type and Tactics
 
 	
 IguanaVertices:	DB $00, $00, $5A, $1F, $23, $01

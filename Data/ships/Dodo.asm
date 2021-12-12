@@ -10,7 +10,7 @@ Dodo:	                DB $00, $7E, $90
                         DW DodoNormals
                         DB $00, $00
                         DW DodoVertices
-
+                        DB 2,0                      ; Type and Tactics
 DodoVertices:	        DB $00, $96, $C4, $1F, $01, $55
                         DB $8F, $2E, $C4, $1F, $01, $22
                         DB $58, $79, $C4, $5F, $02, $33
@@ -35,11 +35,7 @@ DodoVertices:	        DB $00, $96, $C4, $1F, $01, $55
                         DB $10, $20, $C4, $DE, $00, $00
                         DB $10, $20, $C4, $17, $00, $00
                         DB $10, $20, $C4, $57, $00, $00
-
 DodoVertSize:           equ $ - DodoVertices	
-	
-	
-	
 DodoEdges:	            DB $1F, $01, $00, $04
                         DB $1F, $02, $04, $08
                         DB $1F, $03, $08, $0C
@@ -74,13 +70,8 @@ DodoEdges:	            DB $1F, $01, $00, $04
                         DB $14, $00, $54, $5C
                         DB $17, $00, $5C, $58
                         DB $14, $00, $58, $50
-
 DodoEdgesSize:          equ $ - DodoEdges	
-	
-	
 DodoEdgesCnt:           equ DodoEdgesSize/4	
-	
-	
 DodoNormals:	        DB $1F, $00, $00, $C4
                         DB $1F, $67, $8E, $58
                         DB $5F, $A9, $37, $59
@@ -93,6 +84,5 @@ DodoNormals:	        DB $1F, $00, $00, $C4
                         DB $FF, $67, $8E, $58
                         DB $BF, $A9, $37, $59
                         DB $3F, $00, $00, $C4
-
 DodoNormalsSize:        equ $ - DodoNormals	
 DodoLen:                equ $ - Dodo	

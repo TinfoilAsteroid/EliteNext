@@ -10,6 +10,8 @@ TestVector:             DB $03, $41, $23
                         DW TestVectorNormals
                         DB $04,$01
                         DW TestVectorVertices
+                        DB 0,0                      ; Type and Tactics
+
 TestVectorVertices	    DB $00,$40,$00,$1F,$00,$00 
                         DB $00,$20,$00,$1F,$00,$00 
                         DB $40,$00,$00,$1F,$01,$01 

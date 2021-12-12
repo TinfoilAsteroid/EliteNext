@@ -10,6 +10,7 @@ Adder:	                DB $00, $09, $C4
                         DW AdderNormals
                         DB $02, $21
                         DW AdderVertices
+                        DB 0,0                      ; Type and Tactics
 AdderVertices:	        DB $12, $00, $28, $9F, $01, $BC
                         DB $12, $00, $28, $1F, $01, $23
                         DB $1E, $00, $18, $3F, $23, $45

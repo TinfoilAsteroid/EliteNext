@@ -10,6 +10,7 @@ Python_P:	DB $02, $19, $00
 	DW Python_PNormals
 	DB $00, $1B
 	DW Python_PVertices
+                        DB 0,0                      ; Type and Tactics
 
 Python_PVertices:	DB $00, $00, $E0, $1F, $10, $32
 	DB $00, $30, $30, $1F, $10, $54

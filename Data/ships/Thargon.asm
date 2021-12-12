@@ -10,6 +10,7 @@ Thargon:	DB $F0, $06, $40
 	DW ThargonNormals
 	DB $02, $10
 	DW ThargonVertices
+                        DB 0,0                      ; Type and Tactics
 
 	
 ThargonVertices:	DB $09, $00, $28, $9F, $01, $55

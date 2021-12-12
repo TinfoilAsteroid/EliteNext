@@ -10,7 +10,8 @@ ShuttleType9:	DB $0F, $09, $C4
 	DW ShuttleType9Normals
 	DB $02, $00
 	DW ShuttleType9Vertices
-	
+	                        DB 0,0                      ; Type and Tactics
+
 
 ShuttleType9Vertices:	DB $00, $11, $17, $5F, $FF, $FF
 	DB $11, $00, $17, $9F, $FF, $FF

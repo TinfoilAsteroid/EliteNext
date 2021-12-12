@@ -6,6 +6,11 @@ JumpIfNegative:	        MACRO target
                         jp		m, target 
                         ENDM
         
+        
+JumpIfUnderflow:	    MACRO target
+                        jp		po, target 
+                        ENDM
+                
 JumpOnMemBitSet:        MACRO mem, bitnbr, target
                         ld      a,(mem)
                         bit 	bitnbr,a

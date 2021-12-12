@@ -126,6 +126,7 @@ draw_launch_ship:       MMUSelectLayer1
 .SetupGalaxy:           xor     a ; palcehodler as it would cause next macro to fail re initialise all universe banks
                         
                         MaxThrottle
+                        ZeroThrottle; DEBUG
                         ret
 
 loop_launch_ship:       call    LaunchTubeEdges

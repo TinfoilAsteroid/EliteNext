@@ -10,6 +10,7 @@ Sidewinder:	DB $00, $10, $81
 	DW SidewinderNormals
 	DB $02, $10
 	DW SidewinderVertices
+                        DB 0,0                      ; Type and Tactics
 
 SidewinderVertices:	DB $20, $00, $24, $9F, $10, $54
 	DB $20, $00, $24, $1F, $20, $65

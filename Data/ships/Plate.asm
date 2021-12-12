@@ -10,6 +10,7 @@ Plate:	DB $80, $00, $64
 	DW PlateNormals
 	DB $03, $00
 	DW PlateVertices
+                        DB 0,0                      ; Type and Tactics
 
 	
 PlateVertices:	DB $0F, $16, $09, $FF, $FF, $FF

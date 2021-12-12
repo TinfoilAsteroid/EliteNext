@@ -10,6 +10,7 @@ Logo:	DB $00, $26, $49
 	DW LogoNormals
 	DB $01, $00
 	DW LogoVertices
+                        DB 0,0                      ; Type and Tactics
 
 LogoVertices:	DB $00, $09, $37, $5F, $00, $00
 	DB $0A, $09, $1E, $DF, $00, $00

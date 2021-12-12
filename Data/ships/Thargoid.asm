@@ -10,6 +10,7 @@ Thargoid:	DB $00, $26, $49
 	DW ThargoidNormals
 	DB $02, $16
 	DW ThargoidVertices
+                        DB 0,0                      ; Type and Tactics
 
 ThargoidVertices:	DB $20, $30, $30, $5F, $40, $88
 	DB $20, $44, $00, $5F, $10, $44

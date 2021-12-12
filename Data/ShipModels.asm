@@ -1,6 +1,6 @@
                 IFNDEF SHIPEQUATES
                 DEFINE SHIPEQUATES
-ScoopDebrisOffset	    equ	0
+ScoopDebrisOffset	    equ	0                               ; hull byte#0 high nibble is scoop info, lower nibble is debris spin info
 MissileLockLoOffset	    equ 1
 MissileLockHiOffset	    equ 2
 EdgeAddyOffset		    equ 3
@@ -22,6 +22,8 @@ FaceAddyOffset		    equ 16
 QOffset				    equ 18
 LaserOffset			    equ 19
 VerticiesAddyOffset     equ 20
+ShipTypeOffset          equ 22
+ShipNewBitsOffset       equ 23
 
 CobraTablePointer       equ 43
 ;29 faulty

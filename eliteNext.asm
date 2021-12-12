@@ -75,6 +75,8 @@ Initialise:             MMUSelectLayer2
                         call 		l2_initialise
                         ld          a,$FF
                         ld          (ScreenTransitionForced),a
+TidyDEBUG:              ld          a,16
+                        ld          (TidyCounter),a
 
 TestText:               xor			a
                         ld      (JSTX),a
@@ -139,26 +141,40 @@ ScreenTransBlock:       ld      a,$0
                         call    MovementKeyTest
 ;Process cursor keys for respective screen    
 HandleMovement:         ld      a,(CallCursorRoutine+2)
-                        IfAIsZeroGoto     UpdateUniverseSpeed
+                        IfAIsZeroGoto     UpdateUniverse
 HandleBankSelect:       ld      a,$00
                         MMUSelectScreenA
 CallCursorRoutine:      call    $0000
 ; need to optimise so not looping over agint for all universe doign ingle updates
-UpdateUniverseSpeed:    MMUSelectUniverseN 0
-                        ; call    TestRollLoop
-                        ld      a,(DELTA)
-                        ld      d,0
-                        ld      e,a
-                        ld      hl,(UBnKzlo)
-                        ld      a,(UBnKzsgn)
-                        ld      b,a
-                        ld      c,$80
-                        call    ADDHLDESignBC
-                        ld      (UBnKzlo),hl
-                        ld      (UBnKzsgn),a
+UpdateUniverse:         MMUSelectUniverseN 0
+;IsItSpaceStation:
+;
+;.ISDK	\ is docking to SST nearby
+;AD 49 09                LDA &0949 \ allwk+37+36	\ UNIV #SST last byte NEWB,  K%+NI%+36
+;29 04                   AND #4			\ keep bit2, is space station angry?
+;D0 22                   BNE MA62		\ Failed dock
+;A5 54                   LDA &54	   \ INWK+14	\ rotmat0z hi, face normal
+;C9 D6                   CMP #&D6		\ z_unit  -ve &56 to -ve &60, 26 degrees.
+;90 1C                   BCC MA62		\ Failed dock
+;20 AE 42                JSR &42AE  \ SPS1	\ XX15 vector to planet
+;A5 36                   LDA &36	   \ XX15+2	\ z_unit away from planet
+;C9 56                   CMP #&56		\ < #&60 ?
+;90 13                   BCC MA62		\ Failed dock
+;A5 56                   LDA &56	   \ INWK+16	\ rotmat1x hi, slit roll
+;29 7F                   AND #&7F		\ clear sign
+;C9 50                   CMP #&50		\ < #&60 ?
+;90 0B                   BCC MA62		\ Failed dock
+;
                         call    ApplyMyRollAndPitch
-                        ;       call    DEBUGSETNODES
+                         ;call    DEBUGSETNODES
                         ;       call    DEBUGSETPOS
+                        ld      hl,TidyCounter
+                        dec     (hl)
+                        jr      nz ,.SkipTidy
+                        ld      a,16
+                        ld      (TidyCounter),a
+                       ; call    TIDY
+.SkipTidy:                        
                         call   ProcessNodes
 DrawShipTest:           MMUSelectLayer1
                         ld     a,$DF
@@ -166,9 +182,10 @@ DrawShipTest:           MMUSelectLayer1
 CheckIfViewUpdate:      ld      a,$00
                         cp      0
                         jr      z, MenusLoop; This will change as more screens are added TODO
-SpecificCodeWhenInView: ;call   SetAllFacesVisible
-                        call   BackFaceCull				; culling but over aggressive backface assumes all 0 up front TOFIX
-                        call   PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
+SpecificCodeWhenInView: call   SetAllFacesVisible
+                        call   CullV2				; culling but over aggressive backface assumes all 0 up front TOFIX
+      ;              break                       
+                       call   PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
                         MMUSelectLayer2
                         call   l2_cls
                         MMUSelectUniverseN 0    
@@ -245,7 +262,7 @@ TestPauseMode:          ld      a,(GamePaused)
 TestQuit:               ld      a,c_Pressed_Quit
                         call    is_key_pressed
                         ret
-currentDemoShip:        DB 0
+currentDemoShip:        DB 13
 
 
 DEBUGSETNODES:          ld      hl,DEBUGUBNKDATA
@@ -256,13 +273,22 @@ DEBUGSETNODES:          ld      hl,DEBUGUBNKDATA
                         ld      de,UBnkrotmatSidevX
                         ld      bc,6*3
                         ldir
-                        
                         ret
+
 DEBUGSETPOS:            ld      hl,DEBUGUBNKDATA 
                         ld      de,UBnKxlo 
                         ld      bc,9 - 3
                         ldir
                         ret
+
+TidyCounter             DB  0
+
+
+; culltest
+DEBUGUBNKDATA:          db      $00,	$00,	$00,	$00,	$00,	$00,	$Fc,	$02,	$00
+DEBUGROTMATDATA:        db      $00,	$60,	$00,	$00,	$00,	$00
+                        db      $00,	$00,	$00,	$60,	$00,	$00
+                        db      $00,	$00,	$00,	$00,	$00,	$E0
 
 ; FAILS due to sharp angle, OK now
 ;DEBUGUBNKDATA:          db      $39,	$01,	$00,	$43,	$01,	$00,	$EF,	$03,	$00
@@ -332,11 +358,11 @@ DEBUGSETPOS:            ld      hl,DEBUGUBNKDATA
 ;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
 ;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
 ; Test top center clip test 1 - good test many ships fail
-DEBUGUBNKDATA:          db      $19,    $00,    $00,    $50,    $00,    $00,    $20,    $01,    $00
-          
-DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
-                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
-                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
+;DEBUGUBNKDATA:          db      $19,    $00,    $00,    $50,    $00,    $00,    $20,    $01,    $00
+;          
+;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
+;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
+;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
 ; Test top center clip test 2 - Poss 2nd ship has an issue with a small line
 ;DEBUGUBNKDATA:          db      $19,    $00,    $00,    $60,    $00,    $00,    $2F,    $01,    $00
 ;          
@@ -491,7 +517,7 @@ SetInitialShipPosition: ld      hl,$0000
                         ld      (UBnKxlo),hl
                         ld      hl,$0000
                         ld      (UBnKylo),hl
-                        ld      hl,$0F04
+                        ld      hl,$08B4
                         ld      (UBnKzlo),hl
                         xor     a
                         ld      (UBnKxsgn),a
@@ -499,9 +525,9 @@ SetInitialShipPosition: ld      hl,$0000
                         ld      (UBnKzsgn),a
 ;    call    Reset TODO
                         call	InitialiseOrientation            ;#00;
-                        ld      a,8
+                        ld      a,1
                         ld      (DELTA),a
-                        ld      hl,16
+                        ld      hl,4
                         ld      (DELTA4),hl
                         ret    
 

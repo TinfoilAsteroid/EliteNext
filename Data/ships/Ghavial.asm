@@ -10,6 +10,7 @@ Ghavial:	DB $03, $26, $00
 	DW GhavialNormals
 	DB $00, $27
 	DW GhavialVertices
+                        DB 0,0                      ; Type and Tactics
 
 GhavialVertices:	DB $1E, $00, $64, $1F, $67, $01
 	DB $1E, $00, $64, $9F, $6B, $05

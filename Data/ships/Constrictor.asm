@@ -13,6 +13,7 @@ Constrictor:    	    DB $F3, $49, $26
                         DW ConstrictorNormals
                         DB $02,$2F
                         DW ConstrictorVertices
+                        DB 0,0                      ; Type and Tactics                        
                     ; missiles = 3             
 ConstrictorVertices     DB $14, $07, $50, $5F, $02, $99 
                         DB $14, $07, $50, $DF, $01, $99 

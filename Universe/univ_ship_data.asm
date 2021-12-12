@@ -14,30 +14,8 @@ StartOfUniv:        DB "Universe PG"
 ;   \ -> & 565D \ See ship data files chosen and loaded after flight code starts running.
 ; Universe map substibute for INWK
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
-UBnKxlo                     DB  0                       ; INWK+0
-UBnKxhi                     DB  0                       ; there are hi medium low as some times these are 24 bit
-UBnKxsgn                    DB  0                       ; INWK+2
-UBnKylo                     DB  0                       ; INWK+3 \ ylo
-UbnKyhi                     DB  0                       ; INWK+4 \ yHi
-UBnKysgn                    DB  0                       ; INWK +5
-UBnKzlo                     DB  0                       ; INWK +6
-UBnKzhi                     DB  0                       ; INWK +7
-UBnKzsgn                    DB  0                       ; INWK +8
-;-Rotation Matrix of Ship----------------------------------------------------------------------------------------------------------
-; Rotation data is stored as lohi, but only 15 bits with 16th bit being  a sign bit. Note this is NOT 2'c compliment
-UBnkrotmatSidevX            DW  0                       ; INWK +21
-UBnkrotmatSidev             equ UBnkrotmatSidevX
-UBnkrotmatSidevY            DW  0                       ; INWK +23
-UBnkrotmatSidevZ            DW  0                       ; INWK +25
-UBnkrotmatRoofvX            DW  0                       ; INWK +15
-UBnkrotmatRoofv             equ UBnkrotmatRoofvX
-UBnkrotmatRoofvY            DW  0                       ; INWK +17
-UBnkrotmatRoofvZ            DW  0                       ; INWK +19
-UBnkrotmatNosevX            DW  0                       ; INWK +9
-UBnkrotmatNosev             EQU UBnkrotmatNosevX
-UBnkrotmatNosevY            DW  0                       ; INWK +11
-UBnkrotmatNosevZ            DW  0                       ; INWK +13
-
+                        INCLUDE "./Variables/ShipPosVars.asm"
+                        INCLUDE "./Variables/RotationMatrixVars.asm"
 
 UBnkspeed                   DB  0                       ; INWK +27
 UBnkAccel                   DB  0                       ; INWK +28
@@ -57,23 +35,38 @@ UBnkaiatkecm                DB  0                       ; INWK +32 ai_attack_uni
 UBnkCam0yLo                 DB  0                       ; INWK +33 ????
 UBnkCam0yHi                 DB  0                       ; INWK +34?????
 UbnKEnergy                  DB  0                       ; INWK +35
+UbnkType                    DB  0                       ; Type 0 Sun, 1 debris, 2 space station, 4 cargo, 8 anthing else
 UbnKNewb                    DB  0                       ; INWK +36 INWK+36
 ; Flags work as follows:
-; 7 - set then remove ship, if set then to code removes without debris
-; 6 - Police ship (used to determine fuguitive status)
-; 4 - Docking
-; 3 - Pirate
-; 2 - Angry status (e.g. space station or bounty hunter)
-; 0 - Trader ship
-INWKxlo                     equ UBnKxlo
-INWKxhi                     equ UBnKxhi                 ; there are hi medium low as some times these are 24 bit
-INWKxsgn                    equ UBnKzsgn                ; INWK+2
-INWKyLo                     equ UBnKylo                 ; INWK+3 \ ylo
-INWKyhi                     equ UbnKyhi                 ; Y Hi???
-INWKysgn                    equ UBnKysgn                ; INWK +5
-INWKzlo                     equ UBnKzlo                 ; INWK +6
-INWKzhi                     equ UBnKzhi                 ; INWK +7
-INWKzsgn                    equ UBnKzsgn                ; INWK +8
+;Bit	Description
+;#0	Trader flag         * 0 = not a trader  * 1 = trader
+;                       80% of traders are peaceful and mind their own business plying their trade between the planet and space station, but 20% of them moonlight as bounty hunters (see bit #1)
+;                       Ships that are traders: Escape pod, Shuttle, Transporter, Anaconda, Rock hermit, Worm
+;#1 Bounty hunter flag  * 0 = not a bounty hunter* 1 = bounty hunter
+;                       If we are a fugitive or a serious offender and we bump into a bounty hunter, they will become hostile and attack us (see bit #2)
+;                       Ships that are bounty hunters: Viper, Fer-de-lance
+;#2	Hostile flag        * 0 = not hostile  * 1 = hostile
+;                       Hostile ships will attack us on sight; there are quite a few of them
+;                       Ships that are hostile: Sidewinder, Mamba, Krait, Adder, Gecko, Cobra Mk I, Worm, Cobra Mk III, Asp Mk II, Python (pirate), Moray, Thargoid, Thargon, Constrictor
+;#3	Pirate flag         * 0 = not a pirate * 1 = pirate
+;                       Hostile pirates will attack us on sight, but once we get inside the space station safe zone, they will stop
+;                       Ships that are pirates: Sidewinder, Mamba, Krait, Adder, Gecko, Cobra Mk I, Cobra Mk III, Asp Mk II, Python (pirate), Moray, Thargoid
+;#4	Docking flag        * 0 = not docking * 1 = docking
+;                       Traders with their docking flag set fly towards the space station to try to dock, otherwise they aim for the planet
+;                       This flag is randomly set for traders when they are spawned
+;                       Ships that can be docking: Escape pod, Shuttle, Transporter, Anaconda, Rock hermit, Worm
+;#5	Innocent bystander  * 0 = normal * 1 = innocent bystander
+;                       If we attack an innocent ship within the space station safe zone, then the station will get angry with us and start spawning cops
+;                       Ships that are innocent bystanders: Shuttle, Transporter, Cobra Mk III, Python, Boa, Anaconda, Rock hermit, Cougar
+;#6	Cop flag            * 0 = not a cop * 1 = cop
+;                       If we destroy a cop, then we instantly become a fugitive (the Transporter isn't actually a cop, but it's clearly under police protection)
+;                       Ships that are cops: Viper, Transporter
+;#7	Scooped, docked, escape pod flag
+;                       For spawned ships, this flag indicates that the ship been scooped or has docked (bit 7 is always clear on spawning)
+;                       For blueprints, this flag indicates whether the ship type has an escape pod fitted, so it can launch it when in dire straits
+;                       Ships that have escape pods: Cobra Mk III, Python, Boa, Anaconda, Rock hermit, Viper, Mamba, Krait, Adder, Cobra Mk I, Cobra Mk III (pirate), Asp Mk II, Python (pirate), Fer-de-lance
+
+
 ; Orientation Matrix [nosev x y z ] nose vector ( forward) 19 to 26
 ;                    [roofv x y z ] roof vector (up)
 ;                    [sidev x y z ] side vector (right)
@@ -88,127 +81,19 @@ INWKDrawCam0yHi             equ UBnkDrawCam0yHi         ; INWK +34UBnkDrawCam0yH
 INWKEnergy                  equ UbnKEnergy              ; INWK +35UBnkDrawCam0ySgn      DB  0               ; XX18+5
 ;UBnkDrawCam0ySgn    equ UbnKEnergy              ; Reycles but not a good idea TODO
 INWKNewb                    equ UbnKNewb                ; INWK +36 INWK+36 \ NEWB bit 7 remove ship?UBnkDrawCam0zLo     DB  0               ; XX18+6
-;-- XX16 --------------------------------------------------------------------------------------------------------------------------
-UBnkTransmatSidevX          DW  0               ; XX16+0
-UBnkTransmatSidev           EQU UBnkTransmatSidevX
-UBnkTransmatSidevY          DW 0                ; XX16+2
-UBnkTransmatSidevZ          DW 0                ; XX16+2
-UBnkTransmatRoofvX          DW 0
-UBnkTransmatRoofv           EQU UBnkTransmatRoofvX
-UBnkTransmatRoofvY          DW 0                ; XX16+2
-UBnkTransmatRoofvZ          DW 0                ; XX16+2
-UBnkTransmatNosevX          DW 0
-UBnkTransmatNosev           EQU UBnkTransmatNosevX
-UBnkTransmatNosevY          DW 0                ; XX16+2
-UBnkTransmatNosevZ          DW 0                ; XX16+2
-UbnkTransmatTransX          DW 0
-UbnkTransmatTransY          DW 0
-UbnkTransmatTransZ          DW 0
-XX16                        equ UBnkTransmatSidev
-;-- XX16Inv --------------------------------------------------------------------------------------------------------------------------
-UbnkTransInvRow0x0          DW 0
-UbnkTransInvRow0x1          DW 0
-UbnkTransInvRow0x2          DW 0
-UbnkTransInvRow0x3          DW 0
-UbnkTransInvRow1y0          DW 0
-UbnkTransInvRow1y1          DW 0
-UbnkTransInvRow1y2          DW 0
-UbnkTransInvRow1y3          DW 0
-UbnkTransInvRow2z0          DW 0
-UbnkTransInvRow2z1          DW 0
-UbnkTransInvRow2z2          DW 0
-UbnkTransInvRow2z3          DW 0
+                        INCLUDE "./Variables/XX16Vars.asm"
+                        INCLUDE "./Variables/XX25Vars.asm"
+                        INCLUDE "./Variables/XX18Vars.asm"
 
-XX16Inv             equ UbnkTransInvRow0x0
-;-- XX25 --------------------------------------------------------------------------------------------------------------------------
-UbnkProjxLo                 DB  0
-UbnkProjxHi                 DB  0
-UbnkProjxSgn                DB  0
-UbnkProjx                   EQU UbnkProjxLo
-UbnkProjyLo                 DB  0
-UbnkProjyHi                 DB  0
-UbnkProjySgn                DB  0
-UbnkProjy                   EQU UbnkProjyLo
-UbnkProjzLo                 DB  0
-UbnkProjzHi                 DB  0
-UbnkProjzSgn                DB  0
-UbnkProjz                   EQU UbnkProjzLo
-XX25                        EQU UbnkProjxLo
-;-- XX18 --------------------------------------------------------------------------------------------------------------------------
-UBnkDrawCam0xLo             DB  0               ; XX18+0
-UBnkDrawCam0xHi             DB  0               ; XX18+1
-UBnkDrawCam0xSgn            DB  0               ; XX18+2
-UBnkDrawCam0x               equ UBnkDrawCam0xLo
-UBnkDrawCam0yLo             DB  0               ; XX18+3
-UBnkDrawCam0yHi             DB  0               ; XX18+4
-UBnkDrawCam0ySgn            DB  0               ; XX18+5
-UBnkDrawCam0y               equ UBnkDrawCam0yLo
-UBnkDrawCam0zLo             DB  0               ; XX18+6
-UBnkDrawCam0zHi             DB  0               ; XX18+7
-UBnkDrawCam0zSgn            DB  0               ; XX18+8
-UBnkDrawCam0z               equ UBnkDrawCam0zLo
-XX18                        equ UBnkDrawCam0xLo
 ; Used to make 16 bit reads a little cleaner in source code
 UbnkZPoint                  DS  3
 UbnkZPointLo                equ UbnkZPoint
 UbnkZPointHi                equ UbnkZPoint+1
 UbnkZPointSign              equ UbnkZPoint+2
-;-- XX15 --------------------------------------------------------------------------------------------------------------------------
-UBnkXScaled                 DB  0               ; XX15+0Xscaled
-UBnkXScaledSign             DB  0               ; XX15+1xsign
-UBnkYScaled                 DB  0               ; XX15+2yscaled
-UBnkYScaledSign             DB  0               ; XX15+3ysign
-UBnkZScaled                 DB  0               ; XX15+4zscaled
-UBnkZScaledSign             DB  0               ; XX15+5zsign
+                        INCLUDE "./Variables/XX15Vars.asm"
+                        INCLUDE "./Variables/XX12Vars.asm"
 
-XX15                        equ UBnkXScaled
-XX15VecX                    equ XX15
-XX15VecY                    equ XX15+1
-XX15VecZ                    equ XX15+2
-UbnkXPoint                  equ XX15
-UbnkXPointLo                equ XX15+0
-UbnkXPointHi                equ XX15+1
-UbnkXPointSign              equ XX15+2
-UbnkYPoint                  equ XX15+3
-UbnkYPointLo                equ XX15+3
-UbnkYPointHi                equ XX15+4
-UbnkYPointSign              equ XX15+5
-; Repurposed XX15 pre clip plines
-UbnkPreClipX1               equ XX15+0
-UbnkPreClipY1               equ XX15+2
-UbnkPreClipX2               equ XX15+4
-UbnkPreClipY2               equ XX15+6
-; Repurposed XX15 post clip lines
-UBnkNewX1                   equ XX15+0
-UBnkNewY1                   equ XX15+1
-UBnkNewX2                   equ XX15+2
-UBnkNewY2                   equ XX15+3
-; Repurposed XX15
-regXX15fx                   equ UBnkXScaled
-regXX15fxSgn                equ UBnkXScaledSign
-regXX15fy                   equ UBnkYScaled
-regXX15fySgn                equ UBnkYScaledSign
-regXX15fz                   equ UBnkZScaled
-regXX15fzSgn                equ UBnkZScaledSign
-; Repurposed XX15
-varX1                       equ UBnkXScaled       ; Reused, verify correct position
-varY1                       equ UBnkXScaledSign   ; Reused, verify correct position
-varZ1                       equ UBnkYScaled       ; Reused, verify correct position
-; After clipping the coords are two 8 bit pairs
-UBnkPoint1Clipped           equ UBnkXScaled
-UBnkPoint2Clipped           equ UBnkYScaled
-;-- transmat0 --------------------------------------------------------------------------------------------------------------------------
-; Note XX12 comes after as some logic in normal processing uses XX15 and XX12 combines
-UBnkXX12xLo                 DB  0               ; XX12+0
-UBnkXX12xSign               DB  0               ; XX12+1
-UBnkXX12yLo                 DB  0               ; XX12+2
-UBnkXX12ySign               DB  0               ; XX12+3
-UBnkXX12zLo                 DB  0               ; XX12+4
-UBnkXX12zSign               DB  0               ; XX12+5
-XX12Save                    DS  6
-XX12Save2                   DS  6
-XX12                        equ UBnkXX12xLo
-varXX12                     equ UBnkXX12xLo
+
 ; Post clipping the results are now 8 bit
 UBnkVisibility              DB  0               ; replaces general purpose xx4 in rendering
 
@@ -267,35 +152,6 @@ UBnkXX19                    DS  3
 
 ; Used to make 16 bit reads a little cleaner in source code
 
-
-
-; Repurposed XX15 when plotting lines
-; Repurposed XX15 before calling clip routine
-UBnkX1                      equ XX15
-UBnKx1Lo                    equ XX15
-UBnKx1Hi                    equ XX15+1
-UBnkY1                      equ XX15+2
-UbnKy1Lo                    equ XX15+2
-UBnkY1Hi                    equ XX15+3
-UBnkX2                      equ XX15+4
-UBnkX2Lo                    equ XX15+4
-UBnkX2Hi                    equ XX15+5
-; Repurposed XX12 when plotting lines
-UBnkY2                      equ XX12+0
-UbnKy2Lo                    equ XX12+0
-UBnkY2Hi                    equ XX12+1
-UBnkDeltaXLo                equ XX12+2
-UBnkDeltaXHi                equ XX12+3
-UBnkDeltaYLo                equ XX12+4
-UBnkDeltaYHi                equ XX12+5
-UbnkGradient                equ XX12+2
-UBnkTemp1                   equ XX12+2
-UBnkTemp1Lo                 equ XX12+2
-UBnkTemp1Hi                 equ XX12+3
-UBnkTemp2                   equ XX12+3
-UBnkTemp2Lo                 equ XX12+3
-UBnkTemp2Hi                 equ XX12+4
-
 ;rotmatFx            equ rotmat0xHi
 ;rotmatFy            equ rotmat0yHi
 ;rotmatFz            equ rotmat0zHi
@@ -305,7 +161,7 @@ UBnkTemp2Hi                 equ XX12+4
 
 UbnkShipType                DB  0
         
-UBnkHullCopy                DS  22
+UBnkHullCopy                DS  24
 ScoopDebrisAddr             equ UBnkHullCopy + 0
 MissileLockLoAddr           equ UBnkHullCopy + 1
 MissileLockHiAddr           equ UBnkHullCopy + 2
@@ -325,7 +181,8 @@ FaceAddyAddr                equ UBnkHullCopy + 16
 QAddr                       equ UBnkHullCopy + 18
 LaserAddr                   equ UBnkHullCopy + 19
 VerticesAddyAddr            equ UBnkHullCopy + 20
-
+ShipTypeAddr                equ UBnkHullCopy + 22
+ShipNewBitsAddr             equ UBnkHullCopy + 23
 ; Static Ship Data. This is copied in when creating the universe object
 XX0                         equ UBnkHullCopy        ; general hull index pointer
 UBnkHullVerticies           DS  300                 ; can only be 255
@@ -470,31 +327,7 @@ PL44:                   ret
 PL44TooBig:             scf
                         ret
 
-;; calcs HLB + DEC where B and C are signs
-;; result HL with A as sign
-;; special handling if result is zero forcign sign bit to be zero
-ADDHLDESignBC:          ld      a,b
-                        and     SignOnly8Bit
-                        xor     c                           ;if b sign and c sign were different then bit 7 of a will be 1 which means 
-                        JumpIfNegative ADDHLDEsBCOppSGN     ;Signs are opposite there fore we can subtract to get difference
-ADDHLDEsBCSameSigns:    ld      a,b
-                        or      c
-                        JumpIfNegative ADDHLDEsBCSameNeg        ; optimisation so we can just do simple add if both positive
-                        add     hl,de                       ; both positive so a will already be zero
-                        ret
-ADDHLDEsBCSameNeg:      add     hl,de
-                        ld      a,b
-                        or      c                           ; now set bit for negative value, we won't bother with overflow for now TODO
-                        ret
-ADDHLDEsBCOppSGN:       or      a
-                        sbc     hl,de
-                        jr      c,ADDHLDEsBCOppInvert
-ADDHLDEsBCOppSGNNoCarry: ld      a,b                                               ; we got here so hl > de therefore we can just take hl's previous sign bit
-                        ret
-ADDHLDEsBCOppInvert:    NegHL                         ; if result was zero then set sign to zero (which doing h or l will give us for free)
-                        ld      a,b
-                        xor     SignOnly8Bit                ; flip sign bit
-                        ret     
+                        include "./Maths/ADDHLDESignBC.asm"
 
 ADDHLDESignedv3:        ld      a,h
                         and     SignOnly8Bit
@@ -770,11 +603,11 @@ ProjectY:               ld      hl,(UBnKylo)
                         ld      (varK4),hl                      ; K3 = X position on screen
                         ret
 ;--------------------------------------------------------------------------------------------------------
-                        include "ModelRender/EraseOldLines-EE51.asm"
-                        include "ModelRender/TrimToScreenGrad-LL118.asm"
-                        include "ModelRender/CLIP-LL145.asm"
+                        include "./ModelRender/EraseOldLines-EE51.asm"
+                        include "./ModelRender/TrimToScreenGrad-LL118.asm"
+                        include "./ModelRender/CLIP-LL145.asm"
 ;--------------------------------------------------------------------------------------------------------
-                        include "Universe/CopyRotmatToTransMat.asm"
+                        include "./Variables/CopyRotmatToTransMat.asm"
 ;--------------------------------------------------------------------------------------------------------
 SetFaceAVisible:        ld      hl,UbnkFaceVisArray
                         add     hl,a
@@ -824,10 +657,7 @@ SetAllFacesHiddenLoop:  ld      (hl),a
 ;-LL21---------------------------------------------------------------------------------------------------
                         include "Universe/NormaliseTransMat.asm"
 ;-LL91---------------------------------------------------------------------------------------------------
-LoadCraftToCamera:      ld      hl,UBnKxlo
-                        ld      de,UBnkDrawCam0xLo
-                        NineLDIInstrunctions                ; transfer 9 bytes
-                        ret
+
 ; Now we have
 ;   * XX18(2 1 0) = (x_sign x_hi x_lo)
 ;   * XX18(5 4 3) = (y_sign y_hi y_lo)
@@ -981,79 +811,27 @@ XX12EquScaleDotOrientation:                         ; .LL51 \ -> &4832 \ XX12=XX
                         ld      (UBnkXX12zSign),a
                         ret
 ;--------------------------------------------------------------------------------------------------------
-                        include "Universe/CopyXX12ScaledToXX18.asm"
+                        include "./Variables/CopyXX12ScaledToXX18.asm"
+                        include "./Variables/CopyXX12toXX15.asm"
+                        include "./Variables/CopyXX18toXX15.asm"
+                        include "./Variables/CopyXX18ScaledToXX15.asm"
+                        include "./Variables/CopyXX12ToScaled.asm"
 ;--------------------------------------------------------------------------------------------------------
-                        include "Universe/CopyXX18toXX15.asm"
-;--------------------------------------------------------------------------------------------------------
-                        include "Universe/CopyXX18ScaledToXX15.asm"
-;--------------------------------------------------------------------------------------------------------
-                        include "Universe/CopyXX12ToScaled.asm"
-;--------------------------------------------------------------------------------------------------------
-                        include "Universe/DotProductXX12XX15.asm"
+                        include "./Maths/Utilities/DotProductXX12XX15.asm"
 ;--------------------------------------------------------------------------------------------------------
 ; scale Normal. IXL is xReg and A is loaded with XX17 holds the scale factor to apply
                         include "Universe/ScaleNormal.asm"
 ;--------------------------------------------------------------------------------------------------------
                         include "Universe/ScaleObjectDistance.asm"
 ;--------------------------------------------------------------------------------------------------------
-; Copy ship pos to camera work vector
-ShipPosToXX18:          ld  hl,UBnKxlo
-                        ld  de,UBnkDrawCam0xLo
-                        ld  bc,9
-                        ldir
-                        ret
+
 ; Backface cull        
 ; is the angle between the ship -> camera vector and the normal of the face as long as both are unit vectors soo we can check that normal z > 0
 ; normal vector = cross product of ship ccordinates 
 ;
-CopyFaceToXX15:         ld      a,(hl)                      ; get Normal byte 0                                                                    ;;;     if visibility (bits 4 to 0 of byte 0) > XX4
-                        ld      b,a                                                    ;;;      
-                        and     $80
-                        ld      (UBnkXScaledSign),a           ; write Sign bits to x sign                                                            ;;;
-                        ld      a,b
-                        sla     a                           ; move y sign to bit 7                                                                 ;;;   copy sign bits to XX12
-                        ld      b,a
-                        and     $80
-                        ld      (UBnkYScaledSign),a           ;                                                                                      ;;;
-                        ld      a,b
-                        sla     a                           ; move y sign to bit 7                                                                 ;;;   copy sign bits to XX12
-                        and     $80
-                        ld      (UBnkZScaledSign),a           ;                                                                                      ;;;
-                        inc     hl                          ; move to X ccord
-                        ld      a,(hl)                      ;                                                                                      ;;;   XX12 x,y,z lo = Normal[loop].x,y,z
-                        ld      (UBnkXScaled),a                                                                                                    ;;;
-                        inc     hl                                                                                                                 ;;;
-                        ld      a,(hl)                      ;                                                                                      ;;;
-                        ld      (UBnkYScaled),a                                                                                                    ;;;
-                        inc     hl                                                                                                                 ;;;
-                        ld      a,(hl)                      ;                                                                                      ;;;
-                        ld      (UBnkZScaled),a     
-                        ret
-               
-CopyFaceToXX12:         ld      a,(hl)                      ; get Normal byte 0                                                                    ;;;     if visibility (bits 4 to 0 of byte 0) > XX4
-                        ld      b,a                         ; save sign bits to b
-                        and     $80
-                        ld      (UBnkXX12xSign),a           ; write Sign bits to x sign                                                            ;;;
-                        ld      a,b
-                        sla     a                           ; move y sign to bit 7                                                                 ;;;   copy sign bits to XX12
-                        ld      b,a        
-                        and     $80
-                        ld      (UBnkXX12ySign),a           ;                                                                                      ;;;
-                        ld      a,b
-                        sla     a                           ; move y sign to bit 7                                                                 ;;;   copy sign bits to XX12
-                        and     $80
-                        ld      (UBnkXX12zSign),a           ;                                                                                      ;;;
-                        inc     hl                          ; move to X ccord
-                        ld      a,(hl)                      ;                                                                                      ;;;   XX12 x,y,z lo = Normal[loop].x,y,z
-                        ld      (UBnkXX12xLo),a                                                                                                    ;;;
-                        inc     hl                                                                                                                 ;;;
-                        ld      a,(hl)                      ;                                                                                      ;;;
-                        ld      (UBnkXX12yLo),a                                                                                                    ;;;
-                        inc     hl                                                                                                                 ;;;
-                        ld      a,(hl)                      ;                                                                                      ;;;
-                        ld      (UBnkXX12zLo),a     
-                        ret
-      
+
+                        include "./Variables/CopyFaceToXX15.asm"
+                        include "./Variables/CopyFaceToXX12.asm"
 ;--------------------------------------------------------------
 ; Original loginc in EE29 (LL9 4 of 12)
 ; Enters with XX4 = z distnace scaled to 1 .. 31
@@ -1187,69 +965,7 @@ RotateXX15ByTransMatXX16:
                         ld      (UBnkXX12zLo),a                     ; that is result done for
                         ret
 
-
-CurrentNormIdx  DB 0
-BackFaceCull:
-SomeFacesVisible:   
-;debug:jp debug                       
-EE29:                                      
-; DEBUG  force for now
-;                        ld     a,MaxVisibility                 ; max visibility                                               ;;;; default max visibility
-;                        ld     (LastNormalVisible),a           ; XX4                                                          ;;;;                                    
-;
-; DEBUG        
-        call    ShipPosToXX18; 
-        ReturnIfMemisZero FaceCtX4Addr                                  ; get number of faces * 4      FaceCntX4 &  return if no faces
-        ld      (varXX20),a                
-        ;DEBUGcall    ScaleObjectDistance                                     ; get Face Normal scale factor FaceScale into XX17
-        ld      a,c                                                     ; return and setup XX17 with the adjusted Q
-        ld      (varXX17),a                 
-      ;  call    CopyXX18ScaledToXX15                                    ; Copy Ship Pos (XX18) to Scaled         (XX15)
-        call    CopyRotmatToTransMat                                    ; Get rotation matrix into tranlation matrix
-        call    ScaleXX16Matrix197  ; JSUT A TODO DEBUG TEST            ; scaling just tidies it up as per point calcs
-      
- 
-        ld      hl,UBnkHullNormals                                                                                                 ;;; V = address of Normal start
-        ld      (varV),hl  
-        ld      a,(FaceCtX4Addr)                                        ; For each face
-        srl     a                                                       ;
-        srl     a                                                       ;
-        ld      b,a                                                     ;
-        xor     a
-        ld      (CurrentNormIdx),a                                                   ; used to increment up face incdex as b decrements
-ProcessNormalsLoop:                                                     ;
-        push    hl
-        push    bc
-        ld      a,(hl)                                                  ;     Get Face sign and visibility distance byte 
-        and     $1F                                                     ;     if normal visibility range  < XX4
-        ;JumpIfAGTENusng c,FaceVisible                                   ; commented out for debuggging the skip 
-
-        call    CopyFaceToXX15                                          ;        Get Face data into XX12
-        ld      a,(UBnkXScaledSign)    
-        call    XX12EquNodeDotOrientation        
-        ld      a,(UBnkXX12zSign)
-        test    $80
-        jp      nz, FaceVisible                                         ;        if dot product < 0 set face visible
-;        jp      FaceNotVisible
-                                 ;        if dot product < 0 set face visible
-FaceNotVisible:                                                         ;        else
-        ld          a,(CurrentNormIdx)
-        call        SetFaceAHidden                                      ;           set face invisible
-        jp          ProcessNormalLoopEnd                                ;        end if
-FaceVisible:
-        ld          a,(CurrentNormIdx)
-        call        SetFaceAVisible
-ProcessNormalLoopEnd:
-        ld          hl, CurrentNormIdx
-        inc         (hl)                    ; move index pointer up by one
-        pop         bc
-        pop         hl                      ; get normal data pointer back
-        ld          a,4
-        add         hl,a                    ; move to next normal entry
-        ld          (varV),hl               ; save as we need it again
-        dec         b
-        jp          nz,ProcessNormalsLoop
-        ret                                 ; If Y >= XX20 all normals' visibilities set, onto Transpose. return
+    include "./ModelRender/BackfaceCull.asm"
 ;--------------------------------------------------------------------------------------------------------
 ; Process edges
 ; .....................................................
@@ -1682,61 +1398,28 @@ EyeStoreYPoint:                                    ; also from LL62, XX3 node he
 ;        nosev_z = nosev_z + beta * nosev_y_hi
 
 
-    
-APPequAPPFlippedMulQ:  
-    
-ApplyMyRollToNosevY:    ld  a,(ALP1)                ; 
-                        ld  (varQ),a                ; Set Q = alpha (the roll angle to rotate through)
-                        ld  hl,(UBnkrotmatNosevY)
-                        ld  (varR),hl               ; RS =  nosev_y
-                        ld  a,(UBnkrotmatNosevX+1)  ; Set A = -nosev_x_hi
-                        xor $80
-                        call  madXAequQmulAaddRS   ; Set (A X) = Q * A + (S R) = = alpha * -nosev_x_hi + nosev_y
-                        ld  hl,(varR)               
-                        ld  (UBnkrotmatNosevY),hl   ; nosevY = RS  nosev_y = nosev_y - alpha * nosev_x_hi
-                        ld hl,(UBnkrotmatNosevX)    ; Set (S R) = nosev_x
-                        ld  (varR),hl
-                        ld  a,(UBnkrotmatNosevY+1)  ;  Set A = nosev_y_hi
-                        call madXAequQmulAaddRS     ; Set (A X) = Q * A + (S R)
-                        ld  hl,(varR)               ; = alpha * nosev_y_hi + nosev_x and store (A X) in nosev_x, so this does: 
-                        ld  (UBnkrotmatNosevX),hl   ; nosev_x = nosev_x + alpha * nosev_y_hi
+ApplyMyRollToVector:    MACRO vectorX, vectorY
+                        ldCopyByte ALPHA,varQ               ; Set Q = a = alpha (the roll angle to rotate through)
+                        ldCopy2Byte vectorY, varR           ; RS =  nosev_y
+                        ldCopyByte  vectorX, varP           ; set P to nosevX lo (may be redundant)
+                        ld a,(vectorX+1)                    ; Set A = -nosev_x_hi
+                        xor $80                             ;
+                        call  madXAequQmulAaddRS            ; Set (A X) = Q * A + (S R) = = alpha * -nosev_x_hi + nosev_y
+                        ld  (vectorY),de                    ; nosev_y = nosev_y - alpha * nosev_x_hi
+                        ldCopy2Byte vectorX, varR           ; Set (S R) = nosev_x
+                        ld  a,(vectorY+1)                   ;  Set A = nosev_y_hi
+                        call madXAequQmulAaddRS             ; Set (A X) = Q * A + (S R)
+                        ld  (vectorX),de                    ; nosev_x = nosev_x + alpha * nosev_y_hi
+                        ENDM
+
+ApplyMyRollToNosevY:    ApplyMyRollToVector UBnkrotmatNosevX, UBnkrotmatNosevY
                         ret
                         
-ApplyMyRollToSidevY:    ld  a,(ALP1)
-                        ld  (varQ),a                ; Set Q = alpha (the roll angle to rotate through)
-                        ld  hl,(UBnkrotmatSidevY)
-                        ld  (varR),hl               ; RS =  nosev_y
-                        ld  a,(UBnkrotmatSidevX+1)  ; Set A = -nosev_x_hi
-                        xor $80
-                        call  madXAequQmulAaddRS    ; Set (A X) = Q * A + (S R) = = alpha * -nosev_x_hi + nosev_y
-                        ld  hl,(varR)               
-                        ld  (UBnkrotmatSidevY),hl   ; nosevY = RS  nosev_y = nosev_y - alpha * nosev_x_hi
-                        ld hl,(UBnkrotmatSidevX)    ; Set (S R) = nosev_x
-                        ld  (varR),hl
-                        ld  a,(UBnkrotmatSidevY+1)  ;  Set A = nosev_y_hi
-                        call madXAequQmulAaddRS     ; Set (A X) = Q * A + (S R)
-                        ld  hl,(varR)               ; = alpha * nosev_y_hi + nosev_x and store (A X) in nosev_x, so this does: 
-                        ld  (UBnkrotmatSidevX),hl   ; nosev_x = nosev_x + alpha * nosev_y_hi
+ApplyMyRollToSidevY:    ApplyMyRollToVector UBnkrotmatSidevX, UBnkrotmatSidevY
                         ret    
 
-ApplyMyRollToRoofvY:    ld  a,(ALP1)
-                        ld  (varQ),a                ; Set Q = alpha (the roll angle to rotate through)
-                        ld  hl,(UBnkrotmatRoofvY)
-                        ld  (varR),hl               ; RS =  nosev_y
-                        ld  a,(UBnkrotmatRoofvX+1)  ; Set A = -nosev_x_hi
-                        xor $80
-                        call  madXAequQmulAaddRS    ; Set (A X) = Q * A + (S R) = = alpha * -nosev_x_hi + nosev_y
-                        ld  hl,(varR)               
-                        ld  (UBnkrotmatRoofvY),hl   ; nosevY = RS  nosev_y = nosev_y - alpha * nosev_x_hi
-                        ld hl,(UBnkrotmatRoofvX)    ; Set (S R) = nosev_x
-                        ld  (varR),hl
-                        ld  a,(UBnkrotmatRoofvY+1)  ;  Set A = nosev_y_hi
-                        call madXAequQmulAaddRS     ; Set (A X) = Q * A + (S R)
-                        ld  hl,(varR)               ; = alpha * nosev_y_hi + nosev_x and store (A X) in nosev_x, so this does: 
-                        ld  (UBnkrotmatRoofvX),hl   ; nosev_x = nosev_x + alpha * nosev_y_hi
-                        ret    
-                 
-                        
+ApplyMyRollToRoofvY:    ApplyMyRollToVector UBnkrotmatRoofvX, UBnkrotmatRoofvY
+                        ret
 
 
 ; 1> (-a)-(-b)=  if ABS(a)> ABS(B), 1A> (ABS(a)-abs(b))*-1 Else 1B> (ABS(b)-abs(a))
@@ -1987,12 +1670,22 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         ld      (UBnKxsgn),a                ; save resutl stright into X pos
                         ld      (UBnKxlo),hl                
                         ;break
-              
+                        ; if its not a sun then apply to local orientation
                        
                         call    ApplyMyRollToNosevY
                         call    ApplyMyRollToSidevY
                         call    ApplyMyRollToRoofvY
-.NoRotation:            ret
+.NoRotation:            ld      a,(DELTA)                   ; get speed
+                        ld      d,0
+                        ld      e,a                         ; de = speed in low byte
+                        ld      hl,(UBnKzlo)                ; hl = z position
+                        ld      a,(UBnKzsgn)                ; b = z sign
+                        ld      b,a                         ; 
+                        ld      c,$80                       ; c = -ve as we are always moving forwards
+                        call    ADDHLDESignBC               ; update speed
+                        ld      (UBnKzlo),hl                ; write back to zpos
+                        ld      (UBnKzsgn),a                ;
+                        ret
 ; .....................................................
 ; Process Nodes does the following:
 ; for each node:
