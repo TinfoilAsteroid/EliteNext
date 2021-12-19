@@ -22,10 +22,11 @@ TISXAccGTEQ:
 	
 
 
-normaliseXX1596fast:			; .NORM	\ -> &3BD6 \ Normalize 3-vector length of XX15
+normaliseXX1596fast:
+    ; .NORM	\ -> &3BD6 \ Normalize 3-vector length of XX15
 	ld		a,(XX15)		    ; XX15+0
 	ld		ixh,a               ; ixh = signed x component
-	and		$7F                 ; a = unsigned version
+	and		SignMask8Bit                 ; a = unsigned version
 N96SQX:	
 	inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2
 	ld		h,d					; h == varR d = varO e= varA
@@ -33,13 +34,13 @@ N96SQX:
 N96SQY:
 	ld		a,(XX15+1)			
 	ld		ixl,a               ; ixl = signed y componet
-	and		$7F                 ; = abs 
+	and		SignMask8Bit                 ; = abs 
 	inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2		:: so DE = XX15[y]^2
 	add		hl,de				; hl = XX15[x]^2 + XX15[y]^2
 N96SQZ:
 	ld		a,(XX15+2)			; Note comments say \ ZZ15+2  should be \ XX15+2 as per code
 	ld		iyh,a               ; iyh = signed
-	and		$7F                 ; unsigned
+	and		SignMask8Bit                 ; unsigned
 	inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2		:: so DE = XX15[z]^2
 N96SQADD:
 	add		hl,de				; hl = XX15[x]^2 + XX15[y]^2 + XX15[z]^2
@@ -48,7 +49,7 @@ N96SQRT:
 	call	asm_sqrt			; hl = sqrt(XX15[x]^2 + XX15[y]^2 + XX15[z]^2), we just are interested in l which is the new Q
 N96NORMX:
 	ld		a,(XX15+0)
-	and		$7F
+	and		SignMask8Bit
 	ld		c,a
 	ld		d,l					; Q(i.e. l) => D, later we can just pop into de
 	call	AequAdivDmul96	; does not use HL so we can retain it
@@ -59,7 +60,7 @@ N96NORMX:
 	ld		(XX15+0),a
 N96NORMY:
 	ld		a,(XX15+1)
-	and		$7F
+	and		SignMask8Bit
 	ld		c,a
 	ld		d,l					; Q(i.e. l) => D, later we can just pop into de
 	call	AequAdivDmul96     	; does not use HL so we can retain it
@@ -70,7 +71,7 @@ N96NORMY:
 	ld		(XX15+1),a
 N96NORMZ:
 	ld		a,(XX15+2)
-	and		$7F
+	and		SignMask8Bit
 	ld		c,a
 	ld		d,l					; Q(i.e. l) => D, later we can just pop into de
 	call	AequAdivDmul96	; does not use HL so we can retain it

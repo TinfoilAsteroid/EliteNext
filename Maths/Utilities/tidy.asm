@@ -43,10 +43,10 @@ TIS1Prep:									;.TIS1	\ -> &293B  \ Tidy subroutine 1 using B register = X
 ; DOES NOT USE		D HL
 Tis1Div96:							   		; .DVID96	\ Their comment A=A/96: answer is A*255/96
 		ld		c,a							; Store sign bit in  ct (we use e reg for that)
-		and		$80							; ..
+		and		SignOnly8Bit						; ..
 		ld		e,a							; ..
 		ld		a,c							; a = high byte again with sign bit cleared
-		and		$7F							; ..
+		and		SignMask8Bit							; ..
 		ld		b,$FE						; slide counter T1
 TIS1RollTLoop								; roll T1  clamp Acc to #96 for rotation matrix unity
 		sla		a

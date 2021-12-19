@@ -24,13 +24,13 @@ MacroDEEquQmulASigned:  MACRO
                         ld      a,(varQ)
                         ld      e,a
                         xor     d                           ; a = a xor var Q
-                        and     $80
+                        and     SignOnly8Bit
                         ld      b,a                         ; b = sign of a xor q
                         ld      a,d                         ; d = abs d (or a reg)
-                        and     $7F 
+                        and     SignMask8Bit 
                         ld      d,a                     
                         ld      a,e                         ; e = abs e (or varQ)
-                        and     $7F
+                        and     SignMask8Bit
                         ld      e,a 
                         mul                                 ; de = a * Q
                         ld      a,d

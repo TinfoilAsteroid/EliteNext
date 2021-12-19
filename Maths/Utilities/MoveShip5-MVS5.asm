@@ -62,7 +62,7 @@ MVS5:								; Moveship5, small rotation in matrix (1-1/2/256 = cos  1/16 = sine
 	pop		bc						; restore Xindex (also Y index)
 	pop		hl						; restore hl as INWK+1[y]
 	ld		a,(hl)					; INWK+1,Y
-	and		$7F						;
+	and		SignMask8Bit						;
 	srl		a						; hi7/2
 	ld		e,a						; use e as varT
 	dec		hl

@@ -356,6 +356,8 @@ Point                   DB  0               ; 9F      POINT
 
 varT					DB	0				; D1
 
+varVector9ByteWork      DS  9
+
 varK3					DS	4				; D2
 varK3p2					DB	0				; 42
 varK3p3					DB	0				; 43

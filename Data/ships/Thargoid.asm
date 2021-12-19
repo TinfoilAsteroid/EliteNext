@@ -1,37 +1,37 @@
 Thargoid:	DB $00, $26, $49
-	DW ThargoidEdges
-	DB ThargoidEdgesSize
-	DB $3C, $26
-	DB ThargoidVertSize
-	DB ThargoidEdgesCnt
-	DB $01, $F4
-	DB ThargoidNormalsSize
-	DB $37, $F0, $27
-	DW ThargoidNormals
-	DB $02, $16
-	DW ThargoidVertices
-                        DB 0,0                      ; Type and Tactics
+            DW ThargoidEdges
+            DB ThargoidEdgesSize
+            DB $3C, $26
+            DB ThargoidVertSize
+            DB ThargoidEdgesCnt
+            DB $01, $F4
+            DB ThargoidNormalsSize
+            DB $37, $F0, $27
+            DW ThargoidNormals
+            DB $02, $16
+            DW ThargoidVertices
+            DB 0,0                      ; Type and Tactics
 
 ThargoidVertices:	DB $20, $30, $30, $5F, $40, $88
-	DB $20, $44, $00, $5F, $10, $44
-	DB $20, $30, $30, $7F, $21, $44
-	DB $20, $00, $44, $3F, $32, $44
-	DB $20, $30, $30, $3F, $43, $55
-	DB $20, $44, $00, $1F, $54, $66
-	DB $20, $30, $30, $1F, $64, $77
-	DB $20, $00, $44, $1F, $74, $88
-	DB $18, $74, $74, $DF, $80, $99
-	DB $18, $A4, $00, $DF, $10, $99
-	DB $18, $74, $74, $FF, $21, $99
-	DB $18, $00, $A4, $BF, $32, $99
-	DB $18, $74, $74, $BF, $53, $99
-	DB $18, $A4, $00, $9F, $65, $99
-	DB $18, $74, $74, $9F, $76, $99
-	DB $18, $00, $A4, $9F, $87, $99
-	DB $18, $40, $50, $9E, $99, $99
-	DB $18, $40, $50, $BE, $99, $99
-	DB $18, $40, $50, $FE, $99, $99
-	DB $18, $40, $50, $DE, $99, $99
+                    DB $20, $44, $00, $5F, $10, $44
+                    DB $20, $30, $30, $7F, $21, $44
+                    DB $20, $00, $44, $3F, $32, $44
+                    DB $20, $30, $30, $3F, $43, $55
+                    DB $20, $44, $00, $1F, $54, $66
+                    DB $20, $30, $30, $1F, $64, $77
+                    DB $20, $00, $44, $1F, $74, $88
+                    DB $18, $74, $74, $DF, $80, $99
+                    DB $18, $A4, $00, $DF, $10, $99
+                    DB $18, $74, $74, $FF, $21, $99
+                    DB $18, $00, $A4, $BF, $32, $99
+                    DB $18, $74, $74, $BF, $53, $99
+                    DB $18, $A4, $00, $9F, $65, $99
+                    DB $18, $74, $74, $9F, $76, $99
+                    DB $18, $00, $A4, $9F, $87, $99
+                    DB $18, $40, $50, $9E, $99, $99
+                    DB $18, $40, $50, $BE, $99, $99
+                    DB $18, $40, $50, $FE, $99, $99
+                    DB $18, $40, $50, $DE, $99, $99
 
 ThargoidVertSize: equ $ - ThargoidVertices	
 	

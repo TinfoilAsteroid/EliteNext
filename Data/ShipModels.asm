@@ -4,7 +4,6 @@ ScoopDebrisOffset	    equ	0                               ; hull byte#0 high nib
 MissileLockLoOffset	    equ 1
 MissileLockHiOffset	    equ 2
 EdgeAddyOffset		    equ 3
-;   
 LineX4Offset		    equ 5
 GunVertexOffset		    equ 6
 ExplosionCtOffset	    equ 7
@@ -16,14 +15,13 @@ FaceCtX4Offset		    equ 12
 DotOffset			    equ 13
 EnergyOffset		    equ 14
 SpeedOffset			    equ 15
-;EdgeHiOffset		    equ	16
 FaceAddyOffset		    equ 16
-;   
 QOffset				    equ 18
 LaserOffset			    equ 19
 VerticiesAddyOffset     equ 20
 ShipTypeOffset          equ 22
 ShipNewBitsOffset       equ 23
+ShipDataLength          equ ShipNewBitsOffset+1
 
 CobraTablePointer       equ 43
 ;29 faulty
@@ -144,8 +142,8 @@ CopyShipDataToUBnkC:
 .GetHullDataAddress:    call        GetInfo                     ; de = address of Ship Data
                         ex          de,hl                       ; hl = address of Ship Data
                         ld          de,UBnkHullCopy             ; Universe bank
-                        ld          bc,22                       ; its now 22 bytes 
-                        ldir                                    ; Copy over 22 bytes
+                        ld          bc,ShipDataLength           
+                        ldir                                    
                         call        CopyVerticesDataToUBnk
                         call        CopyEdgeDataToUBnk
                         call        CopyNormalDataToUBnk

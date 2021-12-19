@@ -108,7 +108,7 @@ TestText:               xor			a
                             MMUSelectLayer2
                             call  l2_flip_buffers
                         ENDIF    
-
+                        
 InitialiseDemoShip:     ld      a,(currentDemoShip)
                         MMUSelectUniverseN 0                          ; load up register into universe bank
                         call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
@@ -141,31 +141,34 @@ ScreenTransBlock:       ld      a,$0
                         call    MovementKeyTest
 ;Process cursor keys for respective screen    
 HandleMovement:         ld      a,(CallCursorRoutine+2)
-                        IfAIsZeroGoto     UpdateUniverse
+                        IfAIsZeroGoto     AreWeDocked
 HandleBankSelect:       ld      a,$00
                         MMUSelectScreenA
 CallCursorRoutine:      call    $0000
 ; need to optimise so not looping over agint for all universe doign ingle updates
+AreWeDocked:           
+                        ld      a,(DockedFlag)
+                        cp      $FF
+                        jp      z,LoopRepeatPoint
 UpdateUniverse:         MMUSelectUniverseN 0
-;IsItSpaceStation:
-;
-;.ISDK	\ is docking to SST nearby
-;AD 49 09                LDA &0949 \ allwk+37+36	\ UNIV #SST last byte NEWB,  K%+NI%+36
-;29 04                   AND #4			\ keep bit2, is space station angry?
-;D0 22                   BNE MA62		\ Failed dock
-;A5 54                   LDA &54	   \ INWK+14	\ rotmat0z hi, face normal
-;C9 D6                   CMP #&D6		\ z_unit  -ve &56 to -ve &60, 26 degrees.
-;90 1C                   BCC MA62		\ Failed dock
-;20 AE 42                JSR &42AE  \ SPS1	\ XX15 vector to planet
-;A5 36                   LDA &36	   \ XX15+2	\ z_unit away from planet
-;C9 56                   CMP #&56		\ < #&60 ?
-;90 13                   BCC MA62		\ Failed dock
-;A5 56                   LDA &56	   \ INWK+16	\ rotmat1x hi, slit roll
-;29 7F                   AND #&7F		\ clear sign
-;C9 50                   CMP #&50		\ < #&60 ?
-;90 0B                   BCC MA62		\ Failed dock
-;
-                        call    ApplyMyRollAndPitch
+.CheckIfWeAreDocking:   ld      a,(ShipTypeAddr)
+                        cp      ShipTypeStation                     ; is it a station
+                        jr      nz,.NotDockingCheck
+                        ld      hl,ShipNewBitsAddr                  ; is it angry
+                        bit     4,(hl)
+                        jr      nz,.NotDockingCheck                  ; if so the doors are shut
+                      ; ld      a,(UBnkrotmatNosevZ+1)              ; get get high byte of rotmat
+                      ; JumpIfALTNusng 214, .NotDockingCheck         ; this is the magic angle to be within 26 degrees +/-
+                      ; call    GetStationVectorToWork              ; Normalise position into XX15 as in effect its a vector from out ship to it given we are always 0,0,0, returns with A holding vector z
+                      ; bit     7,a                                 ; if its negative
+                      ; jr      nz,.NotDockingCheck                  ; we are flying away from it
+                      ; JumpIfALTNusng 89, .NotDockingCheck         ; if the axis <89 the we are not in the 22 degree angle
+                      ; ld      a,(UBnkrotmatRoofvX+1)              ; get roof vector high
+                      ; and     SignMask8Bit
+                      ; JumpIfALTNusng 80, .NotDockingCheck         ; note 80 decimal for 36.6 degrees
+.GoingIn:             ; call    EnterDockingBay
+                      ; jp      LoopRepeatPoint
+.NotDockingCheck:       call    ApplyMyRollAndPitch
                        ;  call    DEBUGSETNODES
                         ;       call    DEBUGSETPOS
                         ld      hl,TidyCounter
@@ -184,8 +187,7 @@ CheckIfViewUpdate:      ld      a,$00
                         jr      z, MenusLoop; This will change as more screens are added TODO
 SpecificCodeWhenInView: call   SetAllFacesVisible
                         call   CullV2				; culling but over aggressive backface assumes all 0 up front TOFIX
-      ;              break                       
-                       call   PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
+                        call   PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
                         MMUSelectLayer2
                         call   l2_cls
                         MMUSelectUniverseN 0    
@@ -223,6 +225,14 @@ DoubleBufferCheck:      ld      a,00
                         jp MainLoop
 ;..................................................................................................................................
 	;call		keyboard_main_loop
+    
+EnterDockingBay:        ld      a,$FF
+                        ld      (DockedFlag),a
+                        ld      (ScreenTransitionForced),a
+                        ld      a,5
+                        ld      (ScreenIndex),a
+                                ; Force status screen
+                        ret
     
 TestForNextShip:        ld      a,c_Pressed_Quit
                         call    is_key_pressed
@@ -280,6 +290,56 @@ DEBUGSETPOS:            ld      hl,DEBUGUBNKDATA
                         ld      bc,9 - 3
                         ldir
                         ret
+
+
+GetStationVectorToWork: ld      hl,UBnKxlo
+                        ld      de,varVector9ByteWork
+                        ldi
+                        ldi
+                        ldi
+                        ldi
+                        ldi
+                        ldi
+                        ldi
+                        ldi
+                        ldi
+.CalcNormalToXX15:      ld      hl, (varVector9ByteWork)  ; X
+                        ld      de, (varVector9ByteWork+3); Y
+                        ld      bc, (varVector9ByteWork+6); Z
+                        ld      a,l
+                        or      e
+                        or      c
+                        or      1
+                        ld      ixl,a                   ; or all bytes and with 1 so we have at least a 1
+                        ld      a,h
+                        or      d
+                        or      b                       ; or all high bytes but don't worry about 1 as its sorted on low bytes
+                        push    bc
+                        ld      b,ixl
+.MulBy2Loop:            sla     b                     ; shift the or'ed low bytes left so but 7 goes into carry
+                        ld      ixl,b
+                        rl      a                       ; roll into a
+                        pop     bc
+                        jr      c,.TA2                  ; if bit rolled out of rl a then we can't shift any more to the left
+                        ShiftHLLeft1                    ; Shift Left X
+                        ShiftDELeft1                    ; Shift Left Y
+                        ShiftBCLeft1                    ; Shift Left Z
+                        push    bc
+                        jr      .MulBy2Loop              ; no need to do jr nc as the first check looks for high bits across all X Y and Z
+.TA2:                   ld      a,(varVector9ByteWork+2); x sign
+                        srl     h
+                        or      h
+                        ld      (XX15VecX),a         ; note this is now a signed highbyte
+                        ld      a,(varVector9ByteWork+5); y sign
+                        srl     d
+                        or      d
+                        ld      (XX15VecY),a         ; note this is now a signed highbyte                        
+                        ld      a,(varVector9ByteWork+8); y sign
+                        srl     b
+                        or      b
+                        ld      (XX15VecZ),a         ; note this is now a signed highbyte                        
+                        call    normaliseXX1596fast 
+                        ret                             ; will return with a holding Vector Z
 
 TidyCounter             DB  0
 
@@ -611,66 +671,156 @@ UpdateConsole:          ld      a,(DELTA)
 .DoneConsole:           call    UpdateRadar
                         ret
     
-ScannerX equ 128
-ScannerY equ 171 
+ScannerX                equ 128
+ScannerY                equ 171 
+ScannerBottom           equ 190
+ScannerTypeMissle       equ 2
+ScannerXRangeOffset     equ $35
+ScannerCenter           equ 127
 
+ScannerDefault          equ 0
+ScannerMissile          equ 2
+ScannerStation          equ 4
+ScannerEnemy            equ 6
+
+ScannerColourTable:     DB  16,28,144,252,18,31,128,224
+
+GetShipColor:           MACRO                   
+                        ld      a,(ShipTypeAddr)
+                        sla     a                            ; as its byte pairs * 2
+                        ld      hl,ScannerColourTable
+                        add     hl,a
+                        ld      a,(hl)
+                        ENDM
+GetShipColorBright:     MACRO                   
+                        ld      a,(ShipTypeAddr)
+                        sla     a                            ; as its byte pairs * 2
+                        inc     a
+                        ld      hl,ScannerColourTable
+                        add     hl,a
+                        ld      a,(hl)
+                        ENDM
+                        
 ; This will go though all the universe ship data banks and plot, for now we will just work on one bank
-UpdateScannerShip:      ld      bc,(UBnKzhi)
-                        ld      a,c
-                        and     $C0
+UpdateScannerShip:      
+                        ld      a,(UBnkexplDsp)             ; if bit 4 is clear then ship should not be drawn
+                        bit     4,a                         ; .
+                        ;DEBUG ret     z                           ; .
+                        ld      a,(ShipTypeAddr)            ; if its a planet or sun, do not display
+                        bit     7,a
                         ret     nz
-                        ld      de,(UBnKxhi)
-                        ld      a,e
-                        and     $C0
-                        ret     nz
-                        ld      hl,(UbnKyhi)
-                        ld      a,l
-                        and     $C0
-                        ret     nz
-                        ld      a,ScannerX
-                        JumpOnBitSet d,7,ScannerNegX
-                        add     a,e
-                        jp      ScannerZCoord
-ScannerNegX:            sub     e
-ScannerZCoord:          ld      e,a
-                        srl     c
-                        srl     c
-                        ld      a,ScannerY
-                        JumpOnBitSet b,7,ScannerNegZ
-                        sub     c
-                        jp      ScannerYCoord
-ScannerNegZ:            add     a,c
-ScannerYCoord:          ld      d,a                     ; now de = pixel pos d = y e = x  for base of stick X & Z , so need Y Stick height
-                        JumpOnBitSet h,7,ScannerStickDown
-                        sub     l                       ; a already holds actual Y
-                        JumpIfAGTENusng 128,ScannerHeightDone
-                        ld      a,128
-                        jp      ScannerHeightDone
-ScannerStickDown:       add     a,l     
-                        JumpIfAGTENusng 191,ScannerHeightDone
-                        ld      a,191
-ScannerHeightDone:      ld      c,e            ; Now sort out line from point DE horzontal by a
-                        ld      b,d
-                        ld      d,a
-                        cp      b
-                        jp      z,Scanner0Height
-                        ld      e,194 ; Should be coloured based on status but this will do for now
-                        push    bc
-                        push    de
+; DEBUG Add in station types later                       
+.NotMissile:            ld      hl,(UBnKzlo)
+                        ld      de,(UBnKxlo)
+                        ld      bc,(UBnKylo)
+                        ld      a,h
+                        or      d
+                        or      b
+                        and     %11000000
+                        ret     nz                          ; if distance Hi > 64 on any ccord- off screen
+.MakeX2Compliment:      ld      a,(UBnKxsgn)
+                        bit     7,a
+                        jr      z,.absXHi
+                        NegD                                
+.absXHi:                ld      a,d
+                        add     ScannerX           
+                        ld      ixh,a                       ; store adjusted X in ixh
+.ProcessZCoord:         srl     h
+                        srl     h
+.MakeZ2Compliment:      ld      a,(UBnKzsgn)
+                        bit     7,a
+                        jr      z,.absZHi
+                        NegH
+.absZHi:                ld      a,ScannerY
+                        sub     h
+                        ld      iyh,a                       ; make iyh adjusted Z = row on screen
+.ProcessStickLength:    srl     b                           ; divide b by 2
+                        jr      nz,.StickHasLength
+.Stick0Length:          ld      a,iyh                       ; abs stick end is row - length   
+                        ld      iyl,a    
+                        ld      a,ixl
+                        GetShipColorBright
+                        MMUSelectLayer2  
+                        jp      .NoStick
+.StickHasLength:        ld      a,(UBnKysgn)                ; if b  =  0 then no line
+                        bit     7,a
+                        jr      z,.absYHi
+                        NegB
+.absYHi:                ld      a,iyh
+.SetStickPos:           sub     b
+                        JumpIfALTNusng ScannerBottom, .StickOnScreen
+                        ld      a,ScannerBottom
+.StickOnScreen:         ld      iyl,a                       ; iyh is again stick end point   
+                        GetShipColor
+                        ld      ixl,a
+                        ld      b,iyh                       ; from row
+                        ld      c,ixh                       ; from col
+                        ld      d,iyl                       ; to row
+                        ld      e,ixl                       ; colur will only be green or yellow for now
+                        push    hl
                         MMUSelectLayer2  
                         call    l2_draw_vert_line_to
-                        pop     de
-                        pop     bc
-Scanner0Height:         ld      b,d
-                        push    bc
-                        ld      a,255
-                        MMUSelectLayer2  
+                        pop     hl
+                        inc     hl
+                        ld      a,(hl)
+.NoStick:               ld      b,iyl                       ; row
+                        ld      c,ixh                       ; col
+                        push    af
                         call    l2_plot_pixel
-                        pop     bc
+                        pop     af
+                        ld      b,iyl
+                        ld      c,ixh
                         inc     c
-                        ld      a,255
-                        MMUSelectLayer2  
                         call    l2_plot_pixel
+                        ret
+
+
+
+;.absXhi:                        
+;                        ld      a,ScannerX
+;                        JumpOnBitSet d,7,ScannerNegX
+;                        add     a,e
+;                        jp      ScannerZCoord
+;ScannerNegX:            sub     e
+;ScannerZCoord:          ld      e,a
+;                        srl     c
+;                        srl     c
+;                        ld      a,ScannerY
+;                        JumpOnBitSet b,7,ScannerNegZ
+;                        sub     c
+;                        jp      ScannerYCoord
+;ScannerNegZ:            add     a,c
+;ScannerYCoord:          ld      d,a                     ; now de = pixel pos d = y e = x  for base of stick X & Z , so need Y Stick height
+;                        JumpOnBitSet h,7,ScannerStickDown
+;                        sub     l                       ; a already holds actual Y
+;                        JumpIfAGTENusng 128,ScannerHeightDone
+;                        ld      a,128
+;                        jp      ScannerHeightDone
+;ScannerStickDown:       add     a,l     
+;                        JumpIfAGTENusng 191,ScannerHeightDone
+;                        ld      a,191
+;ScannerHeightDone:      ld      c,e            ; Now sort out line from point DE horzontal by a
+;                        ld      b,d
+;                        ld      d,a
+;                        cp      b
+;                        jp      z,Scanner0Height
+;                        ld      e,194 ; Should be coloured based on status but this will do for now
+;                        push    bc
+;                        push    de
+;                        MMUSelectLayer2  
+;                        call    l2_draw_vert_line_to
+;                        pop     de
+;                        pop     bc
+;Scanner0Height:         ld      b,d
+;                       push    bc
+;                       ld      a,255
+;                       MMUSelectLayer2  
+;                       call    l2_plot_pixel
+;                       pop     bc
+;                       inc     c
+;                       ld      a,255
+;                       MMUSelectLayer2  
+;                       call    l2_plot_pixel
                         ret
 
 UpdateRadar:            MMUSelectUniverseN 0                          ; load up register into universe bank

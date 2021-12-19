@@ -257,7 +257,6 @@ NegDE:			MACRO
                 ld d,a
                 ENDM
 
-
 NegBC:			MACRO
                 xor a
                 sub c
@@ -267,6 +266,24 @@ NegBC:			MACRO
                 ld b,a
                 ENDM
     
+NegH            MACRO
+                ld      a,h
+                neg
+                ld      h,a
+                ENDM
+
+NegD            MACRO
+                ld      a,d
+                neg
+                ld      d,a
+                ENDM
+
+NegB            MACRO
+                ld      a,b
+                neg
+                ld      b,a
+                ENDM
+
 FourLDIInstrunctions:   MACRO
                         ldi
                         ldi
@@ -282,7 +299,7 @@ FiveLDIInstrunctions:   MACRO
                         ldi
                         ENDM
 
-SixLDIInstrunctions:   MACRO
+SixLDIInstrunctions:    MACRO
                         ldi
                         ldi
                         ldi

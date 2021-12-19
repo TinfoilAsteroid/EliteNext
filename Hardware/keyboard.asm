@@ -331,6 +331,13 @@ get_key_a_state:                            ; reads a mapped key and sets a to k
     ld      a,(hl)                          ; a = keystate
     ret
 
+force_key_press:
+    GetKeyStateAddressDE
+    ex      de,hl
+    ld      a,1
+    ld      (hl),a
+    ret
+
 is_key_pressed:                             ; returns z is set if pressed
     GetKeyStateAddressDE
     ex      de,hl

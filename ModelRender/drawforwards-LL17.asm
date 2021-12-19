@@ -11,10 +11,10 @@ CheckIfExplodingCall:
 ; DEBUG TODO turn into MACRO later
 ; Sets Z flag to true if only some faces are visible
 ; Clears Z flag if exploding so all faces should be rendered
-        ld      a,(explDsp)                 ; INWK+31                                                                               ;;; If bit 5 of exploding state is clear
+        ld      a,(UBnkexplDsp)                 ; INWK+31                                                                               ;;; If bit 5 of exploding state is clear
 ;;DEBUG
         or      $FF ; force bit 5 set so exploding
-        ld      (explDsp),a
+        ld      (UBnkexplDsp),a
 ;;DEBUG        
         ld      c,a                         ; save explDsp into c                                                                   ;;; 
         and     $20                         ; mask bit5 exploding                                                                   ;;; 

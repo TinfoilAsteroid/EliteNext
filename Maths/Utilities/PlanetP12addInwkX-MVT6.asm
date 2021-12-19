@@ -84,7 +84,7 @@ APPequZPosPlusAPP:      push    bc
                         ret
 ; Signs are opposite so we subtract
 .MV50:                  ld      de,(varP1)
-                        ld      hl,(UbnKzlo)
+                        ld      hl,(UBnKzlo)
                         or      a
                         sbc     hl,de
                         jr      c,.MV51                     ; if the result was negative then negate result
