@@ -337,7 +337,7 @@ CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
                         call    ScaleXX16Matrix197          ; scale rotation matrix in XX16
                         call    LoadCraftToCamera           ; XX18 = camera
                         ;call    CopyCameraToXX15Signed      ; Copy the camera to XX15 as signed 15 bit
-.BackfaceLoop:          ld      a,(QAddr)                   ;   
+.BackfaceLoop:          ld      a,(QAddr)                   ;  
                         ld      iyl,a                       ; iyl = scale factor
 ; By this point XX18 = scaled draw cam and iyl = scale factor
                         call    ScaleDrawcam                ; XX18 = scaled camera XX17 = scale
@@ -354,14 +354,13 @@ CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
                         ld      (CurrentNormIdx),a                                                   ; used to increment up face incdex as b decrements
 .ProcessNormalsLoop:     push    hl
                         push    bc
-                        ld      a,(hl)                                                  ;     Get Face sign and visibility distance byte 
+.LL86:                  ld      a,(hl)                                                  ;     Get Face sign and visibility distance byte 
                         and     $1F                                                     ;     if normal visibility range  < XX4
-                        ;JumpIfAGTENusng c,FaceVisible                                   ; commented out for debuggging the skip 
-.LL86:                  jp  .LL87 ; force testing of normals
-                        jp      .FaceVisible
+                        JumpIfAGTENusng c,.FaceVisible                                  ; commented out for debuggging the skip 
 ; This bit needs to be added to force face visible
 .LL87:                  call    CopyFaceToXX12              ; XX12 = normal (repolaced scale version) as a working copy
                         ld      a,(XX17)                    ; a = q scale XX17 cauclated by the call to ScaleDrawcam
+                        ld      b,a
                         JumpIfALTNusng 4,.ScaleNormByXX17   ; if q >= 4 then is so big we don;t factor in + normal for dot product
 .LL143:                 call    CopyXX18toXX15              ; and we just set XX15 = scaled Camera dot rotation matrix
                         jp      .DoneScalingIntoXX15        ; Now Process XX12 normal
@@ -374,12 +373,12 @@ CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
                         ld      a,(UBnkDrawCam0yLo)         ; .
                         srl     a                           ; .
                         ld      (UBnkDrawCam0yLo),a        ; .
-.ScaleXScaledAgain:     ld      a,1                         ; set scale to 1 so we divide original normal by 2 into face and try again and hope we didn't scaled down XX12 earlier so if we did then we must be in the do doo as the object was obscenely large and very close
+.ScaleXScaledAgain:     ld      b,1                         ; set scale to 1 so we divide original normal by 2 into face and try again and hope we didn't scaled down XX12 earlier so if we did then we must be in the do doo as the object was obscenely large and very close
                         ShiftMem8Right1 UBnkXScaled         ; Divide XX15 by 2^B
                         ShiftMem8Right1 UBnkYScaled         ; 
                         ShiftMem8Right1 UBnkZScaled         ; 
 ; if we jumped to here scale factor < 4 so we copy in normal to XX15 (scaled) LL92
-.ScaleNormByXX17:       ld      b,a
+.ScaleNormByXX17:       ;ld      b,a
                         call    CopyXX12toXX15
 .LL93                   dec     b
                         jp      m, .ScaledNorm
@@ -388,13 +387,13 @@ CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
                         ShiftMem8Right1 UBnkZScaled        ; 
                         dec     b                          ; 
                         jp      p,.LL93Loop                ; Now we have XX15 as scaled Normal, XX15 as camera, don;t really knwo why as cals work on XX12 and XX18
-.ScaledNorm:             call    CopyXX15ToXX12 ; DEBUG as XX15 shoudl be a sacled nromal
+.ScaledNorm:            ;ORIG CODE DOES NOT HAVE THIS call    CopyXX15ToXX12 ; DEBUG as XX15 shoudl be a sacled nromal
 ; Add normal to XX15
 ; if we jumped here direct from LL143 then XX15 = drawcam scaled by Q, XX12 = face normal unscaled, XX18 = drawcam scaled also
 ; if we jumped here via scaling       then XX15 = normal scaled by Q,  XX12 = face normal unscaled, XX16 = drawcam scaled
 ; if we hit an overflow               then XX15 = drawcam scaled by Q  XX12 = face normal unscaled, XX18 = (drawcam scaled / 2 ) / 2^ nbr overflows (if we cam in vai scaling then its a mess?
 ; So LL94 is wrong as it shoud be operating on XX12 not XX15
-.LL94:                  ldCopyByte UBnkXX12zLo, varR        ; ldCopyByte  UBnkZScaled,     varR  ; if we jumped direct XX15 = drawcam scaled, Xx12 = normal xx18 = drawcam
+.LL94:                  ldCopyByte UBnkZScaled, varR        ; ldCopyByte  UBnkZScaled,     varR  ; if we jumped direct XX15 = drawcam scaled, Xx12 = normal xx18 = drawcam
                         ldCopyByte UBnkXX12zSign, varS      ; ldCopyByte  UBnkYScaled,     varS  ; if we did scaling then xx15 = norm scaled XX18 = drawcam
                         ldCopyByte  UBnkDrawCam0zLo, varQ   ; AQ = drawcam Z signed
                         ld      a,(UBnkDrawCam0zSgn)        ; .
@@ -402,7 +401,7 @@ CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
                         jp      c,.Ovflw
                         ld      (UBnkZScaled),a             ; XX15Z = SA
                         ldCopyByte  varS, UBnkZScaledSign   ;
-                        ldCopyByte  UBnkXX12xLo,     varR   ; SR = normal X
+                        ldCopyByte  UBnkXScaled,     varR   ; SR = normal X
                         ldCopyByte  UBnkXX12xSign,   varS   ; .
                         ldCopyByte  UBnkDrawCam0xLo, varQ   ; AQ = drawcam x dot
                         ld      a,(UBnkDrawCam0xSgn)        ; .
@@ -410,7 +409,7 @@ CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
                         jp      c,.Ovflw
                         ld      (UBnkXScaled),a             ; XX15Z = SA
                         ldCopyByte  varS, UBnkXScaledSign   ; .
-                        ldCopyByte  UBnkXX12yLo, varR       ; SR = normal Y
+                        ldCopyByte  UBnkYScaled, varR       ; SR = normal Y
                         ldCopyByte  UBnkXX12ySign, varS     ; .
                         ldCopyByte  UBnkDrawCam0yLo, varQ   ; AQ = drawcam y dot
                         ld      a,(UBnkDrawCam0ySgn)        ; .
@@ -446,7 +445,9 @@ CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
                         ld      hl, UBnkXX12zSign           ; .
                         xor     (hl)                        ; .
                         call    SAEquSRPlusAQ               ; SA = ((X+Y signed)) (Z signed)
-                        ld      a,(varS)
+                        cp      0                           ; was the result 0, if so then there are scenarios where SAEquSRPlusAQ can return -ve 0
+                        jr      z,.FaceNotVisible           ; in which case face is not visible
+                        ld      a,(varS)                    ; if the cacl was a negative number then its visible
                         test    $80                         ; this should test S not A
                         jr      nz,.FaceVisible                                      ;        if dot product < 0 set face visible
 .FaceNotVisible:         ld          a,(CurrentNormIdx)

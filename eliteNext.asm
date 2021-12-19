@@ -166,7 +166,7 @@ UpdateUniverse:         MMUSelectUniverseN 0
 ;90 0B                   BCC MA62		\ Failed dock
 ;
                         call    ApplyMyRollAndPitch
-                         ;call    DEBUGSETNODES
+                       ;  call    DEBUGSETNODES
                         ;       call    DEBUGSETPOS
                         ld      hl,TidyCounter
                         dec     (hl)
@@ -262,7 +262,7 @@ TestPauseMode:          ld      a,(GamePaused)
 TestQuit:               ld      a,c_Pressed_Quit
                         call    is_key_pressed
                         ret
-currentDemoShip:        DB 13
+currentDemoShip:        DB      13;$12 ; 13 - corirollis 
 
 
 DEBUGSETNODES:          ld      hl,DEBUGUBNKDATA
@@ -285,7 +285,8 @@ TidyCounter             DB  0
 
 
 ; culltest
-DEBUGUBNKDATA:          db      $00,	$00,	$00,	$00,	$00,	$00,	$Fc,	$02,	$00
+;DEBUGUBNKDATA:          db      $00,	$00,	$00,	$00,	$00,	$00,	$31,	$03,	$00
+DEBUGUBNKDATA:          db      $00,	$00,	$00,	$00,	$00,	$00,	$5C,	$07,	$00
 DEBUGROTMATDATA:        db      $00,	$60,	$00,	$00,	$00,	$00
                         db      $00,	$00,	$00,	$60,	$00,	$00
                         db      $00,	$00,	$00,	$00,	$00,	$E0
