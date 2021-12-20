@@ -53,7 +53,7 @@ STEPDEBUG               equ 1
                         ld			a,7
                         call		l1_attr_cls_to_a
                         ld          a,$FF
-                        call        l2_set_border                        
+                        call        l1_set_border                        
 Initialise:             MMUSelectLayer2
                         call 		l2_initialise
                         call		l2_cls

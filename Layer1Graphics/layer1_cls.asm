@@ -10,6 +10,6 @@ l1_attr_cls_to_a:       ld		hl,	$5800
                         call	memfill_dma
                         ret	
 	
-l2_set_border:          ld	    bc, 0xFEFE
+l1_set_border:          ld	    bc, 0xFEFE
                         out		(c),a
                         ret

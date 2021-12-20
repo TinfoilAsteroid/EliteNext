@@ -46,12 +46,12 @@ ShiftDELeft1:  MACRO
 
 RollDELeft1:   MACRO			   
                rl  e
-               rl   d
+               rl  d
                ENDM
 			   
 ShiftBCLeft1:  MACRO
-			   sla b
-			   rl  c
+			   sla c
+			   rl  b
 			   ENDM
                
 ShiftMem16Right1:   MACRO memaddr

@@ -68,7 +68,7 @@ STEPDEBUG               equ 1
                         ld			a,7
                         call		l1_attr_cls_to_a
                         ld          a,$FF
-                        call        l2_set_border
+                        call        l1_set_border
                         MMUSelectSpriteBank
                         call		sprite_load_sprite_data
 Initialise:             MMUSelectLayer2
@@ -156,17 +156,32 @@ UpdateUniverse:         MMUSelectUniverseN 0
                         jr      nz,.NotDockingCheck
                         ld      hl,ShipNewBitsAddr                  ; is it angry
                         bit     4,(hl)
-                        jr      nz,.NotDockingCheck                  ; if so the doors are shut
-                      ; ld      a,(UBnkrotmatNosevZ+1)              ; get get high byte of rotmat
-                      ; JumpIfALTNusng 214, .NotDockingCheck         ; this is the magic angle to be within 26 degrees +/-
-                      ; call    GetStationVectorToWork              ; Normalise position into XX15 as in effect its a vector from out ship to it given we are always 0,0,0, returns with A holding vector z
-                      ; bit     7,a                                 ; if its negative
-                      ; jr      nz,.NotDockingCheck                  ; we are flying away from it
-                      ; JumpIfALTNusng 89, .NotDockingCheck         ; if the axis <89 the we are not in the 22 degree angle
-                      ; ld      a,(UBnkrotmatRoofvX+1)              ; get roof vector high
-                      ; and     SignMask8Bit
-                      ; JumpIfALTNusng 80, .NotDockingCheck         ; note 80 decimal for 36.6 degrees
-.GoingIn:             ; call    EnterDockingBay
+                        jr      nz,.NotDockingCheck                 ; if so the doors are shut
+.CheckIfInRangeHi:      ld      bc,(UBnKxlo)
+                        ld      hl,(UBnKylo)
+                        ld      de,(UBnKzlo)
+                        ld      a,b
+                        or      h
+                        or      d
+                        jr      nz,.NotDockingCheck
+                        ld      a,c
+                        or      l
+                        or      e
+                        and     %11000000                           ; Note we should make this 1 test for scoop or collision too
+                        ld      a,(UBnkrotmatNosevZ+1)              ; get get high byte of rotmat
+                        JumpIfALTNusng 214, .NotDockingCheck        ; this is the magic angle to be within 26 degrees +/-
+                        call    GetStationVectorToWork              ; Normalise position into XX15 as in effect its a vector from out ship to it given we are always 0,0,0, returns with A holding vector z
+                        bit     7,a                                 ; if its negative
+                        jr      nz,.NotDockingCheck                  ; we are flying away from it
+                        JumpIfALTNusng 89, .NotDockingCheck         ; if the axis <89 the we are not in the 22 degree angle
+                        ld      a,(UBnkrotmatRoofvX+1)              ; get roof vector high
+                        and     SignMask8Bit
+                        JumpIfALTNusng 80, .NotDockingCheck         ; note 80 decimal for 36.6 degrees
+.GoingIn:               
+                      MMUSelectLayer1
+                      ld        a,$6
+                      call      l1_set_border
+                        ; call    EnterDockingBay
                       ; jp      LoopRepeatPoint
 .NotDockingCheck:       call    ApplyMyRollAndPitch
                        ;  call    DEBUGSETNODES
@@ -314,17 +329,16 @@ GetStationVectorToWork: ld      hl,UBnKxlo
                         ld      a,h
                         or      d
                         or      b                       ; or all high bytes but don't worry about 1 as its sorted on low bytes
-                        push    bc
+.MulBy2Loop:            push    bc
                         ld      b,ixl
-.MulBy2Loop:            sla     b                     ; shift the or'ed low bytes left so but 7 goes into carry
+                        sla     b                       ; Shift ixl left 
                         ld      ixl,b
-                        rl      a                       ; roll into a
                         pop     bc
+                        rl      a                       ; roll into a
                         jr      c,.TA2                  ; if bit rolled out of rl a then we can't shift any more to the left
                         ShiftHLLeft1                    ; Shift Left X
                         ShiftDELeft1                    ; Shift Left Y
                         ShiftBCLeft1                    ; Shift Left Z
-                        push    bc
                         jr      .MulBy2Loop              ; no need to do jr nc as the first check looks for high bits across all X Y and Z
 .TA2:                   ld      a,(varVector9ByteWork+2); x sign
                         srl     h
