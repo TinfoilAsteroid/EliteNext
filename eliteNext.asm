@@ -1,4 +1,4 @@
- DEVICE ZXSPECTRUMNEXT
+Fcoc DEVICE ZXSPECTRUMNEXT
  DEVICE ZXSPECTRUMNEXT
  DEVICE ZXSPECTRUMNEXT
  DEFINE  DOUBLEBUFFER 1
@@ -22,8 +22,9 @@ ScreenEquip     EQU ScreenPlanet + 1
 ScreenLaunch    EQU ScreenEquip + 1
 ScreenFront     EQU ScreenLaunch + 1
 ScreenAft       EQU ScreenFront+1
-ScreenLeft      EQU ScreenAft+2
-ScreenRight     EQU ScreenLeft+3
+ScreenLeft      EQU ScreenAft+1
+ScreenRight     EQU ScreenLeft+1
+ScreenDocking   EQU ScreenRight+1
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Colour Defines
     INCLUDE "./Hardware/L2ColourDefines.asm"
@@ -109,12 +110,17 @@ TestText:               xor			a
                             call  l2_flip_buffers
                         ENDIF    
                         
-InitialiseDemoShip:     ld      a,(currentDemoShip)
-                        MMUSelectUniverseN 0                          ; load up register into universe bank
+                        
+InitialiseDemoShip:     call    ClearFreeSlotList
+                        call    FindNextFreeSlotInA
+                        call    SetSlotAToSpaceStation
+                        push    af
+                        MMUSelectUniverseA                          ; load up register into universe bank
                         call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
                         MMUSelectShipModelsA
-                        ld		a,(currentDemoShip)
+                        ld      a,13    ; space station
                         call    CopyShipDataToUBnk
+                        
                         ld      a,3
                         ld      (MenuIdMax),a
                         ld      a,$FF                               ; Starts Docked
@@ -168,6 +174,7 @@ UpdateUniverse:         MMUSelectUniverseN 0
                         or      l
                         or      e
                         and     %11000000                           ; Note we should make this 1 test for scoop or collision too
+                        jr      nz,.NotDockingCheck
                         ld      a,(UBnkrotmatNosevZ+1)              ; get get high byte of rotmat
                         JumpIfALTNusng 214, .NotDockingCheck        ; this is the magic angle to be within 26 degrees +/-
                         call    GetStationVectorToWork              ; Normalise position into XX15 as in effect its a vector from out ship to it given we are always 0,0,0, returns with A holding vector z
@@ -178,11 +185,11 @@ UpdateUniverse:         MMUSelectUniverseN 0
                         and     SignMask8Bit
                         JumpIfALTNusng 80, .NotDockingCheck         ; note 80 decimal for 36.6 degrees
 .GoingIn:               
-                      MMUSelectLayer1
-                      ld        a,$6
-                      call      l1_set_border
-                        ; call    EnterDockingBay
-                      ; jp      LoopRepeatPoint
+                        MMUSelectLayer1
+                        ld        a,$6
+                        call      l1_set_border
+                        call    EnterDockingBay
+                        jp      MenusLoop
 .NotDockingCheck:       call    ApplyMyRollAndPitch
                        ;  call    DEBUGSETNODES
                         ;       call    DEBUGSETPOS
@@ -218,17 +225,23 @@ MenusLoop:              ld      hl,(ScreenLoopJP+1)
 ScreenLoopBank:         ld      a,$0
                         MMUSelectScreenA
 ScreenLoopJP:           call    $0000
+SpecialInstrucion:      ld      a,$00
+                        cp      0
+                        jr      z, LoopRepeatPoint
+                        cp      1
+                        jr      nz, LoopRepeatPoint
+                        call    LaunchedFromStation
 LoopRepeatPoint:
 DoubleBufferCheck:      ld      a,00
                         IFDEF DOUBLEBUFFER
                             cp      0
-                            jp      z,MainLoop
+                            jp      z,.TestTransition
                             MMUSelectLayer2
                             ld     a,(varL2_BUFFER_MODE)
                             cp     0
                             call   nz,l2_flip_buffers
                         ENDIF
-                        ld      a,(ScreenTransitionForced)          ; was there a bruite force screen change in any update loop
+.TestTransition:        ld      a,(ScreenTransitionForced)          ; was there a bruite force screen change in any update loop
                         cp      $FF
                         jp      z,MainLoop
 .BruteForceChange:      ld      d,a
@@ -241,12 +254,8 @@ DoubleBufferCheck:      ld      a,00
 ;..................................................................................................................................
 	;call		keyboard_main_loop
     
-EnterDockingBay:        ld      a,$FF
-                        ld      (DockedFlag),a
+EnterDockingBay:        ld      a,ScreenDocking
                         ld      (ScreenTransitionForced),a
-                        ld      a,5
-                        ld      (ScreenIndex),a
-                                ; Force status screen
                         ret
     
 TestForNextShip:        ld      a,c_Pressed_Quit
@@ -265,6 +274,20 @@ TestForNextShip:        ld      a,c_Pressed_Quit
                         call    CopyShipDataToUBnk
                         call    SetInitialShipPosition
                         ret
+
+SetPositionBehindUs:    ld      hl,$0000
+                        ld      (UBnKxlo),hl
+                        ld      hl,$0000
+                        ld      (UBnKylo),hl
+                        ld      hl,$01B0                            ; so its a negative distance behind
+                        ld      (UBnKzlo),hl
+                        xor     a
+                        ld      (UBnKxsgn),a
+                        ld      (UBnKysgn),a
+                        dec     a                                   ; make a FF
+                        ld      (UBnKzsgn),a
+                        call	InitialiseOrientation; for now its facing the wrong way as if we flew out its arse
+                        ret    
 
 TestPauseMode:          ld      a,(GamePaused)
                         cp      0
@@ -289,22 +312,6 @@ TestQuit:               ld      a,c_Pressed_Quit
                         ret
 currentDemoShip:        DB      13;$12 ; 13 - corirollis 
 
-
-DEBUGSETNODES:          ld      hl,DEBUGUBNKDATA
-                        ld      de,UBnKxlo
-                        ld      bc,9
-                        ldir
-                        ld      hl,DEBUGROTMATDATA
-                        ld      de,UBnkrotmatSidevX
-                        ld      bc,6*3
-                        ldir
-                        ret
-
-DEBUGSETPOS:            ld      hl,DEBUGUBNKDATA 
-                        ld      de,UBnKxlo 
-                        ld      bc,9 - 3
-                        ldir
-                        ret
 
 
 GetStationVectorToWork: ld      hl,UBnKxlo
@@ -357,117 +364,7 @@ GetStationVectorToWork: ld      hl,UBnKxlo
 
 TidyCounter             DB  0
 
-
-; culltest
-;DEBUGUBNKDATA:          db      $00,	$00,	$00,	$00,	$00,	$00,	$31,	$03,	$00
-DEBUGUBNKDATA:          db      $00,	$00,	$00,	$00,	$00,	$00,	$5C,	$07,	$00
-DEBUGROTMATDATA:        db      $00,	$60,	$00,	$00,	$00,	$00
-                        db      $00,	$00,	$00,	$60,	$00,	$00
-                        db      $00,	$00,	$00,	$00,	$00,	$E0
-
-; FAILS due to sharp angle, OK now
-;DEBUGUBNKDATA:          db      $39,	$01,	$00,	$43,	$01,	$00,	$EF,	$03,	$00
-;DEBUGROTMATDATA:        db      $01,	$2F,	$B2,	$CC,	$4C,	$27
-;                        db      $17,	$46,	$87,	$3C,	$95,	$20
-;                        db      $E2,	$32,	$31,	$8C,	$EF,	$D1
-; TOP RIGHT CORNER Passes as python and cobra
-;DEBUGUBNKDATA:          db      $39,	$01,	$00,	$43,	$01,	$00,	$5B,	$04,	$00
-;DEBUGROTMATDATA:        db      $E2,	$03,	$3A,	$16,	$F5,	$60
-;                        db      $D3,	$CE,	$F3,	$BA,	$4E,	$0F
-;                        db      $03,	$BE,	$4A,	$4B,	$DB,	$8C
-; Looks OK
-;DEBUGUBNKDATA:          db      $39,    $01,    $00,    $43,    $01,    $00,    $EE,    $02,    $00
-;DEBUGROTMATDATA:        db      $35,    $d8,    $98,    $9f,    $b0,    $1a
-;                        db      $4B,    $26,    $CE,    $d6,    $60,    $16
-;                        db      $89,    $90,    $c4,    $9f,    $dd,    $d9
-;
-; Massive horizontal line
-; 15th line (or line 14 has corrodinates 05,00 to D8,00) which looks wrong
-; node array looks OK, looks liek its sorted as it was both -ve Y off screen fix added
-;DEBUGUBNKDATA:          db      $39,    $01,    $00,    $43,    $01,    $00,    $BD,    $03,    $00
-;DEBUGROTMATDATA:        db      $59,    $CF,    $06,    $B6,    $61,    $8D
-;                        db      $AD,    $B1,    $97,    $4F,    $C9,    $98
-;                        db      $61,    $99,    $E0,    $0D,    $11,    $5C
-; Line lost in clipping 
-;DEBUGUBNKDATA:          db      $39,    $01,    $00,    $43,    $01,    $00,    $8B,    $04,    $00
-;DEBUGROTMATDATA:        db      $A3,    $4D,    $A9,    $28,    $F8,    $AF
-;                        db      $FB,    $97,    $8C,    $B5,    $FB,    $D0
-;                        db      $DB,    $3A,    $29,    $CA,    $29,    $1C
-;DEBUGUBNKDATA:          db      $5E,    $02,    $00,    $FE,    $00,    $FE,    $E5,    $09,    $00
-;DEBUGROTMATDATA:        db      $A6,    $88,    $89,    $BB,    $53,    $4D
-;                        db      $6D,    $D9,    $F0,    $99,    $BA,    $9E
-;                        db      $4A,    $A8,    $89,    $47,    $DF,    $33
-;            
-;DEBUGUBNKDATA:          db      $ED,    $05,    $00,    $FE,    $00,    $FE,    $F1,    $0A,    $00
-;DEBUGROTMATDATA:        db      $1B,    $33,    $DE,    $B4,    $ED,    $C5
-;                        db      $73,    $C4,    $BC,    $1E,    $96,    $C4
-;                        db      $55,    $B9,    $35,    $D1,    $80,    $0F
-; top left off right issue
-;DEBUGUBNKDATA:          db      $39,    $01,    $00,    $43,    $01,    $00,    $2F,    $03,    $00
-;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
-;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
-;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
-; test middle of screen
-;DEBUGUBNKDATA:          db      $00,    $00,    $00,    $00,    $00,    $00,    $20,    $01,    $00
-;          
-;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
-;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
-;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
-; test middle of screen futher away
-;DEBUGUBNKDATA:          db      $00,    $00,    $00,    $00,    $00,    $00,    $20,    $02,    $00
-;          
-;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
-;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
-;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
-
-; Test left center clip still warping
-;DEBUGUBNKDATA:          db      $80,    $00,    $80,    $00,    $00,    $00,    $20,    $01,    $00
-;          
-;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
-;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
-;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
-; Test right center clip - seems to be warping values towards bottom of screen on clip
-;DEBUGUBNKDATA:          db      $80,    $00,    $00,    $00,    $00,    $00,    $20,    $01,    $00
-;          
-;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
-;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
-;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
-; Test top center clip test 1 - good test many ships fail
-;DEBUGUBNKDATA:          db      $19,    $00,    $00,    $50,    $00,    $00,    $20,    $01,    $00
-;          
-;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
-;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
-;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
-; Test top center clip test 2 - Poss 2nd ship has an issue with a small line
-;DEBUGUBNKDATA:          db      $19,    $00,    $00,    $60,    $00,    $00,    $2F,    $01,    $00
-;          
-;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
-;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
-;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
-; Test bottom center clip ; complet shambles as if its forcing cip to below 128
-; looks better now may have some clipping issues maybe ship data
-;DEBUGUBNKDATA:          db      $19,    $00,    $00,    $50,    $00,    $80,    $20,    $01,    $00
-;          
-;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
-;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
-                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
-; Test left top center clip
-
-; Test right top center clip
-; Test left bottom center clip
-; Test right bottom center clip
-
-; Tests with no clip
-;DEBUGUBNKDATA:          db      $39,    $00,    $00,    $43,    $00,    $00,    $2F,    $04,    $00
-;          
-;DEBUGROTMATDATA:        db      $FD,    $50,    $47,    $B0,    $53,    $9A
-;                        db      $73,    $B7,    $98,    $C8,    $80,    $A3
-;                        db      $E6,    $01,    $81,    $AD,    $B0,    $55
-;
-;DEBUGUBNKDATA:          db      $00,    $00,    $00,    $00,    $00,    $00,    $1F,    $00,    $00
-;      
-; UBNKPOs example 39,01,00,43,01,00,f4,03,00
-; rotmat  example b1, 83,ae,5d,b0,1a,5e,de,82,8a,69,16,70,99,52,19,dd,d9
+            INCLUDE "./debugMatrices.asm"
 
 
 ;TODO Optimisation
@@ -480,8 +377,8 @@ DEBUGROTMATDATA:        db      $00,	$60,	$00,	$00,	$00,	$00
 ; First byte is now docked flag
 ; 
 ; Padded to 8 bytes to allow a * 8 for addressing    
-; Byte 0 - Docked flag  : 0 = not applicable, 1 = only whilst docked, 2 = only when not docked
-; Byte 1 - Screen Id
+; Byte 0   - Docked flag  : 0 = not applicable (always read), 1 = only whilst docked, 2 = only when not docked, 3 = No keypress allowed
+; Byte 1   - Screen Id
 ; Byte 2,3 - address of keypress table
 ; Byte 4   - Bank with Display code
 ; Byte 5,6 - Function for display
@@ -489,18 +386,25 @@ DEBUGROTMATDATA:        db      $00,	$60,	$00,	$00,	$00,	$00
 ; Byte 9   - Draw stars Y/N
 ; byte 10  - Input Blocker (set to 1 will not allow keyboard screen change until flagged, used by transition screens and pause menus)
 ; byte 11  - Double Buffering 0 = no, 1 = yes
-; byte 12,13  - cursor key input 
+; byte 12,13  - cursor key input routine
+; byte 14  - special operation flag = one off routine triggered by code, 01=Launched ship to set up space station behind us
+; byte 15    padding at the momnent (should add in an "AI enabled flag" for optimistation, hold previous value and on change create ships
 ;                          0    1                 2                              3                               4                    5                            6                              7                     8                       9   10  11  12                          13                          14  15    
 ScreenKeyMap:           DB 0,   ScreenLocal     , low addr_Pressed_LocalChart,   high addr_Pressed_LocalChart,   BankMenuShrCht,      low draw_local_chart_menu,   high draw_local_chart_menu,    $00,                  $00,                    $00,$00,$00,low local_chart_cursors,    high local_chart_cursors,   $00,$00;low loop_local_chart_menu,   high loop_local_chart_menu
 ScreenKeyGalactic:      DB 0,   ScreenGalactic  , low addr_Pressed_GalacticChrt, high addr_Pressed_GalacticChrt, BankMenuGalCht,      low draw_galactic_chart_menu,high draw_galactic_chart_menu, low loop_gc_menu,     high loop_gc_menu,      $00,$00,$00,low galctic_chart_cursors,  high galctic_chart_cursors, $00,$00
-                        DB 1,   ScreenMarket    , low addr_Pressed_MarketPrices, high addr_Pressed_MarketPrices, BankMenuMarket,      low draw_market_prices_menu, high draw_market_prices_menu,  low loop_market_menu, high loop_market_menu,  $00,$00,$00,$00,$00,$00,$00
-                        DB 2,   ScreenMarketDsp , low addr_Pressed_MarketPrices, high addr_Pressed_MarketPrices, BankMenuMarket,      low draw_market_prices_menu, high draw_market_prices_menu,  $00,                  $00,                    $00,$00,$00,$00,$00,$00,$00
-ScreenCmdr:             DB 0,   ScreenStatus    , low addr_Pressed_Status,       high addr_Pressed_Status,       BankMenuStatus,      low draw_status_menu,        high draw_status_menu,         low loop_STAT_menu,  high loop_STAT_menu,     $00,$00,$00,$00,$00,$00,$00
-                        DB 0,   ScreenInvent    , low addr_Pressed_Inventory,    high addr_Pressed_Inventory,    BankMenuInvent,      low draw_inventory_menu,     high draw_inventory_menu,      $00,                  $00,                    $00,$00,$00,$00,$00,$00,$00
-                        DB 0,   ScreenPlanet    , low addr_Pressed_PlanetData,   high addr_Pressed_PlanetData,   BankMenuSystem,      low draw_system_data_menu,   high draw_system_data_menu,    $00,                  $00,                    $00,$00,$00,$00,$00,$00,$00
-                        DB 1,   ScreenEquip     , low addr_Pressed_Equip,        high addr_Pressed_Equip,        BankMenuEquipS,      low draw_eqshp_menu,         high draw_eqshp_menu,          low loop_eqshp_menu,  high loop_eqshp_menu,   $00,$00,$00,$00,$00,$00,$00
-                        DB 1,   ScreenLaunch    , low addr_Pressed_Launch,       high addr_Pressed_Launch,       BankLaunchShip,      low draw_launch_ship,        high draw_launch_ship,         low loop_launch_ship, high loop_launch_ship,  $00,$01,$01,$00,$00,$00,$00
+                        DB 1,   ScreenMarket    , low addr_Pressed_MarketPrices, high addr_Pressed_MarketPrices, BankMenuMarket,      low draw_market_prices_menu, high draw_market_prices_menu,  low loop_market_menu, high loop_market_menu,  $00,$00,$00,$00,                        $00,                        $00,$00
+                        DB 2,   ScreenMarketDsp , low addr_Pressed_MarketPrices, high addr_Pressed_MarketPrices, BankMenuMarket,      low draw_market_prices_menu, high draw_market_prices_menu,  $00,                  $00,                    $00,$00,$00,$00,                        $00,                        $00,$00
+ScreenCmdr:             DB 0,   ScreenStatus    , low addr_Pressed_Status,       high addr_Pressed_Status,       BankMenuStatus,      low draw_status_menu,        high draw_status_menu,         low loop_STAT_menu,  high loop_STAT_menu,     $00,$00,$00,$00,                        $00,                        $00,$00
+                        DB 0,   ScreenInvent    , low addr_Pressed_Inventory,    high addr_Pressed_Inventory,    BankMenuInvent,      low draw_inventory_menu,     high draw_inventory_menu,      $00,                  $00,                    $00,$00,$00,$00,                        $00,                        $00,$00
+                        DB 0,   ScreenPlanet    , low addr_Pressed_PlanetData,   high addr_Pressed_PlanetData,   BankMenuSystem,      low draw_system_data_menu,   high draw_system_data_menu,    $00,                  $00,                    $00,$00,$00,$00,                        $00,                        $00,$00
+                        DB 1,   ScreenEquip     , low addr_Pressed_Equip,        high addr_Pressed_Equip,        BankMenuEquipS,      low draw_eqshp_menu,         high draw_eqshp_menu,          low loop_eqshp_menu,  high loop_eqshp_menu,   $00,$00,$00,$00,                        $00,                        $00,$00
+                        DB 1,   ScreenLaunch    , low addr_Pressed_Launch,       high addr_Pressed_Launch,       BankLaunchShip,      low draw_launch_ship,        high draw_launch_ship,         low loop_launch_ship, high loop_launch_ship,  $00,$01,$01,$00,                        $00,                        $01,$00
 ScreenKeyFront:         DB 2,   ScreenFront     , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
+                        DB 2,   ScreenAft       , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
+                        DB 2,   ScreenLeft      , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
+                        DB 2,   ScreenRight     , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
+                        DB 3,   ScreenDocking   , $FF,                           $FF,                            BankLaunchShip,      low draw_docking_ship,       high draw_docking_ship,        low loop_docking_ship,high loop_docking_ship, $00,$01,$01,$00,                        $00,                        $00,$00
+
 ;               DB low addr_Pressed_Aft,          high addr_Pressed_Aft,          BankMenuGalCht,      low SelectFrontView,         high SelectFrontView,          $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 ;               DB low addr_Pressed_Left,         high addr_Pressed_Left,         BankMenuGalCht,      low SelectFrontView,         high SelectFrontView,          $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 ;               DB low addr_Pressed_Right,        high addr_Pressed_Right,        BankMenuGalCht,      low SelectFrontView,         high SelectFrontView,          $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
@@ -510,6 +414,25 @@ ScreenViewsStart    EQU (ScreenKeyFront - ScreenKeyMap)/ScreenMapRow
 ScreenTransitionForced  DB $FF    
     INCLUDE "./GameEngine/resetUniverse.asm"
 
+LaunchedFromStation:    call    FindSpaceStationSlotInA
+                        jr      c,.SpaceStationMissing
+                        MMUSelectUniverseA               ; select the space station's slot so we can re-use it
+                        call    ClearFreeSlotListSaveA  ;Now neeed to set station behind (also need to check which type first                      
+                        jp      .BuiltStation
+.SpaceStationMissing:   ld      a,CoriloisStation
+                        call    GetShipModelAddress             
+                        MMUSelectShipModelA                 ; so we select bank found
+                        push    bc                                  ; save ship number
+                        call    FindNextFreeSlotInA                 ; find a spare slot else hijack 0
+                        jr      nc,.FoundFreeSlot
+.JackSlot0:             xor     a
+.FoundFreeSlot:         MMUSelectUniverseA
+                        pop     bc                                  ; get ship number back
+                        call    CopyShipDataToUBnk
+.BuiltStation:          call    SetPositionBehindUs
+                        xor     a
+                        ld      (SpecialInstrucion+1),a         ; we have done the special instruction
+                        ret
     
 InitialiseCommander:    ld      a,(ScreenCmdr+1)
                         ld      ix,ScreenCmdr
@@ -521,7 +444,7 @@ InitialiseFrontView:    ld      a,(ScreenKeyFront+1)
 ; false ret here as we get it free from jp    
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-SetScreenAIX:           ld      (ScreenIndex),a                 ; Set screen index to ixl
+SetScreenAIX:           ld      (ScreenIndex),a                 ; Set screen index to a
                         xor     a
                         dec     a                               ; set A to FF
                         ld      (ScreenTransitionForced),a      ; In case it was called by a brute force change in an update loop
@@ -548,6 +471,8 @@ SetScreenAIX:           ld      (ScreenIndex),a                 ; Set screen ind
                         ld      (CallCursorRoutine+1),a
                         ld      a,(ix+13)
                         ld      (CallCursorRoutine+2),a
+                        ld      a,(ix+14)
+                        ld      (SpecialInstrucion+1),a
                         
 ScreenUpdateAddr:       jp      $0000                          ; We can just drop out now and also get a free ret from caller
 ;----------------------------------------------------------------------------------------------------------------------------------                    
@@ -555,25 +480,30 @@ ViewKeyTest:            ld      a,(ScreenIndex)
                         ld      c,a
                         ld      b,ScreenMapLen                  ; For now until add screens are added
                         ld      ix,ScreenKeyMap
-ViewScanLoop:           ld      a,(ix+0)                        ; Screen Map Byte 0 Docked flag
-                        cp      0
+ViewScanLoop:           ld      a,(ix+0)                        ; Screen Map Byte 0 Docked flag 
+; 0 = not applicable (always read), 1 = only whilst docked, 2 = only when not docked, 3 = No keypress allowed
+                        cp      3                               ; if not selectable then don't scan this (becuase its a transition screen)
+                        jr      z,NotReadNextKey                ; 
+                        cp      0                               ; if itr a always read skip docking check
                         jr      z,.NoDocCheck
 .DocCheck:              ld      d,a
                         ld      a,(DockedFlag)
-                        cp      0
+                        cp      0                               ; if we are docked
                         jr      z,.NotDockedCheck
 .DockedCheck:           ld      a,d
-                        cp      1
+                        cp      1                               ; if we are docked and its a dock only then scan
                         jr      nz,NotReadNextKey
                         jr      .NoDocCheck
 .NotDockedCheck:        ld      a,d
-                        cp      2
+                        cp      2                               ; if we are not docked and its a flight only then scan
                         jr      nz,NotReadNextKey
 .NoDocCheck:            ld      a,(ix+1)                        ; Screen Map Byte 1 Screen Id
                         cp      c                               ; is the index the current screen, if so skip the scan
                         ld      e,a
                         jr      z,NotReadNextKey   
                         ld      a,(ix+2)                        ; Screen Map Byte 2 - address of keypress table
+                        cp      $FF                             ; if upper byte is FF then we do not respond
+                        jr      z,NotReadNextKey
                         ld      (ReadKeyAddr+1),a               ; Poke address into the ld hl,(....) below
                         ld      a,(ix+3)                        ; Screen Map Byte 3 - address of keypress table
                         ld      (ReadKeyAddr+2),a
@@ -881,6 +811,9 @@ SeedGalaxy0Loop:        push    ix
     
     INCLUDE "./Variables/constant_equates.asm"
     INCLUDE "./Variables/general_variables.asm"
+
+    INCLUDE "./Variables/UniverseSlotRoutines.asm"
+
     INCLUDE "./Variables/EquipmentVariables.asm"
     
     INCLUDE "./Variables/random_number.asm"

@@ -129,7 +129,7 @@ JumpIfAEqNusng: MACRO value, target
                 ENDM
 
 IfAIsZeroGoto:	MACRO target
-				cp	0
+				and a   ; cp 0 - changed to and a for optimisation but affects other flags
 				jp	z,target
 				ENDM
 
@@ -193,20 +193,27 @@ ReturnIfAEqNusng: MACRO value
                   ret     z
                   ENDM
 				   
-				 
-ClearCarryFlag:	MACRO
-				or a
-				ENDM
+SetCarryFlag:           MACRO
+                        scf
+                        ENDM
+                 
+ClearCarryFlag:	        MACRO
+                        or a
+                        ENDM
+                        
+FlipCarryFalg:          MACRO
+                        ccf
+                        ENDM
                 
-pushbcde:		MACRO
-	push	bc
-	push	de
-	ENDM
+pushbcde:		        MACRO
+                        push	bc
+                        push	de
+                        ENDM
 
-popdebc:		MACRO
-	pop		de
-	pop		bc
-	ENDM
+popdebc:		        MACRO
+                        pop		de
+                        pop		bc
+                        ENDM
 
 pushhlde:		MACRO
                 push	hl

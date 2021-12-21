@@ -110,8 +110,8 @@ UBnkXX19                    DS  3
 ;rotmatUy            equ rotmat1yHi
 ;rotmatUz            equ rotmat1zHi
 
-UbnkShipType                DB  0
-        
+UBnkShipModelBank           DB  0
+UBnkShipModelNbr            DB  0
 UBnkHullCopy                DS  ShipDataLength
 ScoopDebrisAddr             equ UBnkHullCopy + ScoopDebrisOffset	 
 MissileLockLoAddr           equ UBnkHullCopy + MissileLockLoOffset	 

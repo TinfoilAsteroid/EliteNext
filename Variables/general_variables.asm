@@ -210,8 +210,8 @@ PATG		DB	0				; 6502 &03C9
 SLSP 		DW	0				; &03B0 \ SLSP \ ship lines pointer
 
 
-UNIV		DS FreeListSize*2	; Array of Universe Pointers
-HULLINDEX	DS ShipTypeSize*2	; hull index for table at XX21= &5600 XX21-1,Y
+;UNIV		DS FreeListSize*2	; Array of Universe Pointers
+;HULLINDEX	DS ShipTypeSize*2	; hull index for table at XX21= &5600 XX21-1,Y
 
 ; Present System Variables
 
@@ -335,7 +335,7 @@ ZZDust					DB	0				;	88		ZZDust (Poss 16 bit need to check)
 XX13                    DB  0               ;   89
 MCNT					DB 	0				; 8A
 TYPE					DB	0				; 8C used for ship type in drawing
-DockedFlag				DB	0				; 8E
+DockedFlag				DB	0				; 8E - Docked flag = 0 = in free space, FF = Docked, any number > 1 = count down to 0, whilst counting down no docking will be tested
 GamePaused              DB  0
 varSWAP                 DB  0               ; 90 , general purpose swap variable
 varCNT                  DB  0               ; 93
@@ -379,8 +379,11 @@ HeapData				DS	50
 ;RuntimeData:
 HeapHead				equ HeapStart
 
-FRIN					DS FreeListSize		; &0311 for 12 bytes Array of Free Index - Now array of while universe pages are occupied
-FreeUniverseSlotList    EQU FRIN
+; For the UniverseSlot list, for an optimisation the type slot will be the ship type, e.g. ship type this will optimise searching for a station or star
+; bit 7 will be set for a sun or planet so we can only ever have 128 types of ship, in relality there are about 3 types
+; note this is ship type as it space station, transporter, pirate etc not model of ship
+UniverseSlotList		DS UniverseListSize		; &0311 for 12 bytes Array of Free Index - Now array of while universe pages are occupied
+    
 SUN						DB	0				; &031D Actually MANY -1? As we can only have 1?
 MANY					DB	0				; &031E array of ship types???
 SpaceStationPresent		DB	0				; &0320	Wonder if many is counter of type in univ objects?
@@ -548,7 +551,9 @@ SpeedoMapping           DB  01,02,02,03,04,04,05,06,06,07,08,09,10,10,11,12,13,1
 DialMiddleXPos          equ $E1 
 RollMiddle              equ $8AE0  
 PitchMiddle             equ $92E0   
-   
+
+                    
+
 MakeInnocentMacro:		MACRO
 						xor		a
 						ld		(FugitiveInnocentStatus),a

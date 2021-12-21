@@ -53,6 +53,7 @@ MMUSelectCpySrcN:    MACRO value
 					 ENDM	
          
 MMUSelectUniverseA:  MACRO
+                     add    a,BankUNIVDATA0
                      nextreg UniverseMMU,       a
                      ENDM
 

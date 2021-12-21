@@ -27,7 +27,42 @@ CobraTablePointer       equ 43
 ;29 faulty
 BankThreshold           equ 16
 
+ShipTableALast          equ 23
+ShipTableBLast          equ 39
+ShipTableCLast          equ 55
                ENDIF
+               
+
+               
+
+
+; For ship number A fetch the adjusted ship number in B and bank number in A for the respective ship based on the ship table
+                        IFDEF SHIPBANKA
+GetShipModelAddress:
+GetShipModelAddressA:   ld      c,a
+                        ld      hl,ShipModelBankA                   ; Ship Model BankA, B and C are all the same value
+                        ENDIF
+                        IFDEF SHIPBANKB
+GetShipModelAddressB:   ld      c,a
+                        ld      hl,ShipModelBankB
+                        ENDIF
+                        IFDEF SHIPBANKC
+GetShipModelAddressC:   ld      c,a
+                        ld      hl,ShipModelBankC
+                        ENDIF
+                        JumpIfALTNusng ShipTableALast+1, .ShipBankA
+                        JumpIfALTNusng ShipTableBLast+1, .ShipBankB
+                        JumpIfALTNusng ShipTableCLast+1, .ShipBankC
+.Failed:                SetCarryFlag                                ; if its over current bank max then a failure
+                        ret
+.ShipBankA:             ld      b,a
+                        jp      .Done
+.ShipBankB:             sub     a,ShipTableALast+1
+                        jp      .Done
+.ShipBankC:             sub     a,ShipTableBLast+1
+.Done:                  ld      a,BankShipModelsA
+                        ClearCarryFlag
+                        ret
 
 ;GINF:
                         IFDEF SHIPBANKA
@@ -122,17 +157,24 @@ CopyNormalDataToUBnkC:
                         call        memcopy_dma
                         ret
 
+
                         IFDEF SHIPBANKA
 CopyShipDataToUBnk: 
-CopyShipDataToUBnkA:               
+CopyShipDataToUBnkA:    push        af
+                        ld          a,BankShipModelsA
                         ENDIF
                         IFDEF SHIPBANKB
-CopyShipDataToUBnkB:
+CopyShipDataToUBnkB:    push        af
+                        ld          a,BankShipModelsB
                         ENDIF
                         IFDEF SHIPBANKC
-CopyShipDataToUBnkC:
+CopyShipDataToUBnkC:    push        af
+                        ld          a,BankShipModelsC
                         ENDIF
-                        ld			(UbnkShipType),a			; mark ship type in bank
+                        ld          (UBnkShipModelBank),a
+                        pop         af                              ; save the current ship number and bank in case we need it later, say for a space station
+                        ld			(UBnkShipModelNbr),a			; mark ship type in bank
+                        
 .GetHullDataLength:     ld          hl,ShipModelSizeTable
                         add         hl,a
                         add         hl,a                        ; we won't multiply by 2 as GetInfo is a general purpose routines so would end up x 4
@@ -173,30 +215,30 @@ ShipModelBankC           DB BankShipModelsA
                          DB BankShipModelsC
                          ENDIF
                          IFDEF SHIPBANKA
-ShipModelTableA:         DW Adder
-                         DW Anaconda
-                         DW Asp_Mk_2
-                         DW Asteroid
-                         DW Boa
-                         DW Boulder
-                         DW Bushmaster
-                         DW CargoType5
-                         DW Chameleon
-                         DW CobraMk3
-                         DW Cobra_Mk_1
-                         DW Cobra_Mk_3_P
-                         DW Constrictor
-                         DW Coriolis
-                         DW Cougar
-                         DW Dodo
-                         DW Dragon
-                         DW Escape_Pod
-                         DW Fer_De_Lance
-                         DW Gecko
-                         DW Ghavial
-                         DW Iguana
-                         DW Krait
-                         DW Logo
+ShipModelTableA:         DW Adder                                   ;00
+                         DW Anaconda                                ;01
+                         DW Asp_Mk_2                                ;02
+                         DW Asteroid                                ;03
+                         DW Boa                                     ;04
+                         DW Boulder                                 ;05
+                         DW Bushmaster                              ;06
+                         DW CargoType5                              ;07
+                         DW Chameleon                               ;08
+                         DW CobraMk3                                ;09
+                         DW Cobra_Mk_1                              ;10
+                         DW Cobra_Mk_3_P                            ;11
+                         DW Constrictor                             ;12
+                         DW Coriolis                                ;13
+                         DW Cougar                                  ;14
+                         DW Dodo                                    ;15
+                         DW Dragon                                  ;16
+                         DW Escape_Pod                              ;17
+                         DW Fer_De_Lance                            ;18
+                         DW Gecko                                   ;19
+                         DW Ghavial                                 ;20
+                         DW Iguana                                  ;21
+                         DW Krait                                   ;22
+                         DW Logo                                    ;23
 ShipVertexTableA:        DW AdderVertices
                          DW AnacondaVertices
                          DW Asp_Mk_2Vertices
@@ -263,30 +305,30 @@ ShipModelSizeTableA:     DW AdderLen
                          DW DodoLen
                          ENDIF
                          IFDEF SHIPBANKB
-ShipModelTableB:         DW Dragon
-                         DW Escape_Pod
-                         DW Fer_De_Lance
-                         DW Gecko
-                         DW Ghavial
-                         DW Iguana
-                         DW Krait
-                         DW Logo
-                         DW Mamba
-                         DW Missile
-                         DW Monitor
-                         DW Moray
-                         DW Ophidian
-                         DW Plate
-                         DW Python
-                         DW Python_P
-ShipVertexTableB:        DW DragonVertices
-                         DW Escape_PodVertices
-                         DW Fer_De_LanceVertices
-                         DW GeckoVertices
-                         DW GhavialVertices
-                         DW IguanaVertices
-                         DW KraitVertices
-                         DW LogoVertices
+ShipModelTableB:         DW Dragon                                  ;24
+                         DW Escape_Pod                              ;25
+                         DW Fer_De_Lance                            ;26
+                         DW Gecko                                   ;27
+                         DW Ghavial                                 ;28
+                         DW Iguana                                  ;29
+                         DW Krait                                   ;30
+                         DW Logo                                    ;31
+                         DW Mamba                                   ;32
+                         DW Missile                                 ;33
+                         DW Monitor                                 ;34
+                         DW Moray                                   ;35
+                         DW Ophidian                                ;36
+                         DW Plate                                   ;37
+                         DW Python                                  ;38
+                         DW Python_P                                ;39
+ShipVertexTableB:        DW DragonVertices                          
+                         DW Escape_PodVertices                      
+                         DW Fer_De_LanceVertices                    
+                         DW GeckoVertices                           
+                         DW GhavialVertices                         
+                         DW IguanaVertices                          
+                         DW KraitVertices                           
+                         DW LogoVertices                            
                          DW MambaVertices
                          DW MissileVertices
                          DW MonitorVertices
@@ -345,22 +387,22 @@ ShipModelSizeTableB:     DW DragonLen
                          DW Python_PLen
                          ENDIF
                          IFDEF SHIPBANKC
-ShipModelTableC:         DW Rattler
-                         DW Rock_Hermit
-                         DW ShuttleType9
-                         DW Shuttle_Mk_2
-                         DW Sidewinder
-                         DW Splinter
-                         DW TestVector
-                         DW Thargoid
-                         DW Thargon
-                         DW TransportType10
-                         DW Viper
-                         DW Worm
-                         DW 0
-                         DW 0
-                         DW 0
-                         DW 0
+ShipModelTableC:         DW Rattler                                 ;40
+                         DW Rock_Hermit                             ;41
+                         DW ShuttleType9                            ;42
+                         DW Shuttle_Mk_2                            ;43
+                         DW Sidewinder                              ;44
+                         DW Splinter                                ;45
+                         DW TestVector                              ;46
+                         DW Thargoid                                ;47
+                         DW Thargon                                 ;48
+                         DW TransportType10                         ;49
+                         DW Viper                                   ;50
+                         DW Worm                                    ;51
+                         DW 0                                       ;52
+                         DW 0                                       ;53
+                         DW 0                                       ;54
+                         DW 0                                       ;55
 ShipVertexTableC:        DW RattlerVertices
                          DW Rock_HermitVertices
                          DW ShuttleType9Vertices

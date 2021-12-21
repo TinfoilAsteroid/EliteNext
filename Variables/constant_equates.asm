@@ -26,7 +26,7 @@ ShipTypeMissile     equ 1
 ShipTypeNormal      equ 0
 
 MaxNumberOfStars	equ 11
-FreeListSize		equ	$12
+UniverseListSize    equ	12
 ShipTypeSize		equ	32 			;??????? just a guess for now
 ShipSST				equ 4			; its a space station
 UniverseBasePage 	equ 70			; Base memory bank for universe Item #0

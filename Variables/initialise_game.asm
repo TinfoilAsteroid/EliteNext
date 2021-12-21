@@ -39,7 +39,7 @@ WipeScanner:								; WPSHPS	\ -> &35D8  \ Wipe Ships on scanner
 	ld		(UBnkexplDsp),a					; and keep bits 7,5,2,1,0 (kill,exploding,missiles)
 .LoopAlsoPlanetOrSun:						; loop and skip if planet or sun
 	inc		b
-	cp		FreeListSize
+	cp		UniverseListSize
 	jr		nz,.OuterLoop
 .ClearLineBuffers:
 	ld		a,$FF
