@@ -124,7 +124,8 @@ LaunchConsole:          MMUSelectConsoleBank                    ; Draw Console
 CoriloisStation         equ     13
 
 
-draw_launch_ship:       MMUSelectLayer1
+draw_launch_ship:       break
+                        MMUSelectLayer1
                         call    l1_cls
                         call    l1_attr_cls
                         MMUSelectSpriteBank
@@ -156,10 +157,6 @@ draw_launch_ship:       MMUSelectLayer1
                         xor     a
                         ld      (current_offsetX),a
                         ld      (current_offsetY),a
-.SetupGalaxy:           xor     a ; palcehodler as it would cause next macro to fail re initialise all universe banks
-                        ld      (DockedFlag),a
-                        MaxThrottle
-                        ZeroThrottle; DEBUG
                         ret
                 
 
@@ -201,7 +198,8 @@ draw_docking_ship:      MMUSelectLayer1
                         ld      (DockedFlag),a ; we don't kill off shipts as we kill them on launch
                         ret
                         
-loop_launch_ship:       call    LaunchTubeEdges
+loop_launch_ship:       break
+                        call    LaunchTubeEdges
                         ld      a,init_countdown
                         ld      (launch_countdown),a
                         ld      hl,(launch_table_idx)
@@ -227,7 +225,13 @@ loop_launch_ship:       call    LaunchTubeEdges
                         ld      a,$80
                         call    l2_draw_box             ; "l2_draw_box bc=rowcol, de=heightwidth a=color"
                         ret 
-.FinishedLaunch:        ld      a,ScreenFront
+.FinishedLaunch:        break
+.SetupGalaxy:           xor     a ; palcehodler as it would cause next macro to fail re initialise all universe banks
+                        ld      (DockedFlag),a
+                        MaxThrottle
+                        ZeroThrottle; DEBUG
+                        ret
+                        ld      a,ScreenFront
                         ld      (ScreenTransitionForced),a
                         ret
 
@@ -257,7 +261,8 @@ loop_docking_ship:      call    LaunchTubeEdges
                         ld      a,$80
                         call    l2_draw_box
                         ret 
-.FinishedDocking        ld      a,ScreenStatus              ; Force move to status screen
+.FinishedDocking        break
+                        ld      a,ScreenStatus              ; Force move to status screen
                         ld      (ScreenTransitionForced),a
                         ret
 

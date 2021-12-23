@@ -120,7 +120,8 @@ InitialiseDemoShip:     call    ClearFreeSlotList
                         MMUSelectShipModelsA
                         ld      a,13    ; space station
                         call    CopyShipDataToUBnk
-                        
+                        xor     a
+                        ld      (CurrentUniverseItem),a
                         ld      a,3
                         ld      (MenuIdMax),a
                         ld      a,$FF                               ; Starts Docked
@@ -132,10 +133,11 @@ InitialiseDemoShip:     call    ClearFreeSlotList
 ;..................................................................................................................................
 MainLoop:	            call    doRandom                            ; redo the seeds every frame
                         call    scan_keyboard
+;.. This bit allows cycling of ships on universe 0 in demo.........................................................................
 DemoOfShipsDEBUG:       call    TestForNextShip
-ScreenTransBlock:       ld      a,$0
-                        cp      1
-                        jp      z,CheckIfViewUpdate                 ; as we are in a transition the whole update AI is skipped
+;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
+InputBlockerCheck:      ld      a,$0
+                        JumpIfAEqNusng $FE, CheckIfViewUpdate          ; as we are in a transition the whole update AI is skipped
                         call    ViewKeyTest
                         call    TestPauseMode
                         ld      a,(GamePaused)
@@ -145,93 +147,72 @@ ScreenTransBlock:       ld      a,$0
                         cp      0
                         ;call    z,ThrottleTest                      ; only use throttle if flying, may expand the logic to include hyperspace, not sure yet
                         call    MovementKeyTest
-;Process cursor keys for respective screen    
+;.. Process cursor keys for respective screen if the address is 0 then we skill just skip movement.................................
 HandleMovement:         ld      a,(CallCursorRoutine+2)
                         IfAIsZeroGoto     AreWeDocked
+;.. Handle displaying correct screen ..............................................................................................
 HandleBankSelect:       ld      a,$00
                         MMUSelectScreenA
 CallCursorRoutine:      call    $0000
-; need to optimise so not looping over agint for all universe doign ingle updates
-AreWeDocked:           
-                        ld      a,(DockedFlag)
+;.. Check to see if we are docked as if we are (or are docking.launching then no AI/Ship updates occur.............................
+AreWeDocked:            ld      a,(DockedFlag)
+                        JumpIfANENusng  0, LoopRepeatPoint
+;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
+;.. we do one universe slot each loop update ......................................................................................
+UpdateUniverseObject:   ld      a,(CurrentUniverseItem)
+;.. If the slot is empty (FF) then skip this slot..................................................................................
+                        call    GetTypeAtSlotA
                         cp      $FF
-                        jp      z,LoopRepeatPoint
-UpdateUniverse:         MMUSelectUniverseN 0
-.CheckIfWeAreDocking:   ld      a,(ShipTypeAddr)
-                        cp      ShipTypeStation                     ; is it a station
-                        jr      nz,.NotDockingCheck
-                        ld      hl,ShipNewBitsAddr                  ; is it angry
-                        bit     4,(hl)
-                        jr      nz,.NotDockingCheck                 ; if so the doors are shut
-.CheckIfInRangeHi:      ld      bc,(UBnKxlo)
-                        ld      hl,(UBnKylo)
-                        ld      de,(UBnKzlo)
-                        ld      a,b
-                        or      h
-                        or      d
-                        jr      nz,.NotDockingCheck
-                        ld      a,c
-                        or      l
-                        or      e
-                        and     %11000000                           ; Note we should make this 1 test for scoop or collision too
-                        jr      nz,.NotDockingCheck
-                        ld      a,(UBnkrotmatNosevZ+1)              ; get get high byte of rotmat
-                        JumpIfALTNusng 214, .NotDockingCheck        ; this is the magic angle to be within 26 degrees +/-
-                        call    GetStationVectorToWork              ; Normalise position into XX15 as in effect its a vector from out ship to it given we are always 0,0,0, returns with A holding vector z
-                        bit     7,a                                 ; if its negative
-                        jr      nz,.NotDockingCheck                  ; we are flying away from it
-                        JumpIfALTNusng 89, .NotDockingCheck         ; if the axis <89 the we are not in the 22 degree angle
-                        ld      a,(UBnkrotmatRoofvX+1)              ; get roof vector high
-                        and     SignMask8Bit
-                        JumpIfALTNusng 80, .NotDockingCheck         ; note 80 decimal for 36.6 degrees
-.GoingIn:               
+                        jr      z,.ProcessedUniverseSlot
+.UniverseObjectFound:   MMUSelectUniverseA
+;.. If its a space station then see if we are ready to dock........................................................................
+.CheckIfDockable:       ld      a,(ShipTypeAddr)
+                        JumpIfANENusgn  ShipTypeStation, .NotDockingCheck
+.IsDockableAngryCheck:  JumpOnMemBitSet ShipNewBitsAddr, 4, .NotDockingCheck  ; is it angry
+                        call    DockingCheck                                  ; Now we do the position and angle checks
+                        lf      a,(ScreenTransitionForced)
+                        JumpIfAEqNusgn FF, MenusLoop                          ; if we docked then a transition would have been forced
+.NotDockingCheck:       call    UpdateShip                                    ; do all the updates based on us and AI
+.ProcessedUniverseSlot: ld      a,(CurrentUniverseItem)                       ; Move to next ship cycling if need be to 0
+                        inc     a                                             ; .
+                        JumpIfALTNusng   UniverseListSize, .UpdatedCounter    ; .
+                        xor     a                                             ; .
+.UpdatedCounter:        ld      (CurrentUniverseItem),a                       ; .
+CheckIfViewUpdate:      ld      a,$00                                         ; if this is set to a view number then we process a view
+                        cp      0                                             ; .
+                        jr      z, MenusLoop                                  ; This will change as more screens are added TODO
+;..Processing a view...............................................................................................................
                         MMUSelectLayer1
-                        ld        a,$6
-                        call      l1_set_border
-                        call    EnterDockingBay
-                        jp      MenusLoop
-.NotDockingCheck:       call    ApplyMyRollAndPitch
-                       ;  call    DEBUGSETNODES
-                        ;       call    DEBUGSETPOS
-                        ld      hl,TidyCounter
-                        dec     (hl)
-                        jr      nz ,.SkipTidy
-                        ld      a,16
-                        ld      (TidyCounter),a
-                       ; call    TIDY
-.SkipTidy:                        
-                        call   ProcessNodes
-DrawShipTest:           MMUSelectLayer1
-                        ld     a,$DF
-                        ld     (line_gfx_colour),a 
-CheckIfViewUpdate:      ld      a,$00
-                        cp      0
-                        jr      z, MenusLoop; This will change as more screens are added TODO
-SpecificCodeWhenInView: call   SetAllFacesVisible
-                        call   CullV2				; culling but over aggressive backface assumes all 0 up front TOFIX
-                        call   PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
-                        MMUSelectLayer2
-                        call   l2_cls
-                        MMUSelectUniverseN 0    
-                        call   DrawLines                   ; Need to plot all lines
-DrawStars:              call   StarsForward
-                        MMUSelectViewFront    
-                        call   UpdateConsole
-                        jp LoopRepeatPoint
+;..Later this will be done via self modifying code to load correct stars routine for view..........................................
+DrawStarsForwards:      ld     a,$DF
+                        ld     (line_gfx_colour),a                         
+StarUpdateBank:         MMUSelectViewFront                                    ; This needs to be self modifying
+StarUpdateRoutine:      call   StarsForward                                   ; This needs to be self modifying
+                        call   UpdateConsole                                  ; Update display console on layer 1
+PrepLayer2:             MMUSelectLayer2                                       ; Clear layer 2 for graphics
+                        call   l2_cls                        
+ProcessShipModels:      call    DrawForwardShips                              ; Draw all ships (this may need to be self modifying)
+                        jp SpecialInstruction                                 ; And we are done with views, so check if there was a special command to do
+;..If we were not in views then we were in display screens/menus...................................................................
 MenusLoop:              ld      hl,(ScreenLoopJP+1)
                         ld      a,h
                         or      l
                         jp      z,LoopRepeatPoint
+;..This is the screen update routine for menus.....................................................................................
 ScreenLoopBank:         ld      a,$0
                         MMUSelectScreenA
 ScreenLoopJP:           call    $0000
+;..After a call to screen update, there is the option to inject in a special routine handler....................................
+;..The special instruction routine must handle resetting the flag itself
 SpecialInstrucion:      ld      a,$00
                         cp      0
                         jr      z, LoopRepeatPoint
                         cp      1
                         jr      nz, LoopRepeatPoint
                         call    LaunchedFromStation
-LoopRepeatPoint:
+LoopRepeatPoint:        ld      a,(DockedFlag)
+HandleLaunched:         IfAIsEqNusgnGoto  $FD, WeHaveCompletedLaunch
+                        IfAIsEqNusgnGoto  $FE, WeAreInTransition
 DoubleBufferCheck:      ld      a,00
                         IFDEF DOUBLEBUFFER
                             cp      0
@@ -251,12 +232,59 @@ DoubleBufferCheck:      ld      a,00
                         add     ix,de                               ; Force screen transition
                         call    SetScreenAIX
                         jp MainLoop
+
 ;..................................................................................................................................
-	;call		keyboard_main_loop
-    
-EnterDockingBay:        ld      a,ScreenDocking
+;.. Quickly eliminate space stations too far away..................................................................................
+DockingCheck:           ld      bc,(UBnKxlo)
+                        ld      hl,(UBnKylo)
+                        ld      de,(UBnKzlo)
+                        ld      a,b
+                        or      h
+                        or      d
+                        ret     nz
+.CheckIfInRangeLo:      ld      a,c
+                        or      l
+                        or      e
+                        and     %11000000                           ; Note we should make this 1 test for scoop or collision too
+                        ret     nz
+;.. Now check to see if we are comming in at a viable angle........................................................................
+.CheckDockingAngle:     ld      a,(UBnkrotmatNosevZ+1)              ; get get high byte of rotmat
+                        ReturnIfALTNusng 214                       ; this is the magic angle to be within 26 degrees +/-
+                        call    GetStationVectorToWork              ; Normalise position into XX15 as in effect its a vector from out ship to it given we are always 0,0,0, returns with A holding vector z
+                        bit     7,a                                 ; if its negative
+                        ret     nz                                  ; we are flying away from it
+                        ReturnIfALTNusng 89                         ; if the axis <89 the we are not in the 22 degree angle
+                        ld      a,(UBnkrotmatRoofvX+1)              ; get roof vector high
+                        and     SignMask8Bit
+                        ReturnIfALTNusng 80                         ; note 80 decimal for 36.6 degrees
+;.. Its passed all validation and we are docking...................................................................................
+.AreDocking:            MMUSelectLayer1
+                        ld        a,$6
+                        call      l1_set_border
+.EnterDockingBay:       ld      a,ScreenDocking
                         ld      (ScreenTransitionForced),a
                         ret
+;..................................................................................................................................                        
+DrawForwardShips:       xor     a
+DrawShipLoop:           push    af
+                        call    GetTypeAtSlotA
+                        cp      $FF
+                        jr      z,ProcessedDrawShip
+; Add in a fast check for ship behind to process nodes and if behind jump to processed Draw ship
+SelectShipToDraw:       MMUSelectUniverseN
+                        call   ProcessNodes
+DrawShip:               call   SetAllFacesVisible
+                        call   CullV2				; culling but over aggressive backface assumes all 0 up front TOFIX
+                        call   PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
+                        MMUSelectUniverseN 0    
+                        call   DrawLines                   ; Need to plot all lines
+UpdateRadar:            call    UpdateScannerShip
+ProcessedDrawShip:      pop     af
+                        inc     a
+                        JumpIfALTNusng   UniverseListSize, DrawShipLoop
+                        ret    
+;..................................................................................................................................
+
     
 TestForNextShip:        ld      a,c_Pressed_Quit
                         call    is_key_pressed
@@ -312,7 +340,17 @@ TestQuit:               ld      a,c_Pressed_Quit
                         ret
 currentDemoShip:        DB      13;$12 ; 13 - corirollis 
 
-
+UpdateShip:             call    ApplyMyRollAndPitch
+                        ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
+                        ld      hl,TidyCounter
+                        dec     (hl)
+                        jr      nz ,.SkipTidy
+                        ld      a,16
+                        ld      (TidyCounter),a
+                       ; call    TIDY DEBUG
+                       ; add AI in here too
+                        ret
+                       
 
 GetStationVectorToWork: ld      hl,UBnKxlo
                         ld      de,varVector9ByteWork
@@ -612,8 +650,7 @@ UpdateConsole:          ld      a,(DELTA)
                         ld      d,a
                         ld      e,$FF
                         call    Draw3Lines
-.DoneConsole:           call    UpdateRadar
-                        ret
+.DoneConsole:           ret
     
 ScannerX                equ 128
 ScannerY                equ 171 
@@ -767,9 +804,6 @@ UpdateScannerShip:
 ;                       call    l2_plot_pixel
                         ret
 
-UpdateRadar:            MMUSelectUniverseN 0                          ; load up register into universe bank
-                        call    UpdateScannerShip
-                        ret
 
 SeedGalaxy0:            xor     a
                         MMUSelectGalaxyA

@@ -335,7 +335,7 @@ ZZDust					DB	0				;	88		ZZDust (Poss 16 bit need to check)
 XX13                    DB  0               ;   89
 MCNT					DB 	0				; 8A
 TYPE					DB	0				; 8C used for ship type in drawing
-DockedFlag				DB	0				; 8E - Docked flag = 0 = in free space, FF = Docked, any number > 1 = count down to 0, whilst counting down no docking will be tested
+DockedFlag				DB	0				; 8E - Docked flag = 0 = in free space, FF = Docked, FE transition, FD = Setup open space and transition to not docked
 GamePaused              DB  0
 varSWAP                 DB  0               ; 90 , general purpose swap variable
 varCNT                  DB  0               ; 93
@@ -383,6 +383,7 @@ HeapHead				equ HeapStart
 ; bit 7 will be set for a sun or planet so we can only ever have 128 types of ship, in relality there are about 3 types
 ; note this is ship type as it space station, transporter, pirate etc not model of ship
 UniverseSlotList		DS UniverseListSize		; &0311 for 12 bytes Array of Free Index - Now array of while universe pages are occupied
+CurrentUniverseItem     DB  0               ; used to cycle ships in each iterations of main loop
     
 SUN						DB	0				; &031D Actually MANY -1? As we can only have 1?
 MANY					DB	0				; &031E array of ship types???

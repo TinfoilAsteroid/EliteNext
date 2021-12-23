@@ -51,6 +51,11 @@ FindSpaceStationSlotInC:ld      hl,UniverseSlotList
 .FoundSlot:             ClearCarryFlag
                         ret
                         
+GetTypeAtSlotA:         ld      hl,UniverseSlotList
+                        add     hl,a
+                        ld      a,(hl)
+                        ret
+                        
 FindSpaceStationSlotInA:call    FindSpaceStationSlotInC:
                         ld      a,c
                         ret
