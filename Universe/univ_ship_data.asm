@@ -1365,8 +1365,8 @@ EyeStoreYPoint:                                    ; also from LL62, XX3 node he
 ;        nosev_z = nosev_z + beta * nosev_y_hi
 
 
-ApplyMyRollToVector:    MACRO vectorX, vectorY
-                        ldCopyByte ALPHA,varQ               ; Set Q = a = alpha (the roll angle to rotate through)
+ApplyMyRollToVector:    MACRO angle, vectorX, vectorY
+                        ldCopyByte angle,varQ               ; Set Q = a = alpha (the roll angle to rotate through)
                         ldCopy2Byte vectorY, varR           ; RS =  nosev_y
                         ldCopyByte  vectorX, varP           ; set P to nosevX lo (may be redundant)
                         ld a,(vectorX+1)                    ; Set A = -nosev_x_hi
@@ -1379,13 +1379,18 @@ ApplyMyRollToVector:    MACRO vectorX, vectorY
                         ld  (vectorX),de                    ; nosev_x = nosev_x + alpha * nosev_y_hi
                         ENDM
 
-ApplyMyRollToNosevY:    ApplyMyRollToVector UBnkrotmatNosevX, UBnkrotmatNosevY
+ApplyMyRollToNosev:     ApplyMyRollToVector ALPHA, UBnkrotmatNosevX, UBnkrotmatNosevY
                         ret
-                        
-ApplyMyRollToSidevY:    ApplyMyRollToVector UBnkrotmatSidevX, UBnkrotmatSidevY
+ApplyMyRollToSidev:     ApplyMyRollToVector ALPHA, UBnkrotmatSidevX, UBnkrotmatSidevY
                         ret    
+ApplyMyRollToRoofv:     ApplyMyRollToVector ALPHA, UBnkrotmatRoofvX, UBnkrotmatRoofvY
+                        ret
 
-ApplyMyRollToRoofvY:    ApplyMyRollToVector UBnkrotmatRoofvX, UBnkrotmatRoofvY
+ApplyMyPitchToNosev:    ApplyMyRollToVector BETA, UBnkrotmatNosevZ, UBnkrotmatNosevY
+                        ret
+ApplyMyPitchToSidev:    ApplyMyRollToVector BETA, UBnkrotmatSidevZ, UBnkrotmatSidevY
+                        ret    
+ApplyMyPitchToRoofv:    ApplyMyRollToVector BETA, UBnkrotmatRoofvZ, UBnkrotmatRoofvY
                         ret
 
 
@@ -1639,9 +1644,12 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         ;break
                         ; if its not a sun then apply to local orientation
                        
-                        call    ApplyMyRollToNosevY
-                        call    ApplyMyRollToSidevY
-                        call    ApplyMyRollToRoofvY
+                        call    ApplyMyRollToNosev
+                        call    ApplyMyRollToSidev
+                        call    ApplyMyRollToRoofv
+                        call    ApplyMyPitchToNosev
+                        call    ApplyMyPitchToSidev
+                        call    ApplyMyPitchToRoofv
 .NoRotation:            ld      a,(DELTA)                   ; get speed
                         ld      d,0
                         ld      e,a                         ; de = speed in low byte

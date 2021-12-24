@@ -10,14 +10,16 @@ MShipBankTable          MACRO
 MGetShipBankId:         MACRO   banktable
                         ld      b,0
                         ld      c,a                                 ; c= original ship id
-.ShiftLoop:             JumpIfALTNusng  16, .SelectedBank
-                        inc     b
-                        ClearCarryFlag
-                        srl     a
+.ShiftLoop:             srl     a
                         srl     a
                         srl     a
                         srl     a                                   ; divide by 16
-                        jr      .ShiftLoop
+                        ld      b,a                                 ; b = bank nbr
+                        ld      a,c
+                        ld      d,b
+                        ld      e,16
+                        mul                                         ; de = 16 * bank number (max is about 15 banks)
+                        sub     e                                   ; a= actual model id now
 .SelectedBank:          ld      d,b                                 ; save current bank number
                         ld      b,a                                 ; b = adjusted ship nbr 
                         ld      a,d                                 ; a = bank number

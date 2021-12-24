@@ -285,7 +285,7 @@ SelectShipToDraw:       pop     af
                         push    af
                         MMUSelectUniverseA
                         call   ProcessNodes
-DrawShip:               call   SetAllFacesVisible
+DrawShip:               ;call   SetAllFacesVisible
                         call   CullV2				; culling but over aggressive backface assumes all 0 up front TOFIX
                         call   PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
                         pop     af
@@ -305,19 +305,25 @@ TestForNextShip:        ld      a,c_Pressed_Quit
                         ret     nz
                         ld      a,(currentDemoShip)
                         inc     a
-                        cp      52
+                        cp      44
                         jr      nz,.TestOK
                         xor     a
 .TestOK:                ld      (currentDemoShip),a
+                        call    ClearUnivSlotList
+                        ld      a,(currentDemoShip)
+                        ld      b,a
+                        xor     a
+                        call    SetSlotAToTypeB
                         MMUSelectUniverseN 0
                         call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
                         ld      a,(currentDemoShip)
                         MMUSelectShipBank1
-                        call    GetShipModelId
-                        MMUSelectShipBank1
+                        call    GetShipBankId
+                        MMUSelectShipBankA
                         ld      a,b
                         call    CopyShipToUniverse
                         call    SetInitialShipPosition
+                        call    DEBUGSETNODES                        
                         ret
 
 
@@ -470,7 +476,7 @@ LaunchedFromStation:    break
                         MMUSelectUniverseA                          ; Prep Target universe
                         MMUSelectShipBank1                          ; Bank in the ship model code
                         ld      a,CoriloisStation
-                        call    GetShipModelId             
+                        call    GetShipBankId             
                         MMUSelectShipBankA                          ; Select the correct bank found
                         ld      a,b                                 ; Select the correct ship
                         call    CopyShipToUniverse
@@ -567,7 +573,7 @@ SetInitialShipPosition: ld      hl,$0000
                         ld      (UBnKxlo),hl
                         ld      hl,$0000
                         ld      (UBnKylo),hl
-                        ld      hl,$08B4
+                        ld      hl,$03B4
                         ld      (UBnKzlo),hl
                         xor     a
                         ld      (UBnKxsgn),a
@@ -1018,8 +1024,8 @@ SeedGalaxy0Loop:        push    ix
 	ORG     ShipModelsAddr, BankShipModels1
     INCLUDE "./Data/ShipModelMacros.asm"
     INCLUDE "./Data/ShipBank1Label.asm"
-GetShipModelId:
-GetShipModel1Id:        MGetShipBankId ShipBankTable
+GetShipBankId:
+GetShipBank1Id:        MGetShipBankId ShipBankTable
 CopyVertsToUniv:
 CopyVertsToUniv1:       McopyVertsToUniverse
 CopyEdgesToUniv:
@@ -1037,7 +1043,7 @@ CopyShipToUniverse1     MCopyShipToUniverse     BankShipModels1
 	ORG     ShipModelsAddr, BankShipModels2
 
     INCLUDE "./Data/ShipBank2Label.asm"
-GetShipModel2Id:        MGetShipBankId ShipBankTable2                        
+GetShipBank2Id:         MGetShipBankId ShipBankTable2                        
 CopyVertsToUniv2:       McopyVertsToUniverse
 CopyEdgesToUniv2:       McopyEdgesToUniverse
 CopyNormsToUniv2:       McopyNormsToUniverse
@@ -1050,7 +1056,7 @@ CopyShipToUniverse2     MCopyShipToUniverse     BankShipModels2
 	ORG     ShipModelsAddr, BankShipModels3
 
     INCLUDE "./Data/ShipBank3Label.asm"
-GetShipModel3Id:        MGetShipBankId ShipBankTable3
+GetShipBank3Id:         MGetShipBankId ShipBankTable3
 CopyVertsToUniv3:       McopyVertsToUniverse
 CopyEdgesToUniv3:       McopyEdgesToUniverse
 CopyNormsToUniv3:       McopyNormsToUniverse    
