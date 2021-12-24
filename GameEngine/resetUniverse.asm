@@ -16,6 +16,10 @@ ResetCopyLoop:
 	pop		af
 	pop		bc
 	inc		a
+    ld      d,a
+    add     "A"
+    ld      (StartOfUnivN),a
+    ld      a,d
 	djnz	ResetCopyLoop
 	ret
     ENDMODULE

@@ -18,21 +18,24 @@ MMUSelectResetUniv:  MACRO
                      nextreg  ResetUniverseMMU, BankResetUniv
                      ENDM
 
-MMUSelectShipModelsA: MACRO
-					 nextreg ShipModelMMU,	    BankShipModelsA
+MMUSelectShipBank1:  MACRO
+					 nextreg ShipModelMMU,	    BankShipModels1
 					 ENDM
-MMUSelectShipModelsB: MACRO
-					 nextreg ShipModelMMU,	    BankShipModelsB
+MMUSelectShipBank2:  MACRO
+					 nextreg ShipModelMMU,	    BankShipModels2
 					 ENDM
-MMUSelectShipModelsC: MACRO
-					 nextreg ShipModelMMU,	    BankShipModelsC
+MMUSelectShipBank3:  MACRO
+					 nextreg ShipModelMMU,	    BankShipModels3
 					 ENDM
-
-MMUSelectShipModelA: MACRO
+MMUSelectShipBank4:  MACRO
+					 nextreg ShipModelMMU,	    BankShipModels4
+					 ENDM
+                     
+MMUSelectShipBankA   MACRO
 					 nextreg ShipModelMMU,	    a
 					 ENDM
 
-MMUSelectShipModelN: MACRO value
+MMUSelectShipBankN:  MACRO value
 					 nextreg ShipModelMMU,	    value
 					 ENDM
 					 

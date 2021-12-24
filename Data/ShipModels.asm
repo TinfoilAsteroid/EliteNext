@@ -1,53 +1,17 @@
-                IFNDEF SHIPEQUATES
-                DEFINE SHIPEQUATES
-ScoopDebrisOffset	    equ	0                               ; hull byte#0 high nibble is scoop info, lower nibble is debris spin info
-MissileLockLoOffset	    equ 1
-MissileLockHiOffset	    equ 2
-EdgeAddyOffset		    equ 3
-LineX4Offset		    equ 5
-GunVertexOffset		    equ 6
-ExplosionCtOffset	    equ 7
-VertexCtX6Offset	    equ 8
-EdgeCountOffset		    equ 9
-BountyLoOffset		    equ 10
-BountyHiOffset		    equ 11
-FaceCtX4Offset		    equ 12
-DotOffset			    equ 13
-EnergyOffset		    equ 14
-SpeedOffset			    equ 15
-FaceAddyOffset		    equ 16
-QOffset				    equ 18
-LaserOffset			    equ 19
-VerticiesAddyOffset     equ 20
-ShipTypeOffset          equ 22
-ShipNewBitsOffset       equ 23
-ShipDataLength          equ ShipNewBitsOffset+1
-
-CobraTablePointer       equ 43
-;29 faulty
-BankThreshold           equ 16
-
-ShipTableALast          equ 23
-ShipTableBLast          equ 39
-ShipTableCLast          equ 55
-               ENDIF
-               
-
-               
 
 
 ; For ship number A fetch the adjusted ship number in B and bank number in A for the respective ship based on the ship table
                         IFDEF SHIPBANKA
-GetShipModelAddress:
-GetShipModelAddressA:   ld      c,a
-                        ld      hl,ShipModelBankA                   ; Ship Model BankA, B and C are all the same value
+GetShipModelId:
+GetShipModelIdA:        ld      c,a
+                        ld      hl,ShipModelBankA                  ; Ship Model BankA, B and C are all the same value
                         ENDIF
                         IFDEF SHIPBANKB
-GetShipModelAddressB:   ld      c,a
+GetShipModelIdB:        ld      c,a
                         ld      hl,ShipModelBankB
                         ENDIF
                         IFDEF SHIPBANKC
-GetShipModelAddressC:   ld      c,a
+GetShipModelIdC:        ld      c,a
                         ld      hl,ShipModelBankC
                         ENDIF
                         JumpIfALTNusng ShipTableALast+1, .ShipBankA
@@ -56,10 +20,13 @@ GetShipModelAddressC:   ld      c,a
 .Failed:                SetCarryFlag                                ; if its over current bank max then a failure
                         ret
 .ShipBankA:             ld      b,a
+                        ld      a,BankShipModelsA
                         jp      .Done
 .ShipBankB:             sub     a,ShipTableALast+1
+                        ld      a,BankShipModelsB
                         jp      .Done
 .ShipBankC:             sub     a,ShipTableBLast+1
+                        ld      a,BankShipModelsC
 .Done:                  ld      a,BankShipModelsA
                         ClearCarryFlag
                         ret
@@ -84,7 +51,7 @@ GetInfoC:
                         ld          hl,ShipModelBankA
                         add         hl,a
                         ld          a,(hl)
-                        MMUSelectShipModelA
+                        ;MMUSelectShipModelA
                         ld          a,c
                         ld          d,b
                         ld          e,16
@@ -157,6 +124,8 @@ CopyNormalDataToUBnkC:
                         call        memcopy_dma
                         ret
 
+;CopyShipIdToUbnk:       ld      
+
 
                         IFDEF SHIPBANKA
 CopyShipDataToUBnk: 
@@ -200,17 +169,17 @@ CopyShipDataToUBnkC:    push        af
 
 ; Ships in Bank A
                          IFDEF SHIPBANKA
-ShipModelBankA           DB BankShipModelsA
+ShipModelBank1           DB BankShipModelsA
                          DB BankShipModelsB
                          DB BankShipModelsC
                          ENDIF
                          IFDEF SHIPBANKB
-ShipModelBankB           DB BankShipModelsA
+ShipModelBank2           DB BankShipModelsA
                          DB BankShipModelsB
                          DB BankShipModelsC
                          ENDIF
                          IFDEF SHIPBANKC
-ShipModelBankC           DB BankShipModelsA
+ShipModelBank3           DB BankShipModelsA
                          DB BankShipModelsB
                          DB BankShipModelsC
                          ENDIF

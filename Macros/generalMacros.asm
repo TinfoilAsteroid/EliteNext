@@ -77,21 +77,34 @@ JumpIfMemGTENusng:      MACRO mem, value, target
                         jp	  nc,target
                         ENDM
 
-JumpIfMemGTEMemusng:    MACRO mem, value, target
+JumpIfMemGTEMemusng:    MACRO mem, address, target
                         ld   a,(mem)
-                        ld   hl,value
+                        ld   hl,address
                         cp   (hl)
                         jp	  nc,target
                         ENDM
 
+JumpIfMemEqMemusng:     MACRO mem, address, target
+                        ld   a,(mem)
+                        ld   hl,address
+                        cp   (hl)
+                        jp	  z,target
+                        ENDM
 
+CallIfMemEqMemusng:     MACRO mem, address, target
+                        ld   a,(mem)
+                        ld   hl,address
+                        cp   (hl)
+                        call    z,target
+                        ENDM
+                        
 JumpIfALTusng:          MACRO target
                         jp		c,target
                         ENDM
                 
 JumpIfALTNusng:         MACRO value, target
                         cp      value
-                        jp		c,target
+                        jp		c, target
                         ENDM
 
 JumpIfMemLTNusng:       MACRO mem, value, target
@@ -105,6 +118,24 @@ JumpIfMemLTMemusng:     MACRO mem, value, target
                         ld    hl,value
                         cp    (hl)
                         jp	  c,target
+                        ENDM
+
+JumpIfMemEqNusng:       MACRO mem,value,target
+                        ld  a,(mem)
+                        cp  value
+                        jr  z,target
+                        ENDM
+
+JumpIfMemNeNusng:       MACRO mem,value,target
+                        ld  a,(mem)
+                        cp  value
+                        jr  nz,target
+                        ENDM
+
+JumpIfMemZero:          MACRO mem,target
+                        ld  a,(mem)
+                        and a
+                        jr  z,target
                         ENDM
 
 JumpIfALTMemHLusng:     MACRO target
@@ -130,7 +161,7 @@ JumpIfAEqNusng: MACRO value, target
 
 IfAIsZeroGoto:	MACRO target
 				and a   ; cp 0 - changed to and a for optimisation but affects other flags
-				jp	z,target
+				jp	z, target
 				ENDM
 
 IfANotZeroGoto:	MACRO target
@@ -147,15 +178,21 @@ IfResultNotZeroGoto:MACRO target
 					ENDM
 
 ReturnIfAIsZero: MACRO
-                 cp     0
+                 and a
                  ret    z
                  ENDM
 
 ReturnIfMemisZero: MACRO mem
                    ld   a,(mem)
-                   cp     0
+                   and a
                    ret    z
                    ENDM
+
+ReturnIfMemEquN:    MACRO mem, value
+                    ld   a,(mem)
+                    cp     value
+                    ret    z
+                    ENDM
 
 ReturnIfANotZero: MACRO
                   cp     0
@@ -337,4 +374,10 @@ NineLDIInstrunctions:  MACRO
 		                ldi
 		                ldi						
                         ENDM
-												
+				
+FlipMemSign:        MACRO mem
+                    ld  a,(mem)
+                    xor SignOnly8Bit
+                    ld  (mem),a
+                    ENDM
+                    

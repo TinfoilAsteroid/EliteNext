@@ -48,7 +48,7 @@ ScreenDocking   EQU ScreenRight+1
     INCLUDE "./Layer2Graphics/layer2_defines.asm"
     INCLUDE	"./Hardware/memory_bank_defines.asm"
     INCLUDE "./Hardware/screen_equates.asm"
-    
+    INCLUDE "./Data/ShipModelEquates.asm"
     INCLUDE "./Macros/MMUMacros.asm"
     INCLUDE "./Macros/ShiftMacros.asm"
     INCLUDE "./Macros/CopyByteMacros.asm"
@@ -111,17 +111,13 @@ TestText:               xor			a
                         ENDIF    
                         
                         
-InitialiseDemoShip:     call    ClearFreeSlotList
-                        call    FindNextFreeSlotInA
-                        call    SetSlotAToSpaceStation
-                        push    af
-                        MMUSelectUniverseA                          ; load up register into universe bank
-                        call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
-                        MMUSelectShipModelsA
-                        ld      a,13    ; space station
-                        call    CopyShipDataToUBnk
-                        xor     a
-                        ld      (CurrentUniverseItem),a
+;InitialiseDemoShip:     call    ClearFreeSlotList
+;                        call    FindNextFreeSlotInA
+;                        ld      b,a
+;                        ld      a,13 ;Coriolis station
+;                        call    InitialiseShipAUnivB
+;                        xor     a
+InitialiseMainLoop:     ld      (CurrentUniverseAI),a
                         ld      a,3
                         ld      (MenuIdMax),a
                         ld      a,$FF                               ; Starts Docked
@@ -137,95 +133,78 @@ MainLoop:	            call    doRandom                            ; redo the see
 DemoOfShipsDEBUG:       call    TestForNextShip
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
 InputBlockerCheck:      ld      a,$0
-                        JumpIfAEqNusng $FE, CheckIfViewUpdate          ; as we are in a transition the whole update AI is skipped
+                        JumpIfAEqNusng $01, SkipInputHandlers       ; as we are in a transition the whole update AI is skipped
                         call    ViewKeyTest
                         call    TestPauseMode
                         ld      a,(GamePaused)
                         cp      0
                         jr      nz,MainLoop
-                        ld      a,(DockedFlag)
-                        cp      0
-                        ;call    z,ThrottleTest                      ; only use throttle if flying, may expand the logic to include hyperspace, not sure yet
                         call    MovementKeyTest
 ;.. Process cursor keys for respective screen if the address is 0 then we skill just skip movement.................................
 HandleMovement:         ld      a,(CallCursorRoutine+2)
-                        IfAIsZeroGoto     AreWeDocked
+                        IfAIsZeroGoto     TestAreWeDocked
 ;.. Handle displaying correct screen ..............................................................................................
 HandleBankSelect:       ld      a,$00
                         MMUSelectScreenA
 CallCursorRoutine:      call    $0000
 ;.. Check to see if we are docked as if we are (or are docking.launching then no AI/Ship updates occur.............................
-AreWeDocked:            ld      a,(DockedFlag)
-                        JumpIfANENusng  0, LoopRepeatPoint
+;.. Also end up here if we have the screen input blocker set
+SkipInputHandlers:      
+;.. For Docked flag its - 0 = in free space, FF = Docked, FE transition, FD = Setup open space and transition to not docked
+TestAreWeDocked:        ld      a,(DockedFlag)                                ; if if we are in free space do universe update
+                        JumpIfANENusng  0, SkipUniveseUpdate                  ; else we skip it. As we are also in dock/transition then no models should be updated so we dont; need to draw
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
-UpdateUniverseObject:   ld      a,(CurrentUniverseItem)
-;.. If the slot is empty (FF) then skip this slot..................................................................................
-                        call    GetTypeAtSlotA
-                        cp      $FF
-                        jr      z,.ProcessedUniverseSlot
-.UniverseObjectFound:   MMUSelectUniverseA
-;.. If its a space station then see if we are ready to dock........................................................................
-.CheckIfDockable:       ld      a,(ShipTypeAddr)
-                        JumpIfANENusgn  ShipTypeStation, .NotDockingCheck
-.IsDockableAngryCheck:  JumpOnMemBitSet ShipNewBitsAddr, 4, .NotDockingCheck  ; is it angry
-                        call    DockingCheck                                  ; Now we do the position and angle checks
-                        lf      a,(ScreenTransitionForced)
-                        JumpIfAEqNusgn FF, MenusLoop                          ; if we docked then a transition would have been forced
-.NotDockingCheck:       call    UpdateShip                                    ; do all the updates based on us and AI
-.ProcessedUniverseSlot: ld      a,(CurrentUniverseItem)                       ; Move to next ship cycling if need be to 0
-                        inc     a                                             ; .
-                        JumpIfALTNusng   UniverseListSize, .UpdatedCounter    ; .
-                        xor     a                                             ; .
-.UpdatedCounter:        ld      (CurrentUniverseItem),a                       ; .
+                        call    UpdateUniverseObjects
+                        JumpIfMemNeNusng ScreenTransitionForced, $FF, BruteForceChange                          ; if we docked then a transition would have been forced
 CheckIfViewUpdate:      ld      a,$00                                         ; if this is set to a view number then we process a view
                         cp      0                                             ; .
                         jr      z, MenusLoop                                  ; This will change as more screens are added TODO
 ;..Processing a view...............................................................................................................
+                        MMUSelectLayer2
+                        call   l2_cls                        
                         MMUSelectLayer1
 ;..Later this will be done via self modifying code to load correct stars routine for view..........................................
 DrawStarsForwards:      ld     a,$DF
                         ld     (line_gfx_colour),a                         
 StarUpdateBank:         MMUSelectViewFront                                    ; This needs to be self modifying
 StarUpdateRoutine:      call   StarsForward                                   ; This needs to be self modifying
-                        call   UpdateConsole                                  ; Update display console on layer 1
 PrepLayer2:             MMUSelectLayer2                                       ; Clear layer 2 for graphics
-                        call   l2_cls                        
+                      ;  call   l2_cls                        
 ProcessShipModels:      call    DrawForwardShips                              ; Draw all ships (this may need to be self modifying)
-                        jp SpecialInstruction                                 ; And we are done with views, so check if there was a special command to do
+                        call   UpdateConsole                                  ; Update display console on layer 1
+                        jp LoopRepeatPoint                                    ; And we are done with views, so check if there was a special command to do
 ;..If we were not in views then we were in display screens/menus...................................................................
 MenusLoop:              ld      hl,(ScreenLoopJP+1)
                         ld      a,h
                         or      l
                         jp      z,LoopRepeatPoint
 ;..This is the screen update routine for menus.....................................................................................
+;.. Also used by transition routines
+SkipUniveseUpdate:      JumpIfMemZero ScreenLoopJP+1,LoopRepeatPoint
 ScreenLoopBank:         ld      a,$0
                         MMUSelectScreenA
 ScreenLoopJP:           call    $0000
-;..After a call to screen update, there is the option to inject in a special routine handler....................................
-;..The special instruction routine must handle resetting the flag itself
-SpecialInstrucion:      ld      a,$00
-                        cp      0
-                        jr      z, LoopRepeatPoint
-                        cp      1
-                        jr      nz, LoopRepeatPoint
-                        call    LaunchedFromStation
 LoopRepeatPoint:        ld      a,(DockedFlag)
-HandleLaunched:         IfAIsEqNusgnGoto  $FD, WeHaveCompletedLaunch
-                        IfAIsEqNusgnGoto  $FE, WeAreInTransition
+HandleLaunched:         JumpIfAEqNusng  $FD, WeHaveCompletedLaunch
+                        JumpIfAEqNusng  $FE, WeAreInTransition
+                        jp  DoubleBufferCheck
+WeHaveCompletedLaunch:  call    LaunchedFromStation
+                        jp  DoubleBufferCheck
+WeAreInTransition:                        
 DoubleBufferCheck:      ld      a,00
                         IFDEF DOUBLEBUFFER
                             cp      0
-                            jp      z,.TestTransition
+                            jp      z,TestTransition
                             MMUSelectLayer2
                             ld     a,(varL2_BUFFER_MODE)
                             cp     0
                             call   nz,l2_flip_buffers
                         ENDIF
-.TestTransition:        ld      a,(ScreenTransitionForced)          ; was there a bruite force screen change in any update loop
+TestTransition:        ld      a,(ScreenTransitionForced)          ; was there a bruite force screen change in any update loop
                         cp      $FF
                         jp      z,MainLoop
-.BruteForceChange:      ld      d,a
+BruteForceChange:      ld      d,a
                         ld      e,ScreenMapRow
                         mul
                         ld      ix,ScreenKeyMap
@@ -233,6 +212,37 @@ DoubleBufferCheck:      ld      a,00
                         call    SetScreenAIX
                         jp MainLoop
 
+;..................................................................................................................................
+;..Update Universe Objects.........................................................................................................
+UpdateUniverseObjects:  xor     a
+                        ld      (SelectedUniverseSlot),a
+.UpdateUniverseLoop:     ld      d,a                                             ; d is unaffected by GetTypeInSlotA
+;.. If the slot is empty (FF) then skip this slot..................................................................................
+                        call    GetTypeAtSlotA
+                        cp      $FF
+                        jr      z,.ProcessedUniverseSlot            
+.UniverseObjectFound:   ld      a,d                                             ; Get back Universe slot as we want it
+                        MMUSelectUniverseA                                      ; and we apply roll and pitch
+                        call    ApplyMyRollAndPitch
+;.. If its a space station then see if we are ready to dock........................................................................
+.CheckIfDockable:       ld      a,(ShipTypeAddr)                                ; Now we have the correct bank
+                        JumpIfANENusng  ShipTypeStation, .NotDockingCheck       ; if its not a station so we don't test docking
+.IsDockableAngryCheck:  JumpOnMemBitSet ShipNewBitsAddr, 4, .NotDockingCheck    ; if it is angry then we dont test docking
+                        call    DockingCheck                                    ; So it is a candiate to test docking. Now we do the position and angle checks
+                        ReturnIfMemEquN ScreenTransitionForced, $FF             ; if we docked then a transition would have been forced
+.NotDockingCheck:       CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, UpdateShip
+.ProcessedUniverseSlot: ld      a,(SelectedUniverseSlot)                        ; Move to next ship cycling if need be to 0
+                        inc     a                                               ; .
+                        JumpIfAGTENusng   UniverseListSize, .UpdateAICounter    ; .
+                        ld      (SelectedUniverseSlot),a
+                        jp      .UpdateUniverseLoop
+.UpdateAICounter:       ld      a,(CurrentUniverseAI)
+                        inc     a
+                        cp      12
+                        jr      c,.IterateAI
+                        xor     a
+.IterateAI:             ld      (CurrentUniverseAI),a
+                        ret
 ;..................................................................................................................................
 ;.. Quickly eliminate space stations too far away..................................................................................
 DockingCheck:           ld      bc,(UBnKxlo)
@@ -271,12 +281,16 @@ DrawShipLoop:           push    af
                         cp      $FF
                         jr      z,ProcessedDrawShip
 ; Add in a fast check for ship behind to process nodes and if behind jump to processed Draw ship
-SelectShipToDraw:       MMUSelectUniverseN
+SelectShipToDraw:       pop     af
+                        push    af
+                        MMUSelectUniverseA
                         call   ProcessNodes
 DrawShip:               call   SetAllFacesVisible
                         call   CullV2				; culling but over aggressive backface assumes all 0 up front TOFIX
                         call   PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
-                        MMUSelectUniverseN 0    
+                        pop     af
+                        push    af
+                        MMUSelectUniverseA
                         call   DrawLines                   ; Need to plot all lines
 UpdateRadar:            call    UpdateScannerShip
 ProcessedDrawShip:      pop     af
@@ -291,31 +305,21 @@ TestForNextShip:        ld      a,c_Pressed_Quit
                         ret     nz
                         ld      a,(currentDemoShip)
                         inc     a
-                        cp      44
+                        cp      52
                         jr      nz,.TestOK
                         xor     a
 .TestOK:                ld      (currentDemoShip),a
                         MMUSelectUniverseN 0
                         call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
                         ld      a,(currentDemoShip)
-                        MMUSelectShipModelsA
-                        call    CopyShipDataToUBnk
+                        MMUSelectShipBank1
+                        call    GetShipModelId
+                        MMUSelectShipBank1
+                        ld      a,b
+                        call    CopyShipToUniverse
                         call    SetInitialShipPosition
                         ret
 
-SetPositionBehindUs:    ld      hl,$0000
-                        ld      (UBnKxlo),hl
-                        ld      hl,$0000
-                        ld      (UBnKylo),hl
-                        ld      hl,$01B0                            ; so its a negative distance behind
-                        ld      (UBnKzlo),hl
-                        xor     a
-                        ld      (UBnKxsgn),a
-                        ld      (UBnKysgn),a
-                        dec     a                                   ; make a FF
-                        ld      (UBnKzsgn),a
-                        call	InitialiseOrientation; for now its facing the wrong way as if we flew out its arse
-                        ret    
 
 TestPauseMode:          ld      a,(GamePaused)
                         cp      0
@@ -340,17 +344,24 @@ TestQuit:               ld      a,c_Pressed_Quit
                         ret
 currentDemoShip:        DB      13;$12 ; 13 - corirollis 
 
-UpdateShip:             call    ApplyMyRollAndPitch
-                        ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
+UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
                         ld      hl,TidyCounter
                         dec     (hl)
-                        jr      nz ,.SkipTidy
+                        ret     nz
                         ld      a,16
                         ld      (TidyCounter),a
                        ; call    TIDY DEBUG
                        ; add AI in here too
                         ret
-                       
+            
+InitialiseShipAUnivB:   push    af
+                        ld      a,b
+                        MMUSelectUniverseA                          ; load up register into universe bank
+                        call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
+                        MMUSelectShipBank1
+                        pop     af
+                        call    CopyShipToUniverse
+                        ret
 
 GetStationVectorToWork: ld      hl,UBnKxlo
                         ld      de,varVector9ByteWork
@@ -425,7 +436,7 @@ TidyCounter             DB  0
 ; byte 10  - Input Blocker (set to 1 will not allow keyboard screen change until flagged, used by transition screens and pause menus)
 ; byte 11  - Double Buffering 0 = no, 1 = yes
 ; byte 12,13  - cursor key input routine
-; byte 14  - special operation flag = one off routine triggered by code, 01=Launched ship to set up space station behind us
+; byte 14  - paddinf (removed special instrunction logic and moved to docking flag)
 ; byte 15    padding at the momnent (should add in an "AI enabled flag" for optimistation, hold previous value and on change create ships
 ;                          0    1                 2                              3                               4                    5                            6                              7                     8                       9   10  11  12                          13                          14  15    
 ScreenKeyMap:           DB 0,   ScreenLocal     , low addr_Pressed_LocalChart,   high addr_Pressed_LocalChart,   BankMenuShrCht,      low draw_local_chart_menu,   high draw_local_chart_menu,    $00,                  $00,                    $00,$00,$00,low local_chart_cursors,    high local_chart_cursors,   $00,$00;low loop_local_chart_menu,   high loop_local_chart_menu
@@ -452,24 +463,22 @@ ScreenViewsStart    EQU (ScreenKeyFront - ScreenKeyMap)/ScreenMapRow
 ScreenTransitionForced  DB $FF    
     INCLUDE "./GameEngine/resetUniverse.asm"
 
-LaunchedFromStation:    call    FindSpaceStationSlotInA
-                        jr      c,.SpaceStationMissing
-                        MMUSelectUniverseA               ; select the space station's slot so we can re-use it
-                        call    ClearFreeSlotListSaveA  ;Now neeed to set station behind (also need to check which type first                      
-                        jp      .BuiltStation
-.SpaceStationMissing:   ld      a,CoriloisStation
-                        call    GetShipModelAddress             
-                        MMUSelectShipModelA                 ; so we select bank found
-                        push    bc                                  ; save ship number
-                        call    FindNextFreeSlotInA                 ; find a spare slot else hijack 0
-                        jr      nc,.FoundFreeSlot
-.JackSlot0:             xor     a
-.FoundFreeSlot:         MMUSelectUniverseA
-                        pop     bc                                  ; get ship number back
-                        call    CopyShipDataToUBnk
-.BuiltStation:          call    SetPositionBehindUs
+LaunchedFromStation:    break
+                        call    ClearUnivSlotList
                         xor     a
-                        ld      (SpecialInstrucion+1),a         ; we have done the special instruction
+                        call    SetSlotAToSpaceStation              ; set slot 0 to space station
+                        MMUSelectUniverseA                          ; Prep Target universe
+                        MMUSelectShipBank1                          ; Bank in the ship model code
+                        ld      a,CoriloisStation
+                        call    GetShipModelId             
+                        MMUSelectShipBankA                          ; Select the correct bank found
+                        ld      a,b                                 ; Select the correct ship
+                        call    CopyShipToUniverse
+.BuiltStation:          call    ResetStationLaunch
+.NowInFlight:           xor     a
+                        ld      (DockedFlag),a
+                        ld      a,ScreenFront
+                        ld      (ScreenTransitionForced),a                        
                         ret
     
 InitialiseCommander:    ld      a,(ScreenCmdr+1)
@@ -502,16 +511,14 @@ SetScreenAIX:           ld      (ScreenIndex),a                 ; Set screen ind
                         ld      a,(ix+9)                        ; Screen Map Byte 9  - Draw stars Y/N
                         ld      (CheckIfViewUpdate+1),a         ; Set flag to determine if we are on an exterior view
                         ld      a,(ix+10)                       ; Screen Map Byte 10  - Input Blocker (set to 1 will not allow keyboard screen change until flagged, used by transition screens and pause menus)
-                        ld      (ScreenTransBlock+1),a          ; Set flag to block transitions as needed e.g. launch screen    
+                        ld      (InputBlockerCheck+1),a          ; Set flag to block transitions as needed e.g. launch screen    
                         ld      a,(ix+11)                       ; Screen Map Byte 11  - Double Buffering 0 = no, 1 = yes
                         ld      (DoubleBufferCheck+1),a
                         ld      a,(ix+12)
                         ld      (CallCursorRoutine+1),a
                         ld      a,(ix+13)
                         ld      (CallCursorRoutine+2),a
-                        ld      a,(ix+14)
-                        ld      (SpecialInstrucion+1),a
-                        
+                      
 ScreenUpdateAddr:       jp      $0000                          ; We can just drop out now and also get a free ret from caller
 ;----------------------------------------------------------------------------------------------------------------------------------                    
 ViewKeyTest:            ld      a,(ScreenIndex)
@@ -1003,25 +1010,58 @@ SeedGalaxy0Loop:        push    ix
     INCLUDE "./Layer1Graphics/layer1_cls.asm"
     INCLUDE "./Layer1Graphics/layer1_print_at.asm"
 ; Bank 59  ------------------------------------------------------------------------------------------------------------------------
+; In the first copy of the banks the "Non number" labels exist. They will map directly in other banks
+; as the is aligned and data tables are after that
+; need to make the ship index tables same size in each to simplify further    
     SLOT    ShipModelsAddr
-    PAGE    BankShipModelsA
-	ORG     ShipModelsAddr, BankShipModelsA
-    DEFINE  SHIPBANKA 1
-    INCLUDE "./Data/ShipModels.asm"
+    PAGE    BankShipModels1
+	ORG     ShipModelsAddr, BankShipModels1
+    INCLUDE "./Data/ShipModelMacros.asm"
+    INCLUDE "./Data/ShipBank1Label.asm"
+GetShipModelId:
+GetShipModel1Id:        MGetShipBankId ShipBankTable
+CopyVertsToUniv:
+CopyVertsToUniv1:       McopyVertsToUniverse
+CopyEdgesToUniv:
+CopyEdgesToUniv1:       McopyEdgesToUniverse
+CopyNormsToUniv:        
+CopyNormsToUniv1:       McopyNormsToUniverse
+ShipBankTable:
+ShipBankTable1:         MShipBankTable
+CopyShipToUniverse:
+CopyShipToUniverse1     MCopyShipToUniverse     BankShipModels1
+    INCLUDE "./Data/ShipModelMetaData1.asm"
 ; Bank 67  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ShipModelsAddr
-    PAGE    BankShipModelsB
-	ORG     ShipModelsAddr, BankShipModelsB
-    UNDEFINE SHIPBANKA
-    DEFINE   SHIPBANKB 1  
-    INCLUDE "./Data/ShipModels.asm"
+    PAGE    BankShipModels2
+	ORG     ShipModelsAddr, BankShipModels2
+
+    INCLUDE "./Data/ShipBank2Label.asm"
+GetShipModel2Id:        MGetShipBankId ShipBankTable2                        
+CopyVertsToUniv2:       McopyVertsToUniverse
+CopyEdgesToUniv2:       McopyEdgesToUniverse
+CopyNormsToUniv2:       McopyNormsToUniverse
+ShipBankTable2:         MShipBankTable
+CopyShipToUniverse2     MCopyShipToUniverse     BankShipModels2
+    INCLUDE "./Data/ShipModelMetaData2.asm"
 ; Bank 68  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ShipModelsAddr
-    PAGE    BankShipModelsC
-	ORG     ShipModelsAddr, BankShipModelsC
-    UNDEFINE SHIPBANKB
-    DEFINE   SHIPBANKC 1  
-    INCLUDE "./Data/ShipModels.asm"
+    PAGE    BankShipModels3
+	ORG     ShipModelsAddr, BankShipModels3
+
+    INCLUDE "./Data/ShipBank3Label.asm"
+GetShipModel3Id:        MGetShipBankId ShipBankTable3
+CopyVertsToUniv3:       McopyVertsToUniverse
+CopyEdgesToUniv3:       McopyEdgesToUniverse
+CopyNormsToUniv3:       McopyNormsToUniverse    
+ShipBankTable3:         MShipBankTable
+CopyShipToUniverse3     MCopyShipToUniverse     BankShipModels3
+    INCLUDE "./Data/ShipModelMetaData3.asm"
+;;Privisioned for more models ; Bank 69  ------------------------------------------------------------------------------------------------------------------------
+;;Privisioned for more models     SLOT    ShipModelsAddr
+;;Privisioned for more models     PAGE    BankShipModels4
+;;Privisioned for more models 	ORG     ShipModelsAddr, BankShipModels4
+
 ; Bank 60  ------------------------------------------------------------------------------------------------------------------------
     SLOT    SpritemembankAddr
     PAGE    BankSPRITE

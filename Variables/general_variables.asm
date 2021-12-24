@@ -383,8 +383,9 @@ HeapHead				equ HeapStart
 ; bit 7 will be set for a sun or planet so we can only ever have 128 types of ship, in relality there are about 3 types
 ; note this is ship type as it space station, transporter, pirate etc not model of ship
 UniverseSlotList		DS UniverseListSize		; &0311 for 12 bytes Array of Free Index - Now array of while universe pages are occupied
-CurrentUniverseItem     DB  0               ; used to cycle ships in each iterations of main loop
-    
+UniverseSlotCount       DS UniverseListSize * 2 ; To be implemented, keeps a count of each slot type, may merge into slot list and set as a DW
+CurrentUniverseAI       DB  0               ; used to cycle ships in each iterations of main loop
+SelectedUniverseSlot    DB  0    
 SUN						DB	0				; &031D Actually MANY -1? As we can only have 1?
 MANY					DB	0				; &031E array of ship types???
 SpaceStationPresent		DB	0				; &0320	Wonder if many is counter of type in univ objects?

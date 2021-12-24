@@ -69,7 +69,7 @@ BankStockTable          equ 55
 BankCmdrData            equ 56
 BankLAYER2              equ 57
 BankLAYER1              equ 58
-BankShipModelsA         equ 59
+BankShipModels1         equ 59
 BankSPRITE              equ 60
 BankConsole             equ 61
 BankFrontView           equ 62
@@ -77,8 +77,9 @@ BankMenuStatus          equ 63
 BankMenuEquipS          equ 64
 BankLaunchShip          equ 65
 BankDispMarket          equ 66
-BankShipModelsB         equ 67
-BankShipModelsC         equ 68
+BankShipModels2         equ 67
+BankShipModels3         equ 68
+BankShipModels4         equ 69
 
 BankUNIVDATA0           equ 70
 BankUNIVDATA1           equ 71

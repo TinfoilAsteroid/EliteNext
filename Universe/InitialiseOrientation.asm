@@ -17,4 +17,11 @@ ZI1:
     ld      hl, $E000					; -96 in hi byte which is +96 with hl bit 7 set
     ld      (UBnkrotmatNosevZ),hl
     ret
-	
+
+
+LaunchedOrientation:
+    call    InitialiseOrientation
+    FlipMemSign UBnkrotmatNosevX+1
+    FlipMemSign UBnkrotmatNosevY+1
+    FlipMemSign UBnkrotmatNosevZ+1
+    ret

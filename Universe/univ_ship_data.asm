@@ -9,6 +9,7 @@
 
 ; "Runtime Ship Data paged into in Bank 7"
 StartOfUniv:        DB "Universe PG"
+StartOfUnivN:       DB "X"
 ; NOTE we can cheat and pre allocate segs just using a DS for now
 
 ;   \ -> & 565D \ See ship data files chosen and loaded after flight code starts running.
@@ -145,17 +146,32 @@ UBnkShipCopy                equ UBnkHullVerticies               ; Buffer for cop
 UBnk_Data_len               EQU $ - StartOfUniv
 
 
-RequAby256DivQOLD:      ld      b,a ;.LL28  BFRDIV R=A*256/Q   byte from remainder of division 
-                        ld      a,(varQ)
-                        ld      c,a
-                        ld      a,b
-
-
 ResetUBnkData:          ld      hl,StartOfUniv
                         ld      de,UBnk_Data_len
                         xor     a
                         call    memfill_dma
                         ret
+                        
+ResetStationLaunch:     ld  a,%10000001
+                        ld  (UBnkaiatkecm),a                    ; set hostinle, no AI, has ECM
+                        xor a
+                        ld      (UBnkrotZCounter),a             ; no pitch
+                        ld      (ShipNewBitsAddr),a             ; initialise new bits logic
+                        ld      a,$FF
+                        ld      (UBnkrotXCounter),a             ; set roll to maxi on station
+.SetPosBehindUs:        ld      hl,$0000
+                        ld      (UBnKxlo),hl
+                        ld      hl,$0000
+                        ld      (UBnKylo),hl
+                        ld      hl,$01B0                            ; so its a negative distance behind
+                        ld      (UBnKzlo),hl
+                        xor     a
+                        ld      (UBnKxsgn),a
+                        ld      (UBnKysgn),a
+                        ld      a,$80
+                        ld      (UBnKzsgn),a
+.SetOrientation:        call    LaunchedOrientation             ; set initial facing
+                        ret    
    
 ;divdide by 16 using undocumented instrunctions
 ;Input: BC = Dividend, DE = Divisor, HL = 0

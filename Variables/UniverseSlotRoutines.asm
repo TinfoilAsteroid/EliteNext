@@ -1,6 +1,32 @@
+ClearSlotCount:         xor     a
+                        ld      hl,UniverseSlotCount
+                        ld      b, UniverseListSize * 2
+.fillLoop:              ld      (hl),a
+                        inc     hl
+                        djnz    .fillLoop
+                        ret
+
+; Initialises all types to a count of 1 where there is an occupied universe slot
+; this needs expanding to cater for a missing type, find type and increment count (use cpir?)
+CorrectSlotCount:       call    ClearSlotCount
+                        ld      hl,UniverseSlotCount
+                        ld      de,UniverseSlotList
+                        ld      b,UniverseListSize
+.fillLoop:              ld      a,(de)
+                        cp      $FF
+                        jr      z,.SkipSlot
+.CorrectSlot:           ld      (hl),a
+                        inc     hl
+                        ld      (hl),1
+                        inc     hl
+.SkipSlot               inc     de
+                        djnz    .fillLoop
+                        ret
+                        
+
 
 ; Wipe all items
-ClearFreeSlotList:      ld      a,$FF
+ClearUnivSlotList:      ld      a,$FF
                         ld      hl,UniverseSlotList
                         ld      b, UniverseListSize
 .fillLoop:              ld      (hl),a
@@ -13,7 +39,7 @@ SetSlotAToSpaceStation: ld      hl,UniverseSlotList
                         ld      (hl),ShipTypeStation
                         ret
                         
-SetSelotAToTypeB:       ld      hl,UniverseSlotList
+SetSlotAToTypeB:        ld      hl,UniverseSlotList
                         add     hl,a
                         ld      (hl),b
                         ret                     
@@ -27,8 +53,8 @@ ClearFreeSlotListSaveA: ld      d,a
                         cp      d
                         jr      z,.SkipSlot
                         ld      a,$FF
-.SkipSlot:              ld      (hl),a
-                        inc     hl
+                        ld      (hl),a
+.SkipSlot:              inc     hl
                         djnz    .fillLoop
                         ret
 
