@@ -224,6 +224,7 @@ UpdateUniverseObjects:  xor     a
 .UniverseObjectFound:   ld      a,d                                             ; Get back Universe slot as we want it
                         MMUSelectUniverseA                                      ; and we apply roll and pitch
                         call    ApplyMyRollAndPitch
+                        call    ApplyShipRollAndPitch
 ;.. If its a space station then see if we are ready to dock........................................................................
 .CheckIfDockable:       ld      a,(ShipTypeAddr)                                ; Now we have the correct bank
                         JumpIfANENusng  ShipTypeStation, .NotDockingCheck       ; if its not a station so we don't test docking
@@ -845,7 +846,22 @@ SeedGalaxy0Loop:        push    ix
 
 
             
-    include "./ModelRender/testdrawing.asm"
+    ;include "./ModelRender/testdrawing.asm"
+XX12PVarQ			DW 0
+XX12PVarR			DW 0
+XX12PVarS			DW 0
+XX12PVarResult1		DW 0
+XX12PVarResult2		DW 0
+XX12PVarResult3		DW 0
+XX12PVarSign2		DB 0
+XX12PVarSign1		DB 0								; Note reversed so BC can do a little endian fetch
+XX12PVarSign3		DB 0
+
+    include "./Maths/Utilities/XX12EquNodeDotOrientation.asm"
+    include "ModelRender/CopyXX12ToXX15.asm"	
+    include "ModelRender/CopyXX15ToXX12.asm"
+    include "./Maths/Utilities/ScaleXX16Matrix197.asm"
+		    
     include "./Universe/StarRoutines.asm"
 ;    include "Universe/move_object-MVEIT.asm"
     include "./ModelRender/draw_object.asm"

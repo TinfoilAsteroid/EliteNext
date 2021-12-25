@@ -39,7 +39,6 @@ ScaleRotationLoop:
 	djnz	ScaleRotationLoop
 	ret
 
-                        include "./Maths/Utilities/ScaleXX16Matrix197.asm"
 GetXX18Scale:
     ld      a,(QAddr)
     ld      ixl,a                 ; save Scale in C
@@ -98,58 +97,6 @@ ScaleLoop:
 	ret
     ENDMODULE 
 
-ScaleNodeTo8Bit:								; TODO make signed
-	ld			bc,(UBnkZScaled)
-	ld			hl,(UBnkXScaled)
-	ld			de,(UBnkYScaled)		
-SetABSbc:
-	ld			a,b
-	ld			ixh,a
-	and			SignMask8Bit
-	ld			b,a									; bc = ABS bc
-SetABShl:
-	ld			a,h
-	ld			ixl,a
-	and			SignMask8Bit
-	ld			h,a									; hl = ABS hl
-SetABSde:
-	ld			a,d
-	ld			iyh,a
-	and			SignMask8Bit
-	ld			d,a									; de = ABS de
-ScaleNodeTo8BitLoop:
-    ld          a,b		                            ; U	\ z hi
-	or			h                                   ; XX15+1	\ x hi
-	or			d                                   ; XX15+4	\ y hi
-    jr          z,ScaleNodeDone                   ; if X, Y, Z = 0  exit loop down once hi U rolled to 0
-    ShiftHLRight1
-    ShiftDERight1
-	ShiftBCRight1
-    jp          ScaleNodeTo8BitLoop
-ScaleNodeDone:										; now we have scaled values we have to deal with sign
-	ld			a,ixh								; get sign bit and or with b
-	and			SignOnly8Bit
-	or			b
-	ld			b,a
-SignforHL:
-	ld			a,ixl								; get sign bit and or with b
-	and			SignOnly8Bit
-	or			h
-	ld			h,a
-SignforDE:
-	ld			a,iyh								; get sign bit and or with b
-	and			SignOnly8Bit
-	or			d
-	ld			d,a
-SignsDoneSaveResult:	
-	ld			(UBnkZScaled),bc
-	ld			(UBnkXScaled),hl
-	ld			(UBnkYScaled),de
-	ld			a,b
-	ld			(varU),a
-	ld			a,c
-	ld			(varT),a
-	ret
 
 varR16			DW	0
 
@@ -210,19 +157,7 @@ TestStoreYPoint:                                    ; also from LL62, XX3 node h
     ld          (iy+3),d                            ; Update Y Point
     ret
 
-    include "ModelRender/CopyXX12ToXX15.asm"	
 
-    include "ModelRender/CopyXX15ToXX12.asm"
-		
-XX12PVarQ			DW 0
-XX12PVarR			DW 0
-XX12PVarS			DW 0
-XX12PVarResult1		DW 0
-XX12PVarResult2		DW 0
-XX12PVarResult3		DW 0
-XX12PVarSign2		DB 0
-XX12PVarSign1		DB 0								; Note reversed so BC can do a little endian fetch
-XX12PVarSign3		DB 0
 
 ; copy from wiring addhlde un iniv ship data
 XX12ProcessCalcHLPlusDESignBC:							

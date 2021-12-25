@@ -339,8 +339,6 @@ DockedFlag				DB	0				; 8E - Docked flag = 0 = in free space, FF = Docked, FE tr
 GamePaused              DB  0
 varSWAP                 DB  0               ; 90 , general purpose swap variable
 varCNT                  DB  0               ; 93
-varRAT                  DB  0               ; 99
-varRAT2                 DB  0               ; 9A
 
 varK					DB	0				; 40
 varKp1					DB	0				; 41

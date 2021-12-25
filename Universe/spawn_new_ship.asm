@@ -81,29 +81,6 @@ E8                      INX 		\ X+=2
 60                      
 
 
- 
-NWKxlo:	DB  0				; INW+0
-INWKxhi:	DB  0				; there are hi medium low as some times these are 24 bit
-INWKxsgn:	DB	0				; INWK+2
-INWKyLo		DB	0				; INWK+3 \ ylo
-INWKyhi		DB	0				; Y Hi???
-INWKysgn:	DB	0				; INWK +5
-INWKzlo		DB	0				; INWK +6
-INWKzhi		DB	0				; INWK +7
-INWKzsgn:	DB	0				; INWK +8
-
-
-INWKspeed:	DB	0				; INWK +27
-INWKAccel	DB	0				; INWK +28			
-rotXCounter:DB	0				; INWK +29
-rotZCounter:DB	0				; INWK +30
-explDsp: 	DB	0				; INWK +31 clear exploding/display state|missiles 
-aiatkecm:	DB	0				; INWK +32 ai_attack_univ_ecm i.e. AI type
-			DB	0				; INWK +33
-			DB	0				; INWK +34
-INWKEnergy:	DB	0				; INWK +35
-INWKNewb:	DB	0				; INWK +36 INWK+36 \ NEWB bit 7 remove ship?
-
 
 .FoundFreeSlot:								; New Ship – Add ship OK now hl = address of free slot (hopefully won't need index)	
 	ld		a,FreeListSize					; 
