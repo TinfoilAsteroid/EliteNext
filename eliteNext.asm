@@ -285,10 +285,12 @@ DrawShipLoop:           push    af
 SelectShipToDraw:       pop     af
                         push    af
                         MMUSelectUniverseA
-                        call   ProcessNodes
-DrawShip:               ;call   SetAllFacesVisible
+                        ;break
                         call    CheckDistance
-                        call    CullV2				; culling but over aggressive backface assumes all 0 up front TOFIX
+                        jr      c,UpdateRadar               ; it can't be drawn if carry is set by may appear on radar
+                        call    ProcessNodes
+DrawShip:               ;call   SetAllFacesVisible
+                        call    CullV2				        ; culling but over aggressive backface assumes all 0 up front TOFIX
                         call    PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
                         pop     af
                         push    af

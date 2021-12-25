@@ -24,6 +24,7 @@ FarInFront			equ $C0
 ShipTypeStation     equ 2
 ShipTypeMissile     equ 1
 ShipTypeNormal      equ 0
+ShipMaxDistance     equ 192
 
 MaxNumberOfStars	equ 11
 UniverseListSize    equ	12

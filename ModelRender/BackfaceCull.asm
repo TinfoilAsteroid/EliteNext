@@ -332,8 +332,19 @@ ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then 
 ;;;;;
 XX4Distance             DB      0
 
-CheckDistance:          ld      hl,(UBnKzlo)                ; hl = z pos / 8
-                        ShiftHLRight1                       ; .
+CheckDistance:          ld      a,(UBnKzsgn)                 ; Is the ship behind us
+.CheckBehind:           and     SignOnly8Bit                 ; .
+                        jr      nz,.ShipNoDraw               ; .
+.CheckViewPort:         ld      hl,(UBnKzlo)
+                        ld      a,h
+                        JumpIfAGTENusng ShipMaxDistance, .ShipNoDraw
+.CheckXAxis:            ld      de,(UBnKxlo)
+                        call    compare16HLDE
+                        jr      c,.ShipNoDraw               ; ship is too far out on the X Axis
+.CheckYAxis:            ld      de,(UBnKylo)
+                        call    compare16HLDE
+                        jr      c,.ShipNoDraw               ; ship is too far out on the X Axis
+.CalculateXX4:           ShiftHLRight1                       ; hl = z pos / 8        
                         ShiftHLRight1                       ; .
                         ShiftHLRight1                       ; .
                         ld      a,h
@@ -346,6 +357,9 @@ CheckDistance:          ld      hl,(UBnKzlo)                ; hl = z pos / 8
                         srl     a
                         srl     a
                         ld      (XX4Distance),a             ; XX4 = "all faces" distance
+                        ClearCarryFlag
+                        ret
+.ShipNoDraw:            SetCarryFlag                        ; ship is behind so do not draw
                         ret
 
 CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;   
