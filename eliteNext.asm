@@ -229,7 +229,7 @@ UpdateUniverseObjects:  xor     a
                         JumpIfANENusng  ShipTypeStation, .NotDockingCheck       ; if its not a station so we don't test docking
 .IsDockableAngryCheck:  JumpOnMemBitSet ShipNewBitsAddr, 4, .NotDockingCheck    ; if it is angry then we dont test docking
                         call    DockingCheck                                    ; So it is a candiate to test docking. Now we do the position and angle checks
-                        ReturnIfMemEquN ScreenTransitionForced, $FF             ; if we docked then a transition would have been forced
+                        ReturnIfMemEquN ScreenTransitionForced, $FF            ; if we docked then a transition would have been forced
 .NotDockingCheck:       CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, UpdateShip
 .ProcessedUniverseSlot: ld      a,(SelectedUniverseSlot)                        ; Move to next ship cycling if need be to 0
                         inc     a                                               ; .
@@ -286,8 +286,9 @@ SelectShipToDraw:       pop     af
                         MMUSelectUniverseA
                         call   ProcessNodes
 DrawShip:               ;call   SetAllFacesVisible
-                        call   CullV2				; culling but over aggressive backface assumes all 0 up front TOFIX
-                        call   PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
+                        call    CheckDistance
+                        call    CullV2				; culling but over aggressive backface assumes all 0 up front TOFIX
+                        call    PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
                         pop     af
                         push    af
                         MMUSelectUniverseA
@@ -356,7 +357,7 @@ UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
                         ret     nz
                         ld      a,16
                         ld      (TidyCounter),a
-                       ; call    TIDY DEBUG
+                        ; call    TIDY TIDY IS BROKEN
                        ; add AI in here too
                         ret
             
@@ -469,8 +470,7 @@ ScreenViewsStart    EQU (ScreenKeyFront - ScreenKeyMap)/ScreenMapRow
 ScreenTransitionForced  DB $FF    
     INCLUDE "./GameEngine/resetUniverse.asm"
 
-LaunchedFromStation:    break
-                        call    ClearUnivSlotList
+LaunchedFromStation:    call    ClearUnivSlotList
                         xor     a
                         call    SetSlotAToSpaceStation              ; set slot 0 to space station
                         MMUSelectUniverseA                          ; Prep Target universe

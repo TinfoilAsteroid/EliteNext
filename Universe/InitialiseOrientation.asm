@@ -1,8 +1,8 @@
 InitialiseOrientation:
 ZI1:
-;  nosev = (0,  0, -1)  nosev = (0, 0, &E000)   E000 = SignBit[96]
-;  roofv = (0,  1,  0)  roofv = (0, &6000, 0)
 ;  sidev = (1,  0,  0)  sidev = (&6000, 0, 0)
+;  roofv = (0,  1,  0)  roofv = (0, &6000, 0)
+;  nosev = (0,  0, -1)  nosev = (0, 0, &E000)   E000 = SignBit[96]
     ld      hl, 0
     ld      (UBnkrotmatSidevY),hl                ; set the zeroes
     ld      (UBnkrotmatSidevZ),hl                ; set the zeroes
@@ -18,10 +18,13 @@ ZI1:
     ld      (UBnkrotmatNosevZ),hl
     ret
 
+;  sidev = (1,  0,  0)  sidev = (&6000, 0, 0)
+;  roofv = (0,  1,  0)  roofv = (0, &6000, 0)
+;  nosev = (-0,  -0, 1) nosev = (0, 0, &6000)
 
 LaunchedOrientation:
     call    InitialiseOrientation
-    FlipMemSign UBnkrotmatNosevX+1
-    FlipMemSign UBnkrotmatNosevY+1
+    FlipMemSign UBnkrotmatNosevX+1;  as its 0 flipping will make no difference
+    FlipMemSign UBnkrotmatNosevY+1;  as its 0 flipping will make no difference
     FlipMemSign UBnkrotmatNosevZ+1
     ret

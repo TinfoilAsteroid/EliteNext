@@ -330,6 +330,23 @@ ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then 
 ;;;;;                        jp          nz,.ProcessNormalsLoop
 ;;;;;                        ret                                 ; If Y >= XX20 all normals' visibilities set, onto Transpose. return
 ;;;;;
+XX4Distance             DB      0
+
+CheckDistance:          ld      hl,(UBnKzlo)                ; hl = z pos / 8
+                        ShiftHLRight1                       ; .
+                        ShiftHLRight1                       ; .
+                        ShiftHLRight1                       ; .
+                        ld      a,h
+                        srl     a                           ; if a / 16 <> 0 then ship is a dot
+.DrawAsDotCheck:        ;jr      z,.ShipIsADot
+                        ; Check visbility distance
+.SetXX4Dist:            ld      a,l
+                        rra                                 ; l may have had bit 0 of h carried in
+                        srl     a                           ; so move it to bit 4 giving A as distance $000xxxxx
+                        srl     a
+                        srl     a
+                        ld      (XX4Distance),a             ; XX4 = "all faces" distance
+                        ret
 
 CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;   
                        ; break                          
@@ -352,11 +369,15 @@ CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
                         ld      b,a                                                     ;
                         xor     a
                         ld      (CurrentNormIdx),a                                                   ; used to increment up face incdex as b decrements
-.ProcessNormalsLoop:     push    hl
+.ProcessNormalsLoop:    push    hl
                         push    bc
-.LL86:                  ld      a,(hl)                                                  ;     Get Face sign and visibility distance byte 
-                        and     $1F                                                     ;     if normal visibility range  < XX4
-                        JumpIfAGTENusng c,.FaceVisible                                  ; commented out for debuggging the skip 
+.LL86:                  ld      a,(hl)                                                  ; Get Face sign and visibility distance byte 
+                        and     $1F                                                     ; if normal visibility range  < XX4
+                        push    hl
+                        ld      hl,XX4Distance
+                        cp      (hl)
+                        pop     hl
+                        jp      c,.FaceVisible                       ; then we always draw
 ; This bit needs to be added to force face visible
 .LL87:                  call    CopyFaceToXX12              ; XX12 = normal (repolaced scale version) as a working copy
                         ld      a,(XX17)                    ; a = q scale XX17 cauclated by the call to ScaleDrawcam

@@ -1,16 +1,16 @@
 JumpIfPositive:	        MACRO target
                         jp		p, target
                         ENDM
-        
+
 JumpIfNegative:	        MACRO target
-                        jp		m, target 
+                        jp		m, target
                         ENDM
-        
-        
+
+
 JumpIfUnderflow:	    MACRO target
-                        jp		po, target 
+                        jp		po, target
                         ENDM
-                
+
 JumpOnMemBitSet:        MACRO mem, bitnbr, target
                         ld      a,(mem)
                         bit 	bitnbr,a
@@ -28,7 +28,7 @@ JumpOnBitSet:           MACRO  reg, bitnbr, target
                         bit 	bitnbr,reg
                         jp      nz,target
                         ENDM
-        
+
 JumpOnBitClear:         MACRO  reg, bitnbr, target
                         bit 	bitnbr,reg
                         jp      z,target
@@ -56,8 +56,8 @@ ReturnOnMemBitClear:    MACRO mem, bitnbr
                         ret		z
                         ENDM
 
-JumpIfAGTEusng:         MACRO 
-                        jp		nc,target 
+JumpIfAGTEusng:         MACRO
+                        jp		nc,target
                         ENDM
 
 JumpIfAGTENusng:        MACRO reg,target
@@ -65,6 +65,17 @@ JumpIfAGTENusng:        MACRO reg,target
                         jp		nc,target
                         ENDM
 
+JumpIfAGTEMemusng:      MACRO mem,target
+                        ld      hl,mem
+                        cp      (hl)
+                        jp		nc,target
+                        ENDM
+
+JumpIfALTMemusng:       MACRO mem,target
+                        ld      hl,mem
+                        cp      (hl)
+                        jp		c,target
+                        ENDM
 
 CallIfAGTENusng:        MACRO   reg,target
                         cp      reg
@@ -97,11 +108,11 @@ CallIfMemEqMemusng:     MACRO mem, address, target
                         cp   (hl)
                         call    z,target
                         ENDM
-                        
+
 JumpIfALTusng:          MACRO target
                         jp		c,target
                         ENDM
-                
+
 JumpIfALTNusng:         MACRO value, target
                         cp      value
                         jp		c, target
@@ -147,13 +158,13 @@ JumpIfANENusng: MACRO value, target
                 cp     value
                 jp      nz,target
                 ENDM
-				
+
 JumpIfANEMemusng: MACRO  value, target
                   ld    hl,value
                   cp    (hl)
                   jp      nz,target
                   ENDM
-                
+
 JumpIfAEqNusng: MACRO value, target
                 cp     value
                 jp      z,target
@@ -172,21 +183,21 @@ IfANotZeroGoto:	MACRO target
 IfResultZeroGoto:	MACRO target
 					jp	z,target
 					ENDM
-                
+
 IfResultNotZeroGoto:MACRO target
 					jp	nz,target
 					ENDM
 
-ReturnIfAIsZero: MACRO
-                 and a
-                 ret    z
-                 ENDM
+ReturnIfAIsZero:    MACRO
+                    and a
+                    ret    z
+                    ENDM
 
-ReturnIfMemisZero: MACRO mem
-                   ld   a,(mem)
-                   and a
-                   ret    z
-                   ENDM
+ReturnIfMemisZero:  MACRO mem
+                    ld   a,(mem)
+                    and a
+                    ret    z
+                    ENDM
 
 ReturnIfMemEquN:    MACRO mem, value
                     ld   a,(mem)
@@ -194,10 +205,10 @@ ReturnIfMemEquN:    MACRO mem, value
                     ret    z
                     ENDM
 
-ReturnIfANotZero: MACRO
-                  cp     0
-                  ret    nz
-                  ENDM
+ReturnIfANotZero:   MACRO
+                    cp     0
+                    ret    nz
+                    ENDM
 
 ReturnIfMemNotZero: MACRO mem
                     ld     a,(mem)
@@ -205,128 +216,128 @@ ReturnIfMemNotZero: MACRO mem
                     ret    nz
                     ENDM
 
-ReturnIfAGTEusng: MACRO value
-				  cp    value
-                  ret	 nc
-                  ENDM
+ReturnIfAGTEusng:   MACRO value
+                    cp    value
+                    ret	 nc
+                    ENDM
 
-ReturnIfALTNusng:  MACRO value
-                   cp    value
-                   ret	 c
-                   ENDM
+ReturnIfALTNusng:   MACRO value
+                    cp    value
+                    ret	 c
+                    ENDM
 
-ReturnIfAGTENusng: MACRO value
-                   cp    value
-                   ret	 nc
-                   ENDM
+ReturnIfAGTENusng:  MACRO value
+                    cp    value
+                    ret	 nc
+                    ENDM
 
-ReturnIfANENusng: MACRO value
-                  cp      value
-                  ret     nz
-                  ENDM
+ReturnIfANENusng:   MACRO value
+                    cp      value
+                    ret     nz
+                    ENDM
 
-ReturnIfAEqNusng: MACRO value
-                  cp      value
-                  ret     z
-                  ENDM
-				   
-SetCarryFlag:           MACRO
-                        scf
-                        ENDM
-                 
-ClearCarryFlag:	        MACRO
-                        or a
-                        ENDM
-                        
-FlipCarryFalg:          MACRO
-                        ccf
-                        ENDM
-                
-pushbcde:		        MACRO
-                        push	bc
-                        push	de
-                        ENDM
+ReturnIfAEqNusng:   MACRO value
+                    cp      value
+                    ret     z
+                    ENDM
 
-popdebc:		        MACRO
-                        pop		de
-                        pop		bc
-                        ENDM
+SetCarryFlag:       MACRO
+                    scf
+                    ENDM
 
-pushhlde:		MACRO
-                push	hl
-                push	de
-                ENDM
-            
-popdehl:		MACRO
-                pop		de
-                pop		hl
-                ENDM
+ClearCarryFlag:	    MACRO
+                    or a
+                    ENDM
 
-pushbcdeaf:		MACRO
-                push	bc
-                push	de
-                push	af
-                ENDM
-	
-popafdebc:		MACRO
-                pop		af
-                pop		de
-                pop		bc
-                ENDM
+FlipCarryFalg:      MACRO
+                    ccf
+                    ENDM
 
-NegIY:			MACRO
-                xor a
-                sub iyl
-                ld iyl,a
-                sbc a,a
-                sub iyh
-                ld iyh,a
-                ENDM
+pushbcde:		    MACRO
+                    push	bc
+                    push	de
+                    ENDM
 
-NegHL:			MACRO
-                xor a
-                sub l
-                ld l,a
-                sbc a,a
-                sub h
-                ld h,a
-                ENDM
+popdebc:		    MACRO
+                    pop		de
+                    pop		bc
+                    ENDM
 
-NegDE:			MACRO
-                xor a
-                sub e
-                ld e,a
-                sbc a,a
-                sub d
-                ld d,a
-                ENDM
+pushhlde:		    MACRO
+                    push	hl
+                    push	de
+                    ENDM
 
-NegBC:			MACRO
-                xor a
-                sub c
-                ld c,a
-                sbc a,a
-                sub  b
-                ld b,a
-                ENDM
-    
-NegH            MACRO
-                ld      a,h
-                neg
-                ld      h,a
-                ENDM
+popdehl:		    MACRO
+                    pop		de
+                    pop		hl
+                    ENDM
 
-NegD            MACRO
-                ld      a,d
-                neg
-                ld      d,a
-                ENDM
+pushbcdeaf:		    MACRO
+                    push	bc
+                    push	de
+                    push	af
+                    ENDM
 
-NegB            MACRO
-                ld      a,b
-                neg
-                ld      b,a
-                ENDM
+popafdebc:		    MACRO
+                    pop		af
+                    pop		de
+                    pop		bc
+                    ENDM
+
+NegIY:			    MACRO
+                    xor a
+                    sub iyl
+                    ld iyl,a
+                    sbc a,a
+                    sub iyh
+                    ld iyh,a
+                    ENDM
+
+NegHL:			    MACRO
+                    xor a
+                    sub l
+                    ld l,a
+                    sbc a,a
+                    sub h
+                    ld h,a
+                    ENDM
+
+NegDE:			    MACRO
+                    xor a
+                    sub e
+                    ld e,a
+                    sbc a,a
+                    sub d
+                    ld d,a
+                    ENDM
+
+NegBC:			    MACRO
+                    xor a
+                    sub c
+                    ld c,a
+                    sbc a,a
+                    sub  b
+                    ld b,a
+                    ENDM
+
+NegH                MACRO
+                    ld      a,h
+                    neg
+                    ld      h,a
+                    ENDM
+
+NegD                MACRO
+                    ld      a,d
+                    neg
+                    ld      d,a
+                    ENDM
+
+NegB                MACRO
+                    ld      a,b
+                    neg
+                    ld      b,a
+                    ENDM
 
 FourLDIInstrunctions:   MACRO
                         ldi
@@ -334,7 +345,7 @@ FourLDIInstrunctions:   MACRO
                         ldi
                         ldi
                         ENDM
-						
+
 FiveLDIInstrunctions:   MACRO
                         ldi
                         ldi
@@ -351,7 +362,7 @@ SixLDIInstrunctions:    MACRO
                         ldi
                         ldi
                         ENDM
-						
+
 EightLDIInstrunctions:  MACRO
 		                ldi
 		                ldi
@@ -360,7 +371,7 @@ EightLDIInstrunctions:  MACRO
 		                ldi
 		                ldi
 		                ldi
-		                ldi						
+		                ldi
                         ENDM
 
 NineLDIInstrunctions:  MACRO
@@ -372,12 +383,11 @@ NineLDIInstrunctions:  MACRO
 		                ldi
 		                ldi
 		                ldi
-		                ldi						
+		                ldi
                         ENDM
-				
+
 FlipMemSign:        MACRO mem
                     ld  a,(mem)
                     xor SignOnly8Bit
                     ld  (mem),a
                     ENDM
-                    

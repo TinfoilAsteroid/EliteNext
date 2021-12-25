@@ -88,11 +88,13 @@ TidyRotXSmall:
 		call	CalcRoofvY					; Set (roofvy= (nosev_x * roofv_x + nosev_z * roofv_z) / nosev_y, Q -= nosev_z
 		ld		(UBnkrotmatRoofvY+1),a			; set roofvy hi
 		jp		NormaliseRoofV
+; TIDY is broken
 TIDY:
+        break
 ORTHOGALISE:
 ;-- NormaliseNosev
 		call	CopyRotMatNoseVtoXX15		
-		call	normaliseXX1596fast			; normalise z hi
+		call	normaliseXX1596fast			; normalise z hi, its really TIS3
 		call	CopyXX15toRotMatNoseV
 .CheckNXSmall:
 		ld		a,(UBnkrotmatNosevX+1)
