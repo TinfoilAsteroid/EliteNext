@@ -337,7 +337,13 @@ ZZDust					DB	0				;	88		ZZDust (Poss 16 bit need to check)
 XX13                    DB  0               ;   89
 MCNT					DB 	0				; 8A
 TYPE					DB	0				; 8C used for ship type in drawing
-DockedFlag				DB	0				; 8E - Docked flag = 0 = in free space, FF = Docked, FE transition, FD = Setup open space and transition to not docked
+;Docked flag = 00 = in free space
+;              FF = Docked
+;              FE = transition
+;              FD = Setup open space and transition to not docked
+;              FC = Hyperspace manimation
+;              FB = Hyperspace complete
+DockedFlag				DB	0				; 8E - 
 GamePaused              DB  0
 varSWAP                 DB  0               ; 90 , general purpose swap variable
 varCNT                  DB  0               ; 93

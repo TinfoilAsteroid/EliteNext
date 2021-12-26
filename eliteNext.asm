@@ -1,4 +1,4 @@
-Fcoc DEVICE ZXSPECTRUMNEXT
+ DEVICE ZXSPECTRUMNEXT
  DEVICE ZXSPECTRUMNEXT
  DEVICE ZXSPECTRUMNEXT
  DEFINE  DOUBLEBUFFER 1
@@ -169,14 +169,38 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
                         or      l
                         jr      z,.NoHyperspace                               ; note message end will tidy up display
 .HyperSpaceMessage:     MMUSelectLayer1
-                        ld      d,96
-                     ;   call    l1_cls_2_lines_d
-                        ld      de,$6028
-                        ld      hl,Hyp_message
+                        ;break
+                        call    DisplayHyperCountDown
+.UpdateHyperCountdown:  ld      hl,(InnerHyperCount)
+                        dec     l
+                        jr      nz,.decHyperInnerOnly
+                        dec     h
+                        jp      m,.HyperCountDone
+.resetHyperInner:       ld      l,$0B
+                        push    hl
+                        ld      d,12
+                        ld      a,L1ColourPaperBlack | L1ColourInkYellow
+                        call    l1_attr_cls_2DlinesA
+                        ld      d,12 * 8
+                        call    l1_cls_2_lines_d
+                        ld      de,$6000
+                        ld      hl,Hyp_centeredTarget
                         call    l1_print_at
-                        ld      de,$6828
-                        ld      hl,Hyp_charging
+                        ld      de,$6800
+                        ld      hl,Hyp_centeredCharging
                         call    l1_print_at
+                        pop     hl
+.decHyperInnerOnly:     ld      (InnerHyperCount),hl
+                        jr      .DoneHyperCounter
+.HyperCountDone:        ld      hl,0
+                        ld      (InnerHyperCount),hl
+                        ld      d,12
+                        ld      a,L1ColourPaperBlack | L1ColourInkBlack
+                        call    l1_attr_cls_2DlinesA
+                        ld      d,12 * 8
+                        call    l1_cls_2_lines_d
+; do some enbaling jump code and jump trasition
+.DoneHyperCounter:                      
 .NoHyperspace:          MMUSelectLayer2
                         call   l2_cls                        
                         MMUSelectLayer1
@@ -373,25 +397,82 @@ UpdateCountdownNumber:  ld		a,(OuterHyperCount)
                         ret 
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-Hyp_message             DB "Hyperspace ",0
-Hyp_to                  DS 20
+Hyp_message             DB "To:"
+Hyp_to                  DS 32
 Hyp_space1              DB " "
 Hyp_dist_amount         DB "0.0"
 Hyp_decimal             DB "."
 Hyp_fraction            DB "0"
 Hyp_dis_ly              DB " LY",0
-Hyp_charging            DB "Charging : "
+Hyp_charging            DB "Charging:"
 Hyp_counter             DB "000",0
+Hyp_centeredTarget      DS 32
+Hyp_centeredEol         DB 0
+Hyp_bufferpadding       DS 32   ; just in case we get a buffer ovverun. shoudl never get beyond 32 chars
+Hyp_centeredCharging    DS 32
+Hyp_centeredEol2        DB 0
+Hyp_bufferpadding2      DS 32   ; just in case we get a buffer ovverun. shoudl never get beyond 32 chars
+
+MainCopyLoop:           ld      a,(hl)
+                        cp      0
+                        ret     z
+                        ld      (de),a
+                        inc     hl
+                        inc     de
+                        jr      MainCopyLoop
+
+CountLengthHL:          ld      b,0
+.CountLenLoop:          ld      a,(hl)
+                        cp      0
+                        jr      z,.DoneCount
+                        inc     b
+                        inc     hl
+                        jr      .CountLenLoop
+.DoneCount:             ld      a,32
+                        sub     b
+                        sra     a         
+                        ret
+                        
+MainClearTextLoop:      ld      b,a
+                        ld      a,32
+.ClearLoop:             ld      (hl),a
+                        inc     hl
+                        djnz    .ClearLoop
+                        ret
 
      
-DisplayHyperCountDown:  ld      hl,Hyp_counter           ; clear counter digits
-                        ld      a,0                      ; clear counter digits
+DisplayHyperCountDown:  ld      de,Hyp_to
+                        ld      hl,name_expanded
+                        call    MainCopyLoop
+.DoneName:              xor     a
+                        ld      (de),a
+                        ld      (Hyp_message+31),a      ; max out at 32 characters
+.CentreJustify:         ld      hl,Hyp_message
+                        call    CountLengthHL
+                        ld      hl,Hyp_centeredTarget
+                        call    MainClearTextLoop
+                        ex      de,hl
+                        ld      hl,Hyp_message
+                        call    MainCopyLoop
+                        xor     a
+                        ld      (Hyp_centeredEol),a
+                        ld      hl,Hyp_counter           ; clear counter digits
+                        ld      a,32                     ; clear counter digits
                         ld      (hl),a                   ; clear counter digits
                         inc     hl                       ; clear counter digits
                         ld      (hl),a                   ; clear counter digits
                         inc     hl                       ; clear counter digits
                         ld      (hl),a                   ; clear counter digits
                         call    UpdateCountdownNumber
+                        ld      hl,Hyp_charging
+                        call    CountLengthHL
+                        ld      hl,Hyp_centeredCharging
+                        call    MainClearTextLoop
+                        ex      de,hl
+                        ld      hl,Hyp_charging
+                        call    MainCopyLoop
+                        xor     a
+                        ld      (Hyp_centeredEol2),a
                         ret
 
 ;DisplayTargetAndRange
@@ -531,6 +612,7 @@ ScreenKeyFront:         DB 2,   ScreenFront     , low addr_Pressed_Front,       
                         DB 2,   ScreenLeft      , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
                         DB 2,   ScreenRight     , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
                         DB 3,   ScreenDocking   , $FF,                           $FF,                            BankLaunchShip,      low draw_docking_ship,       high draw_docking_ship,        low loop_docking_ship,high loop_docking_ship, $00,$01,$01,$00,                        $00,                        $01,$00
+;                        DB 1,   ScreenHyperspace, $FF,                           $FF,                            BankHyperSpace,      low draw_hyperspace,         high draw_hyperspace,          low loop_hyperspace,  high loop_hyperspace,   $00,$01,$01,$00
 
 ;               DB low addr_Pressed_Aft,          high addr_Pressed_Aft,          BankMenuGalCht,      low SelectFrontView,         high SelectFrontView,          $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 ;               DB low addr_Pressed_Left,         high addr_Pressed_Left,         BankMenuGalCht,      low SelectFrontView,         high SelectFrontView,          $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
