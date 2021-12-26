@@ -59,6 +59,8 @@ defaultCommander:       ld		de,CommanderName				;set commander name
                         ld		(EscapePod),a
                         ld      (FugitiveInnocentStatus),a
                         ld		(KillTally),a
+                        ld      (OuterHyperCount),a
+                        ld      (InnerHyperCount),a
                         dec		a								; now a = 255
                         ld		(ForeShield),a
                         ld		(AftShield),a

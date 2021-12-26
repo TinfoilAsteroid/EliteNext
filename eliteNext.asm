@@ -161,7 +161,23 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
                         cp      0                                             ; .
                         jr      z, MenusLoop                                  ; This will change as more screens are added TODO
 ;..Processing a view...............................................................................................................
-                        MMUSelectLayer2
+;..Display any message ............................................................................................................
+                        ld      a,(MessageCount)
+                        jr      z,.NoMessages                                 ; note message end will tidy up display
+.NoMessages:            ld      hl,(InnerHyperCount)
+                        ld      a,h
+                        or      l
+                        jr      z,.NoHyperspace                               ; note message end will tidy up display
+.HyperSpaceMessage:     MMUSelectLayer1
+                        ld      d,96
+                     ;   call    l1_cls_2_lines_d
+                        ld      de,$6028
+                        ld      hl,Hyp_message
+                        call    l1_print_at
+                        ld      de,$6828
+                        ld      hl,Hyp_charging
+                        call    l1_print_at
+.NoHyperspace:          MMUSelectLayer2
                         call   l2_cls                        
                         MMUSelectLayer1
 ;..Later this will be done via self modifying code to load correct stars routine for view..........................................
@@ -330,7 +346,57 @@ TestForNextShip:        ld      a,c_Pressed_Quit
                         call    DEBUGSETNODES                        
                         ret
 
+;----------------------------------------------------------------------------------------------------------------------------------
+NeedAMessageQueue:
 
+UpdateCountdownNumber:  ld		a,(OuterHyperCount)
+                        ld		de,Hyp_counter
+                        ld	c, -100
+                        call	.Num1
+                        ld	c,-10
+                        call	.Num1
+                        ld	c,-1
+.Num1:	                ld	b,'0'-1
+.Num2:	                inc		b
+                        add		a,c
+                        jr		c,.Num2
+                        sub 	c
+                        push	bc
+                        push	af
+                        ld		a,c
+                        cp		-1
+                        ld		a,b
+                        ld		(de),a
+                        inc		de
+                        pop		af
+                        pop		bc
+                        ret 
+
+;----------------------------------------------------------------------------------------------------------------------------------
+Hyp_message             DB "Hyperspace ",0
+Hyp_to                  DS 20
+Hyp_space1              DB " "
+Hyp_dist_amount         DB "0.0"
+Hyp_decimal             DB "."
+Hyp_fraction            DB "0"
+Hyp_dis_ly              DB " LY",0
+Hyp_charging            DB "Charging : "
+Hyp_counter             DB "000",0
+
+     
+DisplayHyperCountDown:  ld      hl,Hyp_counter           ; clear counter digits
+                        ld      a,0                      ; clear counter digits
+                        ld      (hl),a                   ; clear counter digits
+                        inc     hl                       ; clear counter digits
+                        ld      (hl),a                   ; clear counter digits
+                        inc     hl                       ; clear counter digits
+                        ld      (hl),a                   ; clear counter digits
+                        call    UpdateCountdownNumber
+                        ret
+
+;DisplayTargetAndRange
+;DisplayCountDownNumber
+;----------------------------------------------------------------------------------------------------------------------------------
 TestPauseMode:          ld      a,(GamePaused)
                         cp      0
                         jr      nz,.TestForResume
@@ -354,6 +420,8 @@ TestQuit:               ld      a,c_Pressed_Quit
                         ret
 currentDemoShip:        DB      13;$12 ; 13 - corirollis 
 
+
+;----------------------------------------------------------------------------------------------------------------------------------
 UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
                         ld      hl,TidyCounter
                         dec     (hl)
@@ -446,23 +514,23 @@ TidyCounter             DB  0
 ; byte 10  - Input Blocker (set to 1 will not allow keyboard screen change until flagged, used by transition screens and pause menus)
 ; byte 11  - Double Buffering 0 = no, 1 = yes
 ; byte 12,13  - cursor key input routine
-; byte 14  - paddinf (removed special instrunction logic and moved to docking flag)
+; byte 14  - HyperspaceBlock - can not select this screen if in hyperpace - 00 can , 01 can not
 ; byte 15    padding at the momnent (should add in an "AI enabled flag" for optimistation, hold previous value and on change create ships
 ;                          0    1                 2                              3                               4                    5                            6                              7                     8                       9   10  11  12                          13                          14  15    
-ScreenKeyMap:           DB 0,   ScreenLocal     , low addr_Pressed_LocalChart,   high addr_Pressed_LocalChart,   BankMenuShrCht,      low draw_local_chart_menu,   high draw_local_chart_menu,    $00,                  $00,                    $00,$00,$00,low local_chart_cursors,    high local_chart_cursors,   $00,$00;low loop_local_chart_menu,   high loop_local_chart_menu
-ScreenKeyGalactic:      DB 0,   ScreenGalactic  , low addr_Pressed_GalacticChrt, high addr_Pressed_GalacticChrt, BankMenuGalCht,      low draw_galactic_chart_menu,high draw_galactic_chart_menu, low loop_gc_menu,     high loop_gc_menu,      $00,$00,$00,low galctic_chart_cursors,  high galctic_chart_cursors, $00,$00
-                        DB 1,   ScreenMarket    , low addr_Pressed_MarketPrices, high addr_Pressed_MarketPrices, BankMenuMarket,      low draw_market_prices_menu, high draw_market_prices_menu,  low loop_market_menu, high loop_market_menu,  $00,$00,$00,$00,                        $00,                        $00,$00
-                        DB 2,   ScreenMarketDsp , low addr_Pressed_MarketPrices, high addr_Pressed_MarketPrices, BankMenuMarket,      low draw_market_prices_menu, high draw_market_prices_menu,  $00,                  $00,                    $00,$00,$00,$00,                        $00,                        $00,$00
-ScreenCmdr:             DB 0,   ScreenStatus    , low addr_Pressed_Status,       high addr_Pressed_Status,       BankMenuStatus,      low draw_status_menu,        high draw_status_menu,         low loop_STAT_menu,  high loop_STAT_menu,     $00,$00,$00,$00,                        $00,                        $00,$00
-                        DB 0,   ScreenInvent    , low addr_Pressed_Inventory,    high addr_Pressed_Inventory,    BankMenuInvent,      low draw_inventory_menu,     high draw_inventory_menu,      $00,                  $00,                    $00,$00,$00,$00,                        $00,                        $00,$00
-                        DB 0,   ScreenPlanet    , low addr_Pressed_PlanetData,   high addr_Pressed_PlanetData,   BankMenuSystem,      low draw_system_data_menu,   high draw_system_data_menu,    $00,                  $00,                    $00,$00,$00,$00,                        $00,                        $00,$00
-                        DB 1,   ScreenEquip     , low addr_Pressed_Equip,        high addr_Pressed_Equip,        BankMenuEquipS,      low draw_eqshp_menu,         high draw_eqshp_menu,          low loop_eqshp_menu,  high loop_eqshp_menu,   $00,$00,$00,$00,                        $00,                        $00,$00
+ScreenKeyMap:           DB 0,   ScreenLocal     , low addr_Pressed_LocalChart,   high addr_Pressed_LocalChart,   BankMenuShrCht,      low draw_local_chart_menu,   high draw_local_chart_menu,    $00,                  $00,                    $00,$00,$00,low local_chart_cursors,    high local_chart_cursors,   $01,$00;low loop_local_chart_menu,   high loop_local_chart_menu
+ScreenKeyGalactic:      DB 0,   ScreenGalactic  , low addr_Pressed_GalacticChrt, high addr_Pressed_GalacticChrt, BankMenuGalCht,      low draw_galactic_chart_menu,high draw_galactic_chart_menu, low loop_gc_menu,     high loop_gc_menu,      $00,$00,$00,low galctic_chart_cursors,  high galctic_chart_cursors, $01,$00
+                        DB 1,   ScreenMarket    , low addr_Pressed_MarketPrices, high addr_Pressed_MarketPrices, BankMenuMarket,      low draw_market_prices_menu, high draw_market_prices_menu,  low loop_market_menu, high loop_market_menu,  $00,$00,$00,$00,                        $00,                        $01,$00
+                        DB 2,   ScreenMarketDsp , low addr_Pressed_MarketPrices, high addr_Pressed_MarketPrices, BankMenuMarket,      low draw_market_prices_menu, high draw_market_prices_menu,  $00,                  $00,                    $00,$00,$00,$00,                        $00,                        $01,$00
+ScreenCmdr:             DB 0,   ScreenStatus    , low addr_Pressed_Status,       high addr_Pressed_Status,       BankMenuStatus,      low draw_status_menu,        high draw_status_menu,         low loop_STAT_menu,  high loop_STAT_menu,     $00,$00,$00,$00,                        $00,                        $01,$00
+                        DB 0,   ScreenInvent    , low addr_Pressed_Inventory,    high addr_Pressed_Inventory,    BankMenuInvent,      low draw_inventory_menu,     high draw_inventory_menu,      $00,                  $00,                    $00,$00,$00,$00,                        $00,                        $01,$00
+                        DB 0,   ScreenPlanet    , low addr_Pressed_PlanetData,   high addr_Pressed_PlanetData,   BankMenuSystem,      low draw_system_data_menu,   high draw_system_data_menu,    $00,                  $00,                    $00,$00,$00,$00,                        $00,                        $01,$00
+                        DB 1,   ScreenEquip     , low addr_Pressed_Equip,        high addr_Pressed_Equip,        BankMenuEquipS,      low draw_eqshp_menu,         high draw_eqshp_menu,          low loop_eqshp_menu,  high loop_eqshp_menu,   $00,$00,$00,$00,                        $00,                        $01,$00
                         DB 1,   ScreenLaunch    , low addr_Pressed_Launch,       high addr_Pressed_Launch,       BankLaunchShip,      low draw_launch_ship,        high draw_launch_ship,         low loop_launch_ship, high loop_launch_ship,  $00,$01,$01,$00,                        $00,                        $01,$00
 ScreenKeyFront:         DB 2,   ScreenFront     , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
                         DB 2,   ScreenAft       , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
                         DB 2,   ScreenLeft      , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
                         DB 2,   ScreenRight     , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
-                        DB 3,   ScreenDocking   , $FF,                           $FF,                            BankLaunchShip,      low draw_docking_ship,       high draw_docking_ship,        low loop_docking_ship,high loop_docking_ship, $00,$01,$01,$00,                        $00,                        $00,$00
+                        DB 3,   ScreenDocking   , $FF,                           $FF,                            BankLaunchShip,      low draw_docking_ship,       high draw_docking_ship,        low loop_docking_ship,high loop_docking_ship, $00,$01,$01,$00,                        $00,                        $01,$00
 
 ;               DB low addr_Pressed_Aft,          high addr_Pressed_Aft,          BankMenuGalCht,      low SelectFrontView,         high SelectFrontView,          $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 ;               DB low addr_Pressed_Left,         high addr_Pressed_Left,         BankMenuGalCht,      low SelectFrontView,         high SelectFrontView,          $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
@@ -473,6 +541,8 @@ ScreenViewsStart    EQU (ScreenKeyFront - ScreenKeyMap)/ScreenMapRow
 ScreenTransitionForced  DB $FF    
     INCLUDE "./GameEngine/resetUniverse.asm"
 
+
+;----------------------------------------------------------------------------------------------------------------------------------
 LaunchedFromStation:    call    ClearUnivSlotList
                         xor     a
                         call    SetSlotAToSpaceStation              ; set slot 0 to space station
@@ -534,6 +604,9 @@ ViewKeyTest:            ld      a,(ScreenIndex)
                         ld      c,a
                         ld      b,ScreenMapLen                  ; For now until add screens are added
                         ld      ix,ScreenKeyMap
+.HyperspaceCountdown:   ld      a,(ix+14)
+                        cp      1
+                        jr      z,NotReadNextKey               ; can not change to this vie win hyperspace countdown
 ViewScanLoop:           ld      a,(ix+0)                        ; Screen Map Byte 0 Docked flag 
 ; 0 = not applicable (always read), 1 = only whilst docked, 2 = only when not docked, 3 = No keypress allowed
                         cp      3                               ; if not selectable then don't scan this (becuase its a transition screen)
@@ -590,7 +663,8 @@ SetInitialShipPosition: ld      hl,$0000
                         ld      (DELTA4),hl
                         ret    
 
-Draw3Lines:             ld      e,16
+; bc = start position, d = length, e = colour
+Draw3LineBar:           ld      e,16
                         push    bc,,de
                         MMUSelectLayer2
                         call    l2_draw_horz_line
@@ -605,7 +679,41 @@ Draw3Lines:             ld      e,16
                         MMUSelectLayer2
                         call    l2_draw_horz_line
                         ret
+                        
+DrawColourCodedBar:     ld      e,124
+                        cp      40
+                        jr      nc,DrawColourEBar
+                        ld      e,84
+                        cp      30
+                        jr      nc,DrawColourEBar
+                        ld      e,216
+                        cp      20
+                        ld      e,236
+                        cp      10
+                        jr      nc,DrawColourEBar
+                        ld      e,225
+                        cp      5
+                        jr      nc,DrawColourEBar
+                        ld      e,224
+DrawColourEBar:         push    bc,,de
+                        MMUSelectLayer2
+                        call    l2_draw_horz_line
+                        pop     bc,,de
+                        dec     b
+                        push    bc,,de
+                        MMUSelectLayer2
+                        call    l2_draw_horz_line
+                        pop     bc,,de
+                        dec     b    
+                        MMUSelectLayer2
+                        call    l2_draw_horz_line
+                        ret
+                    
+                        ; no ret needed as jp handles it
 
+
+        
+        
 UpdateConsole:          ld      a,(DELTA)
                         cp      0                           ; don't draw if there is nothing to draw
                         jr      z,.UpdateRoll   
@@ -613,14 +721,14 @@ UpdateConsole:          ld      a,(DELTA)
                         ld      hl,SpeedoMapping
                         add     hl,a
                         ld      d,(hl)
-                        call    Draw3Lines
+                        call    Draw3LineBar
 .UpdateRoll:            ld      a,(ALP1)
                         cp      0
-                        jr      z,.UpdatePitch
+                        jp      z,.UpdatePitch
                         ld      hl,RollMiddle
                         ld      a,(ALP2)
                         cp      0
-                        jr      z,.PosRoll
+                        jp     z,.PosRoll
 .NegRoll:               ld      d,0
                         ld      a,(ALP1)
                         sla     a
@@ -632,21 +740,21 @@ UpdateConsole:          ld      a,(DELTA)
                         sub     c
                         ld      d,a
                         ld      e,$FF
-                        call    Draw3Lines
+                        call    Draw3LineBar
                         jr      .UpdatePitch
 .PosRoll:               ld      bc,RollMiddle
                         ld      a,(ALP1)
                         sla     a
                         ld      d,a
                         ld      e,$FF
-                        call    Draw3Lines
+                        call    Draw3LineBar
 .UpdatePitch:           ld      a,(BET1)
                         cp      0
-                        jr      z,.DoneConsole
+                        jp      z,.Fuel
                         ld      hl,PitchMiddle
                         ld      a,(BET2)
                         cp      0
-                        jr      z,.PosPtich
+                        jp      z,.PosPitch
 .NegPitch:              ld      d,0
                         ld      a,(BET1)
                         sla     a
@@ -658,14 +766,97 @@ UpdateConsole:          ld      a,(DELTA)
                         sub     c
                         ld      d,a
                         ld      e,$FF
-                        call    Draw3Lines
-                        jr      .DoneConsole
-.PosPtich:              ld      bc,PitchMiddle
+                        call    Draw3LineBar
+                        jp      .Fuel
+.PosPitch:              ld      bc,PitchMiddle
                         ld      a,(BET1)
                         sla     a
                         ld      d,a
                         ld      e,$FF
-                        call    Draw3Lines
+                        call    Draw3LineBar
+.Fuel:                  ld      a,(Fuel)
+                        srl     a               ; divide by 4 to get range on screen
+                        ld      hl,FuelMapping
+                        add     hl,a
+                        ld      a,(hl)
+                        ld      bc,FuelStart
+                        ld      d,a
+                        call    DrawColourCodedBar                        
+.ForeShield:            ld      a,(ForeShield)
+                        srl     a
+                        srl     a
+                        srl     a               
+                        ld      bc,FShieldStart
+                        call    DrawColourCodedBar                        
+.AftShield:             ld      a,(AftShield)
+                        srl     a
+                        srl     a
+                        srl     a               
+                        ld      bc,AShieldStart
+                        ld      d,a
+                        call    DrawColourCodedBar  ;ld		(ForeShield),a
+.EnergyBars:            ld      a,(PlayerEnergy)
+                        srl     a                   ; energy = energy / 2 so 31 per bar
+                        CallIfALTNusng  31 + 1,.Draw1EnergyBar
+                        CallIfALTNusng  (31*2) + 1,.Draw2EnergyBars
+                        CallIfALTNusng  (31*3) + 1,.Draw3EnergyBars
+.Draw4EnergyBars:       ld      e,24
+                        sub     (32*3)
+                        ld      d,a
+                        ld      bc,EnergyBar4Start
+                        call    DrawColourEBar 
+                        ld      d,31
+                        ld      e,24
+                        ld      bc,EnergyBar3Start
+                        call    DrawColourEBar                        
+                        ld      d,31
+                        ld      e,24
+                        ld      bc,EnergyBar2Start
+                        call    DrawColourEBar                        
+                        ld      d,31
+                        ld      e,24
+                        ld      bc,EnergyBar1Start
+                        call    DrawColourEBar                        
+                        jp      .DoneEnergyBars
+.Draw1EnergyBar:        ld      e,224
+                        ld      d,a
+                        ld      bc,EnergyBar1Start
+                        call    DrawColourEBar                        
+                        jp      .DoneEnergyBars
+.Draw2EnergyBars:       ld      e,216
+                        sub     31
+                        ld      d,a
+                        ld      bc,EnergyBar2Start
+                        call    DrawColourEBar                        
+                        ld      d,31
+                        ld      e,216
+                        ld      bc,EnergyBar1Start
+                        call    DrawColourEBar                        
+                        jp      .DoneEnergyBars
+.Draw3EnergyBars:       ld      e,20
+                        sub     31*2
+                        ld      d,a
+                        ld      e,20
+                        ld      bc,EnergyBar3Start
+                        call    DrawColourEBar                        
+                        ld      d,31
+                        ld      e,20
+                        ld      bc,EnergyBar2Start
+                        call    DrawColourEBar                        
+                        ld      d,31
+                        ld      e,20
+                        ld      bc,EnergyBar1Start
+                        call    DrawColourEBar                        
+.DoneEnergyBars:                                
+
+                        
+                        
+; NEED ENERGY BAR
+;PlayerEnergy                      
+; BNEED LASER temp
+; NEED CABIN TEMP
+;NEED ALTITUDE   
+; Draw compas - if in range draw station, else do planet
 .DoneConsole:           ret
     
 ScannerX                equ 128

@@ -190,14 +190,14 @@ KeyboardMap             DW  Keys+KeyCode_Front        ,Keys+KeyCode_Aft         
                         DW  Keys+KeyCode_GameSkip     ,Keys+KeyCode_Save         ,Keys+KeyCode_Freeze       ,Keys+KeyCode_Resume       ,Keys+KeyCode_Recentre     
                         DW  Keys+KeyCode_Quit         ,Keys+KeyCode_PlanetData   ,Keys+KeyCode_CursorUp     ,Keys+KeyCode_CursorDown   ,Keys+KeyCode_Find
 
-ASCII_Map:           DB "#","Z","X","C","V"
-                     DB "A","S","D","F","G"
-                     DB "Q","W","E","R","T"
-                     DB "1","2","3","4","5"
-                     DB "0","9","8","7","6"
-                     DB "P","O","I","U","Y"
-                     DB ">","L","K","J","H"
-                     DB " ","^","M","N","B"
+ASCII_Map:              DB "#","Z","X","C","V"
+                        DB "A","S","D","F","G"
+                        DB "Q","W","E","R","T"
+                        DB "1","2","3","4","5"
+                        DB "0","9","8","7","6"
+                        DB "P","O","I","U","Y"
+                        DB ">","L","K","J","H"
+                        DB " ","^","M","N","B"
 
 
 addr_Pressed_Front         equ KeyboardMap+c_Pressed_Front       
@@ -242,52 +242,51 @@ addr_Pressed_CursorDown    equ KeyboardMap+c_Pressed_CursorDown
 addr_Pressed_Find          equ KeyboardMap+c_Pressed_Find
 
 
-init_keyboard:
-	ld		hl,Keys
-	ld		de, c_KeyBoardLen
-	ld		a,0
-	call	memfill_dma
-	ret
+MIsKeyPressed:      MACRO   keyaddress, misstarget
+                    ld      hl,(keyaddress)
+                    ld      a,(hl)
+                    IfAIsZeroGoto   misstarget
+                    ENDM
+
+init_keyboard:      ld		hl,Keys
+                    ld		de, c_KeyBoardLen
+                    ld		a,0
+                    call	memfill_dma
+                    ret
 	
-scan_keyboard:
-	ld		hl,RawKeys
-	ld		de,KeyAddrTab
-	xor		a
-	ld		iyl,8
-    ld      ix,Keys
-.PortReadLoop:
-	ld		a,(de)							; Set up BC as port to read
-	ld		c,a
-	inc		de
-    ld      a,(de)
-	ld		b,a
-	inc		de
-	in		a,(c)							; read port to a
-	ld		(hl),a							; set raw keys to value
-	inc		hl								; and ready for next element
-	ld		b,5								; loop all bits (there are only 5 keys to a group)
-.ProcessBitsLoop:
-	bit		0,a								; is bit set
-    jr      z,.SetKeyPressed  
-    ex      af,af'
-    xor     a
-    jp      .SetKey
-	jr		nz,.SkipKeySet
-.SetKeyPressed:	
-	ex		af,af'
-    ld      a,(ix+0)
-    inc     a
-    and     $3                              ; so bit 0 set is pressed, bit 1 set is repeat pressed, i.e. 0 = no, 1 = yes 2,3 = held
-.SetKey:
-	ld		(ix+0),a							; Key Pressed
-	ex		af,af'
-.SkipKeySet:	
-	inc		ix								; move to next key
-	srl		a								; move next key into bit 0
-	djnz	.ProcessBitsLoop				; Process all key group bits
-    dec     iyl
-    jr      nz,.PortReadLoop				; Read next input port
-	ret
+scan_keyboard:      ld		hl,RawKeys
+                    ld		de,KeyAddrTab
+                    xor		a
+                    ld		iyl,8
+                    ld      ix,Keys
+.PortReadLoop:      ld		a,(de)							; Set up BC as port to read
+                    ld		c,a
+                    inc		de
+                    ld      a,(de)
+                    ld		b,a
+                    inc		de
+                    in		a,(c)							; read port to a
+                    ld		(hl),a							; set raw keys to value
+                    inc		hl								; and ready for next element
+                    ld		b,5								; loop all bits (there are only 5 keys to a group)
+.ProcessBitsLoop:   bit		0,a								; is bit set
+                    jr      z,.SetKeyPressed  
+                    ex      af,af'
+                    xor     a
+                    jp      .SetKey
+                    jr		nz,.SkipKeySet
+.SetKeyPressed:	    ex		af,af'
+                    ld      a,(ix+0)
+                    inc     a
+                    and     $3                              ; so bit 0 set is pressed, bit 1 set is repeat pressed, i.e. 0 = no, 1 = yes 2,3 = held
+.SetKey:            ld		(ix+0),a							; Key Pressed
+                    ex		af,af'
+.SkipKeySet:	    inc		ix								; move to next key
+                    srl		a								; move next key into bit 0
+                    djnz	.ProcessBitsLoop				; Process all key group bits
+                    dec     iyl
+                    jr      nz,.PortReadLoop				; Read next input port
+                    ret
 
 GetKeyStateAddressDE: MACRO
                       ld      hl,KeyboardMap                  ; work our address to read from
@@ -301,57 +300,51 @@ GetKeyStateAddressDE: MACRO
 
 
 ; call with a = c_Pressed key, will then read mapping
-wait_for_key_a_press:
-    GetKeyStateAddressDE
-    push    de
-wait_for_key_press_loop:    
-    call    scan_keyboard
-    pop     hl                              ; get key address into hl
-    push    hl
-    ld      a,(hl)
-    JumpIfANENusng  1,wait_for_key_press_loop         ; will also loop if held down when entering this routine
-    pop     hl                              ; tidy up rogue push, less t states than detecting if we want to push or not
-    ret
+wait_for_key_a_press:       GetKeyStateAddressDE
+                            push    de
+wait_for_key_press_loop:    call    scan_keyboard
+                            pop     hl                              ; get key address into hl
+                            push    hl
+                            ld      a,(hl)
+                            JumpIfANENusng  1,wait_for_key_press_loop         ; will also loop if held down when entering this routine
+                            pop     hl                              ; tidy up rogue push, less t states than detecting if we want to push or not
+                            ret
 
-wait_for_key_a_held:
-    GetKeyStateAddressDE
-    push    de
-wait_for_key_a_held_loop:
-    call    scan_keyboard
-    pop     hl
-    push    hl
-    ld      a,(hl)
-    JumpIfALTNusng  2,wait_for_key_a_held_loop
-    pop     hl
-    ret
+wait_for_key_a_held:        GetKeyStateAddressDE
+                            push    de
+wait_for_key_a_held_loop:   call    scan_keyboard
+                            pop     hl
+                            push    hl
+                            ld      a,(hl)
+                            JumpIfALTNusng  2,wait_for_key_a_held_loop
+                            pop     hl
+                            ret
     
-get_key_a_state:                            ; reads a mapped key and sets a to key staus, e.g. 0 1 or >=2 DOES NOT SCAN KEYBOARD
-    GetKeyStateAddressDE
-    ex      de,hl
-    ld      a,(hl)                          ; a = keystate
-    ret
+get_key_a_state:            GetKeyStateAddressDE                 ; reads a mapped key and sets a to key staus, e.g. 0 1 or >=2 DOES NOT SCAN KEYBOARD
+                            ex      de,hl
+                            ld      a,(hl)                        ; a = keystate
+                            ret
 
-force_key_press:
-    GetKeyStateAddressDE
-    ex      de,hl
-    ld      a,1
-    ld      (hl),a
-    ret
+force_key_press:            GetKeyStateAddressDE
+                            ex      de,hl
+                            ld      a,1
+                            ld      (hl),a
+                            ret
 
-is_key_pressed:                             ; returns z is set if pressed
-    GetKeyStateAddressDE
-    ex      de,hl
-    ld      a,(hl)                          ; a = keystate
-    cp      1
-    ret
+; returns z is set if c_ key is pressed
+is_key_pressed:             GetKeyStateAddressDE
+                            ex      de,hl
+                            ld      a,(hl)                          ; a = keystate
+                            cp      1
+                            ret
       
-is_key_held:                                ; returns z is set if held
-    GetKeyStateAddressDE
-    ex      de,hl
-    ld      a,(hl)                          ; a = keystate
-    and     2                               ; clear out bit 1 which elimiates state 3, so it can now be 2 (held) or 0 (not pressed or one off)
-    cp      2
-    ret
+; returns z is set if c_ key is held
+is_key_held:                GetKeyStateAddressDE
+                            ex      de,hl
+                            ld      a,(hl)                          ; a = keystate
+                            and     2                               ; clear out bit 1 which elimiates state 3, so it can now be 2 (held) or 0 (not pressed or one off)
+                            cp      2
+                            ret
 
 is_any_key_pressed:
     ld      hl,Keys
@@ -422,12 +415,11 @@ initInputText:
     djnz    .wipeloop
     ret
     
-InputName:
-    xor     a
-    ld      (InputChanged),a
-    call    is_any_key_pressed
-    cp      $FF
-    ret     z
+InputName:                  xor     a
+                            ld      (InputChanged),a
+                            call    is_any_key_pressed
+                            cp      $FF
+                            ret     z
 .KeyPressed:
     ld      c,a
     ld      a,(InputCursor)                 ; No key so we can now look at if we are at the end of the buffer    

@@ -198,7 +198,7 @@ mktdisp_GetCash:            ld		hl,(Cash+2)
                         ldir
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-mktdisp_GetCargo:   	    ld      de,0
+mktdisp_GetCargo:   	ld      de,0
                         ld      ix,0
                         ld      a,(CargoRunningLoad)
                         ld      ixl,a
@@ -212,7 +212,7 @@ mktdisp_GetCargo:   	    ld      de,0
                         ldir
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-mktdisp_DisplayCargo:       call	mktdisp_GetCargo
+mktdisp_DisplayCargo:   call	mktdisp_GetCargo
                         ld		hl,mktdisp_cargo_amount
                         ld      de,mktdisp_cargo_position
                         MMUSelectLayer1   

@@ -145,33 +145,59 @@ TestDivePressed:        ld      hl,(addr_Pressed_Dive)
                         dec     a                                   ; increase joystick roll
                         ld      (JSTY),a
                         call    draw_front_calc_beta
-                        jp      ForwardViewDoneKeys
+                        jp      ForwardCursorKeysDone
 TestClimbPressed:       ld      hl,(addr_Pressed_Climb)
                         ld      a,(hl)
                         IfAIsZeroGoto   .DampenPitch
                         ld      a,(JSTY)                            ; have we maxed out Joystick?
                         ld      hl,BET1MAXC                         ; currnet ship max left roll
                         cp      (hl)
-                        jr      z,ForwardViewDoneKeys
+                        jr      z,ForwardCursorKeysDone
                         inc     a                                   ; increase joystick roll
 .UpdateBetaPitch:       ld      (JSTY),a
                         call    draw_front_calc_beta
-                        jp      ForwardViewDoneKeys
+                        jp      ForwardCursorKeysDone
 .DampenPitch:           ld      hl,dampenPcounter          ; TODO mach dampen rates ship properies by having teh $20 as a ship config
                         dec     (hl)
-                        jr      nz,ForwardViewDoneKeys
+                        jr      nz,ForwardCursorKeysDone
                         ld      a,dampenRate
                         ld      (hl),a
                         ld      a,(JSTY)
                         cp      0
-                        jr      z,ForwardViewDoneKeys
+                        jr      z,ForwardCursorKeysDone
                         bit     7,a
                         jr      z,.PosPitchDampen
 .NegPitchDampen:        inc     a
                         jr      .ApplyPitchDampen
 .PosPitchDampen:        dec     a
 .ApplyPitchDampen:      jr      .UpdateBetaPitch
-ForwardViewDoneKeys:    ret
+; Now test hyperpsace. We can't be docked as this is a view routine piece of logic but for say local charts we may 
+; be in flight and they have to force a forward view when hyperspace is pressed
+; We won't do galatic here, but for other views force to forward view
+ForwardCursorKeysDone:  ld      a,c_Pressed_Hyperspace
+                        call    is_key_pressed
+                        jr      nz,.NotHyperspace
+; If we are in hyperspace countdown then test for hyperspace
+                        ld      hl,(InnerHyperCount)                ; if hyperspace was enaged then cancel
+                        ld      a,h                                 ; hyperspace
+                        or      l                                   ; .
+                        jr      nz,.CancelHyperspace                ; .
+; check selected target 
+                        ld      hl,(TargetPlanetX)
+                        ld      a,h
+                        or      l
+                        jr      z,.NoTargetSelected
+; check fuel is sufficient
+                        ld      a,(Fuel)
+                        JumpIfALTMemusng    Distance, .InsufficientFuel
+; set up timer countdown
+                        ld      hl,HyperSpaceTimers                 ; set both timers to 15
+                        ld      (InnerHyperCount),hl                ; .
+.CancelHyperspace
+.NoTargetSelected
+.InsufficientFuel
+.NotHyperspace:         
+                        ret
 
 
 

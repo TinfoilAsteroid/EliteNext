@@ -82,6 +82,11 @@ CallIfAGTENusng:        MACRO   reg,target
                         call	nc,target
                         ENDM
 
+CallIfALTNusng:         MACRO   reg,target
+                        cp      reg
+                        call	c,target
+                        ENDM
+                        
 JumpIfMemGTENusng:      MACRO mem, value, target
                         ld     a,(mem)
                         cp     value
@@ -134,13 +139,13 @@ JumpIfMemLTMemusng:     MACRO mem, value, target
 JumpIfMemEqNusng:       MACRO mem,value,target
                         ld  a,(mem)
                         cp  value
-                        jr  z,target
+                        jp  z,target
                         ENDM
 
 JumpIfMemNeNusng:       MACRO mem,value,target
                         ld  a,(mem)
                         cp  value
-                        jr  nz,target
+                        jp  nz,target
                         ENDM
 
 JumpIfMemZero:          MACRO mem,target

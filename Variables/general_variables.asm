@@ -251,8 +251,8 @@ BET1MAXC                DB  31              ; max climb
 BET1MAXD                DB  -31             ; max dive
 XC						DB	0               ; 2C
 YC						DB 	0               ; 2D
-OuterHyperCount			DB 	0				; 2E		TODO Replace with 16 bit counter later
-InnerHyperCount			DB 	0				; 2F
+InnerHyperCount			DB 	0				; 2F QQ22+1
+OuterHyperCount			DB 	0				; 2E QQ22
 ECMActive				DB 	0				; 30		ECM Active flag
 JSTX                    DW  0               ;           Joystick analog value
 ALPHA					DB	0				; 8D        Alpha with bit 7 sign
@@ -262,6 +262,8 @@ ALP2FLIP				DB  0				; 33		ALP2	negated roll sign
 ALP1MAXR                DB  31               ;   Maximum roll, added becuase we may allow different ship types
 ALP1MAXL                DB  -31             ;   Maximum roll, added becuase we may allow different ship types
 
+MessageCount            DB 0                ; used for enquing messages later
+MessageTimout           DB 0                ; count down before current message is erased
 MissileTarget			DW	0				; 45
 IndexedWork				DS	37				; General purpose work space when doing temp arrays
 
@@ -544,13 +546,26 @@ varDustX                DS MaxNumberOfStars *2
 varDustY                DS MaxNumberOfStars *2
 varDustZ                DS MaxNumberOfStars *2
 
-   
+FShieldStart            equ $8410
+AShieldStart            equ $8D10
+FuelStart               equ $9410
+
+EnergyBar4Start         equ $A5D5
+EnergyBar3Start         equ $ADD5
+EnergyBar2Start         equ $B5D5
+EnergyBar1Start         equ $BDD5
+; 70 /2 = 35 values
+;                            0                             1                             2                             3                  
+;                            0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6
+FuelMapping             DB  01,02,02,03,04,04,05,06,06,07,08,09,10,10,11,12,13,14,14,15,16,16,17,19,20,21,21,22,23,24,25,26,27,28,30,31,31
 SpeedoStart             equ $84D1
+;                            0                             1                             2                             3                             4
+;                            0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0
 SpeedoMapping           DB  01,02,02,03,04,04,05,06,06,07,08,09,10,10,11,12,13,14,14,15,16,16,17,18,19,20,20,21,22,23,24,24,25,26,26,27,28,28,29,30,31
 
 DialMiddleXPos          equ $E1 
-RollMiddle              equ $8AE0  
-PitchMiddle             equ $92E0   
+RollMiddle              equ $8CE0  
+PitchMiddle             equ $94E0   
 
                     
 
@@ -564,7 +579,7 @@ NoEscapePodMacro:		MACRO
 						ld		(EscapePod),a
 						ENDM				
 
-MaxFuelLevel            EQU     $46
+MaxFuelLevel            EQU     70              ; 7.0 light years max
 MaxFuelMacro:			MACRO
 						ld		a,MaxFuelLevel
 						ld		(Fuel),a

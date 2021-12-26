@@ -25,6 +25,8 @@ ShipTypeStation     equ 2
 ShipTypeMissile     equ 1
 ShipTypeNormal      equ 0
 ShipMaxDistance     equ 192
+HyperSpaceTimers    equ $0B0B
+
 
 MaxNumberOfStars	equ 11
 UniverseListSize    equ	12
