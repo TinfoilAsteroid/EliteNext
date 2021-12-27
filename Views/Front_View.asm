@@ -67,7 +67,85 @@ draw_front_view:        MMUSelectLayer1
                         xor         a
                         ld          (DockedFlag),a              ; we can never be docked if we hit a view screen
                         ret
+
+
+
+
+                        ;  1......................  2......................  3......................  4......................  5......................  6...................... 7......................  8......................
+                        ;  1......................  2......................  3......................  4......................  5......................  6...................... 7......................  8......................
+LightningLines:         db 128, 064, 096, 040, 255, 097, 042, 076, 035, 031, 082, 039, 079, 020, 026, 079, 026, 058, 018, 022, 064, 021, 032, 026, 018, 038, 025, 030, 009, 026, 035, 020, 005, 016, 018, 037, 021, 000, 000, 018
+                        db 128, 064, 139, 040, 255, 137, 045, 160, 035, 031, 150, 040, 157, 056, 026, 160, 036, 175, 010, 022, 156, 037, 196, 040, 018, 197, 041, 223, 033, 026, 223, 033, 245, 030, 018, 223, 032, 254, 047, 018
+                        db 128, 064, 090, 089, 255, 089, 089, 064, 098, 031, 079, 092, 064, 072, 025, 065, 075, 030, 070, 022, 035, 071, 038, 064, 018, 067, 095, 021, 099, 026, 031, 097, 000, 080, 018, 031, 097, 021, 110, 018
+                        db 128, 064, 097, 113, 255, 098, 110, 064, 115, 031, 070, 115, 073, 127, 025, 071, 114, 060, 112, 022, 030, 120, 020, 126, 018, 070, 114, 050, 120, 026, 050, 120, 027, 119, 018, 020, 125, 010, 120, 018
+                        db 128, 064, 132, 089, 255, 131, 081, 145, 098, 031, 145, 097, 133, 103, 025, 145, 098, 150, 110, 022, 150, 109, 154, 105, 018, 150, 110, 146, 120, 026, 145, 120, 140, 126, 018, 147, 120, 159, 126, 018
+                        db 128, 064, 159, 103, 255, 161, 102, 171, 108, 031, 160, 102, 175, 127, 025, 175, 124, 200, 122, 022, 200, 121, 223, 120, 018, 224, 120, 225, 127, 026, 224, 119, 245, 116, 018, 246, 117, 254, 123, 018
+                        db 128, 064, 145, 074, 255, 145, 073, 158, 072, 031, 159, 072, 179, 064, 025, 159, 073, 185, 085, 022, 182, 084, 197, 076, 018, 195, 075, 207, 079, 026, 206, 079, 245, 063, 018, 206, 080, 245, 105, 018
+
+; Draw line at hl for b lines
+DrawLighningLine:       push    hl,,bc
+                        ld      c,(hl)
+                        inc     hl
+                        ld      b,(hl)
+                        inc     hl
+                        ld      e,(hl)
+                        inc     hl
+                        ld      d,(hl)
+                        inc     hl
+                        ld      a,(hl)          ; colour
+                        call    l2_draw_diagonal
+                        pop     hl,,bc
+                        ld      a,5
+                        add     hl,a
+                        djnz    DrawLighningLine
+                        ret
+
+;Loop though all lines
+;   60$% chance of drawing a line, call draw line
+;   go to next line
+;repeat
+hyperspace_Lightning:   ld      b, 7                    ; total number of lightning bolts
+                        ld      hl,LightningLines 
+                        MMUSelectLayer2
+                        ;break
+; above here select which lines table we will use
+.LineLoop:              push    bc,,hl
+                        call    doRandom
+                        cp      100
+                        jr      nc,.NextLine
+                        call    doRandom
+                        and     $07
+                        inc     a
+                        ld      b,a
+                        pop     hl
+                        push    hl
+                        call    DrawLighningLine
+.NextLine:              pop     bc,,hl
+                        ld      d,8
+                        ld      e,5
+                        mul
+                        add     hl,de
+                        djnz    .LineLoop
+                        ld      a,(HyperCircle)
+                        ld      d,a
+                        ld      bc, $4080
+                        ;break
+                        ld      e,0
+                        call    l2_draw_circle_fill; ; ">l2_draw_circle_fill BC = center row col, d = radius, e = colour"
+                        ld      bc, $4080
+                        ld      a,(HyperCircle)
+                        inc     a
+                        ld      d,a
+                        ld      e,$FF
+                        call    l2_draw_circle
+                        ld      a,(HyperCircle)
+                        inc     a
+                        inc     a
+                        cp      62
+                        ret     nc
+                        ld      (HyperCircle),a
+                        ret
                         
+                       
 draw_hyperspace:        MMUSelectLayer1
                         call    l1_cls
                         call    l1_attr_cls

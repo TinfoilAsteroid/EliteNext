@@ -343,6 +343,12 @@ DrawShip:               ;call   SetAllFacesVisible
                         push    af
                         MMUSelectUniverseA
                         call   DrawLines                   ; Need to plot all lines
+                        ld      a,BankFrontView
+                        MMUSelectScreenA
+                        call        hyperspace_Lightning                        
+                        pop     af
+                        push    af
+                        MMUSelectUniverseA
 UpdateRadar:            call    UpdateScannerShip
 ProcessedDrawShip:      pop     af
                         inc     a

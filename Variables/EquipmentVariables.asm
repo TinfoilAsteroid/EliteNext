@@ -12,6 +12,18 @@ CargoTonnes             DB  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 SlaveCargoTonnes		equ CargoTonnes+3
 NarcoticsCargoTonnes	equ CargoTonnes+6
 FirearmsCargoTonnes		equ CargoTonnes+10
+; For each view laser a localised copy of the stats
+; TODO - need to add code to maintain on load/save/equipment transactions
+LaserType               DS  4               ; quick reference to laser type
+LaserDamagedFlag        DS  4               ; probabiliy out of 255 that it will no fire, 0 = good, 255 = will not fire
+LaserPulsePause         DS  4               ; time before next pulse - 0 = beam
+LaserPulseDuration      DS  4               ; time laser is on per shot
+LaserDamageOutput       DS  4               ; amount of damage for a laser hit
+LaserEnergyDrain        DS  4               ; amount of energy drained by cycle
+LaserHeat               DS  4               ; amount of heat generated
+LaserDurability         DS  4               ; probabability out of 255 that a hit on unshielded will add random amount of damage
+LaserDurabilityAmount   DS  4               ; max amount of damagage can be sustained in one damage hit
+
 
 QQ20                    equ CargoTonnes
 EquipmentFitted         DS  EQ_ITEM_COUNT    ; Series of flags for if each item is fitted
