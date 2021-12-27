@@ -49,6 +49,54 @@ InitStarAtHL:           ex      de,hl
                         ld      (hl),a
                         inc     hl
                         ret
+                        
+InitHyperStarAtHL:      ex      de,hl
+                        call    doRND
+                        sla     a
+                        sla     a                ; so its * 4 as we have a blank spot
+                        ex      de,hl
+                        and     %11111000
+                        ld      (hl),a
+                        and     $7F
+                        inc     hl
+                        ld      (hl),a
+                        ex      de,hl
+                        call    doRND
+                        ex      de,hl
+                        rrca    
+                        and     $80
+                        or      (hl)
+                        ld      (hl),a
+                        inc     hl
+                        ex      de,hl
+                        call    doRND
+                        sla     a
+                        sla     a               ; so its * 4 as we have a blank spot
+                        ex      de,hl
+                        and     %11111000
+                        ld      (hl),a
+                        inc     hl
+                        and     $7F
+                        ld      (hl),a
+                        ex      de,hl
+                        call    doRND
+                        ex      de,hl
+                        rrca    
+                        and     $80
+                        or      (hl)
+                        ld      (hl),a
+                        inc     hl
+                        ex      de,hl
+                        call    doRND
+                        ex      de,hl
+                        or      95
+                        ld      (hl),a
+                        inc     hl
+                        or      %01110000
+                        and     $7f     ; bodge
+                        ld      (hl),a
+                        inc     hl
+                        ret                        
 
 ; we could cheat, flip the sign of DE and just add but its not very optimised
 StarsSUBHLDESigned:     ld      a,h
@@ -140,8 +188,16 @@ InitialiseStars:        ld      b,MaxNumberOfStars
                         ld      a,b
                         ld      (NumberOfStarsNOSTM),a
                         ld      hl,varDust
-InitStarsLoop:          call    InitStarAtHL
-                        djnz    InitStarsLoop
+.InitStarsLoop:         call    InitStarAtHL
+                        djnz    .InitStarsLoop
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------        
+InitialiseHyperStars:   ld      b,MaxNumberOfStars
+                        ld      a,b
+                        ld      (NumberOfStarsNOSTM),a
+                        ld      hl,varDust
+.InitStarsLoop:         call    InitHyperStarAtHL
+                        djnz    .InitStarsLoop
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 StarsForward:          ; break

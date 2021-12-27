@@ -52,6 +52,8 @@ draw_front_view:        MMUSelectLayer1
                         call     asm_l2_double_buffer_on
                         MMUSelectSpriteBank
                         call    sprite_cls_cursors
+                        call    sprite_reticule
+                        call    sprite_laser
                         MMUSelectConsoleBank
                         ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
                         ld          de,ConsoleImageData
@@ -65,6 +67,34 @@ draw_front_view:        MMUSelectLayer1
                         xor         a
                         ld          (DockedFlag),a              ; we can never be docked if we hit a view screen
                         ret
+                        
+draw_hyperspace:        MMUSelectLayer1
+                        call    l1_cls
+                        call    l1_attr_cls
+                        MMUSelectLayer2
+                        call     asm_l2_double_buffer_on
+                        MMUSelectSpriteBank
+                        call    sprite_cls_cursors
+                        MMUSelectConsoleBank
+                        ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
+                        ld          de,ConsoleImageData
+                        ld          bc, ScreenL1BottomLen
+                        call        memcopy_dma
+                        ld          hl,ScreenL1AttrBtm       ; now the pointers are in Ubnk its easy to read
+                        ld          de,ConsoleAttributes
+                        ld          bc, ScreenL1AttrBtmLen
+                        call        memcopy_dma
+                        call        InitialiseHyperStars
+                        xor         a
+                        ld          (DockedFlag),a              ; we can never be docked if we hit a view screen
+                        ld          a,2
+                        ld          (HyperCircle),a
+                        ld          a,$FC
+                        ld          (DockedFlag),a
+                        ret
+                        
+                        
+loop_hyperspace                        
                         
 dampenRate:             equ     $04
 dampenRcounter:         DB      dampenRate

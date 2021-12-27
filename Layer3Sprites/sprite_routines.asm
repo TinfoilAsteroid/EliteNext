@@ -15,18 +15,48 @@ local_hyper_sprite					equ	local_cursor_sprite2+1
 local_hyper_sprite1					equ	local_hyper_sprite+1
 local_hyper_sprite2					equ	local_hyper_sprite1+2
 
+reticlule_sprite1                   equ	local_hyper_sprite2+1
+reticlule_sprite2                   equ	reticlule_sprite1+1
+reticlule_sprite3                   equ	reticlule_sprite2+1
+reticlule_sprite4                   equ reticlule_sprite3+1
+
+laser_sprite1                       equ	reticlule_sprite4+1
+laser_sprite2                       equ	laser_sprite1    +1
+laser_sprite3                       equ	laser_sprite2    +1
+laser_sprite4                       equ laser_sprite3    +1
+laser_sprite5                       equ	laser_sprite4    +1
+laser_sprite6                       equ	laser_sprite5    +1
+laser_sprite7                       equ	laser_sprite6    +1
+laser_sprite8                       equ laser_sprite7    +1
+laser_sprite9                       equ	laser_sprite8    +1
+laser_sprite10                      equ	laser_sprite9    +1
+laser_sprite11                      equ	laser_sprite10   +1
+laser_sprite12                      equ laser_sprite11   +1
+laser_sprite13                      equ	laser_sprite12   +1
+laser_sprite14                      equ	laser_sprite13   +1
+laser_sprite15                      equ	laser_sprite14   +1
+laser_sprite16                      equ laser_sprite15   +1
+
 glactic_pattern_1					equ 0
 glactic_hyper_pattern_1             equ 2
 local_pattern_1                     equ 4
 local_hyper_pattern_1               equ 6
+reticule_pattern_1                  equ 12
+reticule_pattern_2                  equ 13
+laser_pattern_1                     equ 14
+laser_pattern_2                     equ 15
+laser_pattern_3                     equ 16
+laser_pattern_4                     equ 17
+laser_pattern_5                     equ 18
+laser_pattern_6                     equ 19
+laser_pattern_7                     equ 20
+laser_pattern_8                     equ 21
 
 spritecursoroffset					equ 17
 
 
-
-	
-sprite_big:
 ; " sprite_big BC = rowcol, D = sprite nbr , E= , pattern"
+sprite_big:
 .SetAnchor:	
 	ld		a,d                                 ; a = sprite nbr, bug fix?
 	push	af									; save id for next few
@@ -176,7 +206,122 @@ sprite_local_hyper_cursor:
 	ld		e,9
 	call	sprite_big
 	ret	
+    
+sprite_reticule:    ld      a,reticlule_sprite1
+                    nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+                    ld      a,(13*8) + 32
+                    nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+                    ld		a,(7 * 8) + 32 + 13
+                    nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                    xor     a
+                    nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+                    ld      a,reticule_pattern_2 | %10000000
+                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+.rightReticule      ld      a,reticlule_sprite2
+                    nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+                    ld      a,(17*8) + 32 -2
+                    nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+                    ld		a,(7 * 8) + 32 + 13
+                    nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                    ld      a,%00001000
+                    nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring horizontal
+                    ld      a,reticule_pattern_2 | %10000000
+                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+.topReticule        ld      a,reticlule_sprite3
+                    nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+                    ld      a,(16*8) + 32 -1
+                    nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+                    ld		a,(5 * 8) + 32 +4
+                    nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                    xor     a
+                    nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 
+                    ld      a,reticule_pattern_1 | %10000000
+                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+.bottomReticule     ld      a,reticlule_sprite4
+                    nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+                    ld      a,(16*8) + 32 -1
+                    nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+                    ld		a,(9 * 8) + 32 +5
+                    nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                    ld      a,%00000100
+                    nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring vertical
+                    ld      a,reticule_pattern_1 | %10000000
+                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+                    ret
 
+laserbasex          equ 7
+laserbasey          equ 14  
+
+ShowSprite          MACRO   spritenbr, patternnbr
+                    ld      a, spritenbr
+                    nextreg SPRITE_PORT_INDEX_REGISTER,a
+                    ld      a,patternnbr | %10000000
+                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+                    ENDM
+                    
+LeftLaser:          MACRO   xoffset, yoffset, spriteL, patternL
+                    ld      a, spriteL
+                    nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+                    ld      a,((laserbasex + xoffset) *8) + 32 
+                    nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+                    ld		a,((laserbasey -yoffset) * 8) + 32 -1
+                    nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                    xor     a
+                    nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+                    ld      a, patternL | %00000000             ; hidden by default
+                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a		 
+                    ENDM
+
+RightLaser:         MACRO   xoffset, yoffset, spriteL, patternL
+                    ld      a, spriteL
+                    nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+                    ld      a,(((30-laserbasex) - xoffset) *8) + 32 -2
+                    nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+                    ld		a,((laserbasey -yoffset) * 8) + 32 -1
+                    nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                    ld      a,%00001000
+                    nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+                    ld      a, patternL | %00000000             ; hidden by default
+                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a		 
+                    ENDM
+                    
+  
+sprite_laser:       LeftLaser  0,0,laser_sprite1 ,laser_pattern_1
+                    LeftLaser  2,0,laser_sprite2 ,laser_pattern_2
+                    LeftLaser  2,2,laser_sprite3 ,laser_pattern_3
+                    LeftLaser  4,1,laser_sprite4 ,laser_pattern_4
+                    LeftLaser  3,3,laser_sprite5 ,laser_pattern_5
+                    LeftLaser  5,3,laser_sprite6 ,laser_pattern_6
+                    LeftLaser  6,5,laser_sprite7 ,laser_pattern_7
+                    LeftLaser  8,5,laser_sprite8 ,laser_pattern_8
+                    RightLaser 0,0,laser_sprite9 ,laser_pattern_1
+                    RightLaser 2,0,laser_sprite10,laser_pattern_2
+                    RightLaser 2,2,laser_sprite11,laser_pattern_3
+                    RightLaser 4,1,laser_sprite12,laser_pattern_4
+                    RightLaser 3,3,laser_sprite13,laser_pattern_5
+                    RightLaser 5,3,laser_sprite14,laser_pattern_6
+                    RightLaser 6,5,laser_sprite15,laser_pattern_7
+                    RightLaser 8,5,laser_sprite16,laser_pattern_8    
+                    ret                           
+                    ; Need simple show updates just to update the show attribute
+
+sprite_laser_show: ShowSprite laser_sprite1 ,laser_pattern_1
+                   ShowSprite laser_sprite2 ,laser_pattern_2
+                   ShowSprite laser_sprite3 ,laser_pattern_3
+                   ShowSprite laser_sprite4 ,laser_pattern_4
+                   ShowSprite laser_sprite5 ,laser_pattern_5
+                   ShowSprite laser_sprite6 ,laser_pattern_6
+                   ShowSprite laser_sprite7 ,laser_pattern_7
+                   ShowSprite laser_sprite8 ,laser_pattern_8
+                   ShowSprite laser_sprite9 ,laser_pattern_1
+                   ShowSprite laser_sprite10,laser_pattern_2
+                   ShowSprite laser_sprite11,laser_pattern_3
+                   ShowSprite laser_sprite12,laser_pattern_4
+                   ShowSprite laser_sprite13,laser_pattern_5
+                   ShowSprite laser_sprite14,laser_pattern_6
+                   ShowSprite laser_sprite15,laser_pattern_7
+                   ShowSprite laser_sprite16,laser_pattern_8
+                   ret
 
 sprite_galactic_hide:
 	nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_cursor_sprite
@@ -213,12 +358,61 @@ sprite_local_hyper_hide:
 	nextreg		SPRITE_PORT_INDEX_REGISTER,local_hyper_sprite2
 	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
 	ret
-	
+
+
+sprite_reticule_hide:
+	nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite1
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite2
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite3
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite4
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	ret
+
+sprite_laser_hide:
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite1
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite2
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite3
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite4
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite5
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$0
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite6
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite7
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite8
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+    nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite9
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite10
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite11
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite12
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+    nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite13
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite14
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite15
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite16
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+    ret
+    
 sprite_cls_cursors:
 	call	sprite_galactic_hide	
 	call	sprite_galactic_hyper_hide	
 	call	sprite_local_hide	
 	call	sprite_local_hyper_hide	
+    call    sprite_reticule_hide
+    ;call    sprite_laser_hide
 	ret
 
 init_sprites:

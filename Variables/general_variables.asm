@@ -253,6 +253,7 @@ XC						DB	0               ; 2C
 YC						DB 	0               ; 2D
 InnerHyperCount			DB 	0				; 2F QQ22+1
 OuterHyperCount			DB 	0				; 2E QQ22
+HyperCircle             DB  0
 ECMActive				DB 	0				; 30		ECM Active flag
 JSTX                    DW  0               ;           Joystick analog value
 ALPHA					DB	0				; 8D        Alpha with bit 7 sign

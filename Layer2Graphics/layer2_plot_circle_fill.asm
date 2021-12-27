@@ -97,7 +97,7 @@ l2_draw_circle_fill:    ld		a,e
                         inc ixl				; X=X+1
                         jp .CircleLoop
 .PlotLine:              push	de,,bc,,hl,,af
-.LineColour:	        ld		a,(l2_circle_colour)
+.LineColour:	        ld		a,0         ; circle colur
                         ld      e,a
                         call 	l2_draw_horz_line
                         pop     de,,bc,,hl,,af

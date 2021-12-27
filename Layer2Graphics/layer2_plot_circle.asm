@@ -108,7 +108,7 @@ l2_draw_circle:     ld		a,e
                     inc de	
                     inc ixl				; X=X+1
                     jp      .CircleLoop
-.PlotPixel:         ld		a,(l2_circle_colour)
+.PlotPixel:         ld		a,0                  ; This was originally indirect, where as it neeed to be value
                     push	de,,bc,,hl
                     call 	l2_plot_pixel_y_test
                     pop		de,,bc,,hl
