@@ -227,7 +227,7 @@ mktdisp_DisplayCash:        call	mktdisp_GetCash
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------	
 ; "A = stock item number"
-PrintMktDispItem:        push     af
+PrintMktDispItem:       push     af
                         ld      hl,mktdisp_position
                         ld      d,a
                         ld      e,8

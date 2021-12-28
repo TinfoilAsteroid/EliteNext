@@ -396,7 +396,7 @@ gc_calc_distance:       ld      a,(Galaxy)
                         ld      (GalaxyPresentSystem),bc
                         ld      bc,(TargetPlanetX)
                         ld      (GalaxyDestinationSystem),bc
-fqp                        call    galaxy_find_distance            ; get distance into HL
+                        call    galaxy_find_distance            ; get distance into HL
                         ld      ix,(Distance)
                         ld      de,0
                         ld      iy,galactic_distance

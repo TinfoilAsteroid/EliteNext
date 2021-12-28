@@ -110,7 +110,7 @@ hyperspace_Lightning:   ld      b, 7                    ; total number of lightn
 ; above here select which lines table we will use
 .LineLoop:              push    bc,,hl
                         call    doRandom
-                        cp      100
+                        cp      30
                         jr      nc,.NextLine
                         call    doRandom
                         and     $07
@@ -129,7 +129,7 @@ hyperspace_Lightning:   ld      b, 7                    ; total number of lightn
                         ld      d,a
                         ld      bc, $4080
                         ;break
-                        ld      e,0
+                        ld      e,$00
                         call    l2_draw_circle_fill; ; ">l2_draw_circle_fill BC = center row col, d = radius, e = colour"
                         ld      bc, $4080
                         ld      a,(HyperCircle)
@@ -140,9 +140,10 @@ hyperspace_Lightning:   ld      b, 7                    ; total number of lightn
                         ld      a,(HyperCircle)
                         inc     a
                         inc     a
-                        cp      62
+                        cp      64
                         ret     nc
                         ld      (HyperCircle),a
+                        SetCarryFlag
                         ret
                         
                        
@@ -290,14 +291,28 @@ ForwardCursorKeysDone:  ld      a,c_Pressed_Hyperspace
                         ld      a,h                                 ; hyperspace
                         or      l                                   ; .
                         jr      nz,.CancelHyperspace                ; .
-; check selected target 
+; check selected target if we finf one then after gettting galaxy at bc a=0 if not found
+                        ld      de,(PresentSystemX)
                         ld      hl,(TargetPlanetX)
-                        ld      a,h
-                        or      l
-                        jr      z,.NoTargetSelected
+                        call    compare16HLDE
+                        jr      z,.NoTargetSelected                 ; can't jump to current system
+                        ld      a,(Galaxy)
+                        MMUSelectGalaxyA
+                        ld      bc,(TargetPlanetX)
+                        call    galaxy_name_at_bc
+                        cp      0
+                        jr      z,.NotHyperspace
 ; check fuel is sufficient
+                        ld      bc,(PresentSystemX)
+                        ld      (GalaxyPresentSystem),bc
+                        ld      bc,(TargetPlanetX)
+                        ld      (GalaxyDestinationSystem),bc
+                        call    galaxy_find_distance            ; get distance into HL
+                        ld      a,h
+                        and     a
+                        jr      nz,.InsufficientFuel            ; max jump capacity is 25 ly for any ship
                         ld      a,(Fuel)
-                        JumpIfALTMemusng    Distance, .InsufficientFuel
+                        JumpIfALTNusng    l, .InsufficientFuel
 ; set up timer countdown
                         ld      hl,HyperSpaceTimers                 ; set both timers to 15
                         ld      (InnerHyperCount),hl                ; .

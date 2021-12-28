@@ -944,7 +944,7 @@ ix_seed_to_galaxy_working:
 		jr		galaxy_copy_seed
 
 ; Here we twist just once rather than the usual4 for a system
-NextGalaxyNamingSeed:  ld		a,(GalaxyNamingSeed)			; QQ15 ; x = a + c
+NextGalaxyNamingSeed:   ld		a,(GalaxyNamingSeed)			; QQ15 ; x = a + c
                         or		a							; clear carry flag
                         ld		hl,GalaxyNamingSeed+2			; hl -> qq+2 [c]
                         add		a,(hl)						; a= QQ15 [a]+ QQ15 [c]
@@ -1229,7 +1229,8 @@ galaxy_find_distance:   ld      d,0
                         ld      (Distance+1),a
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-; Find the systems pointed to by GalaxyTargetSystem and loads it into WorkingSeeds, this needs to chagne to galaxyresultseed or galayxworkingseed
+; Find the systems pointed to by GalaxyTargetSystem and loads it into WorkingSeeds
+; this needs to chagne to galaxyresultseed or galayxworkingseed
 galaxy_system_under_cursor:xor     a
                         ld		(XSAV),a
                         ld      ix,galaxy_data
@@ -1243,7 +1244,7 @@ galaxy_system_under_cursor:xor     a
 .FoundSystem:           jr      nz,.ItsNotThisX
                         push    ix
                         pop     hl
-                        ld      de,WorkingSeeds
+                        ld      de,WorkingSeeds                 ;' copy to wkring Seeds
                         call    copy_seed
                         ld      a,$FF
                         pop     ix
@@ -1259,33 +1260,33 @@ galaxy_system_under_cursor:xor     a
                         ret		z
                         jr		.GCCounterLoop
 ;----------------------------------------------------------------------------------------------------------------------------------
-SeedGalaxy:             ld      hl,SystemSeed
-                        ld      de,galaxy_master_seed
-                        ldi
-                        ldi
-                        ldi
-                        ldi
-                        ldi
-                        ldi
-                        ld      ix,galaxy_data
-                        xor		a
-                        ld		(XSAV),a
-SeedGalaxyLoop:         push    ix
-                        pop     de
-                        ld      hl,SystemSeed
-                        call    copy_seed
-                        push    ix
-                        pop     hl
-                        add     hl,8
-                        push    hl
-                        pop     ix
-                        call    next_system_seed
-                        ld		a,(XSAV)
-                        dec		a
-                        cp		0
-                        ret		z
-                        ld		(XSAV),a
-                        jr      SeedGalaxyLoop
+SeedGalaxy:             ld      hl,SystemSeed                   ; First copy system seed to galaxy master
+                        ld      de,galaxy_master_seed           ; .
+                        ldi                                     ; .
+                        ldi                                     ; .
+                        ldi                                     ; .
+                        ldi                                     ; .
+                        ldi                                     ; .
+                        ldi                                     ; .
+                        ld      ix,galaxy_data                  ; Generate system seed data for each planet
+                        xor		a                               ; .
+                        ld		(XSAV),a                        ; .
+SeedGalaxyLoop:         push    ix                              ; .
+                        pop     de                              ; .
+                        ld      hl,SystemSeed                   ; .
+                        call    copy_seed                       ; .
+                        push    ix                              ; .
+                        pop     hl                              ; .
+                        add     hl,8                            ; .
+                        push    hl                              ; .
+                        pop     ix                              ; .
+                        call    next_system_seed                ; .
+                        ld		a,(XSAV)                        ; .
+                        dec		a                               ; .
+                        cp		0                               ; .
+                        ret		z                               ; .
+                        ld		(XSAV),a                        ; .
+                        jr      SeedGalaxyLoop                  ; .
                         ret
 
 GalaxyBankSize   EQU $ - galaxy_page_marker

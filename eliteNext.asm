@@ -88,23 +88,17 @@ TestText:               xor			a
                         MMUSelectSpriteBank
                         call		init_sprites
                         
-                        MMUSelectStockTable
-                        call		generate_stock_market ; Normally done on jump to system and start up, should be written on load save to stop market price cheating
-
                         IFDEF DOUBLEBUFFER
                             MMUSelectLayer2
                             call        l2_cls
                             call  l2_flip_buffers
                         ENDIF
+; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files                        
+InitialiseGalaxies:     call		ResetUniv                       ; Reset ship data
+                        call        ResetGalaxy                     ; Reset each galaxy copying in code
+                        call        SeedAllGalaxies
 
-                        ;MMUSelectResetUniv
-                        call		ResetUniv:   
-                        call        ResetGalaxy
-                        MMUSelectGalaxyN 0
-                        call        SeedGalaxy
-
-                        MMUSelectLayer2
-                        MMUSelectUniverseN 0
+.ClearLayer2Buffers:    MMUSelectLayer2
                         call        l2_cls
                         IFDEF DOUBLEBUFFER    
                             MMUSelectLayer2
@@ -112,13 +106,16 @@ TestText:               xor			a
                         ENDIF    
                         
                         
+;.Sa                        MMUSelectUniverseN 0                       
+                        
 ;InitialiseDemoShip:     call    ClearFreeSlotList
 ;                        call    FindNextFreeSlotInA
 ;                        ld      b,a
 ;                        ld      a,13 ;Coriolis station
 ;                        call    InitialiseShipAUnivB
 ;                        xor     a
-InitialiseMainLoop:     ld      (CurrentUniverseAI),a
+InitialiseMainLoop:     xor     a
+                        ld      (CurrentUniverseAI),a
                         ld      a,3
                         ld      (MenuIdMax),a
                         ld      a,$FF                               ; Starts Docked
@@ -127,6 +124,9 @@ InitialiseMainLoop:     ld      (CurrentUniverseAI),a
                         call    InitialiseCommander
                         MMUSelectUniverseN 0    
                         call    SetInitialShipPosition
+                                               
+                        MMUSelectStockTable
+                        call    generate_stock_market
 ;..................................................................................................................................
 MainLoop:	            call    doRandom                            ; redo the seeds every frame
                         call    scan_keyboard
@@ -232,12 +232,50 @@ LoopRepeatPoint:        ld      a,(DockedFlag)
 HandleLaunched:         JumpIfAEqNusng  $FD, WeHaveCompletedLaunch
                         JumpIfAEqNusng  $FE, WeAreInTransition
                         JumpIfAEqNusng  $FC, WeAreHJumping
-                        JumpIfAEqNusng  $FB, WeHaveCompletedHJump
+                        JumpIfAEqNusng  $FB, WeAreHEntering
+                        JumpIfAEqNusng  $FA, WeHaveCompletedHJump
                         jp  DoubleBufferCheck
-WeHaveCompletedHJump:   ; set up new star system and landing location in system                        
 WeHaveCompletedLaunch:  call    LaunchedFromStation
+                        jp      DoubleBufferCheck
+WeAreHJumping:          call        hyperspace_Lightning
+                        jp      c,DoubleBufferCheck
+                        ld      a,$FB
+                        ld      (DockedFlag),a
+                        jp      DoubleBufferCheck
+WeAreHEntering:         ld      a,$FA
+                        ld      (DockedFlag),a
                         jp  DoubleBufferCheck
-WeAreHJumping:                        
+WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
+                        MMUSelectGalaxyA
+                        ;break; not resettign system correctly
+                        ld      hl,(TargetPlanetX)
+                        ld      (PresentSystemX),hl
+                        ld      b,h
+                        ld      c,l
+                        ld      a,(Fuel)
+                        ld      hl,Distance
+                        sub     a,(hl)
+                        ld      (Fuel),a
+                        ld      a,ScreenFront
+                        ld      (ScreenTransitionForced),a
+                        ld      a,$00
+                        ld      (DockedFlag),a
+                        call    GalaxyGenerateDesc             ; bc  holds new system to generate system
+                        call    copy_working_to_system         ; and propogate copies of seeds
+                        call    copy_working_to_galaxy         ; .
+                        call    get_planet_data_working_seed   ; sort out system data
+                        ;call    GetDigramGalaxySeed           ; .           
+                        MMUSelectStockTable                    ; .
+                        call    generate_stock_market          ; generate new prices
+                        call    ClearUnivSlotList              ; clear out any ships
+                        ; from BBC TT18 jump code
+                        ; need to set system corrodinates, flush out univere ships etc
+                        ; set up new star system and landing location in system     
+                        ; reset ship speed etc (RES2)
+                        ; update legal status, missle indicatrions, planet data block, sun data block (SOLAR)
+                        ;   put planet into data blokc 1 of FRIN
+                        ;   put sun inot data block (NWWSHIP)
+                        ; need to look at in system warp code (WARP) - note we need to -reorg all to code for teh station as that will never be in slot 0
 WeAreInTransition:                        
 DoubleBufferCheck:      ld      a,00
                         IFDEF DOUBLEBUFFER
@@ -345,7 +383,6 @@ DrawShip:               ;call   SetAllFacesVisible
                         call   DrawLines                   ; Need to plot all lines
                         ld      a,BankFrontView
                         MMUSelectScreenA
-                        call        hyperspace_Lightning                        
                         pop     af
                         push    af
                         MMUSelectUniverseA
@@ -699,10 +736,17 @@ ViewKeyTest:            ld      a,(ScreenIndex)
                         ld      c,a
                         ld      b,ScreenMapLen                  ; For now until add screens are added
                         ld      ix,ScreenKeyMap
-.HyperspaceCountdown:   ld      a,(ix+14)
+                        ld      hl,(InnerHyperCount)
+                        ld      a,h
+                        or      l
+                        ld      iyh,a
+ViewScanLoop:           ld      a,iyh
+.HyperspaceCountdown:   and     a
+                        jr      z,.DockedFlag
+                        ld      a,(ix+14)
                         cp      1
-                        jr      z,NotReadNextKey               ; can not change to this vie win hyperspace countdown
-ViewScanLoop:           ld      a,(ix+0)                        ; Screen Map Byte 0 Docked flag 
+                        jp      z,NotReadNextKey
+.DockedFlag:            ld      a,(ix+0)                        ; Screen Map Byte 0 Docked flag 
 ; 0 = not applicable (always read), 1 = only whilst docked, 2 = only when not docked, 3 = No keypress allowed
                         cp      3                               ; if not selectable then don't scan this (becuase its a transition screen)
                         jr      z,NotReadNextKey                ; 

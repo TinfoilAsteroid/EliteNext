@@ -25,8 +25,7 @@ WipeScanner:								; WPSHPS	\ -> &35D8  \ Wipe Ships on scanner
 	ld		(TYPE),a
 .SelectUnivBank:
 	ld		a,b
-	add		UniverseBasePage
-	nMMUSelectUniverseA			            ; select correct universeobject page
+	MMUSelectUniverseA			            ; select correct universeobject page
 	ld		c,31
 ; We won't copy as the bank holds a local copy of data all the time	
 	ld		de,UBnkexplDsp					; start with INWK+31

@@ -443,11 +443,6 @@ CommanderName			DS  8				; 0350 - 3057 Commander Name
 CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
 VarTP					DB	0				; 0358 TP? The Plan  \ mission uses lower 4 bits
 											; Bit mask XXXX10XX - Thargoid plan mission
-PresentSystemX			DB	0				; 0359 - 035A QQ0 X Y
-PresentSystemY			DB  0
-GalaxySeeds				DS	6				; 035B - 0360 QQ21
-COK						DB	0				; 0366 Competition Byte what ? Does some file check and accelleration check
-Galaxy      			DB	0				; 0367 Galaxy (incremented with galactiv drive
 ;036C to D???
 DampingKeys				DS  7				; 0387 - 038D
 ;  #&6 Does K toggle keyboard/joystick control -  03CD certainly makes keyboard not work anymore.
@@ -475,13 +470,10 @@ MarketPrice				DB	0				; 03AA QQ24
 MaxStockAvaliable		DB  0				; 03AB   \ QQ25     \ max available
 SystemEconomy			DB  0				; 03AC \ QQ28   \ the economy byte of present system (0 is Rich Ind.)
 CargoItem				DB	0				; 03AD (I think its item type just scooped) QQ29
-GovPresentSystem		DB	0				; 03AE Govenment 
-TekPresentSystem		DB	0				; 03AF Technology
 ShipLineStackPointer	DW	0				; 03B0 & 03B1 ship Lines pointer reset to top LS% = &0CFF (make DW for z80 and direct hl pointer)
 											; this is ship lines stack pointer so may be redundant with paging
 											; LS = line stack so we will have one for now to remove later
-WorkingSeeds			DS	6
-PresentSystemSeeds		DS	6				; 03B2 - 03B7
+COK						DB	0				; 0366 Competition Byte what ? Does some file check and accelleration check
 DisplayEcononmy			DB	0				; 03B8
 DisplayGovernment		DB  0				; 03B9 Is it target? 03B9 \ QQ4	 \ Government, 0 is Anarchy.
 DisplayTekLevel			DB	0				; 03BA   \ QQ5	\ Tech
@@ -489,10 +481,19 @@ DisplayPopulation		DW	0				; 03BB \ QQ6  \ population*10
 DisplayProductivity		DW	0				; 03BD \ QQ7   \ productivity*10
 Distance          		DW	0				; 03BE \ QQ8 distince in 0.1LY units
 DisplayRadius			DW	0
+; --- Galaxy Data --------------------------;
+Galaxy      			DB	0				; 0367 Galaxy (incremented with galactiv drive
+WorkingSeeds			DS	6
+PresentSystemSeeds		DS	6				; 03B2 - 03B7
+GalaxySeeds				DS	6				; 035B - 0360 QQ21
+PresentSystemX			DB	0				; 0359 - 035A QQ0 X Y
+PresentSystemY			DB  0
 TargetPlanetX			DB	0               ; 03C1
 TargetPlanetY			DB	0               ; 03C2
-SRCTargetPlanetX		DB	0               ; Used for short range chart cursor
-SRCTargetPlanetY		DB	0               ; then divided down to target planet for compatibilit with galactic chart routines
+GovPresentSystem		DB	0				; 03AE Govenment 
+TekPresentSystem		DB	0				; 03AF Technology
+;SRCTargetPlanetX		DB	0               ; Used for short range chart cursor
+;SRCTargetPlanetY		DB	0               ; then divided down to target planet for compatibilit with galactic chart routines
 NumberOfStarsNOSTM		DB	0				; 03C3 NOSTM  \ number of stars, dust.
 
 CompassColor			DB	0				; 03C5

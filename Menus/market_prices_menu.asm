@@ -245,18 +245,18 @@ MKT_DisplayCash:        call	MKT_GetCash
 ;----------------------------------------------------------------------------------------------------------------------------------	
 ; "A = stock item number"
 PrintMarketItem:        push     af
-                        ld      hl,market_position
-                        ld      d,a
-                        ld      e,8
-                        mul
-                        ld      d,e
-                        ld      e,0
-                        add     hl,de
-                        ld      (market_cursor),hl
-                        ex      hl,de
-                        ld      hl,market_blank_line    
-                        MMUSelectLayer1   
-                        call	l1_print_at
+                        ld      hl,market_position  ; hl = base cursor position + row number * 8 
+                        ld      d,a                 ; .
+                        ld      e,8                 ; . 
+                        mul                         ; .
+                        ld      d,e                 ; .
+                        ld      e,0                 ; .
+                        add     hl,de               ; .
+                        ld      (market_cursor),hl  ; save in market cursor and copy to de
+                        ex      hl,de               ; .
+                        ld      hl,market_blank_line; hl = blank line text 
+                        MMUSelectLayer1             ; print blank line (hl) and position DE
+                        call	l1_print_at         ; .
                         pop     af
                         ld		ix,StockFood		; start 8 bytes before index as first add will shift
                         ld      iy,CargoTonnes
@@ -345,11 +345,12 @@ draw_market_prices_menu:INCLUDE "Menus/clear_screen_inline_no_double_buffer.asm"
                         ld		b,9
                         ld		hl,market_boiler_text
                         call	MPM_print_boiler_text
+; Generate the market list on screen                        
 .DisplayPrices:         ld		a,0
-                        ld		hl,market_position
-                        ld		(market_cursor),hl
+                        ld		hl,market_position          ; set current cursor position on screen
+                        ld		(market_cursor),hl          ; .
 MarketLoop:	            push	af
-                        call	PrintMarketItem
+                        call	PrintMarketItem             ; display a single market item
                         pop		af
                         inc		a
                         cp		17
