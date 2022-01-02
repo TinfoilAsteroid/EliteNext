@@ -92,6 +92,13 @@ MCopyShipToUniverse:    MACRO       banklabel
                         ret
                         ENDM
                         
+MCopyBodyToUniverse:    MACRO       copyRoutine
+                        ld          a,13
+                        call        copyRoutine
+                        ret
+                        ENDM
+                        
+                        
 MCopyShipIdToUniverse:  MACRO
                         call        GetShipModelId
                         MMUSelectShipBankA

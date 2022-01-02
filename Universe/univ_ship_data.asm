@@ -23,8 +23,8 @@ StartOfUnivN:       DB "X"
 ; Orientation Matrix [nosev x y z ] nose vector ( forward) 19 to 26
 ;                    [roofv x y z ] roof vector (up)
 ;                    [sidev x y z ] side vector (right)
-rotXCounter                 equ UBnkrotXCounter         ; INWK +29
-rotZCounter                 equ UBnkrotZCounter         ; INWK +30UBnkDrawCam0xLo   DB  0               ; XX18+0
+;;rotXCounter                 equ UBnkrotXCounter         ; INWK +29
+;;rotZCounter                 equ UBnkrotZCounter         ; INWK +30UBnkDrawCam0xLo   DB  0               ; XX18+0
 univRAT      DB  0               ; 99
 univRAT2     DB  0               ; 9A
 univRAT2Val  DB  0               ; 9A
@@ -44,6 +44,7 @@ UbnkZPointSign              equ UbnkZPoint+2
 
 ; Post clipping the results are now 8 bit
 UBnkVisibility              DB  0               ; replaces general purpose xx4 in rendering
+UBnKDrawAsDot               DB  0               ; if 0 then OK, if 1 then just draw dot of line heap
 UBnkProjectedY              DB  0
 UBnkProjectedX              DB  0
 UBnkProjected               equ UBnkProjectedY  ; resultant projected position
@@ -131,20 +132,42 @@ OrthagCountdown             DB  12
 UBnkShipCopy                equ UBnkHullVerticies               ; Buffer for copy of ship data, for speed will copy to a local memory block, Cobra is around 400 bytes on creation of a new ship so should be plenty
 UBnk_Data_len               EQU $ - StartOfUniv
 
+ZeroUnivPitchAndRoll:   MACRO
+                        xor     a
+                        ld      (UBnKRotXCounter),a
+                        ld      (UBnKRotZCounter),a
+                        ENDM
 
+MaxUnivPitchAndRoll:    MACRO
+                        ld      a,127
+                        ld      (UBnKRotXCounter),a
+                        ld      (UBnKRotZCounter),a
+                        ENDM                   
+
+; --------------------------------------------------------------
 ResetUBnkData:          ld      hl,StartOfUniv
                         ld      de,UBnk_Data_len
                         xor     a
                         call    memfill_dma
                         ret
-                        
+; --------------------------------------------------------------
+ResetUbnkPosition:      ld      hl,UBnKxlo
+                        ld      b, 3*3
+                        xor     a
+.zeroLoop:              ld      (hl),a
+                        inc     hl
+                        djnz    .zeroLoop
+                        ret
+
+; --------------------------------------------------------------                        
+; This sets current univrse object to space station
 ResetStationLaunch:     ld  a,%10000001
                         ld  (UBnkaiatkecm),a                    ; set hostinle, no AI, has ECM
                         xor a
-                        ld      (UBnkrotZCounter),a             ; no pitch
+                        ld      (UBnKRotZCounter),a             ; no pitch
                         ld      (ShipNewBitsAddr),a             ; initialise new bits logic
                         ld      a,$FF
-                        ld      (UBnkrotXCounter),a             ; set roll to maxi on station
+                        ld      (UBnKRotXCounter),a             ; set roll to maxi on station
 .SetPosBehindUs:        ld      hl,$0000
                         ld      (UBnKxlo),hl
                         ld      hl,$0000
@@ -157,130 +180,8 @@ ResetStationLaunch:     ld  a,%10000001
                         ld      a,$80
                         ld      (UBnKzsgn),a
 .SetOrientation:        call    LaunchedOrientation             ; set initial facing
-                        ret    
-   
-;divdide by 16 using undocumented instrunctions
-;Input: BC = Dividend, DE = Divisor, HL = 0
-;Output: BC = Quotient, HL = Remainder
-PROJ256mulAdivQ:        ld      b,a
-                        ld      c,0
-                        ld      d,0
-                        ld      a,(varQ)
-                        ld      e,a
-PROJDIV16UNDOC:         ld      hl,0
-                        ld      a,b 
-                        ld      b,16
-PROJDIV16UNDOCLOOP:     sll     c       ; unroll 16 times
-                        rla             ; ...
-                        adc     hl,hl       ; ...
-                        sbc     hl,de       ; ...
-                        jr      nc,PROJDIV16UNDOCSKIP       ; ...
-                        add     hl,de       ; ...
-                        dec     c       ; ...
-PROJDIV16UNDOCSKIP:     djnz    PROJDIV16UNDOCLOOP
-                        ld      a,c
-                        ld      (varR),a
-                        ret
-;
     ;Input: BC = Dividend, DE = Divisor, HL = 0
 ;Output: BC = Quotient, HL = Remainder
-
-;INPUTS:    bhl = dividend  cde = divisor where b and c are sign bytes
-;OUTPUTS:   cahl = quotient cde = divisor
-DVID3B2:                ld      (varPhi2),a                     ;DVID3B2 \ Divide 3 bytes by 2, K = [P(HiLo).A]/[INWK_z HiLo], for planet radius, Xreg protected. ; P+2    \ num sg
-                        ldCopy2Byte UBnKzlo, varQ               ; [QR} = Ubnk zlohi  (i.e. Inwk_z HiLo)
-                        ld      a,(UBnKzsgn)                    ; 
-                        ld      (varS),a                        ; S = inkw z sign 
-DVID3B:                 ld      de,(varP)                       ; K (3bytes)=P(Lo Hi Hi2)/S.R.Q approx  Acc equiv K(0).; get P and P+1 into de
-                        ld      a,e                             ; num lo
-                        or      1                               ; must be at least 1
-                        ld      (varP),a                        ; store
-                        ld      e,a                             ; update DE too
-                        ld      a,(varPhi2)                     ; varP Sign     E.D.A = P Lo Hi Hi2
-                        ld      hl,varS                         ; hl = address of VarS
-                        xor     (hl)                            ; A = PHi2 Xor S Signs
-                        and     $80                             ; 
-                        ld      (varT),a                        ; T = Sign bit of A
-                        ld      iyl,0                           ; iyl = yReg = counter
-                        ld      a,(varPhi2)                     ; 
-                        and     $7F                             ; A = Ph2 again but minus sign bit 
-DVL9:                   JumpIfAGTENusng $40,DV14                ; counter Y up; if object is over $40 away then scaled and exit Y count
-                        ShiftDELeft1                            ; de (or P,P1) > 1
-                        rl      a                               ; and accumulator as 3rd byte
-                        inc     iyl
-                        jp      nz,DVL9                         ; loop again with a max of 256 iterations
-DV14:                   ld      (varPhi2),a                     ; scaled, exited Ycount
-                        ld      (varP),de                       ; store off the value so far
-                        ld      a,(varS)                        ; zsign
-                        and     $7F                             ; denom sg7
-                        ; jp mi,DV9                             ; this can never happen as bit 7 is and'ed out
-                        ld      hl,(varQ)                       ; demon lo
-DVL6:                   dec     iyl                             ; counter Y back down, roll S. ;  scale Y back
-                        ShiftHLLeft1
-                        rl      a                               ; mulitply QRS by 2
-                        jp      p,DVL6                          ; loop roll S until Abit7 set.
-DV9:                    ld      (varQ),hl                       ; bmi cant enter here from above ; save off so far
-                        ld      (varQ),a                        ; Q \ mostly empty so now reuse as hi denom
-                        ld      a,$FE                           ;  Xreg protected so can't LL28+4
-                        ld      (varR),a                        ;  R
-                        ld      a,(varPhi2)                     ; P+2 \ big numerator
-                        call    PROJ256mulAdivQ                 ; TODO LL31\ R now =A*256/Q
-                        ld      a,0
-                        ld      (varKp1),a
-                        ld      (varKp2),a
-                        ld      (varKp3),a                      ; clear out K+1 to K+3
-                        ld      a,iyl                           ; Y counter for scale
-                        JumpOnBitClear a,7,DV12                 ; Ycount +ve
-                        ld      a,(varR)                        ; R     \ else Y count is -ve, Acc = remainder.
-                        ld      de,(varK)                       ; d= k1
-                        ld      hl,(varK2)                      ; h = k3, l = k2
-                        ld      e,a                             ; use e to hold K0 pulled from a
-DVL8:                   sla     a                               ; boost up a                     ;  counter Y up
-                        rl      d                               ; k1
-                        rl      l                               ; k2
-                        rl      h                               ; k3
-                        inc     iyl
-                        jr      nz,DVL8                         ;
-DVL8Save:               ld      (varK),de
-                        ld      (varK2),hl                      ; save back K0 to k3
-                        ld      a,(varT)
-                        ld      c,a                             ; get varT into c reg 
-                        ld      a,h                             ; a= k3 (sign)
-                        or      c                               ; merge in varT (sign)that was saved much earlier up)
-                        ld      (varK3),a                       ; load sign bit back into K3
-                        ret
-DV12:                   IfAIsZeroGoto   DV13                    ; Y Count zerp, go to DV13
-                        ld      a,(varR)                        ; Reduce Remainder
-DVL10:                  srl     a                               ; divide by 2                     ; counter Y reduce
-                        dec     iyl
-                        jp      nz,DVL10                        ; loop y reduce until y is zero
-                        ld      (varK),a                        ; k Lo
-                        ldCopyByte  varT,varKp3                 ; Copy sign to K+3
-                        ret
-DV13:                   ldCopyByte  varR,varK                   ; R \ already correct so copy to K lo;DV13   \ Ycount zero \ K(1to2) already = 0
-                        ldCopyByte  varT,varKp3                 ; Copy sign to K+3
-                        ret
- 
-    
-PLS6:                   call    DVID3B2                         ; Returns AHL K ( 2 1 0 )
-                        ld      a,(varKp3)
-                        and     $7F
-                        ld      hl,varKp2
-                        or      (hl)
-                        jp      nz,PL44TooBig
-                        ld      a,(varKp1)
-                        cp      4                               ; if high byte > 4 then total > 1024 so too big
-                        jr      nc,PL44TooBig
-                        ClearCarryFlag                          ; we have a good result regardless
-                        ld      hl,(varK)                       ; get K (0 1)
-                        ld      a,(varKp3)                      ; if sign bit high?
-                        bit     7,a
-                        ret     z                               ; no so we can just return
-PL44:                   ret 
-PL44TooBig:             scf
-                        ret
-
-                        include "./Maths/ADDHLDESignBC.asm"
 
 ADDHLDESignedv3:        ld      a,h
                         and     SignOnly8Bit
@@ -707,43 +608,6 @@ XX12CalcZ:              N0equN1byN2div256 varQ,(hl),(UBnkZScaled)       ; Q = |s
 ; Now we exit with A = result S = Sign        
                         ret
 
-; added where sign is separate byte
-;;;XX12DotOneRowV2:        
-;;;XX12CalcXV2:
-;;;        ld      a,(hl)
-;;;        ld      de,(UBnkXScaled)
-;;;        ld      b,d
-;;;        ld      d,a
-;;;        mul
-;;;        ld      a,e
-;;;        ld      (varT),a
-;;;XX12CalcXSignV2:
-;;;        inc     hl
-;;;        ld      a,(hl)
-;;;        xor     b
-;;;        ld      (varS),a
-;;;XX12CalcYV2:
-;;;        inc     hl
-;;;        ld      de,(UBnkYScaled)
-;;;        ld      b,d
-;;;        ld      d,a
-;;;        mul
-;;;        ld      a,e
-;;;        ld      (varQ),a
-;;;        ld      a,(varT)
-;;;        ld      (varR),a
-;;;XX12CalcYSignV2:
-;;;        inc     hl
-;;;        ld      a,(hl)
-;;;        xor     b
-;;;        ld      (varS),a
-;;;XX12CalcXPlusYV2:
-;;;        push    hl
-;;;        call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA) \ 1byte add (subtract)
-;;;        pop     hl
-;;;        ld      (varT),a                            ; var S already holds sign
-;;;       ret
-
 
 ;-- LL51---------------------------------------------------------------------------------------------------------------------------
 ;TESTED OK
@@ -959,13 +823,7 @@ SetAndMop\1:
         ld          (UBnK\0lo),hl                       ; XX15+0
 FinishedThisNode\1
                     ENDM
-                    
-;------------------------------------------------------------------------------------------------------------------------------
-CopyByteAtNextHL:   MACRO targetaddr
-                    inc         hl                                  ; vertex byte#1
-                    ld          a,(hl)                              ;
-                    ld          (targetaddr),a                     ; XX15+2 = (V),Y
-                    ENDM
+
 ;--LL52 to LL55-----------------------------------------------------------------------------------------------------------------                    
 
 TransposeXX12NodeToXX15:
@@ -1354,120 +1212,29 @@ EyeStoreYPoint:                                    ; also from LL62, XX3 node he
 ;        nosev_z = nosev_z + beta * nosev_y_hi
 
 
-
-; 1> (-a)-(-b)=  if ABS(a)> ABS(B), 1A> (ABS(a)-abs(b))*-1 Else 1B> (ABS(b)-abs(a))
-; 2> (+a)-(+b)=  if ABS(a) > ABS(B),2A>  ABS(a)- abs (B)   else 2B> (ABS(B) - abs(A) * -1
-; 3> (-a)-(+b)=  3A> (ABS(a) + ABS(b)) * -1
-; 4> (+a)-(-b)=  4A> ABS(a) + ABS(b)
-;AHLequUbnkYminusAHL:    ld      b,a                 ; b =sign of subtraction
-;                        ex      de,hl               ; de = amount to subtract
-;                        ld      hl,(UBnKylo)        ; hl = unsigned Y position
-;                        ld      a,(UBnKysgn)        ; ahl = signed Y corrodinate
-;                        ld      c,a                 ; we may need the sign later
-;                        xor     b                   ; now we need to see if signs were different or same                       
-;                        JumpIfNegative .SignsDifferent  ; if zer fk==
-;.SignsTheSame:          call    compare16HLDE       ; if signs were the saem tehn
-;                        jr      c,.HLLessThanDE     ; if abs(y) < ABS (hl) then do scenario 2B
-;.HLGreaterDE:           sub     hl,de               ; Scenario 1A> & 2A> sub hl from de and leave sign the same
-;                        ld      a,h
-;                        or      l
-;                        jr      z,.HLGTDEZero
-;                        ld      a,c                 ; get back ubnkysign as hl > de we use y sign
-;                        ret
-;.HLGTDEZero:            xor     a
-;                        ret                         ; if the result was zero set sign to zero too
-;.HLLessThanDE:          ex      de,hl               ; if signs were same but DE > ypos then cover secnario 1B and 2B
-;                        sub     hl,de               ; 
-;                        ld      a,h
-;                        or      l
-;                        jr      z,.HLLTDEZero
-;                        ld      a,c
-;                        xor     $80                 ; flip sign bit to cover 1B> and 2B?
-;                        ret
-;.HLLTDEZero:            xor     a
-;                        ret     
-;.SignsDifferent:        add     hl,de               ; if they are oppos
-;                        ld      a,h
-;                        or      l
-;                        jr      z,.HLLTDEZero
-;                        ld      a,c                 ; then we always use the sign of y even if hl > de or de < hl
-;                        ret    
-;
-;----------------------------------------------------------------------------------------------------------
-;AHLequKminusAHL:        ld      b,a                 ; b =sign of subtraction
-;                        ex      de,hl               ; de = amount to subtract
-;                        ld      hl,(varKp1)         ; Ahl = K
-;                        ld      a,(varKp3)          ; 
-;                        ld      c,a                 ; we may need the sign later
-;                        xor     b                   ; now we need to see if signs were different or same                       
-;                        JumpIfNegative .SignsDifferent  ; if zer fk==
-;.SignsTheSame:          call    compare16HLDE       ; if signs were the saem tehn
-;                        jr      c,.HLLessThanDE     ; if abs(y) < ABS (hl) then do scenario 2B
-;.HLGreaterDE:           sub     hl,de               ; Scenario 1A> & 2A> sub hl from de and leave sign the same
-;                        ld      a,h
-;                        or      l
-;                        jr      z,.HLGTDEZero
-;                        ld      a,c                 ; get back ubnkysign as hl > de we use y sign
-;                        ret
-;.HLGTDEZero:            xor     a
-;                        ret                         ; if the result was zero set sign to zero too
-;.HLLessThanDE:          ex      de,hl               ; if signs were same but DE > ypos then cover secnario 1B and 2B
-;                        sub     hl,de               ; 
-;                        ld      a,h
-;                        or      l
-;                        jr      z,.HLLTDEZero
-;                        ld      a,c
-;                        xor     $80                 ; flip sign bit to cover 1B> and 2B?
-;                        ret
-;.HLLTDEZero:            xor     a
-;                        ret     
-;.SignsDifferent:        add     hl,de               ; if they are oppos
-;                        ld      a,h
-;                        or      l
-;                        jr      z,.HLLTDEZero
-;                        ld      a,c                 ; then we always use the sign of y even if hl > de or de < hl
-;                        ret    
-;-------------------------------------------------------------------------------------------------------------
-
-;AHLequUbnkZplusAHL:     ld      b,a                 ; b =sign of subtraction
-;                        ex      de,hl               ; de = amount to subtract
-;                        ld      hl,(UBnKzlo)        ; hl = unsigned Y position
-;                        ld      a,(UBnKzsgn)        ; ahl = signed Y corrodinate
-;                        ld      c,a                 ; we may need the sign later
-;                        xor     b                   ; now we need to see if signs were different or same                       
-;                        JumpIfNegative .SignsDifferent  ; if zer fk==
-;.SignsTheSame:          add     hl,de
-;                        ld      a,h
-;                        or      l
-;                        jr      z,.HLGTDEZero
-;                        ld      a,c                 ; get back ubnkysign as hl > de we use y sign
-;                        ret
-;.HLGTDEZero:            xor     a
-;                        ret                         ; if the result was zero set sign to zero too
-;.HLLTDEZero:            xor     a
-;                        ret     
-;.SignsDifferent:        call    compare16HLDE       ; if signs were the saem tehn
-;                        jr      c,.HLLessThanDE     ; if abs(y) < ABS (hl) then do scenario 2B
-;.HLGreaterDE:           sub     hl,de               ; Scenario 1A> & 2A> sub hl from de and leave sign the same
-;                        ld      a,h
-;                        or      l
-;                        jr      z,.HLGTDEZero
-;                        ld      a,c                 ; get back ubnkysign as hl > de we use y sign
-;                        ret
-;.HLLessThanDE:          ex      de,hl               ; if signs were same but DE > ypos then cover secnario 1B and 2B
-;                        sub     hl,de               ; 
-;                        ld      a,h
-;                        or      l
-;                        jr      z,.HLLTDEZero
-;                        ld      a,c
-;                        xor     $80                 ; flip sign bit to cover 1B> and 2B?
-;                        ret
-
-
-
-
+; ---------------------------------------------------------------------------------------------------------------------------------    
             INCLUDE "./Universe/ApplyMyRollAndPitch.asm"
             INCLUDE "./Universe/ApplyShipRollAndPitch.asm"
+            INCLUDE "./ModelRender/DrawLines.asm"
+; ---------------------------------------------------------------------------------------------------------------------------------    
+
+
+ProcessDot:                 call    CopyRotmatToTransMat             ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
+                            call    ScaleXX16Matrix197               ;#02; Normalise XX16
+                            call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
+                            call    InverseXX16                      ;#11; Invert rotation matrix
+                            ld      hl,0
+                            ld      (UBnkXScaled),a
+                            ld      (UBnkYScaled),a
+                            ld      (UBnkZScaled),a
+                            xor     a
+                            call    XX12EquNodeDotOrientation
+                            call    TransposeXX12ByShipToXX15
+                            call	ScaleNodeTo8Bit					    ; scale to 8 bit values, why don't we hold the magnitude here?x
+                            ld      iy,UBnkNodeArray
+                            call    ProjectNodeToEye
+                            ret
+                 
 ; .....................................................
 ; Process Nodes does the following:
 ; for each node:
@@ -1476,52 +1243,70 @@ PNXX20DIV6          DB      0
 PNVERTEXPTR         DW      0   ; DEBUG WILL USE LATER
 PNNODEPRT           DW      0   ; DEBUG WILL USE LATER
 PNLASTNORM          DB      0
-ProcessNodes:
-    xor     a
-    ld      (UbnkLineArrayLen),a
-    call    CopyRotmatToTransMat             ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
-    call    ScaleXX16Matrix197               ;#02; Normalise XX16
-    call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
-    call    InverseXX16                      ;#11; Invert rotation matrix
-    ld      hl,UBnkHullVerticies
-    ld      a,(VertexCtX6Addr)               ; get Hull byte#8 = number of vertices *6                                   ;;;
-GetActualVertexCount:
-    ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
-    ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
-    ld      d,6
-    call    asm_div8                         ; asm_div8 C_Div_D - C is the numerator, D is the denominator, A is the remainder, B is 0, C is the result of C/D,D,E,H,L are not changed"
-    ld      b,c                              ; c = number of vertices
-    ld      iy,UBnkNodeArray
+ProcessNodes:           xor     a
+                        ld      (UbnkLineArrayLen),a
+                        call    CopyRotmatToTransMat             ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
+                        call    ScaleXX16Matrix197               ;#02; Normalise XX16
+                        call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
+                        call    InverseXX16                      ;#11; Invert rotation matrix
+                        ld      hl,UBnkHullVerticies
+                        ld      a,(VertexCtX6Addr)               ; get Hull byte#8 = number of vertices *6                                   ;;;
+GetActualVertexCount:   ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
+                        ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
+                        ld      d,6
+                        call    asm_div8                         ; asm_div8 C_Div_D - C is the numerator, D is the denominator, A is the remainder, B is 0, C is the result of C/D,D,E,H,L are not changed"
+                        ld      b,c                              ; c = number of vertices
+                        ld      iy,UBnkNodeArray
 LL48:   
-PointLoop:	
-	push	bc                                  ; save counters
-	push	hl                                  ; save verticies list pointer
-	push	iy                                  ; save Screen plot array pointer
-    ld      a,b
-    ;break
-    call    CopyNodeToXX15                      ; copy verices at hl to xx15
-	ld		a,(UBnkXScaledSign)
-	call    XX12EquNodeDotOrientation
-	call    TransposeXX12ByShipToXX15
-	call	ScaleNodeTo8Bit					    ; scale to 8 bit values, why don't we hold the magnitude here?x
-	pop		iy                                  ; get back screen plot array pointer
-	call    ProjectNodeToEye                     ; set up screen plot list entry
+PointLoop:	            push	bc                                  ; save counters
+                        push	hl                                  ; save verticies list pointer
+                        push	iy                                  ; save Screen plot array pointer
+                        ld      a,b
+                        ;break
+                        call    CopyNodeToXX15                      ; copy verices at hl to xx15
+                        ld		a,(UBnkXScaledSign)
+                        call    XX12EquNodeDotOrientation
+                        call    TransposeXX12ByShipToXX15
+                        call	ScaleNodeTo8Bit					    ; scale to 8 bit values, why don't we hold the magnitude here?x
+                        pop		iy                                  ; get back screen plot array pointer
+                        call    ProjectNodeToEye                     ; set up screen plot list entry
    ; ld      hl,UbnkLineArrayLen
   ;  inc     (hl)                                ; another node done
-ReadyForNextPoint:
-	push	iy                                  ; copy screen plot pointer to hl
-	pop		hl
-	ld		a,4
-	add		hl,a
-	push	hl                                  ; write it back at iy + 4
-	pop		iy								    ; and put it in iy again
-	pop		hl                                  ; get hl back as vertex list
-	ld		a,6
-	add 	hl,a                                ; and move to next vertex
-	pop		bc                                  ; get counter back
-	djnz	PointLoop
+ReadyForNextPoint:      push	iy                                  ; copy screen plot pointer to hl
+                        pop		hl
+                        ld		a,4
+                        add		hl,a
+                        push	hl                                  ; write it back at iy + 4
+                        pop		iy								    ; and put it in iy again
+                        pop		hl                                  ; get hl back as vertex list
+                        ld		a,6
+                        add 	hl,a                                ; and move to next vertex
+                        pop		bc                                  ; get counter back
+                        djnz	PointLoop
 ; ......................................................   
-    ret                                         
+                        ClearCarryFlag
+                        ret                                         
+
+; ......................................................   
+ProcessShip:            call    CheckDistance
+                        ret     c
+.IsItADot:              ld      a,(UBnKDrawAsDot)
+                        and     a
+                        jr      z,.CarryOnWithDraw                        
+.itsJustADot:           ld      bc,(UBnkNodeArray)          ; if its at dot range
+                        ld      a,$FF                       ; just draw a pixel
+                        MMUSelectLayer2                     ; then go to update radar
+                        call    l2_plot_pixel               ; 
+                        ClearCarryFlag
+                        ret
+.CarryOnWithDraw:       call    ProcessNodes
+                        call    CullV2
+                        call    PrepLines
+                        call    DrawLines
+                        ClearCarryFlag
+                        ret 
+; ......................................................   
+
 ;-LL49-----------------------------------------------------------------------------------------------------------------------------
 ;  Entering Here we have the following:
 ;  XX15(1 0) = vertex x-coordinate but sign not populated

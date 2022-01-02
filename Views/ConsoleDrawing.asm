@@ -226,7 +226,7 @@ GetShipColorBright:     MACRO
                         
 ; This will go though all the universe ship data banks and plot, for now we will just work on one bank
 UpdateScannerShip:      
-                        ld      a,(UBnkexplDsp)             ; if bit 4 is clear then ship should not be drawn
+                        ld      a,(UBnKexplDsp)             ; if bit 4 is clear then ship should not be drawn
                         bit     4,a                         ; .
                         ;DEBUG ret     z                           ; .
                         ld      a,(ShipTypeAddr)            ; if its a planet or sun, do not display

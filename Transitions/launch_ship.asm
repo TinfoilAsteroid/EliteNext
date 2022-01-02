@@ -258,8 +258,7 @@ loop_docking_ship:      call    LaunchTubeEdges
                         ld      a,$80
                         call    l2_draw_box
                         ret 
-.FinishedDocking        ld      a,ScreenStatus              ; Force move to status screen
-                        ld      (ScreenTransitionForced),a
+.FinishedDocking        ForceTransition ScreenStatus              ; Force move to status screen
                         ret
 
   

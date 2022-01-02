@@ -21,6 +21,8 @@ MenuShrChtAddr          equ $c000
 MenuStatusAddr          equ $c000
 MenuSystemAddr          equ $c000
 ViewFrontAddr           equ $c000
+SunBankAddr             equ $c000
+PlanetBankAddr          equ $c000
 UniverseBankAddr	    equ $c000
 LaunchShipAddr          equ $c000
 membank7 			    equ $e000
@@ -38,6 +40,8 @@ ConsoleImageAddr        equ $e000
 GalaxyDataAddr          equ $e000
 
 DMACpySourceMMU		    equ	MMU_SLOT_0_REGISTER
+SunMMU 		            equ MMU_SLOT_6_REGISTER
+PlanetMMU 		        equ MMU_SLOT_6_REGISTER
 UniverseMMU 		    equ MMU_SLOT_6_REGISTER
 ScreenBankMMU           equ MMU_SLOT_6_REGISTER
 MenuEquipSMMU           equ MMU_SLOT_6_REGISTER
@@ -94,6 +98,8 @@ BankUNIVDATA9           equ 79
 BankUNIVDATA10          equ 80
 BankUNIVDATA11          equ 81
 BankUNIVDATA12          equ 82
+BankSunData             equ 83
+BankPlanetData          equ 84
  
 BankGalaxyData0         equ 91
 BankGalaxyData1         equ 92

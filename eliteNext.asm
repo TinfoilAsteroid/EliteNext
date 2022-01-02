@@ -52,10 +52,12 @@ ScreenHyperspace EQU ScreenDocking+1
     INCLUDE "./Data/ShipModelEquates.asm"
     INCLUDE "./Macros/MMUMacros.asm"
     INCLUDE "./Macros/ShiftMacros.asm"
+    INCLUDE "./Macros/MathsMacros.asm"
     INCLUDE "./Macros/CopyByteMacros.asm"
     INCLUDE "./Macros/GeneralMacros.asm"
     INCLUDE "./Macros/ldCopyMacros.asm"
     INCLUDE "./Macros/ldIndexedMacros.asm"
+    INCLUDE "./Variables/general_variables_macros.asm"
 
 
 charactersetaddr		equ 15360
@@ -75,8 +77,7 @@ STEPDEBUG               equ 1
                         call		sprite_load_sprite_data
 Initialise:             MMUSelectLayer2
                         call 		l2_initialise
-                        ld          a,$FF
-                        ld          (ScreenTransitionForced),a
+                        ClearForceTransition
 TidyDEBUG:              ld          a,16
                         ld          (TidyCounter),a
 
@@ -122,7 +123,7 @@ InitialiseMainLoop:     xor     a
                         ld      (DockedFlag),a
 ;                        call    InitialiseFrontView
                         call    InitialiseCommander
-                        MMUSelectUniverseN 0    
+                        MMUSelectUniverseN 2    
                         call    SetInitialShipPosition
                                                
                         MMUSelectStockTable
@@ -169,41 +170,7 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
                         ld      a,h
                         or      l
                         jr      z,.NoHyperspace                               ; note message end will tidy up display
-.HyperSpaceMessage:     MMUSelectLayer1
-                        ;break
-                        call    DisplayHyperCountDown
-.UpdateHyperCountdown:  ld      hl,(InnerHyperCount)
-                        dec     l
-                        jr      nz,.decHyperInnerOnly
-                        dec     h
-                        jp      m,.HyperCountDone
-.resetHyperInner:       ld      l,$0B
-                        push    hl
-                        ld      d,12
-                        ld      a,L1ColourPaperBlack | L1ColourInkYellow
-                        call    l1_attr_cls_2DlinesA
-                        ld      d,12 * 8
-                        call    l1_cls_2_lines_d
-                        ld      de,$6000
-                        ld      hl,Hyp_centeredTarget
-                        call    l1_print_at
-                        ld      de,$6800
-                        ld      hl,Hyp_centeredCharging
-                        call    l1_print_at
-                        pop     hl
-.decHyperInnerOnly:     ld      (InnerHyperCount),hl
-                        jr      .DoneHyperCounter
-.HyperCountDone:        ld      hl,0
-                        ld      (InnerHyperCount),hl
-                        ld      d,12
-                        ld      a,L1ColourPaperBlack | L1ColourInkBlack
-                        call    l1_attr_cls_2DlinesA
-                        ld      d,12 * 8
-                        call    l1_cls_2_lines_d
-                        ld      a,ScreenHyperspace                            ; transition to hyperspace
-                        ld      (ScreenTransitionForced),a
-; do some enbaling jump code and jump trasition
-.DoneHyperCounter:                      
+                        call    HyperSpaceMessage
 .NoHyperspace:          MMUSelectLayer2
                         call   l2_cls                        
                         MMUSelectLayer1
@@ -214,6 +181,8 @@ StarUpdateBank:         MMUSelectViewFront                                    ; 
 StarUpdateRoutine:      call   StarsForward                                   ; This needs to be self modifying
 PrepLayer2:             MMUSelectLayer2                                       ; Clear layer 2 for graphics
                       ;  call   l2_cls                        
+;ProcessSun:             call    DrawForwardSun
+ProcessPlanet:
 ProcessShipModels:      call    DrawForwardShips                              ; Draw all ships (this may need to be self modifying)
                         call   UpdateConsole                                  ; Update display console on layer 1
                         jp LoopRepeatPoint                                    ; And we are done with views, so check if there was a special command to do
@@ -252,12 +221,8 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not worki
                         ld      (PresentSystemX),hl
                         ld      b,h
                         ld      c,l
-                        ld      a,(Fuel)
-                        ld      hl,Distance
-                        sub     a,(hl)
-                        ld      (Fuel),a
-                        ld      a,ScreenFront
-                        ld      (ScreenTransitionForced),a
+                        CorrectPostJumpFuel
+                        ForceTransition ScreenFront            ; This will also trigger stars 
                         ld      a,$00
                         ld      (DockedFlag),a
                         call    GalaxyGenerateDesc             ; bc  holds new system to generate system
@@ -268,6 +233,24 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not worki
                         MMUSelectStockTable                    ; .
                         call    generate_stock_market          ; generate new prices
                         call    ClearUnivSlotList              ; clear out any ships
+                        call    ResetPlayerShip
+                        HalveFugitiveStatus                    ; halves status and brings bit into carry
+                        MMUSelectSun
+                        call    CreateSun                      ; create the local sun and set position based on seed
+;TODO                        call    generateSunAndPlanetPos        ; uses current carry state too
+;TODO.CreateSun:             call    SetSunSlot
+; PROBABLY NOT NEEDED NOW                      MMUSelectShipBank1
+; PROBABLY NOT NEEDED NOW                      call    GetShipBankId
+;;SELECT CORRECT BANK                        MMUSelectUniverseN 0
+;;TODO                        call    CopyBodyToUniverse
+;;TODO                        call    CreateSun
+;;TODOCreatePlanet:          call    SetPlanetSlot
+;;TODO                       MMUSelectShipBank1
+;;TODO                       call    GetShipBankId
+;;TODO                       MMUSelectUniverseBankN 1
+;;TODO                       call    CopyBodyToUniverse
+
+                        ; reset main loop counters
                         ; from BBC TT18 jump code
                         ; need to set system corrodinates, flush out univere ships etc
                         ; set up new star system and landing location in system     
@@ -297,6 +280,39 @@ BruteForceChange:      ld      d,a
                         call    SetScreenAIX
                         jp MainLoop
 
+;..Hyperspace counter............................................................................................................
+HyperSpaceMessage:      MMUSelectLayer1
+                        call    DisplayHyperCountDown
+.UpdateHyperCountdown:  ld      hl,(InnerHyperCount)
+                        dec     l
+                        jr      nz,.decHyperInnerOnly
+                        dec     h
+                        ret     m
+.resetHyperInner:       ld      l,$0B
+                        push    hl
+                        ld      d,12
+                        ld      a,L1ColourPaperBlack | L1ColourInkYellow
+                        call    l1_attr_cls_2DlinesA
+                        ld      d,12 * 8
+                        call    l1_cls_2_lines_d
+                        ld      de,$6000
+                        ld      hl,Hyp_centeredTarget
+                        call    l1_print_at
+                        ld      de,$6800
+                        ld      hl,Hyp_centeredCharging
+                        call    l1_print_at
+                        pop     hl
+.decHyperInnerOnly:     ld      (InnerHyperCount),hl
+                        ret
+.HyperCountDone:        ld      hl,0
+                        ld      (InnerHyperCount),hl
+                        ld      d,12
+                        ld      a,L1ColourPaperBlack | L1ColourInkBlack
+                        call    l1_attr_cls_2DlinesA
+                        ld      d,12 * 8
+                        call    l1_cls_2_lines_d
+                        ForceTransition ScreenHyperspace                            ; transition to hyperspace
+                        ret
 ;..................................................................................................................................
 ;..Update Universe Objects.........................................................................................................
 UpdateUniverseObjects:  xor     a
@@ -357,42 +373,68 @@ DockingCheck:           ld      bc,(UBnKxlo)
 .AreDocking:            MMUSelectLayer1
                         ld        a,$6
                         call      l1_set_border
-.EnterDockingBay:       ld      a,ScreenDocking
-                        ld      (ScreenTransitionForced),a
+.EnterDockingBay:       ForceTransition ScreenDocking
                         ret
+
+;..................................................................................................................................                        
+;; TODODrawForwardSun:         MMUSelectSun
+;; TODO                        ld      a,(SunKShipType)
+;; TODO.ProcessBody:           cp      129
+;; TODO                        jr      nz,.ProcessPlanet
+;; TODO.ProcessSun:            call    ProcessSun
+;; TODO
+;; TODOProcessSun:             call    CheckSunDistance
+;; TODO
+;; TODO                        ret
+;; TODO.ProcessPlanet:         call    ProcessPlanet
+;; TODO                        ret                        
 ;..................................................................................................................................                        
 DrawForwardShips:       xor     a
-DrawShipLoop:           push    af
+DrawShipLoop:           ld      (CurrentShipUniv),a
                         call    GetTypeAtSlotA
                         cp      $FF
                         jr      z,ProcessedDrawShip
 ; Add in a fast check for ship behind to process nodes and if behind jump to processed Draw ship
-SelectShipToDraw:       pop     af
-                        push    af
+SelectShipToDraw:       ld      a,(CurrentShipUniv)
                         MMUSelectUniverseA
                         ;break
-                        call    CheckDistance
-                        jr      c,UpdateRadar               ; it can't be drawn if carry is set by may appear on radar
-                        call    ProcessNodes
-DrawShip:               ;call   SetAllFacesVisible
-                        call    CullV2				        ; culling but over aggressive backface assumes all 0 up front TOFIX
-                        call    PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
-                        pop     af
-                        push    af
-                        MMUSelectUniverseA
-                        call   DrawLines                   ; Need to plot all lines
-                        ld      a,BankFrontView
-                        MMUSelectScreenA
-                        pop     af
-                        push    af
-                        MMUSelectUniverseA
-UpdateRadar:            call    UpdateScannerShip
-ProcessedDrawShip:      pop     af
+                        ; Need check for exploding here
+.ProcessUnivShip:       call    ProcessShip             ;; call    ProcessUnivShip
+UpdateRadar: 
+;;;Does nothing                       ld      a,BankFrontView
+;;;Does nothing                       MMUSelectScreenA
+;;;Does nothing         ld      a,(CurrentShipUniv)
+;;;Does nothing         MMUSelectUniverseA
+                        call    UpdateScannerShip
+ProcessedDrawShip:      ld      a,(CurrentShipUniv)
                         inc     a
                         JumpIfALTNusng   UniverseListSize, DrawShipLoop
                         ret    
 ;..................................................................................................................................
+CurrentShipUniv:        DB      0
 
+;;;ProcessUnivShip:        call    CheckDistance               ; Will check for negative Z and skip (how do we deal with read and side views? perhaps minsky transformation handles that?)
+;;;                        ret     c
+;;;                        ld      a,(UbnkDrawAsDot)
+;;;                        and     a
+;;;                        jr      z,.CarryOnWithDraw
+;;;.itsJustADot:           ld      bc,(UBnkNodeArray)          ; if its at dot range
+;;;                        ld      a,$FF                       ; just draw a pixel
+;;;                        MMUSelectLayer2                     ; then go to update radar
+;;;                        call    l2_plot_pixel               ; 
+;;;                        ClearCarryFlag
+;;;                        ret
+;;;.ProcessShipNodes:      call    ProcessShip
+;;;
+;;;call    ProcessNodes ; it hink here we need the star and planet special cases
+;;;.DrawShip:              call    CullV2				        ; culling but over aggressive backface assumes all 0 up front TOFIX
+;;;                        call    PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
+;;;                        ld      a,(CurrentShipUniv)
+;;;                        MMUSelectUniverseA
+;;;                        call   DrawLines
+;;;                        ClearCarryFlag
+;;;                        ret                        
+                        
     
 TestForNextShip:        ld      a,c_Pressed_Quit
                         call    is_key_pressed
@@ -408,7 +450,7 @@ TestForNextShip:        ld      a,c_Pressed_Quit
                         ld      b,a
                         xor     a
                         call    SetSlotAToTypeB
-                        MMUSelectUniverseN 0
+                        MMUSelectUniverseN 2
                         call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
                         ld      a,(currentDemoShip)
                         MMUSelectShipBank1
@@ -676,8 +718,8 @@ ScreenTransitionForced  DB $FF
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 LaunchedFromStation:    call    ClearUnivSlotList
-                        xor     a
-                        call    SetSlotAToSpaceStation              ; set slot 0 to space station
+                        ld      a,1
+                        call    SetSlot1ToSpaceStation              ; set slot 1 to space station
                         MMUSelectUniverseA                          ; Prep Target universe
                         MMUSelectShipBank1                          ; Bank in the ship model code
                         ld      a,CoriloisStation
@@ -688,8 +730,9 @@ LaunchedFromStation:    call    ClearUnivSlotList
 .BuiltStation:          call    ResetStationLaunch
 .NowInFlight:           xor     a
                         ld      (DockedFlag),a
-                        ld      a,ScreenFront
-                        ld      (ScreenTransitionForced),a                        
+                        ForceTransition ScreenFront
+                        call    ResetPlayerShip
+                        break
                         ret
     
 InitialiseCommander:    ld      a,(ScreenCmdr+1)
@@ -703,9 +746,7 @@ InitialiseFrontView:    ld      a,(ScreenKeyFront+1)
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 SetScreenAIX:           ld      (ScreenIndex),a                 ; Set screen index to a
-                        xor     a
-                        dec     a                               ; set A to FF
-                        ld      (ScreenTransitionForced),a      ; In case it was called by a brute force change in an update loop
+                        ClearForceTransition                    ; In case it was called by a brute force change in an update loop
                         ld      (ScreenChanged),a               ; Set screen changed to FF
                         ld      a,(ix+4)                        ; Screen Map Byte 4   - Bank with Display code
                         ld      (ScreenLoopBank+1),a            ; setup loop            
@@ -900,9 +941,9 @@ XX12PVarSign3		DB 0
 		    
     include "./Universe/StarRoutines.asm"
 ;    include "Universe/move_object-MVEIT.asm"
-    include "./ModelRender/draw_object.asm"
-    include "./ModelRender/draw_ship_point.asm"
-    include "./ModelRender/drawforwards-LL17.asm"
+;    include "./ModelRender/draw_object.asm"
+;    include "./ModelRender/draw_ship_point.asm"
+;    include "./ModelRender/drawforwards-LL17.asm"
     
     INCLUDE	"./Hardware/memfill_dma.asm"
     INCLUDE	"./Hardware/memcopy_dma.asm"
@@ -923,9 +964,11 @@ XX12PVarSign3		DB 0
 ;INCLUDE "Tables/inwk_table.asm" This is no longer needed as we will write to univer object bank
 
 ; Include all maths libraries to test assembly
+    
     INCLUDE "./Maths/addhldesigned.asm"
     INCLUDE "./Maths/addhlasigned.asm"
     INCLUDE "./Maths/Utilities/AddDEtoCash.asm"
+    INCLUDE "./Maths/DIVD3B2.asm"
     INCLUDE "./Maths/multiply.asm"
     INCLUDE "./Maths/asm_square.asm"
     INCLUDE "./Maths/asm_sqrt.asm"
@@ -935,6 +978,7 @@ XX12PVarSign3		DB 0
     INCLUDE "./Maths/negate16.asm"
     INCLUDE "./Maths/normalise96.asm"
     INCLUDE "./Maths/binary_to_decimal.asm"
+    include "./Maths/ADDHLDESignBC.asm"    
 ;INCLUDE "badd_ll38.asm"
 ;;INCLUDE "XX12equXX15byXX16.asm"
     INCLUDE "./Maths/Utilities/AequAdivQmul96-TIS2.asm"
@@ -1088,6 +1132,8 @@ ShipBankTable:
 ShipBankTable1:         MShipBankTable
 CopyShipToUniverse:
 CopyShipToUniverse1     MCopyShipToUniverse     BankShipModels1
+CopyBodyToUniverse:
+CopyBodyToUniverse1:    MCopyBodyToUniverse     CopyShipToUniverse1
     INCLUDE "./Data/ShipModelMetaData1.asm"
 ; Bank 67  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ShipModelsAddr
@@ -1101,6 +1147,8 @@ CopyEdgesToUniv2:       McopyEdgesToUniverse
 CopyNormsToUniv2:       McopyNormsToUniverse
 ShipBankTable2:         MShipBankTable
 CopyShipToUniverse2     MCopyShipToUniverse     BankShipModels2
+CopyBodyToUniverse2:    MCopyBodyToUniverse     CopyShipToUniverse2
+
     INCLUDE "./Data/ShipModelMetaData2.asm"
 ; Bank 68  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ShipModelsAddr
@@ -1114,6 +1162,7 @@ CopyEdgesToUniv3:       McopyEdgesToUniverse
 CopyNormsToUniv3:       McopyNormsToUniverse    
 ShipBankTable3:         MShipBankTable
 CopyShipToUniverse3     MCopyShipToUniverse     BankShipModels3
+CopyBodyToUniverse3:    MCopyBodyToUniverse     CopyShipToUniverse3
     INCLUDE "./Data/ShipModelMetaData3.asm"
 ;;Privisioned for more models ; Bank 69  ------------------------------------------------------------------------------------------------------------------------
 ;;Privisioned for more models     SLOT    ShipModelsAddr
@@ -1242,6 +1291,17 @@ UNIVDATABlock12     DB $FF
     
     DISPLAY "Galaxy Data - Bytes free ",/D, $2000 - ($- GalaxyDataAddr)
 
+; Bank 83  ------------------------------------------------------------------------------------------------------------------------
+    SLOT    SunBankAddr
+    PAGE    BankSunData
+	ORG	    SunBankAddr,BankSunData
+    INCLUDE "./Universe/Sun/sun_data.asm"
+
+; Bank 84  ------------------------------------------------------------------------------------------------------------------------
+    SLOT    PlanetBankAddr
+    PAGE    BankPlanetData
+	ORG	    PlanetBankAddr,BankPlanetData
+    ;TODO INCLUDE "./Universe/planet_data.asm"
 
     SLOT    GalaxyDataAddr
     PAGE    BankGalaxyData1

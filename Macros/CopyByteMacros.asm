@@ -16,4 +16,10 @@ CopyByteAtNextHLiyl: 	MACRO memloc
 						ld          a,(hl)                              ;
 						ld          (memloc),a                     ; XX15+2 = (V),Y
 						ENDM
-						
+
+;------------------------------------------------------------------------------------------------------------------------------
+CopyByteAtNextHL:   MACRO targetaddr
+                    inc         hl                                  ; vertex byte#1
+                    ld          a,(hl)                              ;
+                    ld          (targetaddr),a                     ; SunXX15+2 = (V),Y
+                    ENDM

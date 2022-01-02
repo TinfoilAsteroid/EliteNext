@@ -33,10 +33,10 @@ InitialiseLineRead:
         ld          hl,UbnkLineArray                    ; head of array
         ld          (varU16),hl                         ; store current line array pointer un varU16
         ldCopyByte  EdgeCountAddr, XX17                 ; XX17  = total number of edges to traverse edge counter
-        ld          a,(UBnkexplDsp)                     ; get explosion status
+        ld          a,(UBnKexplDsp)                     ; get explosion status
         JumpOnBitClear a,6,CalculateNewLines            ; LL170 bit6 of display state clear (laser not firing) \ Calculate new lines
         and         $BF                                 ; else laser is firing, clear bit6.
-        ld          (UBnkexplDsp),a                     ; INWK+31
+        ld          (UBnKexplDsp),a                     ; INWK+31
 ;   TODO commentedout as teh subroutine is a mess   call        AddLaserBeamLine                    ; add laser beam line to draw list
 ; NOw we can calculate hull after including laser line        
 CalculateNewLines:

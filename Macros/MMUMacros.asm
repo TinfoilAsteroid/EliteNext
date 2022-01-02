@@ -55,6 +55,14 @@ MMUSelectCpySrcN:    MACRO value
                      nextreg DMACpySourceMMU,	value
 					 ENDM	
          
+MMUSelectSun:        MACRO
+                     nextreg SunMMU,            BankSunData
+                     ENDM
+
+MMUSelectPlanet:     MACRO
+                     nextreg PlanetMMU,         PlanetBankAddr
+                     ENDM
+
 MMUSelectUniverseA:  MACRO
                      add    a,BankUNIVDATA0
                      nextreg UniverseMMU,       a

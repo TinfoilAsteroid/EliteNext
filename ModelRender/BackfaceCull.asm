@@ -332,6 +332,8 @@ ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then 
 ;;;;;
 XX4Distance             DB      0
 
+                      
+
 CheckDistance:          ld      a,(UBnKzsgn)                 ; Is the ship behind us
 .CheckBehind:           and     SignOnly8Bit                 ; .
                         jr      nz,.ShipNoDraw               ; .
@@ -349,7 +351,7 @@ CheckDistance:          ld      a,(UBnKzsgn)                 ; Is the ship behin
                         ShiftHLRight1                       ; .
                         ld      a,h
                         srl     a                           ; if a / 16 <> 0 then ship is a dot
-.DrawAsDotCheck:        ;jr      z,.ShipIsADot
+.DrawAsDotCheck:        jp      z,.ShipIsADot
                         ; Check visbility distance
 .SetXX4Dist:            ld      a,l
                         rra                                 ; l may have had bit 0 of h carried in
@@ -357,11 +359,20 @@ CheckDistance:          ld      a,(UBnKzsgn)                 ; Is the ship behin
                         srl     a
                         srl     a
                         ld      (XX4Distance),a             ; XX4 = "all faces" distance
+                        xor     a
+                        ld      (UBnKDrawAsDot),a           ; set draw as dot to 0, i.e. false
                         ClearCarryFlag
                         ret
-.ShipNoDraw:            SetCarryFlag                        ; ship is behind so do not draw
+.ShipNoDraw:            SetCarryFlag                        ; ship is behind so do not draw, so we don't care abour draw as dot
                         ret
+.ShipIsADot:            call    ProcessDot                  ; use the same logic as process nodes to do 1 point
+                        xor     a
+                        ld      (UBnKDrawAsDot),a           ; set draw as dot to 0, i.e. false
+                        ClearCarryFlag
+                        ret
+                        
 
+; TODO remove all teh processing of rotmat to load craft to camera as its already been done
 CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;   
                        ; break                          
                         call    CopyRotmatToTransMat        ; XX16 = UBNKRotMat    

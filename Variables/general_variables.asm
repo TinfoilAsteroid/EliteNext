@@ -255,6 +255,8 @@ InnerHyperCount			DB 	0				; 2F QQ22+1
 OuterHyperCount			DB 	0				; 2E QQ22
 HyperCircle             DB  0
 ECMActive				DB 	0				; 30		ECM Active flag
+ECMLoopA                DB  0
+ECMLoopB                DB  0
 JSTX                    DW  0               ;           Joystick analog value
 ALPHA					DB	0				; 8D        Alpha with bit 7 sign
 ALP1					DB 	0				; 31		ALP1	Roll magnitude Also Apha
@@ -389,6 +391,9 @@ HeapHead				equ HeapStart
 ; For the UniverseSlot list, for an optimisation the type slot will be the ship type, e.g. ship type this will optimise searching for a station or star
 ; bit 7 will be set for a sun or planet so we can only ever have 128 types of ship, in relality there are about 3 types
 ; note this is ship type as it space station, transporter, pirate etc not model of ship
+; This replaces FRIN
+; slot 0 always equals the planet
+; slot 1 is the space station or sun depending on if we are in the space station safe zone)
 UniverseSlotList		DS UniverseListSize		; &0311 for 12 bytes Array of Free Index - Now array of while universe pages are occupied
 UniverseSlotCount       DS UniverseListSize * 2 ; To be implemented, keeps a count of each slot type, may merge into slot list and set as a DW
 CurrentUniverseAI       DB  0               ; used to cycle ships in each iterations of main loop
@@ -448,8 +453,8 @@ DampingKeys				DS  7				; 0387 - 038D
 ;  #&6 Does K toggle keyboard/joystick control -  03CD certainly makes keyboard not work anymore.
 ;  #&5 Does J reverse both joystick channels
 ;  #&4 Does Y reverse joystick Y channel			03CB
-;  #&3 Does F toggle flashing information			03CA
 ;  #&2 Does X toggle startup message display ? PATG?	03C9
+;  #&3 Does F toggle flashing information			03CA
 ;  #&1 Does A toggle keyboard auto-recentering ?
 ;  #&0 Caps-lock toggles keyboard flight damping
 NbrMissiles				DB	0				; 038B	Does this clash with Dampingkeys?
@@ -481,6 +486,14 @@ DisplayPopulation		DW	0				; 03BB \ QQ6  \ population*10
 DisplayProductivity		DW	0				; 03BD \ QQ7   \ productivity*10
 Distance          		DW	0				; 03BE \ QQ8 distince in 0.1LY units
 DisplayRadius			DW	0
+; --- Used in creation of sun and planet----;
+PlanetXPos     DS  1
+PlanetYPos     DS  1
+PlanetZPos     DS  1
+PlanetType     DS  1
+SunXPos        DS  1
+SunYPos        DS  1
+SunZPos        DS  1
 ; --- Galaxy Data --------------------------;
 Galaxy      			DB	0				; 0367 Galaxy (incremented with galactiv drive
 WorkingSeeds			DS	6
@@ -575,37 +588,12 @@ DialMiddleXPos          equ $E1
 RollMiddle              equ $8CE0  
 PitchMiddle             equ $94E0   
 
-                    
-
-MakeInnocentMacro:		MACRO
-						xor		a
-						ld		(FugitiveInnocentStatus),a
-						ENDM
-						
-NoEscapePodMacro:		MACRO
-						xor		a
-						ld		(EscapePod),a
-						ENDM				
-
-MaxFuelLevel            EQU     70              ; 7.0 light years max
-MaxFuelMacro:			MACRO
-						ld		a,MaxFuelLevel
-						ld		(Fuel),a
-						ENDM				
                         
-MaxThrottle:            MACRO
-                        ld      a,(SHIPMAXSPEED)
-                        ld      (DELTA),a
-                        ld      d,a
-                        ld      e,4
-                        mul
-                        ld      (DELT4Lo),de
-                        ENDM
-                        
-ZeroThrottle:           MACRO                        
-                        xor     a
-                        ld      (DELTA),a
-                        ld      (DELT4Lo),a
-                        ld      (DELT4Lo+1),a
-                        ENDM
+ResetPlayerShip:        ZeroThrottle
+                        ZeroPitch
+                        ZeroRoll
+                        ClearMissileTarget
+                        ClearECM
+                        ChargeEnergyAndShields
+                        ret
                         

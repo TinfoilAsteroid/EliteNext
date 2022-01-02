@@ -1,10 +1,10 @@
 ; -- Ship AI data
-
-UBnkspeed                   DB  0                       ; INWK +27
-UBnkAccel                   DB  0                       ; INWK +28
-UBnkrotXCounter             DB  0                       ; INWK +29
-UBnkrotZCounter             DB  0                       ; INWK +30
-UBnkexplDsp                 DB  0                       ; INWK +31 clear exploding/display state|missiles
+UBnKShipType                DB  0
+UBnKspeed                   DB  0                       ; INWK +27
+UBnKAccel                   DB  0                       ; INWK +28
+UBnKRotXCounter             DB  0                       ; INWK +29
+UBnKRotZCounter             DB  0                       ; INWK +30
+UBnKexplDsp                 DB  0                       ; INWK +31 clear exploding/display state|missiles
 ; Flags work as follows:
 ; 7 - Flag ship to be killed with debris
 ; 6 - Invisible/Erase (also mentions Laser Firing?)

@@ -30,7 +30,6 @@ GetShipModelIdC:        ld      c,a
 .Done:                  ld      a,BankShipModelsA
                         ClearCarryFlag
                         ret
-
 ;GINF:
                         IFDEF SHIPBANKA
 GetInfo:                                    ; gets pointer to ship data for ship type in a
@@ -184,258 +183,13 @@ ShipModelBank3           DB BankShipModelsA
                          DB BankShipModelsC
                          ENDIF
                          IFDEF SHIPBANKA
-ShipModelTableA:         DW Adder                                   ;00
-                         DW Anaconda                                ;01
-                         DW Asp_Mk_2                                ;02
-                         DW Asteroid                                ;03
-                         DW Boa                                     ;04
-                         DW Boulder                                 ;05
-                         DW Bushmaster                              ;06
-                         DW CargoType5                              ;07
-                         DW Chameleon                               ;08
-                         DW CobraMk3                                ;09
-                         DW Cobra_Mk_1                              ;10
-                         DW Cobra_Mk_3_P                            ;11
-                         DW Constrictor                             ;12
-                         DW Coriolis                                ;13
-                         DW Cougar                                  ;14
-                         DW Dodo                                    ;15
-                         DW Dragon                                  ;16
-                         DW Escape_Pod                              ;17
-                         DW Fer_De_Lance                            ;18
-                         DW Gecko                                   ;19
-                         DW Ghavial                                 ;20
-                         DW Iguana                                  ;21
-                         DW Krait                                   ;22
-                         DW Logo                                    ;23
-ShipVertexTableA:        DW AdderVertices
-                         DW AnacondaVertices
-                         DW Asp_Mk_2Vertices
-                         DW AsteroidVertices
-                         DW BoaVertices
-                         DW BoulderVertices
-                         DW BushmasterVertices
-                         DW CargoType5Vertices
-                         DW ChameleonVertices
-                         DW CobraMk3Vertices
-                         DW Cobra_Mk_1Vertices
-                         DW Cobra_Mk_3_PVertices
-                         DW ConstrictorVertices
-                         DW CoriolisVertices
-                         DW CougarVertices
-                         DW DodoVertices
-ShipEdgeTableA:          DW AdderEdges
-                         DW AnacondaEdges
-                         DW Asp_Mk_2Edges
-                         DW AsteroidEdges
-                         DW BoaEdges
-                         DW BoulderEdges
-                         DW BushmasterEdges
-                         DW CargoType5Edges
-                         DW ChameleonEdges
-                         DW CobraMk3Edges
-                         DW Cobra_Mk_1Edges
-                         DW Cobra_Mk_3_PEdges
-                         DW ConstrictorEdges
-                         DW CoriolisEdges
-                         DW CougarEdges
-                         DW DodoEdges
-ShipNormalTableA:        DW AdderNormals
-                         DW AnacondaNormals
-                         DW Asp_Mk_2Normals
-                         DW AsteroidNormals
-                         DW BoaNormals
-                         DW BoulderNormals
-                         DW BushmasterNormals
-                         DW CargoType5Normals
-                         DW ChameleonNormals
-                         DW CobraMk3Normals
-                         DW Cobra_Mk_1Normals
-                         DW Cobra_Mk_3_PNormals
-                         DW ConstrictorNormals
-                         DW CoriolisNormals
-                         DW CougarNormals
-                         DW DodoNormals
-ShipModelSizeTableA:     DW AdderLen
-                         DW AnacondaLen
-                         DW Asp_Mk_2Len
-                         DW AsteroidLen
-                         DW BoaLen
-                         DW BoulderLen
-                         DW BushmasterLen
-                         DW CargoType5Len
-                         DW ChameleonLen
-                         DW CobraMk3Len
-                         DW Cobra_Mk_1Len
-                         DW Cobra_Mk_3_PLen
-                         DW ConstrictorLen
-                         DW CoriolisLen
-                         DW CougarLen
-                         DW DodoLen
+
                          ENDIF
                          IFDEF SHIPBANKB
-ShipModelTableB:         DW Dragon                                  ;24
-                         DW Escape_Pod                              ;25
-                         DW Fer_De_Lance                            ;26
-                         DW Gecko                                   ;27
-                         DW Ghavial                                 ;28
-                         DW Iguana                                  ;29
-                         DW Krait                                   ;30
-                         DW Logo                                    ;31
-                         DW Mamba                                   ;32
-                         DW Missile                                 ;33
-                         DW Monitor                                 ;34
-                         DW Moray                                   ;35
-                         DW Ophidian                                ;36
-                         DW Plate                                   ;37
-                         DW Python                                  ;38
-                         DW Python_P                                ;39
-ShipVertexTableB:        DW DragonVertices                          
-                         DW Escape_PodVertices                      
-                         DW Fer_De_LanceVertices                    
-                         DW GeckoVertices                           
-                         DW GhavialVertices                         
-                         DW IguanaVertices                          
-                         DW KraitVertices                           
-                         DW LogoVertices                            
-                         DW MambaVertices
-                         DW MissileVertices
-                         DW MonitorVertices
-                         DW MorayVertices
-                         DW OphidianVertices
-                         DW PlateVertices
-                         DW PythonVertices
-                         DW Python_PVertices
-ShipEdgeTableB:          DW DragonEdges
-                         DW Escape_PodEdges
-                         DW Fer_De_LanceEdges
-                         DW GeckoEdges
-                         DW GhavialEdges
-                         DW IguanaEdges
-                         DW KraitEdges
-                         DW LogoEdges
-                         DW MambaEdges
-                         DW MissileEdges
-                         DW MonitorEdges
-                         DW MorayEdges
-                         DW OphidianEdges
-                         DW PlateEdges
-                         DW PythonEdges
-                         DW Python_PEdges
-ShipNormalTableB:        DW DragonNormals
-                         DW Escape_PodNormals
-                         DW Fer_De_LanceNormals
-                         DW GeckoNormals
-                         DW GhavialNormals
-                         DW IguanaNormals
-                         DW KraitNormals
-                         DW LogoNormals
-                         DW MambaNormals
-                         DW MissileNormals
-                         DW MonitorNormals
-                         DW MorayNormals
-                         DW OphidianNormals
-                         DW PlateNormals
-                         DW PythonNormals
-                         DW Python_PNormals
-ShipModelSizeTableB:     DW DragonLen
-                         DW Escape_PodLen
-                         DW Fer_De_LanceLen
-                         DW GeckoLen
-                         DW GhavialLen
-                         DW IguanaLen
-                         DW KraitLen
-                         DW LogoLen
-                         DW MambaLen
-                         DW MissileLen
-                         DW MonitorLen
-                         DW MorayLen
-                         DW OphidianLen
-                         DW PlateLen
-                         DW PythonLen
-                         DW Python_PLen
+
                          ENDIF
                          IFDEF SHIPBANKC
-ShipModelTableC:         DW Rattler                                 ;40
-                         DW Rock_Hermit                             ;41
-                         DW ShuttleType9                            ;42
-                         DW Shuttle_Mk_2                            ;43
-                         DW Sidewinder                              ;44
-                         DW Splinter                                ;45
-                         DW TestVector                              ;46
-                         DW Thargoid                                ;47
-                         DW Thargon                                 ;48
-                         DW TransportType10                         ;49
-                         DW Viper                                   ;50
-                         DW Worm                                    ;51
-                         DW 0                                       ;52
-                         DW 0                                       ;53
-                         DW 0                                       ;54
-                         DW 0                                       ;55
-ShipVertexTableC:        DW RattlerVertices
-                         DW Rock_HermitVertices
-                         DW ShuttleType9Vertices
-                         DW Shuttle_Mk_2Vertices
-                         DW SidewinderVertices
-                         DW SplinterVertices
-                         DW TestVectorVertices
-                         DW ThargoidVertices
-                         DW ThargonVertices
-                         DW TransportType10Vertices
-                         DW ViperVertices
-                         DW WormVertices
-                         DW 0
-                         DW 0
-                         DW 0
-                         DW 0
-ShipEdgeTableC:          DW RattlerEdges
-                         DW Rock_HermitEdges
-                         DW ShuttleType9Edges
-                         DW Shuttle_Mk_2Edges
-                         DW SidewinderEdges
-                         DW SplinterEdges
-                         DW TestVectorEdges
-                         DW ThargoidEdges
-                         DW ThargonEdges
-                         DW TransportType10Edges
-                         DW ViperEdges
-                         DW WormEdges
-                         DW 0
-                         DW 0
-                         DW 0
-                         DW 0
-ShipNormalTableC:        DW RattlerNormals
-                         DW Rock_HermitNormals
-                         DW ShuttleType9Normals
-                         DW Shuttle_Mk_2Normals
-                         DW SidewinderNormals
-                         DW SplinterNormals
-                         DW TestVectorNormals
-                         DW ThargoidNormals
-                         DW ThargonNormals
-                         DW TransportType10Normals
-                         DW ViperNormals
-                         DW WormNormals
-                         DW 0
-                         DW 0
-                         DW 0
-                         DW 0
-ShipModelSizeTableC:     DW RattlerLen
-                         DW Rock_HermitLen
-                         DW ShuttleType9Len
-                         DW Shuttle_Mk_2Len
-                         DW SidewinderLen
-                         DW SplinterLen
-                         DW TestVectorLen
-                         DW ThargoidLen
-                         DW ThargonLen
-                         DW TransportType10Len
-                         DW ViperLen
-                         DW WormLen
-                         DW 0
-                         DW 0
-                         DW 0
-                         DW 0
+
                          ENDIF
  
 
@@ -450,54 +204,13 @@ ShipNormalTable:        EQU ShipNormalTableA
                         ENDIF
                         
                         IFDEF SHIPBANKA
-                        include "Data/Ships/Adder.asm"
-                        include "Data/Ships/Anaconda.asm"
-                        include "Data/Ships/Asp_Mk_2.asm"
-                        include "Data/Ships/Asteroid.asm"
-                        include "Data/Ships/Boa.asm"
-                        include "Data/Ships/Boulder.asm"
-                        include "Data/Ships/Bushmaster.asm"
-                        include "Data/Ships/CargoType5.asm"
-                        include "Data/Ships/Chameleon.asm"
-                        include "Data/Ships/CobraMk3.asm"
-                        include "Data/Ships/Cobra_Mk_1.asm"
-                        include "Data/Ships/Cobra_Mk_3_P.asm"
-                        include "Data/Ships/Constrictor.asm"
-                        include "Data/Ships/Coriolis.asm"
-                        include "Data/Ships/Cougar.asm"
-                        include "Data/Ships/Dodo.asm"
+
                         ENDIF
                         IFDEF SHIPBANKB
-                        include "Data/Ships/Dragon.asm"
-                        include "Data/Ships/Escape_Pod.asm"
-                        include "Data/Ships/Fer_De_Lance.asm"
-                        include "Data/Ships/Gecko.asm"
-                        include "Data/Ships/Ghavial.asm"
-                        include "Data/Ships/Iguana.asm"
-                        include "Data/Ships/Krait.asm"
-                        include "Data/Ships/Logo.asm"
-                        include "Data/Ships/Mamba.asm"
-                        include "Data/Ships/Missile.asm"
-                        include "Data/Ships/Monitor.asm"
-                        include "Data/Ships/Moray.asm"
-                        include "Data/Ships/Ophidian.asm"
-                        include "Data/Ships/Plate.asm"
-                        include "Data/Ships/Python.asm"
-                        include "Data/Ships/Python_P.asm"
+
                         ENDIF
                         IFDEF SHIPBANKC
-                        include "Data/Ships/Rattler.asm"
-                        include "Data/Ships/Rock_Hermit.asm"
-                        include "Data/Ships/ShuttleType9.asm"
-                        include "Data/Ships/Shuttle_Mk_2.asm"
-                        include "Data/Ships/Sidewinder.asm"
-                        include "Data/Ships/Splinter.asm"
-                        include "Data/Ships/TestVector.asm"
-                        include "Data/Ships/Thargoid.asm"
-                        include "Data/Ships/Thargon.asm"
-                        include "Data/Ships/TransportType10.asm"
-                        include "Data/Ships/Viper.asm"
-                        include "Data/Ships/Worm.asm"
+
                         ENDIF
 
 

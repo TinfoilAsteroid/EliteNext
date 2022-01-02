@@ -103,58 +103,48 @@ current_distY	DB 0
 
 find_present_system:    xor		a
                         ld		(XSAV),a
-.CounterLoop:
-	ld		a,(SystemSeed+1)				; QQ15+1 \ seed Ycoord of star
-	ld		c,a
-.calcLocaldy:
-	ld		a,(PresentSystemY)
-	ld		b,a								; so b holds Y ccord
-	ld		a,c
-	sub		b
-	bit		7,a
-	jr		z,.positivedy
-.negativedy:
-	neg
-.positivedy:
-	ld		(current_distY),a				; save cuirrent_dist Y as we need it maybe
-	ld		de,(working_distX)
-	cp		d
-	jr		nc,.toofar
-.calcLocaldx:
-	ld		a,(SystemSeed+3)				; QQ15+3 \ seed Xcoord of star
-	ld		c,a
-	ld		a,(PresentSystemX)
-	ld		b,a								; so b holds Y ccord
-	ld		a,c
-	sub		b
-	bit		7,a
-	jr		z,.positivedx
-.negativedx:
-	neg
-.positivedx:
-	ld		c,a
-	cp		e
-	jr		nc,.toofar
-.Nearer:									; we have a closer system
-	ld		a,(current_distY)
-	ld		b,a								; we have c to recall Y into b
-	ld		(working_distX),bc
-	push	bc
-	call 	copy_system_to_working
-	pop		bc
-	ld		a,b								;
-	or		c								;
-	ret		z								; if we have distance 0 then bang on
-.toofar:
-	call	next_system_seed
-	ld		a,(XSAV)
-	dec		a
-	cp		0
-	ret		z
-	ld		(XSAV),a
-	jr		.CounterLoop
-	
-	
+.CounterLoop:           ld		a,(SystemSeed+1)				; QQ15+1 \ seed Ycoord of star
+                        ld		c,a
+.calcLocaldy:           ld		a,(PresentSystemY)
+                        ld		b,a								; so b holds Y ccord
+                        ld		a,c
+                        sub		b
+                        bit		7,a
+                        jr		z,.positivedy
+.negativedy:            neg
+.positivedy:            ld		(current_distY),a				; save cuirrent_dist Y as we need it maybe
+                        ld		de,(working_distX)
+                        cp		d
+                        jr		nc,.toofar
+.calcLocaldx:           ld		a,(SystemSeed+3)				; QQ15+3 \ seed Xcoord of star
+                        ld		c,a
+                        ld		a,(PresentSystemX)
+                        ld		b,a								; so b holds Y ccord
+                        ld		a,c
+                        sub		b
+                        bit		7,a
+                        jr		z,.positivedx
+.negativedx:            neg
+.positivedx:            ld		c,a
+                        cp		e
+                        jr		nc,.toofar
+.Nearer:			    ld		a,(current_distY) 				; we have a closer system
+                        ld		b,a								; we have c to recall Y into b
+                        ld		(working_distX),bc
+                        push	bc
+                        call 	copy_system_to_working
+                        pop		bc
+                        ld		a,b								;
+                        or		c								;
+                        ret		z								; if we have distance 0 then bang on
+.toofar:                call	next_system_seed
+                        ld		a,(XSAV)
+                        dec		a
+                        cp		0
+                        ret		z
+                        ld		(XSAV),a
+                        jr		.CounterLoop
+
 get_planet_data_working_seed:
 		ld		a, (WorkingSeeds+1)
 		and		7
