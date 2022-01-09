@@ -11,6 +11,10 @@ JumpIfUnderflow:	    MACRO target
                         jp		po, target
                         ENDM
 
+JumpIfOverflow:	        MACRO target
+                        jp		po, target
+                        ENDM
+;.. Bit routines
 JumpOnMemBitSet:        MACRO mem, bitnbr, target
                         ld      a,(mem)
                         bit 	bitnbr,a
@@ -55,7 +59,7 @@ ReturnOnMemBitClear:    MACRO mem, bitnbr
                         bit 	bitnbr,a
                         ret		z
                         ENDM
-
+; Comparison Routines
 JumpIfAGTEusng:         MACRO
                         jp		nc,target
                         ENDM
@@ -254,7 +258,7 @@ ClearCarryFlag:	    MACRO
                     or a
                     ENDM
 
-FlipCarryFalg:      MACRO
+FlipCarryFlag:      MACRO
                     ccf
                     ENDM
 

@@ -31,6 +31,18 @@ Div24by24:              ld b,a
                         pop de
                         ret
                         
+Div24by24ASigned:       ld      iyh,a
+                        and     SignMask8Bit
+                        call    Div24by24
+                        push    af
+                        ld      a,iyh
+                        and     SignOnly8Bit
+                        or      c
+                        ld      c,a
+                        pop     af
+                        ret
+                        
+                        
 Div24by24LeadSign:      ld      iyh,a           ; Preserve signed in IYL
                         xor     c               ; flip sign if negative
                         and     SignOnly8Bit    ; .

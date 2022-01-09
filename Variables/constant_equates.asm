@@ -46,6 +46,12 @@ UniverseObjectSlot	equ	7
 
 KeyForwardsView		equ	$20
 
+;...Game Colour Mapping
+L2DustColour        equ L2ColourGREY_1
+L2SunScannerBright  equ 252
+L2SunScanner        equ 180
+
+
 ; Ship Data
 ;;;;	.XX21	\ -> &5600 \ Table of pointers to ships' data given to XX0
 ;;;;00 7F			 EQUW &7F00 \ type  1 is #MSL  Missile data on page off bottom of screen

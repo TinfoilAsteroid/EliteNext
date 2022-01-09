@@ -90,7 +90,16 @@ ForceTransition:        MACRO newScreen
                         ld      (ScreenTransitionForced), a
                         ENDM
                 
+SetSafeZone:            MACRO
+                        ld      a,$FF
+                        ld      (SpaceStationSafeZone),a
+                        ENDM
 
+ClearSafeZone:          MACRO
+                        xor     a
+                        ld      (SpaceStationSafeZone),a
+                        ENDM
+                        
                         
                        
                         

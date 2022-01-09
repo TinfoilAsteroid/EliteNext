@@ -242,6 +242,7 @@ varYY					equ	YYlo
 											;	28
 											;	29		
 ;PlayerShipPositionData - Must be contiguous for setup
+SpaceStationSafeZone    DB  0               ; Flag to determine if we are in safe zone
 BETA 					DB	0               ; 2A        (pitch done)		
 JSTY                    DB  0               ; Joystick analog
 BET1 					DB	0               ; 2B        lower7 magnitude	

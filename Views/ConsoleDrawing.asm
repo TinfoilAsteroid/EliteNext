@@ -223,6 +223,113 @@ GetShipColorBright:     MACRO
                         add     hl,a
                         ld      a,(hl)
                         ENDM
+           
+UpdateScannerSun:       ld      hl,(SBnKzhi)
+                        ld      a,h
+                        and     SignMask8Bit
+                        ld      h,a
+                        ld      a,(SBnKzlo)
+                        ShiftHLRight1
+                        rr      a
+                        ShiftHLRight1
+                        rr      a
+                        ShiftHLRight1
+                        rr      a
+                        ShiftHLRight1
+                        rr      a
+                        ld      h,l
+                        ld      l,a
+
+                        ld      de,(SBnKxhi)
+                        ld      a,d
+                        and     SignMask8Bit
+                        ld      d,a                        
+                        ShiftDERight1
+                        rr      a
+                        ShiftDERight1
+                        rr      a
+                        ShiftDERight1
+                        rr      a
+                        ShiftDERight1
+                        rr      a
+                        ld      d,e
+                        ld      e,a
+
+                        ld      bc,(SBnKyhi)
+                        ld      a,b
+                        and     SignMask8Bit
+                        ld      b,a
+                        ShiftBCRight1
+                        rr      a
+                        ShiftBCRight1
+                        rr      a
+                        ShiftBCRight1
+                        rr      a
+                        ShiftBCRight1
+                        rr      a
+                        ld      b,c
+                        ld      c,a
+
+;                        ld      a,h
+;                        or      d
+;                        or      b
+;                        and     %11000000
+;                        ret     nz                          ; if distance Hi > 64 on any ccord- off screen
+.MakeX2Compliment:      ld      a,(SBnKxsgn)
+                        bit     7,a
+                        jr      z,.absXHi
+                        NegD                                
+.absXHi:                ld      a,d
+                        add     ScannerX           
+                        ld      ixh,a                       ; store adjusted X in ixh
+.ProcessZCoord:         srl     h
+                        srl     h
+.MakeZ2Compliment:      ld      a,(SBnKzsgn)
+                        bit     7,a
+                        jr      z,.absZHi
+                        NegH
+.absZHi:                ld      a,ScannerY
+                        sub     h
+                        ld      iyh,a                       ; make iyh adjusted Z = row on screen
+.ProcessStickLength:    srl     b                           ; divide b by 2
+                        jr      nz,.StickHasLength
+.Stick0Length:          ld      a,iyh                       ; abs stick end is row - length   
+                        ld      iyl,a    
+                        ld      a,ixl
+                        ld      a,L2SunScannerBright
+                        MMUSelectLayer2  
+                        jp      .NoStick
+.StickHasLength:        ld      a,(UBnKysgn)                ; if b  =  0 then no line
+                        bit     7,a
+                        jr      z,.absYHi
+                        NegB
+.absYHi:                ld      a,iyh
+.SetStickPos:           sub     b
+                        JumpIfALTNusng ScannerBottom, .StickOnScreen
+                        ld      a,ScannerBottom
+.StickOnScreen:         ld      iyl,a                       ; iyh is again stick end point   
+                        ld      b,iyh                       ; from row
+                        ld      c,ixh                       ; from col
+                        ld      d,iyl                       ; to row
+                        ld      e,L2SunScanner
+                        push    hl
+                        MMUSelectLayer2  
+                        call    l2_draw_vert_line_to
+                        pop     hl
+                        inc     hl
+                        ld      a,(hl)
+.NoStick:               ld      b,iyl                       ; row
+                        ld      c,ixh                       ; col
+                        push    af
+                        call    l2_plot_pixel
+                        pop     af
+                        ld      b,iyl
+                        ld      c,ixh
+                        inc     c
+                        call    l2_plot_pixel
+                        ret
+
+           
                         
 ; This will go though all the universe ship data banks and plot, for now we will just work on one bank
 UpdateScannerShip:      

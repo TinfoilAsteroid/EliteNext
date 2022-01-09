@@ -85,7 +85,7 @@ TestText:               xor			a
                         ld      (JSTX),a
                         MMUSelectCmdrData
                         call		defaultCommander
-                        
+DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks su n
                         MMUSelectSpriteBank
                         call		init_sprites
                         
@@ -128,6 +128,7 @@ InitialiseMainLoop:     xor     a
                                                
                         MMUSelectStockTable
                         call    generate_stock_market
+;..MAIN GAME LOOP..................................................................................................................
 ;..................................................................................................................................
 MainLoop:	            call    doRandom                            ; redo the seeds every frame
                         call    scan_keyboard
@@ -157,7 +158,8 @@ TestAreWeDocked:        ld      a,(DockedFlag)                                ; 
                         JumpIfANENusng  0, SkipUniveseUpdate                  ; else we skip it. As we are also in dock/transition then no models should be updated so we dont; need to draw
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
-                        call    UpdateUniverseObjects
+;.. First update Sun...............................................................................................................
+.UpdateShips:           call    UpdateUniverseObjects
                         JumpIfMemNeNusng ScreenTransitionForced, $FF, BruteForceChange                          ; if we docked then a transition would have been forced
 CheckIfViewUpdate:      ld      a,$00                                         ; if this is set to a view number then we process a view
                         cp      0                                             ; .
@@ -174,16 +176,28 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
 .NoHyperspace:          MMUSelectLayer2
                         call   l2_cls                        
                         MMUSelectLayer1
+.UpdateSun:             MMUSelectSun
+.DEBUGFORCE:            ;ld      hl,$0000
+                        ;ld      (SBnKxlo),hl
+                        ;ld      (SBnKylo),hl
+                        ;xor     a
+                        ;ld      (SBnKxsgn),a
+                        ;ld      (SBnKysgn),a
+                        ;ld      hl,$0200
+                        ;ld      (SBnKzlo),hl
+                        ;ld      a,$00
+                        ;ld      (SBnKzsgn),a
+                        call    SunUpdateAndRender
 ;..Later this will be done via self modifying code to load correct stars routine for view..........................................
-DrawStarsForwards:      ld     a,$DF
+DrawDustForwards:       ld     a,$DF
                         ld     (line_gfx_colour),a                         
-StarUpdateBank:         MMUSelectViewFront                                    ; This needs to be self modifying
-StarUpdateRoutine:      call   StarsForward                                   ; This needs to be self modifying
+DustUpdateBank:         MMUSelectViewFront                                    ; This needs to be self modifying
+DustUpdateRoutine:      call   DustForward                                   ; This needs to be self modifying
 PrepLayer2:             MMUSelectLayer2                                       ; Clear layer 2 for graphics
                       ;  call   l2_cls                        
 ;ProcessSun:             call    DrawForwardSun
 ProcessPlanet:
-ProcessShipModels:      call    DrawForwardShips                              ; Draw all ships (this may need to be self modifying)
+ProcessShipModels:      call   DrawForwardShips                               ; Draw all ships (this may need to be self modifying)
                         call   UpdateConsole                                  ; Update display console on layer 1
                         jp LoopRepeatPoint                                    ; And we are done with views, so check if there was a special command to do
 ;..If we were not in views then we were in display screens/menus...................................................................
@@ -216,7 +230,6 @@ WeAreHEntering:         ld      a,$FA
                         jp  DoubleBufferCheck
 WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
-                        ;break; not resettign system correctly
                         ld      hl,(TargetPlanetX)
                         ld      (PresentSystemX),hl
                         ld      b,h
@@ -397,7 +410,6 @@ DrawShipLoop:           ld      (CurrentShipUniv),a
 ; Add in a fast check for ship behind to process nodes and if behind jump to processed Draw ship
 SelectShipToDraw:       ld      a,(CurrentShipUniv)
                         MMUSelectUniverseA
-                        ;break
                         ; Need check for exploding here
 .ProcessUnivShip:       call    ProcessShip             ;; call    ProcessUnivShip
 UpdateRadar: 
@@ -409,6 +421,10 @@ UpdateRadar:
 ProcessedDrawShip:      ld      a,(CurrentShipUniv)
                         inc     a
                         JumpIfALTNusng   UniverseListSize, DrawShipLoop
+DrawSunCompass:         MMUSelectSun
+; For now for the sun we will take high bytes so it scales down
+                        call    UpdateScannerSun      
+
                         ret    
 ;..................................................................................................................................
 CurrentShipUniv:        DB      0
@@ -717,7 +733,9 @@ ScreenTransitionForced  DB $FF
 
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-LaunchedFromStation:    call    ClearUnivSlotList
+LaunchedFromStation:    MMUSelectSun
+                        call    CreateSun                      ; create the local sun and set position based on seed
+                        call    ClearUnivSlotList
                         ld      a,1
                         call    SetSlot1ToSpaceStation              ; set slot 1 to space station
                         MMUSelectUniverseA                          ; Prep Target universe
@@ -732,7 +750,6 @@ LaunchedFromStation:    call    ClearUnivSlotList
                         ld      (DockedFlag),a
                         ForceTransition ScreenFront
                         call    ResetPlayerShip
-                        break
                         ret
     
 InitialiseCommander:    ld      a,(ScreenCmdr+1)

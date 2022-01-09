@@ -200,7 +200,7 @@ InitialiseHyperStars:   ld      b,MaxNumberOfStars
                         djnz    .InitStarsLoop
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-StarsForward:          ; break
+DustForward:            ; break
                         ld      a,(NumberOfStarsNOSTM)
                         ld      b,a                                 ; get the number of stars to process
                         ld      iy,varDust                          ; hl is now a pointer to the dust array
@@ -357,14 +357,14 @@ StarNegYPt:             ld      b,a
                         ld      a,$60
                         sub     b
                         ld      b,a
-StarDoneY:              ld      a,$FC
+StarDoneY:              ld      a,L2DustColour
                         push    bc
 .DrawStar:              MMUSelectLayer2
                         call    l2_plot_pixel 
                         ld      a,(iy+5)
                         pop    bc
                         JumpIfAGTENusng $60,EndofStarsLoop
-                        ld      a,$D8
+                        ld      a,L2DustColour
                         inc     c
                         push    bc
                         MMUSelectLayer2
@@ -372,14 +372,14 @@ StarDoneY:              ld      a,$FC
                         ld      a,(iy+5)
                         pop    bc
                         JumpIfAGTENusng $37,EndofStarsLoop
-                        ld      a,$B4
+                        ld      a,L2DustColour
                         inc     b
                         push    bc
                         MMUSelectLayer2
                         call    l2_plot_pixel 
                         ld      a,(iy+5)
                         pop    bc
-                        ld      a,$B4
+                        ld      a,L2DustColour
                         dec     c
                         MMUSelectLayer2
                         call    l2_plot_pixel  

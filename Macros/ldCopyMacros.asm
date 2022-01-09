@@ -8,7 +8,7 @@ ldCopyByte:    MACRO memfrom, memto
 			   ENDM
 
 
-ldCopyByteABS: MACRO 
+ldCopyByteABS: MACRO memfrom, memto
                ld       a,(memfrom)
 			   and		$7F
                ld       (memto),a

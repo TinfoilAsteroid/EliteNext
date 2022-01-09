@@ -13,4 +13,23 @@ ApplyMyRollToVector:    MACRO angle, vectorX, vectorY
                         call madXAequQmulAaddRS             ; Set (A X) = Q * A + (S R)
                         ld  (vectorX),de                    ; nosev_x = nosev_x + alpha * nosev_y_hi
                         ENDM
-                        
+
+SignedHLTo2C:           MACRO
+                        bit     7,h
+                        jr      z,.Done2c
+                        ld      a,h
+                        and     SignMask8Bit
+                        ld      h,a
+                        NegHL
+.Done2c:                                        
+                        ENDM
+
+MemSignedTo2C:          MACRO   memfrom
+                        ld      hl,(memfrom)
+                        bit     7,h
+                        jr      z,.Done2c
+                        ld      a,h
+                        and     SignMask8Bit
+                        ld      h,a
+.Done2c:                ld      (memfrom),hl
+                        ENDM

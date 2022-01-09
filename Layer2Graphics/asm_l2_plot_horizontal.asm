@@ -14,19 +14,19 @@ l2_horz_cmd_len	        EQU $ - l2_horz_line
 
 ; "l2_draw_horz_dma"
 ; "plot at bc for length d colour e using dma, assumes bank already selected"  
-l2_draw_horz_dma:       ld		a,e
-                        ld		(l2_horz_pixel),a
-                        ld		a,d
-                        ld 		(l2_horz_lenlo),a
-                        xor 	a
-                        ld 		(l2_horz_lenhi),a
-                        ld		h,b
-                        ld		l,c
-                        ld		(l2_horz_target),hl
-.write_dma:             ld 		hl, l2_horz_line
-                        ld 		b, l2_horz_cmd_len
-                        ld		c,IO_DATAGEAR_DMA_PORT
-                        otir
+l2_draw_horz_dma:       ld		a,e                                               ; T=4      ;
+                        ld		(l2_horz_pixel),a                                 ; T=13     ;
+                        ld      e,d ; saved 3 t states ld		a,d                                               ; T=4      ; e=d   4
+                        ld      d,0; saved 3 t states ld 		(l2_horz_lenlo),a                                 ; T=13     ; d = 0  7 
+                        ld      (l2_horz_lenlo),de; saved 3 t states xor 	a                                                 ; T=4      ; t 20  31
+                        ; saved 3 t states ld ld 		(l2_horz_lenhi),a                                 ; T=13     ;
+                      ; saved 4 t states  ld		h,b                           ;          ;
+                      ; saved 4 t states  ld		l,c                           ;          ;
+                        ld      (l2_horz_target),bc ; saved 4 t states  was , hl  ; T=20     ;
+.write_dma:             ld 		hl, l2_horz_line                                  ;          ;
+                        ld 		b, l2_horz_cmd_len                                ; 
+                        ld		c,IO_DATAGEAR_DMA_PORT                            ; 
+                        otir                                                      ; 
                         ret
 	
 ; "bc = left side row,col, d = length, e = color"

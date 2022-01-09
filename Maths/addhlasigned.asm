@@ -1,3 +1,128 @@
+; HL = HL (signed) + A (unsigned), uses HL, DE, A
+AddAusngToHLsng:        ld      d,a
+                        ld      e,h
+                        ld      a,h
+                        and     SignMask8Bit
+                        ld      h,a
+                        ld      a,d
+                        add     hl,a
+                        ld      a,e
+                        and     SignOnly8Bit
+                        or      h
+                        ret
+; HL = A (unsigned) - HL (signed), uses HL, DE, BC, A
+HLEequAusngMinusHLsng:  ld      b,h
+                        ld      c,a
+                        ld      a,b
+                        and     SignOnly8Bit
+                        jr      nz,.DoAdd
+.DoSubtract:            ex      de,hl               ; move hl into de
+                        ld      h,0                 ; hl = a
+                        ld      l,c
+                        ClearCarryFlag
+                        sbc     hl,de               ; hl = a - hl
+                        ret
+.DoAdd:                 ld      a,c
+                        add hl,a
+                        ret 
+
+; DEL = DEL + BCH signed, uses BC, DE, HL, IY, A
+AddBCHtoDELsigned:      ld      a,b                 ; Are the values both the same sign?
+                        xor     d                   ; .
+                        and     SignOnly8Bit        ; .
+                        jr      nz,.SignDifferent   ; .
+.SignSame:              ld      a,b                 ; if they are then we only need 1 signe
+                        and     SignOnly8Bit        ; so store it in iyh
+                        ld      iyh,a               ;
+                        ld      a,b                 ; bch = abs bch
+                        and     SignMask8Bit        ; .
+                        ld      b,a                 ; .
+                        ld      a,d                 ; del = abs del
+                        and     SignMask8Bit        ; .
+                        ld      d,a                 ; .
+                        ld      a,h                 ; l = h + l
+                        add     l                   ; .
+                        ld      l,a                 ; . 
+                        ld      a,c                 ; e = e + c + carry
+                        adc     e                   ; .
+                        ld      e,a                 ; .
+                        ld      a,b                 ; d = b + d + carry (signed)
+                        adc     d                   ; 
+                        or      iyh                 ; d = or back in sign bit
+                        ld      d,a                 ; 
+                        ret                         ; done
+.SignDifferent:         ld      a,b                 ; bch = abs bch
+                        ld      iyh,a               ; iyh = b sign
+                        and     SignMask8Bit        ; .
+                        ld      b,a                 ; .
+                        ld      a,d                 ; del = abs del
+                        ld      iyl,a               ; iyl = d sign
+                        and     SignMask8Bit        ; .
+                        ld      d,a                 ; .
+                        push    hl                  ; hl = bc - de
+                        ld      hl,bc               ; if bc < de then there is a carry
+                        sbc     hl,de               ;
+                        pop     hl                  ;
+                        jr      c,.BCHltDEL
+                        jr      nz,.DELltBCH        ; if the result was not zero then DEL > BCH
+.BCeqDE:                ld      a,h                 ; if the result was zero then check lowest bits
+                        JumpIfALTNusng l,.BCHltDEL
+                        jr      nz,.DELltBCH
+; The same so its just zero
+.BCHeqDEL:              xor     a                  ; its just zero
+                        ld      d,a                ; .
+                        ld      e,a                ; .
+                        ld      l,a                ; .
+                        ret                        ; .
+;BCH is less than DEL so its DEL - BCH the sort out sign
+.BCHltDEL:              ld      a,l                ; l = l - h                      ; ex
+                        sub     h                  ; .                              ;   01D70F DEL
+                        ld      l,a                ; .                              ;  -000028 BCH
+                        ld      a,e                ; e = e - c - carry              ;1. 
+                        sbc     c                  ; .                              ;
+                        ld      e,a                ; .                              ;
+                        ld      a,d                ; d = d - b - carry              ;
+                        sbc     b                  ; .                              ;
+                        ld      d,a                ; .                              ;
+                        ld      a,iyl              ; as d was larger, take d sign
+                        and     SignOnly8Bit       ;
+                        or      d                  ;
+                        ld      d,a                ;
+                        ret
+.DELltBCH:              ld      a,h                ; l = h - l
+                        sub     l                  ;
+                        ld      l,a                ;
+                        ld      a,c                ; e = c - e - carry
+                        sbc     e                  ;
+                        ld      e,a                ;
+                        ld      a,b                ; d = b - d - carry
+                        sbc     d                  ;
+                        ld      d,a                ;
+                        ld      a,iyh              ; as b was larger, take b sign into d
+                        and     SignOnly8Bit       ;
+                        or      d                  ;
+                        ld      d,a                ;
+                        ret
+
+                        
+;BHL = AHL + DE where AHL = 16 bit + A sign and DE = 15 bit signed    
+AddAHLtoDEsigned:       ld      b,a                     ; B = A , C = D (save sign bytes)
+                        ld      c,d                     ; .
+                        xor     c                       ; A = A xor C
+                        res     7,d                     ; clear sign bit of D
+                        jr nz,  .OppositeSigns          ; if A xor C is opposite signs job to A0A1
+                        add     hl,de                   ; HL = HL + DE
+                        ret                             ; return 
+.OppositeSigns:         sbc     hl,de                   ; HL = HL -DE
+                        ret     nc                      ; if no carry return
+                        add     hl,de                   ; else HL = HL + DE
+                        ex      de,hl                   ;      swap HL and DE
+                        and     a                       ;      reset carry
+                        sbc     hl,de                   ;      HL = DE - HL (as they were swapped)
+                        ld      b,c                     ;      B = sign of C
+                        ret                             ;      ret
+
+
 
 ; a = value to add
 ; b = offset (equivalent to regX)

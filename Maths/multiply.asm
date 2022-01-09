@@ -200,7 +200,36 @@ mulDEbyHL:              push    bc
                         xor a                       ; reset carry
                         pop     bc
                         ret
-                        
+ 
+; DELC = HLE * D, uses HL, DE, C , A , IYH
+mulHLEbyDSigned:        ld      a,d
+                        xor     h
+                        and     SignOnly8Bit
+                        ld      iyh,a               ; iyh = copy of sign
+                        ld      a,h
+                        and     SignMask8Bit
+                        ld      h,a                 ; hle = abs (hle)
+                        ld      a,d
+                        and     SignMask8Bit
+                        ld      d,a                 ; now also d = abs d
+.PerformMultiply:       mul                         ; de = E*A
+                        ld      c,e                 ; c = low E*A
+                        ld      e,l                 ;
+                        ld      l,a                 ; hl = H,A
+                        ld      a,d                 ; a = (E*A)/256
+                        ld      d,l                 ; de = A,L
+                        mul                         ; de = E*A (high) + E*A/256(low)
+                        add     de,a                ; .
+                        ld      a,d                 ; hl = E*A (high) + E*A/256(low)
+                        ex      de,hl               ; A =  E*A, de = HA
+                        mul
+                        add     de,a                ; 
+                        ld      a,d
+                        or      iyh                 ; recover sign
+                        ld      d,a                 ; sign back on d
+                        ret
+
+ 
 ; multiplication of two S156-bit numbers into a 16-bit 2'd compliment product
 ; enter : de = 16-bit multiplicand
 ;         hl = 16-bit multiplicand
@@ -230,7 +259,7 @@ mulDEbyHLSgnTo2c:       xor     a
 .RecoverSign:           ld      a,(mulDEbyHLSignByte)
                         test    $80
                         ret     z
-.Negateghl: 				xor 	a
+.Negateghl: 			xor 	a
                         sub 	l
                         ld 		l,a
                         sbc 	a,a
