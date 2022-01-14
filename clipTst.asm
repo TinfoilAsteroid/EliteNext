@@ -37,9 +37,10 @@ ScreenRight     EQU ScreenLeft+3
     INCLUDE "./Macros/MMUMacros.asm"
     INCLUDE "./Macros/ShiftMacros.asm"
     INCLUDE "./Macros/CopyByteMacros.asm"
-    INCLUDE "./Macros/GeneralMacros.asm"
+    INCLUDE "./Macros/generalMacros.asm"
     INCLUDE "./Macros/ldCopyMacros.asm"
     INCLUDE "./Macros/ldIndexedMacros.asm"
+    INCLUDE "./Variables/general_variables_macros.asm"
 
 charactersetaddr		equ 15360
 STEPDEBUG               equ 1

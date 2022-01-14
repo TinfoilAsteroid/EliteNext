@@ -54,7 +54,7 @@ ScreenHyperspace EQU ScreenDocking+1
     INCLUDE "./Macros/ShiftMacros.asm"
     INCLUDE "./Macros/MathsMacros.asm"
     INCLUDE "./Macros/CopyByteMacros.asm"
-    INCLUDE "./Macros/GeneralMacros.asm"
+    INCLUDE "./Macros/generalMacros.asm"
     INCLUDE "./Macros/ldCopyMacros.asm"
     INCLUDE "./Macros/ldIndexedMacros.asm"
     INCLUDE "./Variables/general_variables_macros.asm"
@@ -984,7 +984,7 @@ XX12PVarSign3		DB 0
     
     INCLUDE "./Maths/addhldesigned.asm"
     INCLUDE "./Maths/addhlasigned.asm"
-    INCLUDE "./Maths/Utilities/AddDEtoCash.asm"
+    INCLUDE "./Maths/Utilities/AddDEToCash.asm"
     INCLUDE "./Maths/DIVD3B2.asm"
     INCLUDE "./Maths/multiply.asm"
     INCLUDE "./Maths/asm_square.asm"
@@ -1118,7 +1118,7 @@ XX12PVarSign3		DB 0
     SLOT    CMDRDATAAddr
     PAGE    BankCmdrData
     ORG     CMDRDATAAddr, BankCmdrData
-    INCLUDE "./Commander/CommanderData.asm"
+    INCLUDE "./Commander/commanderData.asm"
     INCLUDE "./Commander/zero_player_cargo.asm"
 ; Bank 58  ------------------------------------------------------------------------------------------------------------------------
     SLOT    LAYER1Addr
