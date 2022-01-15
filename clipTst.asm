@@ -1,5 +1,6 @@
  DEVICE ZXSPECTRUMNEXT
- CSPECTMAP eliteNext.map
+
+ CSPECTMAP clipTst.map
  OPT --zxnext=cspect --syntax=a --reversepop
 
 DEBUGSEGSIZE   equ 1
