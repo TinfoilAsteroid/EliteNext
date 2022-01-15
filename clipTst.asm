@@ -1,7 +1,6 @@
  DEVICE ZXSPECTRUMNEXT
- DEVICE ZXSPECTRUMNEXT
  CSPECTMAP eliteNext.map
- OPT --zxnext=cspect --syntax=a
+ OPT --zxnext=cspect --syntax=a --reversepop
 
 DEBUGSEGSIZE   equ 1
 DEBUGLOGSUMMARY equ 1

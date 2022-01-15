@@ -1,9 +1,7 @@
  DEVICE ZXSPECTRUMNEXT
- DEVICE ZXSPECTRUMNEXT
- DEVICE ZXSPECTRUMNEXT
  DEFINE  DOUBLEBUFFER 1
  CSPECTMAP eliteNext.map
- OPT --zxnext=cspect --syntax=a
+ OPT --zxnext=cspect --syntax=a --reversepop
 
 DEBUGSEGSIZE   equ 1
 DEBUGLOGSUMMARY equ 1
