@@ -415,6 +415,7 @@ UpdateRadar:
 ;;;Does nothing                       MMUSelectScreenA
 ;;;Does nothing         ld      a,(CurrentShipUniv)
 ;;;Does nothing         MMUSelectUniverseA
+                        call    UpdateCompassSun
                         call    UpdateScannerShip
 ProcessedDrawShip:      ld      a,(CurrentShipUniv)
                         inc     a

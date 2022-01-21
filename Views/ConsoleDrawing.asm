@@ -196,6 +196,9 @@ UpdateConsole:          ld      a,(DELTA)
     
 ScannerX                equ 128
 ScannerY                equ 171 
+SunScanCenterX          equ 84
+SunScanCenterY          equ 171 
+
 ScannerBottom           equ 190
 ScannerTypeMissle       equ 2
 ScannerXRangeOffset     equ $35
@@ -265,60 +268,193 @@ SunShiftRight           MACRO   reglo, reghi, regsgn
                         ld      regsgn,a
                         ENDM
 
-SunShiftPosTo15Bit:     ld      de,(SBnKzlo)
-                        ld      a,(SBnKzsgn)
+;SunShiftPosTo15Bit:     ld      de,(SBnKzlo)
+;                        ld      a,(SBnKzsgn)
+;                        push    af
+;                        and     SignMask8Bit
+;                        ld      iyl,a
+;                        ld      hl,(SBnKxlo)
+;                        ld      a,(SBnKxsgn)
+;                        push    af
+;                        and     SignMask8Bit
+;                        ld      ixl,a
+;                        ld      bc,(SBnKylo)
+;                        ld      a,(SBnKysgn)
+;                        and     SignMask8Bit
+;                        push    af
+;                        ld      iyh,a
+;.ShiftLoop:             ld      a,iyh
+;                        or      iyl
+;                        or      ixl
+;                        jr      z,.ShiftBit15
+;.ShiftZ:                SunShiftRight iyl, d, e
+;.ShiftX:                SunShiftRight ixl, h, l
+;.ShiftY:                SunShiftRight ixh, b, c
+;                        jr      .ShipLoop
+;.ShiftBit15:            ld      a,iyh
+;                        or      iyl
+;                        or      ixl
+;                        jr      z,.CompletedShift
+;.ShiftZ:                SunShiftRight iyl, d, e
+;.ShiftX:                SunShiftRight ixl, h, l
+;.ShiftY:                SunShiftRight ixh, b, c             ; finally shift to 15 bits so we can get the sign back
+;.CompletedShift:        pop     af                          ; get ysgn
+;                        and     SignOnly8Bit
+;                        or      b
+;                        ld      b,a
+;                        pop     af                          ; get xsgn
+;                        and     SignOnly8Bit
+;                        or      h
+;                        ld      h,a                        
+;                        pop     af                          ; get zsgn
+;                        and     SignOnly8Bit
+;                        or      d
+;                        ld      d,a
+;                        ret
+;                        
+ScaleSunPos:            ld      de,(SBnKzhi)
+                        ld      a,d
                         push    af
                         and     SignMask8Bit
-                        ld      iyl,a
-                        ld      hl,(SBnKxlo)
-                        ld      a,(SBnKxsgn)
+                        ld      d,a
+                        ld      hl,(SBnKxhi)
+                        ld      a,h
                         push    af
                         and     SignMask8Bit
-                        ld      ixl,a
-                        ld      bc,(SBnKylo)
-                        ld      a,(SBnKysgn)
-                        and     SignMask8Bit
+                        ld      h,a
+                        ld      bc,(SBnKyhi)
+                        ld      a,b
                         push    af
-                        ld      iyh,a
-.ShiftLoop:             ld      a,iyh
-                        or      iyl
-                        or      ixl
-                        jr      z,.ShiftBit15
-.ShiftZ:                SunShiftRight iyl, d, e
-.ShiftX:                SunShiftRight ixl, h, l
-.ShiftY:                SunShiftRight ixh, b, c
-                        jr      .ShipLoop
-.ShiftBit15:            ld      a,iyh
-                        or      iyl
-                        or      ixl
-                        jr      z,.CompletedShift
-.ShiftZ:                SunShiftRight iyl, d, e
-.ShiftX:                SunShiftRight ixl, h, l
-.ShiftY:                SunShiftRight ixh, b, c             ; finally shift to 15 bits so we can get the sign back
-.CompletedShift:        pop     af                          ; get ysgn
+                        and     SignMask8Bit
+                        ld      b,a
+.ShiftLoop:             ld      a,b
+                        or      d
+                        or      h
+                        jr      z,.Shifted
+                        ShiftBCRight1
+                        ShiftHLRight1
+                        ShiftDERight1
+                        jr      .ShiftLoop
+.Shifted:               ShiftBCRight1                       ; we want 7 bit 
+                        ShiftHLRight1
+                        ShiftDERight1
+                        pop     af                          ; get ysgn
                         and     SignOnly8Bit
-                        or      b
+                        ld      b,a
                         pop     af                          ; get xsgn
                         and     SignOnly8Bit
-                        or      h
+                        ld      h,a                        
                         pop     af                          ; get zsgn
                         and     SignOnly8Bit
-                        or      d
-                        
-
-UpdateCompassSun:       call    SunShiftPosTo15Bit
-                        ld      (SunXScaled),hl
-                        ld      (SunYScaled),bc
-                        ld      (SunZScaled),de
-                        normalise xx15 so it sin teh range +/- 96
-                        divide by 10 so its +/- 9
-                        so same wiht Y
-                        
-                        if z sign negative then call show_compass_sun_behind
-                                           else call show_compass_sun_infront
+                        ld      d,a
+                        ret
+ 
 
 
-                        ld      a,(SBnKzsng)
+UpdateCompassSun:       call    ScaleSunPos                 ; get as 7 bit signed
+                        push    bc,,de,,hl,,de
+.normaliseYSqr:         ld      d,c                         ; bc = y ^ 2
+                        ld      e,c
+                        mul                                 
+                        ld      bc,de
+                        ld      d,l                         ; hl = x ^ 2
+.normaliseXSqr:         ld      e,l
+                        mul
+                        ex      de,hl
+.normaliseZSqr:         pop     de                          ; de = z ^ 2
+                        ld      d,e
+                        mul
+.normaliseSqrt:         add     hl,de                       ; hl = x^2 + y^2 + x^2
+                        add     hl,bc       
+                        ex      de,hl
+                        call    asm_sqrt                    ; hl = sqrt (x^2 + y^2 + x^2)
+                        ; if h <> 0 then more difficult
+                        ld      d,l
+                        ld      iyl,d
+.NormaliseX:            pop     hl
+                        ld      a,h
+                        and     SignOnly8Bit
+                        ld      c,a
+                        push    bc
+                        ld      a,l
+                        or      h
+                       ; ld      d,a
+                        ld      a,l
+                        call    AequAdivDmul96
+                        ld      e,a
+                        EDiv10Inline
+                        ld      a,h
+                        pop     bc
+                        or      c
+                        ld      ixh,a
+                        ; deal with sign
+.NormaliseZ:            ld      d,iyl
+                        pop     hl
+                        ld      a,h
+                        and     SignOnly8Bit
+                        ld      c,a
+                        push    bc
+                        ld      a,l
+                        or      h
+                      ;  ld      d,a
+                        ld      a,l
+                        call    AequAdivDmul96
+                        ld      e,a
+                        EDiv10Inline
+                        ld      a,h    
+                        pop     bc
+                        or      c
+                        ld      ixl,a
+                        ; deal with sign
+.NormaliseY:            ld      d,iyl
+                        pop     hl
+                        ld      a,h
+                        and     SignOnly8Bit
+                        ld      c,a
+                        push    bc
+                        ld      a,l
+                        or      h
+                     ;   ld      d,a
+                        ld      a,l
+                        call    AequAdivDmul96
+                        ld      e,a
+                        EDiv10Inline
+                        ld      a,h
+                        pop     bc                        
+                        or      c
+                        ld      iyh,a
+                        ; deal with sign
+.SetXPos:               ld      a,ixh
+                        bit     7,a
+                        jr      z,.XPositive
+.XNegative:             and     SignMask8Bit
+                        ld      c,SunScanCenterX
+                        sub     c
+                        neg
+                        jp      .DoneX
+.XPositive:             ld      c,SunScanCenterX
+                        add     c
+.DoneX:                 ld      c,a                        
+.SetYPos:               ld      a,iyh
+                        bit     7,a
+                        jr      z,.YPositive
+.YNegative:             and     SignMask8Bit
+                        ld      b,SunScanCenterY
+                        sub     b
+                        neg
+                        jp      .DoneY
+.YPositive:             ld      b,SunScanCenterY
+                        add     b 
+.DoneY:                 ld      b,a
+.SetSprite:             MMUSelectSpriteBank
+                        call    compass_sun_move
+                        ld      a,ixl
+                        bit     7,a
+                        jr      nz,.SunBehind
+.SunInfront:            call    show_compass_sun_infront
+                        ret
+.SunBehind:             call    show_compass_sun_behind                        
+                        ret
                         
 
 
