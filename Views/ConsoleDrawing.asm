@@ -206,6 +206,12 @@ ScannerMissile          equ 2
 ScannerStation          equ 4
 ScannerEnemy            equ 6
 
+
+SunXScaled              DB  0
+SunYScaled              DB  0
+SunZScaled              DB  0
+
+
 ScannerColourTable:     DB  16,28,144,252,18,31,128,224
 
 GetShipColor:           MACRO                   
@@ -223,75 +229,124 @@ GetShipColorBright:     MACRO
                         add     hl,a
                         ld      a,(hl)
                         ENDM
-           
-UpdateScannerSun:       ld      hl,(SBnKzhi)
+
+Shift24BitScan:         MACRO   regHi, reglo
+                        ld      hl,(regHi)
+                        ld      b,h
                         ld      a,h
                         and     SignMask8Bit
                         ld      h,a
-                        ld      a,(SBnKzlo)
-                        ShiftHLRight1
-                        rr      a
-                        ShiftHLRight1
-                        rr      a
-                        ShiftHLRight1
-                        rr      a
-                        ShiftHLRight1
-                        rr      a
-                        ld      h,l
-                        ld      l,a
+                        ld      a,(reglo)
+                        sla     a
+                        rl      l
+                        rl      h
+                        sla     a
+                        rl      l
+                        rl      h
+                        sla     a
+                        rl      l
+                        rl      h
+                        sla     a
+                        rl      l
+                        rl      h
+                        sla     a
+                        rl      l
+                        rl      h
+                        sla     a
+                        rl      l
+                        rl      h
+                        ENDM
+                        
+SunShiftRight           MACRO   reglo, reghi, regsgn
+                        ld      a,regsgn
+                        srl     a
+                        rr      reghi
+                        rr      reglo
+                        ld      regsgn,a
+                        ENDM
 
-                        ld      de,(SBnKxhi)
-                        ld      a,d
+SunShiftPosTo15Bit:     ld      de,(SBnKzlo)
+                        ld      a,(SBnKzsgn)
+                        push    af
                         and     SignMask8Bit
-                        ld      d,a                        
-                        ShiftDERight1
-                        rr      a
-                        ShiftDERight1
-                        rr      a
-                        ShiftDERight1
-                        rr      a
-                        ShiftDERight1
-                        rr      a
-                        ld      d,e
-                        ld      e,a
-
-                        ld      bc,(SBnKyhi)
-                        ld      a,b
+                        ld      iyl,a
+                        ld      hl,(SBnKxlo)
+                        ld      a,(SBnKxsgn)
+                        push    af
                         and     SignMask8Bit
-                        ld      b,a
-                        ShiftBCRight1
-                        rr      a
-                        ShiftBCRight1
-                        rr      a
-                        ShiftBCRight1
-                        rr      a
-                        ShiftBCRight1
-                        rr      a
-                        ld      b,c
-                        ld      c,a
+                        ld      ixl,a
+                        ld      bc,(SBnKylo)
+                        ld      a,(SBnKysgn)
+                        and     SignMask8Bit
+                        push    af
+                        ld      iyh,a
+.ShiftLoop:             ld      a,iyh
+                        or      iyl
+                        or      ixl
+                        jr      z,.ShiftBit15
+.ShiftZ:                SunShiftRight iyl, d, e
+.ShiftX:                SunShiftRight ixl, h, l
+.ShiftY:                SunShiftRight ixh, b, c
+                        jr      .ShipLoop
+.ShiftBit15:            ld      a,iyh
+                        or      iyl
+                        or      ixl
+                        jr      z,.CompletedShift
+.ShiftZ:                SunShiftRight iyl, d, e
+.ShiftX:                SunShiftRight ixl, h, l
+.ShiftY:                SunShiftRight ixh, b, c             ; finally shift to 15 bits so we can get the sign back
+.CompletedShift:        pop     af                          ; get ysgn
+                        and     SignOnly8Bit
+                        or      b
+                        pop     af                          ; get xsgn
+                        and     SignOnly8Bit
+                        or      h
+                        pop     af                          ; get zsgn
+                        and     SignOnly8Bit
+                        or      d
+                        
 
-;                        ld      a,h
-;                        or      d
-;                        or      b
-;                        and     %11000000
-;                        ret     nz                          ; if distance Hi > 64 on any ccord- off screen
-.MakeX2Compliment:      ld      a,(SBnKxsgn)
-                        bit     7,a
-                        jr      z,.absXHi
-                        NegD                                
-.absXHi:                ld      a,d
+UpdateCompassSun:       call    SunShiftPosTo15Bit
+                        ld      (SunXScaled),hl
+                        ld      (SunYScaled),bc
+                        ld      (SunZScaled),de
+                        normalise xx15 so it sin teh range +/- 96
+                        divide by 10 so its +/- 9
+                        so same wiht Y
+                        
+                        if z sign negative then call show_compass_sun_behind
+                                           else call show_compass_sun_infront
+
+
+                        ld      a,(SBnKzsng)
+                        
+
+
+UpdateScannerSun:       Shift24BitScan  SBnKyhi, SBnKylo
+ProcessStickLength:     srl     h
+                        bit     7,b
+                        jr      z,.No2CY
+                        NegHL
+.No2CY:                 ld      bc,hl
+                        Shift24BitScan  SBnKxhi, SBnKxlo
+                        bit     7,b
+                        jr      z,.No2CX
+                        NegHL
+.No2CX:                 ex      de,hl
+                        Shift24BitScan  SBnKzhi, SBnKzlo
+.ProcessZCoord:         srl     h
+                        srl     h                        
+                        bit     7,b
+                        jr      z,.No2CZ
+                        NegHL
+.No2CZ:                 ld      a,d
                         add     ScannerX           
                         ld      ixh,a                       ; store adjusted X in ixh
-.ProcessZCoord:         srl     h
-                        srl     h
-.MakeZ2Compliment:      ld      a,(SBnKzsgn)
-                        bit     7,a
-                        jr      z,.absZHi
-                        NegH
-.absZHi:                ld      a,ScannerY
+                        ld      a,ScannerY
                         sub     h
                         ld      iyh,a                       ; make iyh adjusted Z = row on screen
-.ProcessStickLength:    srl     b                           ; divide b by 2
+                        ld      a,b
+                        and     a
                         jr      nz,.StickHasLength
 .Stick0Length:          ld      a,iyh                       ; abs stick end is row - length   
                         ld      iyl,a    

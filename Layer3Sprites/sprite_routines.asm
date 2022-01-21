@@ -37,6 +37,9 @@ laser_sprite14                      equ	laser_sprite13   +1
 laser_sprite15                      equ	laser_sprite14   +1
 laser_sprite16                      equ laser_sprite15   +1
 
+compass_sun                         equ laser_sprite16   +1
+compass_station                     equ compass_sun      +1
+
 glactic_pattern_1					equ 0
 glactic_hyper_pattern_1             equ 2
 local_pattern_1                     equ 4
@@ -51,7 +54,10 @@ laser_pattern_5                     equ 18
 laser_pattern_6                     equ 19
 laser_pattern_7                     equ 20
 laser_pattern_8                     equ 21
-
+compass_sun_infront                 equ 22
+compass_sun_behind                  equ 23
+compass_station_infront             equ 24
+compass_station_behind              equ 25
 spritecursoroffset					equ 17
 
 
@@ -117,6 +123,34 @@ sprite_big:
 	nextreg	SPRITE_PORT_ATTR4_REGISTER,a		; visible 5 bytes pattern e
 	ret	
 	
+    
+single_sprite:          ld		a,d                                 ; a = sprite nbr, bug fix?
+                        push	af									; save id for next few
+                        push	de
+                        nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
+; write out X position bits 1 to 8
+                        ld		a,c
+                        ld      hl,spritecursoroffset
+                        add		hl,a                                ; hl = full x position
+                        ld		a,l
+                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+; write out Y position bits 1 to 8
+                        ex		de,hl								; de = full x position
+                        ld		a,b
+                        ld      hl,spritecursoroffset
+                        add		hl,a
+                        ld		a,l                                 ; hl = full y position
+                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+; write out MSB of X as its an anchor  
+                        ld		a,d									; de = MSB of X (hl bit 0)
+                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; lower y
+; write out sprite pattern
+                        pop		de                                  ; de = pattern and sprite nbr
+                        ld		a,e
+                        or		%10000000							; 
+                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern e
+                        ret
+    
 sprite_galactic_cursor:
 ; ">sprite_galactic_cursor BC = rowcol"
 	ld		d,galactic_cursor_sprite
@@ -166,9 +200,7 @@ sprite_ghc_move:
     ret
 
 
-sprite_lhc_move:
-;DBG:jp DBG
-;DBX:
+sprite_lhc_move:        
 	ld		a,local_hyper_sprite
 	nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
 ; write out X position bits 1 to 8
@@ -193,25 +225,66 @@ sprite_lhc_move:
 	nextreg	SPRITE_PORT_ATTR4_REGISTER,a		; visible 5 bytes pattern e
     ret
 
-sprite_local_cursor:
 ; "sprite_local_cursor BC = rowcol"
-	ld		d,local_cursor_sprite
-	ld		e,6
-	call	sprite_big
-	ret
-	
-sprite_local_hyper_cursor:
+sprite_local_cursor:        ld		d,local_cursor_sprite
+                            ld		e,6
+                            call	sprite_big
+                            ret
+
 ; "sprite_local_hyper_cursor BC = rowcol"
-	ld		d,local_hyper_sprite
-	ld		e,9
-	call	sprite_big
-	ret	
+sprite_local_hyper_cursor:  ld		d,local_hyper_sprite
+                            ld		e,9
+                            call	sprite_big
+                            ret	
+
+compass_offset          equ 4
+    
+compass_sun_move:       ld		a,compass_sun
+                        nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
+; write out X position bits 1 to 8
+                        ld		a,c
+                        ld      hl,compass_offset
+                        add		hl,a                                ; hl = full x position
+                        ld		a,l
+                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+; write out Y position bits 1 to 8
+                        ex		de,hl								; de = full x position
+                        ld		a,b
+                        ld      hl,compass_offset
+                        add		hl,a
+                        ld		a,l                                 ; hl = full y position
+                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+; write out MSB of X as its an anchor  
+                        ld		a,d									; de = MSB of X (hl bit 0)
+                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; lower y
+                        ret    
+
+compass_station_move:   ld		a,compass_station
+                        nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
+; write out X position bits 1 to 8
+                        ld		a,c
+                        ld      hl,compass_offset
+                        add		hl,a                                ; hl = full x position
+                        ld		a,l
+                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+; write out Y position bits 1 to 8
+                        ex		de,hl								; de = full x position
+                        ld		a,b
+                        ld      hl,compass_offset
+                        add		hl,a
+                        ld		a,l                                 ; hl = full y position
+                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+; write out MSB of X as its an anchor  
+                        ld		a,d									; de = MSB of X (hl bit 0)
+                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; lower y
+                        ret  
+                        
     
 sprite_reticule:    ld      a,reticlule_sprite1
                     nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
                     ld      a,(13*8) + 32
                     nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
-                    ld		a,(7 * 8) + 32 + 13
+                    ld		a,(7 * 8) + 32 + 13 + 32
                     nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                     xor     a
                     nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
@@ -221,7 +294,7 @@ sprite_reticule:    ld      a,reticlule_sprite1
                     nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
                     ld      a,(17*8) + 32 -2
                     nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
-                    ld		a,(7 * 8) + 32 + 13
+                    ld		a,(7 * 8) + 32 + 13 + 32
                     nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                     ld      a,%00001000
                     nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring horizontal
@@ -231,7 +304,7 @@ sprite_reticule:    ld      a,reticlule_sprite1
                     nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
                     ld      a,(16*8) + 32 -1
                     nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
-                    ld		a,(5 * 8) + 32 +4
+                    ld		a,(5 * 8) + 32 +4 + 32
                     nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                     xor     a
                     nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 
@@ -241,7 +314,7 @@ sprite_reticule:    ld      a,reticlule_sprite1
                     nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
                     ld      a,(16*8) + 32 -1
                     nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
-                    ld		a,(9 * 8) + 32 +5
+                    ld		a,(9 * 8) + 32 +5 + 32
                     nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                     ld      a,%00000100
                     nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring vertical
@@ -285,6 +358,19 @@ RightLaser:         MACRO   xoffset, yoffset, spriteL, patternL
                     nextreg	SPRITE_PORT_ATTR3_REGISTER,a		 
                     ENDM
                     
+  
+show_compass_sun_infront:ShowSprite  compass_sun, compass_sun_infront
+                         ret
+                         
+show_compass_sun_behind: ShowSprite  compass_sun, compass_sun_behind
+                         ret
+
+show_compass_station_infront: ShowSprite  compass_station, compass_station_infront
+                         ret
+
+show_compass_statin_behind:   ShowSprite  compass_station, compass_station_behind
+                         ret
+  
   
 sprite_laser:       LeftLaser  0,0,laser_sprite1 ,laser_pattern_1
                     LeftLaser  2,0,laser_sprite2 ,laser_pattern_2
@@ -406,6 +492,13 @@ sprite_laser_hide:
 	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
     ret
     
+sprite_compass_hide:
+	nextreg		SPRITE_PORT_INDEX_REGISTER,compass_sun
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+	nextreg		SPRITE_PORT_INDEX_REGISTER,compass_station
+	nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+    ret
+
 sprite_cls_cursors:
 	call	sprite_galactic_hide	
 	call	sprite_galactic_hyper_hide	
@@ -413,6 +506,7 @@ sprite_cls_cursors:
 	call	sprite_local_hyper_hide	
     call    sprite_reticule_hide
     ;call    sprite_laser_hide
+    ;call    sprite_compass_hide
 	ret
 
 init_sprites:
