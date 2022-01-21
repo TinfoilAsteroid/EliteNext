@@ -46,7 +46,7 @@ stat_copy_to_name:
     ldir
     ret
 
-STAT_print_boiler_text: INCLUDE "Menus/L2print_boiler_text_inlineInclude.asm"
+STAT_print_boiler_text: INCLUDE "Menus/l2print_boiler_text_inlineInclude.asm"
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 STAT_DispDEIXtoIY:      ld (.STATclcn32z),ix

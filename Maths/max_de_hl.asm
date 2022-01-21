@@ -11,11 +11,7 @@ MaxDEHL:
 ;
 	and     a
 	sbc     hl,de
-	jr      c,@choose_2nd   ; HL < DE?  Choose DE!
-	add     hl,de           ; Restore HL
+	add     hl,de           ; Restore HL (does produce same CF as sbc before)
+	ret     nc              ; HL >= DE, CF=0
+	ex      de,hl           ; CF=1 -> HL < DE -> Choose DE!
 	ret
-@choose_2nd:
-    add     hl,de
-    ex      de,hl
-    scf
-    ret
