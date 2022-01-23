@@ -33,3 +33,17 @@ MemSignedTo2C:          MACRO   memfrom
                         ld      h,a
 .Done2c:                ld      (memfrom),hl
                         ENDM
+                        
+                        
+    ;returns result in H
+EDiv10Inline:           MACRO
+                        ld      d,0
+                        ld      hl,de 
+                        add     hl,hl
+                        add     hl,de
+                        add     hl,hl
+                        add     hl,hl
+                        add     hl,de
+                        add     hl,hl
+                        ENDM
+                        

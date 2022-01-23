@@ -237,26 +237,22 @@ sprite_local_hyper_cursor:  ld		d,local_hyper_sprite
                             call	sprite_big
                             ret	
 
-compass_offset          equ 4
+compass_offset          equ 2
+ScannerX                equ 128
+ScannerY                equ 171 
+SunScanCenterX          equ 92
+SunScanCenterY          equ 171 
     
 compass_sun_move:       ld		a,compass_sun
                         nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
 ; write out X position bits 1 to 8
-                        ld		a,c
-                        ld      hl,compass_offset
-                        add		hl,a                                ; hl = full x position
-                        ld		a,l
+                        ld      a, SunScanCenterX-compass_offset
+                        add     a,c
                         nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
 ; write out Y position bits 1 to 8
-                        ex		de,hl								; de = full x position
-                        ld		a,b
-                        ld      hl,compass_offset
-                        add		hl,a
-                        ld		a,l                                 ; hl = full y position
+                        ld      a, SunScanCenterY-compass_offset
+                        add     a,b
                         nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
-; write out MSB of X as its an anchor  
-                        ld		a,d									; de = MSB of X (hl bit 0)
-                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; lower y
                         ret    
 
 compass_station_move:   ld		a,compass_station
