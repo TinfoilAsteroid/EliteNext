@@ -51,9 +51,7 @@ laser_pattern_2                     equ 15
 laser_pattern_3                     equ 16
 laser_pattern_4                     equ 17
 laser_pattern_5                     equ 18
-laser_pattern_6                     equ 19
-laser_pattern_7                     equ 20
-laser_pattern_8                     equ 21
+
 compass_sun_infront                 equ 22
 compass_sun_behind                  equ 23
 compass_station_infront             equ 24
@@ -275,22 +273,25 @@ compass_station_move:   ld		a,compass_station
                         nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; lower y
                         ret  
                         
+ReticuleCentreX      EQU (256/2)+32 -1
+ReticuleCentreY      EQU (192/2)+32 -1
+ReticuleOffset       EQU 8
     
-sprite_reticule:    ld      a,reticlule_sprite1
+sprite_reticule:    ld      a,reticlule_sprite1                 ; LEFT ARM
                     nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
-                    ld      a,(13*8) + 32
+                    ld      a,ReticuleCentreX -16 - ReticuleOffset
                     nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
-                    ld		a,(7 * 8) + 32 + 13 + 32
+                    ld		a,ReticuleCentreY 
                     nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                     xor     a
                     nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
                     ld      a,reticule_pattern_2 | %10000000
                     nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
-.rightReticule      ld      a,reticlule_sprite2
+.rightReticule      ld      a,reticlule_sprite2                 ; RIGHT ARM
                     nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
-                    ld      a,(17*8) + 32 -2
+                    ld      a,ReticuleCentreX + ReticuleOffset
                     nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
-                    ld		a,(7 * 8) + 32 + 13 + 32
+                    ld		a,ReticuleCentreY
                     nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                     ld      a,%00001000
                     nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring horizontal
@@ -298,9 +299,9 @@ sprite_reticule:    ld      a,reticlule_sprite1
                     nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
 .topReticule        ld      a,reticlule_sprite3
                     nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
-                    ld      a,(16*8) + 32 -1
+                    ld      a,ReticuleCentreX
                     nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
-                    ld		a,(5 * 8) + 32 +4 + 32
+                    ld		a,ReticuleCentreY-16 - ReticuleOffset
                     nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                     xor     a
                     nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 
@@ -308,9 +309,9 @@ sprite_reticule:    ld      a,reticlule_sprite1
                     nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
 .bottomReticule     ld      a,reticlule_sprite4
                     nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
-                    ld      a,(16*8) + 32 -1
+                    ld      a,ReticuleCentreX
                     nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
-                    ld		a,(9 * 8) + 32 +5 + 32
+                    ld		a,ReticuleCentreY + ReticuleOffset
                     nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                     ld      a,%00000100
                     nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring vertical
@@ -318,7 +319,7 @@ sprite_reticule:    ld      a,reticlule_sprite1
                     nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
                     ret
 
-laserbasex          equ 7
+laserbasex          equ 6
 laserbasey          equ 14  
 
 ShowSprite          MACRO   spritenbr, patternnbr
@@ -370,20 +371,16 @@ show_compass_statin_behind:   ShowSprite  compass_station, compass_station_behin
   
 sprite_laser:       LeftLaser  0,0,laser_sprite1 ,laser_pattern_1
                     LeftLaser  2,0,laser_sprite2 ,laser_pattern_2
-                    LeftLaser  2,2,laser_sprite3 ,laser_pattern_3
-                    LeftLaser  4,1,laser_sprite4 ,laser_pattern_4
-                    LeftLaser  3,3,laser_sprite5 ,laser_pattern_5
-                    LeftLaser  5,3,laser_sprite6 ,laser_pattern_6
-                    LeftLaser  6,5,laser_sprite7 ,laser_pattern_7
-                    LeftLaser  8,5,laser_sprite8 ,laser_pattern_8
+                    LeftLaser  4,1,laser_sprite3 ,laser_pattern_3
+                    LeftLaser  6,2,laser_sprite4 ,laser_pattern_4
+                    LeftLaser  8,2,laser_sprite5 ,laser_pattern_5
                     RightLaser 0,0,laser_sprite9 ,laser_pattern_1
                     RightLaser 2,0,laser_sprite10,laser_pattern_2
-                    RightLaser 2,2,laser_sprite11,laser_pattern_3
-                    RightLaser 4,1,laser_sprite12,laser_pattern_4
-                    RightLaser 3,3,laser_sprite13,laser_pattern_5
-                    RightLaser 5,3,laser_sprite14,laser_pattern_6
-                    RightLaser 6,5,laser_sprite15,laser_pattern_7
-                    RightLaser 8,5,laser_sprite16,laser_pattern_8    
+                    RightLaser 4,1,laser_sprite11,laser_pattern_3
+                    RightLaser 6,2,laser_sprite12,laser_pattern_4
+                    RightLaser 8,2,laser_sprite13,laser_pattern_5
+
+ 
                     ret                           
                     ; Need simple show updates just to update the show attribute
 
@@ -392,17 +389,15 @@ sprite_laser_show: ShowSprite laser_sprite1 ,laser_pattern_1
                    ShowSprite laser_sprite3 ,laser_pattern_3
                    ShowSprite laser_sprite4 ,laser_pattern_4
                    ShowSprite laser_sprite5 ,laser_pattern_5
-                   ShowSprite laser_sprite6 ,laser_pattern_6
-                   ShowSprite laser_sprite7 ,laser_pattern_7
-                   ShowSprite laser_sprite8 ,laser_pattern_8
+
+
                    ShowSprite laser_sprite9 ,laser_pattern_1
                    ShowSprite laser_sprite10,laser_pattern_2
                    ShowSprite laser_sprite11,laser_pattern_3
                    ShowSprite laser_sprite12,laser_pattern_4
                    ShowSprite laser_sprite13,laser_pattern_5
-                   ShowSprite laser_sprite14,laser_pattern_6
-                   ShowSprite laser_sprite15,laser_pattern_7
-                   ShowSprite laser_sprite16,laser_pattern_8
+
+
                    ret
 
 sprite_galactic_hide:

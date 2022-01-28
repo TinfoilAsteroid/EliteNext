@@ -266,9 +266,17 @@ ALP2FLIP				DB  0				; 33		ALP2	negated roll sign
 ALP1MAXR                DB  31               ;   Maximum roll, added becuase we may allow different ship types
 ALP1MAXL                DB  -31             ;   Maximum roll, added becuase we may allow different ship types
 
+MAXMESSAGES             EQU 5
+MESSAGETIMELIMIT        EQU 20
+MESSAGESIZE             EQU 33
+MESSAGELINE             EQU $0001
+
 MessageCount            DB 0                ; used for enquing messages later
-MessageTimout           DB 0                ; count down before current message is erased
-MissileTarget			DW	0				; 45
+MessageCurrent          DB 0
+MessageIndex            DW MAXMESSAGES
+MessageQueue            DS MAXMESSAGES * MESSAGESIZE
+MessageTimeout          DB MAXMESSAGES
+MissileTarget			DW 0				; 45
 IndexedWork				DS	37				; General purpose work space when doing temp arrays
 
 ; MOVED TO Universe XX19					DB	0				; page 0 &67
@@ -399,9 +407,10 @@ UniverseSlotList		DS UniverseListSize		; &0311 for 12 bytes Array of Free Index 
 UniverseSlotCount       DS UniverseListSize * 2 ; To be implemented, keeps a count of each slot type, may merge into slot list and set as a DW
 CurrentUniverseAI       DB  0               ; used to cycle ships in each iterations of main loop
 SelectedUniverseSlot    DB  0    
+SpaceStationPresent		DB	0				; flag to determine if we are within space station safe zone
+
 SUN						DB	0				; &031D Actually MANY -1? As we can only have 1?
 MANY					DB	0				; &031E array of ship types???
-SpaceStationPresent		DB	0				; &0320	Wonder if many is counter of type in univ objects?
 						DB	0				; &0321	Speculative?
 						DB	0				; &0322	Speculative?
 						DB	0				; &0323	Speculative?

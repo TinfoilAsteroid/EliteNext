@@ -54,6 +54,7 @@ draw_front_view:        MMUSelectLayer1
                         call    sprite_cls_cursors
                         call    sprite_reticule
                         call    sprite_laser
+                        call    sprite_laser_show
                         MMUSelectConsoleBank
                         ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
                         ld          de,ConsoleImageData

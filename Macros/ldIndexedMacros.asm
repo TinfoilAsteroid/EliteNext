@@ -38,3 +38,12 @@ ldHLIdxAToA:        MACRO value
                     add         hl,a
                     ld          a,(hl)
                     ENDM
+
+HLEquAddrAtHLPlusA: MACRO
+                    sla         a
+                    add         hl,a
+                    ld          a,(hl)
+                    inc         hl
+                    ld          h,(hl)
+                    ld          l,a
+                    ENDM

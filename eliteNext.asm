@@ -164,8 +164,9 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
                         jr      z, MenusLoop                                  ; This will change as more screens are added TODO
 ;..Processing a view...............................................................................................................
 ;..Display any message ............................................................................................................
-                        ld      a,(MessageCount)
+.HandleMessages:        ld      a,(MessageCount)
                         jr      z,.NoMessages                                 ; note message end will tidy up display
+.UpdateMessage:                        
 .NoMessages:            ld      hl,(InnerHyperCount)
                         ld      a,h
                         or      l
@@ -415,14 +416,19 @@ UpdateRadar:
 ;;;Does nothing                       MMUSelectScreenA
 ;;;Does nothing         ld      a,(CurrentShipUniv)
 ;;;Does nothing         MMUSelectUniverseA
-                        call    UpdateCompassSun
-                        call    UpdateScannerShip
+                        call    UpdateScannerShip               ; Always update ship positions                        
 ProcessedDrawShip:      ld      a,(CurrentShipUniv)
                         inc     a
                         JumpIfALTNusng   UniverseListSize, DrawShipLoop
-DrawSunCompass:         MMUSelectSun
-; For now for the sun we will take high bytes so it scales down
-                        call    UpdateScannerSun      
+.DrawSunCompass:        MMUSelectSun
+                        call    UpdateCompassSun                ; Always update the sun position
+                        call    UpdateScannerSun                ; Always attempt to put the sun on the scanner 
+.CheckPlanetCompass:     ld      a,(SpaceStationPresent)
+                        and     a
+                        jr      nz,.DrawSpaceStationCompass
+.DrawPlanetCompass:                        
+             
+.DrawSpaceStationCompass:
 
                         ret    
 ;..................................................................................................................................
@@ -861,6 +867,7 @@ SetInitialShipPosition: ld      hl,$0000
 
 
             INCLUDE "./Views/ConsoleDrawing.asm"
+            INCLUDE "./Tables/MessageQueue.asm"
 
 
 
@@ -951,11 +958,11 @@ XX12PVarSign1		DB 0								; Note reversed so BC can do a little endian fetch
 XX12PVarSign3		DB 0
 
     include "./Maths/Utilities/XX12EquNodeDotOrientation.asm"
-    include "ModelRender/CopyXX12ToXX15.asm"	
-    include "ModelRender/CopyXX15ToXX12.asm"
+    include "./ModelRender/CopyXX12ToXX15.asm"	
+    include "./ModelRender/CopyXX15ToXX12.asm"
     include "./Maths/Utilities/ScaleXX16Matrix197.asm"
 		    
-    include "./Universe/StarRoutines.asm"
+    include "./Universe/StarDust/StarRoutines.asm"
 ;    include "Universe/move_object-MVEIT.asm"
 ;    include "./ModelRender/draw_object.asm"
 ;    include "./ModelRender/draw_ship_point.asm"
@@ -1226,7 +1233,7 @@ CopyBodyToUniverse3:    MCopyBodyToUniverse     CopyShipToUniverse3
     SLOT    UniverseBankAddr
     PAGE    BankUNIVDATA0
 	ORG	    UniverseBankAddr,BankUNIVDATA0
-    INCLUDE "./Universe/univ_ship_data.asm"
+    INCLUDE "./Universe/Ships/univ_ship_data.asm"
     
     SLOT    UniverseBankAddr
     PAGE    BankUNIVDATA1
@@ -1303,7 +1310,7 @@ UNIVDATABlock12     DB $FF
     SLOT    GalaxyDataAddr
     PAGE    BankGalaxyData0
 	ORG GalaxyDataAddr, BankGalaxyData0
-    INCLUDE "./Universe/galaxy_data.asm"                                                            
+    INCLUDE "./Universe/Galaxy/galaxy_data.asm"                                                            
     
     DISPLAY "Galaxy Data - Bytes free ",/D, $2000 - ($- GalaxyDataAddr)
 

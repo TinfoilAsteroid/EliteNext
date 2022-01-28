@@ -212,7 +212,8 @@ SunYScaled              DB  0
 SunZScaled              DB  0
 
 
-ScannerColourTable:     DB  16,28,144,252,18,31,128,224
+ScannerColourTable:     DB  L2ColourGREEN_2, L2ColourGREEN_1, L2ColourYELLOW_4,L2ColourYELLOW_1,L2ColourCYAN_2,L2ColourCYAN_1,L2ColourRED_4,L2ColourPINK_4
+ScannerColourTableAngry:DB  L2ColourRED_2, L2ColourRED_1 ; just a place holder for now
 
 GetShipColor:           MACRO                   
                         ld      a,(ShipTypeAddr)
@@ -424,7 +425,90 @@ UpdateCompassSun:       MMUSelectSun
                         bit     7,c                         ; if sign is negative then 2'c value
                         jr      z,.DoneNormY
                         neg
-.DoneNormY:              ld      b,a                       ; .
+.DoneNormY:             ld      b,a                       ; .
+                        ld      c,ixh
+.SetSprite:             MMUSelectSpriteBank
+                        call    compass_sun_move
+                        ld      a,ixl
+                        bit     7,a
+                        jr      nz,.SunBehind
+.SunInfront:            call    show_compass_sun_infront
+                        ret
+.SunBehind:             call    show_compass_sun_behind                        
+                        ret
+                        
+UpdateCompassStation:   MMUSelectSun
+                        call    ScaleSunPos                 ; get as 7 bit signed
+                        push    bc,,de,,hl,,de              ; save to stack Y, Z, X and copy of X scaled and signed hihg = sign, low = 7 bit value
+.normaliseYSqr:         ld      d,c                         ; bc = y ^ 2 
+                        ld      e,c                         ; .
+                        mul                                 ; .
+                        ld      bc,de                       ; .
+.normaliseXSqr:         ld      d,l                         ; hl = x ^ 2
+                        ld      e,l                         ; .
+                        mul                                 ; .
+                        ex      de,hl                       ; .
+.normaliseZSqr:         pop     de                          ; get saved from stack 2
+                        ld      d,e                         ; de = z ^ 
+                        mul                                 ; .
+.normaliseSqrt:         add     hl,de                       ; hl = x^2 + y^2 + x^2
+                        add     hl,bc       
+                        ex      de,hl
+                        call    asm_sqrt                    ; (Q) = hl = sqrt (x^2 + y^2 + x^2)
+                        ; if h <> 0 then more difficult
+                        ld      d,l                         ; iyl = q
+                        ld      iyl,d                       ; .
+.NormaliseX:            pop     hl                          ; hl x scaled
+                        ld      a,h                         ; c = sign
+                        and     SignOnly8Bit                ; .
+                        ld      c,a                         ; .
+                        push    bc                          ; save sign to stack
+                        ld      a,l                         ; a = 8 bit abs z
+                        call    AequAdivQmul96ABS              ; e = a /q * 96 (d was already loaded with q)
+                        ld      e,a                         ; .
+                        EDiv10Inline                        ; a = e / 10
+                        ld      a,h                         ; .
+                        pop     bc                          ; retrieve sign
+                        cp      0
+                        jr      z,.DoneNormX                 ; in case we end up with - 0
+                        bit     7,c                         ; if sign is negative then 2'c value
+                        jr      z,.DoneNormX 
+                        neg
+.DoneNormX:             ld      ixh,a                       ; ixh = (signed 2's c x /q * 96) / 10
+.NormaliseZ:            ld      d,iyl                       ; d = q
+                        pop     hl                          ; hl z scaled
+                        ld      a,h                         ; c = sign
+                        and     SignOnly8Bit                ; .
+                        ld      c,a                         ; .
+                        push    bc                          ; save sign to stack
+                        ld      a,l                         ; e = a /q * 96
+                        call    AequAdivQmul96ABS              ; .
+                        ld      e,a                         ; a = e / 10
+                        EDiv10Inline                        ; .
+                        ld      a,h                         ; retrieve sign
+                        pop     bc                          ; retrieve sign
+                        bit     7,c                         ; if sign is negative then 2'c value
+                        jr      z,.DoneNormZ 
+                        neg
+.DoneNormZ:             ld      ixl,a                       ; .
+.NormaliseY:            ld      d,iyl                       ; d = q
+                        pop     hl                          ; hl y scaled
+                        ld      a,h                         ; c = sign
+                        and     SignOnly8Bit                ; .
+                        ld      c,a                         ; .
+                        push    bc                          ; save sign to stack
+                        ld      a,l                         ; a = 8 bit signed z
+                        call    AequAdivQmul96ABS              ; .
+                        ld      e,a                         ; a = e / 10
+                        EDiv10Inline                        ; .
+                        ld      a,h                         ; retrieve sign
+                        pop     bc                          ; retrieve sign
+                        cp      0
+                        jr      z,.DoneNormY                 ; in case we end up with - 0
+                        bit     7,c                         ; if sign is negative then 2'c value
+                        jr      z,.DoneNormY
+                        neg
+.DoneNormY:             ld      b,a                       ; .
                         ld      c,ixh
 .SetSprite:             MMUSelectSpriteBank
                         call    compass_sun_move
@@ -437,41 +521,46 @@ UpdateCompassSun:       MMUSelectSun
                         ret
                         
 
-
 UpdateScannerSun:       MMUSelectSun
                         Shift24BitScan  SBnKyhi, SBnKylo
-ProcessStickLength:     srl     h
-                        bit     7,b
-                        jr      z,.No2CY
-                        NegHL
-.No2CY:                 ld      bc,hl
-                        Shift24BitScan  SBnKxhi, SBnKxlo
-                        bit     7,b
-                        jr      z,.No2CX
-                        NegHL
-.No2CX:                 ex      de,hl
-                        Shift24BitScan  SBnKzhi, SBnKzlo
-.ProcessZCoord:         srl     h
-                        srl     h                        
-                        bit     7,b
-                        jr      z,.No2CZ
-                        NegHL
-.No2CZ:                 ld      a,d
+.IsItInRange:           ld      a,(SBnKxsgn)                ; if the high byte is not
+                        ld      hl,SBnKysgn                 ; a sign only
+                        or      (hl)                        ; then its too far away
+                        ld      hl,SBnKzsgn                 ; for the scanner to draw
+                        or      (hl)                        ; so rely on the compass
+                        and     SignMask8Bit                ;
+                        ret     nz                          ;
+.ItsInRange:            ld      hl,(SBnKzlo)                ; we will get unsigned values
+                        ld      de,(SBnKxlo)
+                        ld      bc,(SBnKylo)
+                        ld      a,h
+                        or      d
+                        or      b
+                        and     %11000000
+                        ret     nz                          ; if distance Hi > 64 on any ccord- off screen
+.MakeX2Compliment:      ld      a,(SBnKxsgn)
+                        bit     7,a
+                        jr      z,.absXHi
+                        NegD                                
+.absXHi:                ld      a,d
                         add     ScannerX           
                         ld      ixh,a                       ; store adjusted X in ixh
-                        ld      a,ScannerY
+.ProcessZCoord:         srl     h
+                        srl     h
+.MakeZ2Compliment:      ld      a,(SBnKzsgn)
+                        bit     7,a
+                        jr      z,.absZHi
+                        NegH
+.absZHi:                ld      a,ScannerY
                         sub     h
                         ld      iyh,a                       ; make iyh adjusted Z = row on screen
-                        ld      a,b
-                        and     a
+.ProcessStickLength:    srl     b                           ; divide b by 2
                         jr      nz,.StickHasLength
 .Stick0Length:          ld      a,iyh                       ; abs stick end is row - length   
                         ld      iyl,a    
-                        ld      a,ixl
-                        ld      a,L2SunScannerBright
                         MMUSelectLayer2  
                         jp      .NoStick
-.StickHasLength:        ld      a,(UBnKysgn)                ; if b  =  0 then no line
+.StickHasLength:        ld      a,(SBnKysgn)                ; if b  =  0 then no line
                         bit     7,a
                         jr      z,.absYHi
                         NegB
@@ -480,32 +569,31 @@ ProcessStickLength:     srl     h
                         JumpIfALTNusng ScannerBottom, .StickOnScreen
                         ld      a,ScannerBottom
 .StickOnScreen:         ld      iyl,a                       ; iyh is again stick end point   
+                        ld      ixl,a
                         ld      b,iyh                       ; from row
                         ld      c,ixh                       ; from col
                         ld      d,iyl                       ; to row
                         ld      e,L2SunScanner
-                        push    hl
                         MMUSelectLayer2  
                         call    l2_draw_vert_line_to
-                        pop     hl
-                        inc     hl
-                        ld      a,(hl)
 .NoStick:               ld      b,iyl                       ; row
                         ld      c,ixh                       ; col
-                        push    af
+                        ld      a,L2SunScannerBright
                         call    l2_plot_pixel
-                        pop     af
                         ld      b,iyl
                         ld      c,ixh
                         inc     c
+                        ld      a,L2SunScannerBright
                         call    l2_plot_pixel
                         ret
 
-           
+; This will do a planet update if we are not in space station range
+UpdateScannerPlanet:    
+          
+; As the space station is always ship 0 then we can just use the scanner
                         
 ; This will go though all the universe ship data banks and plot, for now we will just work on one bank
-UpdateScannerShip:      
-                        ld      a,(UBnKexplDsp)             ; if bit 4 is clear then ship should not be drawn
+UpdateScannerShip:      ld      a,(UBnKexplDsp)             ; if bit 4 is clear then ship should not be drawn
                         bit     4,a                         ; .
                         ;DEBUG ret     z                           ; .
                         ld      a,(ShipTypeAddr)            ; if its a planet or sun, do not display

@@ -1,0 +1,74 @@
+ResetMessageQueue:      ZeroA
+                        ld      (MessageCount),a
+                        ld      (MessageCurrent),a
+                        ld      hl,MessageQueue
+                        ld      de,MessageIndex
+                        ld      b,5
+.ClearMessageIndexs:    ld      a,l                                 ; Wipe out the indexes to all the data
+                        ld      (de),a                              ; 
+                        inc     de                                  ;
+                        ld      a,h                                 ;
+                        ld      (de),a                              ;
+                        inc     de                                  ;
+                        ld      a,MESSAGESIZE                       ;
+                        add     hl,a                                ;
+                        djnz    .ClearMessageIndexs                 ;
+.ClearText:             ld      hl,MessageQueue
+                        ld      de,(MAXMESSAGES * MESSAGESIZE) + MAXMESSAGES    ; MessageQueue + MessageTimeout
+                        ld      a,0
+                        call	memfill_dma
+                        ret
+
+; Message to enqeue is a string held at DE that must be terminated in \0
+;                                       IYH = timer for message
+EnqueMessage:           ld      a,(MessageCount)                    ; Maximum message count check
+                        ReturnIfAGTENusng    MAXMESSAGES            ; we do not enque if queue is full
+                        inc     a
+                        ld      (MessageCount),a                    ; get ready for next message
+.AddMessage:            ld      c,a
+                        ld      a,(MessageCurrent)                  ; a = current message id + count + 1
+                        add     c                                   ;
+                        JumpIfALTNusng MAXMESSAGES, .ReadyToAdd     ; a = a modulus 5 (note we can only hit 5 messages
+.CircularQueue:         sub     MAXMESSAGES                         ; so only need 1 cycle of modulus
+.ReadyToAdd:            ld      hl,MessageTimeout                   ; write out message display time
+                        add     hl,a                                ; as some may be brief messages
+                        ld      c,a                                 ;
+                        ld      a,iyh                               ;
+                        ld      (hl),a                              ;
+                        ld      a,c                                 ; get back index
+                        ld      hl,MessageIndex
+                        HLEquAddrAtHLPlusA                          ; hl = target location for message
+                        ex      de,hl                               ; de = destination, hl = message
+                        ldCopyTextAtHLtoDE                          ; copy over text as we have done the rest
+                        ret
+                        
+UpdateMessageTimer:     ld      a,(MessageCurrent)
+                        ld      hl,MessageTimeout
+                        add     hl,a
+                        ld      a,(hl)
+                        dec     a
+                        jr      z,.UpdateQueue
+.UpdateTimer            ld      (hl),a
+                        ret
+.UpdateQueue:           ld      (hl),a
+                        ld      hl,MessageCount
+                        dec     (hl)
+                        ld      a,(MessageCurrent)
+                        inc     hl
+                        JumpIfALTNusng MAXMESSAGES, .ReadyToUpdate
+.CircularQueue:         ZeroA
+.ReadyToUpdate          ld      (MessageCurrent),a                        
+                        ret
+
+DisplayCurrentMessage:  ld      a,(MessageCount)
+                        ReturnIfAIsZero
+                        ld      a,(MessageCurrent)
+                        ld      hl,MessageIndex
+                        HLEquAddrAtHLPlusA
+                        MMUSelectLayer1
+                        ld      de,MESSAGELINE
+                        call    l1_print_at_wrap
+                        ret
+                        
+                        
+                        

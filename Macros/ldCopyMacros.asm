@@ -2,6 +2,19 @@ ZeroA:		   MACRO
 			   xor a
 			   ENDM
 			   
+
+ldCopyTextAtHLtoDE:     MACRO
+.CopyLoop:              ld      a,(hl)
+                        ld      (de),a
+                        cp      0
+                        ret     z
+                        inc     hl
+                        inc     de
+                        jr      .CopyLoop
+                        ENDM
+                        
+                        
+               
 ldCopyByte:    MACRO memfrom, memto
                ld       a,(memfrom)
                ld       (memto),a
