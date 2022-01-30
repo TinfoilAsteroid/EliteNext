@@ -266,6 +266,15 @@ ALP2FLIP				DB  0				; 33		ALP2	negated roll sign
 ALP1MAXR                DB  31               ;   Maximum roll, added becuase we may allow different ship types
 ALP1MAXL                DB  -31             ;   Maximum roll, added becuase we may allow different ship types
 
+EventCounter    		DB 	0				; 8A
+MissJumpFlag            DB  0
+ExtraVesselsCounter     DB  0
+JunkCount				DB  0				; $033E
+PlayerMisJump			DB	0				; $0341 witchspace misjump
+CopCount                DB  0 
+PirateCount             DB  0
+BadnessStatus           DB  0
+
 MAXMESSAGES             EQU 5
 MESSAGETIMELIMIT        EQU 20
 MESSAGESIZE             EQU 33
@@ -347,7 +356,6 @@ MenuIdMax				DB	0				;	87		MenuIdMax		QQ11
 											; 0  Space View (Not a menu)
 ZZDust					DB	0				;	88		ZZDust (Poss 16 bit need to check)
 XX13                    DB  0               ;   89
-MCNT					DB 	0				; 8A
 TYPE					DB	0				; 8C used for ship type in drawing
 ;Docked flag = 00 = in free space
 ;              FF = Docked
@@ -440,8 +448,6 @@ TransporterPresent		DB	0				; &0328	MANY + 10 (or #SHU + 1)
 				        DB	0				; &033B	MANY + 29 Speculative?
 				        DB	0				; &033C	MANY + 30 Thargoids 
 				        DB	0				; &033D	MANY + 31 Constrictor?
-JunkCount				DB  0				; $033E
-PlayerMisJump			DB	0				; $0341 witchspace misjump
 CabinTemp				DB	0				; $0342
 MissileArmedStatus		DB	0				; 0344 MSAR  
 View					DB	0				; 0345 Index for laser mount and screen view, 1 = front 2 = aft = 4 left 8 = right
@@ -456,8 +462,6 @@ XSAV2 					DB	0				; 034E used to temporary save 6502 X reg
 YSAV2 					DB	0				; 034F used to temporary save 6502 Y reg
 CommanderName			DS  8				; 0350 - 3057 Commander Name
 CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
-VarTP					DB	0				; 0358 TP? The Plan  \ mission uses lower 4 bits
-											; Bit mask XXXX10XX - Thargoid plan mission
 ;036C to D???
 DampingKeys				DS  7				; 0387 - 038D
 ;  #&6 Does K toggle keyboard/joystick control -  03CD certainly makes keyboard not work anymore.
@@ -549,6 +553,9 @@ DiskReadFailFlag		DB	0				; 03CF \ CATF \ Disk catalog fail flag
 
 
 ; 0b00 is start address of data to save 
+; Now MissionData VarTP					DB	0				; 0358 TP? The Plan  \ mission uses lower 4 bits
+											; Bit mask XXXX10XX - Thargoid plan mission
+
 MissionData				DB	0				; &0B00	  \ look at data, first byte is TP mission bits
 
 FileNameStringPointer	DW	0				;0C00	   \ pointer to filename string

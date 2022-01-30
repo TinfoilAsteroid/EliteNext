@@ -1,3 +1,20 @@
+GetByteAInTable:    MACRO table
+                    ld          hl,table
+                    add         hl,a
+                    ld          a,(hl)
+                    ENDM
+
+HLWordAInTable:     MACRO table
+                    ld          hl,table
+                    sla         a
+                    add         hl,a
+                    ld          a,(hl)
+                    inc         hl
+                    ld          h,(hl)
+                    ld          l,a
+                    ENDM
+
+
 ldAToHLixl:			MACRO value
 					ld          hl,value
 					ex          af,af'

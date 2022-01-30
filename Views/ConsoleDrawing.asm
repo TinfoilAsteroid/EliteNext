@@ -437,7 +437,8 @@ UpdateCompassSun:       MMUSelectSun
 .SunBehind:             call    show_compass_sun_behind                        
                         ret
                         
-UpdateCompassStation:   MMUSelectSun
+UpdateCompassStation:   MMUSelectShipBankN 0
+
                         call    ScaleSunPos                 ; get as 7 bit signed
                         push    bc,,de,,hl,,de              ; save to stack Y, Z, X and copy of X scaled and signed hihg = sign, low = 7 bit value
 .normaliseYSqr:         ld      d,c                         ; bc = y ^ 2 

@@ -1,0 +1,1031 @@
+Done
+CIRCLE (Flight)	Drawing circles	Draw a circle for the planet
+CIRCLE2 (Flight)	Drawing circles	Draw a circle (for the planet or chart)
+Main flight loop (Part 1 of 16) (Flight)	Main loop	Seed the random number generator
+
+InWork
+Main flight loop (Part 2 of 16) (Flight)	Main loop	Calculate the alpha and beta angles from the current pitch and roll of our ship
+Main flight loop (Part 3 of 16) (Flight)	Main loop	Scan for flight keys and process the results
+Main flight loop (Part 4 of 16) (Flight)	Main loop	For each nearby ship: Copy the ship's data block from K% to the zero-page workspace at INWK
+Main flight loop (Part 5 of 16) (Flight)	Main loop	For each nearby ship: If an energy bomb has been set off, potentially kill this ship
+Main flight loop (Part 6 of 16) (Flight)	Main loop	For each nearby ship: Move the ship in space and copy the updated INWK data block back to K%
+Main flight loop (Part 7 of 16) (Flight)	Main loop	For each nearby ship: Check whether we are docking, scooping or colliding with it
+Main flight loop (Part 8 of 16) (Flight)	Main loop	For each nearby ship: Process us potentially scooping this item
+Main flight loop (Part 9 of 16) (Flight)	Main loop	For each nearby ship: If it is a space station, check whether we are successfully docking with it
+Main flight loop (Part 10 of 16) (Flight)	Main loop	For each nearby ship: Remove if scooped, or process collisions
+Main flight loop (Part 11 of 16) (Flight)	Main loop	For each nearby ship: Process missile lock and firing our laser
+Main flight loop (Part 12 of 16) (Flight)	Main loop	For each nearby ship: Draw the ship, remove if killed, loop back
+Main flight loop (Part 13 of 16) (Flight)	Main loop	Show energy bomb effect, charge shields and energy banks
+Main flight loop (Part 14 of 16) (Flight)	Main loop	Spawn a space station if we are close enough to the planet
+Main flight loop (Part 15 of 16) (Flight)	Main loop	Perform altitude checks with the planet and sun and process fuel scooping if appropriate
+Main flight loop (Part 16 of 16) (Flight)	Main loop	Process laser pulsing, E.C.M. energy drain, call stardust routine
+Main game loop (Part 1 of 6) (Flight)	Main loop	Spawn a trader (a Cobra Mk III, Python, Boa or Anaconda)
+Main game loop (Part 2 of 6) (Flight)	Main loop	Call the main flight loop, and potentially spawn a trader, an asteroid, or a cargo canister
+Main game loop (Part 3 of 6) (Flight)	Main loop	Potentially spawn a cop, particularly if we've been bad
+Main game loop (Part 4 of 6) (Flight)	Main loop	Potentially spawn a lone bounty hunter, a Thargoid, or up to four pirates
+Main game loop (Part 5 of 6) (Flight)	Main loop	Cool down lasers, make calls to update the dashboard
+Main game loop (Part 6 of 6) (Flight)	Main loop	Process non-flight key presses (red function keys, docked keys)
+
+
+ToDo
+
+Name	            Category	    Description
+ABORT (Flight)	    Dashboard	    Disarm missiles and update the dashboard indicators
+ABORT2 (Flight)	    Dashboard	    Set/unset the lock target for a missile and update the dashboard
+ACT (Text tokens)	Maths (Geometry)	Arctan table
+ADD (Flight)	    Maths (Arithmetic)	Calculate (A X) = (A P) + (S R)
+ANGRY (Flight)	    Tactics	Make a ship hostile
+ARCTAN (Flight)	    Maths (Geometry)	Calculate A = arctan(P / Q)
+auton (Flight)	    Keyboard	Get the docking computer to "press" the flight keys to dock the ship
+B% (Loader 1)	    Screen mode	VDU commands for switching to a mode 7 screen
+B% (Loader 3)	    Screen mode	VDU commands for setting the square mode 4 screen
+BAD (Flight)	    Status	Calculate how bad we have been
+BEEP (Flight)	    Sound	Make a short, high beep
+BEGIN (Loader 1)	Copy protection	Decrypt the loader code using a rolling EOR that uses the decryption routine itself to seed the decryption
+BELL (Flight)	    Sound	Make a standard system beep
+BLINE (Flight)	    Drawing circles	Draw a circle segment and add it to the ball line heap
+BLOCK (Loader 1)	Copy protection	These bytes are copied and decrypted by the loader routine (not used in this version as disc protection is disabled)
+BOX (Flight)	    Utility routines	Just draw the border and (if this is a space view) the view name. This can be used to remove the border and view name, as it is drawn using EOR logic
+BPRNT (Flight)	    Text	Print a 32-bit number, left-padded to a specific number of digits, with an optional decimal point
+BRBR1 (Loader 3)	Loader	Loader break handler: print a newline and the error message, and then hang the computer
+BULB (Flight)	Dashboard	Draw an indicator bulb on the dashboard
+BULB-2 (Flight)	Dashboard	Set the Y screen address
+BUMP2 (Flight)	Dashboard	Bump up the value of the pitch or roll dashboard indicator
+CATD (Loader 3)	Save and load	Load disc sectors 0 and 1 to &0E00 and &0F00 respectively
+CATDcode (Loader 3)	Save and load	The CATD routine, bundled up in the loader so it can be moved to &0D7A to be run
+CHAR (Text tokens)	Text	Macro definition for characters in the recursive token table
+CHECK (Loader 3)	Copy protection	Calculate a checksum from two 256-byte portions of the loader code
+CHK (Loader 3)	Save and load	First checksum byte for the saved commander data file
+CHK2 (Loader 3)	Save and load	Second checksum byte for the saved commander data file
+CHKON (Flight)	Drawing circles	Check whether any part of a circle appears on the extended screen
+CLYNS (Flight)	Utility routines	Clear the bottom three text rows of the mode 4 screen
+cmn (Flight)	Text	Print the commander's name
+cmn-1 (Flight)	Text	Contains an RTS
+CNT (Loader 3)	Drawing planets	A counter for use in drawing Saturn's planetary body
+CNT2 (Loader 3)	Drawing planets	A counter for use in drawing Saturn's background stars
+CNT3 (Loader 3)	Drawing planets	A counter for use in drawing Saturn's rings
+cntr (Flight)	Dashboard	Apply damping to the pitch or roll dashboard indicator
+COMPAS (Flight)	Dashboard	Update the compass
+CONT (Text tokens)	Text	Macro definition for control codes in the recursive token table
+CPIX2 (Flight)	Drawing pixels	Draw a single-height dash on the dashboard
+CPIX4 (Flight)	Drawing pixels	Draw a double-height dot on the dashboard
+cpl (Flight)	Text	Print the selected system name
+crlf (Flight)	Text	Tab to column 21 and print a colon
+csh (Flight)	Text	Print the current amount of cash
+CTRL (Flight)	Keyboard	Scan the keyboard to see if CTRL is currently pressed
+CTWOS (Flight)	Drawing pixels	Ready-made single-pixel character row bytes for mode 5
+DCS1 (Flight)	Flight	Calculate the vector from the ideal docking position to the ship
+DEATH (Flight)	Start and end	Display the death screen
+DEATH2 (Flight)	Start and end	Reset most of the game and restart from the title screen
+DELAY (Flight)	Utility routines	Wait for a specified time, in 1/50s of a second
+DENGY (Flight)	Flight	Drain some energy from the energy banks
+DET1 (Flight)	Screen mode	Show or hide the dashboard (for when we die)
+DIALS (Part 1 of 4) (Flight)	Dashboard	Update the dashboard: speed indicator
+DIALS (Part 2 of 4) (Flight)	Dashboard	Update the dashboard: pitch and roll indicators
+DIALS (Part 3 of 4) (Flight)	Dashboard	Update the dashboard: four energy banks
+DIALS (Part 4 of 4) (Flight)	Dashboard	Update the dashboard: shields, fuel, laser & cabin temp, altitude
+DIL (Flight)	Dashboard	The range of the indicator is 0-16 (for the energy banks)
+DIL-1 (Flight)	Dashboard	The range of the indicator is 0-32 (for the speed indicator)
+DIL2 (Flight)	Dashboard	Update the roll or pitch indicator on the dashboard
+DILX (Flight)	Dashboard	Update a bar-based indicator on the dashboard
+DILX+2 (Flight)	Dashboard	The range of the indicator is 0-64 (for the fuel indicator)
+DK4 (Flight)	Keyboard	Scan for pause, configuration and secondary flight keys
+DKJ1 (Flight)	Keyboard	Read joystick and flight controls
+DKS1 (Flight)	Keyboard	Scan the keyboard for a flight key
+DKS2 (Flight)	Keyboard	Read the joystick position
+DKS2-1 (Flight)	Keyboard	Contains an RTS
+DKS3 (Flight)	Keyboard	Toggle a configuration setting and emit a beep
+DKS4 (Flight)	Keyboard	Scan the keyboard to see if a specific key is being pressed
+DOCKIT (Flight)	Flight	Apply docking manoeuvres to the ship in INWK
+DOENTRY (Flight)	Loader	Load and run the docked code
+DOEXP (Flight)	Drawing ships	Draw an exploding ship
+DOKEY (Flight)	Keyboard	Scan for the seven primary flight controls
+DORND (Flight)	Utility routines	Generate random numbers
+DORND (Loader 3)	Utility routines	Generate random numbers
+DORND2 (Flight)	Utility routines	Make sure the C flag doesn't affect the outcome
+DOT (Flight)	Dashboard	Draw a dash on the compass
+DV41 (Flight)	Maths (Arithmetic)	Calculate (P R) = 256 * DELTA / A
+DV42 (Flight)	Maths (Arithmetic)	Calculate (P R) = 256 * DELTA / z_hi
+DVID3B2 (Flight)	Maths (Arithmetic)	Calculate K(3 2 1 0) = (A P+1 P) / (z_sign z_hi z_lo)
+DVID4 (Flight)	Maths (Arithmetic)	Calculate (P R) = 256 * A / Q
+DVIDT (Flight)	Maths (Arithmetic)	Calculate (P+1 A) = (A P) / Q
+E% (Loader 3)	Sound	Sound envelope definitions
+ECBLB (Flight)	Dashboard	Light up the E.C.M. indicator bulb ("E") on the dashboard
+ECBLB2 (Flight)	Dashboard	Start up the E.C.M. (indicator, start countdown and make sound)
+ECBT (Flight)	Dashboard	The character bitmap for the E.C.M. indicator bulb
+ECHAR (Loader 2)	Loader	Character definitions for the Electron to mimic the graphics characters of the BBC Micro's mode 7 teletext screen
+ECMOF (Flight)	Sound	Switch off the E.C.M.
+EDGES (Flight)	Drawing lines	Draw a horizontal line given a centre and a half-width
+ee3 (Flight)	Text	Print the hyperspace countdown in the top-left of the screen
+EE51 (Flight)	Drawing ships	Remove the current ship from the screen, called from SHPPT before drawing the ship as a point
+Elite loader (Loader 1)	Loader	Reset vectors, change to mode 7, and load and run the ELITE3 loader
+Elite loader (Part 1 of 2) (Loader 2)	Loader	Various copy protection checks, and make sure there is no Tube
+Elite loader (Part 2 of 2) (Loader 2)	Loader	Load and run the ELITE4 loader
+Elite loader (Part 1 of 3) (Loader 3)	Loader	Set up the split screen mode, move code around, set up the sound envelopes and configure the system
+Elite loader (Part 2 of 3) (Loader 3)	Loader	Include binaries for recursive tokens, Missile blueprint and images
+Elite loader (Part 3 of 3) (Loader 3)	Loader	Include binaries for the loading screen images
+ESCAPE (Flight)	Flight	Launch our escape pod
+ex (Flight)	Text	Print a recursive token
+EXNO (Flight)	Sound	Make the sound of a laser strike or ship explosion
+EXNO-2 (Flight)	Sound	Set X = 7 and fall through into EXNO to make the sound of a ship exploding
+EXNO2 (Flight)	Sound	Process us making a kill
+EXNO3 (Flight)	Sound	Make an explosion sound
+FAROF (Flight)	Maths (Geometry)	Compare x_hi, y_hi and z_hi with 224
+FAROF2 (Flight)	Maths (Geometry)	Compare x_hi, y_hi and z_hi with A
+FLFLLS (Flight)	Drawing suns	Reset the sun line heap
+FLIP (Flight)	Stardust	Reflect the stardust particles in the screen diagonal
+FLKB (Flight)	Keyboard	Flush the keyboard buffer
+FMLTU (Flight)	Maths (Arithmetic)	Calculate A = A * Q / 256
+FMLTU2 (Flight)	Maths (Arithmetic)	Calculate A = K * sin(A)
+FNE (Loader 3)	Sound	Macro definition for defining a sound envelope
+fq1 (Flight)	Tactics	Used to add a cargo canister to the universe
+FR1 (Flight)	Tactics	Display the "missile jammed" message
+FR1-2 (Flight)	Tactics	Clear the C flag and return from the subroutine
+FRCE (Flight)	Main loop	The entry point for the main game loop if we want to jump straight to a specific screen, by pretending to "press" a key, in which case A contains the internal key number of the key we want to "press"
+FRMIS (Flight)	Tactics	Fire a missile from our ship
+FRS1 (Flight)	Tactics	Launch a ship straight ahead of us, below the laser sights
+fwl (Flight)	Text	Print fuel and cash levels
+GC2 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (A P) * 4
+GCASH (Flight)	Maths (Arithmetic)	Calculate (Y X) = P * Q * 4
+Ghy (Flight)	Flight	Perform a galactic hyperspace jump
+GINF (Flight)	Universe	Fetch the address of a ship's data block into INF
+GOIN (Flight)	Main loop	We jump here from part 3 of the main flight loop if the docking computer is activated by pressing "C"
+GOPL (Flight)	Tactics	Make the ship head towards the planet
+GTHG (Flight)	Universe	Spawn a Thargoid ship and a Thargon companion
+GVL (Flight)	Universe	Calculate the availability of market items
+HFS1 (Flight)	Drawing circles	Don't clear the screen, and draw 8 concentric rings with the step size in STP
+HFS2 (Flight)	Drawing circles	Draw the launch or hyperspace tunnel
+HI1 (Flight)	Tactics	Contains an RTS
+HITCH (Flight)	Tactics	Work out if the ship in INWK is in our crosshairs
+HL6 (Flight)	Drawing lines	Contains an RTS
+HLOIN (Flight)	Drawing lines	Draw a horizontal line from (X1, Y1) to (X2, Y1)
+HLOIN2 (Flight)	Drawing lines	Remove a line from the sun line heap and draw it on-screen
+hm (Flight)	Charts	Select the closest system and redraw the chart crosshairs
+hy5 (Flight)	Universe	Contains an RTS
+hyp (Flight)	Flight	Start the hyperspace process
+hyp1 (Flight)	Universe	Process a jump to the system closest to (QQ9, QQ10)
+hyp1+3 (Flight)	Universe	Jump straight to the system at (QQ9, QQ10) without first calculating which system is closest. We do this if we already know that (QQ9, QQ10) points to a system
+hyR (Flight)	Universe	Contains an RTS
+INBAY (Flight)	Loader	Load and run the main docked code in T.CODE
+IRQ1 (Loader 3)	Screen mode	The main screen-mode interrupt handler (IRQ1V points here)
+ITEM (Flight)	Market	Macro definition for the market prices table
+jmp (Flight)	Universe	Set the current system to the selected system
+K% (Flight)	Workspaces	Ship data blocks and ship line heaps
+KILLSHP (Flight)	Universe	Remove a ship from our local bubble of universe
+KS1 (Flight)	Universe	Remove the current ship from our local bubble of universe
+KS2 (Flight)	Universe	Check the local bubble for missiles with target lock
+KS3 (Flight)	Universe	Set the SLSP ship heap pointer after shuffling ship slots
+KS4 (Flight)	Universe	Remove the space station and replace it with the sun
+KYTB (Flight)	Keyboard	Contains an RTS
+KYTB (Flight)	Keyboard	Lookup table for in-flight keyboard controls
+LASLI (Flight)	Drawing lines	Draw the laser lines for when we fire our lasers
+LASLI-1 (Flight)	Drawing lines	Contains an RTS
+LASLI2 (Flight)	Drawing lines	Just draw the current laser lines without moving the centre point, draining energy or heating up. This has the effect of removing the lines from the screen
+LAUN (Flight)	Drawing circles	Make the launch sound and draw the launch tunnel
+LL10-1 (Flight)	Drawing ships	Contains an RTS
+LL118 (Flight)	Drawing lines	Move a point along a line until it is on-screen
+LL118-1 (Flight)	Drawing lines	Contains an RTS
+LL120 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (S x1_lo) * XX12+2 or (S x1_lo) / XX12+2
+LL121 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (S R) / Q and set the sign to the opposite of the top byte on the stack
+LL122 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (S R) * Q and set the sign to the opposite of the top byte on the stack
+LL123 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (S R) / XX12+2 or (S R) * XX12+2
+LL128 (Flight)	Maths (Arithmetic)	Contains an RTS
+LL129 (Flight)	Maths (Arithmetic)	Calculate Q = XX12+2, A = S EOR XX12+3 and (S R) = |S R|
+LL133 (Flight)	Maths (Arithmetic)	Negate (Y X) and return from the subroutine LL128 Contains an RTS
+LL145 (Part 1 of 4) (Flight)	Drawing lines	Clip line: Work out which end-points are on-screen, if any
+LL145 (Part 2 of 4) (Flight)	Drawing lines	Clip line: Work out if any part of the line is on-screen
+LL145 (Part 3 of 4) (Flight)	Drawing lines	Clip line: Calculate the line's gradient
+LL145 (Part 4 of 4) (Flight)	Drawing lines	Clip line: Call the routine in LL188 to do the actual clipping
+LL147 (Flight)	Drawing lines	Don't initialise the values in SWAP or A
+LL164 (Flight)	Drawing circles	Make the hyperspace sound and draw the hyperspace tunnel
+LL28 (Flight)	Maths (Arithmetic)	Calculate R = 256 * A / Q
+LL28+4 (Flight)	Maths (Arithmetic)	Skips the A >= Q check and always returns with C flag cleared, so this can be called if we know the division will work
+LL30 (Flight)	Drawing lines	LL30 is a synonym for LOIN and draws a line from (X1, Y1) to (X2, Y2)
+LL31 (Flight)	Maths (Arithmetic)	Skips the A >= Q check and does not set the R counter, so this can be used for jumping straight into the division loop if R is already set to 254 and we know the division will work
+LL38 (Flight)	Maths (Arithmetic)	Calculate (S A) = (S R) + (A Q)
+LL5 (Flight)	Maths (Arithmetic)	Calculate Q = SQRT(R Q)
+LL51 (Flight)	Maths (Geometry)	Calculate the dot product of XX15 and XX16
+LL61 (Flight)	Maths (Arithmetic)	Calculate (U R) = 256 * A / Q
+LL62 (Flight)	Maths (Arithmetic)	Calculate 128 - (U R)
+LL70+1 (Flight)	Drawing ships	Contains an RTS (as the first byte of an LDA instruction)
+LL81+2 (Flight)	Drawing ships	Draw the contents of the ship line heap, used to draw the ship as a dot from SHPPT
+LL9 (Part 1 of 12) (Flight)	Drawing ships	Draw ship: Check if ship is exploding, check if ship is in front
+LL9 (Part 2 of 12) (Flight)	Drawing ships	Draw ship: Check if ship is in field of view, close enough to draw
+LL9 (Part 3 of 12) (Flight)	Drawing ships	Draw ship: Set up orientation vector, ship coordinate variables
+LL9 (Part 4 of 12) (Flight)	Drawing ships	Draw ship: Set visibility for exploding ship (all faces visible)
+LL9 (Part 5 of 12) (Flight)	Drawing ships	Draw ship: Calculate the visibility of each of the ship's faces
+LL9 (Part 6 of 12) (Flight)	Drawing ships	Draw ship: Calculate the visibility of each of the ship's vertices
+LL9 (Part 7 of 12) (Flight)	Drawing ships	Draw ship: Calculate the visibility of each of the ship's vertices
+LL9 (Part 8 of 12) (Flight)	Drawing ships	Draw ship: Calculate the screen coordinates of visible vertices
+LL9 (Part 9 of 12) (Flight)	Drawing ships	Draw ship: Draw laser beams if the ship is firing its laser at us
+LL9 (Part 10 of 12) (Flight)	Drawing ships	Draw ship: Calculate the visibility of each of the ship's edges
+LL9 (Part 11 of 12) (Flight)	Drawing ships	Draw ship: Add all visible edges to the ship line heap
+LL9 (Part 12 of 12) (Flight)	Drawing ships	Draw ship: Draw all the visible edges from the ship line heap
+LO2 (Flight)	Flight	Contains an RTS
+LOAD (Loader 1)	Copy protection	Load a hidden file from disc (not used in this version as disc protection is disabled)
+LOAD (Loader 2)	Copy protection	This code accesses the disc directly (not used in this version as disc protection is disabled)
+LOAD (Loader 3)	Loader	Load the main docked code, set up various vectors, run a checksum and start the game
+LOADcode (Loader 2)	Copy protection	LOAD routine, bundled up in the loader so it can be moved to &0400 to be run
+LOADcode (Loader 3)	Loader	Encrypted LOAD routine, bundled up in the loader so it can be moved to &0B00 to be run
+LOADSCR (Loader 2)	Loader	Show the mode 7 Acornsoft loading screen
+LOGO (Loader 2)	Loader	Tables containing the Acornsoft logo for the BBC Micro and Acorn Electron
+LOGOS (Loader 2)	Loader	Print a large Acornsoft logo as part of the loading screen
+LOIN (Part 1 of 7) (Flight)	Drawing lines	Draw a line: Calculate the line gradient in the form of deltas
+LOIN (Part 2 of 7) (Flight)	Drawing lines	Draw a line: Line has a shallow gradient, step right along x-axis
+LOIN (Part 3 of 7) (Flight)	Drawing lines	Draw a shallow line going right and up or left and down
+LOIN (Part 4 of 7) (Flight)	Drawing lines	Draw a shallow line going right and down or left and up
+LOIN (Part 5 of 7) (Flight)	Drawing lines	Draw a line: Line has a steep gradient, step up along y-axis
+LOIN (Part 6 of 7) (Flight)	Drawing lines	Draw a steep line going up and left or down and right
+LOIN (Part 7 of 7) (Flight)	Drawing lines	Draw a steep line going up and right or down and left
+LOOK1 (Flight)	Flight	Initialise the space view
+LSHIPS (Flight)	Loader	Load a new ship blueprints file
+LTLI (Flight)	Loader	The OS command string for loading the docked code in file T.CODE
+LYN (Flight)	Utility routines	Clear most of a row of pixels
+m (Flight)	Maths (Geometry)	Do not include A in the calculation
+M% (Flight)	Main loop	The entry point for the main flight loop
+MA9 (Flight)	Maths (Geometry)	Contains an RTS
+MAD (Flight)	Maths (Arithmetic)	Calculate (A X) = Q * A + (S R)
+MAL1 (Flight)	Main loop	Marks the beginning of the ship analysis loop, so we can jump back here from part 12 of the main flight loop to work our way through each ship in the local bubble. We also jump back here when a ship is removed from the bubble, so we can continue processing from the next ship
+MAS1 (Flight)	Maths (Geometry)	Add an orientation vector coordinate to an INWK coordinate
+MAS2 (Flight)	Maths (Geometry)	Calculate a cap on the maximum distance to the planet or sun
+MAS3 (Flight)	Maths (Arithmetic)	Calculate A = x_hi^2 + y_hi^2 + z_hi^2 in the K% block
+MAS4 (Flight)	Maths (Geometry)	Calculate a cap on the maximum distance to a ship
+MCASH (Flight)	Maths (Arithmetic)	Add an amount of cash to the cash pot
+me1 (Flight)	Text	Erase an old in-flight message and display a new one
+me2 (Flight)	Text	Remove an in-flight message from the space view
+me3 (Flight)	Main loop	Used by me2 to jump back into the main game loop after printing an in-flight message
+mes9 (Flight)	Text	Print a text token, possibly followed by " DESTROYED"
+MESS (Flight)	Text	Display an in-flight message
+MESS1 (Loader 1)	Loader	The OS command string for switching to the disc filing system
+MESS1 (Loader 2)	Loader	The OS command string for loading the ELITE4 loader
+MESS1 (Loader 3)	Loader	The OS command string for changing the disc directory to E
+MESS2 (Loader 1)	Loader	The OS command string for loading the the ELITE3 binary
+MJP (Flight)	Flight	Process a mis-jump into witchspace
+MLOOP (Flight)	Main loop	The entry point for the main game loop. This entry point comes after the call to the main flight loop and spawning routines, so it marks the start of the main game loop for when we are docked (as we don't need to call the main flight loop or spawning routines if we aren't in space)
+MLS1 (Flight)	Maths (Arithmetic)	Calculate (A P) = ALP1 * A
+MLS2 (Flight)	Maths (Arithmetic)	Calculate (S R) = XX(1 0) and (A P) = A * ALP1
+MLTU2 (Flight)	Maths (Arithmetic)	Calculate (A P+1 P) = (A ~P) * Q
+MLTU2-2 (Flight)	Maths (Arithmetic)	Set Q to X, so this calculates (A P+1 P) = (A ~P) * X
+MLU1 (Flight)	Maths (Arithmetic)	Calculate Y1 = y_hi and (A P) = |y_hi| * Q for Y-th stardust
+MLU2 (Flight)	Maths (Arithmetic)	Calculate (A P) = |A| * Q
+MPL (Loader 2)	Utility routines	Move two pages of memory from LOADcode to LOAD and jump to ENTRY2
+MSBAR (Flight)	Dashboard	Draw a specific indicator in the dashboard's missile bar
+msblob (Flight)	Dashboard	Display the dashboard's missile indicators in green
+MU1 (Flight)	Maths (Arithmetic)	Copy X into P and A, and clear the C flag
+MU11 (Flight)	Maths (Arithmetic)	Calculate (A P) = P * X
+MU5 (Flight)	Maths (Arithmetic)	Set K(3 2 1 0) = (A A A A) and clear the C flGag
+MU6 (Flight)	Maths (Arithmetic)	Set P(1 0) = (A A)
+MULT1 (Flight)	Maths (Arithmetic)	Calculate (A P) = Q * A
+MULT12 (Flight)	Maths (Arithmetic)	Calculate (S R) = Q * A
+MULT3 (Flight)	Maths (Arithmetic)	Calculate K(3 2 1 0) = (A P+1 P) * Q
+MULTS-2 (Flight)	Maths (Arithmetic)	Calculate (A P) = X * A
+MULTU (Flight)	Maths (Arithmetic)	Calculate (A P) = P * Q
+MUT1 (Flight)	Maths (Arithmetic)	Calculate R = XX and (A P) = Q * A
+MUT2 (Flight)	Maths (Arithmetic)	Calculate (S R) = XX(1 0) and (A P) = Q * A
+MUT3 (Flight)	Maths (Arithmetic)	Unused routine that does the same as MUT2
+MV40 (Flight)	Moving	Rotate the planet or sun's location in space by the amount of pitch and roll of our ship
+MV45 (Flight)	Moving	Rejoin the MVEIT routine after the rotation, tactics and scanner code
+MVBL (Loader 3)	Utility routines	Decrypt and move a multi-page block of memory
+MVEIT (Part 1 of 9) (Flight)	Moving	Move current ship: Tidy the orientation vectors
+MVEIT (Part 2 of 9) (Flight)	Moving	Move current ship: Call tactics routine, remove ship from scanner
+MVEIT (Part 3 of 9) (Flight)	Moving	Move current ship: Move ship forward according to its speed
+MVEIT (Part 4 of 9) (Flight)	Moving	Move current ship: Apply acceleration to ship's speed as a one-off
+MVEIT (Part 5 of 9) (Flight)	Moving	Move current ship: Rotate ship's location by our pitch and roll
+MVEIT (Part 6 of 9) (Flight)	Moving	Move current ship: Move the ship in space according to our speed
+MVEIT (Part 7 of 9) (Flight)	Moving	Move current ship: Rotate ship's orientation vectors by pitch/roll
+MVEIT (Part 8 of 9) (Flight)	Moving	Move current ship: Rotate ship about itself by its own pitch/roll
+MVEIT (Part 9 of 9) (Flight)	Moving	Move current ship: Redraw on scanner, if it hasn't been destroyed
+MVPG (Loader 3)	Utility routines	Decrypt and move a page of memory
+MVS4 (Flight)	Moving	Apply pitch and roll to an orientation vector
+MVS5 (Flight)	Moving	Apply a 3.6 degree pitch or roll to an orientation vector
+MVT1 (Flight)	Moving	Calculate (x_sign x_hi x_lo) = (x_sign x_hi x_lo) + (A R)
+MVT1-2 (Flight)	Moving	Clear bits 0-6 of A before entering MVT1
+MVT3 (Flight)	Moving	Calculate K(3 2 1) = (x_sign x_hi x_lo) + K(3 2 1)
+MVT6 (Flight)	Moving	Calculate (A P+2 P+1) = (x_sign x_hi x_lo) + (A P+2 P+1)
+NA% (Loader 3)	Save and load	The data block for the last saved commander
+NLIN (Flight)	Drawing lines	Draw a horizontal line at pixel row 23 to box in a title
+NLIN2 (Flight)	Drawing lines	Draw a screen-wide horizontal line at the pixel row in A
+NLIN3 (Flight)	Drawing lines	Print a title and a horizontal line at row 19 to box it in
+NLIN4 (Flight)	Drawing lines	Draw a horizontal line at pixel row 19 to box in a title
+NO1 (Flight)	Maths (Geometry)	Contains an RTS
+NO3 (Flight)	Sound	Make a sound from a prepared sound block
+NOISE (Flight)	Sound	Make the sound whose number is in A
+NORM (Flight)	Maths (Geometry)	Normalise the three-coordinate vector in XX15
+NOS1 (Flight)	Sound	Prepare a sound block
+nWq (Flight)	Stardust	Create a random cloud of stardust
+NwS1 (Flight)	Universe	Flip the sign and double an INWK byte
+NWSHP (Flight)	Universe	Add a new ship to our local bubble of universe
+NWSPS (Flight)	Universe	Add a new space station to our local bubble of universe
+NWSTARS (Flight)	Stardust	Initialise the stardust field
+oh (Flight)	Universe	Contains an RTS SPIN2 Remove any randomness: spawn cargo of a specific type (given in X), and always spawn the number given in A
+OOPS (Flight)	Flight	Take some damage
+OSB (Loader 3)	Utility routines	A convenience routine for calling OSBYTE with Y = 0
+OSBmod (Loader 3)	Copy protection	Calculate a checksum on &0F00 to &0FFF (the test is disabled in this version)
+ou2 (Flight)	Text	Display "E.C.M.SYSTEM DESTROYED" as an in-flight message
+ou3 (Flight)	Text	Display "FUEL SCOOPS DESTROYED" as an in-flight message
+OUCH (Flight)	Flight	Potentially lose cargo or equipment following damage
+out (Loader 3)	Drawing pixels	Contains an RTS
+PARAMS1 (Loader 1)	Copy protection	OSWORD parameter block for accessing a specific track on the disc (not used in this version as disc protection is disabled)
+PARAMS2 (Loader 1)	Copy protection	OSWORD parameter block for accessing a specific track on the disc (not used in this version as disc protection is disabled)
+PARAMS3 (Loader 1)	Copy protection	OSWORD parameter block for loading the ELITE3 loader file (not used in this version as disc protection is disabled)
+ping (Flight)	Universe	Set the selected system to the current system
+PIX (Loader 3)	Drawing pixels	Draw a single pixel at a specific coordinate
+PIX1 (Flight)	Maths (Arithmetic)	Calculate (YY+1 SYL+Y) = (A P) + (S R) and draw stardust particle
+PIXEL (Flight)	Drawing pixels	Draw a 1-pixel dot, 2-pixel dash or 4-pixel square
+PIXEL2 (Flight)	Drawing pixels	Draw a stardust particle relative to the screen centre
+PL2 (Flight)	Drawing planets	Remove the planet or sun from the screen
+PL2-1 (Flight)	Drawing planets	Contains an RTS
+PL21 (Flight)	Drawing planets	Return from a planet/sun-drawing routine with a failure flag
+PL44 (Flight)	Drawing planets	Clear the C flag and return from the subroutine
+PL9 (Part 1 of 3) (Flight)	Drawing planets	Draw the planet, with either an equator and meridian, or a crater
+PL9 (Part 2 of 3) (Flight)	Drawing planets	Draw the planet's equator and meridian
+PL9 (Part 3 of 3) (Flight)	Drawing planets	Draw the planet's crater
+PLANET (Flight)	Drawing planets	Draw the planet or sun
+plf (Flight)	Text	Print a text token followed by a newline
+plf2 (Flight)	Text	Print text followed by a newline and indent of 6 characters
+PLL1 (Loader 3)	Drawing planets	Draw Saturn on the loading screen
+PLS1 (Flight)	Drawing planets	Calculate (Y A) = nosev_x / z
+PLS2 (Flight)	Drawing planets	Draw a half-circle
+PLS22 (Flight)	Drawing planets	Draw a circle or half-circle
+PLS3 (Flight)	Drawing planets	Calculate (Y A P) = 222 * roofv_x / z
+PLS4 (Flight)	Drawing planets	Calculate CNT2 = arctan(P / A) / 4
+PLS5 (Flight)	Drawing planets	Calculate roofv_x / z and roofv_y / z
+PLS6 (Flight)	Drawing planets	Calculate (X K) = (A P) / (z_sign z_hi z_lo)
+pr2 (Flight)	Text	Print an 8-bit number, left-padded to 3 digits, and optional point
+pr2+2 (Flight)	Text	Print the 8-bit number in X to the number of digits in A
+pr5 (Flight)	Text	Print a 16-bit number, left-padded to 5 digits, and optional point
+pr6 (Flight)	Text	Print 16-bit number, left-padded to 5 digits, no point
+PROJ (Flight)	Drawing ships	Project the current ship onto the screen
+PROT1 (Loader 2)	Loader	Various copy protection shenanigans in preparation for showing the Acornspft loading screen
+PROT1 (Loader 3)	Copy protection	Part of the CHKSM copy protection checksum calculation
+PROT2 (Loader 3)	Copy protection	Part of the CHKSM copy protection checksum calculation
+PROT3 (Loader 3)	Copy protection	Part of the CHKSM copy protection checksum calculation
+prq (Flight)	Text	Print a text token followed by a question mark
+prstr (Loader 2)	Loader	Print the NOP-terminated string immediately following the JSR instruction that called the routine
+ptg (Flight)	Flight	Called when the user manually forces a mis-jump
+PU1 (Flight)	Flight	Flip the coordinate axes for the four different views
+PX3 (Flight)	Drawing pixels	Plot a single pixel at (X, Y) within a character block
+PX4 (Flight)	Drawing pixels	Contains an RTS
+PZW (Flight)	Dashboard	Fetch the current dashboard colours, to support flashing
+QQ18 (Text tokens)	Text	The recursive token table for tokens 0-148
+QQ23 (Flight)	Market	Market prices table
+qw (Flight)	Text	Print a recursive token in the range 128-145
+RAND (Loader 3)	Drawing planets	The random number seed used for drawing Saturn
+RDKEY (Flight)	Keyboard	Scan the keyboard for key presses
+RE2+2 (Flight)	Dashboard	Restore A from T and return from the subroutine
+RE3+2 (Flight)	Dashboard	Auto-recentre the value in X, if keyboard auto-recentre is configured
+REDU2 (Flight)	Dashboard	Reduce the value of the pitch or roll dashboard indicator
+RES2 (Flight)	Start and end	Reset a number of flight variables and workspaces
+RESET (Flight)	Start and end	Reset most variables
+ROOT (Loader 3)	Maths (Arithmetic)	Calculate ZP = SQRT(ZP(1 0))
+RR3+1 (Flight)	Text	Contains an RTS RREN Prints the character definition pointed to by P(2 1) at the screen address pointed to by (A SC). Used by the BULB routine
+RREN (Flight)	Text	Prints the character definition pointed to by P(2 1) at the screen address pointed to by (A SC). Used by the BULB routine
+RSHIPS (Flight)	Loader	Launch from the station, load a new set of ship blueprints and jump into the main game loop
+rT9 (Flight)	Text	Contains an RTS
+RTOK (Text tokens)	Text	Macro definition for recursive tokens in the recursive token table
+RTS2 (Flight)	Drawing suns	Contains an RTS
+S% (Flight)	Workspaces	Entry points and vector addresses in the main flight code
+S1% (Loader 3)	Save and load	The drive and directory number used when saving or loading a commander file
+SC5 (Flight)	Utility routines	Contains an RTS
+SCAN (Flight)	Dashboard	Display the current ship on the scanner
+scramble (Flight)	Loader	Decrypt the main flight code between &1300 and &55FF and jump into the main game loop
+SESCP (Flight)	Flight	Spawn an escape pod from the current (parent) ship
+SFRMIS (Flight)	Tactics	Add an enemy missile to our local bubble of universe
+SFS1 (Flight)	Universe	Spawn a child ship from the current (parent) ship
+SFS1-2 (Flight)	Universe	Add a missile to the local bubble that has AI enabled, is hostile, but has no E.C.M.
+SFS2 (Flight)	Moving	Move a ship in space along one of the coordinate axes
+SFX (Flight)	Sound	Sound data
+SHD (Flight)	Flight	Charge a shield and drain some energy from the energy banks
+SHIPI (Flight)	Loader	The OS command string for loading a ship blueprints file
+SHPPT (Flight)	Drawing ships	Draw a distant ship as a point rather than a full wireframe
+SIGHT (Flight)	Flight	Draw the laser crosshairs
+SNE (Text tokens)	Maths (Geometry)	Sine/cosine table
+SOLAR (Flight)	Universe	Set up various aspects of arriving in a new system
+SOS1 (Flight)	Universe	Update the missile indicators, set up the planet data block
+SP1 (Flight)	Dashboard	Draw the space station on the compass
+SP2 (Flight)	Dashboard	Draw a dot on the compass, given the planet/station vector
+SPBLB (Flight)	Dashboard	Light up the space station indicator ("S") on the dashboard
+SPBT (Flight)	Dashboard	The bitmap definition for the space station indicator bulb
+spc (Flight)	Text	Print a text token followed by a space
+SPIN (Flight)	Universe	Randomly spawn cargo from a destroyed ship
+SPIN2 (Flight)	Universe	Remove any randomness: spawn cargo of a specific type (given in X), and always spawn the number given in A
+SPS1 (Flight)	Maths (Geometry)	Calculate the vector to the planet and store it in XX15
+SPS1+1 (Flight)	Maths (Geometry)	A BRK instruction
+SPS2 (Flight)	Maths (Arithmetic)	Calculate (Y X) = A / 10
+SPS3 (Flight)	Maths (Geometry)	Copy a space coordinate from the K% block into K3
+SPS4 (Flight)	Maths (Geometry)	Calculate the vector to the space station
+SQUA (Flight)	Maths (Arithmetic)	Clear bit 7 of A and calculate (A P) = A * A
+SQUA2 (Flight)	Maths (Arithmetic)	Calculate (A P) = A * A
+SQUA2 (Loader 3)	Maths (Arithmetic)	Calculate (A P) = A * A
+STARS (Flight)	Stardust	The main routine for processing the stardust
+STARS1 (Flight)	Stardust	Process the stardust for the front view
+STARS2 (Flight)	Stardust	Process the stardust for the left or right view
+STARS6 (Flight)	Stardust	Process the stardust for the rear view
+STATUS (Flight)	Status	Show the Status Mode screen (red key f8)
+SUN (Part 1 of 4) (Flight)	Drawing suns	Draw the sun: Set up all the variables needed
+SUN (Part 2 of 4) (Flight)	Drawing suns	Draw the sun: Start from bottom of screen and erase the old sun
+SUN (Part 3 of 4) (Flight)	Drawing suns	Draw the sun: Continue to move up the screen, drawing the new sun
+SUN (Part 4 of 4) (Flight)	Drawing suns	Draw the sun: Continue to the top of the screen, erasing old sun
+T95 (Flight)	Keyboard	Print the distance to the selected system
+TA151 (Flight)	Tactics	Make the ship head towards the planet
+TA2 (Flight)	Maths (Geometry)	Calculate the length of the vector in XX15 (ignoring the low coordinates), returning it in Q
+TACTICS (Part 1 of 7) (Flight)	Tactics	Apply tactics: Process missiles, both enemy missiles and our own
+TACTICS (Part 2 of 7) (Flight)	Tactics	Apply tactics: Escape pod, station, lone Thargon, safe-zone pirate
+TACTICS (Part 3 of 7) (Flight)	Tactics	Apply tactics: Calculate dot product to determine ship's aim
+TACTICS (Part 4 of 7) (Flight)	Tactics	Apply tactics: Check energy levels, maybe launch escape pod if low
+TACTICS (Part 5 of 7) (Flight)	Tactics	Apply tactics: Consider whether to launch a missile at us
+TACTICS (Part 6 of 7) (Flight)	Tactics	Apply tactics: Consider firing a laser at us, if aim is true
+TACTICS (Part 7 of 7) (Flight)	Tactics	Apply tactics: Set pitch, roll, and acceleration
+tal (Flight)	Text	Print the current galaxy number
+TAS1 (Flight)	Maths (Arithmetic)	Calculate K3 = (x_sign x_hi x_lo) - V(1 0)
+TAS2 (Flight)	Maths (Geometry)	Normalise the three-coordinate vector in K3
+TAS3 (Flight)	Maths (Geometry)	Calculate the dot product of XX15 and an orientation vector
+TAS3-2 (Flight)	Maths (Geometry)	Calculate nosev . XX15
+TAS4 (Flight)	Maths (Geometry)	Calculate the dot product of XX15 and one of the space station's orientation vectors
+TAS6 (Flight)	Maths (Geometry)	Negate the vector in XX15 so it points in the opposite direction
+TENS (Flight)	Text	A constant used when printing large numbers in BPRNT
+THERE (Flight)	Missions	Check whether we are in the Constrictor's system in mission 1
+TIDY (Flight)	Maths (Geometry)	Orthonormalise the orientation vectors for a ship
+TIS1 (Flight)	Maths (Arithmetic)	Calculate (A ?) = (-X * A + (S R)) / 96
+TIS2 (Flight)	Maths (Arithmetic)	Calculate A = A / Q
+TIS3 (Flight)	Maths (Arithmetic)	Calculate -(nosev_1 * roofv_1 + nosev_2 * roofv_2) / nosev_3
+tnpr (Flight)	Market	Work out if we have space for a specific amount of cargo
+tnpr1 (Flight)	Market	Work out if we have space for one tonne of cargo
+TT100 (Flight)	Main loop	The entry point for the start of the main game loop, which calls the main flight loop and the moves into the spawning routine
+TT102 (Flight)	Keyboard	Process function key, save key, hyperspace and chart key presses and update the hyperspace counter
+TT103 (Flight)	Charts	Draw a small set of crosshairs on a chart
+TT105 (Flight)	Charts	Draw crosshairs on the Short-range Chart, with clipping
+TT11 (Flight)	Text	Print a 16-bit number, left-padded to n digits, and optional point
+TT110 (Flight)	Flight	Launch from a station or show the front space view
+TT111 (Flight)	Universe	Set the current system to the nearest system to a point
+TT111-1 (Flight)	Universe	Contains an RTS
+TT113 (Flight)	Maths (Arithmetic)	Contains an RTS
+TT114 (Flight)	Charts	Display either the Long-range or Short-range Chart
+TT123 (Flight)	Charts	Move galactic coordinates by a signed delta
+TT128 (Flight)	Drawing circles	Draw a circle on a chart
+TT14 (Flight)	Drawing circles	Draw a circle with crosshairs on a chart
+TT146 (Flight)	Text	Print the distance to the selected system in light years
+TT147 (Flight)	Text	Print an error when a system is out of hyperspace range
+TT15 (Flight)	Drawing lines	Draw a set of crosshairs
+TT151 (Flight)	Market	Print the name, price and availability of a market item
+TT152 (Flight)	Market	Print the unit ("t", "kg" or "g") for a market item
+TT16 (Flight)	Charts	Move the crosshairs on a chart
+TT160 (Flight)	Market	Print "t" (for tonne) and a space
+TT161 (Flight)	Market	Print "kg" (for kilograms)
+TT162 (Flight)	Text	Print a space
+TT162+2 (Flight)	Text	Jump to TT27 to print the text token in A
+TT163 (Flight)	Market	Print the headers for the table of market prices
+TT167 (Flight)	Market	Show the Market Price screen (red key f7)
+TT16a (Flight)	Market	Print "g" (for grams)
+TT17 (Flight)	Keyboard	Scan the keyboard for cursor key or joystick movement
+TT18 (Flight)	Flight	Try to initiate a jump into hyperspace
+TT180 (Flight)	Charts	Contains an RTS
+TT20 (Flight)	Universe	Twist the selected system's seeds four times
+TT210 (Flight)	Inventory	Show a list of current cargo in our hold, optionally to sell
+TT213 (Flight)	Inventory	Show the Inventory screen (red key f9)
+TT22 (Flight)	Charts	Show the Long-range Chart (red key f4)
+TT23 (Flight)	Charts	Show the Short-range Chart (red key f5)
+TT24 (Flight)	Universe	Calculate system data from the system seeds
+TT25 (Flight)	Universe	Show the Data on System screen (red key f6)
+TT26 (Flight)	Text	Print a character at the text cursor by poking into screen memory
+TT27 (Flight)	Text	Print a text token
+TT41 (Flight)	Text	Print a letter according to Sentence Case
+TT42 (Flight)	Text	Print a letter in lower case
+TT43 (Flight)	Text	Print a two-letter token or recursive token 0-95
+TT44 (Flight)	Text	Jumps to TT26 to print the character in A (used to enable us to use a branch instruction to jump to TT26)
+TT45 (Flight)	Text	Print a letter in lower case
+TT46 (Flight)	Text	Print a character and switch to capitals
+TT48 (Flight)	Text	Contains an RTS
+TT54 (Flight)	Universe	Twist the selected system's seeds
+TT60 (Flight)	Text	Print a text token and a paragraph break
+TT66 (Flight)	Utility routines	Clear the screen and set the current view type
+TT67 (Flight)	Text	Print a newline
+TT68 (Flight)	Text	Print a text token followed by a colon
+TT69 (Flight)	Text	Set Sentence Case and print a newline
+TT70 (Flight)	Text	Display "MAINLY " and jump to TT72
+TT72 (Flight)	Universe	Used by TT70 to re-enter the routine after displaying "MAINLY" for the economy type
+TT73 (Flight)	Text	Print a colon
+TT74 (Flight)	Text	Print a character
+TT81 (Flight)	Universe	Set the selected system's seeds to those of system 0
+TTX110 (Flight)	Flight	Set the current system to the nearest system and return to hyp
+TTX111 (Flight)	Flight	Used to rejoin this routine from the call to TTX110
+TTX66 (Flight)	Utility routines	Clear the top part of the screen and draw a white border
+TTX69 (Flight)	Text	Print a paragraph break
+TVT1 (Loader 3)	Screen mode	Palette data for space and the two dashboard colour schemes
+TVT1code (Loader 3)	Loader	Code block at &1100-&11E2 that remains resident in both docked and flight mode (palettes, screen mode routine and commander data)
+TWFL (Flight)	Drawing lines	Ready-made character rows for the left end of a horizontal line in mode 4
+TWFR (Flight)	Drawing lines	Ready-made character rows for the right end of a horizontal line in mode 4
+TWOK (Text tokens)	Text	Macro definition for two-letter tokens in the token table
+TWOS (Flight)	Drawing pixels	Ready-made single-pixel character row bytes for mode 4
+TWOS (Loader 3)	Drawing pixels	Ready-made single-pixel character row bytes for mode 4
+TWOS2 (Flight)	Drawing pixels	Ready-made double-pixel character row bytes for mode 4
+U% (Flight)	Keyboard	Clear the key logger
+UNIV (Flight)	Universe	Table of pointers to the local universe's ship data blocks
+Unused block (Flight)	Utility routines	These bytes appear to be unused (the same block appears in both the flight and docked code)
+Unused copy protection routine (Loader 2)	Copy protection	This code doesn't appear to be run in this version
+Unused duplicate of MULTU (Flight)	Maths (Arithmetic)	Unused duplicate of the MULTU routine
+UP (Flight)	Workspaces	Ship slots, variables
+var (Flight)	Market	Calculate QQ19+3 = economy * |economic_factor|
+VCSU1 (Flight)	Maths (Arithmetic)	Calculate vector K3(8 0) = [x y z] - coordinates of the sun or space station
+VCSUB (Flight)	Maths (Arithmetic)	Calculate vector K3(8 0) = [x y z] - coordinates in (A V)
+VEC (Missile ship blueprint)	Screen mode	The original value of the IRQ1 vector
+WARP (Flight)	Flight	Perform an in-system jump
+WP (Flight)	Workspaces	Variables
+WP1 (Flight)	Drawing planets	Reset the ball line heap
+WPLS (Flight)	Drawing suns	Remove the sun from the screen
+WPLS-1 (Flight)	Drawing suns	Contains an RTS
+WPLS2 (Flight)	Drawing planets	Remove the planet from the screen
+WPSHPS (Flight)	Dashboard	Clear the scanner, reset the ball line and sun line heaps
+WSCAN (Flight)	Screen mode	Wait for the vertical sync
+wW (Flight)	Flight	Start a hyperspace countdown
+
+
+
+Variables
+--------------------------------------------------------------------------------------------
+X1 (Flight)	Workspace variable	Temporary storage, typically used for x-coordinates in line-drawing routines
+X2 (Flight)	Workspace variable	Temporary storage, typically used for x-coordinates in line-drawing routines
+XC (Flight)	Workspace variable	The x-coordinate of the text cursor (i.e. the text column), which can be from 0 to 32
+XSAV (Flight)	Workspace variable	Temporary storage for saving the value of the X register, used in a number of places
+XSAV2 (Flight)	Workspace variable	Temporary storage, used for storing the value of the X register in the TT26 routine
+XX (Flight)	Workspace variable	Temporary storage, typically used for storing a 16-bit x-coordinate
+XX0 (Flight)	Workspace variable	Temporary storage, used to store the address of a ship blueprint. For example, it is used when we add a new ship to the local bubble in routine NWSHP, and it contains the address of the current ship's blueprint as we loop through all the nearby ships in the main flight loop
+XX1 (Flight)	Workspace variable	This is an alias for INWK that is used in the main ship-drawing routine at LL9
+XX12 (Flight)	Workspace variable	Temporary storage for a block of values, used in a number of places
+XX13 (Flight)	Workspace variable	Temporary storage, typically used in the line-drawing routines
+XX14 (Flight)	Workspace variable	This byte appears to be unused
+XX15 (Flight)	Workspace variable	Temporary storage, typically used for storing screen coordinates in line-drawing routines
+XX16 (Flight)	Workspace variable	Temporary storage for a block of values, used in a number of places
+XX17 (Flight)	Workspace variable	Temporary storage, used in BPRNT to store the number of characters to print, and as the edge counter in the main ship-drawing routine
+XX18 (Flight)	Workspace variable	Temporary storage used to store coordinates in the LL9 ship-drawing routine
+XX19 (Flight)	Workspace variable	XX19(1 0) shares its location with INWK(34 33), which contains the address of the ship line heap
+XX2 (Flight)	Workspace variable	Temporary storage, used to store the visibility of the ship's faces during the ship-drawing routine at LL9
+XX20 (Flight)	Workspace variable	Temporary storage, used in a number of places
+XX21 (Ship blueprints A)	Drawing ships	Ship blueprints lookup table for the D.MOA file
+XX21 (Ship blueprints B)	Drawing ships	Ship blueprints lookup table for the D.MOB file
+XX21 (Ship blueprints C)	Drawing ships	Ship blueprints lookup table for the D.MOC file
+XX21 (Ship blueprints D)	Drawing ships	Ship blueprints lookup table for the D.MOD file
+XX21 (Ship blueprints E)	Drawing ships	Ship blueprints lookup table for the D.MOE file
+XX21 (Ship blueprints F)	Drawing ships	Ship blueprints lookup table for the D.MOF file
+XX21 (Ship blueprints G)	Drawing ships	Ship blueprints lookup table for the D.MOG file
+XX21 (Ship blueprints H)	Drawing ships	Ship blueprints lookup table for the D.MOH file
+XX21 (Ship blueprints I)	Drawing ships	Ship blueprints lookup table for the D.MOI file
+XX21 (Ship blueprints J)	Drawing ships	Ship blueprints lookup table for the D.MOJ file
+XX21 (Ship blueprints K)	Drawing ships	Ship blueprints lookup table for the D.MOK file
+XX21 (Ship blueprints L)	Drawing ships	Ship blueprints lookup table for the D.MOL file
+XX21 (Ship blueprints M)	Drawing ships	Ship blueprints lookup table for the D.MOM file
+XX21 (Ship blueprints N)	Drawing ships	Ship blueprints lookup table for the D.MON file
+XX21 (Ship blueprints O)	Drawing ships	Ship blueprints lookup table for the D.MOO file
+XX21 (Ship blueprints P)	Drawing ships	Ship blueprints lookup table for the D.MOP file
+XX24 (Flight)	Workspace variable	This byte appears to be unused
+XX3 (Flight)	Workspaces	Temporary storage space for complex calculations
+XX4 (Flight)	Workspace variable	Temporary storage, used in a number of places
+Y1 (Flight)	Workspace variable	Temporary storage, typically used for y-coordinates in line-drawing routines
+Y2 (Flight)	Workspace variable	Temporary storage, typically used for y-coordinates in line-drawing routines
+YC (Flight)	Workspace variable	The y-coordinate of the text cursor (i.e. the text row), which can be from 0 to 23
+ypl (Flight)	Text	Print the current system name
+ypl-1 (Flight)	Text	Contains an RTS
+YSAV (Flight)	Workspace variable	Temporary storage for saving the value of the Y register, used in a number of places
+YSAV2 (Flight)	Workspace variable	Temporary storage, used for storing the value of the Y register in the TT26 routine
+YY (Flight)	Workspace variable	Temporary storage, typically used for storing a 16-bit y-coordinate
+YY (Loader 3)	Workspace variable	Temporary storage, used in a number of places
+Ze (Flight)	Universe	Initialise the INWK workspace to a hostile ship
+ZERO (Flight)	Utility routines	Zero-fill pages &9, &A, &B, &C and &D
+ZES1 (Flight)	Utility routines	Zero-fill the page whose number is in X
+ZES2 (Flight)	Utility routines	Zero-fill a specific page
+ZINF (Flight)	Utility routines	Reset the INWK workspace and orientation vectors
+ZP (Flight)	Workspaces	Lots of important variables are stored in the zero page workspace as it is quicker and more space-efficient to access memory here
+ZP (Loader 1)	Workspaces	Important variables used by the loader
+ZP (Loader 2)	Workspaces	Important variables used by the loader
+ZP (Loader 3)	Workspaces	Important variables used by the loader
+ZZ (Flight)	Workspace variable	Temporary storage, typically used for distance values#
+
+
+ALP1 (Flight)	    Workspace variable	Magnitude of the roll angle alpha, i.e. |alpha|, which is a positive value between 0 and 31
+ALP2 (Flight)	    Workspace variable	Bit 7 of ALP2 = sign of the roll angle in ALPHA
+ALPHA (Flight)	    Workspace variable	The current roll angle alpha, which is reduced from JSTX to a sign-magnitude value between -31 and +31
+BET1 (Flight)	    Workspace variable	The magnitude of the pitch angle beta, i.e. |beta|, which is a positive value between 0 and 8
+BET2 (Flight)	    Workspace variable	Bit 7 of BET2 = sign of the pitch angle in BETA
+BETA (Flight)	    Workspace variable	The current pitch angle beta, which is reduced from JSTY to a sign-magnitude value between -8 and +8
+ASH (Flight)	    Workspace variable	Aft shield status
+auto (Flight)	    Workspace variable	Docking computer activation status
+BST (Flight)	Workspace variable	Fuel scoops (BST stands for "barrel status")
+BSTK (Flight)	Workspace variable	Bitstik configuration setting
+BUF (Flight)	Workspace variable	The line buffer used by DASC to print justified text
+CABTMP (Flight)	Workspace variable	Cabin temperature
+CASH (Flight)	Workspace variable	Our current cash pot
+CNT2 (Flight)	Workspace variable	Temporary storage, used in the planet-drawing routine to store the segment number where the arc of a partial circle should start
+COK (Flight)	Workspace variable	Flags used to generate the competition code
+COL (Flight)	Workspace variable	Temporary storage, used to store colour information when drawing pixels in the dashboard
+COMC (Flight)	Workspace variable	The colour of the dot on the compass
+COMX (Flight)	Workspace variable	The x-coordinate of the compass dot
+COMY (Flight)	Workspace variable	The y-coordinate of the compass dot
+CPIR (Flight)	Workspace variable	A counter used when spawning pirates, to work our way through the list of pirate ship blueprints until we find one that has been loaded
+DELT4 (Flight)	Workspace variable	Our current speed * 64 as a 16-bit value
+DELTA (Flight)	Workspace variable	Our current speed, in the range 1-40
+ALTIT (Flight)	    Workspace variable	Our altitude above the surface of the planet or sun
+AVL (Flight)	    Workspace variable	Market availability in the current system
+BOMB (Flight)	    Workspace variable	Energy bomb
+CATF (Flight)	Workspace variable	The disc catalogue flag
+CHKSM (Loader 3)	Workspace variable	Used in the copy protection code
+CNT (Flight)	Workspace variable	Temporary storage, typically used for storing the number of iterations required when looping
+CRGO (Flight)	Workspace variable	Our ship's cargo capacity
+DAMP (Flight)	Workspace variable	Keyboard damping configuration setting
+de (Flight)	Workspace variable	Equipment destruction flag
+DJD (Flight)	Workspace variable	Keyboard auto-recentre configuration setting
+DKCMP (Flight)	Workspace variable	Docking computer
+DL (Flight)	Workspace variable	Vertical sync flag
+DL (Loader 3)	Workspace variable	Vertical sync flag
+DLY (Flight)	Workspace variable	In-flight message delay
+DNOIZ (Flight)	Workspace variable	Sound on/off configuration setting
+ECM (Flight)	Workspace variable	E.C.M. system
+ECMA (Flight)	Workspace variable	The E.C.M. countdown timer, which determines whether an E.C.M. system is currently operating:
+ECMP (Flight)	Workspace variable	Our E.C.M. status
+ENERGY (Flight)	Workspace variable	Energy bank status
+ENGY (Flight)	Workspace variable	Energy unit
+ESCP (Flight)	Workspace variable	Escape pod
+EV (Flight)	Workspace variable	The "extra vessels" spawning counter
+FIST (Flight)	Workspace variable	Our legal status (FIST stands for "fugitive/innocent status"):
+FLAG (Flight)	Workspace variable	A flag that's used to define whether this is the first call to the ball line routine in BLINE, so it knows whether to wait for the second call before storing segment data in the ball line heap
+FLH (Flight)	Workspace variable	Flashing console bars configuration setting
+FRIN (Flight)	Workspace variable	Slots for the ships in the local bubble of universe
+FSH (Flight)	Workspace variable	Forward shield status
+GCNT (Flight)	Workspace variable	The number of the current galaxy (0-7)
+GHYP (Flight)	Workspace variable	Galactic hyperdrive
+GNTMP (Flight)	Workspace variable	Laser temperature (or "gun temperature")
+gov (Flight)	Workspace variable	The current system's government type (0-7)
+HFX (Flight)	Workspace variable	A flag that toggles the hyperspace colour effect
+INF (Flight)	Workspace variable	Temporary storage, typically used for storing the address of a ship's data block, so it can be copied to and from the internal workspace at INWK
+INWK (Flight)	Workspace variable	The zero-page internal workspace for the current ship data block
+JSTE (Flight)	Workspace variable	Reverse both joystick channels configuration setting
+JSTGY (Flight)	Workspace variable	Reverse joystick Y-channel configuration setting
+JSTK (Flight)	Workspace variable	Keyboard or joystick configuration setting
+JSTX (Flight)	Workspace variable	Our current roll rate
+JSTY (Flight)	Workspace variable	Our current pitch rate
+JUNK (Flight)	Workspace variable	The amount of junk in the local bubble
+K (Flight)	Workspace variable	Temporary storage, used in a number of places
+K2 (Flight)	Workspace variable	Temporary storage, used in a number of places
+K3 (Flight)	Workspace variable	Temporary storage, used in a number of places
+K4 (Flight)	Workspace variable	Temporary storage, used in a number of places
+K5 (Flight)	Workspace variable	Temporary storage used to store segment coordinates across successive calls to BLINE, the ball line routine
+K6 (Flight)	Workspace variable	Temporary storage, typically used for storing coordinates during vector calculations
+KL (Flight)	Workspace variable	The following bytes implement a key logger that enables Elite to scan for concurrent key presses of the primary flight keys, plus a secondary flight key
+KY1 (Flight)	Workspace variable	"?" is being pressed
+KY12 (Flight)	Workspace variable	TAB is being pressed
+KY13 (Flight)	Workspace variable	ESCAPE is being pressed
+KY14 (Flight)	Workspace variable	"T" is being pressed
+KY15 (Flight)	Workspace variable	"U" is being pressed
+KY16 (Flight)	Workspace variable	"M" is being pressed
+KY17 (Flight)	Workspace variable	"E" is being pressed
+KY18 (Flight)	Workspace variable	"J" is being pressed
+KY19 (Flight)	Workspace variable	"C" is being pressed
+KY2 (Flight)	Workspace variable	Space is being pressed
+KY20 (Flight)	Workspace variable	"P" is being pressed
+KY3 (Flight)	Workspace variable	"<" is being pressed
+KY4 (Flight)	Workspace variable	">" is being pressed
+KY5 (Flight)	Workspace variable	"X" is being pressed
+KY6 (Flight)	Workspace variable	"S" is being pressed
+KY7 (Flight)	Workspace variable	"A" is being pressed
+LAS (Flight)	Workspace variable	Contains the laser power of the laser fitted to the current space view (or 0 if there is no laser fitted to the current view)
+LAS2 (Flight)	Workspace variable	Laser power for the current laser
+LASCT (Flight)	Workspace variable	The laser pulse count for the current laser
+LASER (Flight)	Workspace variable	The specifications of the lasers fitted to each of the four space views:
+LASX (Flight)	Workspace variable	The x-coordinate of the tip of the laser line
+LASY (Flight)	Workspace variable	The y-coordinate of the tip of the laser line
+LSO (Flight)	Workspace variable	The ship line heap for the space station (see NWSPS) and the sun line heap (see SUN)
+LSP (Flight)	Workspace variable	The ball line heap pointer, which contains the number of the first free byte after the end of the LSX2 and LSY2 heaps (see the deep dive on "The ball line heap" for details)
+LSX (Flight)	Workspace variable	LSX is an alias that points to the first byte of the sun line heap at LSO
+LSX2 (Flight)	Workspace variable	The ball line heap for storing x-coordinates (see the deep dive on "The ball line heap" for details)
+LSY2 (Flight)	Workspace variable	The ball line heap for storing y-coordinates (see the deep dive on "The ball line heap" for details)
+MANY (Flight)	Workspace variable	The number of ships of each type in the local bubble of universe
+MCH (Flight)	Workspace variable	The text token number of the in-flight message that is currently being shown, and which will be removed by the me2 routine when the counter in DLY reaches zero
+MCNT (Flight)	Workspace variable	The main loop counter
+MJ (Flight)	Workspace variable	Are we in witchspace (i.e. have we mis-jumped)?
+MSAR (Flight)	Workspace variable	The targeting state of our leftmost missile
+MSTG (Flight)	Workspace variable	The current missile lock target
+NAME (Flight)	Workspace variable	The current commander name
+NEWB (Flight)	Workspace variable	The ship's "new byte flags" (or NEWB flags)
+NOMSL (Flight)	Workspace variable	The number of missiles we have fitted (0-4)
+NOSTM (Flight)	Workspace variable	The number of stardust particles shown on screen, which is 18 (#NOST) for normal space, and 3 for witchspace
+P (Flight)	Workspace variable	Temporary storage, used in a number of places
+P (Loader 2)	Workspace variable	Temporary storage, used in a number of places
+P (Loader 3)	Workspace variable	Temporary storage, used in a number of places
+PATG (Flight)	Workspace variable	Configuration setting to show the author names on the start-up screen and enable manual hyperspace mis-jumps
+Q (Flight)	Workspace variable	Temporary storage, used in a number of places
+Q (Loader 2)	Workspace variable	Temporary storage, used in a number of places
+Q (Loader 3)	Workspace variable	Temporary storage, used in a number of places
+QQ0 (Flight)	Workspace variable	The current system's galactic x-coordinate (0-256)
+QQ1 (Flight)	Workspace variable	The current system's galactic y-coordinate (0-256)
+QQ10 (Flight)	Workspace variable	The galactic y-coordinate of the crosshairs in the galaxy chart (and, most of the time, the selected system's galactic y-coordinate)
+QQ11 (Flight)	Workspace variable	The number of the current view:
+QQ12 (Flight)	Workspace variable	Our "docked" status
+QQ14 (Flight)	Workspace variable	Our current fuel level (0-70)
+QQ15 (Flight)	Workspace variable	The three 16-bit seeds for the selected system, i.e. the one in the crosshairs in the Short-range Chart
+QQ17 (Flight)	Workspace variable	Contains a number of flags that affect how text tokens are printed, particularly capitalisation:
+QQ19 (Flight)	Workspace variable	Temporary storage, used in a number of places
+QQ2 (Flight)	Workspace variable	The three 16-bit seeds for the current system, i.e. the one we are currently in
+QQ20 (Flight)	Workspace variable	The contents of our cargo hold
+QQ21 (Flight)	Workspace variable	The three 16-bit seeds for the current galaxy
+QQ22 (Flight)	Workspace variable	The two hyperspace countdown counters
+QQ24 (Flight)	Workspace variable	Temporary storage, used to store the current market item's price in routine TT151
+QQ25 (Flight)	Workspace variable	Temporary storage, used to store the current market item's availability in routine TT151
+QQ26 (Flight)	Workspace variable	A random value used to randomise market data
+QQ28 (Flight)	Workspace variable	The current system's economy (0-7)
+QQ29 (Flight)	Workspace variable	Temporary storage, used in a number of places
+QQ3 (Flight)	Workspace variable	The selected system's economy (0-7)
+QQ4 (Flight)	Workspace variable	The selected system's government (0-7)
+QQ5 (Flight)	Workspace variable	The selected system's tech level (0-14)
+QQ6 (Flight)	Workspace variable	The selected system's population in billions * 10 (1-71), so the maximum population is 7.1 billion
+QQ7 (Flight)	Workspace variable	The selected system's productivity in M CR (96-62480)
+QQ8 (Flight)	Workspace variable	The distance from the current system to the selected system in light years * 10, stored as a 16-bit number
+QQ9 (Flight)	Workspace variable	The galactic x-coordinate of the crosshairs in the galaxy chart (and, most of the time, the selected system's galactic x-coordinate)
+R (Flight)	Workspace variable	Temporary storage, used in a number of places
+R (Loader 2)	Workspace variable	Temporary storage, used in a number of places
+RAND (Flight)	Workspace variable	Four 8-bit seeds for the random number generation system implemented in the DORND routine
+RAT (Flight)	Workspace variable	Used to store different signs depending on the current space view, for use in calculating stardust movement
+RAT2 (Flight)	Workspace variable	Temporary storage, used to store the pitch and roll signs when moving objects and stardust
+S (Flight)	Workspace variable	Temporary storage, used in a number of places
+S (Loader 2)	Workspace variable	Temporary storage, used in a number of places
+SC (Flight)	Workspace variable	Screen address (low byte)
+SC (Loader 2)	Workspace variable	Screen address (low byte)
+SC (Loader 3)	Workspace variable	Screen address (low byte)
+SCH (Flight)	Workspace variable	Screen address (high byte)
+SCH (Loader 2)	Workspace variable	Screen address (high byte)
+SCH (Loader 3)	Workspace variable	Screen address (high byte)
+SLSP (Flight)	Workspace variable	The address of the bottom of the ship line heap
+SSPR (Flight)	Workspace variable	"Space station present" flag
+STP (Flight)	Workspace variable	The step size for drawing circles
+SUNX (Flight)	Workspace variable	The 16-bit x-coordinate of the vertical centre axis of the sun (which might be off-screen)
+SVC (Flight)	Workspace variable	The save count
+SWAP (Flight)	Workspace variable	Temporary storage, used to store a flag that records whether or not we had to swap a line's start and end coordinates around when clipping the line in routine LL145 (the flag is used in places like BLINE to swap them back)
+SX (Flight)	Workspace variable	This is where we store the x_hi coordinates for all the stardust particles
+SXL (Flight)	Workspace variable	This is where we store the x_lo coordinates for all the stardust particles
+SY (Flight)	Workspace variable	This is where we store the y_hi coordinates for all the stardust particles
+SYL (Flight)	Workspace variable	This is where we store the y_lo coordinates for all the stardust particles
+SZ (Flight)	Workspace variable	This is where we store the z_hi coordinates for all the stardust particles
+SZL (Flight)	Workspace variable	This is where we store the z_lo coordinates for all the stardust particles
+T (Flight)	Workspace variable	Temporary storage, used in a number of places
+T (Loader 2)	Workspace variable	Temporary storage, used in a number of places
+T (Loader 3)	Workspace variable	Temporary storage, used in a number of places
+T1 (Flight)	Workspace variable	Temporary storage, used in a number of places
+TALLY (Flight)	Workspace variable	Our combat rank
+tek (Flight)	Workspace variable	The current system's tech level (0-14)
+TGT (Flight)	Workspace variable	Temporary storage, typically used as a target value for counters when drawing explosion clouds and partial circles
+TP (Flight)	Workspace variable	The current mission status
+TRTB% (Flight)	Workspace variable	Contains the address of the keyboard translation table, which is used to translate internal key numbers to ASCII
+TRTB% (Loader 2)	Workspace variable	Contains the address of the keyboard translation table, which is used to translate internal key numbers to ASCII
+TYPE (Flight)	Workspace variable	The current ship type
+U (Flight)	Workspace variable	Temporary storage, used in a number of places
+V (Flight)	Workspace variable	Temporary storage, typically used for storing an address pointer
+VIEW (Flight)	Workspace variable	The number of the current space view
+
+
+Blueprints
+---------------------------------------
+VERTEX (Missile ship blueprint)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints A)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints B)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints C)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints D)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints E)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints F)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints G)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints H)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints I)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints J)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints K)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints L)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints M)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints N)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints O)	Drawing ships	Macro definition for adding vertices to ship blueprints
+VERTEX (Ship blueprints P)	Drawing ships	Macro definition for adding vertices to ship blueprints
+SHIP_ADDER (Ship blueprints B)	Drawing ships	Ship blueprint for an Adder
+SHIP_ADDER (Ship blueprints G)	Drawing ships	Ship blueprint for an Adder
+SHIP_ADDER (Ship blueprints I)	Drawing ships	Ship blueprint for an Adder
+SHIP_ADDER (Ship blueprints M)	Drawing ships	Ship blueprint for an Adder
+SHIP_ANACONDA (Ship blueprints L)	Drawing ships	Ship blueprint for an Anaconda
+SHIP_ASP_MK_2 (Ship blueprints N)	Drawing ships	Ship blueprint for an Asp Mk II
+SHIP_ASP_MK_2 (Ship blueprints P)	Drawing ships	Ship blueprint for an Asp Mk II
+SHIP_ASTEROID (Ship blueprints C)	Drawing ships	Ship blueprint for an asteroid
+SHIP_ASTEROID (Ship blueprints D)	Drawing ships	Ship blueprint for an asteroid
+SHIP_ASTEROID (Ship blueprints H)	Drawing ships	Ship blueprint for an asteroid
+SHIP_ASTEROID (Ship blueprints K)	Drawing ships	Ship blueprint for an asteroid
+SHIP_ASTEROID (Ship blueprints N)	Drawing ships	Ship blueprint for an asteroid
+SHIP_ASTEROID (Ship blueprints O)	Drawing ships	Ship blueprint for an asteroid
+SHIP_ASTEROID (Ship blueprints P)	Drawing ships	Ship blueprint for an asteroid
+SHIP_BOA (Ship blueprints C)	Drawing ships	Ship blueprint for a Boa
+SHIP_BOA (Ship blueprints F)	Drawing ships	Ship blueprint for a Boa
+SHIP_BOULDER (Ship blueprints B)	Drawing ships	Ship blueprint for a boulder
+SHIP_BOULDER (Ship blueprints E)	Drawing ships	Ship blueprint for a boulder
+SHIP_BOULDER (Ship blueprints F)	Drawing ships	Ship blueprint for a boulder
+SHIP_BOULDER (Ship blueprints G)	Drawing ships	Ship blueprint for a boulder
+SHIP_BOULDER (Ship blueprints P)	Drawing ships	Ship blueprint for a boulder
+SHIP_CANISTER (Ship blueprints A)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints B)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints C)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints D)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints E)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints F)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints G)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints H)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints I)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints J)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints K)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints L)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints M)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints N)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints O)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_CANISTER (Ship blueprints P)	Drawing ships	Ship blueprint for a cargo canister
+SHIP_COBRA_MK_1 (Ship blueprints D)	Drawing ships	Ship blueprint for a Cobra Mk I
+SHIP_COBRA_MK_1 (Ship blueprints E)	Drawing ships	Ship blueprint for a Cobra Mk I
+SHIP_COBRA_MK_1 (Ship blueprints J)	Drawing ships	Ship blueprint for a Cobra Mk I
+SHIP_COBRA_MK_1 (Ship blueprints K)	Drawing ships	Ship blueprint for a Cobra Mk I
+SHIP_COBRA_MK_1 (Ship blueprints M)	Drawing ships	Ship blueprint for a Cobra Mk I
+SHIP_COBRA_MK_1 (Ship blueprints O)	Drawing ships	Ship blueprint for a Cobra Mk I
+SHIP_COBRA_MK_3 (Ship blueprints B)	Drawing ships	Ship blueprint for a Cobra Mk III
+SHIP_COBRA_MK_3 (Ship blueprints C)	Drawing ships	Ship blueprint for a Cobra Mk III
+SHIP_COBRA_MK_3 (Ship blueprints D)	Drawing ships	Ship blueprint for a Cobra Mk III
+SHIP_COBRA_MK_3 (Ship blueprints E)	Drawing ships	Ship blueprint for a Cobra Mk III
+SHIP_COBRA_MK_3 (Ship blueprints F)	Drawing ships	Ship blueprint for a Cobra Mk III
+SHIP_COBRA_MK_3 (Ship blueprints G)	Drawing ships	Ship blueprint for a Cobra Mk III
+SHIP_COBRA_MK_3 (Ship blueprints K)	Drawing ships	Ship blueprint for a Cobra Mk III
+SHIP_COBRA_MK_3 (Ship blueprints L)	Drawing ships	Ship blueprint for a Cobra Mk III
+SHIP_COBRA_MK_3 (Ship blueprints N)	Drawing ships	Ship blueprint for a Cobra Mk III
+SHIP_COBRA_MK_3 (Ship blueprints O)	Drawing ships	Ship blueprint for a Cobra Mk III
+SHIP_COBRA_MK_3 (Ship blueprints P)	Drawing ships	Ship blueprint for a Cobra Mk III
+SHIP_COBRA_MK_3_P (Ship blueprints A)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
+SHIP_COBRA_MK_3_P (Ship blueprints H)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
+SHIP_COBRA_MK_3_P (Ship blueprints I)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
+SHIP_COBRA_MK_3_P (Ship blueprints J)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
+SHIP_COBRA_MK_3_P (Ship blueprints M)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
+SHIP_CONSTRICTOR (Ship blueprints G)	Drawing ships	Ship blueprint for a Constrictor
+SHIP_CORIOLIS (Ship blueprints A)	Drawing ships	Ship blueprint for a Coriolis space station
+SHIP_CORIOLIS (Ship blueprints C)	Drawing ships	Ship blueprint for a Coriolis space station
+SHIP_CORIOLIS (Ship blueprints E)	Drawing ships	Ship blueprint for a Coriolis space station
+SHIP_CORIOLIS (Ship blueprints G)	Drawing ships	Ship blueprint for a Coriolis space station
+SHIP_CORIOLIS (Ship blueprints I)	Drawing ships	Ship blueprint for a Coriolis space station
+SHIP_CORIOLIS (Ship blueprints K)	Drawing ships	Ship blueprint for a Coriolis space station
+SHIP_CORIOLIS (Ship blueprints M)	Drawing ships	Ship blueprint for a Coriolis space station
+SHIP_CORIOLIS (Ship blueprints O)	Drawing ships	Ship blueprint for a Coriolis space station
+SHIP_DODO (Ship blueprints B)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+SHIP_DODO (Ship blueprints D)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+SHIP_DODO (Ship blueprints F)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+SHIP_DODO (Ship blueprints H)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+SHIP_DODO (Ship blueprints J)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+SHIP_DODO (Ship blueprints L)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+SHIP_DODO (Ship blueprints N)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+SHIP_DODO (Ship blueprints P)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+SHIP_ESCAPE_POD (Ship blueprints A)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints B)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints C)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints D)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints E)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints F)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints G)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints H)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints I)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints J)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints K)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints L)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints N)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints O)	Drawing ships	Ship blueprint for an escape pod
+SHIP_ESCAPE_POD (Ship blueprints P)	Drawing ships	Ship blueprint for an escape pod
+SHIP_FER_DE_LANCE (Ship blueprints A)	Drawing ships	Ship blueprint for a Fer-de-Lance
+SHIP_FER_DE_LANCE (Ship blueprints L)	Drawing ships	Ship blueprint for a Fer-de-Lance
+SHIP_GECKO (Ship blueprints D)	Drawing ships	Ship blueprint for a Gecko
+SHIP_GECKO (Ship blueprints E)	Drawing ships	Ship blueprint for a Gecko
+SHIP_GECKO (Ship blueprints F)	Drawing ships	Ship blueprint for a Gecko
+SHIP_GECKO (Ship blueprints J)	Drawing ships	Ship blueprint for a Gecko
+SHIP_GECKO (Ship blueprints K)	Drawing ships	Ship blueprint for a Gecko
+SHIP_GECKO (Ship blueprints M)	Drawing ships	Ship blueprint for a Gecko
+SHIP_GECKO (Ship blueprints N)	Drawing ships	Ship blueprint for a Gecko
+SHIP_KRAIT (Ship blueprints A)	Drawing ships	Ship blueprint for a Krait
+SHIP_KRAIT (Ship blueprints B)	Drawing ships	Ship blueprint for a Krait
+SHIP_KRAIT (Ship blueprints C)	Drawing ships	Ship blueprint for a Krait
+SHIP_KRAIT (Ship blueprints E)	Drawing ships	Ship blueprint for a Krait
+SHIP_KRAIT (Ship blueprints G)	Drawing ships	Ship blueprint for a Krait
+SHIP_KRAIT (Ship blueprints H)	Drawing ships	Ship blueprint for a Krait
+SHIP_KRAIT (Ship blueprints I)	Drawing ships	Ship blueprint for a Krait
+SHIP_KRAIT (Ship blueprints J)	Drawing ships	Ship blueprint for a Krait
+SHIP_KRAIT (Ship blueprints M)	Drawing ships	Ship blueprint for a Krait
+SHIP_KRAIT (Ship blueprints N)	Drawing ships	Ship blueprint for a Krait
+SHIP_KRAIT (Ship blueprints O)	Drawing ships	Ship blueprint for a Krait
+SHIP_KRAIT (Ship blueprints P)	Drawing ships	Ship blueprint for a Krait
+SHIP_MAMBA (Ship blueprints A)	Drawing ships	Ship blueprint for a Mamba
+SHIP_MAMBA (Ship blueprints B)	Drawing ships	Ship blueprint for a Mamba
+SHIP_MAMBA (Ship blueprints E)	Drawing ships	Ship blueprint for a Mamba
+SHIP_MAMBA (Ship blueprints G)	Drawing ships	Ship blueprint for a Mamba
+SHIP_MAMBA (Ship blueprints I)	Drawing ships	Ship blueprint for a Mamba
+SHIP_MAMBA (Ship blueprints J)	Drawing ships	Ship blueprint for a Mamba
+SHIP_MAMBA (Ship blueprints L)	Drawing ships	Ship blueprint for a Mamba
+SHIP_MAMBA (Ship blueprints M)	Drawing ships	Ship blueprint for a Mamba
+SHIP_MAMBA (Ship blueprints O)	Drawing ships	Ship blueprint for a Mamba
+SHIP_MISSILE (Missile ship blueprint)	Drawing ships	Ship blueprint for a missile
+SHIP_MORAY (Ship blueprints K)	Drawing ships	Ship blueprint for a Moray
+SHIP_PLATE (Ship blueprints A)	Drawing ships	Ship blueprint for an alloy plate
+SHIP_PLATE (Ship blueprints B)	Drawing ships	Ship blueprint for an alloy plate
+SHIP_PLATE (Ship blueprints E)	Drawing ships	Ship blueprint for an alloy plate
+SHIP_PLATE (Ship blueprints G)	Drawing ships	Ship blueprint for an alloy plate
+SHIP_PLATE (Ship blueprints I)	Drawing ships	Ship blueprint for an alloy plate
+SHIP_PLATE (Ship blueprints J)	Drawing ships	Ship blueprint for an alloy plate
+SHIP_PLATE (Ship blueprints O)	Drawing ships	Ship blueprint for an alloy plate
+SHIP_PLATE (Ship blueprints P)	Drawing ships	Ship blueprint for an alloy plate
+SHIP_PYTHON (Ship blueprints A)	Drawing ships	Ship blueprint for a Python
+SHIP_PYTHON (Ship blueprints H)	Drawing ships	Ship blueprint for a Python
+SHIP_PYTHON (Ship blueprints K)	Drawing ships	Ship blueprint for a Python
+SHIP_PYTHON_P (Ship blueprints I)	Drawing ships	Ship blueprint for a Python (pirate)
+SHIP_PYTHON_P (Ship blueprints O)	Drawing ships	Ship blueprint for a Python (pirate)
+SHIP_SHUTTLE (Ship blueprints H)	Drawing ships	Ship blueprint for a Shuttle
+SHIP_SIDEWINDER (Ship blueprints A)	Drawing ships	Ship blueprint for a Sidewinder
+SHIP_SIDEWINDER (Ship blueprints C)	Drawing ships	Ship blueprint for a Sidewinder
+SHIP_SIDEWINDER (Ship blueprints D)	Drawing ships	Ship blueprint for a Sidewinder
+SHIP_SIDEWINDER (Ship blueprints E)	Drawing ships	Ship blueprint for a Sidewinder
+SHIP_SIDEWINDER (Ship blueprints F)	Drawing ships	Ship blueprint for a Sidewinder
+SHIP_SIDEWINDER (Ship blueprints H)	Drawing ships	Ship blueprint for a Sidewinder
+SHIP_SIDEWINDER (Ship blueprints I)	Drawing ships	Ship blueprint for a Sidewinder
+SHIP_SIDEWINDER (Ship blueprints J)	Drawing ships	Ship blueprint for a Sidewinder
+SHIP_SIDEWINDER (Ship blueprints K)	Drawing ships	Ship blueprint for a Sidewinder
+SHIP_SIDEWINDER (Ship blueprints L)	Drawing ships	Ship blueprint for a Sidewinder
+SHIP_SIDEWINDER (Ship blueprints M)	Drawing ships	Ship blueprint for a Sidewinder
+SHIP_SIDEWINDER (Ship blueprints N)	Drawing ships	Ship blueprint for a Sidewinder
+SHIP_SIDEWINDER (Ship blueprints P)	Drawing ships	Ship blueprint for a Sidewinder
+SHIP_SPLINTER (Ship blueprints C)	Drawing ships	Ship blueprint for a splinter
+SHIP_SPLINTER (Ship blueprints D)	Drawing ships	Ship blueprint for a splinter
+SHIP_SPLINTER (Ship blueprints H)	Drawing ships	Ship blueprint for a splinter
+SHIP_SPLINTER (Ship blueprints K)	Drawing ships	Ship blueprint for a splinter
+SHIP_SPLINTER (Ship blueprints N)	Drawing ships	Ship blueprint for a splinter
+SHIP_SPLINTER (Ship blueprints O)	Drawing ships	Ship blueprint for a splinter
+SHIP_SPLINTER (Ship blueprints P)	Drawing ships	Ship blueprint for a splinter
+SHIP_THARGOID (Ship blueprints C)	Drawing ships	Ship blueprint for a Thargoid mothership
+SHIP_THARGOID (Ship blueprints D)	Drawing ships	Ship blueprint for a Thargoid mothership
+SHIP_THARGON (Ship blueprints C)	Drawing ships	Ship blueprint for a Thargon
+SHIP_THARGON (Ship blueprints D)	Drawing ships	Ship blueprint for a Thargon
+SHIP_TRANSPORTER (Ship blueprints F)	Drawing ships	Ship blueprint for a Transporter
+SHIP_VIPER (Ship blueprints A)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints B)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints C)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints D)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints E)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints F)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints G)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints H)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints I)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints J)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints K)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints L)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints M)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints N)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints O)	Drawing ships	Ship blueprint for a Viper
+SHIP_VIPER (Ship blueprints P)	Drawing ships	Ship blueprint for a Viper
+SHIP_WORM (Ship blueprints B)	Drawing ships	Ship blueprint for a Worm
+SHIP_WORM (Ship blueprints L)	Drawing ships	Ship blueprint for a Worm
+E% (Ship blueprints A)	Drawing ships	Ship blueprints default NEWB flags for the D.MOA file
+E% (Ship blueprints B)	Drawing ships	Ship blueprints default NEWB flags for the D.MOB file
+E% (Ship blueprints C)	Drawing ships	Ship blueprints default NEWB flags for the D.MOC file
+E% (Ship blueprints D)	Drawing ships	Ship blueprints default NEWB flags for the D.MOD file
+E% (Ship blueprints E)	Drawing ships	Ship blueprints default NEWB flags for the D.MOE file
+E% (Ship blueprints F)	Drawing ships	Ship blueprints default NEWB flags for the D.MOF file
+E% (Ship blueprints G)	Drawing ships	Ship blueprints default NEWB flags for the D.MOG file
+E% (Ship blueprints H)	Drawing ships	Ship blueprints default NEWB flags for the D.MOH file
+E% (Ship blueprints I)	Drawing ships	Ship blueprints default NEWB flags for the D.MOI file
+E% (Ship blueprints J)	Drawing ships	Ship blueprints default NEWB flags for the D.MOJ file
+E% (Ship blueprints K)	Drawing ships	Ship blueprints default NEWB flags for the D.MOK file
+E% (Ship blueprints L)	Drawing ships	Ship blueprints default NEWB flags for the D.MOL file
+E% (Ship blueprints M)	Drawing ships	Ship blueprints default NEWB flags for the D.MOM file
+E% (Ship blueprints N)	Drawing ships	Ship blueprints default NEWB flags for the D.MON file
+E% (Ship blueprints O)	Drawing ships	Ship blueprints default NEWB flags for the D.MOO file
+E% (Ship blueprints P)	Drawing ships	Ship blueprints default NEWB flags for the D.MOP file
+EDGE (Missile ship blueprint)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints A)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints B)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints C)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints D)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints E)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints F)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints G)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints H)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints I)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints J)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints K)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints L)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints M)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints N)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints O)	Drawing ships	Macro definition for adding edges to ship blueprints
+EDGE (Ship blueprints P)	Drawing ships	Macro definition for adding edges to ship blueprints
+FACE (Missile ship blueprint)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints A)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints B)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints C)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints D)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints E)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints F)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints G)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints H)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints I)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints J)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints K)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints L)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints M)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints N)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints O)	Drawing ships	Macro definition for adding faces to ship blueprints
+FACE (Ship blueprints P)	Drawing ships	Macro definition for adding faces to ship blueprints

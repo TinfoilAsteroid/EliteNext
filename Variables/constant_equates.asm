@@ -21,6 +21,7 @@ MaxVisibility		equ $1F
 FarInFront			equ $C0
 
 ; Universe Managment
+ShipTypeJunk        equ 3
 ShipTypeStation     equ 2
 ShipTypeMissile     equ 1
 ShipTypeNormal      equ 0

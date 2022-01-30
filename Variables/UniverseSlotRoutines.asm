@@ -98,7 +98,22 @@ GetTypeAtSlotA:         ld      hl,UniverseSlotList
 IsPlanetOrSpaceStation: ld      hl,UniverseSlotList+1
                         ld      a,(hl)
                         ret
-                  
+
+AddJunkCount:           MACRO
+                        ld      hl,JunkCount
+                        inc     (hl)
+                        ENDM
+
+SubJunkCount:           MACRO
+                        ld      hl,JunkCount
+                        dec     (hl)
+                        ENDM
+                        
+TestRoomForJunk:        MACRO   Target
+                        ld      a,3
+                        JumpIfALTMemusng    JunkCount, Target
+                        ENDM
+                        
 
 FindNextFreeSlotInC:    ld      hl,UniverseSlotList
                         ld      b, UniverseListSize

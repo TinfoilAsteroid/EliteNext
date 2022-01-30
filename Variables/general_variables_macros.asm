@@ -1,5 +1,26 @@
+; limited to 255 character length
+CountLengthHL:          MACRO   Limiter
+                        ld      de,hl
+                        ld      bc,Limiter
+                        xor     a
+                        cpir
+                        ClearCarryFlag
+                        sbc     hl,de
+                        ld      a,l
+                        ret
                     
 
+HalfLengthHL:           ld      b,0
+.CountLenLoop:          ld      a,(hl)
+                        cp      0
+                        jr      z,.DoneCount
+                        inc     b
+                        inc     hl
+                        jr      .CountLenLoop
+.DoneCount:             ld      a,32
+                        sub     b
+                        sra     a         
+                        ret
 
 MakeInnocentMacro:		MACRO
 						xor		a
@@ -99,7 +120,23 @@ ClearSafeZone:          MACRO
                         xor     a
                         ld      (SpaceStationSafeZone),a
                         ENDM
+
+CoolLasers:             MACRO
+                        ld      a,(GunTemperature)
+                        and     a
+                        jr      z,.AlreadyCool
+                        dec     a
+                        ld      (GunTemperature),a
+.AlreadyCool:           
+                        ENDM                        
                         
+InitEventCounter:       MACRO
+                        xor     a
+                        ld      (EventCounter),a
+                        ENDM
                         
-                       
+ClearMissJump:          MACRO
+                        xor     a
+                        ld      (MissJumpFlag),a
+                        ENDM
                         

@@ -48,14 +48,20 @@ ScreenHyperspace EQU ScreenDocking+1
     INCLUDE	"./Hardware/memory_bank_defines.asm"
     INCLUDE "./Hardware/screen_equates.asm"
     INCLUDE "./Data/ShipModelEquates.asm"
-    INCLUDE "./Macros/MMUMacros.asm"
-    INCLUDE "./Macros/ShiftMacros.asm"
-    INCLUDE "./Macros/MathsMacros.asm"
+    INCLUDE "./Macros/callMacros.asm"
+    INCLUDE "./Macros/carryFlagMacros.asm"
     INCLUDE "./Macros/CopyByteMacros.asm"
-    INCLUDE "./Macros/generalMacros.asm"
     INCLUDE "./Macros/ldCopyMacros.asm"
     INCLUDE "./Macros/ldIndexedMacros.asm"
+    INCLUDE "./Macros/jumpMacros.asm"
+    INCLUDE "./Macros/MathsMacros.asm"
+    INCLUDE "./Macros/MMUMacros.asm"
+    INCLUDE "./Macros/NegateMacros.asm"
+    INCLUDE "./Macros/returnMacros.asm"
+    INCLUDE "./Macros/ShiftMacros.asm"
+    INCLUDE "./Macros/signBitMacros.asm"
     INCLUDE "./Variables/general_variables_macros.asm"
+    INCLUDE "./Data/ShipIdEquates.asm.asm"
 
 
 charactersetaddr		equ 15360
@@ -126,21 +132,34 @@ InitialiseMainLoop:     xor     a
                                                
                         MMUSelectStockTable
                         call    generate_stock_market
+                        call    ResetMessageQueue
+                        InitEventCounter
+                        ClearMissJump
 ;..MAIN GAME LOOP..................................................................................................................
+; MACRO BLOCKS.....................................................................................................................
+MainLoopInput:          MACRO
+                        call    scan_keyboard
+;.. This bit allows cycling of ships on universe 0 in demo.........................................................................
+DemoOfShipsDEBUG:       call    TestForNextShip
+;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
+InputMainMacro:         call    ViewKeyTest
+                        call    TestPauseMode
+                        ld      a,(GamePaused)
+                        cp      0
+                        jr      nz,MainLoop
+                        call    MovementKeyTest
+                        ENDM
+
 ;..................................................................................................................................
 MainLoop:	            call    doRandom                            ; redo the seeds every frame
+                        CoolLasers
                         call    scan_keyboard
 ;.. This bit allows cycling of ships on universe 0 in demo.........................................................................
 DemoOfShipsDEBUG:       call    TestForNextShip
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
 InputBlockerCheck:      ld      a,$0
                         JumpIfAEqNusng $01, SkipInputHandlers       ; as we are in a transition the whole update AI is skipped
-                        call    ViewKeyTest
-                        call    TestPauseMode
-                        ld      a,(GamePaused)
-                        cp      0
-                        jr      nz,MainLoop
-                        call    MovementKeyTest
+                        InputMainMacro
 ;.. Process cursor keys for respective screen if the address is 0 then we skill just skip movement.................................
 HandleMovement:         ld      a,(CallCursorRoutine+2)
                         IfAIsZeroGoto     TestAreWeDocked
@@ -154,6 +173,10 @@ SkipInputHandlers:
 ;.. For Docked flag its - 0 = in free space, FF = Docked, FE transition, FD = Setup open space and transition to not docked
 TestAreWeDocked:        ld      a,(DockedFlag)                                ; if if we are in free space do universe update
                         JumpIfANENusng  0, SkipUniveseUpdate                  ; else we skip it. As we are also in dock/transition then no models should be updated so we dont; need to draw
+
+.UpdateEventCounter:    ld      hl,EventCounter                               ; evnery 256 cycles we do a trigger test
+                        dec     (hl)
+                        call    z,LoopEventTriggered
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
 ;.. First update Sun...............................................................................................................
@@ -164,15 +187,13 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
                         jr      z, MenusLoop                                  ; This will change as more screens are added TODO
 ;..Processing a view...............................................................................................................
 ;..Display any message ............................................................................................................
-.HandleMessages:        ld      a,(MessageCount)
-                        jr      z,.NoMessages                                 ; note message end will tidy up display
-.UpdateMessage:                        
-.NoMessages:            ld      hl,(InnerHyperCount)
-                        ld      a,h
-                        or      l
-                        jr      z,.NoHyperspace                               ; note message end will tidy up display
+.CheckHyperspaceMessage:AnyHyperSpaceMacro .HandleMessages
                         call    HyperSpaceMessage
-.NoHyperspace:          MMUSelectLayer2
+.HandleMessages:        AnyMessagesMacro,  .NoMessages
+                        call    DisplayCurrentMessage
+                        call    UpdateMessageTimer
+                      
+.NoMessages:            MMUSelectLayer2
                         call   l2_cls                        
                         MMUSelectLayer1
 .UpdateSun:             MMUSelectSun
@@ -236,6 +257,7 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not worki
                         CorrectPostJumpFuel
                         ForceTransition ScreenFront            ; This will also trigger stars 
                         ld      a,$00
+                        ld      (ExtraVesselsCounter),a
                         ld      (DockedFlag),a
                         call    GalaxyGenerateDesc             ; bc  holds new system to generate system
                         call    copy_working_to_system         ; and propogate copies of seeds
@@ -262,6 +284,93 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not worki
 ;;TODO                       MMUSelectUniverseBankN 1
 ;;TODO                       call    CopyBodyToUniverse
 
+LoopEventTriggered:     JumpIfMemNotZero MissJumpFlag, .WitchSpaceEvent
+                        call    doRandom
+                        JumpIfAGTENusng 35, .NotJunk
+.SpawnJunk:             TestRoomForJunk .NotJunk
+                        FindNextFreeSlotInC                         ; c= slot number
+                        jr      c,.NoSpace
+                        AddJunkCount
+.CouldBeTrader:         call    doRandom
+                        and     1
+                        jp      z,.SpawnTrader
+                        ld      a,c                                 ; a = slot number
+                        MMUSelectUniverseA
+                        MMUSelectShipBank1
+                        call    doRandom
+                        cp      10                                  ; will set carry if a < 10
+                        FlipCarryFlag                               ; so now carry is set if a > 10
+                        and     1                                   ; so only have carry flag
+                        adc     ShipID_CargoType5                   ; so now a = 4 + random + poss carry
+                        ld      b,a                                 ; save ship type
+                        ld      a,(SpaceStationSafeZone)            ; if in space station zone
+                        and     a                                   ; then we can't do asteroids
+                        jr      z,.NotInSafeZone                    ; .
+                        ld      a,b
+                        ReturnIfAEQNusng   ShipID_Asteroid
+.NotInSafeZone:         jp      SpawnShipTypeA
+                        ;.......implicit ret
+.NotJunk:               ReturnMemNotZero SpaceStationSafeZone
+                        a = work out our contrasband and badness level
+                        sla     a
+                        JumpIfMemZero CopCount,.NoCopsInSystem
+                        ld      hl,FugitiveInnocentStatus           ; or a with FIST status
+                        or      (hl)
+.NoCopsInSystem:        ld      (BadnessStatus),a                   ; if badness level triggers a cop     
+                        call    DoRandom                            ; then its hostile
+                        ld      hl,BadnessStatus                    ; 
+                        cp      (hl)                                ; 
+                        CallIfAGTENusng .SpawnHostileCop            ; 
+                        ReturnIfMemNotZero CopCount                 ; if here are police then we are done
+                        ld      hl, ExtraVesselsCounter             ; count down extra vessels counter
+                        dec     (hl)                                ; to prevent mass spawing
+                        ret     p                                   ;
+.ExtraVesselHit0:       inc     (hl)                                ; set counter to 0
+                        JumpIfMemNotZero MissionData,.DoMissionPlans; call special mission spawn logic routine
+                        ret     c                                   ; return if carry was set (i.e. it did something)
+                        ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
+                        MMUSelectGalaxyA
+                        ld      a,(GalaxyDisplayGovernment)
+                        IfANotZeroGoto .NotAnarchySystem
+                        ld      b,a
+                        call    doRandom                            ; if random > 120 then don't spawn
+                        ReturnIfALTENusng 120                       ;
+                        and     7                                   ; if random 0 ..7 < gov rating
+                        ReturnIfALTENusng b                         ; then return
+.SpawnHostile:          ld      a,b
+                        JumpIfAGTENusgn .SpawnPirates               ; 100 in 255 change of one or more pirates
+                        ld      hl, ExtraVesselsCounter             ; prevent the next spawning
+                        inc     (hl)                                ; 
+                        and     3                                   ; a = random 0..3
+                        MMUSelectShipBank1
+                        GetByteInTable ShipHunterTable              ; get hunter ship type
+                        jp      SpawnShipTypeA
+                        ;.......implicit ret                       
+.SpawnPirates:          ld      a,b                                 ; a = random 0..3
+                        and     3
+                        ld      (ExtraVesselsCounter),a
+                        ld      (PirateCount),a
+.PirateLoop:            call    doRandom
+                        ld      c,a                                 ; random and random and 7
+                        call    doRandome
+                        and     c
+                        and     7
+                        GetByteInTable ShipPirateTable
+                        call    SpawnShipTypeA
+                        ld      hl,PirateCount
+                        dec     (hl)
+                        jr      nz,.PirateLoop
+                        ret
+.WitchSpaceEvent:       ret; TODO for now
+
+SpawnShipTypeA:         call    GetShipBankId
+                        MMUSelectShipBankA
+                        ld      a,b
+                        call    CopyShipToUniverse
+                        call    UnivSetSpawnPosition
+                        ret
+
+
                         ; reset main loop counters
                         ; from BBC TT18 jump code
                         ; need to set system corrodinates, flush out univere ships etc
@@ -271,6 +380,8 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not worki
                         ;   put planet into data blokc 1 of FRIN
                         ;   put sun inot data block (NWWSHIP)
                         ; need to look at in system warp code (WARP) - note we need to -reorg all to code for teh station as that will never be in slot 0
+
+
 WeAreInTransition:                        
 DoubleBufferCheck:      ld      a,00
                         IFDEF DOUBLEBUFFER
@@ -292,39 +403,6 @@ BruteForceChange:      ld      d,a
                         call    SetScreenAIX
                         jp MainLoop
 
-;..Hyperspace counter............................................................................................................
-HyperSpaceMessage:      MMUSelectLayer1
-                        call    DisplayHyperCountDown
-.UpdateHyperCountdown:  ld      hl,(InnerHyperCount)
-                        dec     l
-                        jr      nz,.decHyperInnerOnly
-                        dec     h
-                        ret     m
-.resetHyperInner:       ld      l,$0B
-                        push    hl
-                        ld      d,12
-                        ld      a,L1ColourPaperBlack | L1ColourInkYellow
-                        call    l1_attr_cls_2DlinesA
-                        ld      d,12 * 8
-                        call    l1_cls_2_lines_d
-                        ld      de,$6000
-                        ld      hl,Hyp_centeredTarget
-                        call    l1_print_at
-                        ld      de,$6800
-                        ld      hl,Hyp_centeredCharging
-                        call    l1_print_at
-                        pop     hl
-.decHyperInnerOnly:     ld      (InnerHyperCount),hl
-                        ret
-.HyperCountDone:        ld      hl,0
-                        ld      (InnerHyperCount),hl
-                        ld      d,12
-                        ld      a,L1ColourPaperBlack | L1ColourInkBlack
-                        call    l1_attr_cls_2DlinesA
-                        ld      d,12 * 8
-                        call    l1_cls_2_lines_d
-                        ForceTransition ScreenHyperspace                            ; transition to hyperspace
-                        ret
 ;..................................................................................................................................
 ;..Update Universe Objects.........................................................................................................
 UpdateUniverseObjects:  xor     a
@@ -526,67 +604,6 @@ Hyp_centeredCharging    DS 32
 Hyp_centeredEol2        DB 0
 Hyp_bufferpadding2      DS 32   ; just in case we get a buffer ovverun. shoudl never get beyond 32 chars
 
-MainCopyLoop:           ld      a,(hl)
-                        cp      0
-                        ret     z
-                        ld      (de),a
-                        inc     hl
-                        inc     de
-                        jr      MainCopyLoop
-
-CountLengthHL:          ld      b,0
-.CountLenLoop:          ld      a,(hl)
-                        cp      0
-                        jr      z,.DoneCount
-                        inc     b
-                        inc     hl
-                        jr      .CountLenLoop
-.DoneCount:             ld      a,32
-                        sub     b
-                        sra     a         
-                        ret
-                        
-MainClearTextLoop:      ld      b,a
-                        ld      a,32
-.ClearLoop:             ld      (hl),a
-                        inc     hl
-                        djnz    .ClearLoop
-                        ret
-
-     
-DisplayHyperCountDown:  ld      de,Hyp_to
-                        ld      hl,name_expanded
-                        call    MainCopyLoop
-.DoneName:              xor     a
-                        ld      (de),a
-                        ld      (Hyp_message+31),a      ; max out at 32 characters
-.CentreJustify:         ld      hl,Hyp_message
-                        call    CountLengthHL
-                        ld      hl,Hyp_centeredTarget
-                        call    MainClearTextLoop
-                        ex      de,hl
-                        ld      hl,Hyp_message
-                        call    MainCopyLoop
-                        xor     a
-                        ld      (Hyp_centeredEol),a
-                        ld      hl,Hyp_counter           ; clear counter digits
-                        ld      a,32                     ; clear counter digits
-                        ld      (hl),a                   ; clear counter digits
-                        inc     hl                       ; clear counter digits
-                        ld      (hl),a                   ; clear counter digits
-                        inc     hl                       ; clear counter digits
-                        ld      (hl),a                   ; clear counter digits
-                        call    UpdateCountdownNumber
-                        ld      hl,Hyp_charging
-                        call    CountLengthHL
-                        ld      hl,Hyp_centeredCharging
-                        call    MainClearTextLoop
-                        ex      de,hl
-                        ld      hl,Hyp_charging
-                        call    MainCopyLoop
-                        xor     a
-                        ld      (Hyp_centeredEol2),a
-                        ret
 
 ;DisplayTargetAndRange
 ;DisplayCountDownNumber
@@ -867,7 +884,7 @@ SetInitialShipPosition: ld      hl,$0000
 
 
             INCLUDE "./Views/ConsoleDrawing.asm"
-            INCLUDE "./Tables/MessageQueue.asm"
+            INCLUDE "./Tables/message_queue.asm"
 
 
 

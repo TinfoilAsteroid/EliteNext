@@ -16,9 +16,9 @@ StartOfUnivN:       DB "X"
 ;   \ -> & 565D \ See ship data files chosen and loaded after flight code starts running.
 ; Universe map substibute for INWK
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
-                        INCLUDE "./Variables/ShipPosVars.asm"
-                        INCLUDE "./Variables/RotationMatrixVars.asm"
-                        INCLUDE "./Variables/AIRuntimeData.asm"
+                        INCLUDE "./Universe/Ships/ShipPosVars.asm"
+                        INCLUDE "./Universe/Ships/RotationMatrixVars.asm"
+                        INCLUDE "./Universe/Ships/AIRuntimeData.asm"
 
 ; Orientation Matrix [nosev x y z ] nose vector ( forward) 19 to 26
 ;                    [roofv x y z ] roof vector (up)
@@ -29,17 +29,17 @@ univRAT      DB  0               ; 99
 univRAT2     DB  0               ; 9A
 univRAT2Val  DB  0               ; 9A
 
-                        INCLUDE "./Variables/XX16Vars.asm"
-                        INCLUDE "./Variables/XX25Vars.asm"
-                        INCLUDE "./Variables/XX18Vars.asm"
+                        INCLUDE "./Universe/Ships/XX16Vars.asm"
+                        INCLUDE "./Universe/Ships/XX25Vars.asm"
+                        INCLUDE "./Universe/Ships/XX18Vars.asm"
 
 ; Used to make 16 bit reads a little cleaner in source code
 UbnkZPoint                  DS  3
 UbnkZPointLo                equ UbnkZPoint
 UbnkZPointHi                equ UbnkZPoint+1
 UbnkZPointSign              equ UbnkZPoint+2
-                        INCLUDE "./Variables/XX15Vars.asm"
-                        INCLUDE "./Variables/XX12Vars.asm"
+                        INCLUDE "./Universe/Ships/XX15Vars.asm"
+                        INCLUDE "./Universe/Ships/XX12Vars.asm"
 
 
 ; Post clipping the results are now 8 bit
@@ -144,6 +144,26 @@ MaxUnivPitchAndRoll:    MACRO
                         ld      (UBnKRotZCounter),a
                         ENDM                   
 
+RandomUnivPitchAndRoll: MACRO
+                        call    DoRandom
+                        or      %01101111
+                        ld      (UBnKRotXCounter),a
+                        call    DoRandom
+                        or      %01101111
+                        ld      (UBnKRotZCounter),a
+                        ENDM
+
+RandomUnivSpeed:        MACRO
+                        call    DoRandom
+                        and     31
+                        ld      (UBnKspeed),a
+                        ENDM
+                        
+ZeroUnivAccelleration:  MACRO
+                        xor     a
+                        ld      (UBnKAccel),a
+                        ENDM
+                        
 ; --------------------------------------------------------------
 ResetUBnkData:          ld      hl,StartOfUniv
                         ld      de,UBnk_Data_len
@@ -159,6 +179,41 @@ ResetUbnkPosition:      ld      hl,UBnKxlo
                         djnz    .zeroLoop
                         ret
 
+; --------------------------------------------------------------                        
+; This sets the position of the current ship randomly, called after spawing
+UnivSetSpawnPosition:   RandomUnivPitchAndRoll
+                        call    DoRandom                        ; set x lo and y lo to random
+.setXlo:                ld      (UBnKxlo),a 
+.setYlo:                ld      (UBnKylo),a
+.setXsign:              rrca                                    ; rotate by 1 bit right
+                        ld      b,a
+                        and     SignOnly8Bit
+                        ld      (UBnKxsgn),a
+.setYSign:              ld      a,b                             ; get random back again
+                        rrca                                    ; rotate by 1 bit right
+                        ld      b,a
+                        and     SignOnly8Bit                    ; and set y sign
+                        ld      (UBnKysgn),a
+.setYHigh:              rrc     b                               ; as value is in b rotate again
+                        ld      a,b                             ; 
+                        and     31                              ; set y hi to random 0 to 31
+                        ld      (UbnKyhi),a                     ;
+.setXHigh:              rrc     b                               ; as value is in b rotate again
+                        ld      a,b
+                        and     31                              ; set x hi to random 0 to 31
+                        ld      c,a                             ; save shifted into c as well
+                        ld      (UBnKxhi),a
+.setZHigh:              ld      a,80                            ; set z hi to 80 - xhi - yhi - carry
+                        sbc     b
+                        sbc     c
+                        ld      (UBnKzhi),a
+.CheckIfBodyOrJunk:     ReturnIfMemEquN ShipTypeOffset, ShipTypeJunk
+                        ld      a,b                             ; its not junk to set z sign
+                        rrca                                    ; as it can jump in
+                        and     SignOnly8Bit
+                        ld      (UBnKzsgn),a
+                        ret
+                        
 ; --------------------------------------------------------------                        
 ; This sets current univrse object to space station
 ResetStationLaunch:     ld  a,%10000001
@@ -461,8 +516,8 @@ ProjectY:               ld      hl,(UBnKylo)
                         include "./ModelRender/TrimToScreenGrad-LL118.asm"
                         include "./ModelRender/CLIP-LL145.asm"
 ;--------------------------------------------------------------------------------------------------------
-                        include "./Variables/CopyRotmatToTransMat.asm"
-                        include "./Variables/TransposeXX12ByShipToXX15.asm"
+                        include "./Universe/Ships/CopyRotmatToTransMat.asm"
+                        include "./Universe/Ships/TransposeXX12ByShipToXX15.asm"
                         include "./Maths/Utilities/ScaleNodeTo8Bit.asm"
 
 ;--------------------------------------------------------------------------------------------------------
@@ -631,18 +686,18 @@ XX12EquScaleDotOrientation:                         ; .LL51 \ -> &4832 \ XX12=XX
                         ld      (UBnkXX12zSign),a
                         ret
 ;--------------------------------------------------------------------------------------------------------
-                        include "./Variables/CopyXX12ScaledToXX18.asm"
-                        include "./Variables/CopyXX12toXX15.asm"
-                        include "./Variables/CopyXX18toXX15.asm"
-                        include "./Variables/CopyXX18ScaledToXX15.asm"
-                        include "./Variables/CopyXX12ToScaled.asm"
+                        include "./Universe/Ships/CopyXX12ScaledToXX18.asm"
+                        include "./Universe/Ships/CopyXX12toXX15.asm"
+                        include "./Universe/Ships/CopyXX18toXX15.asm"
+                        include "./Universe/Ships/CopyXX18ScaledToXX15.asm"
+                        include "./Universe/Ships/CopyXX12ToScaled.asm"
 ;--------------------------------------------------------------------------------------------------------
                         include "./Maths/Utilities/DotProductXX12XX15.asm"
 ;--------------------------------------------------------------------------------------------------------
 ; scale Normal. IXL is xReg and A is loaded with XX17 holds the scale factor to apply
                         include "Universe/Ships/ScaleNormal.asm"
 ;--------------------------------------------------------------------------------------------------------
-                        include "Universe/Ships/ScaleObjectDistance.asm"
+                        include "./Universe/Ships/ScaleObjectDistance.asm"
 ;--------------------------------------------------------------------------------------------------------
 
 ; Backface cull        
@@ -650,8 +705,8 @@ XX12EquScaleDotOrientation:                         ; .LL51 \ -> &4832 \ XX12=XX
 ; normal vector = cross product of ship ccordinates 
 ;
 
-                        include "./Variables/CopyFaceToXX15.asm"
-                        include "./Variables/CopyFaceToXX12.asm"
+                        include "./Universe/Ships/CopyFaceToXX15.asm"
+                        include "./Universe/Ships/CopyFaceToXX12.asm"
 ;--------------------------------------------------------------
 ; Original loginc in EE29 (LL9 4 of 12)
 ; Enters with XX4 = z distnace scaled to 1 .. 31
