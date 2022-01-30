@@ -6117,7 +6117,7 @@
   48+ 9B77 10 FC                                djnz    .fillLoop
   49+ 9B79 C9                                   ret
   50+ 9B7A
-  51+ 9B7A 21 0F 98     SetSlot0ToSpaceStation: ld      hl,UniverseSlotList
+  51+ 9B7A 21 10 98     SetSlot0ToSpaceStation: ld      hl,UniverseSlotList+1
   52+ 9B7D 36 02                                ld      (hl),ShipTypeStation
   53+ 9B7F C9                                   ret
   54+ 9B80

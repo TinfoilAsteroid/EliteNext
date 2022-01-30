@@ -48,7 +48,7 @@ ClearUnivSlotList:      ld      a,$FF
                         djnz    .fillLoop
                         ret
 
-SetSlot0ToSpaceStation: ld      hl,UniverseSlotList
+SetSlot0ToSpaceStation: ld      hl,UniverseSlotList+1
                         ld      (hl),ShipTypeStation
                         ret
                         
