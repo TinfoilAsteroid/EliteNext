@@ -32,7 +32,7 @@ ShipModelsAddr	        equ $e000
 SpritemembankAddr       equ $e000
 ResetUniverseAddr       equ $e000
 StockTableAddr	        equ $e000
-CMDRDATAAddr            equ $e000
+CommanderAddr           equ $e000
 LAYER2Addr              equ $e000
 LAYER1Addr              equ $e000
 SPRITEAddr              equ $e000
@@ -58,7 +58,7 @@ L2memMMU       		    equ MMU_SLOT_7_REGISTER
 SpritememMMU   		    equ MMU_SLOT_7_REGISTER
 ShipModelMMU  		    equ MMU_SLOT_7_REGISTER
 ResetUniverseMMU	    equ MMU_SLOT_7_REGISTER
-CmdrDataMMU			    equ MMU_SLOT_7_REGISTER
+CommanderMMU	        equ MMU_SLOT_7_REGISTER
 StockTableMMU		    equ MMU_SLOT_7_REGISTER
 ConsoleImageDataMMU	    equ MMU_SLOT_7_REGISTER
 GalaxyDataMMU	        equ MMU_SLOT_7_REGISTER
@@ -70,7 +70,7 @@ BankMenuInvent          equ 52
 BankMenuSystem          equ 53
 BankMenuMarket          equ 54
 BankStockTable          equ 55
-BankCmdrData            equ 56
+BankCommander           equ 56
 BankLAYER2              equ 57
 BankLAYER1              equ 58
 BankShipModels1         equ 59

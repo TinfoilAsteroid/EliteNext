@@ -39,8 +39,8 @@ MMUSelectShipBankN:  MACRO value
 					 nextreg ShipModelMMU,	    value
 					 ENDM
 					 
-MMUSelectCmdrData:	 MACRO
-                     nextreg CmdrDataMMU,       BankCmdrData	
+MMUSelectCommander:	 MACRO
+                     nextreg CommanderMMU,       BankCommander	
 					 ENDM
 
 MMUSelectStockTable: MACRO

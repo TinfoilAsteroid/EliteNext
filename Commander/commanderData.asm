@@ -1,4 +1,4 @@
-
+commanderPage           DB  "COMMANDERPAGE 56"
 defaultName		        DB	"JAMESON",0
 defaultStock	        DB $10, $0F, $11, $00, $03, $1C,$0E, $00, $00, $0A, $00, $11,$3A, $07, $09, $08, $00;
 defaultSeeds	        DB $4a, $5a, $48, $02, $53, $b7
@@ -70,3 +70,15 @@ defaultCommander:       ld		de,CommanderName				;set commander name
                         call	ZeroCargo						; Clear out cargo
                         ; more to DO	
                         ret
+
+; Set a = 2 * (slaves + narcotics) + firearms
+calculateBadness:       ld      a,(SlaveCargoTonnes)            ; Badness = 2(slaves + narcotics)
+                        ld      b,a                             ; .
+                        ld      a,(NarcoticsCargoTonnes)        ; .
+                        add     b                               ; .
+                        sla     a                               ; .
+                        ld      b,a                             ;
+                        ld      a,(FirearmsCargoTonnes)         ; Badness += firearms tonns    
+                        add     b
+                        ret
+                        

@@ -89,7 +89,7 @@ TidyDEBUG:              ld          a,16
 
 TestText:               xor			a
                         ld      (JSTX),a
-                        MMUSelectCmdrData
+                        MMUSelectCommander
                         call		defaultCommander
 DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks su n
                         MMUSelectSpriteBank
@@ -175,7 +175,7 @@ TestAreWeDocked:        ld      a,(DockedFlag)                                ; 
 
 .UpdateEventCounter:    ld      hl,EventCounter                               ; evnery 256 cycles we do a trigger test
                         dec     (hl)
-                        call    z,LoopEventTriggered
+                        ;call    z,LoopEventTriggered
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
 ;.. First update Sun...............................................................................................................
@@ -283,19 +283,18 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not worki
 ;;TODO                       MMUSelectUniverseBankN 1
 ;;TODO                       call    CopyBodyToUniverse
 
-LoopEventTriggered:     JumpIfMemNotZero MissJumpFlag, .WitchSpaceEvent
-                        call    doRandom
+LoopEventTriggered:     break
+.CanWeDoAnAdd:          call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
+                        ret     c                                   ; then may as well just skip routine
+                        ld      iyh,c                               ; save slot free in iyh
+                        JumpIfMemNotZero MissJumpFlag, .WitchSpaceEvent
+                        call    doRandom                            ; if random > 35 then its not junk
                         JumpIfAGTENusng 35, .NotJunk
-.SpawnJunk:             TestRoomForJunk .NotJunk
-                        call    FindNextFreeSlotInC                         ; c= slot number
-                        ret     c
-                        AddJunkCount
-.CouldBeTrader:         call    doRandom
+.TestJunk:              TestRoomForJunk .NotJunk                    ; can we fit in any junk
+.CouldBeTrader:         call    doRandom                            ; so its now a 50/50 change of being a trader
                         and     1
                         jp      z,.SpawnTrader
-                        ld      a,c                                 ; a = slot number
-                        MMUSelectUniverseA
-                        MMUSelectShipBank1
+.SpawnJunk:             ld      a,c                                 ; a = slot number
                         call    doRandom
                         cp      10                                  ; will set carry if a < 10
                         FlipCarryFlag                               ; so now carry is set if a > 10
@@ -306,12 +305,14 @@ LoopEventTriggered:     JumpIfMemNotZero MissJumpFlag, .WitchSpaceEvent
                         and     a                                   ; then we can't do asteroids
                         jr      z,.NotInSafeZone                    ; .
                         ld      a,b
-                        ReturnIfAEqNusng   ShipID_Asteroid
-.NotInSafeZone:         jp      SpawnShipTypeA
+                        ReturnIfAEqNusng   ShipID_Asteroid          ; we can't spawn asteroids near a space station
+.NotInSafeZone:         AddJunkCount                                ; so its
+                        jp      SpawnShipTypeA
                         ;.......implicit ret
-.NotJunk:               ReturnIfMemNotZero SpaceStationSafeZone
-                      ;TODO  a = work out our contrasband and badness level
-                        sla     a
+.NotJunk:               JumpIfMemNotZero SpaceStationSafeZone, .SpawnTrader ; changed so that it can spawn friendly ships around a space station
+                        MMUSelectCommander                          ; get cargo rating
+                        call    calculateBadness                    ; a = badness
+                        sla     a                                   ; double badness for scans
                         JumpIfMemZero CopCount,.NoCopsInSystem
                         ld      hl,FugitiveInnocentStatus           ; or a with FIST status
                         or      (hl)
@@ -324,7 +325,7 @@ LoopEventTriggered:     JumpIfMemNotZero MissJumpFlag, .WitchSpaceEvent
                         ret     p                                   ;
 .ExtraVesselHit0:       inc     (hl)                                ; set counter to 0
           ;TODO              JumpIfMemNotZero MissionData,.DoMissionPlans; call special mission spawn logic routine
-                        ret     c                                   ; return if carry was set (i.e. it did something)
+           ;TODO             ret     c                                   ; return if carry was set (i.e. it did something)
                         ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      a,(GalaxyDisplayGovernment)
@@ -363,13 +364,18 @@ LoopEventTriggered:     JumpIfMemNotZero MissJumpFlag, .WitchSpaceEvent
                         ret
 .WitchSpaceEvent:       ret; TODO for now
 
-SpawnShipTypeA:         call    GetShipBankId
+SpawnShipTypeA:         ld      iyl,a                               ; save ship type
+                        MMUSelectShipBank1                          ; select bank 1
+                        ld      a,iyh                               ; select unverse free slot
+                        MMUSelectUniverseA                          ; .
+                        ld      a, iyl                              ; retrive ship type
+                        call    SetSlotAToTypeB                     ; record in the lookup tables
+                        call    GetShipBankId                       ; find actual memory location of data
                         MMUSelectShipBankA
-                        ld      a,b
+                        ld      a,b                                 ; b = computed ship id for bank
                         call    CopyShipToUniverse
-                        call    UnivSetSpawnPosition
+                        call    UnivSetSpawnPosition                ; set initial spawn position
                         ret
-
 
                         ; reset main loop counters
                         ; from BBC TT18 jump code
@@ -480,24 +486,24 @@ DockingCheck:           ld      bc,(UBnKxlo)
 ;; TODO                        ret                        
 ;..................................................................................................................................                        
 DrawForwardShips:       xor     a
-DrawShipLoop:           ld      (CurrentShipUniv),a
+.DrawShipLoop:          ld      (CurrentShipUniv),a
                         call    GetTypeAtSlotA
                         cp      $FF
-                        jr      z,ProcessedDrawShip
+                        jr      z,.ProcessedDrawShip
 ; Add in a fast check for ship behind to process nodes and if behind jump to processed Draw ship
-SelectShipToDraw:       ld      a,(CurrentShipUniv)
+.SelectShipToDraw:       ld      a,(CurrentShipUniv)
                         MMUSelectUniverseA
                         ; Need check for exploding here
 .ProcessUnivShip:       call    ProcessShip             ;; call    ProcessUnivShip
-UpdateRadar: 
+.UpdateRadar: 
 ;;;Does nothing                       ld      a,BankFrontView
 ;;;Does nothing                       MMUSelectScreenA
 ;;;Does nothing         ld      a,(CurrentShipUniv)
 ;;;Does nothing         MMUSelectUniverseA
                         call    UpdateScannerShip               ; Always update ship positions                        
-ProcessedDrawShip:      ld      a,(CurrentShipUniv)
+.ProcessedDrawShip:     ld      a,(CurrentShipUniv)
                         inc     a
-                        JumpIfALTNusng   UniverseListSize, DrawShipLoop
+                        JumpIfALTNusng   UniverseListSize, .DrawShipLoop
 .DrawSunCompass:        MMUSelectSun
                         call    UpdateCompassSun                ; Always update the sun position
                         call    UpdateScannerSun                ; Always attempt to put the sun on the scanner 
@@ -759,7 +765,7 @@ LaunchedFromStation:    MMUSelectSun
                         call    CreateSun                      ; create the local sun and set position based on seed
                         call    ClearUnivSlotList
                         ld      a,1
-                        call    SetSlot1ToSpaceStation              ; set slot 1 to space station
+                        call    SetSlot0ToSpaceStation              ; set slot 1 to space station
                         MMUSelectUniverseA                          ; Prep Target universe
                         MMUSelectShipBank1                          ; Bank in the ship model code
                         ld      a,CoriloisStation
@@ -1139,9 +1145,9 @@ XX12PVarSign3		DB 0
     INCLUDE "./Layer2Graphics/clearLines-LL155.asm"
     INCLUDE "./Layer2Graphics/l2_draw_line_v2.asm"
 ; Bank 56  ------------------------------------------------------------------------------------------------------------------------
-    SLOT    CMDRDATAAddr
-    PAGE    BankCmdrData
-    ORG     CMDRDATAAddr, BankCmdrData
+    SLOT    CommanderAddr
+    PAGE    BankCommander
+    ORG     CommanderAddr, BankCommander
     INCLUDE "./Commander/commanderData.asm"
     INCLUDE "./Commander/zero_player_cargo.asm"
 ; Bank 58  ------------------------------------------------------------------------------------------------------------------------
