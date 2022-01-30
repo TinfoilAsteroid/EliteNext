@@ -1,16 +1,4 @@
 
-AnyMessagesMacro:       MACRO   NoMessageTarget
-                        ld      a,(MessageCount)
-                        and     a
-                        jr      a, NoMessageTarget
-                        ENDM
-                        
-AnyHyperSpaceMacro:     MACRO   NoMessageText                        
-                        ld      hl,(InnerHyperCount)
-                        ld      a,h
-                        or      l
-                        jr      z,NoMessageText
-                        ENDM
                         
 ResetMessageQueue:      ZeroA
                         ld      (MessageCount),a

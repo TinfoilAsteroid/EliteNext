@@ -43,25 +43,27 @@ ScreenHyperspace EQU ScreenDocking+1
 ; byint and selling equipment
 ; bying and selling stock
 
-    INCLUDE "./Hardware/register_defines.asm"
-    INCLUDE "./Layer2Graphics/layer2_defines.asm"
-    INCLUDE	"./Hardware/memory_bank_defines.asm"
-    INCLUDE "./Hardware/screen_equates.asm"
-    INCLUDE "./Data/ShipModelEquates.asm"
-    INCLUDE "./Macros/callMacros.asm"
-    INCLUDE "./Macros/carryFlagMacros.asm"
-    INCLUDE "./Macros/CopyByteMacros.asm"
-    INCLUDE "./Macros/ldCopyMacros.asm"
-    INCLUDE "./Macros/ldIndexedMacros.asm"
-    INCLUDE "./Macros/jumpMacros.asm"
-    INCLUDE "./Macros/MathsMacros.asm"
-    INCLUDE "./Macros/MMUMacros.asm"
-    INCLUDE "./Macros/NegateMacros.asm"
-    INCLUDE "./Macros/returnMacros.asm"
-    INCLUDE "./Macros/ShiftMacros.asm"
-    INCLUDE "./Macros/signBitMacros.asm"
-    INCLUDE "./Variables/general_variables_macros.asm"
-    INCLUDE "./Data/ShipIdEquates.asm.asm"
+                        INCLUDE "./Hardware/register_defines.asm"
+                        INCLUDE "./Layer2Graphics/layer2_defines.asm"
+                        INCLUDE	"./Hardware/memory_bank_defines.asm"
+                        INCLUDE "./Hardware/screen_equates.asm"
+                        INCLUDE "./Data/ShipModelEquates.asm"
+                        INCLUDE "./Macros/callMacros.asm"
+                        INCLUDE "./Macros/carryFlagMacros.asm"
+                        INCLUDE "./Macros/CopyByteMacros.asm"
+                        INCLUDE "./Macros/ldCopyMacros.asm"
+                        INCLUDE "./Macros/ldIndexedMacros.asm"
+                        INCLUDE "./Macros/jumpMacros.asm"
+                        INCLUDE "./Macros/MathsMacros.asm"
+                        INCLUDE "./Macros/MMUMacros.asm"
+                        INCLUDE "./Macros/NegateMacros.asm"
+                        INCLUDE "./Macros/returnMacros.asm"
+                        INCLUDE "./Macros/ShiftMacros.asm"
+                        INCLUDE "./Macros/signBitMacros.asm"
+                        INCLUDE "./Tables/message_queue_macros.asm"
+                        INCLUDE "./Variables/general_variables_macros.asm"
+                        INCLUDE "./Variables/UniverseSlot_macros.asm"
+                        INCLUDE "./Data/ShipIdEquates.asm"
 
 
 charactersetaddr		equ 15360
@@ -137,12 +139,9 @@ InitialiseMainLoop:     xor     a
                         ClearMissJump
 ;..MAIN GAME LOOP..................................................................................................................
 ; MACRO BLOCKS.....................................................................................................................
-MainLoopInput:          MACRO
-                        call    scan_keyboard
-;.. This bit allows cycling of ships on universe 0 in demo.........................................................................
-DemoOfShipsDEBUG:       call    TestForNextShip
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
-InputMainMacro:         call    ViewKeyTest
+InputMainMacro:         MACRO
+                        call    ViewKeyTest
                         call    TestPauseMode
                         ld      a,(GamePaused)
                         cp      0
@@ -189,7 +188,7 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
 ;..Display any message ............................................................................................................
 .CheckHyperspaceMessage:AnyHyperSpaceMacro .HandleMessages
                         call    HyperSpaceMessage
-.HandleMessages:        AnyMessagesMacro,  .NoMessages
+.HandleMessages:        AnyMessagesMacro  .NoMessages
                         call    DisplayCurrentMessage
                         call    UpdateMessageTimer
                       
@@ -288,8 +287,8 @@ LoopEventTriggered:     JumpIfMemNotZero MissJumpFlag, .WitchSpaceEvent
                         call    doRandom
                         JumpIfAGTENusng 35, .NotJunk
 .SpawnJunk:             TestRoomForJunk .NotJunk
-                        FindNextFreeSlotInC                         ; c= slot number
-                        jr      c,.NoSpace
+                        call    FindNextFreeSlotInC                         ; c= slot number
+                        ret     c
                         AddJunkCount
 .CouldBeTrader:         call    doRandom
                         and     1
@@ -307,26 +306,24 @@ LoopEventTriggered:     JumpIfMemNotZero MissJumpFlag, .WitchSpaceEvent
                         and     a                                   ; then we can't do asteroids
                         jr      z,.NotInSafeZone                    ; .
                         ld      a,b
-                        ReturnIfAEQNusng   ShipID_Asteroid
+                        ReturnIfAEqNusng   ShipID_Asteroid
 .NotInSafeZone:         jp      SpawnShipTypeA
                         ;.......implicit ret
-.NotJunk:               ReturnMemNotZero SpaceStationSafeZone
-                        a = work out our contrasband and badness level
+.NotJunk:               ReturnIfMemNotZero SpaceStationSafeZone
+                      ;TODO  a = work out our contrasband and badness level
                         sla     a
                         JumpIfMemZero CopCount,.NoCopsInSystem
                         ld      hl,FugitiveInnocentStatus           ; or a with FIST status
                         or      (hl)
 .NoCopsInSystem:        ld      (BadnessStatus),a                   ; if badness level triggers a cop     
-                        call    DoRandom                            ; then its hostile
-                        ld      hl,BadnessStatus                    ; 
-                        cp      (hl)                                ; 
-                        CallIfAGTENusng .SpawnHostileCop            ; 
+                        call    doRandom                            ; then its hostile
+                        CallIfAGTEMemusng BadnessStatus, .SpawnHostileCop  ; 
                         ReturnIfMemNotZero CopCount                 ; if here are police then we are done
                         ld      hl, ExtraVesselsCounter             ; count down extra vessels counter
                         dec     (hl)                                ; to prevent mass spawing
                         ret     p                                   ;
 .ExtraVesselHit0:       inc     (hl)                                ; set counter to 0
-                        JumpIfMemNotZero MissionData,.DoMissionPlans; call special mission spawn logic routine
+          ;TODO              JumpIfMemNotZero MissionData,.DoMissionPlans; call special mission spawn logic routine
                         ret     c                                   ; return if carry was set (i.e. it did something)
                         ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
@@ -334,28 +331,31 @@ LoopEventTriggered:     JumpIfMemNotZero MissJumpFlag, .WitchSpaceEvent
                         IfANotZeroGoto .NotAnarchySystem
                         ld      b,a
                         call    doRandom                            ; if random > 120 then don't spawn
-                        ReturnIfALTENusng 120                       ;
+                        ReturnIfAGTENusng 120                       ;
                         and     7                                   ; if random 0 ..7 < gov rating
-                        ReturnIfALTENusng b                         ; then return
+                        ReturnIfALTNusng b                          ; then return
+.SpawnTrader:       ; TODO
+.SpawnHostileCop: ;TODO
 .SpawnHostile:          ld      a,b
-                        JumpIfAGTENusgn .SpawnPirates               ; 100 in 255 change of one or more pirates
+                        JumpIfAGTENusng 100,.SpawnPirates               ; 100 in 255 change of one or more pirates
                         ld      hl, ExtraVesselsCounter             ; prevent the next spawning
                         inc     (hl)                                ; 
                         and     3                                   ; a = random 0..3
                         MMUSelectShipBank1
-                        GetByteInTable ShipHunterTable              ; get hunter ship type
+                        GetByteAInTable ShipHunterTable             ; get hunter ship type
                         jp      SpawnShipTypeA
-                        ;.......implicit ret                       
+                        ;.......implicit ret
+.NotAnarchySystem:      ret                        
 .SpawnPirates:          ld      a,b                                 ; a = random 0..3
                         and     3
                         ld      (ExtraVesselsCounter),a
                         ld      (PirateCount),a
 .PirateLoop:            call    doRandom
                         ld      c,a                                 ; random and random and 7
-                        call    doRandome
+                        call    doRandom
                         and     c
                         and     7
-                        GetByteInTable ShipPirateTable
+                        GetByteAInTable ShipPackList
                         call    SpawnShipTypeA
                         ld      hl,PirateCount
                         dec     (hl)
@@ -501,7 +501,7 @@ ProcessedDrawShip:      ld      a,(CurrentShipUniv)
 .DrawSunCompass:        MMUSelectSun
                         call    UpdateCompassSun                ; Always update the sun position
                         call    UpdateScannerSun                ; Always attempt to put the sun on the scanner 
-.CheckPlanetCompass:     ld      a,(SpaceStationPresent)
+.CheckPlanetCompass:    ld      a,(SpaceStationSafeZone)
                         and     a
                         jr      nz,.DrawSpaceStationCompass
 .DrawPlanetCompass:                        
@@ -885,6 +885,7 @@ SetInitialShipPosition: ld      hl,$0000
 
             INCLUDE "./Views/ConsoleDrawing.asm"
             INCLUDE "./Tables/message_queue.asm"
+            INCLUDE "./Tables/ShipClassTable.asm"
 
 
 

@@ -42,7 +42,7 @@ defaultCommander:       ld		de,CommanderName				;set commander name
                         ld      hl,EquipmentFitted+EQ_FRONT_PULSE
                         ld      a,$FF
                         ld      (hl),a
-                        ld		(VarTP),a						;The Plan/Mission
+                        ld		(MissionData),a						;The Plan/Mission
                         xor     a
                         ld		(LaserList+1),a
                         ld		(LaserList+2),a

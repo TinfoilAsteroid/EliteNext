@@ -117,13 +117,13 @@ JumpIfMemNeNusng:       MACRO mem,value,target
 JumpIfMemZero:          MACRO mem,target
                         ld  a,(mem)
                         and a
-                        jr  z,target
+                        jp  z,target
                         ENDM
 
 JumpIfMemNotZero:       MACRO mem,target
                         ld  a,(mem)
                         and a
-                        jr  nz,target
+                        jp  nz,target
                         ENDM
                         
 JumpIfALTMemHLusng:     MACRO target

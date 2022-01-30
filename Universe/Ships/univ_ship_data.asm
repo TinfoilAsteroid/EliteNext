@@ -145,16 +145,16 @@ MaxUnivPitchAndRoll:    MACRO
                         ENDM                   
 
 RandomUnivPitchAndRoll: MACRO
-                        call    DoRandom
+                        call    doRandom
                         or      %01101111
                         ld      (UBnKRotXCounter),a
-                        call    DoRandom
+                        call    doRandom
                         or      %01101111
                         ld      (UBnKRotZCounter),a
                         ENDM
 
 RandomUnivSpeed:        MACRO
-                        call    DoRandom
+                        call    doRandom
                         and     31
                         ld      (UBnKspeed),a
                         ENDM
@@ -182,7 +182,7 @@ ResetUbnkPosition:      ld      hl,UBnKxlo
 ; --------------------------------------------------------------                        
 ; This sets the position of the current ship randomly, called after spawing
 UnivSetSpawnPosition:   RandomUnivPitchAndRoll
-                        call    DoRandom                        ; set x lo and y lo to random
+                        call    doRandom                        ; set x lo and y lo to random
 .setXlo:                ld      (UBnKxlo),a 
 .setYlo:                ld      (UBnKylo),a
 .setXsign:              rrca                                    ; rotate by 1 bit right
@@ -197,7 +197,7 @@ UnivSetSpawnPosition:   RandomUnivPitchAndRoll
 .setYHigh:              rrc     b                               ; as value is in b rotate again
                         ld      a,b                             ; 
                         and     31                              ; set y hi to random 0 to 31
-                        ld      (UbnKyhi),a                     ;
+                        ld      (UBnKyhi),a                     ;
 .setXHigh:              rrc     b                               ; as value is in b rotate again
                         ld      a,b
                         and     31                              ; set x hi to random 0 to 31
@@ -207,7 +207,7 @@ UnivSetSpawnPosition:   RandomUnivPitchAndRoll
                         sbc     b
                         sbc     c
                         ld      (UBnKzhi),a
-.CheckIfBodyOrJunk:     ReturnIfMemEquN ShipTypeOffset, ShipTypeJunk
+.CheckIfBodyOrJunk:     ReturnIfMemEquN ShipTypeAddr, ShipTypeJunk
                         ld      a,b                             ; its not junk to set z sign
                         rrca                                    ; as it can jump in
                         and     SignOnly8Bit

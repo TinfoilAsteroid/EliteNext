@@ -8,9 +8,10 @@ CountLengthHL:          MACRO   Limiter
                         sbc     hl,de
                         ld      a,l
                         ret
-                    
+                        ENDM
 
-HalfLengthHL:           ld      b,0
+HalfLengthHL:           MACRO
+                        ld      b,0
 .CountLenLoop:          ld      a,(hl)
                         cp      0
                         jr      z,.DoneCount
@@ -20,7 +21,7 @@ HalfLengthHL:           ld      b,0
 .DoneCount:             ld      a,32
                         sub     b
                         sra     a         
-                        ret
+                        ENDM
 
 MakeInnocentMacro:		MACRO
 						xor		a

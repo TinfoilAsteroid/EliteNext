@@ -301,9 +301,17 @@ draw_STAT_items:        MMUSelectLayer1
 get_cmdr_condition:     ld			a,(DockedFlag)
                         cp			PlayerDocked
                         jr			z,.PlayerIsDocked
-.PlayerNotDocked:	    ld			hl, SpaceStationPresent+1				; address of first Non station
-                        ld			a,1										; condition green
-                        ld			b,JunkCount- (SpaceStationPresent+1) +1	; so should be 30
+.PlayerNotDocked:	    ld          a,(SpaceStationSafeZone)
+                        cp          0
+                        ret         z
+                        ld          hl,UniverseSlotCount
+                        ld          c,1
+.CheckForShipsLoop:     ld          b,UniverseListSize
+                        ld          a,(hl)
+                        cp          0
+                        jr          nz,.PlayerColour        ; TODO Need to refine to remove cargo, exploding ships and hull plate
+                        inc         hl
+                        djnz        .CheckForShipsLoop
 .countShipsLoop:	    add			a,(hl)
                         inc			hl
                         djnz		.countShipsLoop

@@ -415,7 +415,7 @@ UniverseSlotList		DS UniverseListSize		; &0311 for 12 bytes Array of Free Index 
 UniverseSlotCount       DS UniverseListSize * 2 ; To be implemented, keeps a count of each slot type, may merge into slot list and set as a DW
 CurrentUniverseAI       DB  0               ; used to cycle ships in each iterations of main loop
 SelectedUniverseSlot    DB  0    
-SpaceStationPresent		DB	0				; flag to determine if we are within space station safe zone
+;SpaceStationPresent		DB	0				; flag to determine if we are within space station safe zone
 
 SUN						DB	0				; &031D Actually MANY -1? As we can only have 1?
 MANY					DB	0				; &031E array of ship types???

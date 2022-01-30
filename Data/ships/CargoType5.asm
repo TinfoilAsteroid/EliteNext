@@ -30,7 +30,7 @@ CargoType5              DB $00, $90, $01
                         DB CargoType5VertSize
                         DB CargoType5EdgesCnt
                         DB $00,$00
-                        DB CargoNormalsSize
+                        DB CargoType5NormalsSize
                         DB $0C,$11,$0F
                         DW CargoType5Normals
                         DB $02,$00

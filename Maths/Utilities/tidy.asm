@@ -26,9 +26,9 @@
 ;
 ;inwkarray			equ		INWK+10
 
-    include "./Variables/CopyRotMattoXX15.asm"
+    include "./Universe/Ships/CopyRotMattoXX15.asm"
     
-    include "./Variables/CopyXX15toRotMat.asm"
+    include "./Universe/Ships/CopyXX15toRotMat.asm"
 
 TidySub1:									;.TIS1	\ -> &293B  \ Tidy subroutine 1  X.A =  (-X*A  + (R.S))/96
 		; b = regX on entry
