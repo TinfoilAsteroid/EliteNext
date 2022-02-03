@@ -19,26 +19,10 @@ CorrectSlotCount:       call    ClearSlotCount
                         inc     hl
                         ld      (hl),1
                         inc     hl
+                        inc     hl
 .SkipSlot               inc     de
                         djnz    .fillLoop
                         ret
-
-ClearUnivExceptSun:     ld      a,$FF
-                        ld      hl,UniverseSlotList + 1
-                        ld      b, UniverseListSize - 1
-.fillLoop:              ld      (hl),a
-                        inc     hl
-                        djnz    .fillLoop
-                        ret
-
-SetSunSlot:             ld      a,129
-                        ld      (UniverseSlotList),a
-                        ret
-
-SetPlanetSlot:          ld      a,129
-                        ld      (UniverseSlotList+1),a
-                        ret
-
 ; Wipe all items
 ClearUnivSlotList:      ld      a,$FF
                         ld      hl,UniverseSlotList
@@ -48,7 +32,7 @@ ClearUnivSlotList:      ld      a,$FF
                         djnz    .fillLoop
                         ret
 
-SetSlot0ToSpaceStation: ld      hl,UniverseSlotList+1
+SetSlot0ToSpaceStation: ld      hl,UniverseSlotList
                         ld      (hl),ShipTypeStation
                         ret
                         

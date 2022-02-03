@@ -1343,9 +1343,9 @@ ReadyForNextPoint:      push	iy                                  ; copy screen p
                         ret                                         
 
 ; ......................................................   
-ProcessShip:            call    CheckDistance
+ProcessShip:            call    CheckDistance               ; checks for z -ve and outside view frustrum
                         ret     c
-.IsItADot:              ld      a,(UBnKDrawAsDot)
+.IsItADot:              ld      a,(UBnKDrawAsDot)           ; if its just a dot then don't draw
                         and     a
                         jr      z,.CarryOnWithDraw                        
 .itsJustADot:           ld      bc,(UBnkNodeArray)          ; if its at dot range
@@ -1354,7 +1354,7 @@ ProcessShip:            call    CheckDistance
                         call    l2_plot_pixel               ; 
                         ClearCarryFlag
                         ret
-.CarryOnWithDraw:       call    ProcessNodes
+.CarryOnWithDraw:       call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
                         call    CullV2
                         call    PrepLines
                         call    DrawLines

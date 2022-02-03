@@ -175,7 +175,7 @@ TestAreWeDocked:        ld      a,(DockedFlag)                                ; 
 
 .UpdateEventCounter:    ld      hl,EventCounter                               ; evnery 256 cycles we do a trigger test
                         dec     (hl)
-                        ;call    z,LoopEventTriggered
+                        call    z,LoopEventTriggered
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
 ;.. First update Sun...............................................................................................................
@@ -283,7 +283,7 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not worki
 ;;TODO                       MMUSelectUniverseBankN 1
 ;;TODO                       call    CopyBodyToUniverse
 
-LoopEventTriggered:     break
+LoopEventTriggered:     
 .CanWeDoAnAdd:          call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
                         ret     c                                   ; then may as well just skip routine
                         ld      iyh,c                               ; save slot free in iyh
@@ -367,9 +367,11 @@ LoopEventTriggered:     break
 SpawnShipTypeA:         ld      iyl,a                               ; save ship type
                         MMUSelectShipBank1                          ; select bank 1
                         ld      a,iyh                               ; select unverse free slot
+                        ld      b,iyl
+                        call    SetSlotAToTypeB
                         MMUSelectUniverseA                          ; .
                         ld      a, iyl                              ; retrive ship type
-                        call    SetSlotAToTypeB                     ; record in the lookup tables
+                        ;call    SetSlotAToTypeB                     ; record in the lookup tables
                         call    GetShipBankId                       ; find actual memory location of data
                         MMUSelectShipBankA
                         ld      a,b                                 ; b = computed ship id for bank
@@ -410,10 +412,12 @@ BruteForceChange:      ld      d,a
                         jp MainLoop
 
 ;..................................................................................................................................
+;..Process A ship..................................................................................................................
+
 ;..Update Universe Objects.........................................................................................................
 UpdateUniverseObjects:  xor     a
                         ld      (SelectedUniverseSlot),a
-.UpdateUniverseLoop:     ld      d,a                                             ; d is unaffected by GetTypeInSlotA
+.UpdateUniverseLoop:    ld      d,a                                             ; d is unaffected by GetTypeInSlotA
 ;.. If the slot is empty (FF) then skip this slot..................................................................................
                         call    GetTypeAtSlotA
                         cp      $FF
@@ -427,7 +431,7 @@ UpdateUniverseObjects:  xor     a
                         JumpIfANENusng  ShipTypeStation, .NotDockingCheck       ; if its not a station so we don't test docking
 .IsDockableAngryCheck:  JumpOnMemBitSet ShipNewBitsAddr, 4, .NotDockingCheck    ; if it is angry then we dont test docking
                         call    DockingCheck                                    ; So it is a candiate to test docking. Now we do the position and angle checks
-                        ReturnIfMemEquN ScreenTransitionForced, $FF            ; if we docked then a transition would have been forced
+                       ; ReturnIfMemEquN ScreenTransitionForced, $FF             ; if we docked then a transition would have been forced
 .NotDockingCheck:       CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, UpdateShip
 .ProcessedUniverseSlot: ld      a,(SelectedUniverseSlot)                        ; Move to next ship cycling if need be to 0
                         inc     a                                               ; .
@@ -494,7 +498,7 @@ DrawForwardShips:       xor     a
 .SelectShipToDraw:       ld      a,(CurrentShipUniv)
                         MMUSelectUniverseA
                         ; Need check for exploding here
-.ProcessUnivShip:       call    ProcessShip             ;; call    ProcessUnivShip
+.ProcessUnivShip:       call    ProcessShip          ; TODFO TUNE THIS   ;; call    ProcessUnivShip
 .UpdateRadar: 
 ;;;Does nothing                       ld      a,BankFrontView
 ;;;Does nothing                       MMUSelectScreenA
@@ -764,9 +768,8 @@ ScreenTransitionForced  DB $FF
 LaunchedFromStation:    MMUSelectSun
                         call    CreateSun                      ; create the local sun and set position based on seed
                         call    ClearUnivSlotList
-                        ld      a,1
                         call    SetSlot0ToSpaceStation              ; set slot 1 to space station
-                        MMUSelectUniverseA                          ; Prep Target universe
+                        MMUSelectUniverseN 0                        ; Prep Target universe
                         MMUSelectShipBank1                          ; Bank in the ship model code
                         ld      a,CoriloisStation
                         call    GetShipBankId             
