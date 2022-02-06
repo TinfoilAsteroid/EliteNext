@@ -181,7 +181,8 @@ ResetUbnkPosition:      ld      hl,UBnKxlo
 
 ; --------------------------------------------------------------                        
 ; This sets the position of the current ship randomly, called after spawing
-UnivSetSpawnPosition:   RandomUnivPitchAndRoll
+UnivSetSpawnPosition:   call    InitialiseOrientation
+                        RandomUnivPitchAndRoll
                         call    doRandom                        ; set x lo and y lo to random
 .setXlo:                ld      (UBnKxlo),a 
 .setYlo:                ld      (UBnKylo),a
@@ -1169,12 +1170,12 @@ CheckFace1:                                                                     
         push        hl                                  ; we need to save HL                                                        ;;;
         ldHLIdxAToA UbnkFaceVisArray                    ; visibility at face 1                                                Byte 4;;;
         pop         hl                                  ;                                                                           ;;;
-        IfANotZeroGoto NodeIsVisible                    ; is face 1 visible                                                         ;;;
+        JumpIfAIsNotZero NodeIsVisible                  ; is face 1 visible                                                         ;;;
 CheckFace2:                                                                                                                         ;;;
         ld          a,d                                                                                                             ;;;
         swapnib                                                                                                                     ;;;
         and         $0F                                 ; this is face 2                                                            ;;;
-        IfANotZeroGoto NodeIsVisible                    ; is face 1 visible                                                         ;;;
+        JumpIfAIsNotZero NodeIsVisible                  ; is face 1 visible                                                         ;;;
 CheckFace3:                                                                                                                         ;;;
         CopyByteAtNextHL varP                           ; vertex byte#4, first 2 faces two 4-bit indices 0:15 into XX2 for 2 of the ;;;     
         ld          d,a                                 ; use d to hold a as a temp                                                 ;;;
@@ -1182,12 +1183,12 @@ CheckFace3:                                                                     
         push        hl                                  ; we need to save HL                                                        ;;;
         ldHLIdxAToA UbnkFaceVisArray                  ; visibility at face 1                                                Byte 5;;;
         pop         hl                                  ;                                                                           ;;;
-        IfANotZeroGoto NodeIsVisible                    ; is face 1 visible                                                         ;;;
+        JumpIfAIsNotZero NodeIsVisible                  ; is face 1 visible                                                         ;;;
 CheckFace4:                                                                                                                         ;;;
         ld          a,d                                                                                                             ;;;
         swapnib                                                                                                                     ;;;
         and         $0F                                 ; this is face 2                                                            ;;;
-        IfANotZeroGoto NodeIsVisible                    ; is face 1 visible                                                         ;;;
+        JumpIfAIsNotZero NodeIsVisible                  ; is face 1 visible                                                         ;;;
 NodeIsNotVisible:                                                                                                                   ;;;
         ld          bc,4
         add         iy,bc                               ; if not visible then move to next element in array anyway                  ;;;
@@ -1273,22 +1274,23 @@ EyeStoreYPoint:                                    ; also from LL62, XX3 node he
             INCLUDE "./ModelRender/DrawLines.asm"
 ; ---------------------------------------------------------------------------------------------------------------------------------    
 
-
-ProcessDot:                 call    CopyRotmatToTransMat             ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
-                            call    ScaleXX16Matrix197               ;#02; Normalise XX16
-                            call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
-                            call    InverseXX16                      ;#11; Invert rotation matrix
-                            ld      hl,0
-                            ld      (UBnkXScaled),a
-                            ld      (UBnkYScaled),a
-                            ld      (UBnkZScaled),a
-                            xor     a
-                            call    XX12EquNodeDotOrientation
-                            call    TransposeXX12ByShipToXX15
-                            call	ScaleNodeTo8Bit					    ; scale to 8 bit values, why don't we hold the magnitude here?x
-                            ld      iy,UBnkNodeArray
-                            call    ProjectNodeToEye
-                            ret
+; DIot seem to lawyas have Y = 0???
+ProcessDot:            ; break
+                        call    CopyRotmatToTransMat             ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
+                        call    ScaleXX16Matrix197               ;#02; Normalise XX16
+                        call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
+                        call    InverseXX16                      ;#11; Invert rotation matrix
+                        ld      hl,0
+                        ld      (UBnkXScaled),a
+                        ld      (UBnkYScaled),a
+                        ld      (UBnkZScaled),a
+                        xor     a
+                        call    XX12EquNodeDotOrientation
+                        call    TransposeXX12ByShipToXX15
+                        call	ScaleNodeTo8Bit					    ; scale to 8 bit values, why don't we hold the magnitude here?x
+                        ld      iy,UBnkNodeArray
+                        call    ProjectNodeToEye
+                        ret
                  
 ; .....................................................
 ; Process Nodes does the following:
@@ -1298,9 +1300,9 @@ PNXX20DIV6          DB      0
 PNVERTEXPTR         DW      0   ; DEBUG WILL USE LATER
 PNNODEPRT           DW      0   ; DEBUG WILL USE LATER
 PNLASTNORM          DB      0
-ProcessNodes:           xor     a
+ProcessNodes:           ZeroA
                         ld      (UbnkLineArrayLen),a
-                        call    CopyRotmatToTransMat             ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
+                        call CopyRotmatToTransMat ; CopyRotToTransMacro                      ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
                         call    ScaleXX16Matrix197               ;#02; Normalise XX16
                         call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
                         call    InverseXX16                      ;#11; Invert rotation matrix
@@ -1344,17 +1346,27 @@ ReadyForNextPoint:      push	iy                                  ; copy screen p
 
 ; ......................................................   
 ProcessShip:            call    CheckDistance               ; checks for z -ve and outside view frustrum
-                        ret     c
+                        ret     c                           ; carry flag means drop out
 .IsItADot:              ld      a,(UBnKDrawAsDot)           ; if its just a dot then don't draw
-                        and     a
-                        jr      z,.CarryOnWithDraw                        
-.itsJustADot:           ld      bc,(UBnkNodeArray)          ; if its at dot range
-                        ld      a,$FF                       ; just draw a pixel
+                        JumpIfATrue .CarryOnWithDraw                        
+.itsJustADot:           call    ProcessDot
+                        ld      bc,(UBnkNodeArray)          ; if its at dot range get X
+                        ld      de,(UBnkNodeArray+2)        ; and Y
+                        ld      a,b                         ; if high byte components are not 0 then off screen
+                        or      d                           ;
+                        ret     nz                          ;
+                        ld      a,e
+                        and     %10000000                   ; check to see if Y > 128
+                        ret     nz
+                        ld      b,e                         ; now b = y and c = x
+                        ld      a,L2ColourWHITE_1           ; just draw a pixel
+                        ld      a,224
                         MMUSelectLayer2                     ; then go to update radar
                         call    l2_plot_pixel               ; 
                         ClearCarryFlag
                         ret
-.CarryOnWithDraw:       call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
+.CarryOnWithDraw:       ;break
+                        call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
                         call    CullV2
                         call    PrepLines
                         call    DrawLines

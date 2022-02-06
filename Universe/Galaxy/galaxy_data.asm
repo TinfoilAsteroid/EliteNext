@@ -1161,7 +1161,7 @@ find_nearest_miss:      push     ix
                         pop      ix
                         dec     iyh
                         ld      a,iyh
-                        IfANotZeroGoto find_nearest_loop
+                        JumpIfAIsNotZero find_nearest_loop
                         ld      bc ,(nearestfound)              ; if we hit here then after searching we have found a nearest
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------

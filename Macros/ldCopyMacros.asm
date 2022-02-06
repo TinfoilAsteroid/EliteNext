@@ -1,7 +1,19 @@
 ZeroA:		            MACRO
                         xor a
                         ENDM
-			   
+                        
+SetATrue:               MACRO
+                        xor     a
+                        ENDM
+                       
+SetAFalse:              MACRO
+                        ld      a,$FF
+                        ENDM
+
+SetMemFalse             MACRO   mem
+                        ld      a,$FF
+                        ld      (mem),a
+                        ENDM
 
 ldCopyTextAtHLtoDE:     MACRO
 .CopyLoop:              ld      a,(hl)

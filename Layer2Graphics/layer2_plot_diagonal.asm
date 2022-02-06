@@ -132,7 +132,7 @@ l2S_adjustCol:
 l2S_ErrNotNegative:
 	ld		a,iyh
 	or		iyl
-	IfAIsZeroGoto l2S_ErrZero					; if there is no error then goto zeroerror
+	JumpIfAIsZero l2S_ErrZero					; if there is no error then goto zeroerror
 l2S_ErrPositive:								; if its a positive error then we update Y
 	lddeiy
 	ex		de,hl
@@ -223,7 +223,7 @@ l2D_adjustCol:          nop										; this is our inc/dec of X
                         jr		l2D_Loop							; repeat loop
 l2D_ErrNotNegative:     ld		a,iyh
                         or		iyl
-                        IfAIsZeroGoto l2D_ErrZero					; if there is no error then goto zeroerror
+                        JumpIfAIsZero l2D_ErrZero					; if there is no error then goto zeroerror
 l2D_ErrPositive:		lddeiy
                         ex		de,hl
                         ld		d,0

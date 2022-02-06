@@ -42,7 +42,7 @@ JumpIfTooFarAway:       MACRO   target
                         ld		hl,(UBnKzlo)                    ; hl = z position, by this point it must be positive
                         ShiftHLDiv8                             ; z position / 8
                         ld      a,h                             ; 
-                        IfANotZeroGoto target                       ; LL13 - hop as far , i.e. zhi not 0 after divide by 8
+                        JumpIfAIsNotZero target                       ; LL13 - hop as far , i.e. zhi not 0 after divide by 8
                         ENDM
 
 DisplayObject:

@@ -14,6 +14,16 @@ JumpIfUnderflow:	    MACRO target
 JumpIfOverflow:	        MACRO target
                         jp		po, target
                         ENDM
+
+
+JumpIfNotZero:	        MACRO target
+                        jp	nz,target
+                        ENDM
+
+JumpIfZero:	            MACRO target
+                        jp	z,target
+                        ENDM
+
 ;.. Bit routines
 JumpOnMemBitSet:        MACRO mem, bitnbr, target
                         ld      a,(mem)
@@ -78,6 +88,16 @@ JumpIfMemEqMemusng:     MACRO mem, address, target
                         ld   hl,address
                         cp   (hl)
                         jp	  z,target
+                        ENDM
+
+JumpIfATrue:            MACRO target
+                        and     a
+                        jp      z, target
+                        ENDM
+                        
+JumpIfAFalse:           MACRO target
+                        and     a
+                        jp      nz, target
                         ENDM
 
 JumpIfALTusng:          MACRO target
@@ -147,12 +167,12 @@ JumpIfAEqNusng:         MACRO value, target
                         jp      z,target
                         ENDM
 
-IfAIsZeroGoto:	        MACRO target
+JumpIfAIsZero:	        MACRO target
                         and a   ; cp 0 - changed to and a for optimisation but affects other flags
                         jp	z, target
                         ENDM
 
-IfANotZeroGoto:	        MACRO target
+JumpIfAIsNotZero:       MACRO target
                         cp	0
                         jp	nz,target
                         ENDM

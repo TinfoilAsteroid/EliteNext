@@ -39,9 +39,8 @@ defaultCommander:       ld		de,CommanderName				;set commander name
 .ClearFittedLooop:      ld      (hl),a
                         inc     hl
                         djnz    .ClearFittedLooop
-                        ld      hl,EquipmentFitted+EQ_FRONT_PULSE
-                        ld      a,$FF
-                        ld      (hl),a
+                        SetAFalse
+                        ld      (EquipmentFitted+EQ_FRONT_PULSE),a
                         ld		(MissionData),a						;The Plan/Mission
                         xor     a
                         ld		(LaserList+1),a

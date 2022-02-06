@@ -21,11 +21,11 @@ MacroAequDxEdiv256usgn:	MACRO
 						ENDM
 DotProductXX12XX15:
         ld          a,(UBnkXX12xLo)         ; Use e as var Q for xnormal lo
-        IfAIsZeroGoto dotxskipzero
+        JumpIfAIsZero dotxskipzero
         ld          e,a
         ld          a,(UBnkXScaled)         ; use d as XX12 world xform x, e = norm x
         ld          d,a                     ; de = xx12 x signed 
-        IfAIsZeroGoto dotxskipzero
+        JumpIfAIsZero dotxskipzero
 		mul
         ld          b,d                     ; b = result
         ld          a,(UBnkXX12xSign)
@@ -41,10 +41,10 @@ dotxskipzero:
 dotmuly:        
 ; now we have b = XX12 x &d  norm x signed  
         ld          a,(UBnkXX12yLo)
-        IfAIsZeroGoto dotyskipzero
+        JumpIfAIsZero dotyskipzero
         ld          e,a
         ld          a,(UBnkYScaled)         ; XX15+2
-        IfAIsZeroGoto dotyskipzero
+        JumpIfAIsZero dotyskipzero
         ld          d,a                     ; de = xx12 x signed 
         mul         
         ld          c,d                     ; c = result
@@ -70,10 +70,10 @@ dotaddxy:
         call ADDHLDESignBC                  ; so now hl = result so will push sign to h
         ld          b,a                     ; b = resultant sign , hl = add so far
         ld          a,(UBnkXX12zLo)         ; 
-        IfAIsZeroGoto dotzskipzero
+        JumpIfAIsZero dotzskipzero
         ld          e,a                     ; 
         ld          a,(UBnkZScaled)         ;
-        IfAIsZeroGoto dotzskipzero
+        JumpIfAIsZero dotzskipzero
         ld          d,a
         mul
         push        hl                      ; save prev result

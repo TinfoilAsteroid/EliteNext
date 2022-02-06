@@ -13,6 +13,6 @@ LL90Loop:
         ShiftMem16Right1 UBnkDrawCam0xLo    ; cam X /= 2
         ShiftMem16Right1 UBnkDrawCam0zLo    ; cam Z /= 2
         ld      a,h                         ; last shift will result in zhi adjusted into h reg. 
-        IfANotZeroGoto LL90Loop             ; loop until z hi = 0 this gives scalinging in c
+        JumpIfAIsNotZero LL90Loop           ; loop until z hi = 0 this gives scalinging in c
         ret
 		

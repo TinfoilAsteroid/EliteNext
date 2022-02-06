@@ -116,7 +116,7 @@ NormaliseRoofV:
 		ld		b,a							; b = regX for now
 		ld		a,(UBnkrotmatRoofvY+1)	    ; roofv y
 		call	TidySub1					; Set (A ?)= (-nosev_z * roofv_y + nosev_y * roofv_z) / 96, Q -= nosev_z
-        IfAIsZeroGoto NormSideXNoNeg
+        JumpIfAIsZero NormSideXNoNeg
 		xor		$80							; flip a to get -sidev_x
 NormSideXNoNeg:        
 		ld		(UBnkrotmatSidevX+1),a
@@ -129,7 +129,7 @@ NormSideXNoNeg:
 		ld		b,a							; b = regX for now
 		ld		a,(UBnkrotmatRoofvZ+1)			; roofv z
 		call	TidySub1					; Set (A ?)= (-nosev_z * roofv_y + nosev_y * roofv_z) / 96, Q -= nosev_z
-        IfAIsZeroGoto NormSideYNoNeg
+        JumpIfAIsZero NormSideYNoNeg
 		xor		$80							; flip a to get -sidev_y
 NormSideYNoNeg:        
 		ld		(UBnkrotmatNosevY+1),a
@@ -142,7 +142,7 @@ NormSideYNoNeg:
 		ld		b,a							; b = regX for now
 		ld		a,(UBnkrotmatRoofvX+1)			; roofv x
 		call	TidySub1					; Set (A ?)= (-nosev_z * roofv_y + nosev_y * roofv_z) / 96, Q -= nosev_z
-        IfAIsZeroGoto NormSideZNoNeg
+        JumpIfAIsZero NormSideZNoNeg
 		xor		$80							; flip a to get -sidev_y
 NormSideZNoNeg:
 		ld		(UBnkrotmatSidevY+1),a ;TODO SHoudl this be Y??

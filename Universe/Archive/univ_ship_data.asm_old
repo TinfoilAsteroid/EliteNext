@@ -249,7 +249,7 @@ DVL8Save:               ld      (varK),de
                         or      c                               ; merge in varT (sign)that was saved much earlier up)
                         ld      (varK3),a                       ; load sign bit back into K3
                         ret
-DV12:                   IfAIsZeroGoto   DV13                    ; Y Count zerp, go to DV13
+DV12:                   JumpIfAIsZero   DV13                    ; Y Count zerp, go to DV13
                         ld      a,(varR)                        ; Reduce Remainder
 DVL10:                  srl     a                               ; divide by 2                     ; counter Y reduce
                         dec     iyl
@@ -1255,12 +1255,12 @@ CheckFace1:                                                                     
         push        hl                                  ; we need to save HL                                                        ;;;
         ldHLIdxAToA UbnkFaceVisArray                    ; visibility at face 1                                                Byte 4;;;
         pop         hl                                  ;                                                                           ;;;
-        IfANotZeroGoto NodeIsVisible                    ; is face 1 visible                                                         ;;;
+        JumpIfAIsNotZero NodeIsVisible                    ; is face 1 visible                                                         ;;;
 CheckFace2:                                                                                                                         ;;;
         ld          a,d                                                                                                             ;;;
         swapnib                                                                                                                     ;;;
         and         $0F                                 ; this is face 2                                                            ;;;
-        IfANotZeroGoto NodeIsVisible                    ; is face 1 visible                                                         ;;;
+        JumpIfAIsNotZero NodeIsVisible                    ; is face 1 visible                                                         ;;;
 CheckFace3:                                                                                                                         ;;;
         CopyByteAtNextHL varP                           ; vertex byte#4, first 2 faces two 4-bit indices 0:15 into XX2 for 2 of the ;;;     
         ld          d,a                                 ; use d to hold a as a temp                                                 ;;;
@@ -1268,12 +1268,12 @@ CheckFace3:                                                                     
         push        hl                                  ; we need to save HL                                                        ;;;
         ldHLIdxAToA UbnkFaceVisArray                  ; visibility at face 1                                                Byte 5;;;
         pop         hl                                  ;                                                                           ;;;
-        IfANotZeroGoto NodeIsVisible                    ; is face 1 visible                                                         ;;;
+        JumpIfAIsNotZero NodeIsVisible                    ; is face 1 visible                                                         ;;;
 CheckFace4:                                                                                                                         ;;;
         ld          a,d                                                                                                             ;;;
         swapnib                                                                                                                     ;;;
         and         $0F                                 ; this is face 2                                                            ;;;
-        IfANotZeroGoto NodeIsVisible                    ; is face 1 visible                                                         ;;;
+        JumpIfAIsNotZero NodeIsVisible                    ; is face 1 visible                                                         ;;;
 NodeIsNotVisible:                                                                                                                   ;;;
         ld          bc,4
         add         iy,bc                               ; if not visible then move to next element in array anyway                  ;;;

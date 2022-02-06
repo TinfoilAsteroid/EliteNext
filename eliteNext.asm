@@ -125,7 +125,7 @@ InitialiseMainLoop:     xor     a
                         ld      (CurrentUniverseAI),a
                         ld      a,3
                         ld      (MenuIdMax),a
-                        ld      a,$FF                               ; Starts Docked
+                        SetAFalse                               ; Starts Docked
                         ld      (DockedFlag),a
 ;                        call    InitialiseFrontView
                         call    InitialiseCommander
@@ -161,7 +161,7 @@ InputBlockerCheck:      ld      a,$0
                         InputMainMacro
 ;.. Process cursor keys for respective screen if the address is 0 then we skill just skip movement.................................
 HandleMovement:         ld      a,(CallCursorRoutine+2)
-                        IfAIsZeroGoto     TestAreWeDocked
+                        JumpIfAIsZero     TestAreWeDocked
 ;.. Handle displaying correct screen ..............................................................................................
 HandleBankSelect:       ld      a,$00
                         MMUSelectScreenA
@@ -329,7 +329,7 @@ LoopEventTriggered:
                         ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      a,(GalaxyDisplayGovernment)
-                        IfANotZeroGoto .NotAnarchySystem
+                        JumpIfAIsNotZero .NotAnarchySystem
                         ld      b,a
                         call    doRandom                            ; if random > 120 then don't spawn
                         ReturnIfAGTENusng 120                       ;
@@ -626,7 +626,7 @@ TestPauseMode:          ld      a,(GamePaused)
 .CheckPauseKey:         ld      a,c_Pressed_Freeze
                         call    is_key_pressed
                         ret     nz
-.PausePressed:          ld      a,$FF                               ; doesn't really matter if we were in pause already as resume is a different key
+.PausePressed:          SetAFalse                                  ; doesn't really matter if we were in pause already as resume is a different key
                         ld      (GamePaused),a
                         ret
 .TestForResume:         ld      a,c_Pressed_Resume                  ; In pause loop so we can check for resume key
@@ -864,7 +864,7 @@ ViewScanLoop:           ld      a,iyh
                         ld      (ReadKeyAddr+2),a
 ReadKeyAddr:            ld      hl,($0000)                      ; address is entry in the pointer table to the actual keypress
                         ld      a,(hl)                          ; now fetch the actual keypress
-                        IfAIsZeroGoto NotReadNextKey
+                        JumpIfAIsZero NotReadNextKey
 .ValidScreenChange:     ld      a,e
                         jp      SetScreenAIX
 ;--- CODE WILL NOT FALL TO HERE ---

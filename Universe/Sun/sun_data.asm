@@ -129,7 +129,7 @@ SunBankDraw:            MACRO
                         
 SunDraw:                MMUSelectLayer2
 .OptimiseStartPos:      ld      a,(MinYOffset)
-                        IfAIsZeroGoto .OffsetIsZero     ; if offset is 0 then just initate as normal
+                        JumpIfAIsZero .OffsetIsZero     ; if offset is 0 then just initate as normal
                         JumpIfALTNusng 64, .OffsetLT64  ; if offset >=64 then we adjust and mve to bank 0
 .OffsetGTE64:           sub     64
                         ld      (MinYOffset),a          ; adjust offset for bank 2
@@ -157,7 +157,7 @@ SunDraw:                MMUSelectLayer2
                         exx
                         SunBankDraw
 .StartBank2:            ld      a,(MinYOffset)
-                        IfAIsZeroGoto .OffsetBank2IsZero; if offset is 0 then we just continue, offset can never be >127 else there would be no draw
+                        JumpIfAIsZero .OffsetBank2IsZero; if offset is 0 then we just continue, offset can never be >127 else there would be no draw
 .NotZeroOffset:         ld      hl,SBnKLineArray + (64 * 2); adjust to correct offset
                         add     hl,a
                         add     hl,a

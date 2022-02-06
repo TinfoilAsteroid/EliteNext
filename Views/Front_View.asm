@@ -182,7 +182,7 @@ dampenPcounter:         DB      dampenRate
 input_front_view:       xor         a
                         ld      hl,(addr_Pressed_Accellerate)
                         ld      a,(hl)
-                        IfAIsZeroGoto     TestDecellerate
+                        JumpIfAIsZero     TestDecellerate
                         ld      a,(SHIPMAXSPEED)
                         ld      d,a
                         ld      a,(DELTA)
@@ -194,9 +194,9 @@ input_front_view:       xor         a
                         ld      (DELT4Lo),hl
 TestDecellerate:        ld      hl,(addr_Pressed_Decellerate)
                         ld      a,(hl)
-                        IfAIsZeroGoto   TestLeftPressed
+                        JumpIfAIsZero   TestLeftPressed
                         ld      a,(DELTA)
-                        IfAIsZeroGoto   TestLeftPressed
+                        JumpIfAIsZero   TestLeftPressed
                         dec     a
                         ld      (DELTA),a
                         ld      hl,(DELT4Lo)
@@ -207,7 +207,7 @@ TestDecellerate:        ld      hl,(addr_Pressed_Decellerate)
                         ld      (DELT4Lo),hl    
 TestLeftPressed:        ld      hl,(addr_Pressed_RollLeft)
                         ld      a,(hl)
-                        IfAIsZeroGoto   TestRightPressed
+                        JumpIfAIsZero   TestRightPressed
                         ld      a,(JSTX)                            ; have we maxed out Joystick?
                         ld      hl,ALP1MAXL                         ; currnet ship max left roll
                         cp      (hl)
@@ -219,7 +219,7 @@ TestLeftPressed:        ld      hl,(addr_Pressed_RollLeft)
                         jp      TestDivePressed                    ; when pressing ignore damper
 TestRightPressed:       ld      hl,(addr_Pressed_RollRight)
                         ld      a,(hl)
-                        IfAIsZeroGoto   .DampenRoll
+                        JumpIfAIsZero   .DampenRoll
                         ld      a,(JSTX)                            ; have we maxed out Joystick?
                         ld      hl,ALP1MAXR                         ; currnet ship max left roll
                         cp      (hl)
@@ -246,7 +246,7 @@ TestRightPressed:       ld      hl,(addr_Pressed_RollRight)
 ; Dive and Climb input
 TestDivePressed:        ld      hl,(addr_Pressed_Dive)
                         ld      a,(hl)
-                        IfAIsZeroGoto   TestClimbPressed
+                        JumpIfAIsZero   TestClimbPressed
                         ld      a,(JSTY)                            ; have we maxed out Joystick?
                         ld      hl,BET1MAXD                         ; currnet ship max left roll
                         cp      (hl)
@@ -258,7 +258,7 @@ TestDivePressed:        ld      hl,(addr_Pressed_Dive)
                         jp      ForwardCursorKeysDone
 TestClimbPressed:       ld      hl,(addr_Pressed_Climb)
                         ld      a,(hl)
-                        IfAIsZeroGoto   .DampenPitch
+                        JumpIfAIsZero   .DampenPitch
                         ld      a,(JSTY)                            ; have we maxed out Joystick?
                         ld      hl,BET1MAXC                         ; currnet ship max left roll
                         cp      (hl)

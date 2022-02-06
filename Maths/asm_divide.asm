@@ -1,3 +1,41 @@
+;
+;   Set flags E to 11111110
+;   Loop:   A << 2
+;           if carry was 0
+;               if a >= D
+;                   A = A - D
+;                   clear carry (probably irrelevant really)
+;           else
+
+;               sla flags << bringing in carry of 1
+;               if bit 7 of flag was set then loop
+;                                        elase a = e and exit
+;
+;
+;
+
+AEquAmul256DivD:        JumpIfAGTENusng  d, .Ll28Exit255
+                        ld      e,%11111110                 ; Set R to have bits 1-7 set, so we can rotate through 7
+.DivideLoop:            sla     a                        
+                        jr      c,.LL29
+                        JumpIfALTNusng  d, .SkipSub         ; will jump if carry set, so we need to reset on the rol
+                        sub     d
+                        ClearCarryFlag                      ; reset clarry as it will be complimented for rotate as 6502 does carry flags inverted
+.SkipSub:               FlipCarryFlag                       ; if we did the subtract the carry will be clear so we need to invert to roll in.
+                        rl      e
+                        jr      c,.DivideLoop
+                        ld      a,e
+                        ret
+.LL29:                  sub     d                           ; A >= Q, so set A = A - Q
+                        SetCarryFlag                        ; Set the C flag to rotate into the result in R
+                        rl      e                           ; rotate counter e left
+                        jr      c,.DivideLoop               ; if a bit was spat off teh end then loop
+                        ld      a,e                         ; stick result in a
+                        ret
+.Ll28Exit255:           ld  a,255                           ; Fail with FF as result
+                        ret
+
+
 ; Divide 8-bit values
 ; In: Divide E by divider C
 ; Out: A = result, B = rest
@@ -13,7 +51,7 @@
 ;;;    add a,c
 ;;;Div8_NoAdd:
 ;;;    djnz Div8_Loop
-;;;    ld b,a
+;;;    ld b,a0
 ;;;    ld a,e
 ;;;    rla
 ;;;    cpl
@@ -107,13 +145,13 @@ DEV16ATooLarge:         ld     bc,$00FF
 ; "> asm_div8 C_Div_D - C is the numerator, D is the denominator, A is the remainder, B is 0, C is the result of C/D,D,E,H,L are not changed"
 asm_div8:               ld b,8
                         xor a
-div8_loop:	            sla c
+.div8_loop:	            sla c
                         rla
                         cp d
-                        jr c,div8_skip:
+                        jr c,.div8_skip:
                         inc c
                         sub d
-div8_skip:	            djnz div8_loop
+.div8_skip:	            djnz .div8_loop
                         ret
 ; ">asm_div16: HL_Div_C: HL is the numerator,  C is the denominator, output A is the remainder, B is 0, C,DE is not changedHL is the quotient"
 asm_div16:              ld b,16

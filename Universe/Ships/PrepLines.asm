@@ -68,7 +68,7 @@ IsFace1Visibile:                                        ; edges have 2 faces to 
         and         $0F                                 ;
         GetFaceAtA
 ;       jp  VisibileEdge; DEBUG BODGE TEST TODO
-        IfANotZeroGoto VisibileEdge                     ; LL70 visible edge
+        JumpIfAIsNotZero VisibileEdge                     ; LL70 visible edge
 IsFace2Visibile:
         ld          a,c                                 ; restore byte 1 from c register
         swapnib                                         ; 
@@ -76,7 +76,7 @@ IsFace2Visibile:
         push        hl
         GetFaceAtA
         pop         hl
-        IfAIsZeroGoto LL78EdgeNotVisible                ; edge not visible
+        JumpIfAIsZero LL78EdgeNotVisible                ; edge not visible
 VisibileEdge:                                           ; Now we need to node id from bytes 2 - start and 3 - end
 ;LL79--Visible edge--------------------------------------
 ; Get Edge Byte 2

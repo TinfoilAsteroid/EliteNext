@@ -35,7 +35,7 @@ CurrentNormIdx  DB 0
 
 
 ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then we have scaled XX18
-                        IfAIsZeroGoto .ScaleDone            ; 
+                        JumpIfAIsZero .ScaleDone            ; 
                         ld      hl,(UBnkDrawCam0xLo)        ; pull postition into registers
                         ld      de,(UBnkDrawCam0yLo)        ; we only pull in if needed to save fetches
                         ld      bc,(UBnkDrawCam0zLo)        ;
@@ -44,7 +44,7 @@ ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then 
                         ShiftDERight1                       ;
                         ShiftBCRight1                       ;
                         ld      a,b                         ; loop if not scaled down
-                        IfANotZeroGoto .ScaleNormalLoop     ;
+                        JumpIfAIsNotZero .ScaleNormalLoop     ;
                         ld      (UBnkDrawCam0xLo),hl        ; save position back to XX18
                         ld      (UBnkDrawCam0yLo),de        ;
                         ld      (UBnkDrawCam0zLo),bc        ;
@@ -197,7 +197,7 @@ ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then 
 ;;;;;.BackfaceLoop:          ld      a,(QAddr)                   ; a = ship normal scale factor
 ;;;;;                        ld      iyl,a                       ; iyl = scale factor
 ;;;;;.ScaleNormal:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then we have scaled XX18
-;;;;;                        IfAIsZeroGoto .ScaleDone            ; 
+;;;;;                        JumpIfAIsZero .ScaleDone            ; 
 ;;;;;                        ld      hl,(UBnkDrawCam0xLo)        ; pull postition into registers
 ;;;;;                        ld      de,(UBnkDrawCam0yLo)        ; we only pull in if needed to save fetches
 ;;;;;                        ld      bc,(UBnkDrawCam0zLo)        ;
@@ -206,7 +206,7 @@ ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then 
 ;;;;;                        ShiftDERight1                       ;
 ;;;;;                        ShiftBCRight1                       ;
 ;;;;;                        ld      a,b                         ; loop if not scaled down
-;;;;;                        IfANotZeroGoto .ScaleNormalLoop     ;
+;;;;;                        JumpIfAIsNotZero .ScaleNormalLoop     ;
 ;;;;;                        ld      (UBnkDrawCam0xLo),hl        ; save position back to XX18
 ;;;;;                        ld      (UBnkDrawCam0yLo),de        ;
 ;;;;;                        ld      (UBnkDrawCam0zLo),bc        ;
@@ -335,39 +335,38 @@ XX4Distance             DB      0
                       
 
 CheckDistance:          ld      a,(UBnKzsgn)                 ; Is the ship behind us
-.CheckBehind:           and     SignOnly8Bit                 ; .
+.CheckBehind:           and     SignOnly8Bit                 ; which means z sign is negative
                         jr      nz,.ShipNoDraw               ; .
-.CheckViewPort:         ld      hl,(UBnKzlo)
+.CheckViewPort:         ld      hl,(UBnKzlo)                 ; now check to see if its within 90 degree arc
                         ld      a,h
                         JumpIfAGTENusng ShipMaxDistance, .ShipNoDraw
-.CheckXAxis:            ld      de,(UBnKxlo)
+.CheckXAxis:            ld      de,(UBnKxlo)                 ; if abs x > abx z then its out side of view port
+                        call    compare16HLDE                
+                        jr      c,.ShipNoDraw               ; ship is too far out on the X Axis
+.CheckYAxis:            ld      de,(UBnKylo)                ; if abs y > abx z then its out side of view port
                         call    compare16HLDE
                         jr      c,.ShipNoDraw               ; ship is too far out on the X Axis
-.CheckYAxis:            ld      de,(UBnKylo)
-                        call    compare16HLDE
-                        jr      c,.ShipNoDraw               ; ship is too far out on the X Axis
-.CalculateXX4:           ShiftHLRight1                       ; hl = z pos / 8        
+.CalculateXX4:          ShiftHLRight1                       ; hl = z pos / 8        
                         ShiftHLRight1                       ; .
                         ShiftHLRight1                       ; .
                         ld      a,h
                         srl     a                           ; if a / 16 <> 0 then ship is a dot
-.DrawAsDotCheck:        jp      z,.ShipIsADot
+.DrawAsDotCheck:        JumpIfNotZero   .ShipIsADot
                         ; Check visbility distance
-.SetXX4Dist:            ld      a,l
+.SetXX4Dist:            ;break
+                        ld      a,l
                         rra                                 ; l may have had bit 0 of h carried in
                         srl     a                           ; so move it to bit 4 giving A as distance $000xxxxx
                         srl     a
                         srl     a
                         ld      (XX4Distance),a             ; XX4 = "all faces" distance
-                        xor     a
+                        SetATrue
                         ld      (UBnKDrawAsDot),a           ; set draw as dot to 0, i.e. false
                         ClearCarryFlag
                         ret
 .ShipNoDraw:            SetCarryFlag                        ; ship is behind so do not draw, so we don't care abour draw as dot
                         ret
-.ShipIsADot:            call    ProcessDot                  ; use the same logic as process nodes to do 1 point
-                        xor     a
-                        ld      (UBnKDrawAsDot),a           ; set draw as dot to 0, i.e. false
+.ShipIsADot:            SetMemFalse UBnKDrawAsDot           ; use the same logic as process nodes to do 1 point
                         ClearCarryFlag
                         ret
                         
@@ -389,20 +388,20 @@ CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
 .PrepNormals:           ld      hl,UBnkHullNormals                                                                                                 ;;; V = address of Normal start
                         ld      (varV),hl  
                         ld      a,(FaceCtX4Addr)                                        ; For each face
-                        srl     a                                                       ;
-                        srl     a                                                       ;
-                        ld      b,a                                                     ;
-                        xor     a
-                        ld      (CurrentNormIdx),a                                                   ; used to increment up face incdex as b decrements
-.ProcessNormalsLoop:    push    hl
-                        push    bc
-.LL86:                  ld      a,(hl)                                                  ; Get Face sign and visibility distance byte 
-                        and     $1F                                                     ; if normal visibility range  < XX4
-                        push    hl
-                        ld      hl,XX4Distance
-                        cp      (hl)
-                        pop     hl
-                        jp      c,.FaceVisible                       ; then we always draw
+                        srl     a                                              ;
+                        srl     a                                              ;
+                        ld      b,a                                            ;
+                        xor     a                           
+                        ld      (CurrentNormIdx),a                                          ; used to increment up face incdex as b decrements
+.ProcessNormalsLoop:    push    hl                          
+                        push    bc                          
+.LL86:                  ld      a,(hl)                                         ; Get Face sign and visibility distance byte 
+                        and     $1F                                            ; if normal visibility range  < XX4
+                        push    hl                          
+                        ld      hl,XX4Distance              
+                        cp      (hl)                        
+                        pop     hl                          
+                        jp      c,.FaceVisible              ; then we always draw
 ; This bit needs to be added to force face visible
 .LL87:                  call    CopyFaceToXX12              ; XX12 = normal (repolaced scale version) as a working copy
                         ld      a,(XX17)                    ; a = q scale XX17 cauclated by the call to ScaleDrawcam

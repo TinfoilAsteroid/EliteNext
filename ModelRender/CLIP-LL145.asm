@@ -178,7 +178,7 @@ ClipLine:               ld      bc,(UbnkPreClipY1)          ; bc - XX15(2,3)
 .DxGTEDy:               ld      (varQ),a                    ; Set Q = delta_x_lo
                         ld      d,a                         ; d = also Q for calc
                         ld      a,e                         ; Set A = delta_y_lo
-                        call    LL28Amul256DivD             ; Call LL28 to calculate:  R (actually a reg) = 256 * A / Q   = 256 * delta_y_lo / delta_x_lo
+                        call    AEquAmul256DivD; LL28Amul256DivD             ; Call LL28 to calculate:  R (actually a reg) = 256 * A / Q   = 256 * delta_y_lo / delta_x_lo
                         ld      (varR),a                    ;
                         jr      .LL116                      ; Jump to LL116, as we now have the line's gradient in R
 ; Here Delta Y > Delta X so calulate delta X / delta Y
@@ -186,7 +186,7 @@ ClipLine:               ld      bc,(UbnkPreClipY1)          ; bc - XX15(2,3)
                         ld      d,a
                         ld      (varQ),a
                         ld      a,l                         ; Set A = delta_x_lo
-                        call    LL28Amul256DivD             ; Call LL28 to calculate: R = 256 * A / Q  = 256 * delta_x_lo / delta_y_lo
+                        call    AEquAmul256DivD; LL28Amul256DivD             ; Call LL28 to calculate: R = 256 * A / Q  = 256 * delta_x_lo / delta_y_lo
                         ld      (varR),a                    ;
                         ld      hl,varT                     ; T was set to 0 above, so this sets T = &FF
                         dec     (hl)

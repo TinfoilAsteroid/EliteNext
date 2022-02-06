@@ -149,7 +149,7 @@ DVL8Save:               ld      (varK),de
                         or      c                               ; merge in varT (sign)that was saved much earlier up)
                         ld      (varK3),a                       ; load sign bit back into K3
                         ret
-DV12:                   IfAIsZeroGoto   DV13                    ; Y Count zerp, go to DV13
+DV12:                   JumpIfAIsZero   DV13                    ; Y Count zerp, go to DV13
                         ld      a,(varR)                        ; Reduce Remainder
 DVL10:                  srl     a                               ; divide by 2                     ; counter Y reduce
                         dec     iyl

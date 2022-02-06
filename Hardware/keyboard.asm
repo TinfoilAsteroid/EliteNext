@@ -245,7 +245,7 @@ addr_Pressed_Find          equ KeyboardMap+c_Pressed_Find
 MIsKeyPressed:      MACRO   keyaddress, misstarget
                     ld      hl,(keyaddress)
                     ld      a,(hl)
-                    IfAIsZeroGoto   misstarget
+                    JumpIfAIsZero   misstarget
                     ENDM
 
 init_keyboard:      ld		hl,Keys
@@ -357,7 +357,7 @@ is_any_key_pressed:
     inc     hl
     inc     c
     djnz    .KeyReadLoop
-    ld      a,$FF
+    SetAFalse
     ret
 .KeyPressed:
     ld      a,c
@@ -375,7 +375,7 @@ is_any_key_held:
     inc     hl
     inc     c
     djnz    .KeyReadLoop
-    ld      a,$FF
+    SetAFalse
     ret
 .KeyPressed:
     ld      a,c
@@ -454,8 +454,7 @@ InputName:                  xor     a
     ld      a,c
     ld      hl,InputCursor
     inc     (hl)
-    ld      a,$FF
-    ld      (InputChanged),a
+    SetMemFalse InputChanged
     ret
 .EnterPressed:
     ld      a,(InputCursor)
@@ -481,80 +480,68 @@ InputName:                  xor     a
     add     hl,a
     xor     a
     ld      (hl),a
-    ld      a,$FF
-    ld      (InputChanged),a
+    SetMemFalse InputChanged
     ret
 
-MovementKeyTest:
-;DBG1:jp dbg1
-;dbx1:
-    xor     a
-    ld      (CursorKeysPressed),a
-    ld      a,(MenuIdMax)
-    and     $FC
-    jr      nz,CursorKeys
-ClimbDiveKeys:
-    ld      hl,(addr_Pressed_Climb)
-    ld      a,(hl)
-    IfAIsZeroGoto ScanDiveKey
-    ld      a,(CursorKeysPressed)
-    or      $80
-    ld      (CursorKeysPressed),a
-    jp      ScanLeftKey
-ScanDiveKey:    
-    ld      hl,(addr_Pressed_Dive)
-    ld      a,(hl)
-    IfAIsZeroGoto ScanLeftKey
-    ld      a,(CursorKeysPressed)
-    or      $40
-    ld      (CursorKeysPressed),a
-    jp      ScanLeftKey
-CursorKeys:
-    ld      hl,(addr_Pressed_CursorUp)
-    ld      a,(hl)
-    IfAIsZeroGoto ScanCursorDownKey
-    ld      a,(CursorKeysPressed)
-    or      $80
-    ld      (CursorKeysPressed),a
-    jp      ScanLeftKey
-ScanCursorDownKey
-    ld      hl,(addr_Pressed_CursorDown)
-    ld      a,(hl)
-    IfAIsZeroGoto ScanLeftKey
-    ld      a,(CursorKeysPressed)
-    or      $40
-    ld      (CursorKeysPressed),a
-ScanLeftKey:
-    ld      hl,(addr_Pressed_RollLeft)
-    ld      a,(hl)
-    IfAIsZeroGoto ScanRightKey
-    ld      a,(CursorKeysPressed)
-    or      $20
-    ld      (CursorKeysPressed),a
-    ret
-ScanRightKey:
-    ld      hl,(addr_Pressed_RollRight)
-    ld      a,(hl)
-    IfAIsZeroGoto ScanHomeKey
-    ld      a,(CursorKeysPressed)
-    or      $10
-    ld      (CursorKeysPressed),a
-    ret
-ScanHomeKey:
-    ld      hl,(addr_Pressed_HomeCursor)
-    ld      a,(hl)
-    IfAIsZeroGoto ScanRecentreKey
-    ld      a,(CursorKeysPressed)
-    or      $08
-    ld      (CursorKeysPressed),a
-    ret
-ScanRecentreKey:
-    ld      hl,(addr_Pressed_Recentre)
-    ld      a,(hl)
-    ReturnIfAIsZero
-    ld      a,(CursorKeysPressed)
-    or      $04
-    ld      (CursorKeysPressed),a
-    ret
+MovementKeyTest:        xor     a
+                        ld      (CursorKeysPressed),a
+                        ld      a,(MenuIdMax)
+                        and     $FC
+                        jr      nz,CursorKeys
+ClimbDiveKeys:          ld      hl,(addr_Pressed_Climb)
+                        ld      a,(hl)
+                        JumpIfAIsZero ScanDiveKey
+                        ld      a,(CursorKeysPressed)
+                        or      $80
+                        ld      (CursorKeysPressed),a
+                        jp      ScanLeftKey
+ScanDiveKey:            ld      hl,(addr_Pressed_Dive)
+                        ld      a,(hl)
+                        JumpIfAIsZero ScanLeftKey
+                        ld      a,(CursorKeysPressed)
+                        or      $40
+                        ld      (CursorKeysPressed),a
+                        jp      ScanLeftKey
+CursorKeys:             ld      hl,(addr_Pressed_CursorUp)
+                        ld      a,(hl)
+                        JumpIfAIsZero ScanCursorDownKey
+                        ld      a,(CursorKeysPressed)
+                        or      $80
+                        ld      (CursorKeysPressed),a
+                        jp      ScanLeftKey
+ScanCursorDownKey:      ld      hl,(addr_Pressed_CursorDown)
+                        ld      a,(hl)
+                        JumpIfAIsZero ScanLeftKey
+                        ld      a,(CursorKeysPressed)
+                        or      $40
+                        ld      (CursorKeysPressed),a
+ScanLeftKey:            ld      hl,(addr_Pressed_RollLeft)
+                        ld      a,(hl)
+                        JumpIfAIsZero ScanRightKey
+                        ld      a,(CursorKeysPressed)
+                        or      $20
+                        ld      (CursorKeysPressed),a
+                        ret
+ScanRightKey:           ld      hl,(addr_Pressed_RollRight)
+                        ld      a,(hl)
+                        JumpIfAIsZero ScanHomeKey
+                        ld      a,(CursorKeysPressed)
+                        or      $10
+                        ld      (CursorKeysPressed),a
+                        ret
+ScanHomeKey:            ld      hl,(addr_Pressed_HomeCursor)
+                        ld      a,(hl)
+                        JumpIfAIsZero ScanRecentreKey
+                        ld      a,(CursorKeysPressed)
+                        or      $08
+                        ld      (CursorKeysPressed),a
+                        ret
+ScanRecentreKey:        ld      hl,(addr_Pressed_Recentre)
+                        ld      a,(hl)
+                        ReturnIfAIsZero
+                        ld      a,(CursorKeysPressed)
+                        or      $04
+                        ld      (CursorKeysPressed),a
+                        ret
 
     
