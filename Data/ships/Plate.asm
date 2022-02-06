@@ -1,16 +1,17 @@
-Plate:	DB $80, $00, $64
-	DW PlateEdges
-	DB PlateEdgesSize
-	DB $00, $0A
-	DB PlateVertSize
-	DB PlateEdgesCnt
-	DB $00, $00
-	DB PlateNormalsSize
-	DB $05, $10, $10
-	DW PlateNormals
-	DB $03, $00
-	DW PlateVertices
+Plate:	                DB $80, $00, $64
+                        DW PlateEdges
+                        DB PlateEdgesSize
+                        DB $00, $0A
+                        DB PlateVertSize
+                        DB PlateEdgesCnt
+                        DB $00, $00
+                        DB PlateNormalsSize
+                        DB $05, $10, $10
+                        DW PlateNormals
+                        DB $03, $00
+                        DW PlateVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 
 	
 PlateVertices:	DB $0F, $16, $09, $FF, $FF, $FF

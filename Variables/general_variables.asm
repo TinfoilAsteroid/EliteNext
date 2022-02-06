@@ -284,6 +284,12 @@ YSAV2 					DB	0				; 034F used to temporary save 6502 Y reg
 CommanderName			DS  8				; 0350 - 3057 Commander Name
 CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
 ;036C to D???
+; ComunicationFlags  
+SetStationAngryFlag     DB  0
+SetShipHitByMissileFlag DB  0
+ShipBlastCheckCounter   DB  0
+; TODO will need an read for a list of missiles, who they are targeting an the target current vector for AI persuit
+; i.e. a list of programmed missiles in universe slot list code
 DampingKeys				DS  7				; 0387 - 038D
 ;  #&6 Does K toggle keyboard/joystick control -  03CD certainly makes keyboard not work anymore.
 ;  #&5 Does J reverse both joystick channels

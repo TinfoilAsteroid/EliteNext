@@ -122,6 +122,7 @@ LaserAddr                   equ UBnkHullCopy + LaserOffset
 VerticesAddyAddr            equ UBnkHullCopy + VerticiesAddyOffset  
 ShipTypeAddr                equ UBnkHullCopy + ShipTypeOffset       
 ShipNewBitsAddr             equ UBnkHullCopy + ShipNewBitsOffset    
+ShipAIFlagsAddr             equ UBnkHullCopy + ShipAIFlagsOffset
 ; Static Ship Data. This is copied in when creating the universe object
 XX0                         equ UBnkHullCopy        ; general hull index pointer
 UBnkHullVerticies           DS  300                 ; can only be 255
@@ -162,6 +163,21 @@ RandomUnivSpeed:        MACRO
 ZeroUnivAccelleration:  MACRO
                         xor     a
                         ld      (UBnKAccel),a
+                        ENDM
+                        
+AequN1xorN2:            MACRO  param1,param2
+                        ld      a,(param1)
+                        xor     param2
+                        ENDM
+
+N0equN1byN2div256:      MACRO param1,param2,param3
+                        ld      a,param3                        ; 
+                        ld      e,a                         ; use e as var Q = value of XX15 [n] lo
+                        ld      a,param2                        ; A = XX16 element
+                        ld      d,a
+                        mul
+                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low                
+                        ld      (param1),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
                         ENDM
                         
 ; --------------------------------------------------------------
@@ -473,6 +489,7 @@ MVS5RotateAxis:         ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                     ret
     
                     include "Universe/Ships/InitialiseOrientation.asm"
+                    include "Universe/Ships/Tactics.asm"
 ;----------------------------------------------------------------------------------------------------------------------------------
 OrientateVertex:
 
@@ -623,20 +640,6 @@ XXCURRENTN0equN1byN2div256: MACRO param1, param2, param3
 .resultPos:             ld      (param1),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
                         ENDM
                 
-AequN1xorN2:            MACRO  param1,param2
-                        ld      a,(param1)
-                        xor     param2
-                        ENDM
-
-N0equN1byN2div256:      MACRO param1,param2,param3
-                        ld      a,param3                        ; 
-                        ld      e,a                         ; use e as var Q = value of XX15 [n] lo
-                        ld      a,param2                        ; A = XX16 element
-                        ld      d,a
-                        mul
-                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low                
-                        ld      (param1),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
-                        ENDM
 
  ; TESTEDOK
 XX12DotOneRow:

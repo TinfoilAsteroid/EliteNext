@@ -11,6 +11,7 @@ Bushmaster:	            DB $00, $10, $9A
                         DB $02, $21
                         DW BushmasterVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 BushmasterVertices:	    DB $00, $00, $3C, $1F, $23, $01
                         DB $32, $00, $14, $1F, $57, $13
                         DB $32, $00, $14, $9F, $46, $02

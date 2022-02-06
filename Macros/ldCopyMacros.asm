@@ -15,6 +15,16 @@ SetMemFalse             MACRO   mem
                         ld      (mem),a
                         ENDM
 
+SetMemTrue              MACRO   mem
+                        ld      a,$FF
+                        ld      (mem),a
+                        ENDM                        
+
+SetMemToN:              MACRO   mem,value
+                        ld      a,value
+                        ld      (mem),a
+                        ENDM
+
 ldCopyTextAtHLtoDE:     MACRO
 .CopyLoop:              ld      a,(hl)
                         ld      (de),a

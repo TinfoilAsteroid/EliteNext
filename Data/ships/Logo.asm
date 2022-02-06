@@ -1,16 +1,17 @@
-Logo:	DB $00, $26, $49
-	DW LogoEdges
-	DB LogoEdgesSize
-	DB $00, $36
-	DB LogoVertSize
-	DB LogoEdgesCnt
-	DB $00, $00
-	DB LogoNormalsSize
-	DB $63, $FC, $24
-	DW LogoNormals
-	DB $01, $00
-	DW LogoVertices
+Logo:	                DB $00, $26, $49
+                        DW LogoEdges
+                        DB LogoEdgesSize
+                        DB $00, $36
+                        DB LogoVertSize
+                        DB LogoEdgesCnt
+                        DB $00, $00
+                        DB LogoNormalsSize
+                        DB $63, $FC, $24
+                        DW LogoNormals
+                        DB $01, $00
+                        DW LogoVertices
                         DB 0,0                      ; Type and Tactics
+                        DB 0
 
 LogoVertices:	DB $00, $09, $37, $5F, $00, $00
 	DB $0A, $09, $1E, $DF, $00, $00

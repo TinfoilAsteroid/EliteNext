@@ -1,16 +1,17 @@
-Mamba:	DB $01, $13, $24
-	DW MambaEdges
-	DB MambaEdgesSize
-	DB $00, $22
-	DB MambaVertSize
-	DB MambaEdgesCnt
-	DB $00, $96
-	DB MambaNormalsSize
-	DB $19, $5A, $1E
-	DW MambaNormals
-	DB $02, $12
-	DW MambaVertices
+Mamba:	                DB $01, $13, $24
+                        DW MambaEdges
+                        DB MambaEdgesSize
+                        DB $00, $22
+                        DB MambaVertSize
+                        DB MambaEdgesCnt
+                        DB $00, $96
+                        DB MambaNormalsSize
+                        DB $19, $5A, $1E
+                        DW MambaNormals
+                        DB $02, $12
+                        DW MambaVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 
 MambaVertices:	DB $00, $00, $40, $1F, $10, $32
 	DB $40, $08, $20, $FF, $20, $44

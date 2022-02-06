@@ -11,6 +11,7 @@ Moray:	                DB $01, $03, $84
                         DB $02, $2A
                         DW MorayVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
                         
 MorayVertices:	        DB $0F, $00, $41, $1F, $02, $78
                         DB $0F, $00, $41, $9F, $01, $67

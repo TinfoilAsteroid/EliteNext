@@ -1,16 +1,17 @@
-Rattler:	DB $02, $17, $70
-            DW RattlerEdges
-            DB RattlerEdgesSize
-            DB $00, $2A
-            DB RattlerVertSize
-            DB RattlerEdgesCnt
-            DB $00, $96
-            DB RattlerNormalsSize
-            DB $0A, $71, $1F
-            DW RattlerNormals
-            DB $01, $22
-            DW RattlerVertices
+Rattler:	            DB $02, $17, $70
+                        DW RattlerEdges
+                        DB RattlerEdgesSize
+                        DB $00, $2A
+                        DB RattlerVertSize
+                        DB RattlerEdgesCnt
+                        DB $00, $96
+                        DB RattlerNormalsSize
+                        DB $0A, $71, $1F
+                        DW RattlerNormals
+                        DB $01, $22
+                        DW RattlerVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 
 
 RattlerVertices:	DB $00, $00, $3C, $1F, $89, $23

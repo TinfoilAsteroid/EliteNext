@@ -1,16 +1,17 @@
-Shuttle_Mk_2:	DB $0F, $09, $C4
-	DW Shuttle_Mk_2Edges
-	DB Shuttle_Mk_2EdgesSize
-	DB $00, $26
-	DB Shuttle_Mk_2VertSize
-	DB Shuttle_Mk_2EdgesCnt
-	DB $00, $00
-	DB Shuttle_Mk_2NormalsSize
-	DB $0A, $20, $09
-	DW Shuttle_Mk_2Normals
-	DB $02, $00
-	DW Shuttle_Mk_2Vertices
+Shuttle_Mk_2:	        DB $0F, $09, $C4
+                        DW Shuttle_Mk_2Edges
+                        DB Shuttle_Mk_2EdgesSize
+                        DB $00, $26
+                        DB Shuttle_Mk_2VertSize
+                        DB Shuttle_Mk_2EdgesCnt
+                        DB $00, $00
+                        DB Shuttle_Mk_2NormalsSize
+                        DB $0A, $20, $09
+                        DW Shuttle_Mk_2Normals
+                        DB $02, $00
+                        DW Shuttle_Mk_2Vertices
                         DB 0,0                      ; Type and Tactics
+                        DB 0
 
 	
 Shuttle_Mk_2Vertices:	DB $00, $00, $28, $1F, $23, $01

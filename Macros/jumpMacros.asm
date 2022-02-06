@@ -37,7 +37,26 @@ JumpOnMemBitClear:      MACRO mem, bitnbr, target
                         jp      z,target
                         ENDM
 
+JumpOnABit5Set:         MACRO   target
+                        and     Bit5Only 
+                        jp      nz,target
+                        ENDM
 
+JumpOnABit5Clear:       MACRO   target
+                        and     Bit5Only 
+                        jp      z,target
+                        ENDM
+
+JumpOnBitMaskSet:       MACRO   bitmask, target
+                        and     bitmask
+                        jp      nz,target
+                        ENDM
+
+JumpOnBitMaskClear:     MACRO   bitmask, target
+                        and     bitmask
+                        jp      z,target
+                        ENDM
+                        
 JumpOnBitSet:           MACRO  reg, bitnbr, target
                         bit 	bitnbr,reg
                         jp      nz,target

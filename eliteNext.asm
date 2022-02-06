@@ -123,6 +123,9 @@ InitialiseGalaxies:     call		ResetUniv                       ; Reset ship data
 ;                        xor     a
 InitialiseMainLoop:     xor     a
                         ld      (CurrentUniverseAI),a
+                        ld      (SetStationAngryFlag),a
+                        dec     a                               ; set A to FF
+                        ld      (SetShipHitByMissileFlag),a     ; FF means none
                         ld      a,3
                         ld      (MenuIdMax),a
                         SetAFalse                               ; Starts Docked
@@ -444,6 +447,11 @@ UpdateUniverseObjects:  xor     a
                         jr      c,.IterateAI
                         xor     a
 .IterateAI:             ld      (CurrentUniverseAI),a
+.CheckIfStationAngry:   ReturnIfMemFalse  SetStationAngryFlag
+.SetStationAngryIfPoss: ReturnIfMemNeNusng UniverseSlotList, ShipTypeStation
+                        MMUSelectUniverseN 0
+                        call    ForceAngryDirect
+                        SetMemFalse    SetStationAngryFlag
                         ret
 ;..................................................................................................................................
 ;.. Quickly eliminate space stations too far away..................................................................................

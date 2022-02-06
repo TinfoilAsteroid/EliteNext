@@ -1,16 +1,17 @@
-Rock_Hermit:	DB $07, $19, $00
-	DW Rock_HermitEdges
-	DB Rock_HermitEdgesSize
-	DB $00, $32
-	DB Rock_HermitVertSize
-	DB Rock_HermitEdgesCnt
-	DB $00, $00
-	DB Rock_HermitNormalsSize
-	DB $32, $B4, $1E
-	DW Rock_HermitNormals
-	DB $01, $02
-	DW Rock_HermitVertices
+Rock_Hermit:	        DB $07, $19, $00
+                        DW Rock_HermitEdges
+                        DB Rock_HermitEdgesSize
+                        DB $00, $32
+                        DB Rock_HermitVertSize
+                        DB Rock_HermitEdgesCnt
+                        DB $00, $00
+                        DB Rock_HermitNormalsSize
+                        DB $32, $B4, $1E
+                        DW Rock_HermitNormals
+                        DB $01, $02
+                        DW Rock_HermitVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 
 	
 Rock_HermitVertices:	DB $00, $50, $00, $1F, $FF, $FF

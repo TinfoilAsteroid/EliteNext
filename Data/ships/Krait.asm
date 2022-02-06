@@ -12,6 +12,7 @@ Krait:                  DB $01, $10, $0E
                         DB $02, $10 
                         DW KraitVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 KraitVertices:          DB $00, $00, $60, $1F, $01, $23 
                         DB $00, $12, $30, $3F, $03, $45 
                         DB $00, $12, $30, $7F, $12, $45 

@@ -11,6 +11,7 @@ Cobra_Mk_3_P:	        DB $01, $23, $41
                         DB $01, $12
                         DW Cobra_Mk_3_PVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 Cobra_Mk_3_PVertices:	DB $20, $00, $4C, $1F, $FF, $FF
                         DB $20, $00, $4C, $9F, $FF, $FF
                         DB $00, $1A, $18, $1F, $FF, $FF

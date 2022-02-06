@@ -11,6 +11,7 @@ Fer_De_Lance:	        DB $00, $06, $40
                         DB $01, $12
                         DW Fer_De_LanceVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 Fer_De_LanceVertices:	DB $00, $0E, $6C, $5F, $01, $59
                         DB $28, $0E, $04, $FF, $12, $99
                         DB $0C, $0E, $34, $FF, $23, $99

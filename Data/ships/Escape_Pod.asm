@@ -11,6 +11,7 @@ Escape_Pod:             DB $20, $01, $00
                         DB $04, $00
                         DW Escape_PodVertices
                         DB 0,0                      ; Type and Tactics
+                        DB 0
 Escape_PodVertices:	    DB $07, $00, $24, $9F, $12, $33
                         DB $07, $0E, $0C, $FF, $02, $33
                         DB $07, $0E, $0C, $BF, $01, $33

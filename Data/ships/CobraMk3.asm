@@ -15,6 +15,7 @@ CobraMk3    		    DB $03, $41, $23
                         DB $01,$13
                         DW CobraMk3Vertices
                         DB 0,0                      ; Type and Tactics                        
+                        DB ShipCanAnger
                     ; missiles = 3             
 CobraMk3Vertices	    DB $20,$00,$4C,$1F,$FF,$FF 
                         DB $20,$00,$4C,$9F,$FF,$FF 

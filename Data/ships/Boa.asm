@@ -11,6 +11,7 @@ Boa:	                DB $05, $13, $24
                         DB $00, $1C
                         DW BoaVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 BoaVertices:	        DB $00, $00, $5D, $1F, $FF, $FF
                         DB $00, $28, $57, $38, $02, $33
                         DB $26, $19, $63, $78, $01, $44

@@ -11,6 +11,7 @@ Dragon:	                DB $00, $66, $50
                         DB $00, $47
                         DW DragonVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 DragonVertices:	        DB $00, $00, $FA, $1F, $6B, $05
                         DB $D8, $00, $7C, $1F, $67, $01
                         DB $D8, $00, $7C, $3F, $78, $12

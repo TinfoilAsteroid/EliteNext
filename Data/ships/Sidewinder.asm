@@ -1,16 +1,17 @@
-Sidewinder:	DB $00, $10, $81
-	DW SidewinderEdges
-	DB SidewinderEdgesSize
-	DB $00, $1E
-	DB SidewinderVertSize
-	DB SidewinderEdgesCnt
-	DB $00, $32
-	DB SidewinderNormalsSize
-	DB $14, $46, $25
-	DW SidewinderNormals
-	DB $02, $10
-	DW SidewinderVertices
+Sidewinder:	            DB $00, $10, $81
+                        DW SidewinderEdges
+                        DB SidewinderEdgesSize
+                        DB $00, $1E
+                        DB SidewinderVertSize
+                        DB SidewinderEdgesCnt
+                        DB $00, $32
+                        DB SidewinderNormalsSize
+                        DB $14, $46, $25
+                        DW SidewinderNormals
+                        DB $02, $10
+                        DW SidewinderVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 
 SidewinderVertices:	DB $20, $00, $24, $9F, $10, $54
 	DB $20, $00, $24, $1F, $20, $65

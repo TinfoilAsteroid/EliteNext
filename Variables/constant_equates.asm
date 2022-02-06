@@ -5,6 +5,15 @@ SignMask16Bit		equ %0111111111111111
 SignOnly8Bit		equ $80
 SignOnly16Bit		equ $8000
 
+Bit7Only            equ %10000000
+Bit6Only            equ %01000000
+Bit5Only            equ %00100000
+Bit4Only            equ %00010000
+Bit3Only            equ %00001000
+Bit2Only            equ %00000100
+Bit1Only            equ %00000010
+Bit0Only            equ %00000001
+
 ConstPi				equ $80
 ConstNorm           equ 197
 
@@ -25,6 +34,20 @@ ShipTypeJunk        equ 3
 ShipTypeStation     equ 2
 ShipTypeMissile     equ 1
 ShipTypeNormal      equ 0
+; TacticsControl
+ShipIsTrader        equ %00000001   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
+ShipIsBountyHunter  equ %00000010   ; 
+ShipIsHostile       equ %00000100   ; 
+ShipIsPirate        equ %00001000   ; 
+ShipIsDocking       equ %00010000   ; 
+ShipIsBystander     equ %00100000   ; 
+ShipIsCop           equ %01000000   ; 
+ShipIsScoopDockEsc  equ %10000000   ; 
+
+; UniverseAIControl
+ShipCanAnger        equ %00000001
+
+
 ShipMaxDistance     equ 192
 HyperSpaceTimers    equ $0B0B
 

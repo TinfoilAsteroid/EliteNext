@@ -11,7 +11,8 @@ Monitor:	            DB $04, $36, $00
                         DB $00, $37
                         DW MonitorVertices
                         DB 0,0                      ; Type and Tactics
-                        
+                        DB ShipCanAnger
+
 MonitorVertices:	    DB $00, $0A, $8C, $1F, $FF, $FF
                         DB $14, $28, $14, $3F, $23, $01
                         DB $14, $28, $14, $BF, $50, $34

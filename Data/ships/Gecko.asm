@@ -11,6 +11,7 @@ Gecko:	                DB $00, $26, $49
                         DB $03, $10
                         DW GeckoVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 GeckoVertices:	        DB $0A, $04, $2F, $DF, $03, $45
                         DB $0A, $04, $2F, $5F, $01, $23
                         DB $10, $08, $17, $BF, $05, $67

@@ -20,6 +20,18 @@ ReturnOnMemBitClear:    MACRO mem, bitnbr
                         ret		z
                         ENDM
 
+ReturnIfMemFalse:       MACRO   mem
+                        ld      a,(mem)
+                        and     a
+                        ret     nz
+                        ENDM
+
+ReturnIfMemTrue:        MACRO   mem
+                        ld      a,(mem)
+                        and     a
+                        ret     z
+                        ENDM
+
 ReturnIfAIsZero:        MACRO
                         and a
                         ret    z
@@ -30,13 +42,29 @@ ReturnIfMemisZero:      MACRO mem
                         and a
                         ret    z
                         ENDM
+                        
+ReturnIfBitMaskClear    MACRO   bitmask
+                        and     bitmask
+                        ret     z
+                        ENDM
     
+ReturnIfBitMaskSet      MACRO   bitmask
+                        and     bitmask
+                        ret     nz
+                        ENDM
+
 ReturnIfMemEquN:        MACRO mem, value
+                        ld     a,(mem)
+                        cp     value
+                        ret    nz
+                        ENDM
+    
+ReturnIfMemNeNusng:     MACRO mem, value
                         ld   a,(mem)
                         cp     value
                         ret    z
                         ENDM
-    
+                        
 ReturnIfANotZero:       MACRO
                         cp     0
                         ret    nz

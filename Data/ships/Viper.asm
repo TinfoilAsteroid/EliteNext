@@ -31,6 +31,7 @@ Viper:                  DB $00, $F9, $15
                         DB $01, $11 
                         DW ViperVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
                         
 ViperVertices:          DB $00, $00, $48, $1F, $21, $43 
                         DB $00, $10, $18, $1E, $10, $22 

@@ -11,6 +11,7 @@ Anaconda:	            DB $07, $27, $10
                         DB $01, $3F
                         DW AnacondaVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 AnacondaVertices:	    DB $00, $07, $3A, $3E, $01, $55
                         DB $2B, $0D, $25, $FE, $01, $22
                         DB $1A, $2F, $03, $FE, $02, $33

@@ -1,16 +1,17 @@
-Python_P:	DB $02, $19, $00
-	DW Python_PEdges
-	DB Python_PEdgesSize
-	DB $00, $2A
-	DB Python_PVertSize
-	DB Python_PEdgesCnt
-	DB $00, $C8
-	DB Python_PNormalsSize
-	DB $28, $FA, $14
-	DW Python_PNormals
-	DB $00, $1B
-	DW Python_PVertices
+Python_P:	            DB $02, $19, $00
+                        DW Python_PEdges
+                        DB Python_PEdgesSize
+                        DB $00, $2A
+                        DB Python_PVertSize
+                        DB Python_PEdgesCnt
+                        DB $00, $C8
+                        DB Python_PNormalsSize
+                        DB $28, $FA, $14
+                        DW Python_PNormals
+                        DB $00, $1B
+                        DW Python_PVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 
 Python_PVertices:	DB $00, $00, $E0, $1F, $10, $32
 	DB $00, $30, $30, $1F, $10, $54

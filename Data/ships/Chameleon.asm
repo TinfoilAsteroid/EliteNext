@@ -11,6 +11,7 @@ Chameleon:	            DB $03, $0F, $A0
                         DB $01, $23
                         DW ChameleonVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 ChameleonVertices:	    DB $12, $00, $6E, $9F, $25, $01
                         DB $12, $00, $6E, $1F, $34, $01
                         DB $28, $00, $00, $9F, $8B, $25

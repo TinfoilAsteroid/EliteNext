@@ -1,0 +1,178 @@
+;Ship Tactics
+; used  when no pre-checks are requrired, e.g. if forcing a space station from main loop
+ForceAngryDirect:       ld      hl,ShipNewBitsAddr                      
+                        set     ShipIsHostile, (hl)
+                        ret
+
+; set angry if possible, if its an innocent then flag the space station to get angry
+MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check bit 5 of newb flags
+                        ld      b,a                                     ; copy to b in case we want it later
+                        JumpIfMemEqNusng ShipTypeAddr, ShipTypeStation, .SetNewbAngry
+.ItsNotAStation:        and     ShipIsBystander                         ; check if space station present if its a bystander
+                        call    nz, .setStationAngry                       ; Set Space Station if present, Angry
+                        ld      a,(UBnkaiatkecm)                        ; get AI data
+                        ReturnIfAIsZero                                 ; if 0 then no AI attached
+                        or      Bit7Only                                ; set AI Enabled set to ensure its set
+                        ld      (UBnkaiatkecm),a                        ; .
+                        ld      c,a                                     ; Copy to c in case we need it later
+                        SetMemToN UBnKAccel, 2                          ; set accelleration to 2 to speed up
+                        sla     a                                       ; set pitch to 4
+                        ld      (UBnKRotZCounter),a                     ; .
+                        ld      a,(ShipAIFlagsAddr)
+                        ReturnIfBitMaskClear ShipCanAnger
+.SetNewbAngry:          ld      a,b
+                        or      ShipIsHostile
+                        ld      (ShipNewBitsAddr),a
+                        ret
+.setStationAngry:       SetMemTrue SetStationAngryFlag
+                        ret
+
+; TODO, how to we deal with scared ships, e.g. if angry and no guns or missiles then should be considered scared or if hull mass < say 25% of our ship
+; also for future ship vs ship combat
+;... Tactics........................................................................
+;.PART 1
+; if shiphitbymissleflag <> FF
+;    then dec blast check counter
+;         if blast check counter = 0
+;            then set shiphitbymissileflag to FF
+;    else if SetShipHitByMissileFlag = current ship number
+;            then cause damage to ship
+;         else if ship is in range and ship is not a station
+;                  then cause blast damage to ship
+;         if destroyed
+;            then explode ship
+;                 return
+; end if
+; if ship is a missle (I think we allow missile on missle action)
+;    then if ecm is active
+;            then destroy missile and return
+;            else if ship is angry at us
+;                    then if ship is close to us
+;                            then explodes causing damage to our ship
+;                                 destroy missile
+;                                 set blastcheckcounter to slotlist length
+;                                 set shiphitbymissileflag to FE (general blast)
+;                                 return
+;                            else jump to part 3 to do updates
+;                         end if
+;                    else see how close it is to target
+;                         if close to target
+;                            then explodes destroy missile
+;                                 if ship is not station
+;                                    then set up signal target ship hit my missile flag
+;                                         set blastcheckcounter to slotlist length  (12)
+;                                 end if
+;                                 if we are in range of missle blast
+;                                    cause blast damage to our ship (this will signal death is needed)
+;                                 end if
+;                                 return
+;                         end if
+;                 end if
+;         end if
+;.PART 2A ** adding in a collision logic 
+;    else if ship is close to another ship
+;            then if docking flag set and other ship is space station or we are space station and other ship has docking flag
+;                    then if aligned correctly
+;                         then remove ship as docked
+;                              return
+;         else
+;            call collision route and determine daamage based on sizes and bounce vectors
+;            return
+;.PART 2 ** Need to check if ship has AI flag
+;    else if not hostile
+;            then if not docking or station not present
+;                    then calculate vector to planet
+;                         jump to part 7
+;                    else calculate verctor to docking slot
+;                         call caluclate vector to docking slot (DOCKIT)
+;                         jump to part 7
+;                 end if 
+;            else case ship type 
+;                      >>escape pod>> point at planet and jump to step 7
+;                      >>space station>> if hostile
+;                                           then if cop counter < 7 and 6.2% chance
+;                                                   then spawm hostile cop
+;                                                end if
+;                                           else
+;                                                if 0.8% change and transporter count = 0
+;                                                   then if 50% chance
+;                                                           then spawn transporter
+;                                                           else spawn shuttle
+;                                                        end if
+;                                                end if
+;                                        end if
+;                                        return
+;                      >>targoid and no mother ship in slot list>> set random drift
+;                                                                  return
+;                      >>if bounty hunter flag>> if ship not hostile
+;                                                   then if trader flag clear or 20% chance
+;                                                        then if fugitive or offender 
+;                                                                then set hosile
+;                                                end if
+;                      >>Carrier and hanger slots > 0 >> if 22% chance (code to be added later) 
+;                                         then spawn agressive hosting one of types carried
+;                                              reduce ships in hanger by 1
+;                                              return
+;                      >>rock hermit>> if 22% chance
+;                                         then spawn agressive hosting one of Sidewinder, Mamba, Krait, Adder or Gecko
+;                                              return
+;                      >>pirate and in safe zone>> stop pirate being hostile by removing agressive and hostileflags
+;                 end case
+;         end if
+;         recharge ship energy by recharge factor (TODO as a config item on ship type but by default 1)
+; .PART 3
+;         calulcate dot product of ship nose to us
+; .PART 4              
+;         2.5% change ship rill roll a noticable amount
+;         if ship has > 50% energy jump to part 6
+;         if ship > 1/8th energy jump to part 5
+;         if random 10% chance (i.e. ship < 1/8 energy and bails out)
+;            then launch escape pod
+;                 set AI to null
+;                 set random pitch and roll
+;                 set accelleation to 0
+;         end if
+; .PART 5
+;         if ship does not have any missilesor ECM is firing to part 6
+;            then if random > threshold for ship type (TODO as a config item on ship type)
+;                    then if tharoid ; note this means thargoids are sensitve to ECM
+;                            then launch thargon
+;                            else spawn angry missle under ship
+;                         end if
+;                 end if
+;            else return
+;         end if
+; .PART 6
+;         if ship is not pointing at us from dot product ( < 160 , also > -32)
+;            then jump to part 7
+;            else if ship is pointing directly at us ( < 163 i.e. > -35) 
+;                    then fire laser at us (which reduces energy)
+;                         cause laser damage to our ship (this will signal death is needed)
+;                         decellerate by half as ship has lock on
+;                         return
+;                    else fire laser into space (which reduces energy)
+;                 end if
+;         end if
+; .PART 7#
+;        if ship is a msile targetting us
+;           then ship turns towards us some more
+;           else if z hi > =  3 or ( x hi or y hi > 1) , i.e. ship is far away
+;                    then do random wiht bit 7 set
+;                         if random < AI flag
+;                            then   ship turned towards us
+;                            else   ship turns away from us
+;                         end if
+;                end if
+;           end if
+;           calculate new roll, pitch and accelleration based on new targe vector 
+
+
+;        determine ship direction based on agression and type                    
+;        set pitch and roll coutners
+;        adjust speed depleding on relationship to us 
+; .PART 8 - new 
+;        if ship has ECM, another ECM is not active and missile targeted at it
+;           if ship has enery of ECM energey cost + 1/8th total
+;              if chance 25%
+;                 then fire ECM
+;

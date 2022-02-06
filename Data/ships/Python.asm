@@ -12,7 +12,8 @@ Python:                 DB $05, $00, $19
                         DB $00, $1B
                         DW PythonVertices
                         DB 0,0                      ; Type and Tactics
-                        
+                        DB ShipCanAnger
+
 PythonVertices:         DB $00, $00, $E0, $1F, $10, $32 
                         DB $00, $30, $30, $1E, $10, $54 
                         DB $60, $00, $10, $3F, $FF, $FF 

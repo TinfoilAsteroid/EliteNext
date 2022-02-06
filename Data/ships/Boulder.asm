@@ -11,6 +11,7 @@ Boulder:	            DB $00, $03, $84
                         DB $02, $00
                         DW BoulderVertices
                         DB ShipTypeJunk,0                      ; Type and Tactics  its only junk for spawing logic                     
+                        DB 0
 BoulderVertices:	    DB $12, $25, $0B, $BF, $01, $59
                         DB $1E, $07, $0C, $1F, $12, $56
                         DB $1C, $07, $0C, $7F, $23, $67

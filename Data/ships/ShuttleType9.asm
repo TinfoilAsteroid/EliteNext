@@ -1,16 +1,17 @@
-ShuttleType9:	DB $0F, $09, $C4
-	DW ShuttleType9Edges
-	DB ShuttleType9EdgesSize
-	DB $00, $26
-	DB ShuttleType9VertSize
-	DB ShuttleType9EdgesCnt
-	DB $00, $00
-	DB ShuttleType9NormalsSize
-	DB $16, $20, $08
-	DW ShuttleType9Normals
-	DB $02, $00
-	DW ShuttleType9Vertices
+ShuttleType9:	            DB $0F, $09, $C4
+                            DW ShuttleType9Edges
+                            DB ShuttleType9EdgesSize
+                            DB $00, $26
+                            DB ShuttleType9VertSize
+                            DB ShuttleType9EdgesCnt
+                            DB $00, $00
+                            DB ShuttleType9NormalsSize
+                            DB $16, $20, $08
+                            DW ShuttleType9Normals
+                            DB $02, $00
+                            DW ShuttleType9Vertices
 	                        DB 0,0                      ; Type and Tactics
+                            DB 0
 
 
 ShuttleType9Vertices:	DB $00, $11, $17, $5F, $FF, $FF

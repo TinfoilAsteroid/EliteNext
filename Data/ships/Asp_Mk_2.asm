@@ -11,6 +11,7 @@ Asp_Mk_2:	           DB $00, $0E, $10
                         DB $01, $29
                         DW Asp_Mk_2Vertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 Asp_Mk_2Vertices:	    DB $00, $12, $00, $56, $01, $22
                         DB $00, $09, $2D, $7F, $12, $BB
                         DB $2B, $00, $2D, $3F, $16, $BB

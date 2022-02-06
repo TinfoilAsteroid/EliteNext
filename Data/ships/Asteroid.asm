@@ -11,6 +11,7 @@ Asteroid:	            DB $00, $19, $00
                         DB $01, $00
                         DW AsteroidVertices
                         DB ShipTypeJunk,0                      ; Type and Tactics
+                        DB 0
 AsteroidVertices:	    DB $00, $50, $00, $1F, $FF, $FF
                         DB $50, $0A, $00, $DF, $FF, $FF
                         DB $00, $50, $00, $5F, $FF, $FF

@@ -19,7 +19,8 @@ LaserOffset			    equ 19
 VerticiesAddyOffset     equ 20
 ShipTypeOffset          equ 22
 ShipNewBitsOffset       equ 23
-ShipDataLength          equ ShipNewBitsOffset+1
+ShipAIFlagsOffset       equ 24
+ShipDataLength          equ ShipAIFlagsOffset+1
 
 CobraTablePointer       equ 43
 ;29 faulty

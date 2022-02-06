@@ -1,16 +1,17 @@
-Missile:	DB $00, $06, $40
-	DW MissileEdges
-	DB MissileEdgesSize
-	DB $00, $0A
-	DB MissileVertSize
-	DB MissileEdgesCnt
-	DB $00, $00
-	DB MissileNormalsSize
-	DB $0E, $02, $2C
-	DW MissileNormals
-	DB $02, $00
-	DW MissileVertices
-    DB ShipTypeMissile,0                      ; Type and Tactics
+Missile:	            DB $00, $06, $40
+                        DW MissileEdges
+                        DB MissileEdgesSize
+                        DB $00, $0A
+                        DB MissileVertSize
+                        DB MissileEdgesCnt
+                        DB $00, $00
+                        DB MissileNormalsSize
+                        DB $0E, $02, $2C
+                        DW MissileNormals
+                        DB $02, $00
+                        DW MissileVertices
+                        DB ShipTypeMissile,0                      ; Type and Tactics
+                        DB 0
 
 MissileVertices:	DB $00, $00, $44, $1F, $10, $32
 	DB $08, $08, $24, $5F, $21, $54

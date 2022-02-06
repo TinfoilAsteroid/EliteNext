@@ -60,7 +60,9 @@ SetSlotAOccupiedByB:    ld      hl,UniverseSlotList
                         ld      a,b
                         ld      (hl),b
                         ret
-
+                        
+; Space Station will always be slot 0
+                        
 FindSpaceStationSlotInC:ld      hl,UniverseSlotList
                         ld      b,UniverseListSize
                         ld      c,0

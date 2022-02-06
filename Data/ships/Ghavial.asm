@@ -1,16 +1,17 @@
-Ghavial:	DB $03, $26, $00
-	DW GhavialEdges
-	DB GhavialEdgesSize
-	DB $00, $22
-	DB GhavialVertSize
-	DB GhavialEdgesCnt
-	DB $00, $64
-	DB GhavialNormalsSize
-	DB $0A, $72, $10
-	DW GhavialNormals
-	DB $00, $27
-	DW GhavialVertices
+Ghavial:	            DB $03, $26, $00
+                        DW GhavialEdges
+                        DB GhavialEdgesSize
+                        DB $00, $22
+                        DB GhavialVertSize
+                        DB GhavialEdgesCnt
+                        DB $00, $64
+                        DB GhavialNormalsSize
+                        DB $0A, $72, $10
+                        DW GhavialNormals
+                        DB $00, $27
+                        DW GhavialVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 
 GhavialVertices:	DB $1E, $00, $64, $1F, $67, $01
 	DB $1E, $00, $64, $9F, $6B, $05

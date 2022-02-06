@@ -11,6 +11,7 @@ Dodo:	                DB $00, $7E, $90
                         DB $00, $00
                         DW DodoVertices
                         DB ShipTypeStation,0                      ; Type and Tactics
+                        DB 0
 DodoVertices:	        DB $00, $96, $C4, $1F, $01, $55
                         DB $8F, $2E, $C4, $1F, $01, $22
                         DB $58, $79, $C4, $5F, $02, $33

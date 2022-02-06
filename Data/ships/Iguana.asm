@@ -1,16 +1,17 @@
-Iguana:	DB $01, $0D, $AC
-	DW IguanaEdges
-	DB IguanaEdgesSize
-	DB $00, $1A
-	DB IguanaVertSize
-	DB IguanaEdgesCnt
-	DB $00, $96
-	DB IguanaNormalsSize
-	DB $0A, $5A, $21
-	DW IguanaNormals
-	DB $01, $23
-	DW IguanaVertices
+Iguana:	                DB $01, $0D, $AC
+                        DW IguanaEdges
+                        DB IguanaEdgesSize
+                        DB $00, $1A
+                        DB IguanaVertSize
+                        DB IguanaEdgesCnt
+                        DB $00, $96
+                        DB IguanaNormalsSize
+                        DB $0A, $5A, $21
+                        DW IguanaNormals
+                        DB $01, $23
+                        DW IguanaVertices
                         DB 0,0                      ; Type and Tactics
+                        DB ShipCanAnger
 
 	
 IguanaVertices:	DB $00, $00, $5A, $1F, $23, $01
