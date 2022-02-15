@@ -63,17 +63,11 @@ SetSlotAOccupiedByB:    ld      hl,UniverseSlotList
                         
 ; Space Station will always be slot 0
                         
-FindSpaceStationSlotInC:ld      hl,UniverseSlotList
-                        ld      b,UniverseListSize
-                        ld      c,0
+IsSpaceStationPresent:  ld      hl,UniverseSlotList
+                        ClearCarryFlag
 .SearchLoop:            ld      a,(hl)
-                        JumpIfAEqNusng ShipTypeStation, .FoundSlot
-                        inc     c
-                        inc     hl
-                        djnz    .SearchLoop
+                        ReturnIfAEqNusng ShipTypeStation
                         SetCarryFlag
-                        ret
-.FoundSlot:             ClearCarryFlag
                         ret
                         
 GetTypeAtSlotA:         ld      hl,UniverseSlotList

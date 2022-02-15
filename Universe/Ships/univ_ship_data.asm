@@ -16,10 +16,11 @@ StartOfUnivN:       DB "X"
 ;   \ -> & 565D \ See ship data files chosen and loaded after flight code starts running.
 ; Universe map substibute for INWK
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
-                        INCLUDE "./Universe/Ships/ShipPosVars.asm"
-                        INCLUDE "./Universe/Ships/RotationMatrixVars.asm"
-                        INCLUDE "./Universe/Ships/AIRuntimeData.asm"
-
+                       INCLUDE "./Universe/Ships/AIRuntimeData.asm"
+; moved to runtime asm
+;                        INCLUDE "./Universe/Ships/ShipPosVars.asm"
+;                        INCLUDE "./Universe/Ships/RotationMatrixVars.asm"
+ 
 ; Orientation Matrix [nosev x y z ] nose vector ( forward) 19 to 26
 ;                    [roofv x y z ] roof vector (up)
 ;                    [sidev x y z ] side vector (right)
@@ -252,8 +253,19 @@ ResetStationLaunch:     ld  a,%10000001
                         ld      a,$80
                         ld      (UBnKzsgn),a
 .SetOrientation:        call    LaunchedOrientation             ; set initial facing
+                        ret
     ;Input: BC = Dividend, DE = Divisor, HL = 0
 ;Output: BC = Quotient, HL = Remainder
+
+
+UnivInitRuntime:        ld      bc,UBnKRuntimeSize
+                        ld      hl,UBnKShipType
+                        ZeroA
+.InitLoop:              ld      (hl),a
+                        inc     hl
+                        dnjz    .InitLoop
+                        ret
+
 
 ADDHLDESignedv3:        ld      a,h
                         and     SignOnly8Bit

@@ -1,5 +1,6 @@
 ;Ship Tactics
 ; used  when no pre-checks are requrired, e.g. if forcing a space station from main loop
+
 ForceAngryDirect:       ld      hl,ShipNewBitsAddr                      
                         set     ShipIsHostile, (hl)
                         ret
@@ -12,7 +13,7 @@ MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check 
                         call    nz, .setStationAngry                       ; Set Space Station if present, Angry
                         ld      a,(UBnkaiatkecm)                        ; get AI data
                         ReturnIfAIsZero                                 ; if 0 then no AI attached
-                        or      Bit7Only                                ; set AI Enabled set to ensure its set
+                        or      ShipAIEnabled                           ; set AI Enabled set to ensure its set
                         ld      (UBnkaiatkecm),a                        ; .
                         ld      c,a                                     ; Copy to c in case we need it later
                         SetMemToN UBnKAccel, 2                          ; set accelleration to 2 to speed up
@@ -27,11 +28,149 @@ MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check 
 .setStationAngry:       SetMemTrue SetStationAngryFlag
                         ret
 
+CheckMissileBlastInit:  ZeroA
+                        ld      (CurrentMissileCheck),a
+                        ld      (CurrentMissileCheck),a         ;
+                        ld      hl,UBnKxlo                      ; Copy Blast Coordinates
+                        ld      bc,12                           ; and Damage stats
+                        ld      de,MissileXPos
+                        ldir
+                        ZeroA                                   ; we have processd enque request
+                        ld      (UBnKMissleHitToProcess),a      ; 
+                        call    CheckIfBlastHitUs               ; If we are in Range
+                        call    c, MissileDidHitUs              ; Then we get hit
+                        ret
+                        
+CheckPointRange:        MACRO   ShipPos, ShipSign, MissilePos, MissileSign
+                        ld      a,(MissilePos)                      ; check X Coord
+                        ld      hl,(ShipSign)
+                        xor     (hl)
+                        and     SignOnly8Bit
+                        ld      hl,(ShipPos)
+                        ld      de,(MissilePos)
+                        jr      z,.SignsDiffernt
+.XSame:                 and     a
+                        sbc     hl,de                               ; distance = Ship X - Missile X
+                        JumpIfPositive      .CheckDiff              ; if result was -ve 
+                        NegHL
+                        jp      .CheckDiff
+.SignsDiffernt:         add     hl,de
+                        ReturnIfNegative                            ; if we overflowed then return
+.CheckDiff:             ld      a,h                                 ; if we have an h outside blast raidus
+                        ReturnIfANotZero
+                        ld      a,l
+                        and     a
+                        ReturnIfAGTENusng   BlastRange
+                        ENDM
+;...................................................................                        
+; We only do one test per loop for spreading the load of work                        
+CheckMissileBlastLoop:  ld      a,(CurrentMissileCheck)
+                        ReturnIfAGTENusng   UniverseListSize
+                        ld      iyl,a
+                        inc     a                                   ; update for next slot so re can fast return on distance checks
+                        ld      (CurrentMissileCheck),a
+                        ReturnIfSlotAEmpty
+                        call    IsSpaceStationPresent               ; If its a station its imune to missiles
+                        ret     c                                   ; if we have a special mission to kill a staion then its type won't be space station for game logic
+                        ld      a,(UBnKexplDsp)                     ; Don't explode a ship twice
+                        and     ShipExploding                       ;
+                        ReturnIfNotZero                             ;
+                        ld      a,(MissileBlast)
+                        ld      iyh,a                               ; iyh = missile blast depending on type
+.CheckRange:            ld      a,iyl                               ; now page in universe data
+                        MMUSelectUniverseA      
+                        CheckPointRange UBnKxlo, UBnKxsgn, MissleXPos, MissileXSgn  ; its a square but its good enough
+                        CheckPointRange UBnKylo, UBnKysgn, MissleYPos, MissileYSgn
+                        CheckPointRange UBnKzlo, UBnKzsgn, MissleZPos, MissileZSgn
+                        call    ShipMissileBlast                    ; Ship hit by missile blast
+                        ret                                         ; we are done
+;...................................................................
+CheckIfBlastHitUs:      ld      a,(UBnKMissileBlast)
+                        ld      c,a
+                        jp      MissileHitUsCheckPos
+;...................................................................                        
+CheckIfMissileHitUs:    ld      a,(UBnKMissileDetonateRange)
+                        ld      c,a
+;...................................................................
+MissileHitUsCheckPos:   ld      hl, (MissleXPos)
+                        ZeroA
+                        or      h
+                        ClearCarryFlag
+                        ReturnIfNotZero                             ; will return with carry clear if way far away
+                        ld      a,l
+                        ReturnIfAGTENusng    c                      ; return no carry if x far
+.CheckY:                ld      hl,(MissileYPos)
+                        ZeroA
+                        or      l
+                        ClearCarryflag
+                        ReturnIfNotZero                             ; will return with carry clear if way far away
+                        ld      a,l
+                        ReturnIfAGTENusng    c                      ; return no carry if y far
+.CheckZ:                ld      hl,(MissileZPos)
+                        ZeroA
+                        or      l
+                        ClearCarryflag
+                        ReturnIfNotZero                             ; will return with carry clear if way far away
+                        ld      a,l
+                        ReturnIfAGTENusng    c                      ; return no carry if z far
+.ItsAHit:               SetCarryFlag:                               ; So must have hit
+                        ret
+;...................................................................                        
+MissileLogic:           ld      a,(UBnKMissleHitToProcess)
+.IsMissleHitEnqued:     JumpIfTrue  .ProcessMissileHit
+.CheckForECM:           JumpIFMemTrue   ECMActive,.ECMIsActive
+.IsMissileHostile:      ld      a,(ShipNewBitsAddr)                 ; is missle attacking us?
+                        and     ShipIsHostile
+                        JumpIfNotZero .MissileTargetingShip
+.MissileTargetingPlayer:ld      hl, (MissleXPos)                    ; check if missile in range of us
+                        ld      a,(UBnKMissileDetonateRange)
+                        ld      c,a                                 ; c holds detonation range
+                        call    MissileHitUsCheckPos
+.MissileNotHitUsYet:    jp      nc, .UpdateTargetingUsPos
+.MissleHitUs:           call  HitByMissile
+                        jp    .ECMIsActive                          ; we use ECM logic to destroy missile which eqneues is
+.MissileTargetingShip:  get the targetted ship inbto bank
+                        check range as per player
+                        handle explosion enc
+
+;                    else see how close it is to target
+;                         if close to target
+;                            then explodes destroy missile
+;                                 if ship is not station
+;                                    then set up signal target ship hit my missile flag
+;                                         set blastcheckcounter to slotlist length  (12)
+;                                 end if
+;                                 if we are in range of missle blast
+;                                    cause blast damage to our ship (this will signal death is needed)
+;                                 end if
+;                                 return
+;                         end if
+;                 end if
+;         end if                     
+.ProcessMissileHit:     ld      a,(CurrentMissileCheck)
+                        ReturnIfAGTENusng UniverseSlotListSize  ; need to wait another loop
+.ActivateNewExplosion:  jp  CheckMissileBlastInit               ; initialise
+                        ; DUMMY RET get a free return by using jp
+.ECMIsActive:           call    UnivExplodeShip                 ; ECM detonates missile
+                        SetMemTrue  UBnKMissleHitToProcess      ; Enque an explosion
+                        jp      .ProcessMissileHit              ; lets see if we can enqueue now
+                        ; DUMMY RET get a free return as activenewexplosion does jp to init with a free ret
+
+
+
+            ;            else if ship is angry at us
+;                    
+                        
+; Part 1 - if type is missile and enquing a missile blast and slot free
+;             then enqueue missile blast details
+;                  mark as exploded
+;                  remove missile from universe slot list
+
 ; TODO, how to we deal with scared ships, e.g. if angry and no guns or missiles then should be considered scared or if hull mass < say 25% of our ship
 ; also for future ship vs ship combat
 ;... Tactics........................................................................
 ;.PART 1
-; if shiphitbymissleflag <> FF
+; if shiphitbymissleflag <> false
 ;    then dec blast check counter
 ;         if blast check counter = 0
 ;            then set shiphitbymissileflag to FF
@@ -49,6 +188,7 @@ MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check 
 ;            else if ship is angry at us
 ;                    then if ship is close to us
 ;                            then explodes causing damage to our ship
+;                                 enque missile blast
 ;                                 destroy missile
 ;                                 set blastcheckcounter to slotlist length
 ;                                 set shiphitbymissileflag to FE (general blast)
@@ -57,7 +197,9 @@ MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check 
 ;                         end if
 ;                    else see how close it is to target
 ;                         if close to target
-;                            then explodes destroy missile
+;                            then 
+;                                 enque missile blast
+;                                 destroy missile
 ;                                 if ship is not station
 ;                                    then set up signal target ship hit my missile flag
 ;                                         set blastcheckcounter to slotlist length  (12)

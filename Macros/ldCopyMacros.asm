@@ -16,7 +16,7 @@ SetMemFalse             MACRO   mem
                         ENDM
 
 SetMemTrue              MACRO   mem
-                        ld      a,$FF
+                        xor     a
                         ld      (mem),a
                         ENDM                        
 

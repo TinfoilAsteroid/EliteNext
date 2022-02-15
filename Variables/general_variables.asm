@@ -76,6 +76,7 @@ YC						DB 	0               ; 2D
 InnerHyperCount			DB 	0				; 2F QQ22+1
 OuterHyperCount			DB 	0				; 2E QQ22
 HyperCircle             DB  0
+;... ECM logic. If another ship adds ECM then we just set the loop A and B to starting values so they overlap
 ECMActive				DB 	0				; 30		ECM Active flag
 ECMLoopA                DB  0
 ECMLoopB                DB  0
@@ -284,10 +285,22 @@ YSAV2 					DB	0				; 034F used to temporary save 6502 Y reg
 CommanderName			DS  8				; 0350 - 3057 Commander Name
 CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
 ;036C to D???
-; ComunicationFlags  
+;...ComunicationFlags...........................................................................
 SetStationAngryFlag     DB  0
-SetShipHitByMissileFlag DB  0
 ShipBlastCheckCounter   DB  0
+;...MissileInCheckVariables.....................................................................
+CurrentMissileCheck:    DB  0               ; if > Universe Slot list then free for next missile
+MissileXPos:            DS 2
+MissileXSgn:            DS 1
+MissileYPos:            DS 2
+MissileYSgn:            DS 1
+MissileZPos:            DS 2
+MissileZSgn:            DS 1
+; . Note missile explosion will have to have logic to cause linger if a blast is to be enqued
+MissileBlast:           DB 50               ; later on will initialise as its diff missile types
+MissileBlastDamage:     DB 0                ; Blast dependent on type, e.g. Frag vs penetrator
+MissileDamage:          DB 0                ; Direct hit (may not need this actually)
+
 ; TODO will need an read for a list of missiles, who they are targeting an the target current vector for AI persuit
 ; i.e. a list of programmed missiles in universe slot list code
 DampingKeys				DS  7				; 0387 - 038D

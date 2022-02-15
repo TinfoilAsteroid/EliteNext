@@ -33,8 +33,8 @@ ReturnIfMemTrue:        MACRO   mem
                         ENDM
 
 ReturnIfAIsZero:        MACRO
-                        and a
-                        ret    z
+                        and     a
+                        ret     z
                         ENDM
     
 ReturnIfMemisZero:      MACRO mem
@@ -66,13 +66,13 @@ ReturnIfMemNeNusng:     MACRO mem, value
                         ENDM
                         
 ReturnIfANotZero:       MACRO
-                        cp     0
-                        ret    nz
+                        and     a
+                        ret     nz
                         ENDM
     
 ReturnIfMemNotZero:     MACRO mem
                         ld     a,(mem)
-                        cp     0
+                        and     a
                         ret    nz
                         ENDM
     

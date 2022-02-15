@@ -35,14 +35,16 @@ ShipTypeStation     equ 2
 ShipTypeMissile     equ 1
 ShipTypeNormal      equ 0
 ; TacticsControl
-ShipIsTrader        equ %00000001   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
-ShipIsBountyHunter  equ %00000010   ; 
-ShipIsHostile       equ %00000100   ; 
-ShipIsPirate        equ %00001000   ; 
-ShipIsDocking       equ %00010000   ; 
-ShipIsBystander     equ %00100000   ; 
-ShipIsCop           equ %01000000   ; 
-ShipIsScoopDockEsc  equ %10000000   ; 
+ShipIsTrader        equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
+ShipIsBountyHunter  equ Bit1Only   ; 
+ShipIsHostile       equ Bit2Only   ; 
+ShipIsPirate        equ Bit3Only   ; 
+ShipIsDocking       equ Bit4Only   ; 
+ShipIsBystander     equ Bit5Only   ; 
+ShipIsCop           equ Bit6Only   ; 
+ShipIsScoopDockEsc  equ Bit7Only   ; 
+ShipAIEnabled       equ Bit7Only   ; 
+ShipExploding       equ Bit5Only
 
 ; UniverseAIControl
 ShipCanAnger        equ %00000001

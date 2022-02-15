@@ -196,7 +196,7 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
                         call    UpdateMessageTimer
                       
 .NoMessages:            MMUSelectLayer2
-                        call   l2_cls                        
+                        call   l2_cls                                       ; change this to do top 2 thirds only  fopr console                 
                         MMUSelectLayer1
 .UpdateSun:             MMUSelectSun
 .DEBUGFORCE:            ;ld      hl,$0000
@@ -220,7 +220,10 @@ PrepLayer2:             MMUSelectLayer2                                       ; 
 ;ProcessSun:             call    DrawForwardSun
 ProcessPlanet:
 ProcessShipModels:      call   DrawForwardShips                               ; Draw all ships (this may need to be self modifying)
-                        call   UpdateConsole                                  ; Update display console on layer 1
+                        ; add in loop so we only update every 4 frames, need to change CLS logic too, 
+                        ; every 4 frames needs to do 2 updates so updates both copies of buffer
+                        ; now will CLS bottom thrid
+                        call    UpdateConsole                              ; Update display console on layer 1
                         jp LoopRepeatPoint                                    ; And we are done with views, so check if there was a special command to do
 ;..If we were not in views then we were in display screens/menus...................................................................
 MenusLoop:              ld      hl,(ScreenLoopJP+1)
@@ -373,6 +376,7 @@ SpawnShipTypeA:         ld      iyl,a                               ; save ship 
                         ld      b,iyl
                         call    SetSlotAToTypeB
                         MMUSelectUniverseA                          ; .
+                        call    UnivInitRuntime                     ; Clear runtime data before startup
                         ld      a, iyl                              ; retrive ship type
                         ;call    SetSlotAToTypeB                     ; record in the lookup tables
                         call    GetShipBankId                       ; find actual memory location of data
@@ -380,6 +384,7 @@ SpawnShipTypeA:         ld      iyl,a                               ; save ship 
                         ld      a,b                                 ; b = computed ship id for bank
                         call    CopyShipToUniverse
                         call    UnivSetSpawnPosition                ; set initial spawn position
+                        call    UnivInitRuntime
                         ret
 
                         ; reset main loop counters
@@ -779,6 +784,7 @@ LaunchedFromStation:    MMUSelectSun
                         call    SetSlot0ToSpaceStation              ; set slot 1 to space station
                         MMUSelectUniverseN 0                        ; Prep Target universe
                         MMUSelectShipBank1                          ; Bank in the ship model code
+                        call    UnivInitRuntime                     ; Zerp ship runtime data
                         ld      a,CoriloisStation
                         call    GetShipBankId             
                         MMUSelectShipBankA                          ; Select the correct bank found
