@@ -27953,9 +27953,7 @@ Tactics.asm(51): error: Label not found: MissileDidHitUs
   86++CD1D E6 20                                and     ShipExploding                       ;
   87++CD1F                                      ReturnIfNotZero                             ;
   87++CD1F C0          >                        ret     nz
-Tactics.asm(88): error: Label not found: MissileBlast
-Tactics.asm(88): warning[rdlow]: Reading memory at low address: 0
-  88++CD20 3A 00 00                             ld      a,(MissileBlast)
+  88++CD20 3A A0 98                             ld      a,(CurrentMissileBlastRange)
   89++CD23 FD 67                                ld      iyh,a                               ; iyh = missile blast depending on type
   90++CD25 FD 7D        .CheckRange:            ld      a,iyl                               ; now page in universe data
   91++CD27                                      MMUSelectUniverseA
@@ -28070,9 +28068,7 @@ Tactics.asm(95): error: Label not found: ShipMissileBlast
   95++CDB6 CD 00 00                             call    ShipMissileBlast                    ; Ship hit by missile blast
   96++CDB9 C9                                   ret                                         ; we are done
   97++CDBA              ;...................................................................
-Tactics.asm(98): error: Label not found: UBnKMissileBlast
-Tactics.asm(98): warning[rdlow]: Reading memory at low address: 0
-  98++CDBA 3A 00 00     CheckIfBlastHitUs:      ld      a,(UBnKMissileBlast)
+  98++CDBA 3A 15 C0     CheckIfBlastHitUs:      ld      a,(UBnKMissileBlastRange)
   99++CDBD 4F                                   ld      c,a
  100++CDBE C3 C5 CD                             jp      MissileHitUsCheckPos
  101++CDC1              ;...................................................................

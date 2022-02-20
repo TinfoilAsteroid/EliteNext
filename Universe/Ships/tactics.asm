@@ -85,7 +85,7 @@ CheckMissileBlastLoop:  ld      a,(CurrentMissileCheck)
                         ld      a,(UBnKexplDsp)                     ; Don't explode a ship twice
                         and     ShipExploding                       ;
                         ReturnIfNotZero                             ;
-                        ld      a,(MissileBlast)
+                        ld      a,(CurrentMissileBlastRange)
                         ld      iyh,a                               ; iyh = missile blast depending on type
 .CheckRange:            ld      a,iyl                               ; now page in universe data
                         MMUSelectUniverseA      
@@ -95,7 +95,7 @@ CheckMissileBlastLoop:  ld      a,(CurrentMissileCheck)
                         call    ShipMissileBlast                    ; Ship hit by missile blast
                         ret                                         ; we are done
 ;...................................................................
-CheckIfBlastHitUs:      ld      a,(UBnKMissileBlast)
+CheckIfBlastHitUs:      ld      a,(UBnKMissileBlastRange)
                         ld      c,a
                         jp      MissileHitUsCheckPos
 ;...................................................................                        
