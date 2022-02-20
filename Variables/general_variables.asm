@@ -294,8 +294,8 @@ Delay					DB	0				; 034A Delay general purpose eg. spawing EV or when printign m
 CurrentMissileCheck:    DB  0               ; if > Universe Slot list then free for next missile
 MessageForDestroyed		DB	0				; 034B Message flag for item + destroyed
 UniverseSlotListSize    equ	12
-UniverseSlotTypeSize    equ	64
 UniverseSlotList        DS  UniverseSlotListSize
+UniverseSlotType        DS  UniverseSlotListSize ; base type, e.g. missile, cargo etc, 
 ; Probably not needed UniverseTypeCount       DS  UniverseSlotListSize
 TransporterCount        DB  0
 CopCount                DB  0 

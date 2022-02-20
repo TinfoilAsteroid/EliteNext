@@ -124,8 +124,6 @@ InitialiseGalaxies:     call		ResetUniv                       ; Reset ship data
 InitialiseMainLoop:     xor     a
                         ld      (CurrentUniverseAI),a
                         ld      (SetStationAngryFlag),a
-                        dec     a                               ; set A to FF
-                        ld      (SetShipHitByMissileFlag),a     ; FF means none
                         ld      a,3
                         ld      (MenuIdMax),a
                         SetAFalse                               ; Starts Docked
@@ -379,7 +377,10 @@ LaunchPlayerMissile:    call    FindNextFreeSlotInC                 ; Check if w
                         call    SpawnShipTypeA                      ; spawn the ship
                         ld      a,(MissileTarget)
                         ld      (UBnKMissileTarget),a               ; load target Data
-                        
+                        call    UnivSetPlayerMissile
+                        ret
+.MissileMissFire:       ret ; TODO bing bong noise misfire message
+                     
                         
 
 SpawnShipTypeA:         ld      iyl,a                               ; save ship type
@@ -389,13 +390,18 @@ SpawnShipTypeA:         ld      iyl,a                               ; save ship 
                         call    SetSlotAToTypeB
                         MMUSelectUniverseA                          ; .
                         ld      a, iyl                              ; retrive ship type
-                        ;call    SetSlotAToTypeB                     ; record in the lookup tables
+                        ;call    SetSlotAToTypeB                    ; record in the lookup tables
                         call    GetShipBankId                       ; find actual memory location of data
                         MMUSelectShipBankA
                         ld      a,b                                 ; b = computed ship id for bank
                         call    CopyShipToUniverse
                         call    UnivSetSpawnPosition                ; set initial spawn position
                         call    UnivInitRuntime                     ; Clear runtime data before startup
+                        ld      a,(ShipTypeAddr)
+                        ld      b,a
+                        ld      a,iyl
+                        call    SetSlotAToClassB
+                     
                         ret
 
                         ; reset main loop counters

@@ -26,7 +26,7 @@ ClearSlotCount:         xor     a
 ; Wipe all items
 ClearUnivSlotList:      ld      a,$FF
                         ld      hl,UniverseSlotList
-                        ld      b, UniverseSlotListSize
+                        ld      b, UniverseSlotListSize * 2
 .fillLoop:              ld      (hl),a
                         inc     hl
                         djnz    .fillLoop
@@ -34,9 +34,16 @@ ClearUnivSlotList:      ld      a,$FF
 
 SetSlot0ToSpaceStation: ld      hl,UniverseSlotList
                         ld      (hl),ShipTypeStation
+                        ld      hl,UniverseSlotType
+                        ld      (hl),ShipTypeStation
                         ret
                         
 SetSlotAToTypeB:        ld      hl,UniverseSlotList
+                        add     hl,a
+                        ld      (hl),b
+                        ret
+                        
+SetSlotAToClassB:       ld      hl,UniverseSlotType
                         add     hl,a
                         ld      (hl),b
                         ret                     
@@ -45,23 +52,36 @@ SetSlotAToTypeB:        ld      hl,UniverseSlotList
 ClearFreeSlotListSaveA: ld      d,a
                         ld      c,0
                         ld      hl,UniverseSlotList
-                        ld      b, UniverseSlotListSize
+                        ld      b, UniverseSlotListSize * 2
 .fillLoop:              ld      a,c
                         cp      d
                         jr      z,.SkipSlot
                         ld      a,$FF
                         ld      (hl),a
 .SkipSlot:              inc     hl
+                        inc     hl
                         djnz    .fillLoop
                         ret
 
-SetSlotAOccupiedByB:    ld      hl,UniverseSlotList
+ClearSlotA:             ld      hl,UniverseSlotList
                         add     hl,a
-                        ld      a,b
-                        ld      (hl),b
+                        ld      (hl),$FF
+                        ld      a,UniverseSlotListSize  ; move to types
+                        add     hl,a
+                        ld      (hl),$FF
                         ret
-                        
 ; Space Station will always be slot 0
+
+AreShipsPresent:        ld      hl,UniverseSlotType+1
+                        ld      b,UniverseSlotListSize -1      ; ignore space station
+.NextShip:              ld      a,(hl)
+                        cp      ShipTypeNormal
+                        ClearCarryFlag
+                        ret     z
+                        inc     hl
+                        djnz    .NextShip
+                        SetCarryFlag
+                        ret
                         
 IsSpaceStationPresent:  ld      hl,UniverseSlotList
                         ClearCarryFlag

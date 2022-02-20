@@ -304,26 +304,14 @@ get_cmdr_condition:     ld			a,(DockedFlag)
 .PlayerNotDocked:	    ld          a,(SpaceStationSafeZone)
                         cp          0
                         ret         z
-                        ld          hl,UniverseSlotCount
-                        ld          c,1
-.CheckForShipsLoop:     ld          b,UniverseSlotListSize
-                        ld          a,(hl)
-                        cp          0
-                        jr          nz,.PlayerColour        ; TODO Need to refine to remove cargo, exploding ships and hull plate
-                        inc         hl
-                        djnz        .CheckForShipsLoop
-.countShipsLoop:	    add			a,(hl)
-                        inc			hl
-                        djnz		.countShipsLoop
-                        cp			0
-                        ld          c,1
-                        jr			z,.PlayerColour
+                        call        AreShipsPresent
+                        jr          c,.NoShipsAround
+                        ld          a,1
+                        ret
 .NoShipsAround:         ld			a,(PlayerEnergy)
                         cp			$80
                         ld          a,1
                         adc         1                                       ; add 1 + carry, if a < 128 then carry set so goes red
-                        ret
-.PlayerColour:          ld          a,c
                         ret
 .PlayerIsDocked:        xor			a
                         ret

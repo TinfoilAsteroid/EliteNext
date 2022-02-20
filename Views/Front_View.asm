@@ -330,6 +330,7 @@ ForwardCursorKeysDone:  ld      a,c_Pressed_Hyperspace              ; Check for 
                         jr      z,.MissileNotLocked
 .MissileLaunch:         SetMemTrue  MissileLaunchFlag
 .MissileNotLocked:                       ; later on we need a "bing bong" nose for trying to launch an unlocked missile
+.NotMissileLaunch:
                         ret
 
 

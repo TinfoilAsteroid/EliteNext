@@ -15,8 +15,10 @@ TestRoomForJunk:        MACRO   Target
                         ENDM
 
 JumpIfSpaceStation:     MACRO   Target
-                        ld      hl,UniverseSlotList
+                        ld      hl,UniverseSlotType
                         ld      a,(hl)
+                        cp      ShipTypeStation
+                        ENDM
                         
 
 ; Checks if slot is empty else A = ship type

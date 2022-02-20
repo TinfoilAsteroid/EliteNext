@@ -39,11 +39,6 @@ SetStationAngry:        call    IsSpaceStationPresent                   ; only i
                         MMUSelectUniverseA                              ;
                         ret
 
-
-
-SetMemTrue SetStationAngryFlag
-                        ret
-
 CheckMissileBlastInit:  ZeroA
                         ld      (CurrentMissileCheck),a
                         ld      hl,UBnKxlo                      ; Copy Blast Coordinates
