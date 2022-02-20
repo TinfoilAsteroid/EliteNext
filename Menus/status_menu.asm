@@ -306,7 +306,7 @@ get_cmdr_condition:     ld			a,(DockedFlag)
                         ret         z
                         ld          hl,UniverseSlotCount
                         ld          c,1
-.CheckForShipsLoop:     ld          b,UniverseListSize
+.CheckForShipsLoop:     ld          b,UniverseSlotListSize
                         ld          a,(hl)
                         cp          0
                         jr          nz,.PlayerColour        ; TODO Need to refine to remove cargo, exploding ships and hull plate

@@ -88,26 +88,18 @@ ALP2FLIP				DB  0				; 33		ALP2	negated roll sign
 ALP1MAXR                DB  31               ;   Maximum roll, added becuase we may allow different ship types
 ALP1MAXL                DB  -31             ;   Maximum roll, added becuase we may allow different ship types
 
-EventCounter    		DB 	0				; 8A
-MissJumpFlag            DB  0
-ExtraVesselsCounter     DB  0
-JunkCount				DB  0				; $033E
-PlayerMisJump			DB	0				; $0341 witchspace misjump
-CopCount                DB  0 
-PirateCount             DB  0
-BadnessStatus           DB  0
+
 
 MAXMESSAGES             EQU 5
 MESSAGETIMELIMIT        EQU 20
 MESSAGESIZE             EQU 33
 MESSAGELINE             EQU $0001
 
-MessageCount            DB 0                ; used for enquing messages later
-MessageCurrent          DB 0
-MessageIndex            DW MAXMESSAGES
-MessageQueue            DS MAXMESSAGES * MESSAGESIZE
-MessageTimeout          DB MAXMESSAGES
-MissileTarget			DW 0				; 45
+MessageCount            DB  0                ; used for enquing messages later
+MessageCurrent          DB  0
+MessageIndex            DW  MAXMESSAGES
+MessageQueue            DS  MAXMESSAGES * MESSAGESIZE
+MessageTimeout          DB  MAXMESSAGES
 IndexedWork				DS	37				; General purpose work space when doing temp arrays
 
 ; MOVED TO Universe XX19					DB	0				; page 0 &67
@@ -213,94 +205,12 @@ varK3p1					equ varK3+1			; D3
 varK4					DS	4				; E0
 varK4p1					equ varK4+1			; D3
 
-;PlayerData:
-PlayerForwardSheild0	DB	0 ; ????? 
-PlayerForwardSheild1    DB	0
-PlayerForwardSheild2    DB	0
-
 
 ;Heap
 
 HeapStart				DS	2				; &0100 XX3 50 bytes for now
 HeapData				DS	50
-; Contains 				X 16 bit, Y 16 bit
-;RuntimeData:
-HeapHead				equ HeapStart
-
-; For the UniverseSlot list, for an optimisation the type slot will be the ship type, e.g. ship type this will optimise searching for a station or star
-; bit 7 will be set for a sun or planet so we can only ever have 128 types of ship, in relality there are about 3 types
-; note this is ship type as it space station, transporter, pirate etc not model of ship
-; This replaces FRIN
-; slot 0 always equals the planet
-; slot 1 is the space station or sun depending on if we are in the space station safe zone)
-UniverseSlotList		DS UniverseListSize		; &0311 for 12 bytes Array of Free Index - Now array of while universe pages are occupied
-UniverseSlotCount       DS UniverseListSize * 2 ; To be implemented, keeps a count of each slot type, may merge into slot list and set as a DW
-CurrentUniverseAI       DB  0               ; used to cycle ships in each iterations of main loop
-SelectedUniverseSlot    DB  0    
-;SpaceStationPresent		DB	0				; flag to determine if we are within space station safe zone
-
-SUN						DB	0				; &031D Actually MANY -1? As we can only have 1?
-MANY					DB	0				; &031E array of ship types???
-						DB	0				; &0321	Speculative?
-						DB	0				; &0322	Speculative?
-						DB	0				; &0323	Speculative?
-						DB	0				; &0324	Speculative?
-						DB	0				; &0325	Speculative?
-						DB	0				; &0326	Speculative?
-						DB	0				; &0327	Speculative?
-TransporterPresent		DB	0				; &0328	MANY + 10 (or #SHU + 1)
-						DB	0				; &0329	MANY + 11 Speculative?
-				        DB	0				; &032A	MANY + 12 Speculative?
-				        DB	0				; &032B	MANY + 13 Speculative?
-				        DB	0				; &032C	MANY + 14 Speculative?
-				        DB	0				; &032D	MANY + 15 Speculative?
-				        DB	0				; &032E	MANY+COPS #COP Confirmed in code
-				        DB	0				; &032F	MANY + 17 Speculative?
-				        DB	0				; &0330	MANY + 18 Speculative?
-				        DB	0				; &0331	MANY + 19 Speculative?
-						DB	0				; &0332	MANY + 20 Speculative?
-				        DB	0				; &0333	MANY + 21 Speculative?
-				        DB	0				; &0334	MANY + 22 Speculative?
-				        DB	0				; &0335	MANY + 23 Speculative?
-				        DB	0				; &0336	MANY + 24 Speculative?
-				        DB	0				; &0337	MANY + 25 Speculative?
-				        DB	0				; &0338	MANY + 26 Speculative?
-				        DB	0				; &0339	MANY + 27 Speculative?
-				        DB	0				; &033A	MANY + 28 Speculative?
-				        DB	0				; &033B	MANY + 29 Speculative?
-				        DB	0				; &033C	MANY + 30 Thargoids 
-				        DB	0				; &033D	MANY + 31 Constrictor?
-CabinTemp				DB	0				; $0342
-MissileArmedStatus		DB	0				; 0344 MSAR  
-View					DB	0				; 0345 Index for laser mount and screen view, 1 = front 2 = aft = 4 left 8 = right
-GunTemperature			DB	0				; 0347	GNTMP 
-HyperSpaceFX			DB	0				; 0348 HFX (probabyl BBC specific
-ExtraVessels			DB	0				; 0349 EV Use d by cops, extra vessels still to spawn?
-Delay					DB	0				; 034A Delay general purpose eg. spawing EV or when printign messages
-MessageForDestroyed		DB	0				; 034B Message flag for item + destroyed
-JoystickX				DB	0				; 034C JSTX  
-JoystickY				DB	0				; 034D JSTY
-XSAV2 					DB	0				; 034E used to temporary save 6502 X reg
-YSAV2 					DB	0				; 034F used to temporary save 6502 Y reg
-CommanderName			DS  8				; 0350 - 3057 Commander Name
-CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
-;036C to D???
-;...ComunicationFlags...........................................................................
-SetStationAngryFlag     DB  0
-ShipBlastCheckCounter   DB  0
-;...MissileInCheckVariables.....................................................................
-CurrentMissileCheck:    DB  0               ; if > Universe Slot list then free for next missile
-MissileXPos:            DS 2
-MissileXSgn:            DS 1
-MissileYPos:            DS 2
-MissileYSgn:            DS 1
-MissileZPos:            DS 2
-MissileZSgn:            DS 1
-; . Note missile explosion will have to have logic to cause linger if a blast is to be enqued
-MissileBlast:           DB 50               ; later on will initialise as its diff missile types
-MissileBlastDamage:     DB 0                ; Blast dependent on type, e.g. Frag vs penetrator
-MissileDamage:          DB 0                ; Direct hit (may not need this actually)
-
+; Contains 				X 16 bit, Y ;MissileArmedStatus		DB	0				; 0344 MSAR   using MissileTarget, if missile is not armed tehn target is FF
 ; TODO will need an read for a list of missiles, who they are targeting an the target current vector for AI persuit
 ; i.e. a list of programmed missiles in universe slot list code
 DampingKeys				DS  7				; 0387 - 038D
@@ -320,11 +230,6 @@ KillTally  				DW	0				; 039F - 03A0 \ TALLY   \ kills lo hi
 COMP     				DB	0				; 03A1 2nd competion byte used for save integrity checks?
 											;
 MCH						DB	0				; 03A4  \ MCH  \ old message to erase
-ForeShield				DB	0				; 03A5
-AftShield				DB	0				; 03A6
-PlayerEnergy			DB	0				; 03A7
-CompassX				DB	0				; 03A8
-CompassY				DB	0				; 03A9
 MarketPrice				DB	0				; 03AA QQ24
 MaxStockAvaliable		DB  0				; 03AB   \ QQ25     \ max available
 SystemEconomy			DB  0				; 03AC \ QQ28   \ the economy byte of present system (0 is Rich Ind.)
@@ -341,13 +246,61 @@ DisplayProductivity		DW	0				; 03BD \ QQ7   \ productivity*10
 Distance          		DW	0				; 03BE \ QQ8 distince in 0.1LY units
 DisplayRadius			DW	0
 ; --- Used in creation of sun and planet----;
-PlanetXPos     DS  1
-PlanetYPos     DS  1
-PlanetZPos     DS  1
-PlanetType     DS  1
-SunXPos        DS  1
-SunYPos        DS  1
-SunZPos        DS  1
+PlanetXPos              DS  1
+PlanetYPos              DS  1
+PlanetZPos              DS  1
+PlanetType              DS  1
+SunXPos                 DS  1
+SunYPos                 DS  1
+SunZPos                 DS  1
+; -- Current Missile Runbtime data
+CurrentMissileBank:     DB      0                                   ; used by missile logic as local copy of missile bank number
+MissileXPos             DW      0
+MissileXSgn             DB      0
+MissileYPos             DW      0
+MissileYSgn             DB      0
+MissileZPos             DW      0
+MissileZSgn             DB      0
+CurrentTargetXpos       DS      2
+CurrentTargetXsgn       DS      2
+CurrentTargetYpos       DS      2      
+CurrentTargetYsgn       DS      2
+CurrentTargetZpos       DS      2      
+CurrentTargetZsgn       DS      2
+TargetVectorXpos        DS      2
+TargetVectorXsgn        DS      2
+TargetVectorYpos        DS      2      
+TargetVectorYsgn        DS      2
+TargetVectorZpos        DS      2      
+TargetVectorZsgn        DS      2
+CurrentMissileBlastRange:      DB  0                       ; TODO Initi for runtime copied in when setting up a missile
+CurrentMissileBlastDamage:     DB  0                       ; TODO Initi for runtime copied in when setting up a missile
+CurrentMissileDetonateRange:   DB  0                       ; TODO Initi for runtime copied in when setting up a missile, allows for proximity missiles
+CurrentMissileDetonateDamage:  DB  0                       ; TODO Initi for runtime copied in when setting up a missile
+
+; --- Main Loop Data -----------------------;
+CurrentUniverseAI       DB  0               ; current ship unviverse slot due an AI update
+SelectedUniverseSlot    DB  0
+SetStationAngryFlag     DB  0               ; used to semaphore angry space station
+ShipBlastCheckCounter   DB  0
+EventCounter    		DB 	0				; 8A
+MissJumpFlag            DB  0
+ExtraVesselsCounter     DB  0
+JunkCount				DB  0				; $033E
+PlayerMisJump			DB	0				; $0341 witchspace misjump
+HyperSpaceFX			DB	0				; 0348 HFX (probabyl BBC specific
+ExtraVessels			DB	0				; 0349 EV Use d by cops, extra vessels still to spawn?
+Delay					DB	0				; 034A Delay general purpose eg. spawing EV or when printign messages
+CurrentMissileCheck:    DB  0               ; if > Universe Slot list then free for next missile
+MessageForDestroyed		DB	0				; 034B Message flag for item + destroyed
+UniverseSlotListSize    equ	12
+UniverseSlotTypeSize    equ	64
+UniverseSlotList        DS  UniverseSlotListSize
+; Probably not needed UniverseTypeCount       DS  UniverseSlotListSize
+TransporterCount        DB  0
+CopCount                DB  0 
+PirateCount             DB  0
+
 ; --- Galaxy Data --------------------------;
 Galaxy      			DB	0				; 0367 Galaxy (incremented with galactiv drive
 WorkingSeeds			DS	6
@@ -423,7 +376,29 @@ varStarY                DB  0
 varDustX                DS MaxNumberOfStars *2
 varDustY                DS MaxNumberOfStars *2
 varDustZ                DS MaxNumberOfStars *2
+; -- Player Runtime Data
+GunTemperature          DB  0
+CabinTemperature        DB  0
+PlayerForwardSheild0	DB	0 ; ????? 
+PlayerForwardSheild1    DB	0
+PlayerForwardSheild2    DB	0
+ForeShield				DB	0				; 03A5
+AftShield				DB	0				; 03A6
+PlayerEnergy			DB	0				; 03A7
+CompassX				DB	0				; 03A8
+CompassY				DB	0				; 03A9
+MissileTarget			DB  0				; 45
+MissileLaunchFlag       DB  0
+CommanderName           DS  15
+CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
+BadnessStatus           DB  0
+; -- Input variables
+JoystickX				DB	0				; 034C JSTX  
+JoystickY				DB	0				; 034D JSTY
+XSAV2 					DB	0				; 034E used to temporary save 6502 X reg
+YSAV2 					DB	0				; 034F used to temporary save 6502 Y reg
 
+; -- Console drawing data
 FShieldStart            equ $8410
 AShieldStart            equ $8D10
 FuelStart               equ $9410

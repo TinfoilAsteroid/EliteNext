@@ -284,7 +284,7 @@ TestClimbPressed:       ld      hl,(addr_Pressed_Climb)
 ; Now test hyperpsace. We can't be docked as this is a view routine piece of logic but for say local charts we may 
 ; be in flight and they have to force a forward view when hyperspace is pressed
 ; We won't do galatic here, but for other views force to forward view
-ForwardCursorKeysDone:  ld      a,c_Pressed_Hyperspace
+ForwardCursorKeysDone:  ld      a,c_Pressed_Hyperspace              ; Check for hyperspace
                         call    is_key_pressed
                         jr      nz,.NotHyperspace
 ; If we are in hyperspace countdown then test for hyperspace
@@ -321,6 +321,15 @@ ForwardCursorKeysDone:  ld      a,c_Pressed_Hyperspace
 .NoTargetSelected
 .InsufficientFuel
 .NotHyperspace:         
+.CheckForMissile:       ld      a,c_Pressed_FireMissile             ; launch pressed?
+                        call    is_key_pressed
+                        jr      nz,.NotMissileLaunch
+                        AnyMissilesLeft                             
+                        jr      z,.NotMissileLaunch                 ; no missiles in rack
+                        IsMissileLockedOn
+                        jr      z,.MissileNotLocked
+.MissileLaunch:         SetMemTrue  MissileLaunchFlag
+.MissileNotLocked:                       ; later on we need a "bing bong" nose for trying to launch an unlocked missile
                         ret
 
 

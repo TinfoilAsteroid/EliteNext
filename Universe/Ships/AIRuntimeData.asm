@@ -10,14 +10,18 @@ UBnKzhi                     DB  0                       ; INWK +7
 UBnKzsgn                    DB  0                       ; INWK +8
 ; -- Note these must be here for initialise blast as it does a 12 byte ldir
 ; . Note missile explosion will have to have logic to cause linger if a blast is to be enqued
-UBnKMissileBlast:           DB  0                       ; copied in when setting up a missile
+UBnKMissileBlastRange:      DB  0                       ; copied in when setting up a missile
 UBnKMissileBlastDamage:     DB  0                       ; copied in when setting up a missile
-UBnKMissileDamage:          DB  0                       ; copied in when setting up a missile
 UBnKMissileDetonateRange:   DB  0                       ; copied in when setting up a missile, allows for proximity missiles
-; -- Ship AI data
+UBnKMissileDetonateDamage:  DB  0                       ; copied in when setting up a missile
+; -- Metadata for ship to help with bank managment
 UBnKShipType                DB  0
+UbnKShipBankNbr             DB  0
+UBnkShipModelBank           DB  0
+UBnkShipModelNbr            DB  0
+; -- Ship AI data
 UBnKMissleHitToProcess      DB  0                       ; This is used for enquing missle blasts as we can only do one missile at a time, could make it multi but neeed to smooth CPU usage
-
+UBnKMissileTarget           DB  0                       ; This is the bank number for the target from 0 to n if the missile is not hostile to us
 UBnKspeed                   DB  0                       ; INWK +27
 UBnKAccel                   DB  0                       ; INWK +28
 UBnKRotXCounter             DB  0                       ; INWK +29

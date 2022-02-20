@@ -70,6 +70,16 @@ ReturnIfANotZero:       MACRO
                         ret     nz
                         ENDM
     
+ReturnIfNotZero:        MACRO
+                        ret     nz
+                        ENDM
+                        
+
+ReturnIfNegative:       MACRO
+                        ret     m
+                        ENDM
+                        
+                        
 ReturnIfMemNotZero:     MACRO mem
                         ld     a,(mem)
                         and     a
@@ -90,7 +100,13 @@ ReturnIfAGTENusng:      MACRO value
                         cp    value
                         ret	 nc
                         ENDM
-    
+ 
+ReturnIfAGTEMemusng:    MACRO value
+                        ld      hl,value
+                        cp      (value)
+                        ret	    nc
+                        ENDM 
+                        
 ReturnIfANENusng:       MACRO value
                         cp      value
                         ret     nz

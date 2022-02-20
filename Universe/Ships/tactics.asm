@@ -10,7 +10,7 @@ MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check 
                         ld      b,a                                     ; copy to b in case we want it later
                         JumpIfMemEqNusng ShipTypeAddr, ShipTypeStation, .SetNewbAngry
 .ItsNotAStation:        and     ShipIsBystander                         ; check if space station present if its a bystander
-                        call    nz, .setStationAngry                       ; Set Space Station if present, Angry
+                        call    nz, SetStationAngry                     ; Set Space Station if present, Angry
                         ld      a,(UBnkaiatkecm)                        ; get AI data
                         ReturnIfAIsZero                                 ; if 0 then no AI attached
                         or      ShipAIEnabled                           ; set AI Enabled set to ensure its set
@@ -25,12 +25,27 @@ MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check 
                         or      ShipIsHostile
                         ld      (ShipNewBitsAddr),a
                         ret
-.setStationAngry:       SetMemTrue SetStationAngryFlag
+
+
+SetStationAngry:        call    IsSpaceStationPresent                   ; only if present
+                        ret     c
+                        ld      a,(UbnKShipBankNbr)                     ; save current bank
+                        ld      iyh,a
+                        MMUSelectUniverseN 0                            ; space station is always 0
+                        ld      a,(ShipNewBitsAddr)                     ; get station new bits
+                        or      ShipIsHostile                           ; and mark hostile
+                        ld      (ShipNewBitsAddr),a                     ; .
+                        ld      a,iyh                                   ; get prev bank back
+                        MMUSelectUniverseA                              ;
+                        ret
+
+
+
+SetMemTrue SetStationAngryFlag
                         ret
 
 CheckMissileBlastInit:  ZeroA
                         ld      (CurrentMissileCheck),a
-                        ld      (CurrentMissileCheck),a         ;
                         ld      hl,UBnKxlo                      ; Copy Blast Coordinates
                         ld      bc,12                           ; and Damage stats
                         ld      de,MissileXPos
@@ -60,12 +75,12 @@ CheckPointRange:        MACRO   ShipPos, ShipSign, MissilePos, MissileSign
                         ReturnIfANotZero
                         ld      a,l
                         and     a
-                        ReturnIfAGTENusng   BlastRange
+                        ReturnIfAGTEMemusng   CurrentMissileBlastRange
                         ENDM
 ;...................................................................                        
 ; We only do one test per loop for spreading the load of work                        
 CheckMissileBlastLoop:  ld      a,(CurrentMissileCheck)
-                        ReturnIfAGTENusng   UniverseListSize
+                        ReturnIfAGTENusng   UniverseSlotListSize
                         ld      iyl,a
                         inc     a                                   ; update for next slot so re can fast return on distance checks
                         ld      (CurrentMissileCheck),a
@@ -79,9 +94,9 @@ CheckMissileBlastLoop:  ld      a,(CurrentMissileCheck)
                         ld      iyh,a                               ; iyh = missile blast depending on type
 .CheckRange:            ld      a,iyl                               ; now page in universe data
                         MMUSelectUniverseA      
-                        CheckPointRange UBnKxlo, UBnKxsgn, MissleXPos, MissileXSgn  ; its a square but its good enough
-                        CheckPointRange UBnKylo, UBnKysgn, MissleYPos, MissileYSgn
-                        CheckPointRange UBnKzlo, UBnKzsgn, MissleZPos, MissileZSgn
+                        CheckPointRange UBnKxlo, UBnKxsgn, MissileXPos, MissileXSgn  ; its a square but its good enough
+                        CheckPointRange UBnKylo, UBnKysgn, MissileYPos, MissileYSgn
+                        CheckPointRange UBnKzlo, UBnKzsgn, MissileZPos, MissileZSgn
                         call    ShipMissileBlast                    ; Ship hit by missile blast
                         ret                                         ; we are done
 ;...................................................................
@@ -92,46 +107,84 @@ CheckIfBlastHitUs:      ld      a,(UBnKMissileBlast)
 CheckIfMissileHitUs:    ld      a,(UBnKMissileDetonateRange)
                         ld      c,a
 ;...................................................................
-MissileHitUsCheckPos:   ld      hl, (MissleXPos)
+MissileHitUsCheckPos:   ld      hl, (UBnKxlo)
                         ZeroA
                         or      h
                         ClearCarryFlag
                         ReturnIfNotZero                             ; will return with carry clear if way far away
                         ld      a,l
                         ReturnIfAGTENusng    c                      ; return no carry if x far
-.CheckY:                ld      hl,(MissileYPos)
+.CheckY:                ld      hl,(UBnKylo)
                         ZeroA
                         or      l
-                        ClearCarryflag
+                        ClearCarryFlag
                         ReturnIfNotZero                             ; will return with carry clear if way far away
                         ld      a,l
                         ReturnIfAGTENusng    c                      ; return no carry if y far
-.CheckZ:                ld      hl,(MissileZPos)
+.CheckZ:                ld      hl,(UBnKzlo)
                         ZeroA
                         or      l
-                        ClearCarryflag
+                        ClearCarryFlag
                         ReturnIfNotZero                             ; will return with carry clear if way far away
                         ld      a,l
                         ReturnIfAGTENusng    c                      ; return no carry if z far
 .ItsAHit:               SetCarryFlag:                               ; So must have hit
                         ret
+                        
 ;...................................................................                        
+;... Now the tactics if current ship is the missile
 MissileLogic:           ld      a,(UBnKMissleHitToProcess)
 .IsMissleHitEnqued:     JumpIfTrue  .ProcessMissileHit
 .CheckForECM:           JumpIFMemTrue   ECMActive,.ECMIsActive
 .IsMissileHostile:      ld      a,(ShipNewBitsAddr)                 ; is missle attacking us?
                         and     ShipIsHostile
                         JumpIfNotZero .MissileTargetingShip
-.MissileTargetingPlayer:ld      hl, (MissleXPos)                    ; check if missile in range of us
+.MissileTargetingPlayer:ld      hl, (UBnKxlo)                       ; check if missile in range of us
                         ld      a,(UBnKMissileDetonateRange)
                         ld      c,a                                 ; c holds detonation range
                         call    MissileHitUsCheckPos
 .MissileNotHitUsYet:    jp      nc, .UpdateTargetingUsPos
-.MissleHitUs:           call  HitByMissile
-                        jp    .ECMIsActive                          ; we use ECM logic to destroy missile which eqneues is
-.MissileTargetingShip:  get the targetted ship inbto bank
-                        check range as per player
-                        handle explosion enc
+.MissleHitUs:           call    HitByMissile
+                        jp      .ECMIsActive                        ; we use ECM logic to destroy missile which eqneues is
+.MissileTargetingShip:  ld      a,(UBnKMissileTarget)
+.IsMissleTargetGone:    JumpIfSlotAEmpty    .ECMIsActive            ; if the target was blown up then detonate
+;... Note we don't have to check for impact as we already have a loop doing that
+.SelectTargetShip:      ld      iyl,a
+                        MMUSelectUniverseA
+.IsShipExploding:       ld      a,(UBnkaiatkecm)
+                        and     ShipExploding
+                        jr      nz,.UpdateTargetingShipPos
+.ShipIsExploding:       ld      a,iyl                               ; get missile back into memory
+                        MMUSelectUniverseA
+                        jp      .ECMIsActive
+.UpdateTargetingShipPos:ld      hl,UBnKxlo                          ; get missile target pos top temp while 
+                        ld      de,CurrentTargetXpos
+                        ld      bc,3*3
+                        ldir
+                        ld a,iyl
+.CalculateMissileVector:call    TacticsPosMinusTarget              ; calculate vector to target
+;;TODO                        check range
+;;TODO                        if target has ecm then 7% chance it will active, reduce target energy (i.e. damage)
+;;TODO                        else
+;;TODO                            normalise teh vector for direction
+;;TODO                            dot product = missile nosev . normalised vector
+;;TODO                            cnt = high byte of dot product, cnf is +ve if facing similar direction
+;;TODO                            negate normalised vector so its opposite product
+;;TODO                            invert sign of cnt
+;;TODO                            AK = roovf . XX15
+;;TODO                            Ships pitch = call nroll to caulate teh valu eof ships pitch counter
+;;TODO                            if pitch * 2 < 32 then 
+;;TODO                                ax = sidev . xx15
+;;TODO                                    a = x xort current pitch direction
+;;TODO                                    shipts roll = nroll 
+;;TODO                            do accelleration at TA6 (    https://www.bbcelite.com/disc/flight/subroutine/tactics_part_7_of_7.html#ta20
+                            
+;;TODO                        
+;;TODO                        
+;;TODO
+;;TODOget the targetted ship inbto bank
+;;TODO                        check range as per player
+;;TODO                        handle explosion enc
 
 ;                    else see how close it is to target
 ;                         if close to target

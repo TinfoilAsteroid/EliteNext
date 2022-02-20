@@ -415,73 +415,69 @@ initInputText:
     djnz    .wipeloop
     ret
     
-InputName:                  xor     a
-                            ld      (InputChanged),a
-                            call    is_any_key_pressed
-                            cp      $FF
-                            ret     z
-.KeyPressed:
-    ld      c,a
-    ld      a,(InputCursor)                 ; No key so we can now look at if we are at the end of the buffer    
-    cp      InputLimit                      ; move to variable later and then cp (hl)
-    jr      z,.DeleteOrEnterOnly            ;
-    ld      hl,ASCII_Map
-    ld      a,c
-    add     hl,a
-    ld      a,(hl)
-    cp      "A"
-    jr      nc,.AlphaPressed
-.DeleteOrEnterOnly                          ; CAPS and Symbol act as delete for now
-    cp      "0"                             ; if 0 was preseed check caps shift too
-    jr      z,.CheckShiftDelete             ; for now we will ignore the shift and just assume delete
-    cp      ">"         ; ENTER
-    jr      z,.EnterPressed
-    cp      "#"         ; CAPS
-    jr      z,.CapsPressed
-    cp      "^"         ; SYMBOLSHIFT
-    jr      z,.SymbolPressed
-    cp      " "         ; space
-    jr      z,.SpacePressed
-    ret
-.AlphaPressed:
-    ld      b,a
-    ld      a,(InputCursor)
-    ld      c,a
-    ld      hl,InputString
-    add     hl,a
-    ld      a,b
-    ld      (hl),b
-    ld      a,c
-    ld      hl,InputCursor
-    inc     (hl)
-    SetMemFalse InputChanged
-    ret
-.EnterPressed:
-    ld      a,(InputCursor)
-    inc     a
-    ld      hl,InputString
-    add     hl,a
-    xor     a
-    ld      (hl),a
-    dec     a
-    ld      (EnterPressed),a
-    ld      (InputChanged),a
-    ret
+InputName:              xor     a
+                        ld      (InputChanged),a
+                        call    is_any_key_pressed
+                        cp      $FF
+                        ret     z
+.KeyPressed:            ld      c,a
+                        ld      a,(InputCursor)                 ; No key so we can now look at if we are at the end of the buffer    
+                        cp      InputLimit                      ; move to variable later and then cp (hl)
+                        jr      z,.DeleteOrEnterOnly            ;
+                        ld      hl,ASCII_Map
+                        ld      a,c
+                        add     hl,a
+                        ld      a,(hl)
+                        cp      "A"
+                        jr      nc,.AlphaPressed
+; CAPS and Symbol act as delete for now
+.DeleteOrEnterOnly      cp      "0"                             ; if 0 was preseed check caps shift too
+                        jr      z,.CheckShiftDelete             ; for now we will ignore the shift and just assume delete
+                        cp      ">"         ; ENTER
+                        jr      z,.EnterPressed
+                        cp      "#"         ; CAPS
+                        jr      z,.CapsPressed
+                        cp      "^"         ; SYMBOLSHIFT
+                        jr      z,.SymbolPressed
+                        cp      " "         ; space
+                        jr      z,.SpacePressed
+                        ret
+.AlphaPressed:          ld      b,a
+                        ld      a,(InputCursor)
+                        ld      c,a
+                        ld      hl,InputString
+                        add     hl,a
+                        ld      a,b
+                        ld      (hl),b
+                        ld      a,c
+                        ld      hl,InputCursor
+                        inc     (hl)
+                        SetMemFalse InputChanged
+                        ret
+.EnterPressed:          ld      a,(InputCursor)
+                        inc     a
+                        ld      hl,InputString
+                        add     hl,a
+                        xor     a
+                        ld      (hl),a
+                        dec     a
+                        ld      (EnterPressed),a
+                        ld      (InputChanged),a
+                        ret
 .CheckShiftDelete:
 .CapsPressed:                               ; act as a delete key for now
 .SymbolPressed:    
-.SpacePressed:    
-    ld      a,(InputCursor)
-    cp      0
-    ret     z
-    dec     a
-    ld      (InputCursor),a
-    ld      hl,InputString
-    add     hl,a
-    xor     a
-    ld      (hl),a
-    SetMemFalse InputChanged
-    ret
+.SpacePressed:          ld      a,(InputCursor)
+                        cp      0
+                        ret     z
+                        dec     a
+                        ld      (InputCursor),a
+                        ld      hl,InputString
+                        add     hl,a
+                        xor     a
+                        ld      (hl),a
+                        SetMemFalse InputChanged
+                        ret
 
 MovementKeyTest:        xor     a
                         ld      (CursorKeysPressed),a

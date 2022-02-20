@@ -109,6 +109,18 @@ JumpIfMemEqMemusng:     MACRO mem, address, target
                         jp	  z,target
                         ENDM
 
+JumpIfMemTrue:          MACRO mem, target
+                        ld      a,(mem)
+                        and     a
+                        jp      z, target
+                        ENDM
+                        
+JumpIfMemFalse:         MACRO mem, target
+                        ld      a,(mem)
+                        and     a
+                        jp      nz, target
+                        ENDM
+
 JumpIfATrue:            MACRO target
                         and     a
                         jp      z, target

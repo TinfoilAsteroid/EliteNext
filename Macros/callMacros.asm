@@ -21,3 +21,25 @@ CallIfMemEqMemusng:     MACRO mem, address, target
                         cp   (hl)
                         call    z,target
                         ENDM
+
+CallIfMemTrue:          MACRO mem, target
+                        ld      a,(mem)
+                        and     a
+                        call    z, target
+                        ENDM
+                        
+CallIfMemFalse:         MACRO mem, target
+                        ld      a,(mem)
+                        and     a
+                        call    nz, target
+                        ENDM
+
+CallIfATrue:            MACRO target
+                        and     a
+                        call    z, target
+                        ENDM
+                        
+CallIfAFalse:           MACRO target
+                        and     a
+                        call    nz, target
+                        ENDM

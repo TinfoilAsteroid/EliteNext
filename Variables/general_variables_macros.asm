@@ -78,10 +78,28 @@ CorrectPostJumpFuel:    MACRO
                         ld      (Fuel),a
                         ENDM
 
+AnyMissilesLeft:        MACRO
+                        ld      a,(NbrMissiles)
+                        and     a
+                        ENDM
+
+SetMissileTargetA:      MACRO
+                        ld      (MissileTarget),a
+                        ENDM
+
+IsMissileLockedOn:      MACRO
+                        ld      a,(MissileTarget)
+                        cp      $FF
+                        ret     z
+                        ReturnIfSlotAEmpty                  ; if target slot is empty
+                        ret                                 ; will return as nz now
+                        ENDM
+
 ClearMissileTarget:     MACRO
-                        xor     a
+                        xor     a                           ; Set missile target to FF
                         dec     a
                         ld      (MissileTarget),a
+                        SetMemFalse MissileLaunchFlag
                         ENDM
                         
 ClearECM:               MACRO   

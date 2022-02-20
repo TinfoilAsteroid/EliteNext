@@ -179,6 +179,7 @@ TestAreWeDocked:        ld      a,(DockedFlag)                                ; 
 .UpdateEventCounter:    ld      hl,EventCounter                               ; evnery 256 cycles we do a trigger test
                         dec     (hl)
                         call    z,LoopEventTriggered
+                        CallIfMemTrue   MissileLaunchFlag, LaunchPlayerMissile
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
 ;.. First update Sun...............................................................................................................
@@ -370,13 +371,23 @@ LoopEventTriggered:
                         ret
 .WitchSpaceEvent:       ret; TODO for now
 
+
+LaunchPlayerMissile:    call    FindNextFreeSlotInC                 ; Check if we have a slot free
+                        jr      c,.MissileMissFire                  ; give a miss fire indicator as we have no slots
+.LaunchGood:            ld      a,ShipID_Missile                    ; TODO For now only 1 missile type
+                        GetByteAInTable ShipPackList                ; swap in missile data
+                        call    SpawnShipTypeA                      ; spawn the ship
+                        ld      a,(MissileTarget)
+                        ld      (UBnKMissileTarget),a               ; load target Data
+                        
+                        
+
 SpawnShipTypeA:         ld      iyl,a                               ; save ship type
                         MMUSelectShipBank1                          ; select bank 1
                         ld      a,iyh                               ; select unverse free slot
                         ld      b,iyl
                         call    SetSlotAToTypeB
                         MMUSelectUniverseA                          ; .
-                        call    UnivInitRuntime                     ; Clear runtime data before startup
                         ld      a, iyl                              ; retrive ship type
                         ;call    SetSlotAToTypeB                     ; record in the lookup tables
                         call    GetShipBankId                       ; find actual memory location of data
@@ -384,7 +395,7 @@ SpawnShipTypeA:         ld      iyl,a                               ; save ship 
                         ld      a,b                                 ; b = computed ship id for bank
                         call    CopyShipToUniverse
                         call    UnivSetSpawnPosition                ; set initial spawn position
-                        call    UnivInitRuntime
+                        call    UnivInitRuntime                     ; Clear runtime data before startup
                         ret
 
                         ; reset main loop counters
@@ -443,7 +454,7 @@ UpdateUniverseObjects:  xor     a
 .NotDockingCheck:       CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, UpdateShip
 .ProcessedUniverseSlot: ld      a,(SelectedUniverseSlot)                        ; Move to next ship cycling if need be to 0
                         inc     a                                               ; .
-                        JumpIfAGTENusng   UniverseListSize, .UpdateAICounter    ; .
+                        JumpIfAGTENusng   UniverseSlotListSize, .UpdateAICounter    ; .
                         ld      (SelectedUniverseSlot),a
                         jp      .UpdateUniverseLoop
 .UpdateAICounter:       ld      a,(CurrentUniverseAI)
@@ -520,7 +531,7 @@ DrawForwardShips:       xor     a
                         call    UpdateScannerShip               ; Always update ship positions                        
 .ProcessedDrawShip:     ld      a,(CurrentShipUniv)
                         inc     a
-                        JumpIfALTNusng   UniverseListSize, .DrawShipLoop
+                        JumpIfALTNusng   UniverseSlotListSize, .DrawShipLoop
 .DrawSunCompass:        MMUSelectSun
                         call    UpdateCompassSun                ; Always update the sun position
                         call    UpdateScannerSun                ; Always attempt to put the sun on the scanner 

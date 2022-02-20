@@ -14,6 +14,11 @@ TestRoomForJunk:        MACRO   Target
                         JumpIfALTMemusng    JunkCount, Target
                         ENDM
 
+JumpIfSpaceStation:     MACRO   Target
+                        ld      hl,UniverseSlotList
+                        ld      a,(hl)
+                        
+
 ; Checks if slot is empty else A = ship type
 ReturnIfSlotAEmpty:     MACRO
                         ld      hl,UniverseSlotList
@@ -23,8 +28,16 @@ ReturnIfSlotAEmpty:     MACRO
                         ret     z           ; if slot was ff inc would make it 0
                         dec     a           ; get original value back for later
                         ENDM
-                        
 
+JumpIfSlotAEmpty:       MACRO   Target
+                        ld      hl,UniverseSlotList
+                        add     hl,a
+                        ld      a,(hl)
+                        inc     a
+                        jp      z,Target    ; if slot was ff inc would make it 0
+                        dec     a           ; get original value back for later
+                        ENDM
+                        
 JumpIfSlotHLEmpty:      MACRO   Target
                         ld      a,(hl)
                         and     a

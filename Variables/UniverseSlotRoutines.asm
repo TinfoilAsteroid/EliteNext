@@ -1,6 +1,6 @@
 ClearSlotCount:         xor     a
-                        ld      hl,UniverseSlotCount
-                        ld      b, UniverseListSize * 2
+                        ld      hl,UniverseSlotList
+                        ld      b, UniverseSlotListSize ; prbably not needed + UniverseSlotTypeSize
 .fillLoop:              ld      (hl),a
                         inc     hl
                         djnz    .fillLoop
@@ -8,25 +8,25 @@ ClearSlotCount:         xor     a
 
 ; Initialises all types to a count of 1 where there is an occupied universe slot
 ; this needs expanding to cater for a missing type, find type and increment count (use cpir?)
-CorrectSlotCount:       call    ClearSlotCount
-                        ld      hl,UniverseSlotCount
-                        ld      de,UniverseSlotList
-                        ld      b,UniverseListSize
-.fillLoop:              ld      a,(de)
-                        cp      $FF
-                        jr      z,.SkipSlot
-.CorrectSlot:           ld      (hl),a
-                        inc     hl
-                        ld      (hl),1
-                        inc     hl
-                        inc     hl
-.SkipSlot               inc     de
-                        djnz    .fillLoop
+; DOE NOT WORK CorrectSlotCount:       call    ClearSlotCount
+; DOE NOT WORK                         ld      hl,UniverseSlotCount
+; DOE NOT WORK                         ld      de,UniverseSlotList
+; DOE NOT WORK                         ld      b,UniverseSlotListSize
+; DOE NOT WORK .fillLoop:              ld      a,(de)
+; DOE NOT WORK                         cp      $FF
+; DOE NOT WORK                         jr      z,.SkipSlot
+; DOE NOT WORK .CorrectSlot:           ld      (hl),a
+; DOE NOT WORK                         inc     hl
+; DOE NOT WORK                         ld      (hl),1
+; DOE NOT WORK                         inc     hl
+; DOE NOT WORK                         inc     hl
+; DOE NOT WORK .SkipSlot               inc     de
+; DOE NOT WORK                         djnz    .fillLoop
                         ret
 ; Wipe all items
 ClearUnivSlotList:      ld      a,$FF
                         ld      hl,UniverseSlotList
-                        ld      b, UniverseListSize
+                        ld      b, UniverseSlotListSize
 .fillLoop:              ld      (hl),a
                         inc     hl
                         djnz    .fillLoop
@@ -45,7 +45,7 @@ SetSlotAToTypeB:        ld      hl,UniverseSlotList
 ClearFreeSlotListSaveA: ld      d,a
                         ld      c,0
                         ld      hl,UniverseSlotList
-                        ld      b, UniverseListSize
+                        ld      b, UniverseSlotListSize
 .fillLoop:              ld      a,c
                         cp      d
                         jr      z,.SkipSlot
@@ -80,7 +80,7 @@ IsPlanetOrSpaceStation: ld      hl,UniverseSlotList+1
                         ret
 
 FindNextFreeSlotInC:    ld      hl,UniverseSlotList
-                        ld      b, UniverseListSize
+                        ld      b, UniverseSlotListSize
                         ld      c, 0
 .SearchLoop:            ld      a,(hl)
                         JumpIfAEqNusng $FF, .FoundSlot

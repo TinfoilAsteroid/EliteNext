@@ -99,8 +99,7 @@ UbnKEdgeExplosionType       DS 1
 UBnkXX19                    DS  3
 
 
-UBnkShipModelBank           DB  0
-UBnkShipModelNbr            DB  0
+
 UBnkHullCopy                DS  ShipDataLength
 ScoopDebrisAddr             equ UBnkHullCopy + ScoopDebrisOffset	 
 MissileLockLoAddr           equ UBnkHullCopy + MissileLockLoOffset	 
@@ -161,6 +160,11 @@ RandomUnivSpeed:        MACRO
                         ld      (UBnKspeed),a
                         ENDM
                         
+MaxUnivSpeed:           MACRO
+                        ld      a,31
+                        ld      (UBnKspeed),a
+                        ENDM
+                        
 ZeroUnivAccelleration:  MACRO
                         xor     a
                         ld      (UBnKAccel),a
@@ -196,6 +200,17 @@ ResetUbnkPosition:      ld      hl,UBnKxlo
                         djnz    .zeroLoop
                         ret
 
+; --------------------------------------------------------------                        
+; This sets the position of the current ship if its a player launched missile
+UnivSetPlayerMissile:   call    InitialiseOrientation           ; Player  facing
+                        call    ResetUbnkPosition               ; home position
+                        ld      a,MissileDropHeight
+                        ld      (UBnKylo),a
+                        ld      a,$80
+                        ld      (UBnKysgn),a
+                        MaxUnivSpeed
+                        ret
+                        
 ; --------------------------------------------------------------                        
 ; This sets the position of the current ship randomly, called after spawing
 UnivSetSpawnPosition:   call    InitialiseOrientation
@@ -257,13 +272,23 @@ ResetStationLaunch:     ld  a,%10000001
     ;Input: BC = Dividend, DE = Divisor, HL = 0
 ;Output: BC = Quotient, HL = Remainder
 
-
-UnivInitRuntime:        ld      bc,UBnKRuntimeSize
+; Initialiase data, iyh must equal slot number
+;                   iyl must be ship type
+UnivInitRuntime:        ld      (UbnKShipBankNbr),a
+                        ld      bc,UBnKRuntimeSize
                         ld      hl,UBnKShipType
                         ZeroA
 .InitLoop:              ld      (hl),a
                         inc     hl
-                        dnjz    .InitLoop
+                        djnz    .InitLoop            
+.SetBankData:           ld      a,iyh
+                        ld      (UbnKShipBankNbr),a
+                        ld      a,iyl
+                        ld      (UBnKShipType),a
+                        call    GetShipBankId                ; this will mostly be debugging info
+                        ld      (UBnkShipModelBank),a        ; this will mostly be debugging info
+                        ld      a,b                          ; this will mostly be debugging info
+                        ld      (UBnkShipModelNbr),a         ; this will mostly be debugging info
                         ret
 
 

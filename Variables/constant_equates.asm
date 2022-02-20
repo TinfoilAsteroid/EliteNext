@@ -55,7 +55,7 @@ HyperSpaceTimers    equ $0B0B
 
 
 MaxNumberOfStars	equ 11
-UniverseListSize    equ	12
+
 ShipTypeSize		equ	32 			;??????? just a guess for now
 ShipSST				equ 4			; its a space station
 UniverseBasePage 	equ 70			; Base memory bank for universe Item #0
@@ -71,6 +71,8 @@ ShipDataSlot		equ	6			; this may move into rom swap out space later
 UniverseObjectSlot	equ	7
 
 KeyForwardsView		equ	$20
+; Game specific equates
+MissileDropHeight   equ 5           ; how far the missile is ejected on launch in y axis
 
 ;...Game Colour Mapping
 L2DustColour        equ L2ColourGREY_1
