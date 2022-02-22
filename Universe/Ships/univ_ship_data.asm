@@ -546,7 +546,7 @@ MVS5RotateAxis:         ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                     ret
     
                     include "Universe/Ships/InitialiseOrientation.asm"
-                    include "Universe/Ships/Tactics.asm"
+
 ;----------------------------------------------------------------------------------------------------------------------------------
 OrientateVertex:
 

@@ -70,7 +70,7 @@ charactersetaddr		equ 15360
 STEPDEBUG               equ 1
 
 
-                        ORG         $8000
+EliteNextStartup:       ORG         $8000
                         di
                         ; "STARTUP"
                         MMUSelectLayer1
@@ -101,9 +101,10 @@ DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks
                             call  l2_flip_buffers
                         ENDIF
 ; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files                        
-InitialiseGalaxies:     call		ResetUniv                       ; Reset ship data
-                        call        ResetGalaxy                     ; Reset each galaxy copying in code
-                        call        SeedAllGalaxies
+                        break
+InitialiseGalaxies:    call		ResetUniv                       ; Reset ship data
+                       call        ResetGalaxy                     ; Reset each galaxy copying in code
+                       call        SeedAllGalaxies
 
 .ClearLayer2Buffers:    MMUSelectLayer2
                         call        l2_cls
@@ -1091,7 +1092,7 @@ XX12PVarSign3		DB 0
 ;INCLUDE "XX12equXX15byXX16-LL51.asm"
   ;  INCLUDE "./Maths/Utilities/XYeqyx1loSmulMdiv256-Ll120-LL123.asm"
 
-
+    INCLUDE "./Tactics.asm"
     INCLUDE "./Drive/drive_access.asm"
 
     INCLUDE "./Menus/common_menu.asm"
@@ -1342,7 +1343,7 @@ UNIVDATABlock8      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
 
     SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA8
+    PAGE    BankUNIVDATA9
 	ORG	UniverseBankAddr,BankUNIVDATA9
 UNIVDATABlock9      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
