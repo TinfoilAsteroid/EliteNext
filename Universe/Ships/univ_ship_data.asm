@@ -84,7 +84,6 @@ UbnkLineArrayBytes          DS 1                        ; total number of bytes 
 XX20                        equ UbnkLineArrayLen
 varXX20                     equ UbnkLineArrayLen
 
-
 UbnkEdgeHeapSize            DS 1
 UbnkEdgeHeapBytes           DS 1
 UBnkLinesHeapLen            DS 1
@@ -97,8 +96,6 @@ UbnKEdgeExplosionType       DS 1
 
 ; Lines
 UBnkXX19                    DS  3
-
-
 
 UBnkHullCopy                DS  ShipDataLength
 ScoopDebrisAddr             equ UBnkHullCopy + ScoopDebrisOffset	 
@@ -124,10 +121,10 @@ ShipTypeAddr                equ UBnkHullCopy + ShipTypeOffset
 ShipNewBitsAddr             equ UBnkHullCopy + ShipNewBitsOffset    
 ShipAIFlagsAddr             equ UBnkHullCopy + ShipAIFlagsOffset
 ; Static Ship Data. This is copied in when creating the universe object
-XX0                         equ UBnkHullCopy        ; general hull index pointer
-UBnkHullVerticies           DS  300                 ; can only be 255
-UBnkHullEdges               DS  1200                ; can be 255 * 4
-UBnkHullNormals             DS  300                 ; can only be 255
+XX0                         equ UBnkHullCopy        ; general hull index pointer TODO find biggest ship design
+UBnkHullVerticies           DS  40 * 6              ; Type 10 is 37 verts so 40 to be safe
+UBnkHullEdges               DS  50 * 4              ; Type 10 is 46 edges sp 200 to be safe
+UBnkHullNormals             DS  20 * 4              ; type 10 is 14 edges so 20 to be safe
 OrthagCountdown             DB  12
 
 UBnkShipCopy                equ UBnkHullVerticies               ; Buffer for copy of ship data, for speed will copy to a local memory block, Cobra is around 400 bytes on creation of a new ship so should be plenty

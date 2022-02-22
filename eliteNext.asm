@@ -1293,7 +1293,7 @@ CopyBodyToUniverse3:    MCopyBodyToUniverse     CopyShipToUniverse3
     PAGE    BankUNIVDATA0
 	ORG	    UniverseBankAddr,BankUNIVDATA0
     INCLUDE "./Universe/Ships/univ_ship_data.asm"
-    
+    DISPLAY "Universe Data - Bytes free ",/D, $2000 - (UnivBankSize)
     SLOT    UniverseBankAddr
     PAGE    BankUNIVDATA1
 	ORG	UniverseBankAddr,BankUNIVDATA1
