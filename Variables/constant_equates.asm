@@ -13,6 +13,7 @@ Bit3Only            equ %00001000
 Bit2Only            equ %00000100
 Bit1Only            equ %00000010
 Bit0Only            equ %00000001
+Bit7Clear           equ %01111111
 
 ConstPi				equ $80
 ConstNorm           equ 197
@@ -46,6 +47,7 @@ ShipIsCop           equ Bit6Only   ;
 ShipIsScoopDockEsc  equ Bit7Only   ; 
 ShipAIEnabled       equ Bit7Only   ; 
 ShipExploding       equ Bit5Only
+ShipKilled          equ Bit7Clear
 
 ; UniverseAIControl
 ShipCanAnger        equ %00000001

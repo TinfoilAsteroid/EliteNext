@@ -210,8 +210,28 @@ UnivSetPlayerMissile:   call    InitialiseOrientation           ; Player  facing
                         ld      (UBnKysgn),a
                         MaxUnivSpeed
                         ret
-                        
+; --------------------------------------------------------------
+; this applies blast damage to ship
+ShipMissileBlast:       ld      a,(CurrentMissileBlastDamage)
+                        ld      b,a
+                        ld      a,(UbnKEnergy)                   ; Reduce Energy
+                        sub     b
+                        jp      UnivExplodeShip
+                        jr      UnivExplodeShip
+                        ld      (UbnKEnergy),a
+                        ret
 ; --------------------------------------------------------------                        
+; This sets the ship as a shower of explosiondwd
+UnivExplodeShip:        ld      a,(UBnkaiatkecm)
+                        or      ShipExploding
+                        and     Bit7Clear
+                        ld      (UBnkaiatkecm),a
+                        xor     a
+                        ld      (UbnKEnergy),a
+                        ;TODO
+                        ret
+                        
+; --------------------------------------------------------------
 ; This sets the position of the current ship randomly, called after spawing
 UnivSetSpawnPosition:   call    InitialiseOrientation
                         RandomUnivPitchAndRoll
@@ -1406,12 +1426,16 @@ ProcessShip:            call    CheckDistance               ; checks for z -ve a
                         ClearCarryFlag
                         ret
 .CarryOnWithDraw:       ;break
+                        ld      a,(UBnkaiatkecm)            ; if its exploding then we just draw
+                        or      ShipExploding               ; clouds of pixels
+                        jr      nz,.ExplodingCloud          ; .
                         call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
                         call    CullV2
                         call    PrepLines
                         call    DrawLines
                         ClearCarryFlag
                         ret 
+.ExplodingCloud:                                
 ; ......................................................   
 
 ;-LL49-----------------------------------------------------------------------------------------------------------------------------

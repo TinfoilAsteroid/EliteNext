@@ -26,6 +26,9 @@ MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check 
                         ld      (ShipNewBitsAddr),a
                         ret
 
+MissileDidHitUs:        ret ; TODO
+
+PlayerHitByMissile:     ret; TODO , do hit set up blast radius etc
 
 SetStationAngry:        call    IsSpaceStationPresent                   ; only if present
                         ret     c
@@ -128,9 +131,8 @@ MissileHitUsCheckPos:   ld      hl, (UBnKxlo)
                         
 ;...................................................................                        
 ;... Now the tactics if current ship is the missile
-MissileLogic:           ld      a,(UBnKMissleHitToProcess)
-.IsMissleHitEnqued:     JumpIfTrue  .ProcessMissileHit
-.CheckForECM:           JumpIFMemTrue   ECMActive,.ECMIsActive
+MissileLogic:           JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
+.CheckForECM:           JumpIfMemTrue ECMActive,.ECMIsActive
 .IsMissileHostile:      ld      a,(ShipNewBitsAddr)                 ; is missle attacking us?
                         and     ShipIsHostile
                         JumpIfNotZero .MissileTargetingShip
@@ -139,8 +141,9 @@ MissileLogic:           ld      a,(UBnKMissleHitToProcess)
                         ld      c,a                                 ; c holds detonation range
                         call    MissileHitUsCheckPos
 .MissileNotHitUsYet:    jp      nc, .UpdateTargetingUsPos
-.MissleHitUs:           call    HitByMissile
+.MissleHitUs:           call    PlayerHitByMissile
                         jp      .ECMIsActive                        ; we use ECM logic to destroy missile which eqneues is
+.UpdateTargetingUsPos:  ret                         //TODO
 .MissileTargetingShip:  ld      a,(UBnKMissileTarget)
 .IsMissleTargetGone:    JumpIfSlotAEmpty    .ECMIsActive            ; if the target was blown up then detonate
 ;... Note we don't have to check for impact as we already have a loop doing that
@@ -157,7 +160,7 @@ MissileLogic:           ld      a,(UBnKMissleHitToProcess)
                         ld      bc,3*3
                         ldir
                         ld a,iyl
-.CalculateMissileVector:call    TacticsPosMinusTarget              ; calculate vector to target
+.CalculateMissileVector:;TODOcall    TacticsPosMinusTarget              ; calculate vector to target
 ;;TODO                        check range
 ;;TODO                        if target has ecm then 7% chance it will active, reduce target energy (i.e. damage)
 ;;TODO                        else

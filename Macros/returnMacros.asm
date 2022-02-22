@@ -103,7 +103,7 @@ ReturnIfAGTENusng:      MACRO value
  
 ReturnIfAGTEMemusng:    MACRO value
                         ld      hl,value
-                        cp      (value)
+                        cp      (hl)
                         ret	    nc
                         ENDM 
                         
