@@ -1424,7 +1424,7 @@ ProcessShip:            call    CheckDistance               ; checks for z -ve a
                         ret
 .CarryOnWithDraw:       ;break
                         ld      a,(UBnkaiatkecm)            ; if its exploding then we just draw
-                        or      ShipExploding               ; clouds of pixels
+                        and     ShipExploding               ; clouds of pixels
                         jr      nz,.ExplodingCloud          ; .
                         call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
                         call    CullV2

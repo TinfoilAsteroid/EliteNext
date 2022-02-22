@@ -31865,7 +31865,7 @@
 1424+ D81D C9                                   ret
 1425+ D81E              .CarryOnWithDraw:       ;break
 1426+ D81E 3A 24 C0                             ld      a,(UBnkaiatkecm)            ; if its exploding then we just draw
-1427+ D821 F6 20                                or      ShipExploding               ; clouds of pixels
+1427+ D821 E6 20                                and     ShipExploding               ; clouds of pixels
 1428+ D823 20 0E                                jr      nz,.ExplodingCloud          ; .
 1429+ D825 CD A4 D7                             call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
 1430+ D828 CD 04 D0                             call    CullV2
