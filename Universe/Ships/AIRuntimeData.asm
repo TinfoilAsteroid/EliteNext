@@ -8,6 +8,21 @@ UBnKysgn                    DB  0                       ; INWK +5
 UBnKzlo                     DB  0                       ; INWK +6
 UBnKzhi                     DB  0                       ; INWK +7
 UBnKzsgn                    DB  0                       ; INWK +8
+;-Rotation Matrix of Ship----------------------------------------------------------------------------------------------------------
+; Rotation data is stored as lohi, but only 15 bits with 16th bit being  a sign bit. Note this is NOT 2'c compliment
+; Note they seem to have to be after camera position not quite found why yet, can only assume it does an iy or ix indexed copy? Bu oddly does not affect space station.
+UBnkrotmatSidevX            DW  0                       ; INWK +21
+UBnkrotmatSidev             equ UBnkrotmatSidevX
+UBnkrotmatSidevY            DW  0                       ; INWK +23
+UBnkrotmatSidevZ            DW  0                       ; INWK +25
+UBnkrotmatRoofvX            DW  0                       ; INWK +15
+UBnkrotmatRoofv             equ UBnkrotmatRoofvX
+UBnkrotmatRoofvY            DW  0                       ; INWK +17
+UBnkrotmatRoofvZ            DW  0                       ; INWK +19
+UBnkrotmatNosevX            DW  0                       ; INWK +9
+UBnkrotmatNosev             EQU UBnkrotmatNosevX
+UBnkrotmatNosevY            DW  0                       ; INWK +11
+UBnkrotmatNosevZ            DW  0                       ; INWK +13
 ; -- Note these must be here for initialise blast as it does a 12 byte ldir
 ; . Note missile explosion will have to have logic to cause linger if a blast is to be enqued
 UBnKMissileBlastRange:      DB  0                       ; copied in when setting up a missile
@@ -37,6 +52,7 @@ UBnKexplDsp                 DB  0                       ; INWK +31 clear explodi
 ; 2 - Nbr of Missiles bit 2
 ; 1 - Nbr of Missiles bit 1
 ; 0 - Nbr of Missiles bit 0
+UBnkDrawAllFaces            DB  0
 UBnkaiatkecm                DB  0                       ; INWK +32 ai_attack_univ_ecm i.e. AI type
 UBnkCam0yLo                 DB  0                       ; INWK +33 ????
 UBnkCam0yHi                 DB  0                       ; INWK +34?????
@@ -70,18 +86,4 @@ UBnKRuntimeSize             EQU $-UBnKShipType
 ;                       For spawned ships, this flag indicates that the ship been scooped or has docked (bit 7 is always clear on spawning)
 ;                       For blueprints, this flag indicates whether the ship type has an escape pod fitted, so it can launch it when in dire straits
 ;                       Ships that have escape pods: Cobra Mk III, Python, Boa, Anaconda, Rock hermit, Viper, Mamba, Krait, Adder, Cobra Mk I, Cobra Mk III (pirate), Asp Mk II, Python (pirate), Fer-de-lance
-;-Rotation Matrix of Ship----------------------------------------------------------------------------------------------------------
-; Rotation data is stored as lohi, but only 15 bits with 16th bit being  a sign bit. Note this is NOT 2'c compliment
-UBnkrotmatSidevX            DW  0                       ; INWK +21
-UBnkrotmatSidev             equ UBnkrotmatSidevX
-UBnkrotmatSidevY            DW  0                       ; INWK +23
-UBnkrotmatSidevZ            DW  0                       ; INWK +25
-UBnkrotmatRoofvX            DW  0                       ; INWK +15
-UBnkrotmatRoofv             equ UBnkrotmatRoofvX
-UBnkrotmatRoofvY            DW  0                       ; INWK +17
-UBnkrotmatRoofvZ            DW  0                       ; INWK +19
-UBnkrotmatNosevX            DW  0                       ; INWK +9
-UBnkrotmatNosev             EQU UBnkrotmatNosevX
-UBnkrotmatNosevY            DW  0                       ; INWK +11
-UBnkrotmatNosevZ            DW  0                       ; INWK +13
 

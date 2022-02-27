@@ -366,7 +366,7 @@ DrawLinesCounter		db	0
 LL155:;
 ClearLine:                                  ; CLEAR LINEstr visited by EE31 when XX3 heap ready to draw/erase lines in XX19 heap.
                                                                            ; ObjectInFront:
-DrawLines:              ld	a,$65 ; DEBUG
+DrawLines:              ld	    a,$65 ; DEBUG
                         ld		iyl,a							; set ixl to colour (assuming we come in here with a = colour to draw)
                         ld		a,(UbnkLineArrayLen)			; get number of lines
                         ReturnIfAIsZero   						; No lines then bail out.

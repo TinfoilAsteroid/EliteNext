@@ -165,7 +165,7 @@ l2_draw_diagonal:       ld		(l2linecolor),a					;save colour for later
                         ld		(l2deltaX),hl                   ;
                         ld		(l2deltaY),hl                   ; initlaise deltas as we will only be loading 8 bit in there but workign in 16 bit later
 l2D_preSort:            ld		a,b								;
-                        JumpIfALTNusng	d,l2D_noYSort			; we must have Y1 < Y2 (if eqyal then verical line picked up earlier
+                        JumpIfALTNusng	d,l2D_noYSort			; we must have Y1 < Y2 (if equal then verical line picked up earlier
 l2D_SortBasedOnY:	    ldhlbc									;
                         ex		de,hl                           ;
                         ldbchl									; swap over bc and de using hl as an intermediate

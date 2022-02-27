@@ -122,9 +122,15 @@ ShipNewBitsAddr             equ UBnkHullCopy + ShipNewBitsOffset
 ShipAIFlagsAddr             equ UBnkHullCopy + ShipAIFlagsOffset
 ; Static Ship Data. This is copied in when creating the universe object
 XX0                         equ UBnkHullCopy        ; general hull index pointer TODO find biggest ship design
-UBnkHullVerticies           DS  40 * 6              ; Type 10 is 37 verts so 40 to be safe
-UBnkHullEdges               DS  50 * 4              ; Type 10 is 46 edges sp 200 to be safe
-UBnkHullNormals             DS  20 * 4              ; type 10 is 14 edges so 20 to be safe
+;UBnkHullVerticies           DS  40 * 6              ; Type 10 is 37 verts so 40 to be safe
+;UBnkHullEdges               DS  50 * 4              ; Type 10 is 46 edges sp 200 to be safe
+;UBnkHullNormals             DS  20 * 4              ; type 10 is 14 edges so 20 to be safe
+
+UBnkHullVerticies           DS  300                 ; can only be 255
+UBnkHullEdges               DS  1200                ; can be 255 * 4
+UBnkHullNormals             DS  300                 ; can only be 255
+
+
 OrthagCountdown             DB  12
 
 UBnkShipCopy                equ UBnkHullVerticies               ; Buffer for copy of ship data, for speed will copy to a local memory block, Cobra is around 400 bytes on creation of a new ship so should be plenty
@@ -1423,16 +1429,17 @@ ProcessShip:            call    CheckDistance               ; checks for z -ve a
                         ClearCarryFlag
                         ret
 .CarryOnWithDraw:       ;break
-                        ld      a,(UBnkaiatkecm)            ; if its exploding then we just draw
-                        and     ShipExploding               ; clouds of pixels
-                        jr      nz,.ExplodingCloud          ; .
+;DEBUG                        ld      a,(UBnkaiatkecm)            ; if its exploding then we just draw
+;DEBUG                        and     ShipExploding               ; clouds of pixels
+;DEBUG                        jr      nz,.ExplodingCloud          ; .
                         call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
                         call    CullV2
                         call    PrepLines
                         call    DrawLines
                         ClearCarryFlag
                         ret 
-.ExplodingCloud:                                
+.ExplodingCloud:        break
+                        ret
 ; ......................................................   
 
 ;-LL49-----------------------------------------------------------------------------------------------------------------------------

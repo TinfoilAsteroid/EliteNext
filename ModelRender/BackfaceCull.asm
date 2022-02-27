@@ -330,7 +330,6 @@ ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then 
 ;;;;;                        jp          nz,.ProcessNormalsLoop
 ;;;;;                        ret                                 ; If Y >= XX20 all normals' visibilities set, onto Transpose. return
 ;;;;;
-XX4Distance             DB      0
 
                       
 
@@ -359,7 +358,7 @@ CheckDistance:          ld      a,(UBnKzsgn)                 ; Is the ship behin
                         srl     a                           ; so move it to bit 4 giving A as distance $000xxxxx
                         srl     a
                         srl     a
-                        ld      (XX4Distance),a             ; XX4 = "all faces" distance
+                        ld      (UBnkDrawAllFaces),a        ; XX4 = "all faces" distance
                         SetATrue
                         ld      (UBnKDrawAsDot),a           ; set draw as dot to 0, i.e. false
                         ClearCarryFlag
@@ -398,7 +397,7 @@ CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
 .LL86:                  ld      a,(hl)                                         ; Get Face sign and visibility distance byte 
                         and     $1F                                            ; if normal visibility range  < XX4
                         push    hl                          
-                        ld      hl,XX4Distance              
+                        ld      hl,UBnkDrawAllFaces              
                         cp      (hl)                        
                         pop     hl                          
                         jp      c,.FaceVisible              ; then we always draw

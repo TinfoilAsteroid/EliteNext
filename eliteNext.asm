@@ -101,7 +101,6 @@ DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks
                             call  l2_flip_buffers
                         ENDIF
 ; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files                        
-                        break
 InitialiseGalaxies:    call		ResetUniv                       ; Reset ship data
                        call        ResetGalaxy                     ; Reset each galaxy copying in code
                        call        SeedAllGalaxies
@@ -343,8 +342,8 @@ LoopEventTriggered:
                         ReturnIfALTNusng b                          ; then return
 .SpawnTrader:       ; TODO
 .SpawnHostileCop: ;TODO
-.SpawnHostile:          ld      a,b
-                        JumpIfAGTENusng 100,.SpawnPirates               ; 100 in 255 change of one or more pirates
+.SpawnHostile:          call    doRandom
+                        JumpIfAGTENusng 100,.SpawnPirates           ; 100 in 255 change of one or more pirates
                         ld      hl, ExtraVesselsCounter             ; prevent the next spawning
                         inc     (hl)                                ; 
                         and     3                                   ; a = random 0..3
@@ -353,7 +352,7 @@ LoopEventTriggered:
                         jp      SpawnShipTypeA
                         ;.......implicit ret
 .NotAnarchySystem:      ret                        
-.SpawnPirates:          ld      a,b                                 ; a = random 0..3
+.SpawnPirates:          call    doRandom                           ; a = random 0..3
                         and     3
                         ld      (ExtraVesselsCounter),a
                         ld      (PirateCount),a
