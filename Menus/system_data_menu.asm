@@ -126,14 +126,14 @@ SD_working_cursor       DW   0
 
 sd_copy_of_seed         DS 6
     
-draw_system_data_menu:  INCLUDE "Menus/clear_screen_inline_no_double_buffer.asm"	
-                        xor     a
+draw_system_data_menu:  InitNoDoubleBuffer
+                        ZeroA
                         ld      (system_present_or_target),a
                         ld		a,8
                         ld		(MenuIdMax),a	
 .SelectGalaxy:          ld      a,(Galaxy)
                         MMUSelectGalaxyA
-.CheckCursorOrHome:     ld      bc,(TargetPlanetX)              ; Find out if we have to work on hyperspace or normal cursor
+.CheckCursorOrHome:     ld      bc,(TargetSystemX)              ; Find out if we have to work on hyperspace or normal cursor
                         ld      (SD_working_cursor),bc
                         ld      (GalaxyTargetSystem),bc
                         call    galaxy_system_under_cursor
@@ -143,7 +143,7 @@ draw_system_data_menu:  INCLUDE "Menus/clear_screen_inline_no_double_buffer.asm"
                         ld      (SD_working_cursor),bc
                         ld      (GalaxyTargetSystem),bc
                         call    galaxy_system_under_cursor
-.FoundASystem:          ld      bc,(TargetPlanetX)
+.FoundASystem:          ld      bc,(TargetSystemX)
                         ld      hl,(PresentSystemX)
                         ld      a,b
                         cp      h

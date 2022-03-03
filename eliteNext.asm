@@ -48,6 +48,8 @@ ScreenHyperspace EQU ScreenDocking+1
                         INCLUDE	"./Hardware/memory_bank_defines.asm"
                         INCLUDE "./Hardware/screen_equates.asm"
                         INCLUDE "./Data/ShipModelEquates.asm"
+                        INCLUDE "./Menus/clear_screen_inline_no_double_buffer.asm"	
+                        INCLUDE "./Macros/graphicsMacros.asm"
                         INCLUDE "./Macros/callMacros.asm"
                         INCLUDE "./Macros/carryFlagMacros.asm"
                         INCLUDE "./Macros/CopyByteMacros.asm"
@@ -63,7 +65,9 @@ ScreenHyperspace EQU ScreenDocking+1
                         INCLUDE "./Tables/message_queue_macros.asm"
                         INCLUDE "./Variables/general_variables_macros.asm"
                         INCLUDE "./Variables/UniverseSlot_macros.asm"
+                        
                         INCLUDE "./Data/ShipIdEquates.asm"
+                        
 
 
 charactersetaddr		equ 15360
@@ -86,7 +90,6 @@ Initialise:             MMUSelectLayer2
                         ClearForceTransition
 TidyDEBUG:              ld          a,16
                         ld          (TidyCounter),a
-
 TestText:               xor			a
                         ld      (JSTX),a
                         MMUSelectCommander
@@ -94,25 +97,12 @@ TestText:               xor			a
 DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks su n
                         MMUSelectSpriteBank
                         call		init_sprites
-                        
-                        IFDEF DOUBLEBUFFER
-                            MMUSelectLayer2
-                            call        l2_cls
-                            call  l2_flip_buffers
-                        ENDIF
+.ClearLayer2Buffers:    DoubleBufferIfPossible
+                        DoubleBufferIfPossible
 ; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files                        
-InitialiseGalaxies:    call		ResetUniv                       ; Reset ship data
-                       call        ResetGalaxy                     ; Reset each galaxy copying in code
-                       call        SeedAllGalaxies
-
-.ClearLayer2Buffers:    MMUSelectLayer2
-                        call        l2_cls
-                        IFDEF DOUBLEBUFFER    
-                            MMUSelectLayer2
-                            call  l2_flip_buffers
-                        ENDIF    
-                        
-                        
+InitialiseGalaxies:     call		ResetUniv                       ; Reset ship data
+                        call        ResetGalaxy                     ; Reset each galaxy copying in code
+                        call        SeedAllGalaxies
 ;.Sa                        MMUSelectUniverseN 0                       
                         
 ;InitialiseDemoShip:     call    ClearFreeSlotList
@@ -244,7 +234,8 @@ HandleLaunched:         JumpIfAEqNusng  $FD, WeHaveCompletedLaunch
                         jp  DoubleBufferCheck
 WeHaveCompletedLaunch:  call    LaunchedFromStation
                         jp      DoubleBufferCheck
-WeAreHJumping:          call        hyperspace_Lightning
+WeAreHJumping:          call    hyperspace_Lightning
+                        break
                         jp      c,DoubleBufferCheck
                         ld      a,$FB
                         ld      (DockedFlag),a
@@ -254,7 +245,7 @@ WeAreHEntering:         ld      a,$FA
                         jp  DoubleBufferCheck
 WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
-                        ld      hl,(TargetPlanetX)
+                        ld      hl,(TargetSystemX)
                         ld      (PresentSystemX),hl
                         ld      b,h
                         ld      c,l
@@ -287,7 +278,8 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not worki
 ;;TODO                       call    GetShipBankId
 ;;TODO                       MMUSelectUniverseBankN 1
 ;;TODO                       call    CopyBodyToUniverse
-
+                        ret
+                        
 LoopEventTriggered:     
 .CanWeDoAnAdd:          call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
                         ret     c                                   ; then may as well just skip routine
@@ -425,10 +417,10 @@ DoubleBufferCheck:      ld      a,00
                             cp     0
                             call   nz,l2_flip_buffers
                         ENDIF
-TestTransition:        ld      a,(ScreenTransitionForced)          ; was there a bruite force screen change in any update loop
+TestTransition:         ld      a,(ScreenTransitionForced)          ; was there a bruite force screen change in any update loop
                         cp      $FF
                         jp      z,MainLoop
-BruteForceChange:      ld      d,a
+BruteForceChange:       ld      d,a
                         ld      e,ScreenMapRow
                         mul
                         ld      ix,ScreenKeyMap

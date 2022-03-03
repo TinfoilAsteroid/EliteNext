@@ -292,21 +292,21 @@ ForwardCursorKeysDone:  ld      a,c_Pressed_Hyperspace              ; Check for 
                         ld      a,h                                 ; hyperspace
                         or      l                                   ; .
                         jr      nz,.CancelHyperspace                ; .
-; check selected target if we finf one then after gettting galaxy at bc a=0 if not found
+; check selected target if we find one then after gettting galaxy at bc a=0 if not found
                         ld      de,(PresentSystemX)
-                        ld      hl,(TargetPlanetX)
+                        ld      hl,(TargetSystemX)
                         call    compare16HLDE
                         jr      z,.NoTargetSelected                 ; can't jump to current system
                         ld      a,(Galaxy)
                         MMUSelectGalaxyA
-                        ld      bc,(TargetPlanetX)
+                        ld      bc,(TargetSystemX)
                         call    galaxy_name_at_bc
                         cp      0
                         jr      z,.NotHyperspace
 ; check fuel is sufficient
                         ld      bc,(PresentSystemX)
                         ld      (GalaxyPresentSystem),bc
-                        ld      bc,(TargetPlanetX)
+                        ld      bc,(TargetSystemX)
                         ld      (GalaxyDestinationSystem),bc
                         call    galaxy_find_distance            ; get distance into HL
                         ld      a,h

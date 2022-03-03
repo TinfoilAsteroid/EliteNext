@@ -40,14 +40,13 @@ stat_present_name       DS  30
 stat_target_name        DS  30
                         DB  0
                         
-stat_copy_to_name:
-    ld      hl,GalaxyExpandedName
-    ld      bc,30
-    ldir
-    ret
+stat_copy_to_name:      ld      hl,GalaxyExpandedName
+                        ld      bc,30
+                        ldir
+                        ret
 
-STAT_print_boiler_text: INCLUDE "Menus/l2print_boiler_text_inlineInclude.asm"
-
+;----------------------------------------------------------------------------------------------------------------------------------
+STAT_print_boiler_text: INCLUDE "Menus/print_boiler_text_inlineInclude.asm"
 ;----------------------------------------------------------------------------------------------------------------------------------
 STAT_DispDEIXtoIY:      ld (.STATclcn32z),ix
                         ld (.STATclcn32zIX),de
@@ -193,7 +192,13 @@ STAT_buffer_list:       ld      a,(Galaxy)       ; DEBUG as galaxy n is not work
                         ld      (STAT_current_end),a
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------	
-draw_STAT_maintext:    	ld		b,10
+draw_STAT_maintext:    	InitNoDoubleBuffer
+.Drawbox:               ld		bc,$0101
+                        ld		de,$BEFD
+                        ld		a,$C0
+                        MMUSelectLayer2
+                        call	l2_draw_box
+                        ld		b,10
                         ld		hl,status_boiler_text
                         call	STAT_print_boiler_text
 .PresentSystem:         ld      a,(Galaxy)       ; DEBUG as galaxy n is not working
@@ -209,7 +214,7 @@ draw_STAT_maintext:    	ld		b,10
                         call    l2_print_at
 .HyperspaceSystem:      ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
-                        ld      bc, (TargetPlanetX)
+                        ld      bc, (TargetSystemX)
                         call    galaxy_name_at_bc
                         ld      de,stat_target_name
                         call    stat_copy_to_name:
@@ -338,7 +343,7 @@ get_cmdr_condition:     ld			a,(DockedFlag)
 ;;;                        ld		(equipment_cursor+1), a
 ;;;                        ret
 
-draw_status_menu:       INCLUDE "Menus/clear_screen_inline_no_double_buffer.asm"	
+draw_status_menu:       InitNoDoubleBuffer
                         ld		a,8
                         ld		(MenuIdMax),a	
 .Drawbox:               ld		bc,$0101

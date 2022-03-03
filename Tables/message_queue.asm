@@ -109,7 +109,7 @@ HyperSpaceMessage:      MMUSelectLayer1
                         dec     l
                         jr      nz,.decHyperInnerOnly
                         dec     h
-                        ret     m
+                        jp      m,.HyperCountDone
 .resetHyperInner:       ld      l,$0B
                         push    hl
                         ld      d,12

@@ -294,7 +294,7 @@ PrintMktDispItem:       push     af
                         call	l1_print_at	
                         ret
 
-draw_mktdisp_prices_menu:INCLUDE "Menus/clear_screen_inline_no_double_buffer.asm"	
+draw_mktdisp_prices_menu:InitNoDoubleBuffer
                         ld      a,$20
                         ld      (MenuIdMax),a
 .Drawbox:               ld		bc,$0101

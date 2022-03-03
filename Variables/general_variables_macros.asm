@@ -115,6 +115,16 @@ ChargeEnergyAndShields: MACRO
                         ld      (AftShield),a
                         ENDM
                         
+CopyPresentSystemToTarget: MACRO
+                        ld      hl,(PresentSystemX)
+                        ld      (TargetSystemX),hl
+                        ENDM
+
+CopyTargetSystemToPresent: MACRO
+                        ld      hl,(TargetSystemX)
+                        ld      (PresentSystemX),hl
+                        ENDM
+               
 HalveFugitiveStatus:    MACRO
                         ld      hl,FugitiveInnocentStatus
                         srl     (hl)
@@ -149,6 +159,7 @@ CoolLasers:             MACRO
 .AlreadyCool:           
                         ENDM                        
                         
+                                                
 InitEventCounter:       MACRO
                         xor     a
                         ld      (EventCounter),a
