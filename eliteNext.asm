@@ -122,7 +122,10 @@ InitialiseMainLoop:     xor     a
                         call    InitialiseCommander
                         MMUSelectUniverseN 2    
                         call    SetInitialShipPosition
-                                               
+; Initialist screen refresh
+                        ld      a, ConsoleRefreshInterval
+                        ld      (ConsoleRefreshCounter),a
+                        SetMemFalse    ConsoleRedrawFlag
                         MMUSelectStockTable
                         call    generate_stock_market
                         call    ResetMessageQueue
@@ -185,7 +188,7 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
                         call    UpdateMessageTimer
                       
 .NoMessages:            MMUSelectLayer2
-                        call   l2_cls                                       ; change this to do top 2 thirds only  fopr console                 
+                        call   l2_cls_upper_two_thirds
                         MMUSelectLayer1
 .UpdateSun:             MMUSelectSun
 .DEBUGFORCE:            ;ld      hl,$0000
@@ -204,15 +207,27 @@ DrawDustForwards:       ld     a,$DF
                         ld     (line_gfx_colour),a                         
 DustUpdateBank:         MMUSelectViewFront                                    ; This needs to be self modifying
 DustUpdateRoutine:      call   DustForward                                   ; This needs to be self modifying
-PrepLayer2:             MMUSelectLayer2                                       ; Clear layer 2 for graphics
-                      ;  call   l2_cls                        
+PrepLayer2:             ld      hl,ConsoleRefreshCounter
+                        dec     (hl)
+                        jp      z,ConsoleDraw
+                        jp      m,ConsoleDrawReset
+.ConsoleNotDraw:        SetMemFalse ConsoleRedrawFlag                        
+                        jp      ProcessPlanet
+ConsoleDraw:            SetMemTrue ConsoleRedrawFlag
+                        MMUSelectLayer2   
+                        call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
+                        jp      ProcessPlanet
+ConsoleDrawReset:       SetMemTrue ConsoleRedrawFlag
+                        ld      (hl),ConsoleRefreshInterval                     
+                        MMUSelectLayer2   
+                        call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
 ;ProcessSun:             call    DrawForwardSun
 ProcessPlanet:
 ProcessShipModels:      call   DrawForwardShips                               ; Draw all ships (this may need to be self modifying)
                         ; add in loop so we only update every 4 frames, need to change CLS logic too, 
                         ; every 4 frames needs to do 2 updates so updates both copies of buffer
                         ; now will CLS bottom thrid
-                        call    UpdateConsole                              ; Update display console on layer 1
+                        CallIfMemTrue ConsoleRedrawFlag, UpdateConsole
                         jp LoopRepeatPoint                                    ; And we are done with views, so check if there was a special command to do
 ;..If we were not in views then we were in display screens/menus...................................................................
 MenusLoop:              ld      hl,(ScreenLoopJP+1)
@@ -526,7 +541,8 @@ DrawForwardShips:       xor     a
 ;;;Does nothing                       MMUSelectScreenA
 ;;;Does nothing         ld      a,(CurrentShipUniv)
 ;;;Does nothing         MMUSelectUniverseA
-                        call    UpdateScannerShip               ; Always update ship positions                        
+                        
+                        CallIfMemTrue ConsoleRedrawFlag,UpdateScannerShip ; Always update ship positions                        
 .ProcessedDrawShip:     ld      a,(CurrentShipUniv)
                         inc     a
                         JumpIfALTNusng   UniverseSlotListSize, .DrawShipLoop

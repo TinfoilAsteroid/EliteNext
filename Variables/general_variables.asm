@@ -300,7 +300,8 @@ UniverseSlotType        DS  UniverseSlotListSize ; base type, e.g. missile, carg
 TransporterCount        DB  0
 CopCount                DB  0 
 PirateCount             DB  0
-
+ConsoleRefreshCounter   DB  ConsoleRefreshInterval ; Every 4 interations the console will update twice (once for primary and once for seconday buffer)
+ConsoleRedrawFlag       DB  0
 ; --- Galaxy Data --------------------------;
 Galaxy      			DB	0				; 0367 Galaxy (incremented with galactiv drive
 WorkingSeeds			DS	6

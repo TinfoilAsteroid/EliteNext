@@ -47,8 +47,6 @@ DrawColourEBar:         push    bc,,de
                         ; no ret needed as jp handles it
 
 
-        
-        
 UpdateConsole:          ld      a,(DELTA)
                         cp      0                           ; don't draw if there is nothing to draw
                         jr      z,.UpdateRoll   

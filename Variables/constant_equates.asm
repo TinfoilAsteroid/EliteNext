@@ -58,6 +58,7 @@ HyperSpaceTimers    equ $0B0B
 
 
 MaxNumberOfStars	equ 11
+ConsoleRefreshInterval  equ 4
 
 ShipTypeSize		equ	32 			;??????? just a guess for now
 ShipSST				equ 4			; its a space station
