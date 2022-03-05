@@ -313,7 +313,6 @@ TargetSystemX			DB	0				; System we are targeting for jump
 TargetSystemY			DB	0				; System we are targeting for jump
 GovPresentSystem		DB	0				; 03AE Govenment 
 TekPresentSystem		DB	0				; 03AF Technology
-NumberOfStarsNOSTM		DB	0				; 03C3 NOSTM  \ number of stars, dust.
 
 CompassColor			DB	0				; 03C5
 SoundToggle				DB	0				; 03C6

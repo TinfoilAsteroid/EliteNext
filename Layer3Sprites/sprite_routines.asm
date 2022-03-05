@@ -42,20 +42,20 @@ compass_station                     equ compass_sun      +1
 
 glactic_pattern_1					equ 0
 glactic_hyper_pattern_1             equ 2
-local_pattern_1                     equ 4
-local_hyper_pattern_1               equ 6
-reticule_pattern_1                  equ 12
-reticule_pattern_2                  equ 13
-laser_pattern_1                     equ 14
-laser_pattern_2                     equ 15
-laser_pattern_3                     equ 16
-laser_pattern_4                     equ 17
-laser_pattern_5                     equ 18
+local_present_cursor                equ 4
+local_hyper_pattern                 equ 7
+reticule_pattern_1                  equ 10
+reticule_pattern_2                  equ 11
+laser_pattern_1                     equ 12
+laser_pattern_2                     equ 13
+laser_pattern_3                     equ 14
+laser_pattern_4                     equ 15
+laser_pattern_5                     equ 16
 
-compass_sun_infront                 equ 22
-compass_sun_behind                  equ 23
-compass_station_infront             equ 24
-compass_station_behind              equ 25
+compass_sun_infront                 equ 17
+compass_sun_behind                  equ 18
+compass_station_infront             equ 19
+compass_station_behind              equ 20
 spritecursoroffset					equ 17
 spriteborderoffset                  equ 32
 
@@ -219,13 +219,13 @@ sprite_lhc_move:            ld		a,local_hyper_sprite
 
 ; "sprite_local_cursor BC = rowcol"
 sprite_local_cursor:        ld		d,local_cursor_sprite
-                            ld		e,6
+                            ld		e,local_present_cursor
                             call	sprite_big
                             ret
 
 ; "sprite_local_hyper_cursor BC = rowcol"
 sprite_local_hyper_cursor:  ld		d,local_hyper_sprite
-                            ld		e,9
+                            ld		e,local_hyper_pattern
                             call	sprite_big
                             ret	
 
@@ -366,12 +366,12 @@ show_compass_statin_behind:   ShowSprite  compass_station, compass_station_behin
 sprite_laser:           LeftLaser  0,0,laser_sprite1 ,laser_pattern_1
                         LeftLaser  2,0,laser_sprite2 ,laser_pattern_2
                         LeftLaser  4,1,laser_sprite3 ,laser_pattern_3
-                        LeftLaser  6,2,laser_sprite4 ,laser_pattern_4
+                        LeftLaser  6,1,laser_sprite4 ,laser_pattern_4
                         LeftLaser  8,2,laser_sprite5 ,laser_pattern_5
                         RightLaser 0,0,laser_sprite9 ,laser_pattern_1
                         RightLaser 2,0,laser_sprite10,laser_pattern_2
                         RightLaser 4,1,laser_sprite11,laser_pattern_3
-                        RightLaser 6,2,laser_sprite12,laser_pattern_4
+                        RightLaser 6,1,laser_sprite12,laser_pattern_4
                         RightLaser 8,2,laser_sprite13,laser_pattern_5
                         ret                           
                         ; Need simple show updates just to update the show attribute

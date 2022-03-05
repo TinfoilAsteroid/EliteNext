@@ -77,26 +77,21 @@ STEPDEBUG               equ 1
 EliteNextStartup:       ORG         $8000
                         di
                         ; "STARTUP"
-                        MMUSelectLayer1
-                        call		l1_cls
+                        MMUSelectLayer1 : call		l1_cls
                         ld			a,7
                         call		l1_attr_cls_to_a
                         ld          a,$FF
                         call        l1_set_border
-                        MMUSelectSpriteBank
-                        call		sprite_load_sprite_data
-Initialise:             MMUSelectLayer2
-                        call 		l2_initialise
+                        MMUSelectSpriteBank : call		sprite_load_sprite_data
+Initialise:             MMUSelectLayer2 :  call 		l2_initialise
                         ClearForceTransition
 TidyDEBUG:              ld          a,16
                         ld          (TidyCounter),a
 TestText:               xor			a
                         ld      (JSTX),a
-                        MMUSelectCommander
-                        call		defaultCommander
+                        MMUSelectCommander: call		defaultCommander
 DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks su n
-                        MMUSelectSpriteBank
-                        call		init_sprites
+                        MMUSelectSpriteBank : call		init_sprites
 .ClearLayer2Buffers:    DoubleBufferIfPossible
                         DoubleBufferIfPossible
 ; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files                        
@@ -187,8 +182,7 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
                         call    DisplayCurrentMessage
                         call    UpdateMessageTimer
                       
-.NoMessages:            MMUSelectLayer2
-                        call   l2_cls_upper_two_thirds
+.NoMessages:            MMUSelectLayer2 : call   l2_cls_upper_two_thirds
                         MMUSelectLayer1
 .UpdateSun:             MMUSelectSun
 .DEBUGFORCE:            ;ld      hl,$0000
@@ -214,13 +208,11 @@ PrepLayer2:             ld      hl,ConsoleRefreshCounter
 .ConsoleNotDraw:        SetMemFalse ConsoleRedrawFlag                        
                         jp      ProcessPlanet
 ConsoleDraw:            SetMemTrue ConsoleRedrawFlag
-                        MMUSelectLayer2   
-                        call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
+                        MMUSelectLayer2 :   call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
                         jp      ProcessPlanet
 ConsoleDrawReset:       SetMemTrue ConsoleRedrawFlag
                         ld      (hl),ConsoleRefreshInterval                     
-                        MMUSelectLayer2   
-                        call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
+                        MMUSelectLayer2 :   call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
 ;ProcessSun:             call    DrawForwardSun
 ProcessPlanet:
 ProcessShipModels:      call   DrawForwardShips                               ; Draw all ships (this may need to be self modifying)
@@ -354,7 +346,7 @@ LoopEventTriggered:
                         ld      hl, ExtraVesselsCounter             ; prevent the next spawning
                         inc     (hl)                                ; 
                         and     3                                   ; a = random 0..3
-                        MMUSelectShipBank1
+                        MMUSelectShipBank1 
                         GetByteAInTable ShipHunterTable             ; get hunter ship type
                         jp      SpawnShipTypeA
                         ;.......implicit ret
@@ -387,8 +379,6 @@ LaunchPlayerMissile:    call    FindNextFreeSlotInC                 ; Check if w
                         call    UnivSetPlayerMissile
                         ret
 .MissileMissFire:       ret ; TODO bing bong noise misfire message
-                     
-                        
 
 SpawnShipTypeA:         ld      iyl,a                               ; save ship type
                         MMUSelectShipBank1                          ; select bank 1
@@ -408,7 +398,6 @@ SpawnShipTypeA:         ld      iyl,a                               ; save ship 
                         ld      b,a
                         ld      a,iyl
                         call    SetSlotAToClassB
-                     
                         ret
 
                         ; reset main loop counters

@@ -6,20 +6,20 @@
 ; We can cheat here, Speed is always 0 or positive
 ; z postion will always be positive if we can see it 
 
-InitStarAtHL:           ex      de,hl
-                        call    doRND
-                        ex      de,hl
-                        or      8
-                        ld      (hl),a
-                        and     $7F
-                        inc     hl
-                        ld      (hl),a
-                        ex      de,hl
-                        call    doRND
-                        ex      de,hl
-                        rrca    
-                        and     $80
-                        or      (hl)
+InitStarAtHL:           ex      de,hl               ; preserving hl
+                        call    doRND               ; a = random OR bit 5
+                        ex      de,hl               ; .
+                        or      8                   ; .
+                        ld      (hl),a              ; save to x pos
+                        and     $7F                 ; a = abs a
+                        inc     hl                  ; 
+                        ld      (hl),a              ;
+                        ex      de,hl               ; preserving hl 
+                        call    doRND               ; a = -ve (random / 2)
+                        ex      de,hl               ; .
+                        rrca                        ; .
+                        and     $80                 ; .
+                        or      (hl)                ; or with 
                         ld      (hl),a
                         inc     hl
                         ex      de,hl
@@ -185,36 +185,29 @@ StarsADDHLDESigned:     ld      a,h
                         ret 
 ;----------------------------------------------------------------------------------------------------------------------------------        
 InitialiseStars:        ld      b,MaxNumberOfStars
-                        ld      a,b
-                        ld      (NumberOfStarsNOSTM),a
                         ld      hl,varDust
 .InitStarsLoop:         call    InitStarAtHL
                         djnz    .InitStarsLoop
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------        
 InitialiseHyperStars:   ld      b,MaxNumberOfStars
-                        ld      a,b
-                        ld      (NumberOfStarsNOSTM),a
                         ld      hl,varDust
 .InitStarsLoop:         call    InitHyperStarAtHL
                         djnz    .InitStarsLoop
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-DustForward:            ; break
-                        ld      a,(NumberOfStarsNOSTM)
-                        ld      b,a                                 ; get the number of stars to process
+DustForward:            ld      b,MaxNumberOfStars                  ; get the number of stars to process
                         ld      iy,varDust                          ; hl is now a pointer to the dust array
 StarProcessLoop:        push    bc                                  ; save counter +1
-.Qequ64XSpeedDivZHi:    ld      a,(iy+5)
-                        ld      e,a
+.Qequ64XSpeedDivZHi:    ld      a,(iy+5)                            ; e  = z high
+                        ld      e,a                                 ; d = 0
                         ld      d,0                                 ; de = zhi/256
-                        ld      a,(DELTA)
-                        cp      0
-                        jr      nz,.NormalSpeed
-                        inc     a                                   ; so the is at lest some dust movement
-.NormalSpeed:           ld      b,a
+                        ld      a,(DELTA)                           ; a = speed
+                        JumpIfAIsNotZero .NormalSpeed               ; if we are stationary set speed 
+                        inc     a                                   ; so it is at least some dust movement
+.NormalSpeed:           ld      b,a                                 ;
                         ld      c,0                                 ; bc = delta * 256
-                        call    BC_Div_DE                           ; BC = BC.DE , HL = remainder
+                        call    BC_Div_DE                           ; BC = Speed/Z , HL = remainder
                         ShiftHLRight1
                         ShiftHLRight1                               ; hl = remainder/2 so now 64 * speed / zhi
                         ld      a,l                                 ; 
@@ -223,8 +216,8 @@ StarProcessLoop:        push    bc                                  ; save count
 .ZequZMinusSpeedX64:    ld      hl,(iy+4)                           ; hl = z
                         ld      de, (DELTA4)                         ; de = delta4 i.e. speed * 64 pre computed
                         call    StarsSUBHLDESigned
-                        JumpOnBitSet h,7,ResetStar 
-                        ld      (iy+4),hl
+                        JumpOnBitSet h,7,ResetStar                  ; if z ended up negative then reset the star
+                        ld      (iy+4),hl                           ; save new z pos
 .XEquXPlusXhiMulQ       ld      hl,(iy+0)                           ; hl  = x
                         ld      a,h                                 ;
                         and     $7F                                 ; 
@@ -359,8 +352,7 @@ StarNegYPt:             ld      b,a
                         ld      b,a
 StarDoneY:              ld      a,L2DustColour
                         push    bc
-.DrawStar:              MMUSelectLayer2
-                        call    l2_plot_pixel 
+.DrawStar:              MMUSelectLayer2 : call    l2_plot_pixel 
                         ld      a,(iy+5)
                         pop    bc
                         JumpIfAGTENusng $60,EndofStarsLoop
@@ -375,16 +367,14 @@ StarDoneY:              ld      a,L2DustColour
                         ld      a,L2DustColour
                         inc     b
                         push    bc
-                        MMUSelectLayer2
-                        call    l2_plot_pixel 
+                        MMUSelectLayer2 :   call    l2_plot_pixel 
                         ld      a,(iy+5)
                         pop    bc
                         ld      a,L2DustColour
                         dec     c
-                        MMUSelectLayer2
-                        call    l2_plot_pixel  
+                        MMUSelectLayer2 :   call    l2_plot_pixel  
 EndofStarsLoop:         pop     bc                                      ;  0
-                        push    iy                                      ; +1
+NextStarLoop3:          push    iy                                      ; +1
                         pop     hl                                      ;  0
                         add     hl,6
 NextStarLoop2:          push    hl                                      ; +1
@@ -392,18 +382,11 @@ NextStarLoop2:          push    hl                                      ; +1
                         dec     b
                         jp      nz,StarProcessLoop
                         ret
-ResetStar:              ;break
-                        ;pop     de
-                        pop     bc                                      ; 0
-                        ld      a,(NumberOfStarsNOSTM)
-                        sub     b
-                        ld      d,a
-                        ld      e,6
-                        mul
-                        ld      hl,varDust
-                        add     hl,de
+ResetStar:              pop     bc                                      ; 0
+                        push    iy                                      ; +1 (current star)
+                        pop     hl                                      ; 0  
                         call    InitStarAtHL
-                        jp      NextStarLoop2
+                        jp      NextStarLoop3
 ;----------------------------------------------------------------------------------------------------------------------------------               
 ProjectStarXToScreen:   ld      c,(iy+0)
                         ld      a,(iy+1)
