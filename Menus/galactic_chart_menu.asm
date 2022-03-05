@@ -5,6 +5,9 @@ galactic_chart_header		equ 13
 galactic_star_colour		equ 216
 galactic_star_colour2		equ 108
 galactic_chart_y_offset		equ $18
+galactic_chart_hyper_offset equ 4
+galactic_chart_hyper_x_offset equ 32 - 4
+galactic_chart_hyper_y_offset equ 32 - 4 + 24
 galactic_chart_distance     DB "Distance: "
 galactic_chart_dist_amount  DB "000"
 galactic_chart_decimal      DB "."
@@ -44,163 +47,159 @@ GCM_draw_chart_circle_and_crosshair:
 	ret
 ; TODO MOVE CURSOR CODE
 
-GCM_draw_hyperspace_cross_hair:
-	ld		bc,(TargetPlanetX)              ; bc = selected jump
-.OnGalacticChart:
-	srl		b								; but row is row / 2
-	MMUSelectSpriteBank
-	call	sprite_galactic_hyper_cursor
-	ret
+GCM_draw_hyperspace_cross_hair: ld		bc,(TargetSystemX)              ; bc = selected jump
+                                push    bc
+                                srl		b								; but row is row / 2
+                                MMUSelectSpriteBank
+                                call	sprite_galactic_hyper_cursor
+                                pop     bc
+                                call	sprite_ghc_move
+                                ret
 
 
-plot_gc_stars:
-	xor		a
-	ld		(XSAV),a
-    ld      ix,galaxy_data
-.CounterLoop:
-    ld      a,(Galaxy)
-    MMUSelectGalaxyA
-    push    ix
-    pop     hl
-    ld      de,SystemSeed
-	call    copy_seed
-	ld		a,(SystemSeed+3)				; QQ15+3 \ seed w1_h is Xcoord of star
-	ld		c,a								; c = X Coord
-	ld		a,(SystemSeed+1)
-	srl		a								; Ycoord /2
-	add		a,galactic_chart_y_offset		; add offset to Y coord of star
-	ld		b,a								; b = row
-	push	bc
-	ld		a,galactic_star_colour
-    MMUSelectLayer2
-	call	l2_plot_pixel
-	pop		bc
-	ld		a,(SystemSeed+4)
-	or		$50								; minimum distance away
-	cp		$90
-	jr		nc,.NoSecondPixel
-.SecondPixel:
-	inc		c
-	ld		a,galactic_star_colour2
-    MMUSelectLayer2
-	call	l2_plot_pixel
-.NoSecondPixel:
-    push    ix
-    pop     hl
-    add     hl,8
-    push    hl
-    pop     ix
-	ld		a,(XSAV)
-	dec		a
-	cp		0
-	ret		z
-	ld		(XSAV),a
-	jr		.CounterLoop
+plot_gc_stars:          xor		a
+                        ld		(XSAV),a
+                        ld      ix,galaxy_data
+.CounterLoop:           ld      a,(Galaxy)
+                        MMUSelectGalaxyA
+                        push    ix
+                        pop     hl
+                        ld      de,SystemSeed
+                        call    copy_seed
+                        ld		a,(SystemSeed+3)				; QQ15+3 \ seed w1_h is Xcoord of star
+                        ld		c,a								; c = X Coord
+                        ld		a,(SystemSeed+1)
+                        srl		a								; Ycoord /2
+                        add		a,galactic_chart_y_offset		; add offset to Y coord of star
+                        ld		b,a								; b = row
+                        push	bc
+                        ld		a,galactic_star_colour
+                        MMUSelectLayer2
+                        call	l2_plot_pixel
+                        pop		bc
+                        ld		a,(SystemSeed+4)
+                        or		$50								; minimum distance away
+                        cp		$90
+                        jr		nc,.NoSecondPixel
+.SecondPixel:           inc		c
+                        ld		a,galactic_star_colour2
+                        MMUSelectLayer2
+                        call	l2_plot_pixel
+.NoSecondPixel:         push    ix
+                        pop     hl
+                        add     hl,8
+                        push    hl
+                        pop     ix
+                        ld		a,(XSAV)
+                        dec		a
+                        cp		0
+                        ret		z
+                        ld		(XSAV),a
+                        jr		.CounterLoop
 
 GALDP       DB "********++++++++"
-draw_galactic_chart_menu:
-    INCLUDE "Menus/clear_screen_inline_no_double_buffer.asm"
-    ld      ixl,$DC
-    ld      a,$40
-    ld      (MenuIdMax),a
-    ld      hl,(PresentSystemX)
-    ld      (TargetPlanetX),hl
-    call    gc_present_system               ; Set up the seed for present system
-.Drawbox:
-	ld		bc,$0101
-	ld		de,$BEFD
-	ld		a,$C0
-	MMUSelectLayer2
-	call	l2_draw_box
-	ld		bc,$0A01
-	ld		de,$FEC0
-	call	l2_draw_horz_line
-.StaticText:
-	ld		a,galactic_chart_header
-	call	expandTokenToString
-	ld		b,1
-	ld		hl,galactic_chart_boiler_text
-	call	GCM_print_boiler_text
-.CircleandCrosshair:
-	call	GCM_draw_chart_circle_and_crosshair
-	call	GCM_draw_hyperspace_cross_hair
-	call	plot_gc_stars
-    ld      a,(Galaxy)
-    MMUSelectGalaxyA
-    ld      bc,(TargetPlanetX)
-    ld      (GalaxyTargetSystem),bc
-    call    galaxy_system_under_cursor
-    call    gc_name_if_possible
-    xor     a
-    ld      (gcFindInputMode),a
+draw_galactic_chart_menu:   InitNoDoubleBuffer
+                            ld      ixl,$DC
+                            ld      a,$40
+                            ld      (MenuIdMax),a
+                            ld      hl,(PresentSystemX)
+;                            ld      (TargetSystemX),hl
+                            call    gc_present_system               ; Set up the seed for present system
+.Drawbox:                   ld		bc,$0101
+                            ld		de,$BEFD
+                            ld		a,$C0
+                            MMUSelectLayer2
+                            call	l2_draw_box
+                            ld		bc,$0A01
+                            ld		de,$FEC0
+                            call	l2_draw_horz_line
+.StaticText:                ld		a,galactic_chart_header
+                            call	expandTokenToString
+                            ld		b,1
+                            ld		hl,galactic_chart_boiler_text
+                            call	GCM_print_boiler_text
+.CircleandCrosshair:        call	GCM_draw_chart_circle_and_crosshair
+                            call	GCM_draw_hyperspace_cross_hair
+                            call	plot_gc_stars
+                            ld      a,(Galaxy)
+                            MMUSelectGalaxyA
+                            ld      bc,(TargetSystemX)
+                            call    galaxy_system_under_cursor          ; TODO for some reason this bit
+                            cp      0                                   ; does not reset cursor on a miss
+                            jr      nz,.CurrentTargetIsValid
+.CurrentTargetIsInvalid:    CopyPresentSystemToTarget
+                            ld      bc,(TargetSystemX)
+                            MMUSelectSpriteBank
+                            call	sprite_ghc_move
+.CurrentTargetIsValid:      ld      a,(Galaxy)
+                            MMUSelectGalaxyA
+                            ld      (GalaxyTargetSystem),bc
+                            call    galaxy_system_under_cursor
+                            call    gc_name_if_possible
+                            xor     a
+                            ld      (gcFindInputMode),a
 ;IFDEF DOUBLEBUFFER
 ;    MMUSelectLayer2
 ;    call  l2_flip_buffers
 ;ENDIF
-	ret
+                            ret
 
-gcDelayVal        equ $0A
-gcBlinkVal        equ $10
-
-gcFindInputMode   DB  0
-gcCursorBlink     DB  gcBlinkVal
-gcCursorChar      DB  " "
-gcEndOfString     DB  0
-gcInputText       DS  31
-gcInputDelay      DS  gcDelayVal
-                  DB  0,0,0,0,0
-gcBlank           DS  32
+gcDelayVal                  equ $0A
+gcBlinkVal                  equ $10
+            
+gcFindInputMode             DB  0
+gcCursorBlink               DB  gcBlinkVal
+gcCursorChar                DB  " "
+gcEndOfString               DB  0
+gcInputText                 DS  31
+gcInputDelay                DS  gcDelayVal
+                            DB  0,0,0,0,0
+gcBlank                     DS  32
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_display_find_text:
- 	ld		de,galactic_find_position   ; Wipe input area on screen
-    ld      hl,galactic_find_message
-    MMUSelectLayer1
-	call	l1_print_at
-    ret
+gc_display_find_text:   ld		de,galactic_find_position   ; Wipe input area on screen
+                        ld      hl,galactic_find_message
+                        MMUSelectLayer1
+                        call	l1_print_at
+                        ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_display_find_string:
-    ld      de,gcInputText
-    call    keyboard_copy_input_to_de
-    ld      hl,gcCursorChar         ; Now just copy cursor char too
-    ldi                             ; Copy cursor to local
-    ld      a,(InputCursor)
-    inc     a
-    ld      b,a
-    ld      a,20
-    sub     b
-    ld      b,a
-    ld      a," "
-.SpacePad
-    ld      (de),a
-    inc     de
-    djnz    .SpacePad
-    xor     a
-    ld      (de),a
-	ld		de,galactic_find_text    ; Display text
-    ld      hl,gcInputText
-    MMUSelectLayer1
-	call	l1_print_at
-    ret
+gc_display_find_string: ld      de,gcInputText
+                        call    keyboard_copy_input_to_de
+                        ld      hl,gcCursorChar         ; Now just copy cursor char too
+                        ldi                             ; Copy cursor to local
+                        ld      a,(InputCursor)
+                        inc     a
+                        ld      b,a
+                        ld      a,20
+                        sub     b
+                        ld      b,a
+                        ld      a," "
+.SpacePad:              ld      (de),a
+                        inc     de
+                        djnz    .SpacePad
+                        xor     a
+                        ld      (de),a
+                        ld		de,galactic_find_text    ; Display text
+                        ld      hl,gcInputText
+                        MMUSelectLayer1
+                        call	l1_print_at
+                        ret
 
-blink_cursor:
-    ld      a,(gcCursorBlink)
-    dec     a
-    ld      (gcCursorBlink),a
-    ret     nz
-.FlashCursor:
-    ld      a,gcBlinkVal
-    ld      (gcCursorBlink),a
-    ld      a,(gcCursorChar)
-    cp      " "
-    jr      z,.ChangeToStar
-    ld      a," "
-    ld      (gcCursorChar),a
-    ret
-.ChangeToStar:
-    ld      a,"*"
-    ld      (gcCursorChar),a
-    ret
+blink_cursor:           ld      a,(gcCursorBlink)
+                        dec     a
+                        ld      (gcCursorBlink),a
+                        ret     nz
+.FlashCursor:           ld      a,gcBlinkVal
+                        ld      (gcCursorBlink),a
+                        ld      a,(gcCursorChar)
+                        cp      " "
+                        jr      z,.ChangeToStar
+                        ld      a," "
+                        ld      (gcCursorChar),a
+                        ret
+.ChangeToStar:          ld      a,"*"
+                        ld      (gcCursorChar),a
+                        ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 loop_gc_menu:           ld      a,(gcFindInputMode)
                         cp      0
@@ -258,7 +257,7 @@ AlreadyInInputMode:     ld      a,(gcInputDelay)                    ; keyboard n
                         ld      c,a
                         ld      a,(GalaxyWorkingSeed+1)
                         ld      b,a
-                        ld      (TargetPlanetX),bc
+                        ld      (TargetSystemX),bc
                         call    UpdateGalacticCursor
                         ld		de,galactic_find_position   ; Wipe input area on screen
                         ld      hl,galactic_find_match
@@ -293,44 +292,45 @@ galctic_chart_cursors:  ld      a,(gcFindInputMode)
                         call   c,gc_RecenterPressed
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_UpPressed:           ld     a,(TargetPlanetX+1)
+gc_UpPressed:           ld     a,(TargetSystemX+1)
                         JumpIfAEqNusng 1,gc_BoundsLimit
                         dec     a
-                        ld      (TargetPlanetX+1),a
+                        ld      (TargetSystemX+1),a
                         call    UpdateGalacticCursor
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_DownPressed:         ld     a,(TargetPlanetX+1)
+gc_DownPressed:         ld     a,(TargetSystemX+1)
                         JumpIfAEqNusng 255,gc_BoundsLimit
                         inc    a
-                        ld      (TargetPlanetX+1),a
+                        ld      (TargetSystemX+1),a
                         call    UpdateGalacticCursor
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_LeftPressed:         ld     a,(TargetPlanetX)
+gc_LeftPressed:         ld     a,(TargetSystemX)
                         JumpIfAEqNusng 2,gc_BoundsLimit
                         dec    a
-                        ld      (TargetPlanetX),a
+                        ld      (TargetSystemX),a
                         call    UpdateGalacticCursor
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_RightPressed:        ld     a,(TargetPlanetX)
+gc_RightPressed:        ld     a,(TargetSystemX)
                         JumpIfAEqNusng 253,gc_BoundsLimit
                         inc    a
-                        ld      (TargetPlanetX),a
+                        ld      (TargetSystemX),a
                         call    UpdateGalacticCursor
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 gc_HomePressed:         ld      hl,(PresentSystemX)
-                        ld      (TargetPlanetX),hl
+                        ld      (TargetSystemX),hl
                         call    UpdateGalacticCursor
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_RecenterPressed:     ld      a,(Galaxy)       ; DEBUG as galaxy n is not working
+gc_RecenterPressed:     break
+                        ld      a,(Galaxy)       ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
-                        ld      bc,(TargetPlanetX)
+                        ld      bc,(TargetSystemX)
                         call    find_nearest_to_bc
-                        ld      (TargetPlanetX),bc
+                        ld      (TargetSystemX),bc
                         call    UpdateGalacticCursor
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
@@ -338,13 +338,12 @@ gc_BoundsLimit          xor     a
                         ret
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-UpdateGalacticCursor:   ld		bc,(TargetPlanetX)              ; bc = selected jump
-OnGalacticChart:        srl		b								; but row is row / 2
-                        MMUSelectSpriteBank
+UpdateGalacticCursor:   ld		bc,(TargetSystemX)              ; bc = selected jump
+OnGalacticChart:        MMUSelectSpriteBank
                         call	sprite_ghc_move
                         ld      a,(Galaxy)
                         MMUSelectGalaxyA
-                        ld      bc,(TargetPlanetX)
+                        ld      bc,(TargetSystemX)
                         ld      (GalaxyTargetSystem),bc
                         call    galaxy_system_under_cursor
                         cp      0
@@ -394,7 +393,7 @@ gc_calc_distance:       ld      a,(Galaxy)
                         ldi
                         ld      bc,(PresentSystemX)
                         ld      (GalaxyPresentSystem),bc
-                        ld      bc,(TargetPlanetX)
+                        ld      bc,(TargetSystemX)
                         ld      (GalaxyDestinationSystem),bc
                         call    galaxy_find_distance            ; get distance into HL
                         ld      ix,(Distance)

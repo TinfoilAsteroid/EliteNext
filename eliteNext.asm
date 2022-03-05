@@ -48,6 +48,8 @@ ScreenHyperspace EQU ScreenDocking+1
                         INCLUDE	"./Hardware/memory_bank_defines.asm"
                         INCLUDE "./Hardware/screen_equates.asm"
                         INCLUDE "./Data/ShipModelEquates.asm"
+                        INCLUDE "./Menus/clear_screen_inline_no_double_buffer.asm"	
+                        INCLUDE "./Macros/graphicsMacros.asm"
                         INCLUDE "./Macros/callMacros.asm"
                         INCLUDE "./Macros/carryFlagMacros.asm"
                         INCLUDE "./Macros/CopyByteMacros.asm"
@@ -63,7 +65,9 @@ ScreenHyperspace EQU ScreenDocking+1
                         INCLUDE "./Tables/message_queue_macros.asm"
                         INCLUDE "./Variables/general_variables_macros.asm"
                         INCLUDE "./Variables/UniverseSlot_macros.asm"
+                        
                         INCLUDE "./Data/ShipIdEquates.asm"
+                        
 
 
 charactersetaddr		equ 15360
@@ -73,46 +77,27 @@ STEPDEBUG               equ 1
 EliteNextStartup:       ORG         $8000
                         di
                         ; "STARTUP"
-                        MMUSelectLayer1
-                        call		l1_cls
+                        MMUSelectLayer1 : call		l1_cls
                         ld			a,7
                         call		l1_attr_cls_to_a
                         ld          a,$FF
                         call        l1_set_border
-                        MMUSelectSpriteBank
-                        call		sprite_load_sprite_data
-Initialise:             MMUSelectLayer2
-                        call 		l2_initialise
+                        MMUSelectSpriteBank : call		sprite_load_sprite_data
+Initialise:             MMUSelectLayer2 :  call 		l2_initialise
                         ClearForceTransition
 TidyDEBUG:              ld          a,16
                         ld          (TidyCounter),a
-
 TestText:               xor			a
                         ld      (JSTX),a
-                        MMUSelectCommander
-                        call		defaultCommander
+                        MMUSelectCommander: call		defaultCommander
 DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks su n
-                        MMUSelectSpriteBank
-                        call		init_sprites
-                        
-                        IFDEF DOUBLEBUFFER
-                            MMUSelectLayer2
-                            call        l2_cls
-                            call  l2_flip_buffers
-                        ENDIF
+                        MMUSelectSpriteBank : call		init_sprites
+.ClearLayer2Buffers:    DoubleBufferIfPossible
+                        DoubleBufferIfPossible
 ; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files                        
-InitialiseGalaxies:    call		ResetUniv                       ; Reset ship data
-                       call        ResetGalaxy                     ; Reset each galaxy copying in code
-                       call        SeedAllGalaxies
-
-.ClearLayer2Buffers:    MMUSelectLayer2
-                        call        l2_cls
-                        IFDEF DOUBLEBUFFER    
-                            MMUSelectLayer2
-                            call  l2_flip_buffers
-                        ENDIF    
-                        
-                        
+InitialiseGalaxies:     call		ResetUniv                       ; Reset ship data
+                        call        ResetGalaxy                     ; Reset each galaxy copying in code
+                        call        SeedAllGalaxies
 ;.Sa                        MMUSelectUniverseN 0                       
                         
 ;InitialiseDemoShip:     call    ClearFreeSlotList
@@ -132,7 +117,10 @@ InitialiseMainLoop:     xor     a
                         call    InitialiseCommander
                         MMUSelectUniverseN 2    
                         call    SetInitialShipPosition
-                                               
+; Initialist screen refresh
+                        ld      a, ConsoleRefreshInterval
+                        ld      (ConsoleRefreshCounter),a
+                        SetMemFalse    ConsoleRedrawFlag
                         MMUSelectStockTable
                         call    generate_stock_market
                         call    ResetMessageQueue
@@ -194,8 +182,7 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
                         call    DisplayCurrentMessage
                         call    UpdateMessageTimer
                       
-.NoMessages:            MMUSelectLayer2
-                        call   l2_cls                                       ; change this to do top 2 thirds only  fopr console                 
+.NoMessages:            MMUSelectLayer2 : call   l2_cls_upper_two_thirds
                         MMUSelectLayer1
 .UpdateSun:             MMUSelectSun
 .DEBUGFORCE:            ;ld      hl,$0000
@@ -214,15 +201,25 @@ DrawDustForwards:       ld     a,$DF
                         ld     (line_gfx_colour),a                         
 DustUpdateBank:         MMUSelectViewFront                                    ; This needs to be self modifying
 DustUpdateRoutine:      call   DustForward                                   ; This needs to be self modifying
-PrepLayer2:             MMUSelectLayer2                                       ; Clear layer 2 for graphics
-                      ;  call   l2_cls                        
+PrepLayer2:             ld      hl,ConsoleRefreshCounter
+                        dec     (hl)
+                        jp      z,ConsoleDraw
+                        jp      m,ConsoleDrawReset
+.ConsoleNotDraw:        SetMemFalse ConsoleRedrawFlag                        
+                        jp      ProcessPlanet
+ConsoleDraw:            SetMemTrue ConsoleRedrawFlag
+                        MMUSelectLayer2 :   call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
+                        jp      ProcessPlanet
+ConsoleDrawReset:       SetMemTrue ConsoleRedrawFlag
+                        ld      (hl),ConsoleRefreshInterval                     
+                        MMUSelectLayer2 :   call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
 ;ProcessSun:             call    DrawForwardSun
 ProcessPlanet:
 ProcessShipModels:      call   DrawForwardShips                               ; Draw all ships (this may need to be self modifying)
                         ; add in loop so we only update every 4 frames, need to change CLS logic too, 
                         ; every 4 frames needs to do 2 updates so updates both copies of buffer
                         ; now will CLS bottom thrid
-                        call    UpdateConsole                              ; Update display console on layer 1
+                        CallIfMemTrue ConsoleRedrawFlag, UpdateConsole
                         jp LoopRepeatPoint                                    ; And we are done with views, so check if there was a special command to do
 ;..If we were not in views then we were in display screens/menus...................................................................
 MenusLoop:              ld      hl,(ScreenLoopJP+1)
@@ -244,7 +241,8 @@ HandleLaunched:         JumpIfAEqNusng  $FD, WeHaveCompletedLaunch
                         jp  DoubleBufferCheck
 WeHaveCompletedLaunch:  call    LaunchedFromStation
                         jp      DoubleBufferCheck
-WeAreHJumping:          call        hyperspace_Lightning
+WeAreHJumping:          call    hyperspace_Lightning
+                        break
                         jp      c,DoubleBufferCheck
                         ld      a,$FB
                         ld      (DockedFlag),a
@@ -254,7 +252,7 @@ WeAreHEntering:         ld      a,$FA
                         jp  DoubleBufferCheck
 WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
-                        ld      hl,(TargetPlanetX)
+                        ld      hl,(TargetSystemX)
                         ld      (PresentSystemX),hl
                         ld      b,h
                         ld      c,l
@@ -287,7 +285,8 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not worki
 ;;TODO                       call    GetShipBankId
 ;;TODO                       MMUSelectUniverseBankN 1
 ;;TODO                       call    CopyBodyToUniverse
-
+                        ret
+                        
 LoopEventTriggered:     
 .CanWeDoAnAdd:          call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
                         ret     c                                   ; then may as well just skip routine
@@ -347,7 +346,7 @@ LoopEventTriggered:
                         ld      hl, ExtraVesselsCounter             ; prevent the next spawning
                         inc     (hl)                                ; 
                         and     3                                   ; a = random 0..3
-                        MMUSelectShipBank1
+                        MMUSelectShipBank1 
                         GetByteAInTable ShipHunterTable             ; get hunter ship type
                         jp      SpawnShipTypeA
                         ;.......implicit ret
@@ -380,8 +379,6 @@ LaunchPlayerMissile:    call    FindNextFreeSlotInC                 ; Check if w
                         call    UnivSetPlayerMissile
                         ret
 .MissileMissFire:       ret ; TODO bing bong noise misfire message
-                     
-                        
 
 SpawnShipTypeA:         ld      iyl,a                               ; save ship type
                         MMUSelectShipBank1                          ; select bank 1
@@ -401,7 +398,6 @@ SpawnShipTypeA:         ld      iyl,a                               ; save ship 
                         ld      b,a
                         ld      a,iyl
                         call    SetSlotAToClassB
-                     
                         ret
 
                         ; reset main loop counters
@@ -425,10 +421,10 @@ DoubleBufferCheck:      ld      a,00
                             cp     0
                             call   nz,l2_flip_buffers
                         ENDIF
-TestTransition:        ld      a,(ScreenTransitionForced)          ; was there a bruite force screen change in any update loop
+TestTransition:         ld      a,(ScreenTransitionForced)          ; was there a bruite force screen change in any update loop
                         cp      $FF
                         jp      z,MainLoop
-BruteForceChange:      ld      d,a
+BruteForceChange:       ld      d,a
                         ld      e,ScreenMapRow
                         mul
                         ld      ix,ScreenKeyMap
@@ -534,7 +530,8 @@ DrawForwardShips:       xor     a
 ;;;Does nothing                       MMUSelectScreenA
 ;;;Does nothing         ld      a,(CurrentShipUniv)
 ;;;Does nothing         MMUSelectUniverseA
-                        call    UpdateScannerShip               ; Always update ship positions                        
+                        
+                        CallIfMemTrue ConsoleRedrawFlag,UpdateScannerShip ; Always update ship positions                        
 .ProcessedDrawShip:     ld      a,(CurrentShipUniv)
                         inc     a
                         JumpIfALTNusng   UniverseSlotListSize, .DrawShipLoop

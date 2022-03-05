@@ -374,7 +374,7 @@ draw_eqship_items:      MMUSelectLayer1
                         djnz    .DrawARow
                         ret
 
-draw_eqshp_menu:        INCLUDE "Menus/clear_screen_inline_no_double_buffer.asm"	
+draw_eqshp_menu:        InitNoDoubleBuffer
                         ld      a,$20
                         ld      (MenuIdMax),a
 .SetData:               ld      a,(Galaxy)

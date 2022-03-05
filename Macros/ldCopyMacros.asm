@@ -29,10 +29,11 @@ ldCopyTextAtHLtoDE:     MACRO
 .CopyLoop:              ld      a,(hl)
                         ld      (de),a
                         cp      0
-                        ret     z
+                        jp      z,.DoneCopy
                         inc     hl
                         inc     de
                         jr      .CopyLoop
+.DoneCopy:              
                         ENDM
                         
 ldClearTextLoop:        MACRO   TextSize

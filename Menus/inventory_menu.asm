@@ -167,7 +167,7 @@ INM_GetCash:            ld		hl,(Cash+2)
                         ldir
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-draw_inventory_menu:    INCLUDE "Menus/clear_screen_inline_no_double_buffer.asm"	
+draw_inventory_menu:    InitNoDoubleBuffer
                         ld      a,$08
                         ld      (MenuIdMax),a
                         MMUSelectSpriteBank    

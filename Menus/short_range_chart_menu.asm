@@ -45,7 +45,7 @@ SRM_draw_chart_circle_and_crosshair:
 ; TODO MOVE CURSOR CODE
 ;----------------------------------------------------------------------------------------------------------------------------------
 SRM_draw_hyperspace_cross_hair:
-                        ld		bc,(TargetPlanetX)              ; bc = selected jump
+                        ld		bc,(TargetSystemX)              ; bc = selected jump
                         ld		de,(PresentSystemX)
                         ld		c,src_x_centre
                         ld		b,src_y_centre
@@ -55,7 +55,7 @@ SRM_draw_hyperspace_cross_hair:
 ;----------------------------------------------------------------------------------------------------------------------------------
 src_get_name:           ld      a,(Galaxy)
                         MMUSelectGalaxyA
-                        ld      bc,(TargetPlanetX)
+                        ld      bc,(TargetSystemX)
                         ld      (GalaxyTargetSystem),bc
                         call    galaxy_system_under_cursor
                         cp      0
@@ -68,24 +68,24 @@ src_get_name:           ld      a,(Galaxy)
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 SRM_update_hyperspace_cross_hair:
-                        ld		bc,(TargetPlanetX)              ; bc = selected jump
+                        ld		bc,(TargetSystemX)              ; bc = selected jump
                         ld		de,(PresentSystemX)
-                        ld		a,c
-                        sub		e
-                        jp      p,.NoFlipX
-                        neg
-                        sla		a
-                        sla		a
-                        ld      c,a
-                        ld      a,src_x_centre
-                        sub     c
-                        ld      c,a
-                        jp      .fixY
+                        ld		a,c                             ; a = target x pos
+                        sub		e                               ; a = target x - present x
+                        jp      p,.NoFlipX                      ; if > 0 skip next bit
+                        neg                                     ; c = a = abs a * 4
+                        sla		a                               ; .
+                        sla		a                               ; .
+                        ld      c,a                             ;  .
+                        ld      a,src_x_centre                  ; c = a = centre screen - c
+                        sub     c                               ; .
+                        ld      c,a                             ; .
+                        jp      .fixY                           ;. now do Y
 .NoFlipX:               sla		a
                         sla		a
                         add		a,src_x_centre
                         ld      c,a
-.fixY:                  ld		a,b
+.fixY:                  ld		a,b                             ; for Y its * 2
                         sub		d
                         jp      p,.NoFlipY
                         neg
@@ -121,7 +121,7 @@ src_clear_name_area:    ld      h,8
 ;----------------------------------------------------------------------------------------------------------------------------------
 src_system_undercursor: ld      a,(Galaxy)
                         MMUSelectGalaxyA
-                        ld      bc,(TargetPlanetX)
+                        ld      bc,(TargetSystemX)
                         ld      (GalaxyTargetSystem),bc
                         call    galaxy_system_under_cursor
                         cp      0
@@ -157,7 +157,7 @@ src_calc_distance:      ld      a,(Galaxy)                                      
                         ldi
                         ld      bc,(PresentSystemX)
                         ld      (GalaxyPresentSystem),bc
-                        ld      bc,(TargetPlanetX)
+                        ld      bc,(TargetSystemX)
                         ld      (GalaxyDestinationSystem),bc
                         call    galaxy_find_distance                            ; get distance into HL
                         ld      ix,(Distance)
@@ -414,11 +414,10 @@ SRCtoofar:              pop     hl
                         ld		(XSAV),a
                         jp		SRCCounterLoop
 ;----------------------------------------------------------------------------------------------------------------------------------
-draw_local_chart_menu:  INCLUDE "Menus/clear_screen_inline_no_double_buffer.asm"
+draw_local_chart_menu:  InitNoDoubleBuffer
                         ld      a,$80
                         ld      (MenuIdMax),a
-                        ld		hl,(PresentSystemX)
-                        ld		(TargetPlanetX),hl              ; bc = selected jump
+                        CopyPresentSystemToTarget               ; for short range we always start at present and cusor on present
 SRCDrawbox:             ld		bc,$0101
                         ld		de,$BEFD
                         ld		a,$C0
@@ -456,45 +455,71 @@ local_chart_cursors:    ld     a,(CursorKeysPressed)
                         call   c,src_RecenterPressed
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-src_UpPressed:          ld     a,(TargetPlanetY)
-                        JumpIfAEqNusng 1,src_BoundsLimit
+src_UpPressed:          ld     a,(TargetSystemY)
+                        JumpIfAIsZero   src_BoundsLimit 
+                        ld      b,a                         ; save target as we will need it
+                        ld      a,(PresentSystemY)
+                        sub     b                           ; get the difference between present and target
+                        jp      m,.SkipBoundsTest           ; if target is right of present, we can go left
+                        JumpIfAGTENusng 40,src_BoundsLimit  ; if no more than 20 then OK
+.SkipBoundsTest:        ld      a,b
                         dec     a
-                        ld      (TargetPlanetY),a
+                        ld      (TargetSystemY),a
                         call    SRM_update_hyperspace_cross_hair
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-src_DownPressed:        ld     a,(TargetPlanetY)
+src_DownPressed:        ld     a,(PresentSystemY)
+                        ld      b,a
+                        ld      a,(TargetSystemY)
+                        ld      c,a
+                        JumpIfAEqNusng 128,src_BoundsLimit
+                        sub     b
+                        jp      m,.SkipBoundsTest
+                        JumpIfAGTENusng 40,src_BoundsLimit
+.SkipBoundsTest:        ld      a,c
+                        inc    a
+                        ld      (TargetSystemY),a
+                        call    SRM_update_hyperspace_cross_hair
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+src_LeftPressed:        ld      a,(TargetSystemX)           ; we can't move left if target is zero
+                        JumpIfAIsZero   src_BoundsLimit 
+                        ld      b,a                         ; save target as we will need it
+                        ld      a,(PresentSystemX)
+                        sub     b                           ; get the difference between present and target
+                        jp      m,.SkipBoundsTest           ; if target is right of present, we can go left
+                        JumpIfAGTENusng 20,src_BoundsLimit  ; if no more than 20 then OK
+.SkipBoundsTest:        ld      a,b
+                        dec     a
+                        ld      (TargetSystemX),a
+                        call    SRM_update_hyperspace_cross_hair
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+src_RightPressed:       ld      a,(PresentSystemX)
+                        ld      b,a
+                        ld      a,(TargetSystemX)
+                        ld      c,a
                         JumpIfAEqNusng 255,src_BoundsLimit
+                        sub     b
+                        jp      m,.SkipBoundsTest
+                        JumpIfAGTENusng 20,src_BoundsLimit
+.SkipBoundsTest:        ld      a,c
                         inc    a
-                        ld      (TargetPlanetY),a
-                        call    SRM_update_hyperspace_cross_hair
-                        ret
-;----------------------------------------------------------------------------------------------------------------------------------
-src_LeftPressed:        ld     a,(TargetPlanetX)
-                        JumpIfAEqNusng 2,src_BoundsLimit
-                        dec    a
-                        ld      (TargetPlanetX),a
-                        call    SRM_update_hyperspace_cross_hair
-                        ret
-;----------------------------------------------------------------------------------------------------------------------------------
-src_RightPressed:       ld     a,(TargetPlanetX)
-                        JumpIfAEqNusng 253,src_BoundsLimit
-                        inc    a
-                        ld      (TargetPlanetX),a
+                        ld      (TargetSystemX),a
                         call    SRM_update_hyperspace_cross_hair
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 src_HomePressed:        ld      hl,(PresentSystemX)
-                        ld      (TargetPlanetX),hl
+                        ld      (TargetSystemX),hl
                         call    SRM_update_hyperspace_cross_hair
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 src_RecenterPressed:    break
                         ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
-                        ld      bc,(TargetPlanetX)
+                        ld      bc,(TargetSystemX)
                         call    find_nearest_to_bc
-                        ld      (TargetPlanetX),bc
+                        ld      (TargetSystemX),bc
                         call    SRM_update_hyperspace_cross_hair
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------

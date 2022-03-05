@@ -16,10 +16,10 @@ defaultCommander:       ld		de,CommanderName				;set commander name
                         ldir	
                         ld		a,defaultHomeX
                         ld		(PresentSystemX),a
-                        ld		(TargetPlanetX),a
+                        ld		(TargetSystemX),a
                         ld		a,defaultHomeY
                         ld		(PresentSystemY),a
-                        ld		(TargetPlanetY),a
+                        ld		(TargetSystemY),a
 	; testing
                         ld		hl,IndexedWork
                         call	copy_galaxy_to_system

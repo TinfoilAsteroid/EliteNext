@@ -300,21 +300,19 @@ UniverseSlotType        DS  UniverseSlotListSize ; base type, e.g. missile, carg
 TransporterCount        DB  0
 CopCount                DB  0 
 PirateCount             DB  0
-
+ConsoleRefreshCounter   DB  ConsoleRefreshInterval ; Every 4 interations the console will update twice (once for primary and once for seconday buffer)
+ConsoleRedrawFlag       DB  0
 ; --- Galaxy Data --------------------------;
 Galaxy      			DB	0				; 0367 Galaxy (incremented with galactiv drive
 WorkingSeeds			DS	6
 PresentSystemSeeds		DS	6				; 03B2 - 03B7
 GalaxySeeds				DS	6				; 035B - 0360 QQ21
-PresentSystemX			DB	0				; 0359 - 035A QQ0 X Y
-PresentSystemY			DB  0
-TargetPlanetX			DB	0               ; 03C1
-TargetPlanetY			DB	0               ; 03C2
+PresentSystemX			DB	0				; System we are currently in
+PresentSystemY			DB  0				; System we are currently in
+TargetSystemX			DB	0				; System we are targeting for jump
+TargetSystemY			DB	0				; System we are targeting for jump
 GovPresentSystem		DB	0				; 03AE Govenment 
 TekPresentSystem		DB	0				; 03AF Technology
-;SRCTargetPlanetX		DB	0               ; Used for short range chart cursor
-;SRCTargetPlanetY		DB	0               ; then divided down to target planet for compatibilit with galactic chart routines
-NumberOfStarsNOSTM		DB	0				; 03C3 NOSTM  \ number of stars, dust.
 
 CompassColor			DB	0				; 03C5
 SoundToggle				DB	0				; 03C6

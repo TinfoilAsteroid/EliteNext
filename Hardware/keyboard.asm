@@ -389,31 +389,27 @@ EnterPressed            DB  0               ; zero notpressed FF pressed
 InputChanged            DB  0
 InputLimit              EQU 20 
 
-keyboard_copy_input_to_de:
-    ld      hl,InputString
-    ld      a,(InputCursor)
-    cp      0
-    jr      z,.NoString
-    ld      c,a
-    ld      b,0
-    ldir
-.NoString
-    ld      a,0
-    ld      (de),a
-    ret
+keyboard_copy_input_to_de:  ld      hl,InputString
+                            ld      a,(InputCursor)
+                            cp      0
+                            jr      z,.NoString
+                            ld      c,a
+                            ld      b,0
+                            ldir
+.NoString                   ld      a,0
+                            ld      (de),a
+                            ret
 
-initInputText:
-    xor     a
-    ld      (InputCursor),a
-    ld      (EnterPressed),a
-    ld      (InputChanged),a
-    ld      hl,InputString
-    ld      b,30
-.wipeloop:    
-    ld      (hl),a
-    inc     hl
-    djnz    .wipeloop
-    ret
+initInputText:              xor     a
+                            ld      (InputCursor),a
+                            ld      (EnterPressed),a
+                            ld      (InputChanged),a
+                            ld      hl,InputString
+                            ld      b,30
+.wipeloop:                  ld      (hl),a
+                            inc     hl
+                            djnz    .wipeloop
+                            ret
     
 InputName:              xor     a
                         ld      (InputChanged),a
