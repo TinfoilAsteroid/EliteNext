@@ -276,10 +276,11 @@ scan_keyboard:          ld		ix,RawKeys                      ; hl = table of raw 
                         jr		nz,.SkipKeySet
 .SetKeyPressed:	        ld      iyl,a                           ; save current input byte
                         ld      a,(de)                          ; get current keystate
+                        cp      2
+                        jr      z,.AlreadyHeld
                         inc     a                               ; and increment by 1 as its moved from previous state
-                        and     %00000011                       ; up to a maximum of 3. so bit 0 set is pressed, bit 1 set is repeat pressed, i.e. bit 0 = pressed bit bit 1 = held bit
 .SetKey:                ld		(de),a				  	        ; save key Pressed state
-                        ld      a,iyl                           ; and retrieve the current input byte
+.AlreadyHeld:           ld      a,iyl                           ; and retrieve the current input byte
 .SkipKeySet:	        inc		de								; move to next key
                         djnz	.ProcessBitsLoop				; Process all key group bits
                         dec     c                               ; thats one row of bits all processed
@@ -304,7 +305,74 @@ GetKeyStateAddressHL:   MACRO
                         ld      h,(hl)                          ; now hl = address in keypress list
                         ld      l,a
                         ENDM
-                        
+                  
+
+;;old debug codeCurrentX            DB 0
+;;old debug codeCurrentY            DB 0
+;;old debug code                        
+;;old debug codedisplayKeyStatus:       xor         a
+;;old debug code                        ld          (CurrentX),a
+;;old debug code                        ld          hl,RawKeys
+;;old debug code                        ld          a,(hl)
+;;old debug code                        and         %00011111
+;;old debug code                        ld          b,5
+;;old debug code.displayLoop:           push        bc,,hl
+;;old debug code                        rra
+;;old debug code                        jr          c,.displayNoPress
+;;old debug code.displayPress:          push        af
+;;old debug code                        ld          a,(CurrentX)
+;;old debug code                        ld          e,a
+;;old debug code                        ld          a,(CurrentY)
+;;old debug code                        ld          d,a
+;;old debug code                        ld          a,'*'
+;;old debug code                        MMUSelectLayer1
+;;old debug code                        call        l1_print_char
+;;old debug code                        ld          a,(CurrentX)
+;;old debug code                        add         a,8
+;;old debug code                        ld          (CurrentX),a
+;;old debug code                        pop         af
+;;old debug code                        pop         bc,,hl                        
+;;old debug code                        djnz        .displayLoop
+;;old debug code                        ret
+;;old debug code.displayNoPress:        push        af
+;;old debug code                        ld          a,(CurrentX)
+;;old debug code                        ld          e,a
+;;old debug code                        ld          a,(CurrentY)
+;;old debug code                        ld          d,a
+;;old debug code                        ld          a,'O'
+;;old debug code                        MMUSelectLayer1
+;;old debug code                        call        l1_print_char
+;;old debug code                        ld          a,(CurrentX)
+;;old debug code                        add         a,8
+;;old debug code                        ld          (CurrentX),a
+;;old debug code                        pop         af
+;;old debug code                        pop         bc,,hl                        
+;;old debug code                        djnz        .displayLoop
+;;old debug code                        ret
+;;old debug code                        
+;;old debug codedisplayDownStatus:      ld  a,(Keys+      KeyCode_CursorUp)
+;;old debug code                        cp  0
+;;old debug code                        jr      z,.displayNoUp
+;;old debug code                        cp  1
+;;old debug code                        jr      z,.displayUp
+;;old debug code.displayHeld:           ld      de,8*15
+;;old debug code                        ld      a,"*"
+;;old debug code                        MMUSelectLayer1
+;;old debug code                        call        l1_print_char
+;;old debug code                        ret
+;;old debug code.displayUp:             ld      de,8*15
+;;old debug code                        ld      a,"+"
+;;old debug code                        MMUSelectLayer1
+;;old debug code                        call        l1_print_char
+;;old debug code                        ret
+;;old debug code.displayNoUp:             ld      de,8*15
+;;old debug code                        ld      a,"O"
+;;old debug code                        MMUSelectLayer1
+;;old debug code                        call        l1_print_char
+;;old debug code                        ret
+;;old debug code
+
+                  
 ; call with a = c_Pressed key, will then read mapping does this with keyboard scan, waits until key gets to state 1, if it was already held then#
 ; it will have to be let go to reset of 0 and scan again
 ; Deprecated as not used as yet
@@ -359,7 +427,7 @@ is_any_key_pressed:     ld      hl,Keys
                         jr      z,.KeyPressed                   ; if a key was pressed then handle press
                         SetAFalse
                         ret
-.KeyPressed:            ld      a,40                            ; so c will be how many keys still to scan
+.KeyPressed:            ld      a,39                            ; so c will be how many keys still to scan
                         sub     c                               ; so a = 40 - c to get to result
                         ret
 

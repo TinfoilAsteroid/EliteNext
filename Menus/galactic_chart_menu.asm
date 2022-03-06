@@ -136,8 +136,7 @@ draw_galactic_chart_menu:   InitNoDoubleBuffer
                             ld      (GalaxyTargetSystem),bc
                             call    galaxy_system_under_cursor
                             call    gc_name_if_possible
-                            xor     a
-                            ld      (gcFindInputMode),a
+                            SetMemFalse TextInputMode
 ;IFDEF DOUBLEBUFFER
 ;    MMUSelectLayer2
 ;    call  l2_flip_buffers
@@ -147,12 +146,11 @@ draw_galactic_chart_menu:   InitNoDoubleBuffer
 gcDelayVal                  equ $0A
 gcBlinkVal                  equ $10
             
-gcFindInputMode             DB  0
+
 gcCursorBlink               DB  gcBlinkVal
 gcCursorChar                DB  " "
 gcEndOfString               DB  0
 gcInputText                 DS  31
-gcInputDelay                DS  gcDelayVal
                             DB  0,0,0,0,0
 gcBlank                     DS  32
 
@@ -201,38 +199,27 @@ blink_cursor:           ld      a,(gcCursorBlink)
                         ld      (gcCursorChar),a
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-loop_gc_menu:           ld      a,(gcFindInputMode)
-                        cp      0
-                        jr      nz,AlreadyInInputMode
+loop_gc_menu:           JumpIfMemTrue TextInputMode,AlreadyInInputMode
 .StartFindCheck:        ld      a,c_Pressed_Find                        ;Is F pressed
                         call    is_key_pressed
                         ret     nz
                         call    initInputText                           ;Initialise find input
-                        ld      a,$FF
-                        ld      (gcFindInputMode),a                     ; Set input mode to FF
+                        SetMemTrue TextInputMode                      ; Set input mode to FF
                         ld      a,gcBlinkVal
                         ld      (gcCursorBlink),a                       ; Set up Blink
-                        ld      a,gcDelayVal
-                        ld     (gcInputDelay),a                         ; And keyboard rescan delay
 .DisplayInputbar:       call    gc_display_find_text
                         ret
 ;Already in input mode post pressing find
-AlreadyInInputMode:     ld      a,(gcInputDelay)                    ; keyboard next press delay
-                        cp      0                                   ; can no read until its zero
-                        jr      nz,.blinkCursor                     ; so re just go to blink cursor routine if not permitted
+AlreadyInInputMode:     
 .HasKeyBeenPressed:     call    InputName                           ; else we are ready to read input
                         ld      a,(InputChanged)
                         ld      b,a
                         cp      0
                         jr      z,.blinkNoDelay                     ; when we go hear the input delay could be zero a flip over
-                        ld      a,gcDelayVal
-                        ld     (gcInputDelay),a
 .WasItEnter:            ld      a,(EnterPressed)
                         cp      0
                         jr      nz,.FindEnterPressed
-.blinkCursor:           ld      a,(gcInputDelay)
-                        dec     a
-                        ld     (gcInputDelay),a
+.blinkCursor:           
 .blinkNoDelay:          call    blink_cursor
                         ld      a,(gcCursorBlink)
                         cp      gcBlinkVal
@@ -244,7 +231,7 @@ AlreadyInInputMode:     ld      a,(gcInputDelay)                    ; keyboard n
                         ret
 .FindEnterPressed:      xor     a
                         ld      (EnterPressed),a                    ; reset enter
-                        ld      (gcFindInputMode),a
+                        SetMemFalse TextInputMode
                         ld      a,(Galaxy)                          ; Fetch correct galaxy seed bank into memory
                         MMUSelectGalaxyA
                         ld      hl,InputString
@@ -272,9 +259,7 @@ AlreadyInInputMode:     ld      a,(gcInputDelay)                    ; keyboard n
                         call	l1_print_at
                         ret; DOSTUFFHERE
 ;----------------------------------------------------------------------------------------------------------------------------------
-galctic_chart_cursors:  ld      a,(gcFindInputMode)
-                        cp      0
-                        ret     nz
+galctic_chart_cursors:  ReturnIfMemTrue TextInputMode
                         ld      a,(CursorKeysPressed)
                         cp      0
                         ret     z

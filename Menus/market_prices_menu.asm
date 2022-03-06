@@ -373,20 +373,7 @@ MarketLoop:	            push	af
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Handles all the input whilst in the market menu
-SetMktDelay:            MACRO
-                        ld      a,mkt_KeyDelay
-                        ld      (mkt_KeyCoolDownTimer),a
-                        ENDM
-                        
-mkt_KeyCoolDownTimer:   DB      0                   ; how many cycles we count after key press, i.e. input delay
-mkt_KeyDelay            equ     50
-loop_market_menu:       ld      a,(mkt_KeyCoolDownTimer)
-                        cp      0
-                        jr      z, .ProcessKeys
-.StillCooling:          dec     a
-                        ld      (mkt_KeyCoolDownTimer),a
-                        ret
-.ProcessKeys:           ld      a,c_Pressed_CursorUp  
+loop_market_menu:       ld      a,c_Pressed_CursorUp  
                         call    is_key_pressed
                         call    z,mkt_UpPressed
                         ld      a,c_Pressed_CursorDown
@@ -408,7 +395,6 @@ mkt_UpPressed:          ld      a,(mkt_selected_row)
                         ld      hl,mkt_selected_row
                         dec     (hl)
                         call    mkt_highlight_row
-                        SetMktDelay
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 mkt_DownPressed:        ld      a,c_Pressed_CursorDown
@@ -422,8 +408,7 @@ mkt_DownPressed:        ld      a,c_Pressed_CursorDown
                         call    mkt_lowlight_row
                         ld      hl,mkt_selected_row
                         inc     (hl)
-                        call    mkt_highlight_row
-                        SetMktDelay                    
+                        call    mkt_highlight_row                   
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 mkt_LeftPressed:        ld      a,(mkt_selected_row)
@@ -455,7 +440,6 @@ mkt_LeftPressed:        ld      a,(mkt_selected_row)
                         call    PrintMarketItem
                         call    MKT_DisplayCargo
                         call    MKT_DisplayCash
-                        SetMktDelay
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 mkt_RightPressed:       MMUSelectStockTable
@@ -519,5 +503,4 @@ mkt_RightPressed:       MMUSelectStockTable
                         call    PrintMarketItem
                         call    MKT_DisplayCargo
                         call    MKT_DisplayCash
-                        SetMktDelay
                         ret
