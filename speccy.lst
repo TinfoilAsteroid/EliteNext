@@ -1,0 +1,9 @@
+# file opened: h:\OneDrive\EliteNext\speccy.bat
+speccy.bat(1): error: Unrecognized instruction: -brk -16bit -s28 -remote -sound -w3 -zxnext -cur -mmc=C
+speccy.bat(1): error: Unexpected: -brk -16bit -s28 -remote -sound -w3 -zxnext -cur -mmc=C
+1     0000              CSpect.exe -brk -16bit -s28 -remote -sound -w3 -zxnext -cur -mmc=C
+speccy.bat(1): error: Unrecognized instruction: \Cspect\cspect-next-2gb.img
+speccy.bat(1): error: Unexpected: \Cspect\cspect-next-2gb.img
+1     0000               \Cspect\cspect-next-2gb.img
+2     0000
+# file closed: h:\OneDrive\EliteNext\speccy.bat

@@ -1,0 +1,46 @@
+{
+    
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "dezog",
+            "request": "launch",
+            "name": "DeZog",
+            "remoteType": "cspect",
+            "cspect": 
+            {
+                    "hostname": "localhost",
+                    "port": 11000
+            },
+            "zxnext": 
+            {
+                    "baudrate": 230400,
+                    "port": "/dev/tty.usbserial"
+            },
+            "sjasmplus": [
+                {
+                    "path": "eliteNext.lst",
+                }
+            ],
+            "skipInterrupt": false,
+            "startAutomatically": false,
+            "history": {
+                "reverseDebugInstructionCount": 10000,
+                "codeCoverageEnabled": true
+            },
+            "commandsAfterLaunch": [
+                //"-sprites",
+                //"-patterns"
+            ],
+            "disassemblerArgs": {
+                "numberOfLines": 20,
+                "esxdosRst": true
+            },
+            "rootFolder": "${workspaceFolder}",
+            "topOfStack": "TopOfStack",
+            "load": "eliteN.nex",
+            "smallValuesMaximum": 513,
+            "tmpDir": ".tmp"
+        }      
+    ]
+}

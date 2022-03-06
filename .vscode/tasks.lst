@@ -1,0 +1,89 @@
+# file opened: h:\OneDrive\EliteNext\.vscode\tasks.json
+tasks.json(1): error: Invalid labelname: {
+ 1    0000              {
+ 2    0000                  // See https://go.microsoft.com/fwlink/?LinkId=733558
+ 3    0000                  // for the documentation about the tasks.json format
+tasks.json(4): error: Unrecognized instruction: "version"
+tasks.json(4): error: Unexpected: "version"
+ 4    0000                  "version"
+tasks.json(4): error: Unrecognized instruction: "2.0.0",
+tasks.json(4): error: Unexpected: "2.0.0",
+ 4    0000                "2.0.0",
+tasks.json(5): error: Unrecognized instruction: "tasks"
+tasks.json(5): error: Unexpected: "tasks"
+ 5    0000                  "tasks"
+tasks.json(5): error: Unrecognized instruction: [
+tasks.json(5): error: Unexpected: [
+ 5    0000                [
+tasks.json(6): error: Unrecognized instruction: {
+tasks.json(6): error: Unexpected: {
+ 6    0000                      {
+tasks.json(7): error: Unrecognized instruction: "label"
+tasks.json(7): error: Unexpected: "label"
+ 7    0000                          "label"
+tasks.json(7): error: Unrecognized instruction: "sjasmplus",
+tasks.json(7): error: Unexpected: "sjasmplus",
+ 7    0000                "sjasmplus",
+tasks.json(8): error: Unrecognized instruction: "type"
+tasks.json(8): error: Unexpected: "type"
+ 8    0000                          "type"
+tasks.json(8): error: Unrecognized instruction: "shell",
+tasks.json(8): error: Unexpected: "shell",
+ 8    0000                "shell",
+tasks.json(9): error: Unrecognized instruction: "command"
+tasks.json(9): error: Unexpected: "command"
+ 9    0000                          "command"
+tasks.json(9): error: Unrecognized instruction: "sjasmplus",
+tasks.json(9): error: Unexpected: "sjasmplus",
+ 9    0000                "sjasmplus",
+tasks.json(10): error: Unrecognized instruction: "args"
+tasks.json(10): error: Unexpected: "args"
+10    0000                          "args"
+tasks.json(10): error: Unrecognized instruction: [
+tasks.json(10): error: Unexpected: [
+10    0000                [
+tasks.json(11): error: Unrecognized instruction: "--lst=${fileDirname}/${fileBasenameNoExtension}.lst",
+tasks.json(11): error: Unexpected: "--lst=${fileDirname}/${fileBasenameNoExtension}.lst",
+11    0000                              "--lst=${fileDirname}/${fileBasenameNoExtension}.lst",
+tasks.json(12): error: Unrecognized instruction: "${file}"
+tasks.json(12): error: Unexpected: "${file}"
+12    0000                              "${file}"
+tasks.json(13): error: Unrecognized instruction: ],
+tasks.json(13): error: Unexpected: ],
+13    0000                          ],
+tasks.json(14): error: Unrecognized instruction: "problemMatcher"
+tasks.json(14): error: Unexpected: "problemMatcher"
+14    0000                          "problemMatcher"
+tasks.json(14): error: Unrecognized instruction: [],
+tasks.json(14): error: Unexpected: [],
+14    0000                [],
+tasks.json(15): error: Unrecognized instruction: "group"
+tasks.json(15): error: Unexpected: "group"
+15    0000                          "group"
+tasks.json(15): error: Unrecognized instruction: {
+tasks.json(15): error: Unexpected: {
+15    0000                {
+tasks.json(16): error: Unrecognized instruction: "kind"
+tasks.json(16): error: Unexpected: "kind"
+16    0000                              "kind"
+tasks.json(16): error: Unrecognized instruction: "build",
+tasks.json(16): error: Unexpected: "build",
+16    0000                "build",
+tasks.json(17): error: Unrecognized instruction: "isDefault"
+tasks.json(17): error: Unexpected: "isDefault"
+17    0000                              "isDefault"
+tasks.json(17): error: Unrecognized instruction: true
+17    0000                true
+tasks.json(18): error: Unrecognized instruction: }
+tasks.json(18): error: Unexpected: }
+18    0000                          }
+tasks.json(19): error: Unrecognized instruction: }
+tasks.json(19): error: Unexpected: }
+19    0000                      }
+tasks.json(20): error: Unrecognized instruction: ]
+tasks.json(20): error: Unexpected: ]
+20    0000                  ]
+tasks.json(21): error: Invalid labelname: }
+21    0000              }
+22    0000
+# file closed: h:\OneDrive\EliteNext\.vscode\tasks.json
