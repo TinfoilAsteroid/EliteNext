@@ -73,6 +73,7 @@ ScreenHyperspace EQU ScreenDocking+1
 charactersetaddr		equ 15360
 STEPDEBUG               equ 1
 
+TopOfStack              equ $7F00
 
 EliteNextStartup:       ORG         $8000
                         di
@@ -84,6 +85,7 @@ EliteNextStartup:       ORG         $8000
                         call        l1_set_border
                         MMUSelectSpriteBank : call		sprite_load_sprite_data
 Initialise:             MMUSelectLayer2 :  call 		l2_initialise
+                        call        init_keyboard
                         ClearForceTransition
 TidyDEBUG:              ld          a,16
                         ld          (TidyCounter),a
@@ -141,7 +143,7 @@ InputMainMacro:         MACRO
 ;..................................................................................................................................
 MainLoop:	            call    doRandom                            ; redo the seeds every frame
                         CoolLasers
-                        call    scan_keyboard
+                        call    scan_keyboard                       ; perform the physical input scan
 ;.. This bit allows cycling of ships on universe 0 in demo.........................................................................
 DemoOfShipsDEBUG:       call    TestForNextShip
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
@@ -1002,15 +1004,7 @@ SeedGalaxy0Loop:        push    ix
 
             
     ;include "./ModelRender/testdrawing.asm"
-XX12PVarQ			DW 0
-XX12PVarR			DW 0
-XX12PVarS			DW 0
-XX12PVarResult1		DW 0
-XX12PVarResult2		DW 0
-XX12PVarResult3		DW 0
-XX12PVarSign2		DB 0
-XX12PVarSign1		DB 0								; Note reversed so BC can do a little endian fetch
-XX12PVarSign3		DB 0
+
 
     include "./Maths/Utilities/XX12EquNodeDotOrientation.asm"
     include "./ModelRender/CopyXX12ToXX15.asm"	
@@ -1025,6 +1019,15 @@ XX12PVarSign3		DB 0
     
     INCLUDE	"./Hardware/memfill_dma.asm"
     INCLUDE	"./Hardware/memcopy_dma.asm"
+XX12PVarQ			DW 0
+XX12PVarR			DW 0
+XX12PVarS			DW 0
+XX12PVarResult1		DW 0
+XX12PVarResult2		DW 0
+XX12PVarResult3		DW 0
+XX12PVarSign2		DB 0
+XX12PVarSign1		DB 0								; Note reversed so BC can do a little endian fetch
+XX12PVarSign3		DB 0
     INCLUDE "./Hardware/keyboard.asm"
     
     INCLUDE "./Variables/constant_equates.asm"

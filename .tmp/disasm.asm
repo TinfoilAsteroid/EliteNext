@@ -1,0 +1,59 @@
+L85F0:       equ  85F0h
+L8722:       equ  8722h
+L8723:       equ  8723h
+L874B:       equ  874Bh
+L8774:       equ  8774h
+L94C0:       equ  94C0h
+L96CF:       equ  96CFh
+L96DF:       equ  96DFh
+L988E:       equ  988Eh
+LE02F:       equ  E02Fh
+LE080:       equ  E080h
+LE09B:       equ  E09Bh
+LE0A5:       equ  E0A5h
+LE0C9:       equ  E0C9h
+LE0D0:       equ  E0D0h
+LE0DD:       equ  E0DDh
+LE43D:       equ  E43Dh
+LE445:       equ  E445h
+
+
+             org 8000h
+
+
+8000 L8000:
+8000 F3           DI          
+8001 ED 91 57 3A  NEXTREG REG_MMU7,3Ah 
+8005 CD 80 E0     CALL LE080  
+8008 3E 07        LD   A,07h  
+800A CD 9B E0     CALL LE09B  
+800D 3E FF        LD   A,FFh  
+800F CD A5 E0     CALL LE0A5  
+8012 ED 91 57 3C  NEXTREG REG_MMU7,3Ch 
+8016 CD 45 E4     CALL LE445  
+8019 ED 91 57 39  NEXTREG REG_MMU7,39h 
+801D CD D0 E0     CALL LE0D0  
+8020 CD C0 94     CALL L94C0  
+8023 3E FF        LD   A,FFh  
+8025 32 22 87     LD   (L8722),A 
+8028 3E 10        LD   A,10h  
+802A 32 F0 85     LD   (L85F0),A 
+802D AF           XOR  A      
+802E 32 DF 96     LD   (L96DF),A 
+8031 ED 91 57 38  NEXTREG REG_MMU7,38h 
+8035 CD 2F E0     CALL LE02F  
+8038 AF           XOR  A      
+8039 32 CF 96     LD   (L96CF),A 
+803C ED 91 57 3C  NEXTREG REG_MMU7,3Ch 
+8040 CD 3D E4     CALL LE43D  
+8043 ED 91 57 39  NEXTREG REG_MMU7,39h 
+8047 CD C9 E0     CALL LE0C9  
+804A CD DD E0     CALL LE0DD  
+804D ED 91 57 39  NEXTREG REG_MMU7,39h 
+8051 CD C9 E0     CALL LE0C9  
+8054 CD DD E0     CALL LE0DD  
+8057 CD 23 87     CALL L8723  
+805A CD 4B 87     CALL L874B  
+805D CD 74 87     CALL L8774  
+8060 AF           XOR  A      
+8061 32 8E 98     LD   (L988E),A 
