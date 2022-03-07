@@ -150,6 +150,7 @@ DemoOfShipsDEBUG:       call    TestForNextShip
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
 InputBlockerCheck:      ld      a,$0
                         JumpIfAEqNusng $01, SkipInputHandlers       ; as we are in a transition the whole update AI is skipped
+                        JumpIfMemTrue TextInputMode, SkipInputHandlers  ; in input mode all keys are processed by input
                         InputMainMacro
 ;.. Process cursor keys for respective screen if the address is 0 then we skill just skip movement.................................
 HandleMovement:         ld      a,(CallCursorRoutine+2)

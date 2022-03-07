@@ -199,46 +199,33 @@ blink_cursor:           ld      a,(gcCursorBlink)
                         ld      (gcCursorChar),a
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-loop_gc_menu:           JumpIfMemTrue TextInputMode,AlreadyInInputMode
+; The main loop handles the find key
+loop_gc_menu:           JumpIfMemTrue TextInputMode,AlreadyInInputMode  ;if we are in input mode then go directly there
 .StartFindCheck:        ld      a,c_Pressed_Find                        ;Is F pressed
                         call    is_key_pressed
-                        ret     nz
+                        ret     nz                                      ;the main loop handles find key 
                         call    initInputText                           ;Initialise find input
-                        SetMemTrue TextInputMode                      ; Set input mode to FF
-                        ld      a,gcBlinkVal
-                        ld      (gcCursorBlink),a                       ; Set up Blink
-.DisplayInputbar:       call    gc_display_find_text
-                        ret
+                        SetMemTrue TextInputMode                        ;Set input mode to true
+                        SetMemToN gcCursorBlink, gcBlinkVal             ; set up blink
+.DisplayInputbar:       call    gc_display_find_text                    ; now prep the boiler plate input text
+                        ret                                             ; and exit so next interation handles new input as we have to rescan keyboard
 ;Already in input mode post pressing find
-AlreadyInInputMode:     
-.HasKeyBeenPressed:     call    InputName                           ; else we are ready to read input
-                        ld      a,(InputChanged)
-                        ld      b,a
-                        cp      0
-                        jr      z,.blinkNoDelay                     ; when we go hear the input delay could be zero a flip over
-.WasItEnter:            ld      a,(EnterPressed)
-                        cp      0
-                        jr      nz,.FindEnterPressed
-.blinkCursor:           
+AlreadyInInputMode:     call    InputName                               ; Call input routine to parse a key
+                        JumpIfMemFalse InputChanged, .blinkNoDelay      ; no key they bypass rest of input
+.WasItEnter:            JumpIfMemTrue EnterPressed, .FindEnterPressed   ; if enter was pressed then find
+                        call    gc_display_find_string                  ; update string
 .blinkNoDelay:          call    blink_cursor
-                        ld      a,(gcCursorBlink)
-                        cp      gcBlinkVal
-                        call    z,gc_display_find_string
+                        CallIfMemEqNusng    gcCursorBlink, gcBlinkVal, gc_display_find_string ; on blink we get a double update but we can live with that
                         ret
-.FindDone:              ld      a,b
-                        cp      0
-                        call    nz,gc_display_find_string
-                        ret
-.FindEnterPressed:      xor     a
-                        ld      (EnterPressed),a                    ; reset enter
-                        SetMemFalse TextInputMode
-                        ld      a,(Galaxy)                          ; Fetch correct galaxy seed bank into memory
+.FindEnterPressed:      SetMemFalse EnterPressed                        ; reset enter
+                        SetMemFalse TextInputMode                       ; leave input mode
+                        ld      a,(Galaxy)                              ; Fetch correct galaxy seed bank into memory
                         MMUSelectGalaxyA
                         ld      hl,InputString
                         ld      de,GalaxySearchString
                         call    GalaxyCopyLoop
                         call    find_system_by_name
-                        cp      $FF                                 ; 0 denotes found FF, failure
+                        cp      $FF                                     ; 0 denotes found FF, failure
                         jr      z,.FindNoMatch
                         ld      a,(GalaxyWorkingSeed+3)
                         ld      c,a
@@ -246,7 +233,7 @@ AlreadyInInputMode:
                         ld      b,a
                         ld      (TargetSystemX),bc
                         call    UpdateGalacticCursor
-                        ld		de,galactic_find_position   ; Wipe input area on screen
+                        ld		de,galactic_find_position           ; Wipe input area on screen
                         ld      hl,galactic_find_match
                         MMUSelectLayer1
                         call	l1_print_at                        

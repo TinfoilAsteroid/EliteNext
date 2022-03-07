@@ -466,8 +466,8 @@ keyboard_copy_input_to_de:  ld      hl,InputString
 
 initInputText:          xor     a
                         ld      (InputCursor),a
-                        ld      (EnterPressed),a
-                        ld      (InputChanged),a
+                        SetMemFalse EnterPressed
+                        SetMemFalse InputChanged
                         ld      hl,InputString
                         ld      b,30
 .wipeloop:              ld      (hl),a
@@ -475,8 +475,7 @@ initInputText:          xor     a
                         djnz    .wipeloop
                         ret
     
-InputName:              xor     a
-                        ld      (InputChanged),a
+InputName:              SetMemFalse InputChanged
                         call    is_any_key_pressed
                         cp      $FF
                         ret     z
@@ -491,16 +490,11 @@ InputName:              xor     a
                         cp      "A"
                         jr      nc,.AlphaPressed
 ; CAPS and Symbol act as delete for now
-.DeleteOrEnterOnly      cp      "0"                             ; if 0 was preseed check caps shift too
-                        jr      z,.CheckShiftDelete             ; for now we will ignore the shift and just assume delete
+.DeleteOrEnterOnly      cp      " "                             ; if space was  pressed (mapped to Hash in ASCII table))
+                        jr      z,.SpacePressed               ; for now we will ignore the shift and just assume delete
                         cp      ">"         ; ENTER
                         jr      z,.EnterPressed
                         cp      "#"         ; CAPS
-                        jr      z,.CapsPressed
-                        cp      "^"         ; SYMBOLSHIFT
-                        jr      z,.SymbolPressed
-                        cp      " "         ; space
-                        jr      z,.SpacePressed
                         ret
 .AlphaPressed:          ld      b,a
                         ld      a,(InputCursor)
@@ -512,31 +506,27 @@ InputName:              xor     a
                         ld      a,c
                         ld      hl,InputCursor
                         inc     (hl)
-                        SetMemFalse InputChanged
+                        SetMemTrue InputChanged
                         ret
 .EnterPressed:          ld      a,(InputCursor)
-                        inc     a
                         ld      hl,InputString
                         add     hl,a
-                        xor     a
+                        ZeroA
                         ld      (hl),a
-                        dec     a
-                        ld      (EnterPressed),a
-                        ld      (InputChanged),a
-                        ret
-.CheckShiftDelete:
-.CapsPressed:                               ; act as a delete key for now
-.SymbolPressed:    
-.SpacePressed:          ld      a,(InputCursor)
-                        cp      0
+                        SetMemTrue EnterPressed
+                        SetMemTrue InputChanged
+                        call    init_keyboard           ; Flush keyboard status so futher inputs don't auto read the enter key as a second press
+                        ret   
+.SpacePressed:          ld      a,(InputCursor)         ; Space = delete
+                        cp      0                       ; if input is zero length then can not delete
                         ret     z
-                        dec     a
-                        ld      (InputCursor),a
-                        ld      hl,InputString
-                        add     hl,a
-                        xor     a
-                        ld      (hl),a
-                        SetMemFalse InputChanged
+                        dec     a                       ; move back one and update cursor pos
+                        ld      (InputCursor),a         ;
+                        ld      hl,InputString          ; now update end of line to null
+                        add     hl,a                    ; .
+                        ZeroA                           ; .
+                        ld      (hl),a                  ; .
+                        SetMemTrue InputChanged
                         ret
 
 MovementKeyTest:        xor     a

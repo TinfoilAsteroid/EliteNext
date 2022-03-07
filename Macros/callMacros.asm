@@ -1,4 +1,9 @@
 
+CallIfAEqNusng:         MACRO   reg,target
+                        cp      reg
+                        call	z,target
+                        ENDM
+
 CallIfAGTENusng:        MACRO   reg,target
                         cp      reg
                         call	nc,target
@@ -19,6 +24,12 @@ CallIfMemEqMemusng:     MACRO mem, address, target
                         ld   a,(mem)
                         ld   hl,address
                         cp   (hl)
+                        call    z,target
+                        ENDM
+
+CallIfMemEqNusng:       MACRO mem, value, target
+                        ld   a,(mem)
+                        cp   value
                         call    z,target
                         ENDM
 

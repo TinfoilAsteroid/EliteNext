@@ -7,6 +7,7 @@ GalaxyPresentSystem:     DW 0
 GalaxyDestinationSystem: DW 0
 GalaxyTargetSystem:      DW 0
 ; including a DB 0 as a catcher
+GalaxySearchLength:      DB 0
 GalaxySearchString:      DS 32
                          DB 0
 GalaxyExpandedName:      DS 32
@@ -439,11 +440,13 @@ galaxy_cpy_str_a_at_hl_to_de:add     hl,a
                         ld      h,a
 GalaxyCopyLoop:         ld      a,(hl)
                         cp      0
-                        ret     z
+                        jr      z,.CopyDone
                         ld      (de),a
                         inc     hl
                         inc     de
                         jr      GalaxyCopyLoop
+.CopyDone:              ld      (de),a
+                        ret
 ;------------------------------------------------------------------------------------------------------------------------------------
 galaxy_get_species:     ld      de,GalaxySpecies
                         ld      a,"("
@@ -1029,54 +1032,53 @@ GalaxyDigramToDE:       ld		b,3
                         ret
 ;reorte X 13 Y 97
 
-set_names_lowercase:
-    ;- to do, for case insensitive match
-    ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-is_system_found:        ; search string does not have /0
-; search for riinus then ra you get seardh of rainus
-                        ld      hl,GalaxySearchString
-                        ld      de,GalaxyExpandedName
-.getsearchlen:          ld      c,0
-.getsearchlenloop:      ld      a,(hl)
-                        cp      0
-                        jr      z,.readyToSearch
-                        inc     hl
-                        inc     c
-                        jp      .getsearchlenloop
-                        ld      b,32
-.readyToSearch:         ld      hl,GalaxySearchString
-.searchLoop:            ld      a,(de)
-                        cp      0
-                        jr      z,.EndOfMatch
-                        dec     c
-                        push    bc
-                        cpi
-                        pop     bc
+is_system_found:        ld      a,(GalaxySearchLength)
+                        ;dec     a                       ; as we won't check the /0 just first match
+                        ld      c,a                     ; will always be max of 32 as that is what length routine does
+                        ld      b,0                     ; so we can use cpir
+.readyToSearch:         ld      de,GalaxySearchString   ; hl = string we are serching
+                        ld      hl,GalaxyExpandedName   ; de = the expanded galaxy name
+.searchLoop:            ld      a,(hl)                  ; if the string is too short then maybe there is a longer one to find
+                        JumpIfAIsZero   .noMatch        ; but
+                        ld      a,(de)                  ; get the character to search for
+                        cpi                             ; compare with value in A from HL
                         jr      nz,.noMatch
-                        inc     de
-
-                        djnz    .searchLoop
-.noMatch:               ld      a,$FF
+                        inc     de                      ; move to next search character
+                        jp      po, .matched            ; if c = 0 then we have hit the bingpot
+                        jr      .searchLoop             ; else keep looping
+.noMatch:               SetAFalse
                         ret
-.EndOfMatch:            ld      a,c
-                        cp      0
-                        ret     z
-                        ld      a,$FF
+.matched:               SetATrue
                         ret
 
-find_system_by_name:    xor     a
+set_galaxy_search_len:  ld      hl,GalaxySearchString
+                        ld      b,0
+                        ld      c,32                    ; limiter for missing /0
+.SearchLoop:            ld      a,(hl)
+                        JumpIfAIsZero .foundLength
+                        inc     b
+                        dec     c
+                        jr      z,.foundLength
+                        inc     hl
+                        jp      .SearchLoop
+.foundLength:           ld      a,b
+                        ld      (GalaxySearchLength),a                        
+                        ret
+                        
+; find system by searching for GalaxySearchString
+find_system_by_name:    call    set_galaxy_search_len
+                        xor     a
                         ld      (XSAV),a
                         ld      ix,galaxy_data
 .nextSystem:            call    ix_seed_to_galaxy_working
                         call    GalaxyDigramWorkingSeed
                         call    is_system_found
-                        cp      0
-                        jr      z,.FoundAtIX
-                        ld      a,(XSAV)
+                        JumpIfATrue .FoundAtIX
+.notFoundYet:           ld      a,(XSAV)
                         dec     a
                         jr      z,.NoMoreSystems
-                        ld      (XSAV),a
+.moreToSearch:          ld      (XSAV),a
                         push    ix
                         pop     hl
                         add     hl,8
