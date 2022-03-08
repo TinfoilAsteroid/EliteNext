@@ -113,8 +113,7 @@ InitialiseMainLoop:     xor     a
                         ld      (SetStationAngryFlag),a
                         ld      a,3
                         ld      (MenuIdMax),a
-                        SetAFalse                               ; Starts Docked
-                        ld      (DockedFlag),a
+                        SetMemFalse DockedFlag
 ;                        call    InitialiseFrontView
                         call    InitialiseCommander
                         MMUSelectUniverseN 2    
@@ -246,7 +245,6 @@ HandleLaunched:         JumpIfAEqNusng  $FD, WeHaveCompletedLaunch
 WeHaveCompletedLaunch:  call    LaunchedFromStation
                         jp      DoubleBufferCheck
 WeAreHJumping:          call    hyperspace_Lightning
-                        break
                         jp      c,DoubleBufferCheck
                         ld      a,$FB
                         ld      (DockedFlag),a
@@ -289,10 +287,10 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not worki
 ;;TODO                       call    GetShipBankId
 ;;TODO                       MMUSelectUniverseBankN 1
 ;;TODO                       call    CopyBodyToUniverse
-                        ret
+                        SetMemFalse DockedFlag
+                        jp  DoubleBufferCheck
                         
-LoopEventTriggered:     
-.CanWeDoAnAdd:          call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
+LoopEventTriggered:     call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
                         ret     c                                   ; then may as well just skip routine
                         ld      iyh,c                               ; save slot free in iyh
                         JumpIfMemNotZero MissJumpFlag, .WitchSpaceEvent
@@ -345,6 +343,20 @@ LoopEventTriggered:
                         ReturnIfALTNusng b                          ; then return
 .SpawnTrader:       ; TODO
 .SpawnHostileCop: ;TODO
+                ;       if we outside space sstation safte
+                        ;   call bad to work our contraband
+                        ;    result * 2
+                        ;    count cops in local bubble
+                        ;    if <> 0
+                        ;         t = badness result OR fugitive innoncent status
+                        ;    else 
+                        ;         t = badness result
+                        ;    if random >= badness level
+                        ;         spawn cop
+                        ;         update cop counter
+                        ;   if cops <> 0 jumpo to M loops to stop spawing
+                        ;   else
+                        ;       do Spawn something else (main game lopp part 4 of 6)
 .SpawnHostile:          call    doRandom
                         JumpIfAGTENusng 100,.SpawnPirates           ; 100 in 255 change of one or more pirates
                         ld      hl, ExtraVesselsCounter             ; prevent the next spawning

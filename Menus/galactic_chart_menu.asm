@@ -233,7 +233,7 @@ AlreadyInInputMode:     call    InputName                               ; Call i
                         ld      b,a
                         ld      (TargetSystemX),bc
                         call    UpdateGalacticCursor
-                        ld		de,galactic_find_position           ; Wipe input area on screen
+                        ld		de,galactic_find_position               ; Wipe input area on screen
                         ld      hl,galactic_find_match
                         MMUSelectLayer1
                         call	l1_print_at                        

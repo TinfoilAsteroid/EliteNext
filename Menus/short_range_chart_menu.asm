@@ -514,8 +514,7 @@ src_HomePressed:        ld      hl,(PresentSystemX)
                         call    SRM_update_hyperspace_cross_hair
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-src_RecenterPressed:    break
-                        ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
+src_RecenterPressed:    4ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      bc,(TargetSystemX)
                         call    find_nearest_to_bc

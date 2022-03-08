@@ -180,8 +180,7 @@ SunDraw:                MMUSelectLayer2
                         
 ; --------------------------------------------------------------
 ; This sets current universe object to a star / sun, they use sign + 23 bit positions
-CreateSun:              ;break
-                        call    ResetSBnKData
+CreateSun:              call    ResetSBnKData
                         ld      a,(WorkingSeeds+3)
                         and     %00000111
                         and     %00000001;DEBUG TO DO
