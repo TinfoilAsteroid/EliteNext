@@ -200,33 +200,82 @@ mulDEbyHL:              push    bc
                         xor a                       ; reset carry
                         pop     bc
                         ret
+
+
+; CHL = multiplicand D = multiplier
+; DCHL = CHL * D
+mulCHLbyDSigned:        ld      a,d                 ; get sign from d
+                        xor     h                   ; xor with h to get resultant sign
+                        and     SignOnly8Bit        ; .
+                        ld      iyh,a               ; iyh = copy of sign
+                        ld      a,c                 ; now CHL = ABS (CHL)
+                        and     SignMask8Bit        ; .
+                        ld      c,a                 ; .
+                        ld      a,d                 ; d = ABS D
+                        and     SignMask8Bit        ; .
+; At this point CHL = ABS (HLE), A = ABS(D)                        
+.mul1:                  ld      d,a                 ; first do D * L
+                        ld      e,l                 ; .
+                        mul     de                  ; DE = L * D
+                        ex      af,af'              ; save multiplier
+                        ld      l,e                 ; L = p0
+                        ld      a,d                 ; carry byte
+                        ex      af,af'              ; retrieve muliplier and save carry byte along with flags
+.mul2:                  ld      e,h                 ; byte 2 of multiplicand
+                        ld      d,a                 ; and multiplier
+                        mul     de                  ; now its D & L
+                        ex      af,af'              ; get back carry byte with flags
+.carrybyte1:            add     a,e                 ; add low byte carry to result and retain carry too through next instructions
+                        ld      h,a                 ; h = P1
+                        ld      a,d                 ; a = carry byte
+                        ex      af,af'              ; save carry byte and get back multiplier with flags
+.mul3:                  ld      e,c                 ; byte 3 of multiplicand
+                        ld      d,a                 ; 
+                        mul     de                  ;
+                        ex      af,af'              ; get back carry byte and carry prior to first add
+                        adc     a,e                 ;
+                        or      iyh                 ; recover saved resultant sign
+                        ld      c,a                 ; c byte 3. Note the value range allowed can never cause a byte 3 carry
+                        ret
+
+;  CHL = 53456 D = 1E
+;  56 * 1E = A14 L = 14 carry = 0A
+;  34 * 1E = 618 H = 18 +A = 22 carry = 6
+;  5  * 1E = 096 C = 96 + 6 = 9C
+;  CHL = 9C2214
  
 ; DELC = HLE * D, uses HL, DE, C , A , IYH
-mulHLEbyDSigned:        ld      a,d
-                        xor     h
-                        and     SignOnly8Bit
+; HLE = multiplicand D = multiplier
+mulHLEbyDSigned:        ld      a,d                 ; get sign from d
+                        xor     h                   ; xor with h to get resultant sign
+                        and     SignOnly8Bit        ; .
                         ld      iyh,a               ; iyh = copy of sign
-                        ld      a,h
-                        and     SignMask8Bit
-                        ld      h,a                 ; hle = abs (hle)
+                        ld      a,h                 ; now HLE = ABS (HLE)
+                        and     SignMask8Bit        ; .
+                        ld      h,a                 ; .
+                        ld      a,d                 ; d = ABS D
+                        and     SignMask8Bit        ; .
+; At this point HLE = ABS (HLE), A = ABS(D)                        
+.mul1:                  mul     de                  ; C = E * D
+                        ex      af,af'              ; save mulitplier
+                        ld      c,e                 ; C = p0
+                        ld      a,d                 ; save carry and get back multiplier
+                        ex      af,af'
+.mul2:                  ld      e,l                 ; L = L * D
+                        ld      d,a                 ; .
+                        mul     de                  ; .
+                        ex      af,af'              ; .
+.carrybyte1:            add     a,e                 ; L = L + carry byte
+                        ld      l,a                 ; .
                         ld      a,d
-                        and     SignMask8Bit
-                        ld      d,a                 ; now also d = abs d
-.PerformMultiply:       mul                         ; de = E*A
-                        ld      c,e                 ; c = low E*A
-                        ld      e,l                 ;
-                        ld      l,a                 ; hl = H,A
-                        ld      a,d                 ; a = (E*A)/256
-                        ld      d,l                 ; de = A,L
-                        mul                         ; de = E*A (high) + E*A/256(low)
-                        add     de,a                ; .
-                        ld      a,d                 ; hl = E*A (high) + E*A/256(low)
-                        ex      de,hl               ; A =  E*A, de = HA
-                        mul
-                        add     de,a                ; 
-                        ld      a,d
-                        or      iyh                 ; recover sign
-                        ld      d,a                 ; sign back on d
+                        ex      af,af'              ; save new carry byte
+.mul3:                  ld      e,h                 ; e = H * D
+                        ld      d,a                 
+                        mul     de
+                        ex      af,af'
+                        adc     a,e                 ; 
+                        ld      e,a
+                        ld      d,iyh
                         ret
 
  

@@ -297,8 +297,7 @@ gc_HomePressed:         ld      hl,(PresentSystemX)
                         call    UpdateGalacticCursor
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_RecenterPressed:     break
-                        ld      a,(Galaxy)       ; DEBUG as galaxy n is not working
+gc_RecenterPressed:     ld      a,(Galaxy)       ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      bc,(TargetSystemX)
                         call    find_nearest_to_bc

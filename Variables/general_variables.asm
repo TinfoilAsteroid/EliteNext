@@ -63,7 +63,6 @@ varYY					equ	YYlo
 											;	28
 											;	29		
 ;PlayerShipPositionData - Must be contiguous for setup
-SpaceStationSafeZone    DB  0               ; Flag to determine if we are in safe zone
 BETA 					DB	0               ; 2A        (pitch done)		
 JSTY                    DB  0               ; Joystick analog
 BET1 					DB	0               ; 2B        lower7 magnitude	
@@ -285,8 +284,6 @@ SetStationAngryFlag     DB  0               ; used to semaphore angry space stat
 ShipBlastCheckCounter   DB  0
 EventCounter    		DB 	0				; 8A
 MissJumpFlag            DB  0
-ExtraVesselsCounter     DB  0
-JunkCount				DB  0				; $033E
 PlayerMisJump			DB	0				; $0341 witchspace misjump
 HyperSpaceFX			DB	0				; 0348 HFX (probabyl BBC specific
 ExtraVessels			DB	0				; 0349 EV Use d by cops, extra vessels still to spawn?
@@ -297,12 +294,17 @@ UniverseSlotListSize    equ	12
 UniverseSlotList        DS  UniverseSlotListSize
 UniverseSlotType        DS  UniverseSlotListSize ; base type, e.g. missile, cargo etc, 
 ; Probably not needed UniverseTypeCount       DS  UniverseSlotListSize
-TransporterCount        DB  0
-CopCount                DB  0 
-PirateCount             DB  0
 ConsoleRefreshCounter   DB  ConsoleRefreshInterval ; Every 4 interations the console will update twice (once for primary and once for seconday buffer)
 ConsoleRedrawFlag       DB  0
 TextInputMode           DB  0
+; --- Current System Data ------------------;
+SpaceStationSafeZone    DB  0               ; Flag to determine if we are in safe zone
+ExtraVesselsCounter     DB  0
+JunkCount				DB  0				; $033E
+AsteroidCount           DB  0               ; Not used as yet
+TransporterCount        DB  0
+CopCount                DB  0 
+PirateCount             DB  0
 ; --- Galaxy Data --------------------------;
 Galaxy      			DB	0				; 0367 Galaxy (incremented with galactiv drive
 WorkingSeeds			DS	6

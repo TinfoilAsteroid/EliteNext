@@ -13,14 +13,15 @@ fdraw; In  flight ship data tables
 StartOfSun:        DB "Sun and Planet X"
 ; NOTE we can cheat and pre allocate segs just using a DS for now
 CheckRowHLOnScreen:     MACRO   failtarget
-                        ld      a,h                             ; is greater than 128
-                        and     a                               ; or negative
+                        ld      a,h                             ; is h byte set, i.e > 256 or < 0
+                        and     a                               ; .
                         jr      nz,failtarget                   ; h <> 0 so fails (covers <0 and > 255
                         ld      a,l                             ; l bit 7 0?
-                        bit     7,a                             ;  covers l > 127
+                        and     Bit7Only                        ; covers l > 127 (screen draw area is 0 to 192 / 3 * 2 (128)
                         jr      nz,failtarget                   ;
                         ENDM
 
+; IY = SBnKLineArray + rowValue*2
 IYEquRowN:              MACRO   rowValue                        ; set up iy as target address
                         ld      a,rowValue
                         ld      hl,SBnKLineArray
@@ -32,6 +33,7 @@ IYEquRowN:              MACRO   rowValue                        ; set up iy as t
 ;   \ -> & 565D \ See ship data files chosen and loaded after flight code starts running.
 ; Universe map substibute for INWK
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
+SBnKDataBlock:
                         INCLUDE "./Universe/Sun/SunPosVars.asm"
                         INCLUDE "./Universe/Sun/SunRotationMatrixVars.asm"
                         INCLUDE "./Universe/Sun/SunAIRuntimeData.asm"
@@ -71,10 +73,10 @@ SBnKLinesHeapMax            EQU $ - SBnKLineArray
 
 LineArrayPtr                DW  0
  
-SBnK_Data_len               EQU $ - StartOfUniv
+SBnK_Data_len               EQU $ - SBnKDataBlock
 
 ; --------------------------------------------------------------
-ResetSBnKData:          ld      hl,StartOfUniv
+ResetSBnKData:          ld      hl,SBnKDataBlock
                         ld      de,SBnK_Data_len
                         xor     a
                         call    memfill_dma
@@ -177,15 +179,13 @@ SunDraw:                MMUSelectLayer2
 ; Could make this a sub routine but unwrapping saves a call                        
                         SunBankDraw
                         ret
-                        
+
 ; --------------------------------------------------------------
 ; This sets current universe object to a star / sun, they use sign + 23 bit positions
 CreateSun:              call    ResetSBnKData
                         ld      a,(WorkingSeeds+3)
                         and     %00000111
-                        and     %00000001;DEBUG TO DO
-                        
-                        or      %10000001 ;so working seed byte 3, take lower 3 bits, make sure 0 is set for negative z
+                        or      %10000001
                         ld      (SBnKzsgn),a
                         ld      a,(WorkingSeeds+5)
                         and     %00000011
@@ -712,31 +712,62 @@ SetIYMinusOffset:       MACRO   reg
                         ENDM
                       
 
-SunDrawCircle:          
-.CheckRadius:           ld      a,(SunRadius)                   ;we could do this early 
-                        and     a
-                        ret     z
-                        cp      1
-                        jp      z,SunCircleSinglePixel
-.MakeCentreX2C:         MemSignedTo2C XCentre
-.MakeCentreY2C:         MemSignedTo2C YCentre
-.PrepCircleData:        ld      ixl,0
-                        ld		(.Plot1+1),bc			        ; save origin into DE reg in code
+SunDrawCircle:          ld      a,(SunRadius)                  
+.CheckRadius:           ReturnIfAIsZero                         ; elimiate zero or single pixel
+                        JumpIfAEqNusng  1, SunCircleSinglePixel
+                       ; JumpIfAGTENusng 127, SunFullScreen      ; if its covering whole then just make it yellow
+.MakeCentreX2C:         MemSignedTo2C XCentre                   ; convert 16 bit signed to 2's compliment
+.MakeCentreY2C:         MemSignedTo2C YCentre                   ; .
+.BoundsCheck            ld      hl,(YCentre)
+                        push    hl
+                        ld      a,(SunRadius)
+                        add     hl,a
+                        bit     7,h
+                        ret     nz                              ; if Y + radius is negative then off the screen
+                        pop     hl
+                        ld      d,0
+                        ld      e,a
+                        ClearCarryFlag
+                        sbc     hl,de
+                        ld      a,h
+                        ReturnIfAGTENusng  1                     ; really shoudl be signed TODO
+
+                        ld      hl,(XCentre)
+                        push    hl
+                        ld      a,(SunRadius)
+                        add     hl,a
+                        bit     7,h
+                        ret     nz                              ; if Y + radius is negative then off the screen
+                        pop     hl
+                        ld      d,0
+                        ld      e,a
+                        ClearCarryFlag
+                        sbc     hl,de
+                        ld      a,h
+
+                        ReturnIfAGTENusng 1                      ; really shoudl be signed TODO                        
+                        
+                        ; ** BNOTE Ptuichj abnd roll has a bug as piitch increases z axis value
+.PrepCircleData:       ; ld      ixl,0
+                       ; ld		(.Plot1+1),bc			        ; save origin into DE reg in code
+                       ld      a,(SunRadius)
                         ld		ixh,a							; ixh = radius
-                        ld		ixl,0						    ; ixl = delta
+
+
+                        ld		ixl,0						    ; ixl = delta (y)
 .calcd:	                ld		h,0                             ; de = radius * 2
                         ld		l,a                             ; .
                         add		hl,hl							; .
                         ex		de,hl							; .
-                        ld		hl,3                            ; hl = 3
-                        and		a                               ; hl = 3 - (r * 2)
+                        ld		hl,3                            ; hl = 3 - (r * 2)
+                        and		a                               ; .
                         sbc		hl,de							; .
                         ld		b,h                             ; bc = 3 - (r * 2) : d = 3 - 2r
                         ld		c,l								; .
 .calcdelta:             ld		hl,1                            ; set hl to 1
                         ld		d,0                             ; de = ixl
                         ld		e,ixl                           ;
-                        and		a                               ;
+                        ClearCarryFlag                          ;
                         sbc		hl,de                           ; hl = 1 - ixl
 .Setde1:                ld		de,1                            ; del = 1
 .CircleLoop:            ld		a,ixh                           ; if x = y then exit
@@ -746,13 +777,14 @@ SunDrawCircle:
 ; Process CY+Y CX+X & CY+Y CX-X..................................
 .Plot1:                 ld      hl, (YCentre)
 .Get1YRow:              ld      a,ixh                           
-                        add     hl,a                            ; Check to see if CY+Y
+                        add     hl,a                            ; Check to see if CY+Y (note is add hl ,a usginedf only??)
 .Check1YRowOnScreen:    CheckRowHLOnScreen .NoTopPixelPair
-.Write1YCoord:          SetIYPlusOffset ixh
-                        IYEquRowN l                             ; set up iy as target address
+.Write1YCoord:          SetIYPlusOffset ixh                     ; IY = IY + ixh
+                        IYEquRowN l                             ; IY = SBnkLineArray + (2 * l) - set up iy as target address
                         ld      a,ixl
                         call    ProcessXRowA
-.NoTopPixelPair:
+                        jp      .Plot2
+.NoTopPixelPair:        break
 ; Process CY-Y CX+X & CY-Y CX-X..................................
 .Plot2:                 ld      hl, (YCentre)
 .Get2YRow:              ld      d,0
@@ -764,7 +796,8 @@ SunDrawCircle:
 .Write2YCoord:          IYEquRowN l                             ; set up iy as target address
                         ld      a,ixl
                         call    ProcessXRowA
-.NoBottomPixelPair:
+                        jp      .Plot3
+.NoBottomPixelPair:     break
 ; Process CY+X CX+Y & CY+X CX-Y..................................
 .Plot3:                 ld      hl, (YCentre)
 .Get3YRow:              ld      a,ixl                          
@@ -774,7 +807,8 @@ SunDrawCircle:
 .Write3YCoord:          IYEquRowN l                             ; set up iy as target address
                         ld      a,ixh
                         call    ProcessXRowA
-.NoTop3PixelPair:
+                        jp      .Plot4
+.NoTop3PixelPair:       break
 ; Process CY-X CX+Y & CY-X CX-Y..................................
 .Plot4:                 ld      hl, (YCentre)
 .Get4YRow:              ld      d,0
@@ -797,11 +831,11 @@ SunDrawCircle:
                         inc     bc
                         inc     bc				; D2=D2+2
                         dec     ixh				; Y=Y-1
-.draw_circle_2:		    inc bc				; D2=D2+2
-                        inc bc
-                        inc de				; D1=D1+2
-                        inc de	
-                        inc ixl				; X=X+1
+.draw_circle_2:		    inc bc				    ; D2=D2+2
+                        inc bc  
+                        inc de				    ; D1=D1+2
+                        inc de	    
+                        inc ixl				    ; X=X+1
                         jp      .CircleLoop
 SunCircleSinglePixel:     ld      hl,(XCentre)
                         ld      a,h

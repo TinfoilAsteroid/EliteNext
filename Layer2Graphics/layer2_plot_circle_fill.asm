@@ -3,6 +3,7 @@ l2_circle_dblx		DB 0
 l2_circle_dbly		DB 0
 
 ; ">l2_draw_circle_fill BC = center row col, d = radius, e = colour"
+; Note this code currently does not process BC
 l2_draw_circle_fill:    ld		a,e
                         ld		(.LineColour+1),a
                         ld		a,d								; get radius

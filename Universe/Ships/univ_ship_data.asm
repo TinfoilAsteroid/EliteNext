@@ -173,6 +173,16 @@ ZeroUnivAccelleration:  MACRO
                         ld      (UBnKAccel),a
                         ENDM
                         
+SetShipHostile:         ld      a,(ShipNewBitsAddr)
+                        or      ShipIsHostile 
+                        ld      (ShipNewBitsAddr),a
+                        ret
+
+ClearShipHostile:       ld      a,(ShipNewBitsAddr)
+                        and     ShipNotHostile 
+                        ld      (ShipNewBitsAddr),a
+                        ret
+
 AequN1xorN2:            MACRO  param1,param2
                         ld      a,(param1)
                         xor     param2

@@ -28,7 +28,8 @@ Main game loop (Part 6 of 6) (Flight)	Main loop	Process non-flight key presses (
 
 
 ToDo
-
+#
+CAP max sun and planet
 Name	            Category	    Description
 ABORT (Flight)	    Dashboard	    Disarm missiles and update the dashboard indicators
 ABORT2 (Flight)	    Dashboard	    Set/unset the lock target for a missile and update the dashboard

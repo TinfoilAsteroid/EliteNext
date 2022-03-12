@@ -26,7 +26,7 @@ SunZResult:             DS 3
 
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-; based on MV40
+; Sun version of pitch and roll is a 24 bit calculation 1 bit sign + 23 bit value
 SunApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
                         ld      hl,BETA
                         or      (hl)
@@ -36,21 +36,21 @@ SunApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitch, 
                         ld      a,(ALPHA)                   ; get roll magnitude
                         cp      0
                         jr      nz,.ApplyAlpha
-.NoAlpha:               ld      de,(SBnKyhi)                ; its going to be just Y if alpha is 0
-                        ld      a,(SBnKylo)                 ; .
+.NoAlpha:               ld      de,(SBnKyhi)                ; here we have no roll so
+                        ld      a,(SBnKylo)                 ; store untouched in SunRollResult
                         ld      l,a                         ; .
                         jp      .SaveResult1                ; .
-.ApplyAlpha:            xor     SignOnly8Bit                ; get Q = -alpha
-                        ld      d,a                         ; d reg represents Q (abount to roll)
+.ApplyAlpha:            xor     SignOnly8Bit                ; d = -alpha (Q value)
+                        ld      d,a                         ; 
                         ld      a,(SBnKxlo)                 ; HLE = x sgn, hi, lo
-                        ld      e,a                         ;
-                        ld      hl,(SBnKxhi)                ;
-                        call    mulHLEbyDSigned             ; DELC = x * -alpha, so DEL = X * -alpha / 256
+                        ld      e,a                         ; .
+                        ld      hl,(SBnKxhi)                ; .
+                        call    mulHLEbyDSigned             ; DELC = x * -alpha, so DEL = X * -alpha / 256 where d = sign byte
 .SkipAlphaMultiply:     ld      a,d
-                        ld      (SunRollResultp4),a         ; save D (I guess we need the sign?)
-.CalcYPlusDEL:          ld      a,(SBnKylo)                 ; BCH = Y sgn, hi, lo
-                        ld      h,a
-                        ld      bc,(SBnKyhi)
+                        ld      (SunRollResultp4),a         ; save sign from result, ELC holds actual result
+.CalcYPlusDEL:          ld      a,(SBnKylo)                 ; BCH = Y sgn, hi, lo, we loose the C from result
+                        ld      h,a                         ; .
+                        ld      bc,(SBnKyhi)                ; .
                         call    AddBCHtoDELsigned           ; DEL = Y - ( X *  alpha /256) (which is K2)
 .SaveResult1:           ld      a,d                         ; SunPitchWork = AHL = DEL
                         ld      h,e                         ;

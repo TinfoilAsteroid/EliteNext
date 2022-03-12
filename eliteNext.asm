@@ -252,6 +252,19 @@ WeAreHJumping:          call    hyperspace_Lightning
 WeAreHEntering:         ld      a,$FA
                         ld      (DockedFlag),a
                         jp  DoubleBufferCheck
+
+
+; to create planet position 
+;       take seed 2 AND %00000011 + 3 + carry and store in z sign
+;       take result and divide by 2 then store in x and y sign
+;         
+;       take seed 4 AND %00000111 OR %10000001 and store in z sign
+;       take seed 6 AND %00000011 and store in x sign and y sign
+;       set pitch and roll to 0
+;
+;
+;                                   
+; --- At the end of a hyperspace jump we have to reset compass, market universe sun and planets etc
 WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      hl,(TargetSystemX)
@@ -292,35 +305,35 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not worki
                         
 LoopEventTriggered:     call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
                         ret     c                                   ; then may as well just skip routine
-                        ld      iyh,c                               ; save slot free in iyh
-                        JumpIfMemNotZero MissJumpFlag, .WitchSpaceEvent
-                        call    doRandom                            ; if random > 35 then its not junk
-                        JumpIfAGTENusng 35, .NotJunk
-.TestJunk:              TestRoomForJunk .NotJunk                    ; can we fit in any junk
-.CouldBeTrader:         call    doRandom                            ; so its now a 50/50 change of being a trader
+.SpawnIsPossible:       ld      iyh,c                               ; save slot free in iyh
+.AreWeInWhichSpace:     JumpIfMemFalse MissJumpFlag, .WitchSpaceEvent
+.JunkOrNot:             call    doRandom                            ; if random > 35 then its not junk
+                        JumpIfAGTENusng 35, .NotJunk                ; .
+.JunkLimitHitTest:      TestRoomForJunk .NotJunk                    ; can we fit in any junk
+.CouldBeTraderInstead:  call    doRandom                            ; so its now a 50/50 change of being a trader
                         and     1
                         jp      z,.SpawnTrader
-.SpawnJunk:             ld      a,c                                 ; a = slot number
-                        call    doRandom
+;... Handle spawning of junk if possible
+.SpawnJunk:             call    doRandom
                         cp      10                                  ; will set carry if a < 10
                         FlipCarryFlag                               ; so now carry is set if a > 10
                         and     1                                   ; so only have carry flag
                         adc     ShipID_CargoType5                   ; so now a = 4 + random + poss carry
                         ld      b,a                                 ; save ship type
-                        ld      a,(SpaceStationSafeZone)            ; if in space station zone
-                        and     a                                   ; then we can't do asteroids
-                        jr      z,.NotInSafeZone                    ; .
+                        ; if in space station zone then we can't do asteroids
+.CanWeSpawnAsteroid:    JumpIfMemFalse  SpaceStationSafeZone, .NotInSafeZone
                         ld      a,b
-                        ReturnIfAEqNusng   ShipID_Asteroid          ; we can't spawn asteroids near a space station
-.NotInSafeZone:         AddJunkCount                                ; so its
+.FailIfAsteroidInSafe:  ReturnIfAEqNusng   ShipID_Asteroid          ; we can't spawn asteroids near a space station
+.NotInSafeZone:         AddJunkCount                                ; so its an increase in junk
                         jp      SpawnShipTypeA
                         ;.......implicit ret
-.NotJunk:               JumpIfMemNotZero SpaceStationSafeZone, .SpawnTrader ; changed so that it can spawn friendly ships around a space station
-                        MMUSelectCommander                          ; get cargo rating
-                        call    calculateBadness                    ; a = badness
+;... Handle spawing of non junk type object
+.NotJunk:               JumpIfMemTrue SpaceStationSafeZone, .SpawnTrader ; changed so that it can spawn friendly ships around a space station
+.PossibleCop:           MMUSelectCommander                          ; get cargo rating
+.AreWeABadPerson:       call    calculateBadness                    ; a = badness
                         sla     a                                   ; double badness for scans
-                        JumpIfMemZero CopCount,.NoCopsInSystem
-                        ld      hl,FugitiveInnocentStatus           ; or a with FIST status
+                        JumpIfMemZero CopCount,.NoCopsInSystem      ; are there any cops already
+.CopsAlreadyPresent:    ld      hl,FugitiveInnocentStatus           ; or a with FIST status
                         or      (hl)
 .NoCopsInSystem:        ld      (BadnessStatus),a                   ; if badness level triggers a cop     
                         call    doRandom                            ; then its hostile
@@ -342,35 +355,26 @@ LoopEventTriggered:     call    FindNextFreeSlotInC                 ; c= slot nu
                         and     7                                   ; if random 0 ..7 < gov rating
                         ReturnIfALTNusng b                          ; then return
 .SpawnTrader:       ; TODO
-.SpawnHostileCop: ;TODO
-                ;       if we outside space sstation safte
-                        ;   call bad to work our contraband
-                        ;    result * 2
-                        ;    count cops in local bubble
-                        ;    if <> 0
-                        ;         t = badness result OR fugitive innoncent status
-                        ;    else 
-                        ;         t = badness result
-                        ;    if random >= badness level
-                        ;         spawn cop
-                        ;         update cop counter
-                        ;   if cops <> 0 jumpo to M loops to stop spawing
-                        ;   else
-                        ;       do Spawn something else (main game lopp part 4 of 6)
+; ... Spawn a cop at hostile status
+.SpawnHostileCop:       ld      a,ShipID_Viper
+                        call    SpawnShipTypeA                      ; call rather than jump
+                        call    SetShipHostile                      ; as we have correct universe banked in now
+                        ret
+; ... Spawb a hostile ship or cluster
 .SpawnHostile:          call    doRandom
                         JumpIfAGTENusng 100,.SpawnPirates           ; 100 in 255 change of one or more pirates
-                        ld      hl, ExtraVesselsCounter             ; prevent the next spawning
+.SpawnAHostileHunter:   ld      hl, ExtraVesselsCounter             ; prevent the next spawning
                         inc     (hl)                                ; 
                         and     3                                   ; a = random 0..3
                         MMUSelectShipBank1 
                         GetByteAInTable ShipHunterTable             ; get hunter ship type
-                        jp      SpawnShipTypeA
-                        ;.......implicit ret
+                        call    SpawnShipTypeA
+                        call    SetShipHostile
+                        ret
 .NotAnarchySystem:      ret                        
 .SpawnPirates:          call    doRandom                           ; a = random 0..3
                         and     3
                         ld      (ExtraVesselsCounter),a
-                        ld      (PirateCount),a
 .PirateLoop:            call    doRandom
                         ld      c,a                                 ; random and random and 7
                         call    doRandom
@@ -378,7 +382,9 @@ LoopEventTriggered:     call    FindNextFreeSlotInC                 ; c= slot nu
                         and     7
                         GetByteAInTable ShipPackList
                         call    SpawnShipTypeA
-                        ld      hl,PirateCount
+                        call    SetShipHostile                      ; make sure its hostile
+                        AddPirateCount                              ; another pirate has been spawned
+                        ld      hl,ExtraVesselsCounter
                         dec     (hl)
                         jr      nz,.PirateLoop
                         ret
@@ -396,6 +402,7 @@ LaunchPlayerMissile:    call    FindNextFreeSlotInC                 ; Check if w
                         ret
 .MissileMissFire:       ret ; TODO bing bong noise misfire message
 
+; a = ship type, iyh = universe slot to create in
 SpawnShipTypeA:         ld      iyl,a                               ; save ship type
                         MMUSelectShipBank1                          ; select bank 1
                         ld      a,iyh                               ; select unverse free slot
@@ -425,7 +432,7 @@ SpawnShipTypeA:         ld      iyl,a                               ; save ship 
                         ;   put planet into data blokc 1 of FRIN
                         ;   put sun inot data block (NWWSHIP)
                         ; need to look at in system warp code (WARP) - note we need to -reorg all to code for teh station as that will never be in slot 0
-
+             
 
 WeAreInTransition:                        
 DoubleBufferCheck:      ld      a,00
@@ -484,7 +491,7 @@ UpdateUniverseObjects:  xor     a
 .CheckIfStationAngry:   ReturnIfMemFalse  SetStationAngryFlag
 .SetStationAngryIfPoss: ReturnIfMemNeNusng UniverseSlotList, ShipTypeStation
                         MMUSelectUniverseN 0
-                        call    ForceAngryDirect
+                        call    SetShipHostile
                         SetMemFalse    SetStationAngryFlag
                         ret
 ;..................................................................................................................................
@@ -554,9 +561,7 @@ DrawForwardShips:       xor     a
 .DrawSunCompass:        MMUSelectSun
                         call    UpdateCompassSun                ; Always update the sun position
                         call    UpdateScannerSun                ; Always attempt to put the sun on the scanner 
-.CheckPlanetCompass:    ld      a,(SpaceStationSafeZone)
-                        and     a
-                        jr      nz,.DrawSpaceStationCompass
+.CheckPlanetCompass:    JumpIfMemFalse SpaceStationSafeZone, .DrawSpaceStationCompass
 .DrawPlanetCompass:                        
              
 .DrawSpaceStationCompass:

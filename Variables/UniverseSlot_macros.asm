@@ -9,6 +9,31 @@ SubJunkCount:           MACRO
                         dec     (hl)
                         ENDM
                         
+AddCop:                 MACRO
+                        ld      hl,CopCount
+                        inc     (hl)
+                        ENDM
+                        
+SubCop:                 MACRO
+                        ld      hl,CopCount
+                        dec     (hl)
+                        ENDM
+
+AddPirateCount:         MACRO
+                        ld      hl,PirateCount
+                        inc     (hl)     
+                        ENDM
+
+SubPirateCount:         MACRO
+                        ld      hl,PirateCount
+                        inc     (hl)     
+                        ENDM
+
+AreCopsPresent:         MACRO
+                        ld      a,(CopCount)
+                        and     a
+                        ENDM
+                
 TestRoomForJunk:        MACRO   Target
                         ld      a,3
                         JumpIfALTMemusng    JunkCount, Target

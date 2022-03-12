@@ -140,13 +140,18 @@ ForceTransition:        MACRO newScreen
                         ld      (ScreenTransitionForced), a
                         ENDM
                 
+IsSpaceStationPresent:  MACRO
+                        ld      a,(SpaceStationSafeZone)
+                        and     a
+                        ENDM
+                                                
 SetSafeZone:            MACRO
-                        ld      a,$FF
+                        xor     a
                         ld      (SpaceStationSafeZone),a
                         ENDM
 
 ClearSafeZone:          MACRO
-                        xor     a
+                        ld      a,$FF
                         ld      (SpaceStationSafeZone),a
                         ENDM
 
@@ -158,15 +163,15 @@ CoolLasers:             MACRO
                         ld      (GunTemperature),a
 .AlreadyCool:           
                         ENDM                        
-                        
-                                                
+
+
 InitEventCounter:       MACRO
                         xor     a
                         ld      (EventCounter),a
                         ENDM
                         
 ClearMissJump:          MACRO
-                        xor     a
+                        ld      a,$FF
                         ld      (MissJumpFlag),a
                         ENDM
                         

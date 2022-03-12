@@ -14,7 +14,13 @@ Bit2Only            equ %00000100
 Bit1Only            equ %00000010
 Bit0Only            equ %00000001
 Bit7Clear           equ %01111111
-
+Bit6Clear           equ %10111111
+Bit5Clear           equ %11011111
+Bit4Clear           equ %11101111
+Bit3Clear           equ %11110111
+Bit2Clear           equ %11111011
+Bit1Clear           equ %11111101
+Bit0Clear           equ %11111110
 ConstPi				equ $80
 ConstNorm           equ 197
 
@@ -39,7 +45,8 @@ ShipTypeEmpty       equ 255
 ; TacticsControl
 ShipIsTrader        equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
 ShipIsBountyHunter  equ Bit1Only   ; 
-ShipIsHostile       equ Bit2Only   ; 
+ShipIsHostile       equ Bit2Only   ;
+ShipNotHostile      equ Bit2Clear   ;
 ShipIsPirate        equ Bit3Only   ; 
 ShipIsDocking       equ Bit4Only   ; 
 ShipIsBystander     equ Bit5Only   ; 

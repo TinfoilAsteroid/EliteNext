@@ -351,6 +351,101 @@ ScaleSunPos:            ld      de,(SBnKzhi)                ; de = abs z & save 
                         ret
  
 
+;compass sun
+;            if value is still 24 bit
+;                copy xhi/xsgn y and z to xxx15 ([2 1 0 ] [ 5 4 3] [ 8 7 6 ]
+;                normalise vector (note this assumes sun is just sign byte+ 2 bytes)
+;                tempk39 = OR 3 low bytes
+;                tempkA = OR 3 high bytes
+;                 TAL2:    repeat
+;                             asl tempka tempk39
+;                             exit if carry set
+;                             x coord << 1
+;                             y corrd << 1
+;                             z coord << 1
+;                          until carry clear   
+;                 TA2:     shift x y and z right one and put sign bit in from sign bytes
+;                          now XX15 holds sign + 7 bit bytes maximused for coords
+;                          RQ = AP = X ^ 2
+;                          TP = AP = Y ^ 2
+;                          RQ = RQ + TP
+;                          TP = AP = Z ^ 2
+;                          RQ = RQ + TP
+;                          Q = SQRT (RQ)
+;                          for each coord - A = A/Q * 3/ 8
+;                
+;                
+
+UpscaleSunPosition:     ld      de,(SBnKzhi)                ; de = abs z & save sign on stack
+                        ld      hl,(SBnKxhi)                ; hl = abs x & save sign on stack
+                        ld      bc,(SBnKyhi)                ; bc = abs y & save sign on stack
+                        ld      a,d
+                        and     SignOnly8Bit
+                        srl     a
+                        ld      iyl,a
+                        ld      a,h
+                        and     SignOnly8Bit
+                        or      iyl
+                        srl     a
+                        ld      a,b
+                        and     SignOnly8Bit
+                        or      iyl
+                        ld      iyl,a                       ; IYL now equals YXH00000 where letters = sign bits
+                        ClearSignBit d
+                        ClearSignBit h
+                        ClearSignBit b
+                        ld      a,b
+                        or      e
+                        or      h
+                        or      l
+                        or      b
+                        or      c
+                        jr      z, .Setto1                 ; to prevent and infinite loop in upscale if all zero
+                        ld      a,d
+                        or      e
+                        or      h
+                        sla     a
+                        jr      c,.DoneCalc
+                        jr      z,.DoneCalc                 
+.UpscaleLoop:           ShiftDELeft1
+                        ShiftHLLeft1
+                        ShiftBCLeft1
+                        sla     a
+                        jr      c,.DoneCalc
+                        jp      .UpscaleLoop
+.DoneCalc               ShiftDERight1
+                        ShiftHLRight1
+                        ShiftBCRight1
+.NowSetResultInLowByte: ld      e,d
+                        ld      l,h
+                        ld      c,b
+                        ld      a,iyl
+                        and     SignOnly8Bit
+                        ld      b,a
+                        ld      a,iyl
+                        sla     a
+                        ld      iyl,a
+                        and     SignOnly8Bit
+                        ld      h,a
+                        ld      a,iyl
+                        sla     a
+                        and     SignOnly8Bit
+                        ld      d,a
+                        ret
+.Setto1:                ld      a,1
+                        ld      c,a
+                        ld      e,a
+                        ld      l,a
+                        ld      a,iyl
+                        sla     a
+                        sla     a
+                        and     SignOnly8Bit
+                        or      e
+                        ld      e,a
+                        ret
+                        
+                        
+                        
 
 UpdateCompassSun:       MMUSelectSun
                         call    ScaleSunPos                 ; get as 7 bit signed
@@ -385,7 +480,7 @@ UpdateCompassSun:       MMUSelectSun
                         ld      a,h                         ; .
                         pop     bc                          ; retrieve sign
                         cp      0
-                        jr      z,.DoneNormX                 ; in case we end up with - 0
+                        jr      z,.DoneNormX                ; in case we end up with - 0
                         bit     7,c                         ; if sign is negative then 2'c value
                         jr      z,.DoneNormX 
                         neg
@@ -413,7 +508,7 @@ UpdateCompassSun:       MMUSelectSun
                         ld      c,a                         ; .
                         push    bc                          ; save sign to stack
                         ld      a,l                         ; a = 8 bit signed z
-                        call    AequAdivQmul96ABS              ; .
+                        call    AequAdivQmul96ABS           ; .
                         ld      e,a                         ; a = e / 10
                         EDiv10Inline                        ; .
                         ld      a,h                         ; retrieve sign
@@ -422,9 +517,9 @@ UpdateCompassSun:       MMUSelectSun
                         jr      z,.DoneNormY                 ; in case we end up with - 0
                         bit     7,c                         ; if sign is negative then 2'c value
                         jr      z,.DoneNormY
-                        neg
-.DoneNormY:             ld      b,a                       ; .
-                        ld      c,ixh
+                        neg                                 ;
+.DoneNormY:             ld      b,a                         ; result from Y
+                        ld      c,ixh                       ; x = saved X
 .SetSprite:             MMUSelectSpriteBank
                         call    compass_sun_move
                         ld      a,ixl

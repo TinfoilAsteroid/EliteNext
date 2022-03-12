@@ -306,9 +306,7 @@ draw_STAT_items:        MMUSelectLayer1
 get_cmdr_condition:     ld			a,(DockedFlag)
                         cp			PlayerDocked
                         jr			z,.PlayerIsDocked
-.PlayerNotDocked:	    ld          a,(SpaceStationSafeZone)
-                        cp          0
-                        ret         z
+.PlayerNotDocked:	    ReturnIfMemTrue    SpaceStationSafeZone
                         call        AreShipsPresent
                         jr          c,.NoShipsAround
                         ld          a,1

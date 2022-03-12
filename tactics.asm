@@ -1,13 +1,9 @@
 ;Ship Tactics
 ; used  when no pre-checks are requrired, e.g. if forcing a space station from main loop
 
-ForceAngryDirect:       ld      hl,ShipNewBitsAddr                      
-                        set     ShipIsHostile, (hl)
-                        ret
 
 ; set angry if possible, if its an innocent then flag the space station to get angry
 MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check bit 5 of newb flags
-                        ld      b,a                                     ; copy to b in case we want it later
                         JumpIfMemEqNusng ShipTypeAddr, ShipTypeStation, .SetNewbAngry
 .ItsNotAStation:        and     ShipIsBystander                         ; check if space station present if its a bystander
                         call    nz, SetStationAngry                     ; Set Space Station if present, Angry
@@ -21,9 +17,7 @@ MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check 
                         ld      (UBnKRotZCounter),a                     ; .
                         ld      a,(ShipAIFlagsAddr)
                         ReturnIfBitMaskClear ShipCanAnger
-.SetNewbAngry:          ld      a,b
-                        or      ShipIsHostile
-                        ld      (ShipNewBitsAddr),a
+.SetNewbAngry:          call    SetShipHostile
                         ret
 
 MissileDidHitUs:        ret ; TODO
@@ -35,9 +29,7 @@ SetStationAngry:        call    IsSpaceStationPresent                   ; only i
                         ld      a,(UbnKShipBankNbr)                     ; save current bank
                         ld      iyh,a
                         MMUSelectUniverseN 0                            ; space station is always 0
-                        ld      a,(ShipNewBitsAddr)                     ; get station new bits
-                        or      ShipIsHostile                           ; and mark hostile
-                        ld      (ShipNewBitsAddr),a                     ; .
+                        call    SetShipHostile
                         ld      a,iyh                                   ; get prev bank back
                         MMUSelectUniverseA                              ;
                         ret
