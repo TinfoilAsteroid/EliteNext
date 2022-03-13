@@ -103,7 +103,7 @@ IndexedWork				DS	37				; General purpose work space when doing temp arrays
 
 ; MOVED TO Universe XX19					DB	0				; page 0 &67
 ; MOVED TO Universe XX20					DB	0				; page 0 &67 also used as XX19+1 for XX19 being a word
-NormalCountCopyBy4		equ	XX20			; Also used for normal * 4 holding variable
+;DEFUNCT EQUATE NormalCountCopyBy4		equ	XX20			; Also used for normal * 4 holding variable
 XX21					DB  0				; this may be part of XX20/xx21 accordign to spawn new shipXX21		DW	0				; Ah XX21 is hull pointer  hull pointer lo as it can;t hold HULLINDX as 16bit array
 ;XX21 is the pointer table to the pages for ship types. this will be repalaced by paging so just need an equate for first page
 

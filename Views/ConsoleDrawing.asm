@@ -333,7 +333,7 @@ ScaleSunPos:            ld      de,(SBnKzhi)                ; de = abs z & save 
                         jr      .ShiftLoop
 .Shifted:               ld      a,c                         ; See if we already have 7 bit
                         or      l                           ; 
-                        or      d                           ; 
+                        or      e                           ; 
                         and     $80                         ; 
                         jr      z,.NoAdditionalShift        ;
                         ShiftBCRight1                       ; we want 7 bit 

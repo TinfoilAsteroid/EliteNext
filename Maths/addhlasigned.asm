@@ -25,7 +25,7 @@ HLEequAusngMinusHLsng:  ld      b,h
 .DoAdd:                 ld      a,c
                         add hl,a
                         ret 
-
+;tested mathstestsun2
 ; DEL = DEL + BCH signed, uses BC, DE, HL, IY, A
 AddBCHtoDELsigned:      ld      a,b                 ; Are the values both the same sign?
                         xor     d                   ; .

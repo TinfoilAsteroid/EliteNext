@@ -243,7 +243,7 @@ compass_sun_move:       ld		a,compass_sun
                         nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
 ; write out Y position bits 1 to 8
                         ld      a, SunScanCenterY-compass_offset
-                        add     a,b
+                        sub     b
                         nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                         ret    
 
@@ -258,7 +258,7 @@ compass_station_move:   ld		a,compass_station
 ; write out Y position bits 1 to 8
                         ex		de,hl								; de = full x position
                         ld		a,b
-                        ld      hl,compass_offset
+                        ld      hl,compass_offset           ;TODO Needs to be subtract
                         add		hl,a
                         ld		a,l                                 ; hl = full y position
                         nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen

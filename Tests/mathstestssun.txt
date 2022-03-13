@@ -1,0 +1,1918 @@
+# file opened: mathstestssun.asm
+  1   0000                                      DEVICE ZXSPECTRUMNEXT
+  2   0000                                      DEFINE  DOUBLEBUFFER 1
+  3   0000                                      CSPECTMAP testMaths.map
+  4   0000                                      OPT --zxnext=cspect --syntax=a --reversepop
+  5   0000
+  6   0000              testStartup:            ORG         $8000
+  7   8000
+  8   8000 DD 21 9B 86                          ld      ix, TestCase1
+  9   8004 3A 3C 87     .TestLoop:              ld      a,(testCounter)
+ 10   8007 21 3B 87                             ld      hl, testTotal
+ 11   800A BE                                   cp      (hl)
+ 12   800B 28 5C                                jr      z,.Done
+ 13   800D DD 7E 00                             ld      a,(ix+testCase.XLo)
+ 14   8010 5F                                   ld      e,a
+ 15   8011 DD 7E 01                             ld      a,(ix+testCase.XHi)
+ 16   8014 6F                                   ld      l,a
+ 17   8015 DD 7E 02                             ld      a,(ix+testCase.XSgn)
+ 18   8018 67                                   ld      h,a
+ 19   8019 DD 7E 03                             ld      a,(ix+testCase.DVal)
+ 20   801C 57                                   ld      d,a
+ 21   801D CD 5D 81                             call    mulHLEbyDSigned
+ 22   8020 FD 2E 50                             ld      iyl,'P'
+ 23   8023 7A                                   ld      a,d
+ 24   8024 DD 77 0B                             ld      (ix+testCase.ActualD),a
+ 25   8027 DD BE 07                             cp      (ix+testCase.ExpectedD)
+ 26   802A 28 03                                jr      z,.DOK
+ 27   802C FD 2E 31                             ld      iyl,'1'
+ 28   802F              .DOK:
+ 29   802F 7B                                   ld      a,e
+ 30   8030 DD 77 0A                             ld      (ix+testCase.ActualE),a
+ 31   8033 DD BE 06                             cp      (ix+testCase.ExpectedE)
+ 32   8036 28 03                                jr      z,.EOK
+ 33   8038 FD 2E 32                             ld      iyl,'2'
+ 34   803B              .EOK:
+ 35   803B 7D                                   ld      a,l
+ 36   803C DD 77 09                             ld      (ix+testCase.ActualL),a
+ 37   803F DD BE 05                             cp      (ix+testCase.ExpectedL)
+ 38   8042 28 03                                jr      z,.LOK
+ 39   8044 FD 2E 33                             ld      iyl,'3'
+ 40   8047              .LOK:
+ 41   8047 79                                   ld      a,c
+ 42   8048 DD 77 08                             ld      (ix+testCase.ActualC),a
+ 43   804B DD BE 04                             cp      (ix+testCase.ExpectedC)
+ 44   804E 28 03                                jr      z,.COK
+ 45   8050 FD 2E 34                             ld      iyl,'4'
+ 46   8053              .COK:
+ 47   8053 FD 7D                                ld      a,iyl
+ 48   8055 DD 77 0F                             ld      (ix+testCase.PassFail),a
+ 49   8058 21 3C 87                             ld      hl,testCounter
+ 50   805B 34                                   inc     (hl)
+ 51   805C DD E5                                push    ix
+ 52   805E E1                                   pop     hl
+ 53   805F 3E 10                                ld      a,16
+ 54   8061 ED 31                                add     hl,a
+ 55   8063 E5                                   push    hl
+ 56   8064 DD E1                                pop     ix
+ 57   8066 C3 04 80                             jp      .TestLoop
+ 58   8069
+ 59   8069 DD 01        .Done                   break
+ 60   806B C3 69 80                             jp      .Done                   ; complete tight loop
+ 61   806E
+ 62   806E                                      INCLUDE "../Variables/constant_equates.asm"
+# file opened: ../Variables/constant_equates.asm
+  1+  806E              ;Contants
+  2+  806E
+  3+  806E              SignMask8Bit		equ %01111111
+  4+  806E              SignMask16Bit		equ %0111111111111111
+  5+  806E              SignOnly8Bit		equ $80
+  6+  806E              SignOnly16Bit		equ $8000
+  7+  806E
+  8+  806E              Bit7Only            equ %10000000
+  9+  806E              Bit6Only            equ %01000000
+ 10+  806E              Bit5Only            equ %00100000
+ 11+  806E              Bit4Only            equ %00010000
+ 12+  806E              Bit3Only            equ %00001000
+ 13+  806E              Bit2Only            equ %00000100
+ 14+  806E              Bit1Only            equ %00000010
+ 15+  806E              Bit0Only            equ %00000001
+ 16+  806E              Bit7Clear           equ %01111111
+ 17+  806E              Bit6Clear           equ %10111111
+ 18+  806E              Bit5Clear           equ %11011111
+ 19+  806E              Bit4Clear           equ %11101111
+ 20+  806E              Bit3Clear           equ %11110111
+ 21+  806E              Bit2Clear           equ %11111011
+ 22+  806E              Bit1Clear           equ %11111101
+ 23+  806E              Bit0Clear           equ %11111110
+ 24+  806E              ConstPi				equ $80
+ 25+  806E              ConstNorm           equ 197
+ 26+  806E
+ 27+  806E              ;Text Tokens
+ 28+  806E              EliteToken			equ $1E			; Token ID for text messsage ---- E L I T E ----
+ 29+  806E              BrabenBellToken 	equ $0D
+ 30+  806E              AcorToken			equ $0C
+ 31+  806E
+ 32+  806E              ; Intro Screen
+ 33+  806E              TitleShip			equ	$8C
+ 34+  806E              RotationUnity		equ $60
+ 35+  806E              DBCheckCode			equ $DB
+ 36+  806E              MaxVisibility		equ $1F
+ 37+  806E              FarInFront			equ $C0
+ 38+  806E
+ 39+  806E              ; Universe Managment
+ 40+  806E              ShipTypeJunk        equ 3
+ 41+  806E              ShipTypeStation     equ 2
+ 42+  806E              ShipTypeMissile     equ 1
+ 43+  806E              ShipTypeNormal      equ 0
+ 44+  806E              ShipTypeEmpty       equ 255
+ 45+  806E              ; TacticsControl
+ 46+  806E              ShipIsTrader        equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
+ 47+  806E              ShipIsBountyHunter  equ Bit1Only   ;
+ 48+  806E              ShipIsHostile       equ Bit2Only   ;
+ 49+  806E              ShipNotHostile      equ Bit2Clear   ;
+ 50+  806E              ShipIsPirate        equ Bit3Only   ;
+ 51+  806E              ShipIsDocking       equ Bit4Only   ;
+ 52+  806E              ShipIsBystander     equ Bit5Only   ;
+ 53+  806E              ShipIsCop           equ Bit6Only   ;
+ 54+  806E              ShipIsScoopDockEsc  equ Bit7Only   ;
+ 55+  806E              ShipAIEnabled       equ Bit7Only   ;
+ 56+  806E              ShipExploding       equ Bit5Only
+ 57+  806E              ShipKilled          equ Bit7Clear
+ 58+  806E
+ 59+  806E              ; UniverseAIControl
+ 60+  806E              ShipCanAnger        equ %00000001
+ 61+  806E
+ 62+  806E
+ 63+  806E              ShipMaxDistance     equ 192
+ 64+  806E              HyperSpaceTimers    equ $0B0B
+ 65+  806E
+ 66+  806E
+ 67+  806E              MaxNumberOfStars	equ 11
+ 68+  806E              ConsoleRefreshInterval  equ 4
+ 69+  806E
+ 70+  806E              ShipTypeSize		equ	32 			;??????? just a guess for now
+ 71+  806E              ShipSST				equ 4			; its a space station
+ 72+  806E              UniverseBasePage 	equ 70			; Base memory bank for universe Item #0
+ 73+  806E              ShipDataBasePage	equ	90			; Needs 2mb upgrade but what the heck
+ 74+  806E              ShipCountMax		equ	2			; For now just 2 ships to debug
+ 75+  806E              LineLimitPerShip	equ 70			; Max lines per ship
+ 76+  806E              FaceLimitPerShip	equ	70			; Same as line limit to simplify some logic
+ 77+  806E              ; "NEED TO DEFINE SHIPTYPESIZE TODO"
+ 78+  806E              PlayerDocked		equ	$FF
+ 79+  806E
+ 80+  806E              ; Memory page managment	(Refers to a memory slot as a place to access data)
+ 81+  806E              ShipDataSlot		equ	6			; this may move into rom swap out space later
+ 82+  806E              UniverseObjectSlot	equ	7
+ 83+  806E
+ 84+  806E              KeyForwardsView		equ	$20
+ 85+  806E              ; Game specific equates
+ 86+  806E              MissileDropHeight   equ 5           ; how far the missile is ejected on launch in y axis
+ 87+  806E
+ 88+  806E              ;...Game Colour Mapping
+ 89+  806E              L2DustColour        equ L2ColourGREY_1
+ 90+  806E              L2SunScannerBright  equ 252
+ 91+  806E              L2SunScanner        equ 180
+ 92+  806E
+ 93+  806E
+ 94+  806E              ; Ship Data
+ 95+  806E              ;;;;	.XX21	\ -> &5600 \ Table of pointers to ships' data given to XX0
+ 96+  806E              ;;;;00 7F			 EQUW &7F00 \ type  1 is #MSL  Missile data on page off bottom of screen
+ 97+  806E              ;;;;00 00			 EQUW 0     \ type  2 is #SST  Space Station, Coriolis or Dodo.
+ 98+  806E              ;;;;00 00			 EQUW 0     \ type  3 is #ESC  Escape capsule
+ 99+  806E              ;;;;00 00			 EQUW 0     \ type  4 is #PLT  Plate, alloys
+100+  806E              ;;;;00 00			 EQUW 0     \ type  5 is #OIL  Cargo cannister
+101+  806E              ;;;;00 00			 EQUW 0     \ type  6 is       Boulder
+102+  806E              ;;;;00 00			 EQUW 0     \ type  7 is #AST  Asteroid
+103+  806E              ;;;;00 00			 EQUW 0     \ type  8 is #SPL  Splinter, rock.
+104+  806E              ;;;;00 00			 EQUW 0     \ type  9 is #SHU  Shuttle
+105+  806E              ;;;;00 00			 EQUW 0     \ type 10 is       Transporter
+106+  806E              ;;;;00 00			 EQUW 0     \ type 11 is #CYL  Cobra Mk III,  Boa
+107+  806E              ;;;;00 00			 EQUW 0     \ type 12 is       Python
+108+  806E              ;;;;00 00			 EQUW 0     \ type 13 is       Last of three traders
+109+  806E              ;;;;00 00			 EQUW 0     \ type 14 is #ANA  Anaconda
+110+  806E              ;;;;00 00			 EQUW 0     \ type 15 is #WRM  Worm with Anaconda
+111+  806E              ;;;;00 00			 EQUW 0     \ type 16 is #COP  Viper
+112+  806E              ;;;;00 00			 EQUW 0     \ type 17 is       First pirate
+113+  806E              ;;;;00 00			 EQUW 0     \ type 18 is
+114+  806E              ;;;;00 00			 EQUW 0     \ type 19 is #KRA  Krait small pirate
+115+  806E              ;;;;00 00			 EQUW 0     \ type 20 is #ADA  Adder
+116+  806E              ;;;;00 00			 EQUW 0     \ type 21 is
+117+  806E              ;;;;00 00			 EQUW 0     \ type 22 is
+118+  806E              ;;;;00 00			 EQUW 0     \ type 23 is
+119+  806E              ;;;;00 00			 EQUW 0     \ type 24 is #CYL2 Last strong pirate
+120+  806E              ;;;;00 00			 EQUW 0     \ type 25 is #ASP  Asp Mk II
+121+  806E              ;;;;00 00			 EQUW 0     \ type 26 is #FER  Fer de Lance
+122+  806E              ;;;;00 00			 EQUW 0     \ type 27 is
+123+  806E              ;;;;00 00			 EQUW 0     \ type 28 is	Last of three bounty hunters
+124+  806E              ;;;;00 00			 EQUW 0     \ type 29 is #THG  Thargoid
+125+  806E              ;;;;00 00			 EQUW 0     \ type 30 is #TGL  Thargon
+126+  806E              ;;;;00 00			 EQUW 0     \ type 31 is #CON  Constrictor
+127+  806E              ;;;;	.E%	\ -> &563E \ Hull NEWB bits are escpod, cop, inno, ?, pirate, angry, hunter, trader.
+128+  806E              ;;;;			\ NEWB examples
+129+  806E              ;;;;\ 21			EQUB &21    \ 0010 0001    9 Shuttle has no escape pod, inno, trader.
+130+  806E              ;;;;\ 61			EQUB &61    \ 0110 0001   10 Tansporter no escape pod, Cop, inno, trader.
+131+  806E              ;;;;\ A0			EQUB &A0    \ 1010 0000   11 Cobra has Escape pod, inno, not a trader.
+132+  806E              ;;;;\ C2			EQUB &C2    \ 1100 0010   16 Viper has Escape pod, Cop, hunter.
+133+  806E              ;;;;\ 8C			EQUB &8C    \ 1000 1100   19 Krait pirate has escape pod, is pirate and angry.
+134+  806E
+# file closed: ../Variables/constant_equates.asm
+ 63   806E                                      INCLUDE "../Hardware/L2ColourDefines.asm"
+# file opened: ../Hardware/L2ColourDefines.asm
+  1+  806E              L2ColourBLACK           EQU   0
+  2+  806E              L2ColourRED_1           EQU 224                 ; RGB 255,  0,  0
+  3+  806E              L2ColourRED_2           EQU 192                 ; RGB 218,  0,  0
+  4+  806E              L2ColourRED_3           EQU 160                 ; RGB 182,  0,  0
+  5+  806E              L2ColourRED_4           EQU 128                 ; RGB 145,  0,  0
+  6+  806E              L2ColourRED_5           EQU  96                 ; RGB 109,  0,  0
+  7+  806E              L2ColourRED_6           EQU  64                 ; RGB  72,  0,  0
+  8+  806E              L2ColourRED_7           EQU  32                 ; RGB  36,  0,  0
+  9+  806E              L2ColourYELLOW_1        EQU 252                 ; RGB 255,255,  0
+ 10+  806E              L2ColourYELLOW_2        EQU 216                 ; RGB 218,218,  0
+ 11+  806E              L2ColourYELLOW_3        EQU 180                 ; RGB 182,182,  0
+ 12+  806E              L2ColourYELLOW_4        EQU 144                 ; RGB 145,145,  0
+ 13+  806E              L2ColourYELLOW_5        EQU 108                 ; RGB 109.109,  0
+ 14+  806E              L2ColourYELLOW_6        EQU  72                 ; RGB  72, 72,  0
+ 15+  806E              L2ColourYELLOW_7        EQU  36                 ; RGB  36, 36,  0
+ 16+  806E              L2ColourGREEN_1		    EQU  28                 ; RGB   0,255,  0
+ 17+  806E              L2ColourGREEN_2		    EQU  24                 ; RGB   0,218,  0
+ 18+  806E              L2ColourGREEN_3		    EQU  16                 ; RGB   0,145,  0
+ 19+  806E              L2ColourGREEN_4         EQU  12                 ; RGB   0,109,  0
+ 20+  806E              L2ColourGREEN_5         EQU   8                 ; RGB   0, 72,  0
+ 21+  806E              L2ColourGREEN_6         EQU   4                 ; RGB   0, 36,  0
+ 22+  806E              L2ColourBLUE_1          EQU   3                 ; RGB 0,0,255
+ 23+  806E              L2ColourBLUE_2          EQU   2                 ; RGB 0,0,170
+ 24+  806E              L2ColourBLUE_3          EQU   1                 ; RGB 0,0,85
+ 25+  806E
+ 26+  806E
+ 27+  806E              L2ColourWHITE_1         EQU 255                 ; RGB 255,255,255
+ 28+  806E              L2ColourWHITE_2         EQU 146
+ 29+  806E              L2ColourGREY_1		    EQU L2ColourWHITE_2
+ 30+  806E              L2ColourGREY_2		    EQU 109
+ 31+  806E              L2ColourGREY_3		    EQU  73
+ 32+  806E              L2ColourGREY_4		    EQU  37
+ 33+  806E
+ 34+  806E              L2ColourGREEN_MB        EQU  29                 ;RGB 0,255,85
+ 35+  806E              L2ColourGREEN_MR        EQU 124                 ;RGB 109.255,0
+ 36+  806E              L2ColourCREAM_1         EQU 218                 ; RGB 218,218,170
+ 37+  806E              L2ColourCREAM_2         EQU 182                 ; RGB 182,182,170
+ 38+  806E              L2ColourCREAM_3         EQU 146                 ; RGB 145,145,170
+ 39+  806E
+ 40+  806E              L2ColourTRANSPARENT     EQU 227                 ; RGB 255,  0,255
+ 41+  806E              L2ColourMAGENTA_1       EQU 162                 ; RGB 182,  0,170
+ 42+  806E              L2ColourMAGENTA_2       EQU 130                 ; RGB 145,  0,170
+ 43+  806E              L2ColourMAGENTA_3       EQU  97                 ; RGB 109,  0, 85
+ 44+  806E              L2ColourMAGENTA_4       EQU  65                 ; RGB  72,  0, 85
+ 45+  806E              L2ColourORANGE_1        EQU 236                 ; RGB
+ 46+  806E              L2ColourORANGE_2        EQU 168                 ; RGB
+ 47+  806E              L2ColourORANGE_3        EQU  68                 ; RGB
+ 48+  806E              L2ColourCYAN_1          EQU  31                 ; RGB   0,255, 255
+ 49+  806E              L2ColourCYAN_2          EQU  18                 ; RGB
+ 50+  806E              L2ColourCYAN_3          EQU   9                 ; RGB
+ 51+  806E              L2ColourPURPLE_1        EQU 109                 ; RGB
+ 52+  806E              L2ColourPURPLE_2        EQU  66                 ; RGB
+ 53+  806E              L2ColourPURPLE_3        EQU  33                 ; RGB
+ 54+  806E              L2ColourPINK_1		    EQU 231                 ; RGB
+ 55+  806E              L2ColourPINK_2		    EQU 226                 ; RGB
+ 56+  806E              L2ColourPINK_3		    EQU 225                 ; RGB
+ 57+  806E              L2ColourPINK_4		    EQU 224                 ; RGB
+ 58+  806E
+# file closed: ../Hardware/L2ColourDefines.asm
+ 64   806E                                      INCLUDE "../Macros/carryFlagMacros.asm"
+# file opened: ../Macros/carryFlagMacros.asm
+  1+  806E
+  2+  806E              SetCarryFlag:           MACRO
+  3+  806E ~                                    scf
+  4+  806E                                      ENDM
+  5+  806E
+  6+  806E              ClearCarryFlag:	        MACRO
+  7+  806E ~                                    or a
+  8+  806E                                      ENDM
+  9+  806E
+ 10+  806E              FlipCarryFlag:          MACRO
+ 11+  806E ~                                    ccf
+ 12+  806E                                      ENDM
+ 13+  806E
+# file closed: ../Macros/carryFlagMacros.asm
+ 65   806E                                      INCLUDE "../Macros/jumpMacros.asm"
+# file opened: ../Macros/jumpMacros.asm
+  1+  806E              JumpIfPositive:	        MACRO target
+  2+  806E ~                                    jp		p, target
+  3+  806E                                      ENDM
+  4+  806E
+  5+  806E              JumpIfNegative:	        MACRO target
+  6+  806E ~                                    jp		m, target
+  7+  806E                                      ENDM
+  8+  806E
+  9+  806E
+ 10+  806E              JumpIfUnderflow:	    MACRO target
+ 11+  806E ~                                    jp		po, target
+ 12+  806E                                      ENDM
+ 13+  806E
+ 14+  806E              JumpIfOverflow:	        MACRO target
+ 15+  806E ~                                    jp		po, target
+ 16+  806E                                      ENDM
+ 17+  806E
+ 18+  806E
+ 19+  806E              JumpIfNotZero:	        MACRO target
+ 20+  806E ~                                    jp	nz,target
+ 21+  806E                                      ENDM
+ 22+  806E
+ 23+  806E              JumpIfZero:	            MACRO target
+ 24+  806E ~                                    jp	z,target
+ 25+  806E                                      ENDM
+ 26+  806E
+ 27+  806E              ;.. Bit routines
+ 28+  806E              JumpOnMemBitSet:        MACRO mem, bitnbr, target
+ 29+  806E ~                                    ld      a,(mem)
+ 30+  806E ~                                    bit 	bitnbr,a
+ 31+  806E ~                                    jp      nz,target
+ 32+  806E                                      ENDM
+ 33+  806E
+ 34+  806E              JumpOnMemBitClear:      MACRO mem, bitnbr, target
+ 35+  806E ~                                    ld      a,(mem)
+ 36+  806E ~                                    bit 	bitnbr,a
+ 37+  806E ~                                    jp      z,target
+ 38+  806E                                      ENDM
+ 39+  806E
+ 40+  806E              JumpOnABit5Set:         MACRO   target
+ 41+  806E ~                                    and     Bit5Only
+ 42+  806E ~                                    jp      nz,target
+ 43+  806E                                      ENDM
+ 44+  806E
+ 45+  806E              JumpOnABit5Clear:       MACRO   target
+ 46+  806E ~                                    and     Bit5Only
+ 47+  806E ~                                    jp      z,target
+ 48+  806E                                      ENDM
+ 49+  806E
+ 50+  806E              JumpOnBitMaskSet:       MACRO   bitmask, target
+ 51+  806E ~                                    and     bitmask
+ 52+  806E ~                                    jp      nz,target
+ 53+  806E                                      ENDM
+ 54+  806E
+ 55+  806E              JumpOnBitMaskClear:     MACRO   bitmask, target
+ 56+  806E ~                                    and     bitmask
+ 57+  806E ~                                    jp      z,target
+ 58+  806E                                      ENDM
+ 59+  806E
+ 60+  806E              JumpOnBitSet:           MACRO  reg, bitnbr, target
+ 61+  806E ~                                    bit 	bitnbr,reg
+ 62+  806E ~                                    jp      nz,target
+ 63+  806E                                      ENDM
+ 64+  806E
+ 65+  806E              JumpOnBitClear:         MACRO  reg, bitnbr, target
+ 66+  806E ~                                    bit 	bitnbr,reg
+ 67+  806E ~                                    jp      z,target
+ 68+  806E                                      ENDM
+ 69+  806E
+ 70+  806E              ; Comparison Routines
+ 71+  806E              JumpIfAGTEusng:         MACRO
+ 72+  806E ~                                    jp		nc,target
+ 73+  806E                                      ENDM
+ 74+  806E
+ 75+  806E              JumpIfAGTENusng:        MACRO reg,target
+ 76+  806E ~                                    cp     reg
+ 77+  806E ~                                    jp		nc,target
+ 78+  806E                                      ENDM
+ 79+  806E
+ 80+  806E              JumpIfAGTEMemusng:      MACRO mem,target
+ 81+  806E ~                                    ld      hl,mem
+ 82+  806E ~                                    cp      (hl)
+ 83+  806E ~                                    jp		nc,target
+ 84+  806E                                      ENDM
+ 85+  806E
+ 86+  806E              JumpIfALTMemusng:       MACRO mem,target
+ 87+  806E ~                                    ld      hl,mem
+ 88+  806E ~                                    cp      (hl)
+ 89+  806E ~                                    jp		c,target
+ 90+  806E                                      ENDM
+ 91+  806E
+ 92+  806E              JumpIfMemGTENusng:      MACRO mem, value, target
+ 93+  806E ~                                    ld     a,(mem)
+ 94+  806E ~                                    cp     value
+ 95+  806E ~                                    jp	  nc,target
+ 96+  806E                                      ENDM
+ 97+  806E
+ 98+  806E              JumpIfMemGTEMemusng:    MACRO mem, address, target
+ 99+  806E ~                                    ld   a,(mem)
+100+  806E ~                                    ld   hl,address
+101+  806E ~                                    cp   (hl)
+102+  806E ~                                    jp	  nc,target
+103+  806E                                      ENDM
+104+  806E
+105+  806E              JumpIfMemEqMemusng:     MACRO mem, address, target
+106+  806E ~                                    ld   a,(mem)
+107+  806E ~                                    ld   hl,address
+108+  806E ~                                    cp   (hl)
+109+  806E ~                                    jp	  z,target
+110+  806E                                      ENDM
+111+  806E
+112+  806E              JumpIfMemTrue:          MACRO mem, target
+113+  806E ~                                    ld      a,(mem)
+114+  806E ~                                    and     a
+115+  806E ~                                    jp      z, target
+116+  806E                                      ENDM
+117+  806E
+118+  806E              JumpIfMemFalse:         MACRO mem, target
+119+  806E ~                                    ld      a,(mem)
+120+  806E ~                                    and     a
+121+  806E ~                                    jp      nz, target
+122+  806E                                      ENDM
+123+  806E
+124+  806E              JumpIfATrue:            MACRO target
+125+  806E ~                                    and     a
+126+  806E ~                                    jp      z, target
+127+  806E                                      ENDM
+128+  806E
+129+  806E              JumpIfAFalse:           MACRO target
+130+  806E ~                                    and     a
+131+  806E ~                                    jp      nz, target
+132+  806E                                      ENDM
+133+  806E
+134+  806E              JumpIfALTusng:          MACRO target
+135+  806E ~                                    jp		c,target
+136+  806E                                      ENDM
+137+  806E
+138+  806E              JumpIfALTNusng:         MACRO value, target
+139+  806E ~                                    cp      value
+140+  806E ~                                    jp		c, target
+141+  806E                                      ENDM
+142+  806E
+143+  806E              JumpIfMemLTNusng:       MACRO mem, value, target
+144+  806E ~                                    ld      a,(mem)
+145+  806E ~                                    cp      value
+146+  806E ~                                    jp	  c,target
+147+  806E                                      ENDM
+148+  806E
+149+  806E              JumpIfMemLTMemusng:     MACRO mem, value, target
+150+  806E ~                                    ld    a,(mem)
+151+  806E ~                                    ld    hl,value
+152+  806E ~                                    cp    (hl)
+153+  806E ~                                    jp	  c,target
+154+  806E                                      ENDM
+155+  806E
+156+  806E              JumpIfMemEqNusng:       MACRO mem,value,target
+157+  806E ~                                    ld  a,(mem)
+158+  806E ~                                    cp  value
+159+  806E ~                                    jp  z,target
+160+  806E                                      ENDM
+161+  806E
+162+  806E              JumpIfMemNeNusng:       MACRO mem,value,target
+163+  806E ~                                    ld  a,(mem)
+164+  806E ~                                    cp  value
+165+  806E ~                                    jp  nz,target
+166+  806E                                      ENDM
+167+  806E
+168+  806E              JumpIfMemZero:          MACRO mem,target
+169+  806E ~                                    ld  a,(mem)
+170+  806E ~                                    and a
+171+  806E ~                                    jp  z,target
+172+  806E                                      ENDM
+173+  806E
+174+  806E              JumpIfMemNotZero:       MACRO mem,target
+175+  806E ~                                    ld  a,(mem)
+176+  806E ~                                    and a
+177+  806E ~                                    jp  nz,target
+178+  806E                                      ENDM
+179+  806E
+180+  806E              JumpIfALTMemHLusng:     MACRO target
+181+  806E ~                                    cp    (hl)
+182+  806E ~                                    jp	  c,target
+183+  806E                                      ENDM
+184+  806E
+185+  806E              JumpIfANENusng:         MACRO value, target
+186+  806E ~                                    cp     value
+187+  806E ~                                    jp      nz,target
+188+  806E                                      ENDM
+189+  806E
+190+  806E              JumpIfANEMemusng:       MACRO  value, target
+191+  806E ~                                    ld    hl,value
+192+  806E ~                                    cp    (hl)
+193+  806E ~                                    jp      nz,target
+194+  806E                                      ENDM
+195+  806E
+196+  806E              JumpIfAEqNusng:         MACRO value, target
+197+  806E ~                                    cp     value
+198+  806E ~                                    jp      z,target
+199+  806E                                      ENDM
+200+  806E
+201+  806E              JumpIfAIsZero:	        MACRO target
+202+  806E ~                                    and a   ; cp 0 - changed to and a for optimisation but affects other flags
+203+  806E ~                                    jp	z, target
+204+  806E                                      ENDM
+205+  806E
+206+  806E              JumpIfAIsNotZero:       MACRO target
+207+  806E ~                                    cp	0
+208+  806E ~                                    jp	nz,target
+209+  806E                                      ENDM
+210+  806E
+211+  806E              IfResultZeroGoto:	    MACRO target
+212+  806E ~                                    jp	z,target
+213+  806E                                      ENDM
+214+  806E
+215+  806E              IfResultNotZeroGoto:    MACRO target
+216+  806E ~                                    jp	nz,target
+217+  806E                                      ENDM
+218+  806E
+# file closed: ../Macros/jumpMacros.asm
+ 66   806E                                      INCLUDE "../Macros/ldCopyMacros.asm"
+# file opened: ../Macros/ldCopyMacros.asm
+  1+  806E              ZeroA:		            MACRO
+  2+  806E ~                                    xor a
+  3+  806E                                      ENDM
+  4+  806E
+  5+  806E              SetATrue:               MACRO
+  6+  806E ~                                    xor     a
+  7+  806E                                      ENDM
+  8+  806E
+  9+  806E              SetAFalse:              MACRO
+ 10+  806E ~                                    ld      a,$FF
+ 11+  806E                                      ENDM
+ 12+  806E
+ 13+  806E              SetMemFalse             MACRO   mem
+ 14+  806E ~                                    ld      a,$FF
+ 15+  806E ~                                    ld      (mem),a
+ 16+  806E                                      ENDM
+ 17+  806E
+ 18+  806E              SetMemTrue              MACRO   mem
+ 19+  806E ~                                    xor     a
+ 20+  806E ~                                    ld      (mem),a
+ 21+  806E                                      ENDM
+ 22+  806E
+ 23+  806E              SetMemToN:              MACRO   mem,value
+ 24+  806E ~                                    ld      a,value
+ 25+  806E ~                                    ld      (mem),a
+ 26+  806E                                      ENDM
+ 27+  806E
+ 28+  806E              ldCopyTextAtHLtoDE:     MACRO
+ 29+  806E ~            .CopyLoop:              ld      a,(hl)
+ 30+  806E ~                                    ld      (de),a
+ 31+  806E ~                                    cp      0
+ 32+  806E ~                                    jp      z,.DoneCopy
+ 33+  806E ~                                    inc     hl
+ 34+  806E ~                                    inc     de
+ 35+  806E ~                                    jr      .CopyLoop
+ 36+  806E ~            .DoneCopy:
+ 37+  806E                                      ENDM
+ 38+  806E
+ 39+  806E              ldClearTextLoop:        MACRO   TextSize
+ 40+  806E ~                                    ld      b,a
+ 41+  806E ~                                    ld      a,TextSize
+ 42+  806E ~            .ClearLoop:             ld      (hl),a
+ 43+  806E ~                                    inc     hl
+ 44+  806E ~                                    djnz    .ClearLoop
+ 45+  806E                                      ENDM
+ 46+  806E
+ 47+  806E              ldCopyByte:             MACRO memfrom, memto
+ 48+  806E ~                                    ld       a,(memfrom)
+ 49+  806E ~                                    ld       (memto),a
+ 50+  806E                                      ENDM
+ 51+  806E
+ 52+  806E
+ 53+  806E              ldCopyByteABS:          MACRO memfrom, memto
+ 54+  806E ~                                    ld       a,(memfrom)
+ 55+  806E ~                                    and		$7F
+ 56+  806E ~                                    ld       (memto),a
+ 57+  806E                                      ENDM
+ 58+  806E
+ 59+  806E              ldCopy2Byte             MACRO  memfrom, memto
+ 60+  806E ~                                    ld       hl,(memfrom)
+ 61+  806E ~                                    ld       (memto),hl
+ 62+  806E                                      ENDM
+ 63+  806E
+ 64+  806E              ldWriteConst            MACRO  memfrom, memto
+ 65+  806E ~                                    ld       a,memfrom
+ 66+  806E ~                                    ld       (memto),a
+ 67+  806E                                      ENDM
+ 68+  806E
+ 69+  806E              ldWriteZero             MACRO  memto
+ 70+  806E ~                                    xor      a
+ 71+  806E ~                                    ld       (memto),a
+ 72+  806E                                      ENDM
+ 73+  806E
+ 74+  806E              ldIXLaFromN:	        MACRO memfrom
+ 75+  806E ~                                    ld		a,(memfrom)
+ 76+  806E ~                                    ld		ixl,a
+ 77+  806E                                      ENDM
+ 78+  806E
+ 79+  806E              ldIXHaFromN:	        MACRO memfrom
+ 80+  806E ~                                    ld		a,(memfrom)
+ 81+  806E ~                                    ld		ixh,a
+ 82+  806E                                      ENDM
+ 83+  806E
+ 84+  806E              ldIYLaFromN:	        MACRO memfrom
+ 85+  806E ~                                    ld		a,(memfrom)
+ 86+  806E ~                                    ld		iyl,a
+ 87+  806E                                      ENDM
+ 88+  806E
+ 89+  806E              ldIYHaFromN:	        MACRO memfrom
+ 90+  806E ~                                    ld		a,(memfrom)
+ 91+  806E ~                                    ld		iyh,a
+ 92+  806E                                      ENDM
+ 93+  806E
+ 94+  806E              ldhlde:			        MACRO
+ 95+  806E ~                                    ld		h,d
+ 96+  806E ~                                    ld		l,e
+ 97+  806E                                      ENDM
+ 98+  806E
+ 99+  806E              ldhlbc:			        MACRO
+100+  806E ~                                    ld		h,b
+101+  806E ~                                    ld		l,c
+102+  806E                                      ENDM
+103+  806E
+104+  806E              ldbcde:			        MACRO
+105+  806E ~                                    ld		b,d
+106+  806E ~                                    ld		c,e
+107+  806E                                      ENDM
+108+  806E
+109+  806E              lddebc:			        MACRO
+110+  806E ~                                    ld		d,b
+111+  806E ~                                    ld		e,c
+112+  806E                                      ENDM
+113+  806E
+114+  806E              ldbchl:			        MACRO
+115+  806E ~                                    ld		b,h
+116+  806E ~                                    ld		c,l
+117+  806E                                      ENDM
+118+  806E
+119+  806E              lddeiy:			        MACRO
+120+  806E ~                                    ld		d,iyh
+121+  806E ~                                    ld		e,iyl
+122+  806E                                      ENDM
+123+  806E
+124+  806E              ldiyde:			        MACRO
+125+  806E ~                                    ld		iyh,d
+126+  806E ~                                    ld		iyl,e
+127+  806E                                      ENDM
+128+  806E
+129+  806E
+130+  806E              FourLDIInstrunctions:   MACRO
+131+  806E ~                                    ldi
+132+  806E ~                                    ldi
+133+  806E ~                                    ldi
+134+  806E ~                                    ldi
+135+  806E                                      ENDM
+136+  806E
+137+  806E              FiveLDIInstrunctions:   MACRO
+138+  806E ~                                    ldi
+139+  806E ~                                    ldi
+140+  806E ~                                    ldi
+141+  806E ~                                    ldi
+142+  806E ~                                    ldi
+143+  806E                                      ENDM
+144+  806E
+145+  806E              SixLDIInstrunctions:    MACRO
+146+  806E ~                                    ldi
+147+  806E ~                                    ldi
+148+  806E ~                                    ldi
+149+  806E ~                                    ldi
+150+  806E ~                                    ldi
+151+  806E ~                                    ldi
+152+  806E                                      ENDM
+153+  806E
+154+  806E              EightLDIInstrunctions:  MACRO
+155+  806E ~            		                ldi
+156+  806E ~            		                ldi
+157+  806E ~            		                ldi
+158+  806E ~            		                ldi
+159+  806E ~            		                ldi
+160+  806E ~            		                ldi
+161+  806E ~            		                ldi
+162+  806E ~            		                ldi
+163+  806E                                      ENDM
+164+  806E
+165+  806E              NineLDIInstrunctions:  MACRO
+166+  806E ~            		                ldi
+167+  806E ~            		                ldi
+168+  806E ~            		                ldi
+169+  806E ~            		                ldi
+170+  806E ~            		                ldi
+171+  806E ~            		                ldi
+172+  806E ~            		                ldi
+173+  806E ~            		                ldi
+174+  806E ~            		                ldi
+175+  806E                                      ENDM
+# file closed: ../Macros/ldCopyMacros.asm
+ 67   806E                                      INCLUDE "../Macros/ShiftMacros.asm"
+# file opened: ../Macros/ShiftMacros.asm
+  1+  806E              ShiftIYRight1: MACRO
+  2+  806E ~            			   ld 	a,iyh
+  3+  806E ~            			   srl 	a
+  4+  806E ~            			   ld	iyh,a
+  5+  806E ~            			   ld 	a,iyl
+  6+  806E ~            			   rra
+  7+  806E ~            			   ld	iyl,a
+  8+  806E              			   ENDM
+  9+  806E
+ 10+  806E              ShiftHLRight1: MACRO
+ 11+  806E ~            			   srl h
+ 12+  806E ~            			   rr  l
+ 13+  806E              			   ENDM
+ 14+  806E
+ 15+  806E              ShiftDERight1: MACRO
+ 16+  806E ~            			   srl d
+ 17+  806E ~            			   rr  e
+ 18+  806E              			   ENDM
+ 19+  806E
+ 20+  806E              ShiftBCRight1: MACRO
+ 21+  806E ~            			   srl b
+ 22+  806E ~            			   rr  c
+ 23+  806E              			   ENDM
+ 24+  806E
+ 25+  806E
+ 26+  806E
+ 27+  806E              ShiftHLDiv8:   MACRO
+ 28+  806E ~            			   srl h
+ 29+  806E ~            			   rr  l
+ 30+  806E ~            			   srl h
+ 31+  806E ~            			   rr  l
+ 32+  806E ~            			   srl h
+ 33+  806E ~            			   rr  l
+ 34+  806E              			   ENDM
+ 35+  806E
+ 36+  806E              ShiftHLLeft1:  MACRO
+ 37+  806E ~            			   sla l
+ 38+  806E ~            			   rl  h
+ 39+  806E              			   ENDM
+ 40+  806E
+ 41+  806E              ShiftDELeft1:  MACRO
+ 42+  806E ~            			   sla e
+ 43+  806E ~            			   rl  d
+ 44+  806E              			   ENDM
+ 45+  806E
+ 46+  806E
+ 47+  806E              RollDELeft1:   MACRO
+ 48+  806E ~                           rl  e
+ 49+  806E ~                           rl  d
+ 50+  806E                             ENDM
+ 51+  806E
+ 52+  806E              ShiftBCLeft1:  MACRO
+ 53+  806E ~            			   sla c
+ 54+  806E ~            			   rl  b
+ 55+  806E              			   ENDM
+ 56+  806E
+ 57+  806E
+ 58+  806E              ShiftMem16Right1:   MACRO memaddr
+ 59+  806E ~                                ld    hl,(memaddr)
+ 60+  806E ~                                srl   h
+ 61+  806E ~                                rr    l
+ 62+  806E ~                                ld    (memaddr),hl
+ 63+  806E                                  ENDM
+ 64+  806E
+ 65+  806E              ShiftMem8Right1:    MACRO memaddr
+ 66+  806E ~                                ld      a,(memaddr)
+ 67+  806E ~                                srl     a
+ 68+  806E ~                                ld      (memaddr),a
+ 69+  806E                                  ENDM
+ 70+  806E
+ 71+  806E
+ 72+  806E              ShiftMem8Left1A:    MACRO memaddr
+ 73+  806E ~                                ld      a,(memaddr)
+ 74+  806E ~                                sla     a
+ 75+  806E ~                                ld      (memaddr),a
+ 76+  806E                                  ENDM
+ 77+  806E
+# file closed: ../Macros/ShiftMacros.asm
+ 68   806E                                      INCLUDE "../Macros/NegateMacros.asm"
+# file opened: ../Macros/NegateMacros.asm
+  1+  806E
+  2+  806E              NegIY:			    MACRO
+  3+  806E ~                                xor a
+  4+  806E ~                                sub iyl
+  5+  806E ~                                ld iyl,a
+  6+  806E ~                                sbc a,a
+  7+  806E ~                                sub iyh
+  8+  806E ~                                ld iyh,a
+  9+  806E                                  ENDM
+ 10+  806E
+ 11+  806E              NegHL:			    MACRO
+ 12+  806E ~                                xor a
+ 13+  806E ~                                sub l
+ 14+  806E ~                                ld l,a
+ 15+  806E ~                                sbc a,a
+ 16+  806E ~                                sub h
+ 17+  806E ~                                ld h,a
+ 18+  806E                                  ENDM
+ 19+  806E
+ 20+  806E              NegDE:			    MACRO
+ 21+  806E ~                                xor a
+ 22+  806E ~                                sub e
+ 23+  806E ~                                ld e,a
+ 24+  806E ~                                sbc a,a
+ 25+  806E ~                                sub d
+ 26+  806E ~                                ld d,a
+ 27+  806E                                  ENDM
+ 28+  806E
+ 29+  806E              NegBC:			    MACRO
+ 30+  806E ~                                xor a
+ 31+  806E ~                                sub c
+ 32+  806E ~                                ld c,a
+ 33+  806E ~                                sbc a,a
+ 34+  806E ~                                sub  b
+ 35+  806E ~                                ld b,a
+ 36+  806E                                  ENDM
+ 37+  806E
+ 38+  806E              NegH                MACRO
+ 39+  806E ~                                ld      a,h
+ 40+  806E ~                                neg
+ 41+  806E ~                                ld      h,a
+ 42+  806E                                  ENDM
+ 43+  806E
+ 44+  806E              NegD                MACRO
+ 45+  806E ~                                ld      a,d
+ 46+  806E ~                                neg
+ 47+  806E ~                                ld      d,a
+ 48+  806E                                  ENDM
+ 49+  806E
+ 50+  806E              NegB                MACRO
+ 51+  806E ~                                ld      a,b
+ 52+  806E ~                                neg
+ 53+  806E ~                                ld      b,a
+ 54+  806E                                  ENDM
+ 55+  806E
+# file closed: ../Macros/NegateMacros.asm
+ 69   806E                                      INCLUDE "../Variables/general_variables_macros.asm"
+# file opened: ../Variables/general_variables_macros.asm
+  1+  806E              ; limited to 255 character length
+  2+  806E              CountLengthHL:          MACRO   Limiter
+  3+  806E ~                                    ld      de,hl
+  4+  806E ~                                    ld      bc,Limiter
+  5+  806E ~                                    xor     a
+  6+  806E ~                                    cpir
+  7+  806E ~                                    ClearCarryFlag
+  8+  806E ~                                    sbc     hl,de
+  9+  806E ~                                    ld      a,l
+ 10+  806E ~                                    ret
+ 11+  806E                                      ENDM
+ 12+  806E
+ 13+  806E              HalfLengthHL:           MACRO
+ 14+  806E ~                                    ld      b,0
+ 15+  806E ~            .CountLenLoop:          ld      a,(hl)
+ 16+  806E ~                                    cp      0
+ 17+  806E ~                                    jr      z,.DoneCount
+ 18+  806E ~                                    inc     b
+ 19+  806E ~                                    inc     hl
+ 20+  806E ~                                    jr      .CountLenLoop
+ 21+  806E ~            .DoneCount:             ld      a,32
+ 22+  806E ~                                    sub     b
+ 23+  806E ~                                    sra     a
+ 24+  806E                                      ENDM
+ 25+  806E
+ 26+  806E              MakeInnocentMacro:		MACRO
+ 27+  806E ~            						xor		a
+ 28+  806E ~            						ld		(FugitiveInnocentStatus),a
+ 29+  806E              						ENDM
+ 30+  806E
+ 31+  806E              NoEscapePodMacro:		MACRO
+ 32+  806E ~            						xor		a
+ 33+  806E ~            						ld		(EscapePod),a
+ 34+  806E              						ENDM
+ 35+  806E
+ 36+  806E              MaxFuelLevel            EQU     70              ; 7.0 light years max
+ 37+  806E              MaxFuelMacro:			MACRO
+ 38+  806E ~            						ld		a,MaxFuelLevel
+ 39+  806E ~            						ld		(Fuel),a
+ 40+  806E              						ENDM
+ 41+  806E
+ 42+  806E              MaxThrottle:            MACRO
+ 43+  806E ~                                    ld      a,(SHIPMAXSPEED)
+ 44+  806E ~                                    ld      (DELTA),a
+ 45+  806E ~                                    ld      d,a
+ 46+  806E ~                                    ld      e,4
+ 47+  806E ~                                    mul
+ 48+  806E ~                                    ld      (DELT4Lo),de
+ 49+  806E                                      ENDM
+ 50+  806E
+ 51+  806E              ZeroThrottle:           MACRO
+ 52+  806E ~                                    xor     a
+ 53+  806E ~                                    ld      (DELTA),a
+ 54+  806E ~                                    ld      (DELT4Lo),a
+ 55+  806E ~                                    ld      (DELT4Lo+1),a
+ 56+  806E                                      ENDM
+ 57+  806E
+ 58+  806E              ZeroPitch:              MACRO
+ 59+  806E ~                                    xor     a
+ 60+  806E ~                                    ld      (BET2),a
+ 61+  806E ~                                    ld      (BET2FLIP),a
+ 62+  806E ~                                    ld      (JSTY),a
+ 63+  806E ~                                    ld      (BETA),a
+ 64+  806E                                      ENDM
+ 65+  806E
+ 66+  806E              ZeroRoll:               MACRO
+ 67+  806E ~                                    xor     a                              ; zero roll and climb
+ 68+  806E ~                                    ld      (ALP2),a
+ 69+  806E ~                                    ld      (ALP2FLIP),a
+ 70+  806E ~                                    ld      (JSTX),a
+ 71+  806E ~                                    ld      (ALPHA),a
+ 72+  806E                                      ENDM
+ 73+  806E
+ 74+  806E              CorrectPostJumpFuel:    MACRO
+ 75+  806E ~                                    ld      a,(Fuel)
+ 76+  806E ~                                    ld      hl,Distance
+ 77+  806E ~                                    sub     a,(hl)
+ 78+  806E ~                                    ld      (Fuel),a
+ 79+  806E                                      ENDM
+ 80+  806E
+ 81+  806E              AnyMissilesLeft:        MACRO
+ 82+  806E ~                                    ld      a,(NbrMissiles)
+ 83+  806E ~                                    and     a
+ 84+  806E                                      ENDM
+ 85+  806E
+ 86+  806E              SetMissileTargetA:      MACRO
+ 87+  806E ~                                    ld      (MissileTarget),a
+ 88+  806E                                      ENDM
+ 89+  806E
+ 90+  806E              IsMissileLockedOn:      MACRO
+ 91+  806E ~                                    ld      a,(MissileTarget)
+ 92+  806E ~                                    cp      $FF
+ 93+  806E ~                                    ret     z
+ 94+  806E ~                                    ReturnIfSlotAEmpty                  ; if target slot is empty
+ 95+  806E ~                                    ret                                 ; will return as nz now
+ 96+  806E                                      ENDM
+ 97+  806E
+ 98+  806E              ClearMissileTarget:     MACRO
+ 99+  806E ~                                    xor     a                           ; Set missile target to FF
+100+  806E ~                                    dec     a
+101+  806E ~                                    ld      (MissileTarget),a
+102+  806E ~                                    SetMemFalse MissileLaunchFlag
+103+  806E                                      ENDM
+104+  806E
+105+  806E              ClearECM:               MACRO
+106+  806E ~                                    xor     a
+107+  806E ~                                    ld      (ECMLoopA),a
+108+  806E ~                                    ld      (ECMLoopB),a
+109+  806E                                      ENDM
+110+  806E
+111+  806E              ChargeEnergyAndShields: MACRO
+112+  806E ~                                    ld      a,$FF
+113+  806E ~                                    ld      (PlayerEnergy),a
+114+  806E ~                                    ld      (ForeShield),a
+115+  806E ~                                    ld      (AftShield),a
+116+  806E                                      ENDM
+117+  806E
+118+  806E              CopyPresentSystemToTarget: MACRO
+119+  806E ~                                    ld      hl,(PresentSystemX)
+120+  806E ~                                    ld      (TargetSystemX),hl
+121+  806E                                      ENDM
+122+  806E
+123+  806E              CopyTargetSystemToPresent: MACRO
+124+  806E ~                                    ld      hl,(TargetSystemX)
+125+  806E ~                                    ld      (PresentSystemX),hl
+126+  806E                                      ENDM
+127+  806E
+128+  806E              HalveFugitiveStatus:    MACRO
+129+  806E ~                                    ld      hl,FugitiveInnocentStatus
+130+  806E ~                                    srl     (hl)
+131+  806E                                      ENDM
+132+  806E
+133+  806E              ClearForceTransition    MACRO
+134+  806E ~                                    ld      a,$FF
+135+  806E ~                                    ld      (ScreenTransitionForced),a
+136+  806E                                      ENDM
+137+  806E
+138+  806E              ForceTransition:        MACRO newScreen
+139+  806E ~                                    ld      a,newScreen
+140+  806E ~                                    ld      (ScreenTransitionForced), a
+141+  806E                                      ENDM
+142+  806E
+143+  806E              IsSpaceStationPresent:  MACRO
+144+  806E ~                                    ld      a,(SpaceStationSafeZone)
+145+  806E ~                                    and     a
+146+  806E                                      ENDM
+147+  806E
+148+  806E              SetSafeZone:            MACRO
+149+  806E ~                                    xor     a
+150+  806E ~                                    ld      (SpaceStationSafeZone),a
+151+  806E                                      ENDM
+152+  806E
+153+  806E              ClearSafeZone:          MACRO
+154+  806E ~                                    ld      a,$FF
+155+  806E ~                                    ld      (SpaceStationSafeZone),a
+156+  806E                                      ENDM
+157+  806E
+158+  806E              CoolLasers:             MACRO
+159+  806E ~                                    ld      a,(GunTemperature)
+160+  806E ~                                    and     a
+161+  806E ~                                    jr      z,.AlreadyCool
+162+  806E ~                                    dec     a
+163+  806E ~                                    ld      (GunTemperature),a
+164+  806E ~            .AlreadyCool:
+165+  806E                                      ENDM
+166+  806E
+167+  806E
+168+  806E              InitEventCounter:       MACRO
+169+  806E ~                                    xor     a
+170+  806E ~                                    ld      (EventCounter),a
+171+  806E                                      ENDM
+172+  806E
+173+  806E              ClearMissJump:          MACRO
+174+  806E ~                                    ld      a,$FF
+175+  806E ~                                    ld      (MissJumpFlag),a
+176+  806E                                      ENDM
+177+  806E
+# file closed: ../Variables/general_variables_macros.asm
+ 70   806E                                      INCLUDE "../Maths/multiply.asm"
+# file opened: ../Maths/multiply.asm
+  1+  806E              HLequSRmulQdiv256:      ;X.Y=x1lo.S*M/256  	\ where M/256 is gradient
+  2+  806E 2A FA 82                             ld  hl,(varRS)
+  3+  8071 3A F9 82                             ld  a,(varQ)
+  4+  8074 C5 D5        HLeqyHLmulAdiv256:      push    bc,,de
+  5+  8076 11 00 00                             ld  de,0        ; de = XY
+  6+  8079 47                                   ld  b,a         ; b = Q
+  7+  807A                                      ShiftHLRight1
+  7+  807A CB 3C       >			   srl h
+  7+  807C CB 1D       >			   rr  l
+  8+  807E CB 20                                sla b
+  9+  8080 30 03                                jr  nc,.LL126
+ 10+  8082 EB           .LL125:                 ex de,hl
+ 11+  8083 19                                   add hl,de
+ 12+  8084 EB                                   ex  de,hl       ; de = de + rs
+ 13+  8085              .LL126:                 ShiftHLRight1
+ 13+  8085 CB 3C       >			   srl h
+ 13+  8087 CB 1D       >			   rr  l
+ 14+  8089 CB 20                                sla b
+ 15+  808B 38 F5                                jr      c,.LL125
+ 16+  808D 20 F6                                jr      nz,.LL126
+ 17+  808F EB                                   ex      de,hl   ; hl = result
+ 18+  8090 D1 C1                                pop     bc,,de
+ 19+  8092 C9                                   ret
+ 20+  8093
+ 21+  8093
+ 22+  8093              MacroDEEquQmulASigned:  MACRO
+ 23+  8093 ~                                    ld      d,a                         ; save a into d
+ 24+  8093 ~                                    ld      a,(varQ)
+ 25+  8093 ~                                    ld      e,a
+ 26+  8093 ~                                    xor     d                           ; a = a xor var Q
+ 27+  8093 ~                                    and     SignOnly8Bit
+ 28+  8093 ~                                    ld      b,a                         ; b = sign of a xor q
+ 29+  8093 ~                                    ld      a,d                         ; d = abs d (or a reg)
+ 30+  8093 ~                                    and     SignMask8Bit
+ 31+  8093 ~                                    ld      d,a
+ 32+  8093 ~                                    ld      a,e                         ; e = abs e (or varQ)
+ 33+  8093 ~                                    and     SignMask8Bit
+ 34+  8093 ~                                    ld      e,a
+ 35+  8093 ~                                    mul                                 ; de = a * Q
+ 36+  8093 ~                                    ld      a,d
+ 37+  8093 ~                                    or      b                           ; de = a * Q leading sign bit
+ 38+  8093 ~                                    ld      d,a
+ 39+  8093                                      ENDM
+ 40+  8093
+ 41+  8093
+ 42+  8093
+ 43+  8093                                 ; .MAD	\ -> &22AD  \ Multiply and Add  (DE also) X.A(Lo.Hi) = Q*A + R.S (Lo.Hi)
+ 44+  8093              madXAequQmulAaddRS:     MacroDEEquQmulASigned
+ 44+  8093 57          >                        ld      d,a                         ; save a into d
+ 44+  8094 3A F9 82    >                        ld      a,(varQ)
+ 44+  8097 5F          >                        ld      e,a
+ 44+  8098 AA          >                        xor     d                           ; a = a xor var Q
+ 44+  8099 E6 80       >                        and     SignOnly8Bit
+ 44+  809B 47          >                        ld      b,a                         ; b = sign of a xor q
+ 44+  809C 7A          >                        ld      a,d                         ; d = abs d (or a reg)
+ 44+  809D E6 7F       >                        and     SignMask8Bit
+ 44+  809F 57          >                        ld      d,a
+ 44+  80A0 7B          >                        ld      a,e                         ; e = abs e (or varQ)
+ 44+  80A1 E6 7F       >                        and     SignMask8Bit
+ 44+  80A3 5F          >                        ld      e,a
+ 44+  80A4 ED 30       >                        mul                                 ; de = a * Q
+ 44+  80A6 7A          >                        ld      a,d
+ 44+  80A7 B0          >                        or      b                           ; de = a * Q leading sign bit
+ 44+  80A8 57          >                        ld      d,a
+ 45+  80A9 2A FA 82     madDEaddRS:             ld		hl,(varR)
+ 46+  80AC CD B5 80                             call	madXAAddHLDESigned
+ 47+  80AF EB                                   ex      de,hl                       ; de = R.S + DE
+ 48+  80B0                                      ClearCarryFlag
+ 48+  80B0 B7          >                        or a
+ 49+  80B1 DD 6B                                ld      ixl,e
+ 50+  80B3 7A                                   ld      a,d
+ 51+  80B4 C9                                   ret
+ 52+  80B5
+ 53+  80B5
+ 54+  80B5 7C           madXAAddHLDESigned:     ld      a,h
+ 55+  80B6 E6 80                                and     SignOnly8Bit
+ 56+  80B8 47                                   ld      b,a                         ;save sign bit in b
+ 57+  80B9 AA                                   xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means
+ 58+  80BA                                      JumpIfNegative .ADDHLDEOppSGN        ;Signs are opposite there fore we can subtract to get difference
+ 58+  80BA FA D2 80    >                        jp		m, .ADDHLDEOppSGN
+ 59+  80BD 78           .ADDHLDESameSigns:       ld      a,b
+ 60+  80BE B2                                   or      d
+ 61+  80BF                                      JumpIfNegative .ADDHLDESameNeg       ; optimisation so we can just do simple add if both positive
+ 61+  80BF FA C4 80    >                        jp		m, .ADDHLDESameNeg
+ 62+  80C2 19                                   add     hl,de
+ 63+  80C3 C9                                   ret
+ 64+  80C4 7C           .ADDHLDESameNeg:         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
+ 65+  80C5 E6 7F                                and     SignMask8Bit                ; we could check the value of b for optimisation
+ 66+  80C7 67                                   ld      h,a
+ 67+  80C8 7A                                   ld      a,d
+ 68+  80C9 E6 7F                                and     SignMask8Bit
+ 69+  80CB 57                                   ld      d,a
+ 70+  80CC 19                                   add     hl,de
+ 71+  80CD 3E 80                                ld      a,SignOnly8Bit
+ 72+  80CF B4                                   or      h                           ; now set bit for negative value, we won't bother with overflow for now TODO
+ 73+  80D0 67                                   ld      h,a
+ 74+  80D1 C9                                   ret
+ 75+  80D2 7C           .ADDHLDEOppSGN:          ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit                     ; here HL and DE are opposite
+ 76+  80D3 E6 7F                                and     SignMask8Bit                ; we could check the value of b for optimisation
+ 77+  80D5 67                                   ld      h,a
+ 78+  80D6 7A                                   ld      a,d
+ 79+  80D7 E6 7F                                and     SignMask8Bit
+ 80+  80D9 57                                   ld      d,a
+ 81+  80DA B7                                   or      a
+ 82+  80DB ED 52                                sbc     hl,de
+ 83+  80DD 38 04                                jr      c,.ADDHLDEOppInvert
+ 84+  80DF 78           .ADDHLDEOppSGNNoCarry:   ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
+ 85+  80E0 B4                                   or      h
+ 86+  80E1 67                                   ld      h,a                         ; set the previou sign value
+ 87+  80E2 C9                                   ret
+ 88+  80E3              .ADDHLDEOppInvert:       NegHL                                                   ; we need to flip the sign and 2'c the Hl result
+ 88+  80E3 AF          >                    xor a
+ 88+  80E4 95          >                    sub l
+ 88+  80E5 6F          >                    ld l,a
+ 88+  80E6 9F          >                    sbc a,a
+ 88+  80E7 94          >                    sub h
+ 88+  80E8 67          >                    ld h,a
+ 89+  80E9 78                                   ld      a,b
+ 90+  80EA EE 80                                xor     SignOnly8Bit                ; flip sign bit
+ 91+  80EC B4                                   or      h
+ 92+  80ED 67                                   ld      h,a                         ; recover sign
+ 93+  80EE C9                                   ret
+ 94+  80EF
+ 95+  80EF
+ 96+  80EF                  ; multiplication of 16-bit number and 8-bit number into a 24-bit product
+ 97+  80EF                  ;
+ 98+  80EF                  ; enter : hl = 16-bit multiplier   = x
+ 99+  80EF                  ;          e =  8-bit multiplicand = y
+100+  80EF                  ;
+101+  80EF                  ; exit  : ahl = 24-bit product
+102+  80EF                  ;         carry reset
+103+  80EF                  ;
+104+  80EF                  ; uses  : af, de, hl
+105+  80EF 54           AHLequHLmulE:           ld d,h                      ; xh
+106+  80F0 63                                   ld h,e                      ; yl
+107+  80F1 ED 30                                mul de                      ; xh*yl
+108+  80F3 EB                                   ex de,hl
+109+  80F4 ED 30                                mul de                      ; yl*xl, hl = xh*yl
+110+  80F6
+111+  80F6 7A                                   ld  a,d                     ; sum products
+112+  80F7 85                                   add a,l
+113+  80F8 57                                   ld  d,a
+114+  80F9 EB                                   ex de,hl
+115+  80FA
+116+  80FA 7A                                   ld  a,d
+117+  80FB CE 00                                adc a,0
+118+  80FD C9                                   ret
+119+  80FE
+120+  80FE
+121+  80FE
+122+  80FE                 ; multiplication of two 16-bit numbers into a 32-bit product
+123+  80FE                 ;
+124+  80FE                 ; enter : de = 16-bit multiplicand = y
+125+  80FE                 ;         hl = 16-bit multiplicand = x
+126+  80FE                 ;
+127+  80FE                 ; exit  : dehl = 32-bit product
+128+  80FE                 ;         carry reset
+129+  80FE                 ;
+130+  80FE                 ; uses  : af, bc, de, hl
+131+  80FE
+132+  80FE
+133+  80FE
+134+  80FE 45           DEHLequDEmulHL:         ld b,l                      ; x0
+135+  80FF 4B                                   ld c,e                      ; y0
+136+  8100 5D                                   ld e,l                      ; x0
+137+  8101 6A                                   ld l,d
+138+  8102 E5                                   push hl                     ; x1 y1
+139+  8103 69                                   ld l,c                      ; y0
+140+  8104              ; bc = x0 y0, de = y1 x0,  hl = x1 y0,  stack = x1 y1
+141+  8104 ED 30                                mul de                      ; y1*x0
+142+  8106 EB                                   ex de,hl
+143+  8107 ED 30                                mul de                      ; x1*y0
+144+  8109
+145+  8109 AF                                   xor a                       ; zero A
+146+  810A 19                                   add hl,de                   ; sum cross products p2 p1
+147+  810B 8F                                   adc a,a                     ; capture carry p3
+148+  810C
+149+  810C 59                                   ld e,c                      ; x0
+150+  810D 50                                   ld d,b                      ; y0
+151+  810E ED 30                                mul de                      ; y0*x0
+152+  8110
+153+  8110 47                                   ld b,a                      ; carry from cross products
+154+  8111 4C                                   ld c,h                      ; LSB of MSW from cross products
+155+  8112
+156+  8112 7A                                   ld a,d
+157+  8113 85                                   add a,l
+158+  8114 67                                   ld h,a
+159+  8115 6B                                   ld l,e                      ; LSW in HL p1 p0
+160+  8116
+161+  8116 D1                                   pop de
+162+  8117 ED 30                                mul de                      ; x1*y1
+163+  8119
+164+  8119 EB                                   ex de,hl
+165+  811A ED 4A                                adc hl,bc
+166+  811C EB                                   ex de,hl                    ; de = final MSW
+167+  811D
+168+  811D C9                                   ret
+169+  811E
+170+  811E              ; multiplication of two 16-bit numbers into a 16-bit product
+171+  811E              ; enter : de = 16-bit multiplicand
+172+  811E              ;         hl = 16-bit multiplicand
+173+  811E              ; exit  : hl = 16-bit product
+174+  811E              ;         carry reset
+175+  811E              ; maths is
+176+  811E              ;        hl = y , de= x
+177+  811E              ;        hl = xhi,ylo + (yhigh * xlow)
+178+  811E              ;        hl = yhih & xlo + x
+179+  811E              ;
+180+  811E              ;
+181+  811E              ; uses  : af, bc, de, hl
+182+  811E C5           mulDEbyHL:              push    bc
+183+  811F 7A                                   ld a,d                      ; a = xh
+184+  8120 54                                   ld d,h                      ; d = yh
+185+  8121 67                                   ld h,a                      ; h = xh
+186+  8122 4B                                   ld c,e                      ; c = xl
+187+  8123 45                                   ld b,l                      ; b = yl
+188+  8124 ED 30                                mul                         ; yh * yl
+189+  8126 EB                                   ex de,hl
+190+  8127 ED 30                                mul                         ; xh * yl
+191+  8129 19                                   add hl,de                   ; add cross products
+192+  812A 59                                   ld e,c
+193+  812B 50                                   ld d,b
+194+  812C ED 30                                mul                         ; yl * xl
+195+  812E 7D                                   ld a,l                      ; cross products lsb
+196+  812F 82                                   add a,d                     ; add to msb final
+197+  8130 67                                   ld h,a
+198+  8131 6B                                   ld l,e                      ; hl = final
+199+  8132                                      ; 83 cycles, 19 bytes
+200+  8132 AF                                   xor a                       ; reset carry
+201+  8133 C1                                   pop     bc
+202+  8134 C9                                   ret
+203+  8135
+204+  8135
+205+  8135              ; CHL = multiplicand D = multiplier
+206+  8135              ; DCHL = CHL * D
+207+  8135 7A           mulCHLbyDSigned:        ld      a,d                 ; get sign from d
+208+  8136 AC                                   xor     h                   ; xor with h to get resultant sign
+209+  8137 E6 80                                and     SignOnly8Bit        ; .
+210+  8139 FD 67                                ld      iyh,a               ; iyh = copy of sign
+211+  813B 79                                   ld      a,c                 ; now CHL = ABS (CHL)
+212+  813C E6 7F                                and     SignMask8Bit        ; .
+213+  813E 4F                                   ld      c,a                 ; .
+214+  813F 7A                                   ld      a,d                 ; d = ABS D
+215+  8140 E6 7F                                and     SignMask8Bit        ; .
+216+  8142              ; At this point CHL = ABS (HLE), A = ABS(D)
+217+  8142 57           .mul1:                  ld      d,a                 ; first do D * L
+218+  8143 5D                                   ld      e,l                 ; .
+219+  8144 ED 30                                mul     de                  ; DE = L * D
+220+  8146 08                                   ex      af,af'              ; save multiplier
+221+  8147 6B                                   ld      l,e                 ; L = p0
+222+  8148 7A                                   ld      a,d                 ; carry byte
+223+  8149 08                                   ex      af,af'              ; retrieve muliplier and save carry byte along with flags
+224+  814A 5C           .mul2:                  ld      e,h                 ; byte 2 of multiplicand
+225+  814B 57                                   ld      d,a                 ; and multiplier
+226+  814C ED 30                                mul     de                  ; now its D & L
+227+  814E 08                                   ex      af,af'              ; get back carry byte with flags
+228+  814F 83           .carrybyte1:            add     a,e                 ; add low byte carry to result and retain carry too through next instructions
+229+  8150 67                                   ld      h,a                 ; h = P1
+230+  8151 7A                                   ld      a,d                 ; a = carry byte
+231+  8152 08                                   ex      af,af'              ; save carry byte and get back multiplier with flags
+232+  8153 59           .mul3:                  ld      e,c                 ; byte 3 of multiplicand
+233+  8154 57                                   ld      d,a                 ;
+234+  8155 ED 30                                mul     de                  ;
+235+  8157 08                                   ex      af,af'              ; get back carry byte and carry prior to first add
+236+  8158 8B                                   adc     a,e                 ;
+237+  8159 FD B4                                or      iyh                 ; recover saved resultant sign
+238+  815B 4F                                   ld      c,a                 ; c byte 3. Note the value range allowed can never cause a byte 3 carry
+239+  815C C9                                   ret
+240+  815D
+241+  815D              ;  CHL = 53456 D = 1E
+242+  815D              ;  56 * 1E = A14 L = 14 carry = 0A
+243+  815D              ;  34 * 1E = 618 H = 18 +A = 22 carry = 6
+244+  815D              ;  5  * 1E = 096 C = 96 + 6 = 9C
+245+  815D              ;  CHL = 9C2214
+246+  815D
+247+  815D              ; DELC = HLE * D, uses HL, DE, C , A , IYH
+248+  815D              ; HLE = multiplicand D = multiplier
+249+  815D              ; tested by mathstestsun.asm all passed
+250+  815D 7A           mulHLEbyDSigned:        ld      a,d                 ; get sign from d
+251+  815E AC                                   xor     h                   ; xor with h to get resultant sign
+252+  815F E6 80                                and     SignOnly8Bit        ; .
+253+  8161 FD 67                                ld      iyh,a               ; iyh = copy of sign
+254+  8163 7C                                   ld      a,h                 ; now HLE = ABS (HLE)
+255+  8164 E6 7F                                and     SignMask8Bit        ; .
+256+  8166 67                                   ld      h,a                 ; .
+257+  8167 7A                                   ld      a,d                 ; d = ABS D
+258+  8168 E6 7F                                and     SignMask8Bit        ; .
+259+  816A 57                                   ld      d,a                 ; .
+260+  816B              ; At this point HLE = ABS (HLE), A = ABS(D)
+261+  816B ED 30        .mul1:                  mul     de                  ; C = E * D
+262+  816D 08                                   ex      af,af'              ; save mulitplier
+263+  816E 4B                                   ld      c,e                 ; C = p0
+264+  816F 7A                                   ld      a,d                 ; save carry and get back multiplier
+265+  8170 08                                   ex      af,af'
+266+  8171 5D           .mul2:                  ld      e,l                 ; L = L * D
+267+  8172 57                                   ld      d,a                 ; .
+268+  8173 ED 30                                mul     de                  ; .
+269+  8175 08                                   ex      af,af'              ; .
+270+  8176 83           .carrybyte1:            add     a,e                 ; L = L + carry byte
+271+  8177 6F                                   ld      l,a                 ; .
+272+  8178 7A                                   ld      a,d
+273+  8179 08                                   ex      af,af'              ; save new carry byte
+274+  817A 5C           .mul3:                  ld      e,h                 ; e = H * D
+275+  817B 57                                   ld      d,a
+276+  817C ED 30                                mul     de
+277+  817E 08                                   ex      af,af'
+278+  817F 8B                                   adc     a,e                 ;
+279+  8180 5F                                   ld      e,a
+280+  8181 FD 54                                ld      d,iyh
+281+  8183 C9                                   ret
+282+  8184
+283+  8184
+284+  8184              ; multiplication of two S156-bit numbers into a 16-bit 2'd compliment product
+285+  8184              ; enter : de = 16-bit multiplicand
+286+  8184              ;         hl = 16-bit multiplicand
+287+  8184              ; exit  : hl = 16-bit product
+288+  8184              ;         carry reset
+289+  8184              ;
+290+  8184              ; uses  : af, bc, de, hl
+291+  8184 00           mulDEbyHLSignByte       DB      0
+292+  8185 AF           mulDEbyHLSgnTo2c:       xor     a
+293+  8186 32 84 81                             ld      (mulDEbyHLSignByte),a
+294+  8189 7A           .SignDE:                ld      a,d
+295+  818A ED 27 80                             test    $80
+296+  818D 28 08                                jr      z,.SignHL
+297+  818F E6 7F        .NegativeDE:            and     $7F
+298+  8191 57                                   ld      d,a
+299+  8192 3E 80                                ld      a,$80
+300+  8194 32 84 81                             ld      (mulDEbyHLSignByte),a
+301+  8197 7C           .SignHL:                ld      a,h
+302+  8198 ED 27 80                             test    $80
+303+  819B 28 0B                                jr      z,.AbsoluteMultiply
+304+  819D E6 7F        .NegativeHL:            and     $7F
+305+  819F 67                                   ld      h,a
+306+  81A0 3A 84 81                             ld      a,(mulDEbyHLSignByte)
+307+  81A3 EE 80                                xor     $80
+308+  81A5 32 84 81                             ld      (mulDEbyHLSignByte),a
+309+  81A8 CD 1E 81     .AbsoluteMultiply:      call    mulDEbyHL
+310+  81AB 3A 84 81     .RecoverSign:           ld      a,(mulDEbyHLSignByte)
+311+  81AE ED 27 80                             test    $80
+312+  81B1 C8                                   ret     z
+313+  81B2 AF           .Negateghl: 			xor 	a
+314+  81B3 95                                   sub 	l
+315+  81B4 6F                                   ld 		l,a
+316+  81B5 9F                                   sbc 	a,a
+317+  81B6 94                                   sub 	h
+318+  81B7 67                                   ld 		h,a
+319+  81B8 C9                                   ret
+320+  81B9
+321+  81B9 AF           mulDESgnbyHLUnsgnTo2c:  xor     a
+322+  81BA 32 84 81                             ld      (mulDEbyHLSignByte),a
+323+  81BD 7A           .SignDE:                ld      a,d
+324+  81BE ED 27 80                             test    $80
+325+  81C1 28 08                                jr      z,.AbsoluteMultiply
+326+  81C3 E6 7F        .NegativeDE:            and     $7F
+327+  81C5 57                                   ld      d,a
+328+  81C6 3E 80                                ld      a,$80
+329+  81C8 32 84 81                             ld      (mulDEbyHLSignByte),a
+330+  81CB CD 1E 81     .AbsoluteMultiply:      call    mulDEbyHL
+331+  81CE 3A 84 81     .RecoverSign:           ld      a,(mulDEbyHLSignByte)
+332+  81D1 ED 27 80                             test    $80
+333+  81D4 C8                                   ret     z
+334+  81D5 AF           .Negateghl:             xor 	a
+335+  81D6 95                                   sub 	l
+336+  81D7 6F                                   ld 		l,a
+337+  81D8 9F                                   sbc 	a,a
+338+  81D9 94                                   sub 	h
+339+  81DA 67                                   ld 		h,a
+340+  81DB C9                                   ret
+341+  81DC
+342+  81DC
+# file closed: ../Maths/multiply.asm
+ 71   81DC                                      INCLUDE "../Variables/general_variables.asm"
+# file opened: ../Variables/general_variables.asm
+  1+  81DC
+  2+  81DC
+  3+  81DC 00 00        varAxis1	DW 	0				; address of first axis in a rotation action
+  4+  81DE 00 00        varAxis2	DW	0				; address of 2nd axis in a roation action
+  5+  81E0              ; Variables to simulate 6502 registers until code fixed
+  6+  81E0              ; These must be here in this order as reading Y and X can then be a 16 bit read
+  7+  81E0 00           regX		DB	0               ; using 16 bit read into BC this would go into C
+  8+  81E1 00           regY		DB	0               ; using 16 bit read into BC this would go into B
+  9+  81E2 00           regA		DB	0
+ 10+  81E3
+ 11+  81E3
+ 12+  81E3 00           varGPLoopA	DB	0				; General Purpose innermost loop variable
+ 13+  81E4 00 00        INF			DW	0				; page 0 &20 Used to get address from UNIV array
+ 14+  81E6 00 00        INF28		DW	0				; page 0 &20 Used to get address from UNIV array
+ 15+  81E8
+ 16+  81E8
+ 17+  81E8
+ 18+  81E8              ;XX16		DS	16				; 16 byte Matrix
+ 19+  81E8
+ 20+  81E8              P0INWK							; page 0 & 46
+ 21+  81E8              p0INWK31						; page 0 & 65
+ 22+  81E8              P0INWK36						; PAGE 0 &6A
+ 23+  81E8
+ 24+  81E8 00           XX4			DB	0				; XX4 page 0 &96 last Normal Found to be visible
+ 25+  81E9              LastNormalVisible	equ	XX4
+ 26+  81E9              varXX4              equ XX4
+ 27+  81E9
+ 28+  81E9
+ 29+  81E9
+ 30+  81E9 00           PATG		DB	0				; 6502 &03C9
+ 31+  81EA 00 00        SLSP 		DW	0				; &03B0 \ SLSP \ ship lines pointer
+ 32+  81EC
+ 33+  81EC
+ 34+  81EC              ;UNIV		DS FreeListSize*2	; Array of Universe Pointers
+ 35+  81EC              ;HULLINDEX	DS ShipTypeSize*2	; hull index for table at XX21= &5600 XX21-1,Y
+ 36+  81EC
+ 37+  81EC              ; Present System Variables
+ 38+  81EC
+ 39+  81EC 2B           RandomSeed				DB	43			; 00 DEBUG JUST SOME START VALUES
+ 40+  81ED 20           RandomSeed1				DB	32	; 01
+ 41+  81EE 0C           RandomSeed2				DB	12			; 02
+ 42+  81EF 42           RandomSeed3				DB	66			; 03
+ 43+  81F0
+ 44+  81F0 00           varT1					DB	0				; 06
+ 45+  81F1 00           SClo					DB 0				; 07
+ 46+  81F2 00           SChi					DB 0				; 08
+ 47+  81F3 00           varP					DB 0 				; 10	XX16+7
+ 48+  81F4 00           varPhi					DB 0 				; 11	XX16+8
+ 49+  81F5 00           varPhi2					DB 0 				; 12	XX16+9
+ 50+  81F6              varPp1                  equ varPhi
+ 51+  81F6              varPp2                  equ varPhi2
+ 52+  81F6 00           UnivPointerLo			DB	0				; 20		INF                 XX0+2
+ 53+  81F7 00           UnivPointerHi			DB	0				; 21      INF+1               XX0+3
+ 54+  81F8              UnivPointer				equ	UnivPointerLo
+ 55+  81F8 00           varV					DB 0				; 22                          XX0+4
+ 56+  81F9 00           varVHi					DB 0				; 23                          XX0+5
+ 57+  81FA 00           varXXlo                 DB 0                ; 24
+ 58+  81FB 00           varXXHi                 DB 0                ; 25
+ 59+  81FC              varXX					equ	varXXlo
+ 60+  81FC 00           YYlo                    DB 0                ; 26
+ 61+  81FD 00           YYHi                    DB 0                ; 27
+ 62+  81FE              varYY					equ	YYlo
+ 63+  81FE              											;	28
+ 64+  81FE              											;	29
+ 65+  81FE              ;PlayerShipPositionData - Must be contiguous for setup
+ 66+  81FE 00           BETA 					DB	0               ; 2A        (pitch done)
+ 67+  81FF 00           JSTY                    DB  0               ; Joystick analog
+ 68+  8200 00           BET1 					DB	0               ; 2B        lower7 magnitude
+ 69+  8201 00           BET2                    DB  0               ;            climb sign
+ 70+  8202 00           BET2FLIP				DB	0				; 7C		BET 2 pitch Sign negated
+ 71+  8203 1F           BET1MAXC                DB  31              ; max climb
+ 72+  8204 E1           BET1MAXD                DB  -31             ; max dive
+ 73+  8205 00           XC						DB	0               ; 2C
+ 74+  8206 00           YC						DB 	0               ; 2D
+ 75+  8207 00           InnerHyperCount			DB 	0				; 2F QQ22+1
+ 76+  8208 00           OuterHyperCount			DB 	0				; 2E QQ22
+ 77+  8209 00           HyperCircle             DB  0
+ 78+  820A              ;... ECM logic. If another ship adds ECM then we just set the loop A and B to starting values so they overlap
+ 79+  820A 00           ECMActive				DB 	0				; 30		ECM Active flag
+ 80+  820B 00           ECMLoopA                DB  0
+ 81+  820C 00           ECMLoopB                DB  0
+ 82+  820D 00 00        JSTX                    DW  0               ;           Joystick analog value
+ 83+  820F 00           ALPHA					DB	0				; 8D        Alpha with bit 7 sign
+ 84+  8210 00           ALP1					DB 	0				; 31		ALP1	Roll magnitude Also Apha
+ 85+  8211 00           ALP2					DB  0				; 32		ALP2	Roll Sign
+ 86+  8212 00           ALP2FLIP				DB  0				; 33		ALP2	negated roll sign
+ 87+  8213 1F           ALP1MAXR                DB  31               ;   Maximum roll, added becuase we may allow different ship types
+ 88+  8214 E1           ALP1MAXL                DB  -31             ;   Maximum roll, added becuase we may allow different ship types
+ 89+  8215
+ 90+  8215
+ 91+  8215
+ 92+  8215              MAXMESSAGES             EQU 5
+ 93+  8215              MESSAGETIMELIMIT        EQU 20
+ 94+  8215              MESSAGESIZE             EQU 33
+ 95+  8215              MESSAGELINE             EQU $0001
+ 96+  8215
+ 97+  8215 00           MessageCount            DB  0                ; used for enquing messages later
+ 98+  8216 00           MessageCurrent          DB  0
+ 99+  8217 05 00        MessageIndex            DW  MAXMESSAGES
+100+  8219 00 00 00...  MessageQueue            DS  MAXMESSAGES * MESSAGESIZE
+101+  82BE 05           MessageTimeout          DB  MAXMESSAGES
+102+  82BF 00 00 00...  IndexedWork				DS	37				; General purpose work space when doing temp arrays
+103+  82E4
+104+  82E4              ; MOVED TO Universe XX19					DB	0				; page 0 &67
+105+  82E4              ; MOVED TO Universe XX20					DB	0				; page 0 &67 also used as XX19+1 for XX19 being a word
+106+  82E4              ;DEFUNCT EQUATE NormalCountCopyBy4		equ	XX20			; Also used for normal * 4 holding variable
+107+  82E4 00           XX21					DB  0				; this may be part of XX20/xx21 accordign to spawn new shipXX21		DW	0				; Ah XX21 is hull pointer  hull pointer lo as it can;t hold HULLINDX as 16bit array
+108+  82E5              ;XX21 is the pointer table to the pages for ship types. this will be repalaced by paging so just need an equate for first page
+109+  82E5
+110+  82E5
+111+  82E5 00 00 00...  SystemSeed				DS  5				;	6C		QQ15	Current Galaxy Seed
+112+  82EA              											;	6D		QQ15+1
+113+  82EA              											;	6E		QQ15+2
+114+  82EA              											;	6F		QQ15+3
+115+  82EA              											;	70		QQ15+4
+116+  82EA              											;	71		QQ15+5
+117+  82EA 00           QQ17					DB	0				;   72
+118+  82EB 00           XX18xlo                 DB  0               ;	72		XX18   xlo
+119+  82EC 00           XX18xhi                 DB  0               ;	73		XX18+1 xhi
+120+  82ED 00           XX18xsg                 DB  0               ;	74		XX18+2 xsgn
+121+  82EE 00           XX18ylo                 DB  0               ;	75		XX18   ylo
+122+  82EF 00           XX18yhi                 DB  0               ;	76		XX18+1 yhi
+123+  82F0 00           XX18ysg                 DB  0               ;	77		XX18+2 ysgn
+124+  82F1 00           XX18zlo                 DB  0               ;	78		XX18   zlo
+125+  82F2 00           XX18zhi                 DB  0               ;	79		XX18+1 zhi
+126+  82F3 00           XX18zsg                 DB  0               ;	7A		XX18+2 zsgn
+127+  82F4
+128+  82F4 28           SHIPMAXSPEED            DB  40              ; variable to facilitate ship editing later
+129+  82F5 00           DELTA					DB 	0				; 7D 		DELTA  \ bpl -2 inserted here to stall from title code if byte check fails
+130+  82F6 00           DELT4Lo					DB 	0				; 7E
+131+  82F7 00           DELT4Hi					DB 	0				; 7F
+132+  82F8              DELTA4                  equ                 DELT4Lo
+133+  82F8
+134+  82F8
+135+  82F8              ; Not thise must be in this order else 16 bit fetches will fail
+136+  82F8 00           varU                    DB  0               ;   80
+137+  82F9 00           varQ					DB  0 				;	81
+138+  82FA 00           varR					DB  0 				;	82
+139+  82FB 00           varS					DB  0 				;	83
+140+  82FC              varRS                   equ varR
+141+  82FC
+142+  82FC 00 00        varU16                  DW  0               ; 16 bit variant on varU as I can't use above for this
+143+  82FE
+144+  82FE 00           XSAV					DB	0				; 84	   XSAV usef for nearby ship count outer
+145+  82FF 00           YSAV                    DB  0               ; 85
+146+  8300 00           XX17					DB	0				; 86
+147+  8301              RequiredScale			equ  XX17			; use to hold calculated scale in drawing ship
+148+  8301              varXX17                 equ  XX17
+149+  8301 00           ScreenChanged           DB  0
+150+  8302 00           ScreenIndex             DB  0
+151+  8303 00           CursorKeysPressed       DB  0               ; mapping of the current key presses
+152+  8304                                                          ; 7    6    5    4     3    2        1    0
+153+  8304                                                          ; Up   Down Left Right Home Recentre
+154+  8304 00           InvertedYAxis           DB  0
+155+  8305 00           MenuIdMax				DB	0				;	87		MenuIdMax		QQ11
+156+  8306              											; Bit 7 Set  ShortRangeChart    $80
+157+  8306              											; Bit 6 Set  Galactic Chart     $40
+158+  8306              											; Bit 5 Set  Market Place       $20
+159+  8306              											; Bit 4 Set  Status Screen      $10
+160+  8306              											; Bit 3 Set  Display Inventory  $08
+161+  8306                                                          ; Bit 2 Set  Planet Data        $04
+162+  8306                                                          ; View bit combinations if the ones above not matched
+163+  8306                                                          ; bits 1 0
+164+  8306                                                          ;      1 1  Front view , i.e. $03
+165+  8306                                                          ;      1 0  Aft View          $02
+166+  8306                                                          ;      0 1  Left View         $01
+167+  8306                                                          ;      0 0  Right view        $00
+168+  8306              											; Bit 0 Set  Data On System
+169+  8306              											; 0  Space View (Not a menu)
+170+  8306 00           ZZDust					DB	0				;	88		ZZDust (Poss 16 bit need to check)
+171+  8307 00           XX13                    DB  0               ;   89
+172+  8308 00           TYPE					DB	0				; 8C used for ship type in drawing
+173+  8309              ;Docked flag = 00 = in free space
+174+  8309              ;              FF = Docked
+175+  8309              ;              FE = transition
+176+  8309              ;              FD = Setup open space and transition to not docked
+177+  8309              ;              FC = Hyperspace manimation
+178+  8309              ;              FB = Hyperspace complete
+179+  8309 00           DockedFlag				DB	0				; 8E -
+180+  830A 00           GamePaused              DB  0
+181+  830B 00           varSWAP                 DB  0               ; 90 , general purpose swap variable
+182+  830C 00           varCNT                  DB  0               ; 93
+183+  830D
+184+  830D 00           varK					DB	0				; 40
+185+  830E 00           varKp1					DB	0				; 41
+186+  830F 00           varKp2					DB	0				; 42
+187+  8310 00           varKp3					DB	0				; 43
+188+  8311
+189+  8311 00           varK2                   DB  0               ; 9B
+190+  8312 00           varK2p1                 DB  0               ; 9C K2 plus 1
+191+  8313 00           varK2p2                 DB  0               ; 9D K2 plus 2
+192+  8314 00           varK2p3                 DB  0               ; 9E K2 plus 3
+193+  8315
+194+  8315 00           Point                   DB  0               ; 9F      POINT
+195+  8316
+196+  8316 00           varT					DB	0				; D1
+197+  8317
+198+  8317 00 00 00...  varVector9ByteWork      DS  9
+199+  8320
+200+  8320 00 00 00 00  varK3					DS	4				; D2
+201+  8324 00           varK3p2					DB	0				; 42
+202+  8325 00           varK3p3					DB	0				; 43
+203+  8326              varK3p1					equ varK3+1			; D3
+204+  8326 00 00 00 00  varK4					DS	4				; E0
+205+  832A              varK4p1					equ varK4+1			; D3
+206+  832A
+207+  832A
+208+  832A              ;Heap
+209+  832A
+210+  832A 00 00        HeapStart				DS	2				; &0100 XX3 50 bytes for now
+211+  832C 00 00 00...  HeapData				DS	50
+212+  835E              ; Contains 				X 16 bit, Y ;MissileArmedStatus		DB	0				; 0344 MSAR   using MissileTarget, if missile is not armed tehn target is FF
+213+  835E              ; TODO will need an read for a list of missiles, who they are targeting an the target current vector for AI persuit
+214+  835E              ; i.e. a list of programmed missiles in universe slot list code
+215+  835E 00 00 00...  DampingKeys				DS  7				; 0387 - 038D
+216+  8365              ;  #&6 Does K toggle keyboard/joystick control -  03CD certainly makes keyboard not work anymore.
+217+  8365              ;  #&5 Does J reverse both joystick channels
+218+  8365              ;  #&4 Does Y reverse joystick Y channel			03CB
+219+  8365              ;  #&2 Does X toggle startup message display ? PATG?	03C9
+220+  8365              ;  #&3 Does F toggle flashing information			03CA
+221+  8365              ;  #&1 Does A toggle keyboard auto-recentering ?
+222+  8365              ;  #&0 Caps-lock toggles keyboard flight damping
+223+  8365 00           NbrMissiles				DB	0				; 038B	Does this clash with Dampingkeys?
+224+  8366 00           FugitiveInnocentStatus	DB	0				; 038C	FIST
+225+  8367 00 00 00...  StockAvaliabiliy		DS 	16				; 038D - 039C Stock inventory in station
+226+  8377 00           AlienItemsAvaliability  DB	0				; 039D
+227+  8378 00           RandomMarketSeed		DB	0				; 039E   \ QQ26	\ random byte for each system vist (for market)
+228+  8379 00 00        KillTally  				DW	0				; 039F - 03A0 \ TALLY   \ kills lo hi
+229+  837B 00           COMP     				DB	0				; 03A1 2nd competion byte used for save integrity checks?
+230+  837C              											;
+231+  837C 00           MCH						DB	0				; 03A4  \ MCH  \ old message to erase
+232+  837D 00           MarketPrice				DB	0				; 03AA QQ24
+233+  837E 00           MaxStockAvaliable		DB  0				; 03AB   \ QQ25     \ max available
+234+  837F 00           SystemEconomy			DB  0				; 03AC \ QQ28   \ the economy byte of present system (0 is Rich Ind.)
+235+  8380 00           CargoItem				DB	0				; 03AD (I think its item type just scooped) QQ29
+236+  8381 00 00        ShipLineStackPointer	DW	0				; 03B0 & 03B1 ship Lines pointer reset to top LS% = &0CFF (make DW for z80 and direct hl pointer)
+237+  8383              											; this is ship lines stack pointer so may be redundant with paging
+238+  8383              											; LS = line stack so we will have one for now to remove later
+239+  8383 00           COK						DB	0				; 0366 Competition Byte what ? Does some file check and accelleration check
+240+  8384 00           DisplayEcononmy			DB	0				; 03B8
+241+  8385 00           DisplayGovernment		DB  0				; 03B9 Is it target? 03B9 \ QQ4	 \ Government, 0 is Anarchy.
+242+  8386 00           DisplayTekLevel			DB	0				; 03BA   \ QQ5	\ Tech
+243+  8387 00 00        DisplayPopulation		DW	0				; 03BB \ QQ6  \ population*10
+244+  8389 00 00        DisplayProductivity		DW	0				; 03BD \ QQ7   \ productivity*10
+245+  838B 00 00        Distance          		DW	0				; 03BE \ QQ8 distince in 0.1LY units
+246+  838D 00 00        DisplayRadius			DW	0
+247+  838F              ; --- Used in creation of sun and planet----;
+248+  838F 00           PlanetXPos              DS  1
+249+  8390 00           PlanetYPos              DS  1
+250+  8391 00           PlanetZPos              DS  1
+251+  8392 00           PlanetType              DS  1
+252+  8393 00           SunXPos                 DS  1
+253+  8394 00           SunYPos                 DS  1
+254+  8395 00           SunZPos                 DS  1
+255+  8396              ; -- Current Missile Runbtime data
+256+  8396 00           CurrentMissileBank:     DB      0                                   ; used by missile logic as local copy of missile bank number
+257+  8397 00 00        MissileXPos             DW      0
+258+  8399 00           MissileXSgn             DB      0
+259+  839A 00 00        MissileYPos             DW      0
+260+  839C 00           MissileYSgn             DB      0
+261+  839D 00 00        MissileZPos             DW      0
+262+  839F 00           MissileZSgn             DB      0
+263+  83A0 00 00        CurrentTargetXpos       DS      2
+264+  83A2 00 00        CurrentTargetXsgn       DS      2
+265+  83A4 00 00        CurrentTargetYpos       DS      2
+266+  83A6 00 00        CurrentTargetYsgn       DS      2
+267+  83A8 00 00        CurrentTargetZpos       DS      2
+268+  83AA 00 00        CurrentTargetZsgn       DS      2
+269+  83AC 00 00        TargetVectorXpos        DS      2
+270+  83AE 00 00        TargetVectorXsgn        DS      2
+271+  83B0 00 00        TargetVectorYpos        DS      2
+272+  83B2 00 00        TargetVectorYsgn        DS      2
+273+  83B4 00 00        TargetVectorZpos        DS      2
+274+  83B6 00 00        TargetVectorZsgn        DS      2
+275+  83B8 00           CurrentMissileBlastRange:      DB  0                       ; TODO Initi for runtime copied in when setting up a missile
+276+  83B9 00           CurrentMissileBlastDamage:     DB  0                       ; TODO Initi for runtime copied in when setting up a missile
+277+  83BA 00           CurrentMissileDetonateRange:   DB  0                       ; TODO Initi for runtime copied in when setting up a missile, allows for proximity missiles
+278+  83BB 00           CurrentMissileDetonateDamage:  DB  0                       ; TODO Initi for runtime copied in when setting up a missile
+279+  83BC
+280+  83BC              ; --- Main Loop Data -----------------------;
+281+  83BC 00           CurrentUniverseAI       DB  0               ; current ship unviverse slot due an AI update
+282+  83BD 00           SelectedUniverseSlot    DB  0
+283+  83BE 00           SetStationAngryFlag     DB  0               ; used to semaphore angry space station
+284+  83BF 00           ShipBlastCheckCounter   DB  0
+285+  83C0 00           EventCounter    		DB 	0				; 8A
+286+  83C1 00           MissJumpFlag            DB  0
+287+  83C2 00           PlayerMisJump			DB	0				; $0341 witchspace misjump
+288+  83C3 00           HyperSpaceFX			DB	0				; 0348 HFX (probabyl BBC specific
+289+  83C4 00           ExtraVessels			DB	0				; 0349 EV Use d by cops, extra vessels still to spawn?
+290+  83C5 00           Delay					DB	0				; 034A Delay general purpose eg. spawing EV or when printign messages
+291+  83C6 00           CurrentMissileCheck:    DB  0               ; if > Universe Slot list then free for next missile
+292+  83C7 00           MessageForDestroyed		DB	0				; 034B Message flag for item + destroyed
+293+  83C8              UniverseSlotListSize    equ	12
+294+  83C8 00 00 00...  UniverseSlotList        DS  UniverseSlotListSize
+295+  83D4 00 00 00...  UniverseSlotType        DS  UniverseSlotListSize ; base type, e.g. missile, cargo etc,
+296+  83E0              ; Probably not needed UniverseTypeCount       DS  UniverseSlotListSize
+297+  83E0 04           ConsoleRefreshCounter   DB  ConsoleRefreshInterval ; Every 4 interations the console will update twice (once for primary and once for seconday buffer)
+298+  83E1 00           ConsoleRedrawFlag       DB  0
+299+  83E2 00           TextInputMode           DB  0
+300+  83E3              ; --- Current System Data ------------------;
+301+  83E3 00           SpaceStationSafeZone    DB  0               ; Flag to determine if we are in safe zone
+302+  83E4 00           ExtraVesselsCounter     DB  0
+303+  83E5 00           JunkCount				DB  0				; $033E
+304+  83E6 00           AsteroidCount           DB  0               ; Not used as yet
+305+  83E7 00           TransporterCount        DB  0
+306+  83E8 00           CopCount                DB  0
+307+  83E9 00           PirateCount             DB  0
+308+  83EA              ; --- Galaxy Data --------------------------;
+309+  83EA 00           Galaxy      			DB	0				; 0367 Galaxy (incremented with galactiv drive
+310+  83EB 00 00 00...  WorkingSeeds			DS	6
+311+  83F1 00 00 00...  PresentSystemSeeds		DS	6				; 03B2 - 03B7
+312+  83F7 00 00 00...  GalaxySeeds				DS	6				; 035B - 0360 QQ21
+313+  83FD 00           PresentSystemX			DB	0				; System we are currently in
+314+  83FE 00           PresentSystemY			DB  0				; System we are currently in
+315+  83FF 00           TargetSystemX			DB	0				; System we are targeting for jump
+316+  8400 00           TargetSystemY			DB	0				; System we are targeting for jump
+317+  8401 00           GovPresentSystem		DB	0				; 03AE Govenment
+318+  8402 00           TekPresentSystem		DB	0				; 03AF Technology
+319+  8403
+320+  8403 00           CompassColor			DB	0				; 03C5
+321+  8404 00           SoundToggle				DB	0				; 03C6
+322+  8405 00           KeyboardRecenterToggle	DB	0				; 03C8
+323+  8406 00           PATGMask				DB	0				; &03C9    \ PATG	\ Mask to scan keyboard X-key, for misjump
+324+  8407 00           FlashToggle				DB  0				; 03CA \ FLH \ flash toggle
+325+  8408 00           ReverseJoystick			DB	0				; 03CB \ JSTGY \ Y reverse joystick Y channel
+326+  8409 00           JoystickToggle			DB	0				; 03CD  \ JSTK    \ K toggle keyboard/joystick
+327+  840A 00           DigitalJoystick			DB	0				; 03CE \ JDB   \ . = toggle between keyboard and bitpaddle
+328+  840B 00           DiskReadFailFlag		DB	0				; 03CF \ CATF \ Disk catalog fail flag
+329+  840C
+330+  840C              ; Working Data
+331+  840C
+332+  840C              ;UniverseTable			DS	26				; 1741  \ address pointers for 13 ships INF on pages &9. 37 bytes each.
+333+  840C              ; $0900 =	EQUW page9+37* 0 \ copied to inner worskpace INWK on zero-page when needed
+334+  840C              ; $0925 =	EQUW page9+37* 1
+335+  840C              ; $094A =	EQUW page9+37* 2
+336+  840C              ; $096F =	EQUW page9+37* 3
+337+  840C              ; $0994 =	EQUW page9+37* 4
+338+  840C              ; $09B9 =	EQUW page9+37* 5
+339+  840C              ; $09DE =	EQUW page9+37* 6
+340+  840C              ; $0A03 =	EQUW page9+37* 7
+341+  840C              ; $0A28 =	EQUW page9+37* 8
+342+  840C              ; $0A4D =	EQUW page9+37* 9
+343+  840C              ; $0A72 =	EQUW page9+37*10
+344+  840C              ; $0A97 =	EQUW page9+37*11
+345+  840C              ; $0ABC =	EQUW page9+37*12 \ allwk up to &0ABC while heap for edges working down from &CFF.
+346+  840C
+347+  840C
+348+  840C
+349+  840C              ; 0b00 is start address of data to save
+350+  840C              ; Now MissionData VarTP					DB	0				; 0358 TP? The Plan  \ mission uses lower 4 bits
+351+  840C              											; Bit mask XXXX10XX - Thargoid plan mission
+352+  840C
+353+  840C 00           MissionData				DB	0				; &0B00	  \ look at data, first byte is TP mission bits
+354+  840D
+355+  840D 00 00        FileNameStringPointer	DW	0				;0C00	   \ pointer to filename string
+356+  840F 00 00        CommanderLoadAddress	DW	0				;0C03
+357+  8411 00 00        LengthOfFile			DW	0				;0C0B
+358+  8413 00 00        SaveDataEndAddress		DW	0				;&0C0F	      \ &0C00 is end address of data to save
+359+  8415
+360+  8415 00 00 00...  EdgesBuffer				DS 50
+361+  8447              EdgesBufferSP			equ	$				; Was $0CFF			; Heap pointer for edges buffer
+362+  8447              ShipLinesBufferSP		equ EdgesBufferSP	; was $0CFF
+363+  8447
+364+  8447 00 00 00...  ShipLineStack			DS  70			; For now but will be in the page later
+365+  848D              ShipLineStackTop		equ $ - ShipLineStack
+366+  848D
+367+  848D 00 00 00...  LSO						DS 	$C0				;0E00 Line Buffer Solar of 192 lines (may be 191 in reality)
+368+  854D              ; LSX vector overlaps with LSO
+369+  854D 00           LSX2					DB	0				; &0EC0	    \ LSX2 bline buffer size?
+370+  854E 00           LSY2					DB	0           	; &0F0E	    \ LSY2
+371+  854F
+372+  854F              ; Star Positions are 16 bit 3d coordinates
+373+  854F 00 00 00...  varDust                 DS  MaxNumberOfStars * 6
+374+  8591 00 00 00...  varDustSceen            DS  MaxNumberOfStars * 2 ; To optimise star list to wipe from screen
+375+  85A7 00           varStarX                DB  0
+376+  85A8 00           varStarY                DB  0
+377+  85A9 00 00 00...  varDustX                DS MaxNumberOfStars *2
+378+  85BF 00 00 00...  varDustY                DS MaxNumberOfStars *2
+379+  85D5 00 00 00...  varDustZ                DS MaxNumberOfStars *2
+380+  85EB              ; -- Player Runtime Data
+381+  85EB 00           GunTemperature          DB  0
+382+  85EC 00           CabinTemperature        DB  0
+383+  85ED 00           PlayerForwardSheild0	DB	0 ; ?????
+384+  85EE 00           PlayerForwardSheild1    DB	0
+385+  85EF 00           PlayerForwardSheild2    DB	0
+386+  85F0 00           ForeShield				DB	0				; 03A5
+387+  85F1 00           AftShield				DB	0				; 03A6
+388+  85F2 00           PlayerEnergy			DB	0				; 03A7
+389+  85F3 00           CompassX				DB	0				; 03A8
+390+  85F4 00           CompassY				DB	0				; 03A9
+391+  85F5 00           MissileTarget			DB  0				; 45
+392+  85F6 00           MissileLaunchFlag       DB  0
+393+  85F7 00 00 00...  CommanderName           DS  15
+394+  8606 00           CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
+395+  8607 00           BadnessStatus           DB  0
+396+  8608              ; -- Input variables
+397+  8608 00           JoystickX				DB	0				; 034C JSTX
+398+  8609 00           JoystickY				DB	0				; 034D JSTY
+399+  860A 00           XSAV2 					DB	0				; 034E used to temporary save 6502 X reg
+400+  860B 00           YSAV2 					DB	0				; 034F used to temporary save 6502 Y reg
+401+  860C
+402+  860C              ; -- Console drawing data
+403+  860C              FShieldStart            equ $8410
+404+  860C              AShieldStart            equ $8D10
+405+  860C              FuelStart               equ $9410
+406+  860C
+407+  860C              EnergyBar4Start         equ $A5D5
+408+  860C              EnergyBar3Start         equ $ADD5
+409+  860C              EnergyBar2Start         equ $B5D5
+410+  860C              EnergyBar1Start         equ $BDD5
+411+  860C              ; 70 /2 = 35 values
+412+  860C              ;                            0                             1                             2                             3
+413+  860C              ;                            0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6
+414+  860C 01 02 02 03  FuelMapping             DB  01,02,02,03,04,04,05,06,06,07,08,09,10,10,11,12,13,14,14,15,16,16,17,19,20,21,21,22,23,24,25,26,27,28,30,31,31
+414+  8610 04 04 05 06
+414+  8614 06 07 08 09
+414+  8618 0A 0A 0B 0C
+414+  861C 0D 0E 0E 0F
+414+  8620 10 10 11 13
+414+  8624 14 15 15 16
+414+  8628 17 18 19 1A
+414+  862C 1B 1C 1E 1F
+414+  8630 1F
+415+  8631              SpeedoStart             equ $84D1
+416+  8631              ;                            0                             1                             2                             3                             4
+417+  8631              ;                            0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0
+418+  8631 01 02 02 03  SpeedoMapping           DB  01,02,02,03,04,04,05,06,06,07,08,09,10,10,11,12,13,14,14,15,16,16,17,18,19,20,20,21,22,23,24,24,25,26,26,27,28,28,29,30,31
+418+  8635 04 04 05 06
+418+  8639 06 07 08 09
+418+  863D 0A 0A 0B 0C
+418+  8641 0D 0E 0E 0F
+418+  8645 10 10 11 12
+418+  8649 13 14 14 15
+418+  864D 16 17 18 18
+418+  8651 19 1A 1A 1B
+418+  8655 1C 1C 1D 1E
+418+  8659 1F
+419+  865A
+420+  865A              DialMiddleXPos          equ $E1
+421+  865A              RollMiddle              equ $8CE0
+422+  865A              PitchMiddle             equ $94E0
+423+  865A
+424+  865A
+425+  865A              ResetPlayerShip:        ZeroThrottle
+425+  865A AF          >                        xor     a
+425+  865B 32 F5 82    >                        ld      (DELTA),a
+425+  865E 32 F6 82    >                        ld      (DELT4Lo),a
+425+  8661 32 F7 82    >                        ld      (DELT4Lo+1),a
+426+  8664                                      ZeroPitch
+426+  8664 AF          >                        xor     a
+426+  8665 32 01 82    >                        ld      (BET2),a
+426+  8668 32 02 82    >                        ld      (BET2FLIP),a
+426+  866B 32 FF 81    >                        ld      (JSTY),a
+426+  866E 32 FE 81    >                        ld      (BETA),a
+427+  8671                                      ZeroRoll
+427+  8671 AF          >                        xor     a                              ; zero roll and climb
+427+  8672 32 11 82    >                        ld      (ALP2),a
+427+  8675 32 12 82    >                        ld      (ALP2FLIP),a
+427+  8678 32 0D 82    >                        ld      (JSTX),a
+427+  867B 32 0F 82    >                        ld      (ALPHA),a
+428+  867E                                      ClearMissileTarget
+428+  867E AF          >                        xor     a                           ; Set missile target to FF
+428+  867F 3D          >                        dec     a
+428+  8680 32 F5 85    >                        ld      (MissileTarget),a
+428+  8683             >                        SetMemFalse MissileLaunchFlag
+428+  8683 3E FF       >                        ld      a,$FF
+428+  8685 32 F6 85    >                        ld      (MissileLaunchFlag),a
+429+  8688                                      ClearECM
+429+  8688 AF          >                        xor     a
+429+  8689 32 0B 82    >                        ld      (ECMLoopA),a
+429+  868C 32 0C 82    >                        ld      (ECMLoopB),a
+430+  868F                                      ChargeEnergyAndShields
+430+  868F 3E FF       >                        ld      a,$FF
+430+  8691 32 F2 85    >                        ld      (PlayerEnergy),a
+430+  8694 32 F0 85    >                        ld      (ForeShield),a
+430+  8697 32 F1 85    >                        ld      (AftShield),a
+431+  869A C9                                   ret
+432+  869B
+# file closed: ../Variables/general_variables.asm
+ 72   869B
+ 73   869B                                      STRUCT testCase
+ 74   869B ~            XLo                     BYTE 1
+ 75   869B ~            XHi                     BYTE 2
+ 76   869B ~            XSgn                    BYTE 3
+ 77   869B ~            DVal                    BYTE 4
+ 78   869B ~            ExpectedC               BYTE 5
+ 79   869B ~            ExpectedL               BYTE 6
+ 80   869B ~            ExpectedE               BYTE 7
+ 81   869B ~            ExpectedD               BYTE 8
+ 82   869B ~            ActualC                 BYTE 9
+ 83   869B ~            ActualL                 BYTE 10
+ 84   869B ~            ActualE                 BYTE 11
+ 85   869B ~            ActualD                 BYTE 12
+ 86   869B ~            Padding1                BYTE 13
+ 87   869B ~            Padding2                BYTE 14
+ 88   869B ~            Padding3                BYTE 15
+ 89   869B ~            PassFail                BYTE 16
+ 90   869B                                      ENDS
+ 91   869B              ;                            01   02   03   04   05   06   07   08   09   10   11   12   13   14   15   16
+ 92   869B 05 05 00 05  TestCase1               DB  $05, $05, $00, $05, $19, $19, $00, $00, $00, $00, $00, $00, $00, $00, $01, $00
+ 92   869F 19 19 00 00
+ 92   86A3 00 00 00 00
+ 92   86A7 00 00 01 00
+ 93   86AB 05 05 03 05  TestCase2               DB  $05, $05, $03, $05, $19, $19, $0F, $00, $00, $00, $00, $00, $00, $00, $02, $00
+ 93   86AF 19 19 0F 00
+ 93   86B3 00 00 00 00
+ 93   86B7 00 00 02 00
+ 94   86BB 05 05 83 05  TestCase3               DB  $05, $05, $83, $05, $19, $19, $0F, $80, $00, $00, $00, $00, $00, $00, $03, $00
+ 94   86BF 19 19 0F 80
+ 94   86C3 00 00 00 00
+ 94   86C7 00 00 03 00
+ 95   86CB 05 05 03 85  TestCase4               DB  $05, $05, $03, $85, $19, $19, $0F, $80, $00, $00, $00, $00, $00, $00, $04, $00
+ 95   86CF 19 19 0F 80
+ 95   86D3 00 00 00 00
+ 95   86D7 00 00 04 00
+ 96   86DB 05 0A 00 05  TestCase5               DB  $05, $0A, $00, $05, $19, $32, $00, $00, $00, $00, $00, $00, $00, $00, $05, $00
+ 96   86DF 19 32 00 00
+ 96   86E3 00 00 00 00
+ 96   86E7 00 00 05 00
+ 97   86EB 0A 05 80 05  TestCase6               DB  $0A, $05, $80, $05, $32, $19, $00, $80, $00, $00, $00, $00, $00, $00, $06, $00
+ 97   86EF 32 19 00 80
+ 97   86F3 00 00 00 00
+ 97   86F7 00 00 06 00
+ 98   86FB 05 05 80 05  TestCase7               DB  $05, $05, $80, $05, $19, $19, $00, $80, $00, $00, $00, $00, $00, $00, $07, $00
+ 98   86FF 19 19 00 80
+ 98   8703 00 00 00 00
+ 98   8707 00 00 07 00
+ 99   870B 05 05 83 0A  TestCase8               DB  $05, $05, $83, $0A, $32, $32, $1E, $80, $00, $00, $00, $00, $00, $00, $08, $00
+ 99   870F 32 32 1E 80
+ 99   8713 00 00 00 00
+ 99   8717 00 00 08 00
+100   871B 05 05 83 CA  TestCase9               DB  $05, $05, $83, $CA, $72, $73, $DF, $00, $00, $00, $00, $00, $00, $00, $09, $00
+100   871F 72 73 DF 00
+100   8723 00 00 00 00
+100   8727 00 00 09 00
+101   872B 05 05 03 CA  TestCase10              DB  $05, $05, $03, $CA, $72, $73, $DF, $80, $00, $00, $00, $00, $00, $00, $10, $00
+101   872F 72 73 DF 80
+101   8733 00 00 00 00
+101   8737 00 00 10 00
+102   873B 0A           testTotal               DB  ($-TestCase1)/16
+103   873C 00           testCounter             DB   0
+104   873D
+105   873D
+106   873D                  SAVENEX OPEN "mathssun.nex", $8000 , $7F00
+107   873D                  SAVENEX CFG  0,0,0,1
+108   873D                  SAVENEX AUTO
+109   873D                  SAVENEX CLOSE
+110   873D
+# file closed: mathstestssun.asm

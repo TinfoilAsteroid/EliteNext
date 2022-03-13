@@ -246,6 +246,7 @@ mulCHLbyDSigned:        ld      a,d                 ; get sign from d
  
 ; DELC = HLE * D, uses HL, DE, C , A , IYH
 ; HLE = multiplicand D = multiplier
+; tested by mathstestsun.asm all passed
 mulHLEbyDSigned:        ld      a,d                 ; get sign from d
                         xor     h                   ; xor with h to get resultant sign
                         and     SignOnly8Bit        ; .
@@ -255,6 +256,7 @@ mulHLEbyDSigned:        ld      a,d                 ; get sign from d
                         ld      h,a                 ; .
                         ld      a,d                 ; d = ABS D
                         and     SignMask8Bit        ; .
+                        ld      d,a                 ; .
 ; At this point HLE = ABS (HLE), A = ABS(D)                        
 .mul1:                  mul     de                  ; C = E * D
                         ex      af,af'              ; save mulitplier
