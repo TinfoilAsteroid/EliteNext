@@ -54,7 +54,7 @@ draw_front_view:        MMUSelectLayer1
                         call    sprite_cls_cursors
                         call    sprite_reticule
                         call    sprite_laser
-                        call    sprite_laser_show
+                       ; call    sprite_laser_show
                         MMUSelectConsoleBank
                         ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
                         ld          de,ConsoleImageData
@@ -321,6 +321,32 @@ ForwardCursorKeysDone:  ld      a,c_Pressed_Hyperspace              ; Check for 
 .NoTargetSelected
 .InsufficientFuel
 .NotHyperspace:         
+.CheckForLaserPressed:  SetMemFalse FireLaserPressed
+                        ld      a,(CurrLaserPulseOnCount)
+                        ld      hl,CurrLaserPulseOffCount
+                        or      (hl)
+                        inc     hl  ; CurrLaserPulseOffCount
+                        or      (hl)                                ;
+                        inc     hl  ; CurrLaserPulseRestCount
+                        or      (hl)
+                        jr      nz, .CheckForMissile                ; fire key locked as counters are running
+                        ld      a,c_Pressed_FireLaser               ; so no need to scan
+                        call    is_key_pressed
+                        jr      nz,.CheckForMissile                 ; no key press then skip
+.CanProcesFire:         ld      a,(CurrLaserPulseRateCount)         ; one more pulse
+                        inc     a
+                        ld      hl,CurrLaserPulseRate               ; if we have hit limit then go into rest
+                        cp      (hl)
+                        jr      z,.PulseLimitReached
+.StillHavePulsesLeft:   ld      (CurrLaserPulseRateCount),a         ; we have used a pulse                        
+                        SetMemTrue FireLaserPressed
+                        ldCopyByte CurrLaserPulseOnTime, CurrLaserPulseOnCount      ; set on time
+                        ldCopyByte CurrLaserPulseOffTime, CurrLaserPulseOffCount    ; set off time for later as these only count down when pulse is off
+                        ldCopyByte CurrLaserPulseRest, CurrLaserPulseRateCount     ; set rest time for later
+.PulseLimitReached:     ZeroA
+                        ld      (CurrLaserPulseRateCount),a
+                        ldCopyByte CurrLaserPulseRest, CurrLaserPulseRateCount   ; start the rest phase
+                        
 .CheckForMissile:       ld      a,c_Pressed_FireMissile             ; launch pressed?
                         call    is_key_pressed
                         jr      nz,.NotMissileLaunch

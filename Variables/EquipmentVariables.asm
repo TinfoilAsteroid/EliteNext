@@ -16,8 +16,9 @@ FirearmsCargoTonnes		equ CargoTonnes+10
 ; TODO - need to add code to maintain on load/save/equipment transactions
 LaserType               DS  4               ; quick reference to laser type
 LaserDamagedFlag        DS  4               ; probabiliy out of 255 that it will no fire, 0 = good, 255 = will not fire
+LaserPulseCount         DS  4               ; how many pulses can be fired before long pause
 LaserPulsePause         DS  4               ; time before next pulse - 0 = beam
-LaserPulseDuration      DS  4               ; time laser is on per shot
+LaserPulseRest          DS  4               ; time before pulse count resets to 0
 LaserDamageOutput       DS  4               ; amount of damage for a laser hit
 LaserEnergyDrain        DS  4               ; amount of energy drained by cycle
 LaserHeat               DS  4               ; amount of heat generated

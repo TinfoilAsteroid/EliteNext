@@ -59,6 +59,10 @@ compass_station_behind              equ 20
 spritecursoroffset					equ 17
 spriteborderoffset                  equ 32
 
+HideSprite:                 MACRO   spritenbr
+                            nextreg		SPRITE_PORT_INDEX_REGISTER,spritenbr
+                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+                            ENDM
 
 ; " sprite_big BC = rowcol, D = sprite nbr , E= , pattern"
 sprite_big:
@@ -388,87 +392,55 @@ sprite_laser_show:      ShowSprite laser_sprite1 ,laser_pattern_1
                         ShowSprite laser_sprite13,laser_pattern_5
                         ret
 
-sprite_galactic_hide:   nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_cursor_sprite
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_cursor_sprite1
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_cursor_sprite2
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+sprite_galactic_hide:   HideSprite galactic_cursor_sprite
+                        HideSprite galactic_cursor_sprite1
+                        HideSprite galactic_cursor_sprite2
                         ret	
 	
 sprite_galactic_hyper_hide:
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_hyper_sprite
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-;                        nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_hyper_sprite1
+                        HideSprite galactic_hyper_sprite
+                         ;nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_hyper_sprite1
 ;                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
 ;                        nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_hyper_sprite2
 ;                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
                         ret
 	
-sprite_local_hide:      nextreg		SPRITE_PORT_INDEX_REGISTER,local_cursor_sprite
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,local_cursor_sprite1
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,local_cursor_sprite2
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+sprite_local_hide:      HideSprite local_cursor_sprite
+                        HideSprite local_cursor_sprite1
+                        HideSprite local_cursor_sprite2
                         ret
 	
-sprite_local_hyper_hide:nextreg		SPRITE_PORT_INDEX_REGISTER,local_hyper_sprite
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,local_hyper_sprite1
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,local_hyper_sprite2
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+sprite_local_hyper_hide:HideSprite local_hyper_sprite
+                        HideSprite local_hyper_sprite1
+                        HideSprite local_hyper_sprite2
                         ret
 
-sprite_reticule_hide:   nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite1
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite2
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite3
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite4
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+sprite_reticule_hide:   HideSprite reticlule_sprite1
+                        HideSprite reticlule_sprite2
+                        HideSprite reticlule_sprite3
+                        HideSprite reticlule_sprite4
                         ret
 
-sprite_laser_hide:      nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite1
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite2
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite3
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite4
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite5
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$0
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite6
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite7
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite8
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite9
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite10
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite11
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite12
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite13
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite14
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite15
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite16
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+sprite_laser_hide:      HideSprite laser_sprite1
+                        HideSprite laser_sprite2
+                        HideSprite laser_sprite3
+                        HideSprite laser_sprite4
+                        HideSprite laser_sprite5
+                        HideSprite laser_sprite6
+                        HideSprite laser_sprite7
+                        HideSprite laser_sprite8
+                        HideSprite laser_sprite9
+                        HideSprite laser_sprite10
+                        HideSprite laser_sprite11
+                        HideSprite laser_sprite12
+                        HideSprite laser_sprite13
+                        HideSprite laser_sprite14
+                        HideSprite laser_sprite15
+                        HideSprite laser_sprite16
                         ret
     
-sprite_compass_hide:    nextreg		SPRITE_PORT_INDEX_REGISTER,compass_sun
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
-                        nextreg		SPRITE_PORT_INDEX_REGISTER,compass_station
-                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+sprite_compass_hide:    HideSprite compass_sun
+                        HideSprite compass_station
                         ret
 
 sprite_cls_cursors:     call	sprite_galactic_hide	

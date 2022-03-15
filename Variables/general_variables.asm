@@ -72,9 +72,6 @@ BET1MAXC                DB  31              ; max climb
 BET1MAXD                DB  -31             ; max dive
 XC						DB	0               ; 2C
 YC						DB 	0               ; 2D
-InnerHyperCount			DB 	0				; 2F QQ22+1
-OuterHyperCount			DB 	0				; 2E QQ22
-HyperCircle             DB  0
 ;... ECM logic. If another ship adds ECM then we just set the loop A and B to starting values so they overlap
 ECMActive				DB 	0				; 30		ECM Active flag
 ECMLoopA                DB  0
@@ -148,9 +145,6 @@ RequiredScale			equ  XX17			; use to hold calculated scale in drawing ship
 varXX17                 equ  XX17
 ScreenChanged           DB  0
 ScreenIndex             DB  0 
-CursorKeysPressed       DB  0               ; mapping of the current key presses
-                                            ; 7    6    5    4     3    2        1    0
-                                            ; Up   Down Left Right Home Recentre 
 InvertedYAxis           DB  0
 MenuIdMax				DB	0				;	87		MenuIdMax		QQ11
 											; Bit 7 Set  ShortRangeChart    $80
@@ -282,7 +276,10 @@ CurrentUniverseAI       DB  0               ; current ship unviverse slot due an
 SelectedUniverseSlot    DB  0
 SetStationAngryFlag     DB  0               ; used to semaphore angry space station
 ShipBlastCheckCounter   DB  0
-EventCounter    		DB 	0				; 8A
+InnerHyperCount			DB 	0				; 2F QQ22+1
+OuterHyperCount			DB 	0				; 2E QQ22
+EventCounter            DB  0
+HyperCircle             DB  0
 MissJumpFlag            DB  0
 PlayerMisJump			DB	0				; $0341 witchspace misjump
 HyperSpaceFX			DB	0				; 0348 HFX (probabyl BBC specific
@@ -297,6 +294,10 @@ UniverseSlotType        DS  UniverseSlotListSize ; base type, e.g. missile, carg
 ConsoleRefreshCounter   DB  ConsoleRefreshInterval ; Every 4 interations the console will update twice (once for primary and once for seconday buffer)
 ConsoleRedrawFlag       DB  0
 TextInputMode           DB  0
+CursorKeysPressed       DB  0               ; mapping of the current key presses
+                                            ; 7    6    5    4     3    2        1    0
+                                            ; Up   Down Left Right Home Recentre 
+FireLaserPressed        DB  0
 ; --- Current System Data ------------------;
 SpaceStationSafeZone    DB  0               ; Flag to determine if we are in safe zone
 ExtraVesselsCounter     DB  0
@@ -393,6 +394,38 @@ MissileLaunchFlag       DB  0
 CommanderName           DS  15
 CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
 BadnessStatus           DB  0
+; need to add copy table routines
+CurrLaserType           DB  0               ; current view laser type, determines sprite routine etc
+CurrLaserPulseRate      DB  0               ; current view laser amount of pulses
+CurrLaserPulseOnTime    DB  0               ; how many cycles the laser is on
+CurrLaserPulseOffTime   DB  0               ; how many cycles the laser is on
+CurrLaserPulseRest      DB  0               ; current view laser delay setup between pulses
+; Count down timers must be aligned like this to work
+CurrLaserPulseOnCount   DB  0               ; how many cycles the laser is on timer
+CurrLaserPulseOffCount  DB  0               ; how many cycles the laser is on timer
+CurrLaserPulseRestCount DB  0               ; countdown after shooting for next shot
+CurrLaserPulseRateCount DB  0               ; current view laser current pulses fired
+;note rapidly changing views could reset these so need to consider it in an array
+
+; LaserType                
+; LaserPulseRate                          ; how many pulses can be fired before long pause
+; LaserPulsePause                         ; time before next pulse - 0 = beam
+; LaserPulseRest                          ; time before pulse count resets to 0
+; LaserDamageOutput                       ; amount of damage for a laser hit
+; LaserEnergyDrain                        ; amount of energy drained by cycle
+; LaserHeat                               ; amount of heat generated
+; LaserDurability                         ; probabability out of 255 that a hit on unshielded will add random amount of damage
+; LaserDurabilityAmount                   ; max amount of damagage can be sustained in one damage hit
+; LaserInMarkets                          ; can this laser be purchased 0 = yes 1 = no
+; LaserTechLevel                          ; minimum tech level system to buy from
+
+
+
+CurrLaserBurstRate      DB  0
+CurrLaserBurstCount     DB  0
+CurrLaserDamageOutput   DB  0
+CurrLaserEnergyDrain    DB  0
+CurrLaserHeat           DB  0
 ; -- Input variables
 JoystickX				DB	0				; 034C JSTX  
 JoystickY				DB	0				; 034D JSTY

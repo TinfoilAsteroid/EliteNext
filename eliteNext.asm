@@ -139,9 +139,41 @@ InputMainMacro:         MACRO
                         jr      nz,MainLoop
                         call    MovementKeyTest
                         ENDM
-
+                        
+; counter logic
+;    if beam on count > 0 then beam on count --
+;    if beam on = 0 then  
+;       if beam off count >0 then beam off count --
+;       if beam off count = 0 them
+;          if pulse rest count > 0 then pulse rest count --
+;                         
+;    if fire pressed is OK
+;        pulse rate count ++
+;        pulse on count = pulse on time
+;        pulse off count = pulse off time
+;        pulse rest count = pulse rest time
+        
+UpdateLaserCounters:    MACRO
+                        JumpIfMemZero CurrLaserPulseOnCount,   .SkipPulseOn
+                        dec     a
+                        ld      (CurrLaserPulseOnCount),a
+.SkipPulseOn:           JumpIfAIsNotZero  .SkipOffCounters
+                        ld      a,(CurrLaserPulseOffCount)
+                        JumpIfMemZero CurrLaserPulseOffCount, .SkipPulseOff
+                        dec     a
+                        ld      (CurrLaserPulseRateCount),a
+.SkipPulseOff:          JumpIfMemZero CurrLaserPulseRestCount, .SkipRestRate
+                        dec     a
+                        ld      (CurrLaserPulseRestCount),a
+.SkipRestRate:          JumpIfMemZero CurrLaserPulseOnCount,   .SkipOffCounters
+                        dec     a
+                        ld      (CurrLaserPulseRestCount),a
+.SkipOffCounters:       
+                        ENDM
+                        
 ;..................................................................................................................................
 MainLoop:	            call    doRandom                            ; redo the seeds every frame
+                        UpdateLaserCounters
                         CoolLasers
                         call    scan_keyboard                       ; perform the physical input scan
 ;.. This bit allows cycling of ships on universe 0 in demo.........................................................................
@@ -175,8 +207,7 @@ TestAreWeDocked:        ld      a,(DockedFlag)                                ; 
 .UpdateShips:           call    UpdateUniverseObjects
                         JumpIfMemNeNusng ScreenTransitionForced, $FF, BruteForceChange                          ; if we docked then a transition would have been forced
 CheckIfViewUpdate:      ld      a,$00                                         ; if this is set to a view number then we process a view
-                        cp      0                                             ; .
-                        jr      z, MenusLoop                                  ; This will change as more screens are added TODO
+                        JumpIfAIsZero  MenusLoop                                  ; This will change as more screens are added TODO
 ;..Processing a view...............................................................................................................
 ;..Display any message ............................................................................................................
 .CheckHyperspaceMessage:AnyHyperSpaceMacro .HandleMessages
@@ -217,6 +248,12 @@ ConsoleDrawReset:       SetMemTrue ConsoleRedrawFlag
                         ld      (hl),ConsoleRefreshInterval                     
                         MMUSelectLayer2 :   call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
 ;ProcessSun:             call    DrawForwardSun
+ProcessLaser:           JumpIfMemZero CurrLaserPulseOnCount, NoLaser
+                        MMUSelectSpriteBank
+                        call    sprite_laser_show
+                        jp      ProcessPlanet
+NoLaser:                MMUSelectSpriteBank
+                        call    sprite_laser_hide
 ProcessPlanet:
 ProcessShipModels:      call   DrawForwardShips                               ; Draw all ships (this may need to be self modifying)
                         ; add in loop so we only update every 4 frames, need to change CLS logic too, 
@@ -943,6 +980,7 @@ SetInitialShipPosition: ld      hl,$0000
 
             INCLUDE "./Views/ConsoleDrawing.asm"
             INCLUDE "./Tables/message_queue.asm"
+            INCLUDE "./Tables/LaserStatsTable.asm"
             INCLUDE "./Tables/ShipClassTable.asm"
 
 
