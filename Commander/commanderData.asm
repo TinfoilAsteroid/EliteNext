@@ -40,19 +40,20 @@ defaultCommander:       ld		de,CommanderName				;set commander name
                         inc     hl
                         djnz    .ClearFittedLooop
                         SetAFalse
-                        ld      (EquipmentFitted+EQ_FRONT_PULSE),a
+                        ld      (EquipmentFitted+EQ_FRONT_BEAM),a
                         ld		(MissionData),a						;The Plan/Mission
-                        xor     a                                   ; a = 0 = pulse laser
+                        ld      a,8                                  ; a = 0 = pulse laser
                         ld		(LaserType),a
-                        dec     a                                   ; a = 255
+                        ld      a,$FF                                 ; a = 255
                         ld		(LaserType+1),a
                         ld		(LaserType+2),a
                         ld		(LaserType+3),a
+                        xor     a                                  ; a= 0
                         ld      (LaserDamagedFlag),a
                         ld      (LaserDamagedFlag+1),a
                         ld      (LaserDamagedFlag+2),a
                         ld      (LaserDamagedFlag+3),a
-                        ld      a,EQ_FRONT_PULSE
+; REMOVE?             ld      a,EQ_FRONT_PULSE
                         xor     a
                         ld		(ECMPresent),a
                         ld		(FuelScoopsBarrelStatus),a
@@ -72,7 +73,7 @@ defaultCommander:       ld		de,CommanderName				;set commander name
                         ld		a,20
                         ld		(CargoBaySize),a
                         call	ZeroCargo						; Clear out cargo
-.SetLasers:             ld      a,(LaserList)                   ; we start on Front view
+.SetLasers:             ld      a,0                             ; we start on Front view
                         call    LoadLaserToCurrent
                         ret     
 
@@ -85,10 +86,10 @@ defaultCommander:       ld		de,CommanderName				;set commander name
                         ; more to DO	
                         ret
 ; a = current view number
-LoadLaserToCurrent:     ld      b,a                             ; first off is there a laser present in current view
-                        ld      hl,LaserType                    ; .
+LoadLaserToCurrent:     ld      hl,LaserType                    ; .
                         add     hl,a                            ; .
                         ld      a,(hl)                          ; .
+                        ld      b,a                             ; first off is there a laser present in current view
                         ld      (CurrLaserType),a               ; set type
                         cp      255                             ; .
                         ret     z                               ; we can then drop out early if nothing fitted
@@ -102,24 +103,22 @@ LoadLaserToCurrent:     ld      b,a                             ; first off is t
                         ld      hl,LaserStatsTable              ;
                         add     hl,de                           ;
                         inc     hl                              ; we already have type
-                        ldAtHLtoMem CurrLaserPulseRate
-                        inc     hl
-                        ldAtHLtoMem CurrLaserPulseOnTime
-                        inc     hl
+                        ldAtHLtoMem CurrLaserPulseRate          ; table [1]
+                        inc     hl                              ; table [2]
+                        ldAtHLtoMem CurrLaserPulseOnTime        
+                        inc     hl                              ; table [3]
                         ldAtHLtoMem CurrLaserPulseOffTime
-                        inc     hl
+                        inc     hl                              ; table [4]
                         ldAtHLtoMem CurrLaserPulseRest
-                        inc     hl
-                        ldAtHLtoMem CurrLaserPulseRest
-                        inc     hl
+                        inc     hl                              ; table [5]
                         ldAtHLtoMem CurrLaserDamageOutput                        
-                        inc     hl
+                        inc     hl                              ; table [6]
                         ldAtHLtoMem CurrLaserEnergyDrain   
-                        inc     hl
+                        inc     hl                              ; table [7]
                         ldAtHLtoMem CurrLaserHeat
-                        inc     hl
+                        inc     hl                              ; table [8]
                         ldAtHLtoMem CurrLaserDurability
-                        inc     hl
+                        inc     hl                              ; table [9]
                         ldAtHLtoMem CurrLaserDurabilityAmount   ; we don't need tech level etc for in game run only markets so stop here
                         ret
 

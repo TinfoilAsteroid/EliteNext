@@ -323,31 +323,38 @@ input_front_view:       xor         a
 .NotHyperspace:         
 .CheckForLaserPressed:  call    IsLaserUseable                      ; no laser or destroyed?
                         jr      z,.CheckForMissile
-                        SetMemFalse FireLaserPressed
-                        ld      a,(CurrLaserPulseOnCount)
-                        ld      hl,CurrLaserPulseOffCount
-                        or      (hl)
-                        inc     hl  ; CurrLaserPulseOffCount
-                        or      (hl)                                ;
-                        inc     hl  ; CurrLaserPulseRestCount
-                        or      (hl)
-                        jr      nz, .CheckForMissile                ; fire key locked as counters are running
-                        ld      a,c_Pressed_FireLaser               ; so no need to scan
-                        call    is_key_up_state                     ; is key up, if not then it must be pressed or held
-                        jr      z,.CheckForMissile                  ; no key press then skip
-.CanProcesFire:         ld      a,(CurrLaserPulseRateCount)         ; one more pulse
-                        inc     a
-                        ld      hl,CurrLaserPulseRate               ; if we have hit limit then go into rest
-                        cp      (hl)
-                        jr      z,.PulseLimitReached
-.StillHavePulsesLeft:   ld      (CurrLaserPulseRateCount),a         ; we have used a pulse                        
-                        SetMemTrue FireLaserPressed
-                        ldCopyByte CurrLaserPulseOnTime, CurrLaserPulseOnCount      ; set on time
-                        ldCopyByte CurrLaserPulseOffTime, CurrLaserPulseOffCount    ; set off time for later as these only count down when pulse is off
-                        ldCopyByte CurrLaserPulseRest, CurrLaserPulseRateCount     ; set rest time for later
-.PulseLimitReached:     ZeroA
-                        ld      (CurrLaserPulseRateCount),a
-                        ldCopyByte CurrLaserPulseRest, CurrLaserPulseRateCount   ; start the rest phase
+.CanLaserStillFire:     SetMemFalse FireLaserPressed                ; default to no laser
+                        ld      a,(CurrLaserPulseRate)              ; if not beam type
+                        JumpIfAIsZero .BeamType                     ; .
+                        ld      b,a                                 ; and not run out of pulses
+                        ld      a,(CurrLaserPulseRateCount)         ;
+                        ld      a,(CurrLaserPulseOnCount)           ;    if not already on
+                        JumpIfAEqNusng  b, .PulseLimitReached       ;
+                        ld      hl,CurrLaserPulseOffCount           ;       and not in off phase
+                        or      (hl)                                ;    
+                        inc     hl  ; CurrLaserPulseRestCount       ;       and not in rest phase.
+                        or      (hl)                                ;    .
+                        jr      nz, .CheckForMissile                ;    .
+.IsFirePressed:         ld      a,c_Pressed_FireLaser               ;       if fire is pressed
+                        call    is_key_up_state                     ;       .
+                        jr      z,.CheckForMissile                  ;       .
+.CanProcesFire:         ld      a,(CurrLaserPulseRateCount)         ;            pulse rate count ++
+                        inc     a                                   ;            .
+.StillHavePulsesLeft:   ld      (CurrLaserPulseRateCount),a         ;            .
+                        ldCopyByte CurrLaserPulseOnTime, CurrLaserPulseOnCount  ; pulse on count = pulse on time
+                     ;   ldCopyByte CurrLaserPulseOffTime, CurrLaserPulseOffCount; pulse off count = pulse off time
+                     ;   ldCopyByte CurrLaserPulseRest, CurrLaserPulseRestCount  ; pulse rest count = pulse rest time
+                        jp      .CheckForMissile                   
+.BeamType:              ld      a,c_Pressed_FireLaser               ; else (beam type) if fire is pressed
+                        call    is_key_up_state                     ;                   .
+                        jr      z,.CheckForMissile                  ;                   .
+                        SetMemTrue FireLaserPressed                 ;                   set pulse on to 1
+                        ld      a,1
+                        ld      (CurrLaserPulseOnTime),a            ;                   mark fire pressed
+                        jp      .CheckForMissile
+.PulseLimitReached:     ;ZeroA                                       ;
+                        ;ld      (CurrLaserPulseRateCount),a         ;
+                        ;ldCopyByte CurrLaserPulseRest, CurrLaserPulseRestCount   ; start the rest phase
                         
 .CheckForMissile:       ld      a,c_Pressed_FireMissile             ; launch pressed?
                         call    is_key_pressed

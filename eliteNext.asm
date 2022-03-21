@@ -139,6 +139,59 @@ InputMainMacro:         MACRO
                         jr      nz,MainLoop
                         call    MovementKeyTest
                         ENDM
+
+
+; if beam on count > 0
+;    then beam on count --
+;         if beam on count = 0 
+;            then beam off count = beam off
+; if beam off > 0 
+;    then beam off --
+;         if beam off = 0 and pulse rate count = max count
+;            then pulse rest count = pulse rest
+; if pulse rest > 0 then pulse rest --
+;    if pulse rest = 0
+;       then pulse rate count = 0
+
+
+DecrementIfPossible:    MACRO   memaddr,notpossjp
+                        JumpIfMemZero memaddr, notpossjp
+                        dec     a
+                        ld      (memaddr),a
+                        ENDM
+                        
+UpdateOnCounter:        MACRO
+                        DecrementIfPossible  CurrLaserPulseOnCount, .UpdateOnDone  
+                        JumpIfAIsNotZero     .UpdateOnDone
+                        ldCopyByte CurrLaserPulseOffTime, CurrLaserPulseOffCount
+.UpdateOnDone:
+                        ENDM
+
+UpdateOffCounter:       MACRO
+                        DecrementIfPossible  CurrLaserPulseOffCount,  .UpdateOffDone
+                        JumpIfAIsNotZero     .UpdateOffDone
+                        JumpIfMemNeMemusng   CurrLaserPulseRate, CurrLaserPulseRateCount, .UpdateOffDone
+                        ldCopyByte CurrLaserPulseRest, CurrLaserPulseRestCount
+.UpdateOffDone:
+                        ENDM
+
+UpdateRestCounter:      MACRO
+                        DecrementIfPossible CurrLaserPulseRestCount, .UpdateRestDone                     ; if pulse rest > 0 then  pulse rest --                   
+.DonePulseRest:         JumpIfMemNotZero CurrLaserPulseRestCount, .UpdateRestDone                        ; if pulse rest = 0
+.ResetRate:             ZeroA                                                                           ;    then pulse rate count = 0
+                        ld      (CurrLaserPulseRateCount),a                                             ;    .
+.UpdateRestDone
+                        ENDM
+
+
+UpdateLaserCounters:    MACRO
+                       
+                        UpdateOnCounter
+                        UpdateOffCounter
+                        UpdateRestCounter
+                        ENDM                        
+
+
                         
 ; counter logic
 ;    if beam on count > 0 then beam on count --
@@ -146,29 +199,38 @@ InputMainMacro:         MACRO
 ;       if beam off count >0 then beam off count --
 ;       if beam off count = 0 them
 ;          if pulse rest count > 0 then pulse rest count --
-;                         
-;    if fire pressed is OK
-;        pulse rate count ++
-;        pulse on count = pulse on time
-;        pulse off count = pulse off time
-;        pulse rest count = pulse rest time
+;             if reset count = 0 then pulse rate count = 0
+; shoting logic
+;    if pulse on count is 0 and pulse off count is 0 and rest count is 0                        
+;       then  if fire pressed is OK
+;                if not beam type
+;                   then pulse rate count ++
+;                        if pulse rate count < pulse max count
+;                           then pulse on count = pulse on time
+;                                pulse off count = pulse off time
+;                                pulse rest count = pulse rest time
+;                           else pulse rest count = pulse rest time
+;                                pulse rate count, pulse on count, pulse off count = 0
+;                   else pulse on count = $FF
+;                        pulse off time , rest time = 0
+
         
-UpdateLaserCounters:    MACRO
-                        JumpIfMemZero CurrLaserPulseOnCount,   .SkipPulseOn
-                        dec     a
-                        ld      (CurrLaserPulseOnCount),a
-.SkipPulseOn:           JumpIfAIsNotZero  .SkipOffCounters
-                        ld      a,(CurrLaserPulseOffCount)
-                        JumpIfMemZero CurrLaserPulseOffCount, .SkipPulseOff
-                        dec     a
-                        ld      (CurrLaserPulseRateCount),a
-.SkipPulseOff:          JumpIfMemZero CurrLaserPulseRestCount, .SkipRestRate
-                        dec     a
-                        ld      (CurrLaserPulseRestCount),a
-.SkipRestRate:          JumpIfMemZero CurrLaserPulseOnCount,   .SkipOffCounters
+UpdateLaserCountersold:    MACRO
+                        JumpIfMemZero CurrLaserPulseOnCount,   .SkipPulseOn     ; if beam on count > 0 then beam on count --
+                        dec     a                                               ; .
+                        ld      (CurrLaserPulseOnCount),a                       ; .
+.SkipPulseOn:           JumpIfAIsNotZero  .SkipRestCounter                      ;    if beam on = 0 then                        
+                        ld      a,(CurrLaserPulseOffCount)                      ;       if beam off > 0 then  beam off --
+                        JumpIfMemZero CurrLaserPulseOffCount, .SkipPulseOff     ;       .
+                        dec     a                                               ;       .
+                        ld      (CurrLaserPulseOffCount),a                      ;       .
+.SkipPulseOff:          JumpIfAIsNotZero  .SkipRestCounter                      ;       if beam off = 0
+                        JumpIfMemZero CurrLaserPulseRestCount, .ZeroRateCounter ;
                         dec     a
                         ld      (CurrLaserPulseRestCount),a
-.SkipOffCounters:       
+                        jr      nz,.SkipRestCounter
+.ZeroRateCounter:       ld      (CurrLaserPulseRateCount),a
+.SkipRestCounter:       
                         ENDM
                         
 ;..................................................................................................................................
