@@ -351,8 +351,8 @@ ShipEquipNameTable      DW  WordFuel,       0,              0,          0
 ;ShipLeftWeapons         DB EQ_LEFT_PULSE,   EQ_LEFT_PULSE,      EQ_LEFT_MINING,     EQ_LEFT_MINING
 ;ShipRightWeapons        DB EQ_RIGHT_PULSE,  EQ_RIGHT_PULSE,     EQ_RIGHT_MINING,    EQ_RIGHT_MINING
 ;                           c  y  s  t                                            
-;                           a  p  h  e                                            fi     P
-;                           n  o  o  c                                            tt     o
+;                           a  p  h  e                                            fi     P     Vi
+;                           n  o  o  c                                            tt     o     ew
 ;                           B  s  w  h  price                  type               ed     s
 ShipEquipmentList       DB  0, 0, 1, 1, low     2, high     2, EQ_FUEL          , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
                         DB  0, 1, 1, 1, low   300, high   300, EQ_MISSILE       , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
@@ -365,21 +365,21 @@ ShipEquipmentList       DB  0, 0, 1, 1, low     2, high     2, EQ_FUEL          
                         DB  0, 8, 1, 9, low 15000, high 15000, EQ_DOCK_COMP     , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
                         DB  0, 9, 1,10, low 50000, high 50000, EQ_GAL_DRIVE     , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
                         DB  0,10, 1, 3, low  4000, high  4000, EQ_FRONT_PULSE   , 0     ,$00 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,11, 1, 3, low  4000, high  4000, EQ_REAR_PULSE    , 0     ,$01 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,12, 1, 3, low  4000, high  4000, EQ_LEFT_PULSE    , 0     ,$02 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,13, 1, 3, low  4000, high  4000, EQ_RIGHT_PULSE   , 0     ,$03 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
+                        DB  0,11, 1, 3, low  4000, high  4000, EQ_REAR_PULSE    , 0     ,$01 , 1  , 0  , 0  , 0  , 0  , 0 , 0 
+                        DB  0,12, 1, 3, low  4000, high  4000, EQ_LEFT_PULSE    , 0     ,$02 , 2  , 0  , 0  , 0  , 0  , 0 , 0 
+                        DB  0,13, 1, 3, low  4000, high  4000, EQ_RIGHT_PULSE   , 0     ,$03 , 3  , 0  , 0  , 0  , 0  , 0 , 0 
                         DB  0,14, 0, 4, low 10000, high 10000, EQ_FRONT_BEAM    , 0     ,$00 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,15, 0, 4, low 10000, high 10000, EQ_REAR_BEAM     , 0     ,$01 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,16, 0, 4, low 10000, high 10000, EQ_LEFT_BEAM     , 0     ,$02 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,17, 0, 4, low 10000, high 10000, EQ_RIGHT_BEAM    , 0     ,$03 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
+                        DB  0,15, 0, 4, low 10000, high 10000, EQ_REAR_BEAM     , 0     ,$01 , 1  , 0  , 0  , 0  , 0  , 0 , 0 
+                        DB  0,16, 0, 4, low 10000, high 10000, EQ_LEFT_BEAM     , 0     ,$02 , 2  , 0  , 0  , 0  , 0  , 0 , 0 
+                        DB  0,17, 0, 4, low 10000, high 10000, EQ_RIGHT_BEAM    , 0     ,$03 , 3  , 0  , 0  , 0  , 0  , 0 , 0 
                         DB  0,18, 0,10, low  8000, high  8000, EQ_FRONT_MINING  , 0     ,$00 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,19, 0,10, low  8000, high  8000, EQ_REAR_MINING   , 0     ,$01 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,20, 0,10, low  8000, high  8000, EQ_LEFT_MINING   , 0     ,$02 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,21, 0,10, low  8000, high  8000, EQ_RIGHT_MINING  , 0     ,$03 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
+                        DB  0,19, 0,10, low  8000, high  8000, EQ_REAR_MINING   , 0     ,$01 , 1  , 0  , 0  , 0  , 0  , 0 , 0 
+                        DB  0,20, 0,10, low  8000, high  8000, EQ_LEFT_MINING   , 0     ,$02 , 2  , 0  , 0  , 0  , 0  , 0 , 0 
+                        DB  0,21, 0,10, low  8000, high  8000, EQ_RIGHT_MINING  , 0     ,$03 , 3  , 0  , 0  , 0  , 0  , 0 , 0 
                         DB  0,22, 0,10, low 60000, high 60000, EQ_FRONT_MILITARY, 0     ,$00 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,23, 0,10, low 60000, high 60000, EQ_REAR_MILITARY , 0     ,$01 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,24, 0,10, low 60000, high 60000, EQ_LEFT_MILITARY , 0     ,$02 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,25, 0,10, low 60000, high 60000, EQ_RIGHT_MILITARY, 0     ,$03 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
+                        DB  0,23, 0,10, low 60000, high 60000, EQ_REAR_MILITARY , 0     ,$01 , 1  , 0  , 0  , 0  , 0  , 0 , 0 
+                        DB  0,24, 0,10, low 60000, high 60000, EQ_LEFT_MILITARY , 0     ,$02 , 2  , 0  , 0  , 0  , 0  , 0 , 0 
+                        DB  0,25, 0,10, low 60000, high 60000, EQ_RIGHT_MILITARY, 0     ,$03 , 3  , 0  , 0  , 0  , 0  , 0 , 0 
 ShipEquipTableRowLen    EQU 16
 ShipEquipTableSize      EQU ($-ShipEquipmentList)/ShipEquipTableRowLen
 

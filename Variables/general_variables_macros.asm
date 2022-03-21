@@ -163,6 +163,8 @@ CoolLasers:             MACRO
                         ld      (GunTemperature),a
 .AlreadyCool:           
                         ENDM                        
+                        
+; type 255 is "not fitted"                            
 
 
 InitEventCounter:       MACRO

@@ -42,12 +42,17 @@ defaultCommander:       ld		de,CommanderName				;set commander name
                         SetAFalse
                         ld      (EquipmentFitted+EQ_FRONT_PULSE),a
                         ld		(MissionData),a						;The Plan/Mission
-                        xor     a
-                        ld		(LaserList+1),a
-                        ld		(LaserList+2),a
-                        ld		(LaserList+3),a
+                        xor     a                                   ; a = 0 = pulse laser
+                        ld		(LaserType),a
+                        dec     a                                   ; a = 255
+                        ld		(LaserType+1),a
+                        ld		(LaserType+2),a
+                        ld		(LaserType+3),a
+                        ld      (LaserDamagedFlag),a
+                        ld      (LaserDamagedFlag+1),a
+                        ld      (LaserDamagedFlag+2),a
+                        ld      (LaserDamagedFlag+3),a
                         ld      a,EQ_FRONT_PULSE
-                        ld		(LaserList),a
                         xor     a
                         ld		(ECMPresent),a
                         ld		(FuelScoopsBarrelStatus),a
@@ -67,7 +72,55 @@ defaultCommander:       ld		de,CommanderName				;set commander name
                         ld		a,20
                         ld		(CargoBaySize),a
                         call	ZeroCargo						; Clear out cargo
+.SetLasers:             ld      a,(LaserList)                   ; we start on Front view
+                        call    LoadLaserToCurrent
+                        ret     
+
+
+
+                        ;TODO in load and save need ot preserve damage to guns, heat , ship etc i.e. run time state
+                        
+                        
+                        
                         ; more to DO	
+                        ret
+; a = current view number
+LoadLaserToCurrent:     ld      b,a                             ; first off is there a laser present in current view
+                        ld      hl,LaserType                    ; .
+                        add     hl,a                            ; .
+                        ld      a,(hl)                          ; .
+                        ld      (CurrLaserType),a               ; set type
+                        cp      255                             ; .
+                        ret     z                               ; we can then drop out early if nothing fitted
+                        ld      a,4                             ; Damage state is in next variable in memory
+                        add     hl,a
+                        ld      a,(hl)
+                        ld      (CurrLaserDamage),a             ; copy over current laser's damage
+                        ld      d,b                             ; get table index
+                        ld      e,LaserStatsTableWidth          ;
+                        mul     de                              ;
+                        ld      hl,LaserStatsTable              ;
+                        add     hl,de                           ;
+                        inc     hl                              ; we already have type
+                        ldAtHLtoMem CurrLaserPulseRate
+                        inc     hl
+                        ldAtHLtoMem CurrLaserPulseOnTime
+                        inc     hl
+                        ldAtHLtoMem CurrLaserPulseOffTime
+                        inc     hl
+                        ldAtHLtoMem CurrLaserPulseRest
+                        inc     hl
+                        ldAtHLtoMem CurrLaserPulseRest
+                        inc     hl
+                        ldAtHLtoMem CurrLaserDamageOutput                        
+                        inc     hl
+                        ldAtHLtoMem CurrLaserEnergyDrain   
+                        inc     hl
+                        ldAtHLtoMem CurrLaserHeat
+                        inc     hl
+                        ldAtHLtoMem CurrLaserDurability
+                        inc     hl
+                        ldAtHLtoMem CurrLaserDurabilityAmount   ; we don't need tech level etc for in game run only markets so stop here
                         ret
 
 ; Set a = 2 * (slaves + narcotics) + firearms

@@ -4,7 +4,6 @@ Laser2					DB	0				; 0343 laser Power? Not sure
 LaserCount				DB	0				; 0346  LASCT  \ laser count =9 for pulse, cooled off?
 Cash					DB  0,0,0,0			; 0361 - 0364 Cash now litte endian
 Fuel					DB	25				; 0365  QQ14
-LaserList				DB	5,2,3,1			; View Lasers $0368 to $036B
 CargoBaySize			DB	70				; 036E
 CargoRunningLoad        DB  0
 CargoTonnes             DB  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
@@ -16,14 +15,14 @@ FirearmsCargoTonnes		equ CargoTonnes+10
 ; TODO - need to add code to maintain on load/save/equipment transactions
 LaserType               DS  4               ; quick reference to laser type
 LaserDamagedFlag        DS  4               ; probabiliy out of 255 that it will no fire, 0 = good, 255 = will not fire
-LaserPulseCount         DS  4               ; how many pulses can be fired before long pause
-LaserPulsePause         DS  4               ; time before next pulse - 0 = beam
-LaserPulseRest          DS  4               ; time before pulse count resets to 0
-LaserDamageOutput       DS  4               ; amount of damage for a laser hit
-LaserEnergyDrain        DS  4               ; amount of energy drained by cycle
-LaserHeat               DS  4               ; amount of heat generated
-LaserDurability         DS  4               ; probabability out of 255 that a hit on unshielded will add random amount of damage
-LaserDurabilityAmount   DS  4               ; max amount of damagage can be sustained in one damage hit
+; dont need as static from table LaserPulseRate          DS  4               ; how many pulses can be fired before long pause
+; dont need as static from table LaserPulsePause         DS  4               ; time before next pulse - 0 = beam
+; dont need as static from table LaserPulseRest          DS  4               ; time before pulse count resets to 0
+; dont need as static from table LaserDamageOutput       DS  4               ; amount of damage for a laser hit
+; dont need as static from table LaserEnergyDrain        DS  4               ; amount of energy drained by cycle
+; dont need as static from table LaserHeat               DS  4               ; amount of heat generated
+; dont need as static from table LaserDurability         DS  4               ; probabability out of 255 that a hit on it unshielded will add random amount of damage
+; dont need as static from table LaserDurabilityAmount   DS  4               ; max amount of damagage can be sustained in one damage hit
 
 
 QQ20                    equ CargoTonnes

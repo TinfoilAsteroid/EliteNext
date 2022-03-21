@@ -6,7 +6,6 @@
 ;
 ; LaserType                
 ; LaserPulseRate                          ; how many pulses can be fired before long pause
-; LaserPulsePause                         ; time before next pulse - 0 = beam
 ; LaserPulseOnTime                        ; cycles laser is on for
 ; LaserPulseOffTime                       ; cycles laser is off for
 ; LaserPulseRest                          ; time before pulse count resets to 0 (i.e cooldown)
@@ -18,6 +17,7 @@
 ; LaserInMarkets                          ; can this laser be purchased 0 = yes 1 = no
 ; LaserTechLevel                          ; minimum tech level system to buy from
 ;
+LaserStatsTableWidth    EQU 12
 ;                          Typ  Rate On   Off  Rst  Dam  Drn  Het  Dur  DAt  Mrk  Tek
 LaserStatsTable:        DB $01, $01, $05, $20, $10, $03, $10, $02, $20 ,$10 ,$00, $00; basic laser
                         DB $02, $01, $03, $05, $0A, $03, $10, $08, $20 ,$10 ,$00, $01; pulse laser
@@ -29,7 +29,6 @@ LaserStatsTable:        DB $01, $01, $05, $20, $10, $03, $10, $02, $20 ,$10 ,$00
                         DB $08, $01, $01, $02, $20, $02, $01, $30, $30 ,$11 ,$01, $10; thargoid
                         DB $09, $01, $30, $80, $80, $40, $02, $03, $60 ,$11 ,$01, $10; Starkiller
 
-    
 
 
 

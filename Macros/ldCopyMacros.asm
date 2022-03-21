@@ -56,6 +56,11 @@ ldCopyByteABS:          MACRO memfrom, memto
                         ld       (memto),a
                         ENDM
 
+ldAtHLtoMem:            MACRO   memto
+                        ld      a,(hl)
+                        ld      (memto),a
+                        ENDM
+
 ldCopy2Byte             MACRO  memfrom, memto
                         ld       hl,(memfrom)
                         ld       (memto),hl

@@ -816,12 +816,13 @@ TidyCounter             DB  0
 ; Byte 4   - Bank with Display code
 ; Byte 5,6 - Function for display
 ; Byte 7,8 - Main loop update routine
-; Byte 9   - Draw stars Y/N
+; Byte 9   - Draw stars Y/N ; also are we in an external view that can have guns?
 ; byte 10  - Input Blocker (set to 1 will not allow keyboard screen change until flagged, used by transition screens and pause menus)
 ; byte 11  - Double Buffering 0 = no, 1 = yes
 ; byte 12,13  - cursor key input routine
 ; byte 14  - HyperspaceBlock - can not select this screen if in hyperpace - 00 can , 01 can not
 ; byte 15    padding at the momnent (should add in an "AI enabled flag" for optimistation, hold previous value and on change create ships
+;
 ;                          0    1                 2                              3                               4                    5                            6                              7                     8                       9   10  11  12                          13                          14  15    
 ScreenKeyMap:           DB 0,   ScreenLocal     , low addr_Pressed_LocalChart,   high addr_Pressed_LocalChart,   BankMenuShrCht,      low draw_local_chart_menu,   high draw_local_chart_menu,    $00,                  $00,                    $00,$00,$00,low local_chart_cursors,    high local_chart_cursors,   $01,$00;low loop_local_chart_menu,   high loop_local_chart_menu
 ScreenKeyGalactic:      DB 0,   ScreenGalactic  , low addr_Pressed_GalacticChrt, high addr_Pressed_GalacticChrt, BankMenuGalCht,      low draw_galactic_chart_menu,high draw_galactic_chart_menu, low loop_gc_menu,     high loop_gc_menu,      $00,$00,$00,low galctic_chart_cursors,  high galctic_chart_cursors, $01,$00
@@ -881,8 +882,15 @@ InitialiseFrontView:    ld      a,(ScreenKeyFront+1)
 ;----------------------------------------------------------------------------------------------------------------------------------
 SetScreenAIX:           ld      (ScreenIndex),a                 ; Set screen index to a
                         ClearForceTransition                    ; In case it was called by a brute force change in an update loop
-                        ld      (ScreenChanged),a               ; Set screen changed to FF
-                        ld      a,(ix+4)                        ; Screen Map Byte 4   - Bank with Display code
+                        ld      (ScreenChanged),a               ; Set screen changed to FF                       
+.IsItAViewPort:         ld      a,(ix+9)                        ; Screen Map Byte 9  - Draw stars Y/N and also guns present
+                        ld      (CheckIfViewUpdate+1),a         ; Set flag to determine if we are on an exterior view
+                        JumpIfAIsZero .NotViewPort              ;
+                        ld      a,(ix+1)                        ; get screen view number
+                        sub     ScreenFront                     ; Now a = screen number 0 = front, 1 = aft, 2 = left 3 = right
+                        MMUSelectCommander                      ; Load view laser to current
+                        call    LoadLaserToCurrent              ;
+.NotViewPort:           ld      a,(ix+4)                        ; Screen Map Byte 4   - Bank with Display code
                         ld      (ScreenLoopBank+1),a            ; setup loop            
                         ld      (HandleBankSelect+1),a          ; setup cursor keys
                         MMUSelectScreenA
@@ -894,8 +902,6 @@ SetScreenAIX:           ld      (ScreenIndex),a                 ; Set screen ind
                         ld      (ScreenLoopJP+1),a
                         ld      a,(ix+8)                        ; Screen Map Byte 8 - Main loop update routine
                         ld      (ScreenLoopJP+2),a   
-                        ld      a,(ix+9)                        ; Screen Map Byte 9  - Draw stars Y/N
-                        ld      (CheckIfViewUpdate+1),a         ; Set flag to determine if we are on an exterior view
                         ld      a,(ix+10)                       ; Screen Map Byte 10  - Input Blocker (set to 1 will not allow keyboard screen change until flagged, used by transition screens and pause menus)
                         ld      (InputBlockerCheck+1),a          ; Set flag to block transitions as needed e.g. launch screen    
                         ld      a,(ix+11)                       ; Screen Map Byte 11  - Double Buffering 0 = no, 1 = yes

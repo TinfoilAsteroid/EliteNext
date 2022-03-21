@@ -407,6 +407,11 @@ force_key_press:        GetKeyStateAddressHL                    ; read key locat
                         ld      (hl),a
                         ret
 
+is_key_up_state:        GetKeyStateAddressHL
+                        ld      a,(hl)
+                        cp      0
+                        ret
+                        
 ; returns z is set if c_ key is pressed
 is_key_pressed:         GetKeyStateAddressHL
                         ld      a,(hl)                          ; a = keystate

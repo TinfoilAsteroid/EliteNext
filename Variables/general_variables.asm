@@ -395,7 +395,8 @@ CommanderName           DS  15
 CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
 BadnessStatus           DB  0
 ; need to add copy table routines
-CurrLaserType           DB  0               ; current view laser type, determines sprite routine etc
+CurrLaserType           DB  0               ; current view laser type, copied in from LaserType array
+CurrLaserDamage         DB  0               ; copied in from LaserDamagedFlag array
 CurrLaserPulseRate      DB  0               ; current view laser amount of pulses
 CurrLaserPulseOnTime    DB  0               ; how many cycles the laser is on
 CurrLaserPulseOffTime   DB  0               ; how many cycles the laser is on
@@ -419,13 +420,14 @@ CurrLaserPulseRateCount DB  0               ; current view laser current pulses 
 ; LaserInMarkets                          ; can this laser be purchased 0 = yes 1 = no
 ; LaserTechLevel                          ; minimum tech level system to buy from
 
-
-
 CurrLaserBurstRate      DB  0
 CurrLaserBurstCount     DB  0
 CurrLaserDamageOutput   DB  0
 CurrLaserEnergyDrain    DB  0
 CurrLaserHeat           DB  0
+CurrLaserDurability     DB  0
+CurrLaserDurabilityAmount DB  0
+
 ; -- Input variables
 JoystickX				DB	0				; 034C JSTX  
 JoystickY				DB	0				; 034D JSTY
@@ -462,4 +464,12 @@ ResetPlayerShip:        ZeroThrottle
                         ClearECM
                         ChargeEnergyAndShields
                         ret
-                        
+
+IsLaserUseable:         ld      a,(CurrLaserType)
+                        cp      255
+                        ret     z
+                        ld      a,(CurrLaserDamage)
+                        cp      255
+                        ret     z
+                        ret
+                                                

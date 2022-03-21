@@ -516,12 +516,14 @@ eqshp_LeftPressed:      ld      a,(Galaxy)
                         add     hl,a
                         ld      (hl),0              ; remove laser from equipment
                         call    eqip_refesh_buffer
-                        ld      a,(ix+9)
+                        ld      a,(ix+8)
                         cp      $FF
                         ret     z
-.ItsALaser              ld      hl,LaserList                  
+.ItsALaser              ld      hl,LaserType        ; clear out respective current laser           
+                        ld      b,a
+                        ld      a,(ix+9)
                         add     hl,a
-                        ld      (hl),$00
+                        ld      (hl),$FF            ; $FF = not fitted
                         ret
 .RefundMissle           ld      e,(ix+4)
                         ld      d,(ix+5)
@@ -605,12 +607,9 @@ eqshp_RightPressed:     ld      a,(Galaxy)
                         ld      a,(hl)
                         add     "0"
                         jp      .AddedItem
-.AddLaser:              ld      a,(ix+8)            ; Get facing
-                        ld      hl,LaserList
-                        add     hl,a
-                        ld      a,(hl)              ; get laser list quick ref value
-                        cp      0
-                        jr      z,.BuyLaser
+.AddLaser:              ld      a,(ix+8)            ; Get if its a laser, $FF = no laser
+                        cp      $FF
+                        jr      nz,.BuyLaser
 .LargeCargoBay: ;TODO
 .RefundExistingLaser:   ld      c,a                 ; retain current laser nbr
                         ld      hl,ShipEquipmentList
@@ -640,11 +639,11 @@ eqshp_RightPressed:     ld      a,(Galaxy)
                         ld      a,(ix+6)
                         add     hl,a
                         ld      (hl),$FF
-                        ld      a,(ix+8)
-                        ld      hl,LaserList
+                        ld      a,(ix+9)            ; get laser position
+                        ld      hl,LaserType
                         add     hl,a
-                        ld      a,(ix+6)
-                        ld      (hl),a              ; mark laser list with type
+                        ld      a,(ix+8)            ; get type
+                        ld      (hl),a
                         ld      a,"*"
 .AddedItem              ld      (ix+7),a
                         ld      e,(ix+4)

@@ -182,21 +182,21 @@ dampenPcounter:         DB      dampenRate
 input_front_view:       xor         a
                         ld      hl,(addr_Pressed_Accellerate)
                         ld      a,(hl)
-                        JumpIfAIsZero     TestDecellerate
+                        JumpIfAIsZero     .TestDecellerate
                         ld      a,(SHIPMAXSPEED)
                         ld      d,a
                         ld      a,(DELTA)
-                        JumpIfAGTENusng d,TestDecellerate
+                        JumpIfAGTENusng d,.TestDecellerate
                         inc     a
                         ld      (DELTA),a
                         ld      hl,(DELT4Lo)
                         add     hl,4
                         ld      (DELT4Lo),hl
-TestDecellerate:        ld      hl,(addr_Pressed_Decellerate)
+.TestDecellerate:       ld      hl,(addr_Pressed_Decellerate)
                         ld      a,(hl)
-                        JumpIfAIsZero   TestLeftPressed
+                        JumpIfAIsZero   .TestLeftPressed
                         ld      a,(DELTA)
-                        JumpIfAIsZero   TestLeftPressed
+                        JumpIfAIsZero   .TestLeftPressed
                         dec     a
                         ld      (DELTA),a
                         ld      hl,(DELT4Lo)
@@ -205,38 +205,38 @@ TestDecellerate:        ld      hl,(addr_Pressed_Decellerate)
                         dec     hl
                         dec     hl
                         ld      (DELT4Lo),hl    
-TestLeftPressed:        ld      hl,(addr_Pressed_RollLeft)
+.TestLeftPressed:       ld      hl,(addr_Pressed_RollLeft)
                         ld      a,(hl)
-                        JumpIfAIsZero   TestRightPressed
+                        JumpIfAIsZero   .TestRightPressed
                         ld      a,(JSTX)                            ; have we maxed out Joystick?
                         ld      hl,ALP1MAXL                         ; currnet ship max left roll
                         cp      (hl)
-                        jr      z,TestRightPressed
+                        jr      z,.TestRightPressed
                         ;break
                         dec     a                                   ; increase joystick roll
                         ld      (JSTX),a
                         call    draw_front_calc_alpha
-                        jp      TestDivePressed                    ; when pressing ignore damper
-TestRightPressed:       ld      hl,(addr_Pressed_RollRight)
+                        jp      .TestDivePressed                    ; when pressing ignore damper
+.TestRightPressed:       ld      hl,(addr_Pressed_RollRight)
                         ld      a,(hl)
                         JumpIfAIsZero   .DampenRoll
                         ld      a,(JSTX)                            ; have we maxed out Joystick?
                         ld      hl,ALP1MAXR                         ; currnet ship max left roll
                         cp      (hl)
-                        jr      z,TestDivePressed                   ; if its held then we don't dampen
+                        jr      z,.TestDivePressed                   ; if its held then we don't dampen
                         ;break
                         inc     a                                   ; increase joystick roll
 .UpdateAlphRoll:        ld      (JSTX),a
                         call    draw_front_calc_alpha
-                        jp      TestDivePressed                    ; when pressing ignore damper
+                        jp      .TestDivePressed                    ; when pressing ignore damper
 .DampenRoll:            ld      hl,dampenRcounter
                         dec     (hl)
-                        jr      nz,TestDivePressed
+                        jr      nz,.TestDivePressed
                         ld      a,dampenRate
                         ld      (hl),a
                         ld      a,(JSTX)
                         cp      0
-                        jr      z, TestDivePressed
+                        jr      z, .TestDivePressed
                         bit     7,a
                         jr      z,.PosRollDampen
 .NegRollDampen:         inc     a
@@ -244,37 +244,37 @@ TestRightPressed:       ld      hl,(addr_Pressed_RollRight)
 .PosRollDampen:         dec     a
 .ApplyRollDampen:       jr      .UpdateAlphRoll
 ; Dive and Climb input
-TestDivePressed:        ld      hl,(addr_Pressed_Dive)
+.TestDivePressed:       ld      hl,(addr_Pressed_Dive)
                         ld      a,(hl)
-                        JumpIfAIsZero   TestClimbPressed
+                        JumpIfAIsZero   .TestClimbPressed
                         ld      a,(JSTY)                            ; have we maxed out Joystick?
                         ld      hl,BET1MAXD                         ; currnet ship max left roll
                         cp      (hl)
-                        jr      z,TestClimbPressed
+                        jr      z,.TestClimbPressed
                         ;break
                         dec     a                                   ; increase joystick roll
                         ld      (JSTY),a
                         call    draw_front_calc_beta
-                        jp      ForwardCursorKeysDone
-TestClimbPressed:       ld      hl,(addr_Pressed_Climb)
+                        jp      .ForwardCursorKeysDone
+.TestClimbPressed:      ld      hl,(addr_Pressed_Climb)
                         ld      a,(hl)
                         JumpIfAIsZero   .DampenPitch
                         ld      a,(JSTY)                            ; have we maxed out Joystick?
                         ld      hl,BET1MAXC                         ; currnet ship max left roll
                         cp      (hl)
-                        jr      z,ForwardCursorKeysDone
+                        jr      z,.ForwardCursorKeysDone
                         inc     a                                   ; increase joystick roll
 .UpdateBetaPitch:       ld      (JSTY),a
                         call    draw_front_calc_beta
-                        jp      ForwardCursorKeysDone
+                        jp      .ForwardCursorKeysDone
 .DampenPitch:           ld      hl,dampenPcounter          ; TODO mach dampen rates ship properies by having teh $20 as a ship config
                         dec     (hl)
-                        jr      nz,ForwardCursorKeysDone
+                        jr      nz,.ForwardCursorKeysDone
                         ld      a,dampenRate
                         ld      (hl),a
                         ld      a,(JSTY)
                         cp      0
-                        jr      z,ForwardCursorKeysDone
+                        jr      z,.ForwardCursorKeysDone
                         bit     7,a
                         jr      z,.PosPitchDampen
 .NegPitchDampen:        inc     a
@@ -284,7 +284,7 @@ TestClimbPressed:       ld      hl,(addr_Pressed_Climb)
 ; Now test hyperpsace. We can't be docked as this is a view routine piece of logic but for say local charts we may 
 ; be in flight and they have to force a forward view when hyperspace is pressed
 ; We won't do galatic here, but for other views force to forward view
-ForwardCursorKeysDone:  ld      a,c_Pressed_Hyperspace              ; Check for hyperspace
+.ForwardCursorKeysDone: ld      a,c_Pressed_Hyperspace              ; Check for hyperspace
                         call    is_key_pressed
                         jr      nz,.NotHyperspace
 ; If we are in hyperspace countdown then test for hyperspace
@@ -321,7 +321,9 @@ ForwardCursorKeysDone:  ld      a,c_Pressed_Hyperspace              ; Check for 
 .NoTargetSelected
 .InsufficientFuel
 .NotHyperspace:         
-.CheckForLaserPressed:  SetMemFalse FireLaserPressed
+.CheckForLaserPressed:  call    IsLaserUseable                      ; no laser or destroyed?
+                        jr      z,.CheckForMissile
+                        SetMemFalse FireLaserPressed
                         ld      a,(CurrLaserPulseOnCount)
                         ld      hl,CurrLaserPulseOffCount
                         or      (hl)
@@ -331,8 +333,8 @@ ForwardCursorKeysDone:  ld      a,c_Pressed_Hyperspace              ; Check for 
                         or      (hl)
                         jr      nz, .CheckForMissile                ; fire key locked as counters are running
                         ld      a,c_Pressed_FireLaser               ; so no need to scan
-                        call    is_key_pressed
-                        jr      nz,.CheckForMissile                 ; no key press then skip
+                        call    is_key_up_state                     ; is key up, if not then it must be pressed or held
+                        jr      z,.CheckForMissile                  ; no key press then skip
 .CanProcesFire:         ld      a,(CurrLaserPulseRateCount)         ; one more pulse
                         inc     a
                         ld      hl,CurrLaserPulseRate               ; if we have hit limit then go into rest
