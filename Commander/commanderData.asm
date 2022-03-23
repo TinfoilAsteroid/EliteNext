@@ -42,7 +42,7 @@ defaultCommander:       ld		de,CommanderName				;set commander name
                         SetAFalse
                         ld      (EquipmentFitted+EQ_FRONT_BEAM),a
                         ld		(MissionData),a						;The Plan/Mission
-                        ld      a,8                                  ; a = 0 = pulse laser
+                        ld      a,4                                  ; a = 0 = pulse laser
                         ld		(LaserType),a
                         ld      a,$FF                                 ; a = 255
                         ld		(LaserType+1),a

@@ -177,3 +177,30 @@ ClearMissJump:          MACRO
                         ld      (MissJumpFlag),a
                         ENDM
                         
+
+DrainSystem:            MACRO   SystemMem, DrainMem
+                        ld      a,(DrainMem)
+                        ld      b,a
+                        ld      a,(SystemMem)
+                        sub     a,b
+                        ld      (SystemMem),a
+                        jr      c,.ZeroSystem
+                        jp      .ExitPoint
+.ZeroSystem:            ZeroA
+                        ld      (SystemMem),a
+.ExitPoint              
+                        ENDM
+
+BoostSystem:            MACRO   SystemMem, BoostMem
+                        ld      a,(BoostMem)
+                        ld      b,a
+                        ld      a,(SystemMem)
+                        add     b
+                        ld      (SystemMem),a
+                        jr      c, .MaxSystem
+                        jp      .ExitPoint
+.MaxSystem:             ld      a,255
+                        ld      (SystemMem),a
+.ExitPoint              
+                        ENDM
+                        

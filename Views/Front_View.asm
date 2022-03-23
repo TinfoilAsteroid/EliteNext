@@ -349,8 +349,6 @@ input_front_view:       xor         a
                         call    is_key_up_state                     ;                   .
                         jr      z,.CheckForMissile                  ;                   .
                         SetMemTrue FireLaserPressed                 ;                   set pulse on to 1
-                        ld      a,1
-                        ld      (CurrLaserPulseOnTime),a            ;                   mark fire pressed
                         jp      .CheckForMissile
 .PulseLimitReached:     ;ZeroA                                       ;
                         ;ld      (CurrLaserPulseRateCount),a         ;

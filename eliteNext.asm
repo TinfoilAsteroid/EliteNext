@@ -310,11 +310,16 @@ ConsoleDrawReset:       SetMemTrue ConsoleRedrawFlag
                         ld      (hl),ConsoleRefreshInterval                     
                         MMUSelectLayer2 :   call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
 ;ProcessSun:             call    DrawForwardSun
-ProcessLaser:           JumpIfMemZero CurrLaserPulseOnCount, NoLaser
-                        MMUSelectSpriteBank
+ProcessLaser:           ld      a,(CurrLaserPulseRate)
+                        JumpIfAIsNotZero .CheckForPulse
+                        JumpIfMemFalse FireLaserPressed, .NoLaser
+                        jp      .FireLaser
+.CheckForPulse:         JumpIfMemZero CurrLaserPulseOnCount, .NoLaser
+.FireLaser:             MMUSelectSpriteBank
                         call    sprite_laser_show
+                        call    LaserDrainSystems
                         jp      ProcessPlanet
-NoLaser:                MMUSelectSpriteBank
+.NoLaser:               MMUSelectSpriteBank
                         call    sprite_laser_hide
 ProcessPlanet:
 ProcessShipModels:      call   DrawForwardShips                               ; Draw all ships (this may need to be self modifying)

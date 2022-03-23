@@ -456,6 +456,11 @@ DialMiddleXPos          equ $E1
 RollMiddle              equ $8CE0  
 PitchMiddle             equ $94E0   
 
+
+LaserDrainSystems:      DrainSystem PlayerEnergy, CurrLaserEnergyDrain
+                        BoostSystem GunTemperature, CurrLaserHeat
+                        ret
+                        
                         
 ResetPlayerShip:        ZeroThrottle
                         ZeroPitch
@@ -470,6 +475,5 @@ IsLaserUseable:         ld      a,(CurrLaserType)
                         ret     z
                         ld      a,(CurrLaserDamage)
                         cp      255
-                        ret     z
                         ret
                                                 

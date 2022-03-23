@@ -128,14 +128,59 @@ UpdateConsole:          ld      a,(DELTA)
                         ld      bc,AShieldStart
                         ld      d,a
                         call    DrawColourCodedBar  ;ld		(ForeShield),a
+;PlayerEnergy                      
+; BNEED LASER temp
+; NEED CABIN TEMP
+;NEED ALTITUDE   
+; Draw compas - if in range draw station, else do planet                        
 .EnergyBars:            ld      a,(PlayerEnergy)
                         srl     a                   ; energy = energy / 2 so 31 per bar
-                        CallIfALTNusng  31 + 1,.Draw1EnergyBar
-                        CallIfALTNusng  (31*2) + 1,.Draw2EnergyBars
-                        CallIfALTNusng  (31*3) + 1,.Draw3EnergyBars
-.Draw4EnergyBars:       ld      e,24
-                        sub     (32*3)
+                        JumpIfALTNusng  31 + 1,     Draw1EnergyBar
+                        JumpIfALTNusng  (31*2) + 1, Draw2EnergyBars
+                        JumpIfALTNusng  (31*3) + 1, Draw3EnergyBars 
+                        jp      Draw4EnergyBars
+; implicit ret
+                        
+                        
+; NEED ENERGY BAR
+
+.DoneConsole:           ret
+    
+Draw1EnergyBar:         ld      e,224
                         ld      d,a
+                        ld      bc,EnergyBar1Start
+                        call    DrawColourEBar                        
+                        ret
+Draw2EnergyBars:        ld      e,216
+                        sub     31
+                        ld      d,a
+                        ld      bc,EnergyBar2Start
+                        call    DrawColourEBar                        
+                        ld      d,31
+                        ld      e,216
+                        ld      bc,EnergyBar1Start
+                        call    DrawColourEBar                        
+                        ret
+Draw3EnergyBars:        ld      e,20
+                        sub     31*2
+                        ld      d,a
+                        ld      e,20
+                        ld      bc,EnergyBar3Start
+                        call    DrawColourEBar                        
+                        ld      d,31
+                        ld      e,20
+                        ld      bc,EnergyBar2Start
+                        call    DrawColourEBar                        
+                        ld      d,31
+                        ld      e,20
+                        ld      bc,EnergyBar1Start
+                        call    DrawColourEBar
+                        ret
+Draw4EnergyBars:        ld      e,24
+                        sub     31*3
+                        JumpIfALTNusng 31,.NoMax
+.Max                    ld      a,31
+.NoMax:                 ld      d,a
                         ld      bc,EnergyBar4Start
                         call    DrawColourEBar 
                         ld      d,31
@@ -150,49 +195,7 @@ UpdateConsole:          ld      a,(DELTA)
                         ld      e,24
                         ld      bc,EnergyBar1Start
                         call    DrawColourEBar                        
-                        jp      .DoneEnergyBars
-.Draw1EnergyBar:        ld      e,224
-                        ld      d,a
-                        ld      bc,EnergyBar1Start
-                        call    DrawColourEBar                        
-                        jp      .DoneEnergyBars
-.Draw2EnergyBars:       ld      e,216
-                        sub     31
-                        ld      d,a
-                        ld      bc,EnergyBar2Start
-                        call    DrawColourEBar                        
-                        ld      d,31
-                        ld      e,216
-                        ld      bc,EnergyBar1Start
-                        call    DrawColourEBar                        
-                        jp      .DoneEnergyBars
-.Draw3EnergyBars:       ld      e,20
-                        sub     31*2
-                        ld      d,a
-                        ld      e,20
-                        ld      bc,EnergyBar3Start
-                        call    DrawColourEBar                        
-                        ld      d,31
-                        ld      e,20
-                        ld      bc,EnergyBar2Start
-                        call    DrawColourEBar                        
-                        ld      d,31
-                        ld      e,20
-                        ld      bc,EnergyBar1Start
-                        call    DrawColourEBar                        
-.DoneEnergyBars:                                
-
-                        
-                        
-; NEED ENERGY BAR
-;PlayerEnergy                      
-; BNEED LASER temp
-; NEED CABIN TEMP
-;NEED ALTITUDE   
-; Draw compas - if in range draw station, else do planet
-.DoneConsole:           ret
-    
-
+                        ret
 
 ScannerBottom           equ 190
 ScannerTypeMissle       equ 2
