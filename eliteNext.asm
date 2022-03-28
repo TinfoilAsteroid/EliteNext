@@ -68,69 +68,6 @@ ScreenHyperspace EQU ScreenDocking+1
                         
                         INCLUDE "./Data/ShipIdEquates.asm"
                         
-
-
-charactersetaddr		equ 15360
-STEPDEBUG               equ 1
-
-TopOfStack              equ $7F00
-
-EliteNextStartup:       ORG         $8000
-                        di
-                        ; "STARTUP"
-                        MMUSelectLayer1 : call		l1_cls
-                        ld			a,7
-                        call		l1_attr_cls_to_a
-                        ld          a,$FF
-                        call        l1_set_border
-                        MMUSelectSpriteBank : call		sprite_load_sprite_data
-Initialise:             MMUSelectLayer2 :  call 		l2_initialise
-                        call        init_keyboard
-                        ClearForceTransition
-TidyDEBUG:              ld          a,16
-                        ld          (TidyCounter),a
-TestText:               xor			a
-                        ld      (JSTX),a
-                        MMUSelectCommander: call		defaultCommander
-DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks su n
-                        MMUSelectSpriteBank : call		init_sprites
-.ClearLayer2Buffers:    DoubleBufferIfPossible
-                        DoubleBufferIfPossible
-; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files                        
-InitialiseGalaxies:     call		ResetUniv                       ; Reset ship data
-                        call        ResetGalaxy                     ; Reset each galaxy copying in code
-                        call        SeedAllGalaxies
-;.Sa                        MMUSelectUniverseN 0                       
-                        
-;InitialiseDemoShip:     call    ClearFreeSlotList
-;                        call    FindNextFreeSlotInA
-;                        ld      b,a
-;                        ld      a,13 ;Coriolis station
-;                        call    InitialiseShipAUnivB
-;                        xor     a
-InitialiseMainLoop:     xor     a
-                        ld      (CurrentUniverseAI),a
-                        ld      (SetStationAngryFlag),a
-                        ld      a,3
-                        ld      (MenuIdMax),a
-                        SetMemFalse DockedFlag
-;                        call    InitialiseFrontView
-                        call    InitialiseCommander
-                        MMUSelectUniverseN 2    
-                        call    SetInitialShipPosition
-; Initialist screen refresh
-                        ld      a, ConsoleRefreshInterval
-                        ld      (ConsoleRefreshCounter),a
-                        SetMemFalse    ConsoleRedrawFlag
-                        MMUSelectStockTable
-                        call    generate_stock_market
-                        call    ResetMessageQueue
-                        InitEventCounter
-                        ClearMissJump
-                        SetMemFalse TextInputMode
-;..MAIN GAME LOOP..................................................................................................................
-; MACRO BLOCKS.....................................................................................................................
-;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
 InputMainMacro:         MACRO
                         call    ViewKeyTest
                         call    TestPauseMode
@@ -139,20 +76,6 @@ InputMainMacro:         MACRO
                         jr      nz,MainLoop
                         call    MovementKeyTest
                         ENDM
-
-
-; if beam on count > 0
-;    then beam on count --
-;         if beam on count = 0 
-;            then beam off count = beam off
-; if beam off > 0 
-;    then beam off --
-;         if beam off = 0 and pulse rate count = max count
-;            then pulse rest count = pulse rest
-; if pulse rest > 0 then pulse rest --
-;    if pulse rest = 0
-;       then pulse rate count = 0
-
 
 DecrementIfPossible:    MACRO   memaddr,notpossjp
                         JumpIfMemZero memaddr, notpossjp
@@ -189,10 +112,98 @@ UpdateLaserCounters:    MACRO
                         UpdateOnCounter
                         UpdateOffCounter
                         UpdateRestCounter
-                        ENDM                        
+                        ENDM      
 
-
+UpdateLaserCountersold: MACRO
+                        JumpIfMemZero CurrLaserPulseOnCount,   .SkipPulseOn     ; if beam on count > 0 then beam on count --
+                        dec     a                                               ; .
+                        ld      (CurrLaserPulseOnCount),a                       ; .
+.SkipPulseOn:           JumpIfAIsNotZero  .SkipRestCounter                      ;    if beam on = 0 then                        
+                        ld      a,(CurrLaserPulseOffCount)                      ;       if beam off > 0 then  beam off --
+                        JumpIfMemZero CurrLaserPulseOffCount, .SkipPulseOff     ;       .
+                        dec     a                                               ;       .
+                        ld      (CurrLaserPulseOffCount),a                      ;       .
+.SkipPulseOff:          JumpIfAIsNotZero  .SkipRestCounter                      ;       if beam off = 0
+                        JumpIfMemZero CurrLaserPulseRestCount, .ZeroRateCounter ;
+                        dec     a
+                        ld      (CurrLaserPulseRestCount),a
+                        jr      nz,.SkipRestCounter
+.ZeroRateCounter:       ld      (CurrLaserPulseRateCount),a
+.SkipRestCounter:       
+                        ENDM
                         
+                        
+charactersetaddr		equ 15360
+STEPDEBUG               equ 1
+
+TopOfStack              equ $7F00
+
+EliteNextStartup:       ORG         $8000
+                        di
+                        ; "STARTUP"
+                        ; Make sure  rom is in page 0 during load
+                        MMUSelectLayer2
+                        call        asm_disable_l2_readwrite
+                        MMUSelectROMS
+.GenerateDefaultCmdr:   MMUSelectCommander
+                        call		defaultCommander
+                        call        saveCommander
+                        MMUSelectLayer1
+                        call		l1_cls
+                        ld			a,7
+                        call		l1_attr_cls_to_a
+                        ld          a,$FF
+                        call        l1_set_border
+                        MMUSelectSpriteBank
+                        call		sprite_load_sprite_data
+Initialise:             MMUSelectLayer2
+                        call 		l2_initialise
+                        call        init_keyboard
+                        ClearForceTransition
+TidyDEBUG:              ld          a,16
+                        ld          (TidyCounter),a
+TestText:               xor			a
+                        ld      (JSTX),a
+DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks su n
+                        MMUSelectSpriteBank
+                        call		init_sprites
+.ClearLayer2Buffers:    DoubleBufferIfPossible
+                        DoubleBufferIfPossible
+; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files                        
+InitialiseGalaxies:     call		ResetUniv                       ; Reset ship data
+                        call        ResetGalaxy                     ; Reset each galaxy copying in code
+                        call        SeedAllGalaxies
+StartAttractMode:       call        AttractMode
+                        JumpIfAIsZero  .SkipDefault
+                        MMUSelectCommander
+                        call		defaultCommander
+                        jp          InitialiseMainLoop:
+.SkipDefault                        
+;                        call    FindNextFreeSlotInA
+;                        ld      b,a
+;                        ld      a,13 ;Coriolis station
+;                        call    InitialiseShipAUnivB
+;                        xor     a
+InitialiseMainLoop:     call    InitMainLoop
+;..MAIN GAME LOOP..................................................................................................................
+; MACRO BLOCKS.....................................................................................................................
+;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
+
+
+
+; if beam on count > 0
+;    then beam on count --
+;         if beam on count = 0 
+;            then beam off count = beam off
+; if beam off > 0 
+;    then beam off --
+;         if beam off = 0 and pulse rate count = max count
+;            then pulse rest count = pulse rest
+; if pulse rest > 0 then pulse rest --
+;    if pulse rest = 0
+;       then pulse rate count = 0
+
+          
 ; counter logic
 ;    if beam on count > 0 then beam on count --
 ;    if beam on = 0 then  
@@ -214,25 +225,6 @@ UpdateLaserCounters:    MACRO
 ;                   else pulse on count = $FF
 ;                        pulse off time , rest time = 0
 
-        
-UpdateLaserCountersold:    MACRO
-                        JumpIfMemZero CurrLaserPulseOnCount,   .SkipPulseOn     ; if beam on count > 0 then beam on count --
-                        dec     a                                               ; .
-                        ld      (CurrLaserPulseOnCount),a                       ; .
-.SkipPulseOn:           JumpIfAIsNotZero  .SkipRestCounter                      ;    if beam on = 0 then                        
-                        ld      a,(CurrLaserPulseOffCount)                      ;       if beam off > 0 then  beam off --
-                        JumpIfMemZero CurrLaserPulseOffCount, .SkipPulseOff     ;       .
-                        dec     a                                               ;       .
-                        ld      (CurrLaserPulseOffCount),a                      ;       .
-.SkipPulseOff:          JumpIfAIsNotZero  .SkipRestCounter                      ;       if beam off = 0
-                        JumpIfMemZero CurrLaserPulseRestCount, .ZeroRateCounter ;
-                        dec     a
-                        ld      (CurrLaserPulseRestCount),a
-                        jr      nz,.SkipRestCounter
-.ZeroRateCounter:       ld      (CurrLaserPulseRateCount),a
-.SkipRestCounter:       
-                        ENDM
-                        
 ;..................................................................................................................................
 MainLoop:	            call    doRandom                            ; redo the seeds every frame
                         UpdateLaserCounters
@@ -278,7 +270,8 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
                         call    DisplayCurrentMessage
                         call    UpdateMessageTimer
                       
-.NoMessages:            MMUSelectLayer2 : call   l2_cls_upper_two_thirds
+.NoMessages:            MMUSelectLayer2
+                        call   l2_cls_upper_two_thirds
                         MMUSelectLayer1
 .UpdateSun:             MMUSelectSun
 .DEBUGFORCE:            ;ld      hl,$0000
@@ -304,11 +297,13 @@ PrepLayer2:             ld      hl,ConsoleRefreshCounter
 .ConsoleNotDraw:        SetMemFalse ConsoleRedrawFlag                        
                         jp      ProcessPlanet
 ConsoleDraw:            SetMemTrue ConsoleRedrawFlag
-                        MMUSelectLayer2 :   call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
+                        MMUSelectLayer2 
+                        call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
                         jp      ProcessPlanet
 ConsoleDrawReset:       SetMemTrue ConsoleRedrawFlag
                         ld      (hl),ConsoleRefreshInterval                     
-                        MMUSelectLayer2 :   call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
+                        MMUSelectLayer2 
+                        call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
 ;ProcessSun:             call    DrawForwardSun
 ProcessLaser:           ld      a,(CurrLaserPulseRate)
                         JumpIfAIsNotZero .CheckForPulse
@@ -804,15 +799,7 @@ UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
                         ; call    TIDY TIDY IS BROKEN
                        ; add AI in here too
                         ret
-            
-InitialiseShipAUnivB:   push    af
-                        ld      a,b
-                        MMUSelectUniverseA                          ; load up register into universe bank
-                        call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
-                        MMUSelectShipBank1
-                        pop     af
-                        call    CopyShipToUniverse
-                        ret
+
 
 GetStationVectorToWork: ld      hl,UBnKxlo
                         ld      de,varVector9ByteWork
@@ -1134,7 +1121,7 @@ SeedGalaxy0Loop:        push    ix
 
             
     ;include "./ModelRender/testdrawing.asm"
-
+    include "./Menus/AttractMode.asm"
 
     include "./Maths/Utilities/XX12EquNodeDotOrientation.asm"
     include "./ModelRender/CopyXX12ToXX15.asm"	
@@ -1222,7 +1209,7 @@ XX12PVarSign3		DB 0
   ;  INCLUDE "./Maths/Utilities/XYeqyx1loSmulMdiv256-Ll120-LL123.asm"
 
     INCLUDE "./Tactics.asm"
-    INCLUDE "./Drive/drive_access.asm"
+    INCLUDE "./Hardware/drive_access.asm"
 
     INCLUDE "./Menus/common_menu.asm"
 ; ARCHIVED INCLUDE "Menus/draw_fuel_and_crosshair.asm"

@@ -1,83 +1,83 @@
-ShipModelTable2:         DW Dragon                                  ;16
-                         DW Escape_Pod                              ;17
-                         DW Fer_De_Lance                            ;18
-                         DW Gecko                                   ;19
-                         DW Ghavial                                 ;20
-                         DW Iguana                                  ;21
-                         DW Krait                                   ;22
-                         DW Logo                                    ;23
-                         DW Mamba                                   ;24
-                         DW Missile                                 ;25
-                         DW Monitor                                 ;26
-                         DW Moray                                   ;27
-                         DW Ophidian                                ;28
-                         DW Plate                                   ;29
-                         DW Python                                  ;30
-                         DW Python_P                                ;31
-ShipVertexTable2:        DW DragonVertices                          
-                         DW Escape_PodVertices                      
-                         DW Fer_De_LanceVertices                    
-                         DW GeckoVertices                           
-                         DW GhavialVertices                         
-                         DW IguanaVertices                          
-                         DW KraitVertices                           
-                         DW LogoVertices                            
-                         DW MambaVertices
-                         DW MissileVertices
-                         DW MonitorVertices
-                         DW MorayVertices
-                         DW OphidianVertices
-                         DW PlateVertices
-                         DW PythonVertices
-                         DW Python_PVertices
-ShipEdgeTable2:          DW DragonEdges
-                         DW Escape_PodEdges
-                         DW Fer_De_LanceEdges
-                         DW GeckoEdges
-                         DW GhavialEdges
-                         DW IguanaEdges
-                         DW KraitEdges
-                         DW LogoEdges
-                         DW MambaEdges
-                         DW MissileEdges
-                         DW MonitorEdges
-                         DW MorayEdges
-                         DW OphidianEdges
-                         DW PlateEdges
-                         DW PythonEdges
-                         DW Python_PEdges
-ShipNormalTable2:        DW DragonNormals
-                         DW Escape_PodNormals
-                         DW Fer_De_LanceNormals
-                         DW GeckoNormals
-                         DW GhavialNormals
-                         DW IguanaNormals
-                         DW KraitNormals
-                         DW LogoNormals
-                         DW MambaNormals
-                         DW MissileNormals
-                         DW MonitorNormals
-                         DW MorayNormals
-                         DW OphidianNormals
-                         DW PlateNormals
-                         DW PythonNormals
-                         DW Python_PNormals
-ShipModelSizeTable2:     DW DragonLen
-                         DW Escape_PodLen
-                         DW Fer_De_LanceLen
-                         DW GeckoLen
-                         DW GhavialLen
-                         DW IguanaLen
-                         DW KraitLen
-                         DW LogoLen
-                         DW MambaLen
-                         DW MissileLen
-                         DW MonitorLen
-                         DW MorayLen
-                         DW OphidianLen
-                         DW PlateLen
-                         DW PythonLen
-                         DW Python_PLen
+ShipModelTable2:         DW Dragon                                  ;16  $10
+                         DW Escape_Pod                              ;17  $11
+                         DW Fer_De_Lance                            ;18  $12
+                         DW Gecko                                   ;19  $13
+                         DW Ghavial                                 ;20  $14
+                         DW Iguana                                  ;21  $15
+                         DW Krait                                   ;22  $16
+                         DW Logo                                    ;23  $17
+                         DW Mamba                                   ;24  $18
+                         DW Missile                                 ;25  $19
+                         DW Monitor                                 ;26  $1A
+                         DW Moray                                   ;27  $1B
+                         DW Ophidian                                ;28  $1C
+                         DW Plate                                   ;29  $1D
+                         DW Python                                  ;30  $1E
+                         DW Python_P                                ;31  $1F
+ShipVertexTable2:        DW DragonVertices                          ;16  $10
+                         DW Escape_PodVertices                      ;17  $11
+                         DW Fer_De_LanceVertices                    ;18  $12
+                         DW GeckoVertices                           ;19  $13
+                         DW GhavialVertices                         ;20  $14
+                         DW IguanaVertices                          ;21  $15
+                         DW KraitVertices                           ;22  $16
+                         DW LogoVertices                            ;23  $17
+                         DW MambaVertices                           ;24  $18
+                         DW MissileVertices                         ;25  $19
+                         DW MonitorVertices                         ;26  $1A
+                         DW MorayVertices                           ;27  $1B
+                         DW OphidianVertices                        ;28  $1C
+                         DW PlateVertices                           ;29  $1D
+                         DW PythonVertices                          ;30  $1E
+                         DW Python_PVertices                        ;31  $1F
+ShipEdgeTable2:          DW DragonEdges                             ;16  $10
+                         DW Escape_PodEdges                         ;17  $11
+                         DW Fer_De_LanceEdges                       ;18  $12
+                         DW GeckoEdges                              ;19  $13
+                         DW GhavialEdges                            ;20  $14
+                         DW IguanaEdges                             ;21  $15
+                         DW KraitEdges                              ;22  $16
+                         DW LogoEdges                               ;23  $17
+                         DW MambaEdges                              ;24  $18
+                         DW MissileEdges                            ;25  $19
+                         DW MonitorEdges                            ;26  $1A
+                         DW MorayEdges                              ;27  $1B
+                         DW OphidianEdges                           ;28  $1C
+                         DW PlateEdges                              ;29  $1D
+                         DW PythonEdges                             ;30  $1E
+                         DW Python_PEdges                           ;31  $1F
+ShipNormalTable2:        DW DragonNormals                           ;16  $10
+                         DW Escape_PodNormals                       ;17  $11
+                         DW Fer_De_LanceNormals                     ;18  $12
+                         DW GeckoNormals                            ;19  $13
+                         DW GhavialNormals                          ;20  $14
+                         DW IguanaNormals                           ;21  $15
+                         DW KraitNormals                            ;22  $16
+                         DW LogoNormals                             ;23  $17
+                         DW MambaNormals                            ;24  $18
+                         DW MissileNormals                          ;25  $19
+                         DW MonitorNormals                          ;26  $1A
+                         DW MorayNormals                            ;27  $1B
+                         DW OphidianNormals                         ;28  $1C
+                         DW PlateNormals                            ;29  $1D
+                         DW PythonNormals                           ;30  $1E
+                         DW Python_PNormals                         ;31  $1F
+ShipModelSizeTable2:     DW DragonLen                               ;16  $10
+                         DW Escape_PodLen                           ;17  $11
+                         DW Fer_De_LanceLen                         ;18  $12
+                         DW GeckoLen                                ;19  $13
+                         DW GhavialLen                              ;20  $14
+                         DW IguanaLen                               ;21  $15
+                         DW KraitLen                                ;22  $16
+                         DW LogoLen                                 ;23  $17
+                         DW MambaLen                                ;24  $18
+                         DW MissileLen                              ;25  $19
+                         DW MonitorLen                              ;26  $1A
+                         DW MorayLen                                ;27  $1B
+                         DW OphidianLen                             ;28  $1C
+                         DW PlateLen                                ;29  $1D
+                         DW PythonLen                               ;30  $1E
+                         DW Python_PLen                             ;31  $1F
                          
                         include "Data/ships/Dragon.asm"
                         include "Data/ships/Escape_Pod.asm"

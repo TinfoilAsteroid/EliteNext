@@ -41,6 +41,8 @@ ShipTypeJunk        equ 3
 ShipTypeStation     equ 2
 ShipTypeMissile     equ 1
 ShipTypeNormal      equ 0
+ShipTypeText        equ 253
+ShipTypeDebug       equ 254
 ShipTypeEmpty       equ 255
 ; TacticsControl
 ShipIsTrader        equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag

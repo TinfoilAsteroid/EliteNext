@@ -155,6 +155,21 @@ ClearSafeZone:          MACRO
                         ld      (SpaceStationSafeZone),a
                         ENDM
 
+ClearTemperatures:      MACRO
+                        xor     a
+                        ld      (CabinTemperature),a
+                        ld      (GunTemperature),a
+                        ENDM
+
+CoolCabin:              MACRO
+                        ld      a,(CabinTemperature)
+                        and     a
+                        jr      z,.AlreadyCool
+                        dec     a
+                        ld      (CabinTemperature),a
+.AlreadyCool:           
+                        ENDM                        
+                        
 CoolLasers:             MACRO
                         ld      a,(GunTemperature)
                         and     a

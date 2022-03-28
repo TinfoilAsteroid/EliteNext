@@ -1,27 +1,108 @@
 commanderPage           DB  "COMMANDERPAGE 56"
 defaultName		        DB	"JAMESON",0
-defaultStock	        DB $10, $0F, $11, $00, $03, $1C,$0E, $00, $00, $0A, $00, $11,$3A, $07, $09, $08, $00;
+defaultStock	        DB $10, $0F, $11, $00, $03, $1C,$0E, $00, $00, $0A, $00, $11,$3A, $07, $09, $08, $00
 defaultSeeds	        DB $4a, $5a, $48, $02, $53, $b7
-defaultHomeX	        equ $14
-defaultHomeY	        equ $AD
+defaultHomeX	        DB $14
+defaultHomeY	        DB $AD
+defaultSaveName         DB "Default.SAV",0,0,0,0
 
+; Gun and cabin temps are not saved as can only be saved in dock
+; Note Can only save whilst docked
+SaveCommanderHeader     DB  "COMMANDERSAVE..."
+SaveFilename            DS  15
+SaveCommanderName       DS  15
+SaveSeeds               DS  06
+SaveStockAvaliabiliy    DS  17
+SaveCargo               DS  16
+SaveEquipmentFitted     DS  EQ_ITEM_COUNT
+SaveLaserType           DS  4
+SaveLaserDamagedFlag    DS  4
+SavePresentSystemX      DS  1 
+SavePresentSystemY      DS  1
+SaveTargetSystemX       DS  1
+SaveTargetSystemY       DS  1
+SaveCash                DS  4
+SaveFuel                DS  1
+SaveFugitiveInnocentStatus DS 1
+SaveKillTally           DS  2
+SaveOuterHyperCount     DS  1
+SaveInnerHyperCount     DS  1
+SaveForeShield          DS  1
+SaveAftShield           DS  1
+SavePlayerEnergy        DS  1
+SaveCargoBaySize        DS  1
+SaveFuelScoopStatus     DS  1
+SaveSize                equ $ - SaveCommanderHeader
+
+copyCommanderToSave:    ldCopyStringLen CommanderName,      SaveCommanderName, 15
+                        ldCopyStringLen GalaxySeeds,        SaveSeeds, 6
+                        ldCopyStringLen StockAvaliabiliy,   SaveStockAvaliabiliy, 16
+                        ldCopyStringLen CargoTonnes,        SaveCargo, 16
+                        ldCopyStringLen EquipmentFitted,    SaveEquipmentFitted, EQ_ITEM_COUNT
+                        ldCopyStringLen LaserType,          SaveLaserType, 4
+                        ldCopyStringLen LaserDamagedFlag,   SaveLaserDamagedFlag, 4
+                        ldCopy2Byte     PresentSystemX,     SavePresentSystemX
+                        ldCopy2Byte     TargetSystemX,      SaveTargetSystemX
+                        ldCopyStringLen Cash,               SaveCash, 6
+                        ldCopyByte      Fuel,               SaveFuel
+                        ldCopyByte      FugitiveInnocentStatus,  SaveFugitiveInnocentStatus
+                        ldCopy2Byte     KillTally           ,SaveKillTally
+                        ldCopyByte      OuterHyperCount     ,SaveOuterHyperCount
+                        ldCopyByte      InnerHyperCount     ,SaveInnerHyperCount
+                        ldCopyByte      ForeShield          ,SaveForeShield     
+                        ldCopyByte      AftShield           ,SaveAftShield      
+                        ldCopyByte      PlayerEnergy        ,SavePlayerEnergy   
+                        ldCopyByte      CargoBaySize        ,SaveCargoBaySize   
+                        ldCopyByte      FuelScoopsBarrelStatus     ,SaveFuelScoopStatus
+                        ret
+
+copyCommanderFromSave:  ldCopyStringLen SaveCommanderName,      CommanderName, 15
+                        ldCopyStringLen SaveSeeds,              GalaxySeeds, 6
+                        ldCopyStringLen SaveStockAvaliabiliy,   StockAvaliabiliy, 16
+                        ldCopyStringLen SaveCargo,              CargoTonnes, 16
+                        ldCopyStringLen SaveEquipmentFitted,    EquipmentFitted, EQ_ITEM_COUNT
+                        ldCopyStringLen SaveLaserType,          LaserType, 4
+                        ldCopyStringLen SaveLaserDamagedFlag,    LaserDamagedFlag, 4
+                        ldCopy2Byte     SavePresentSystemX,     PresentSystemX
+                        ldCopy2Byte     SaveTargetSystemX,      TargetSystemX
+                        ld		hl,IndexedWork              ; not sure yet why thisis done here
+                        call	        copy_galaxy_to_system
+                        call	        find_present_system
+                        call	        copy_working_to_galaxy
+                        ldCopyStringLen SaveCash,               Cash, 6
+                        ldCopyByte      SaveFuel,               Fuel
+                        ldCopyByte      SaveFugitiveInnocentStatus,  FugitiveInnocentStatus
+                        ldCopy2Byte     SaveKillTally           ,KillTally
+                        ldCopyByte      SaveOuterHyperCount     ,OuterHyperCount
+                        ldCopyByte      SaveInnerHyperCount     ,InnerHyperCount
+                        ldCopyByte      SaveForeShield          ,ForeShield     
+                        ldCopyByte      SaveAftShield           ,AftShield      
+                        ldCopyByte      SavePlayerEnergy        ,PlayerEnergy   
+                        ldCopyByte      SaveCargoBaySize        ,CargoBaySize   
+                        ldCopyByte      SaveFuelScoopStatus     ,FuelScoopsBarrelStatus
+                        ret
+
+saveCommander:          call    copyCommanderToSave
+                        ldCopyStringLen defaultSaveName, SaveFilename, 15
+                        ld      hl, defaultSaveName             ; default debug name
+                        ld      ix, SaveCommanderHeader
+                        ld      bc, SaveSize
+                        call    FileSave
+                        ret
+                        
+loadCommander:          ld      hl, defaultSaveName             ; default debug name
+                        ld      ix, SaveCommanderHeader
+                        ld      bc, SaveSize
+                        call    FileLoad
+                        call    copyCommanderFromSave
+                        ret
+                        
  ; For now hard laod, later correctlt sequence gneeral vars and dma fill with 0 for a start
-defaultCommander:       ld		de,CommanderName				;set commander name
-                        ld		hl,defaultName
-                        ld		bc,8
-                        ldir
-                        ld		de,GalaxySeeds
-                        ld		hl,defaultSeeds
-                        ld		bc,8
-                        ldir	
-                        ld		a,defaultHomeX
-                        ld		(PresentSystemX),a
-                        ld		(TargetSystemX),a
-                        ld		a,defaultHomeY
-                        ld		(PresentSystemY),a
-                        ld		(TargetSystemY),a
-	; testing
-                        ld		hl,IndexedWork
+defaultCommander:       ldCopyStringLen defaultName, CommanderName, 8
+                        ldCopyStringLen defaultSeeds, GalaxySeeds, 6
+                        ldCopy2Byte defaultHomeX, PresentSystemX
+                        ldCopy2Byte defaultHomeX, TargetSystemX
+                        ld		hl,IndexedWork              ; not sure yet why thisis done here
                         call	copy_galaxy_to_system
                         call	find_present_system
                         call	copy_working_to_galaxy
@@ -78,13 +159,6 @@ defaultCommander:       ld		de,CommanderName				;set commander name
                         ret     
 
 
-
-                        ;TODO in load and save need ot preserve damage to guns, heat , ship etc i.e. run time state
-                        
-                        
-                        
-                        ; more to DO	
-                        ret
 ; a = current view number
 LoadLaserToCurrent:     ld      hl,LaserType                    ; .
                         add     hl,a                            ; .
@@ -133,3 +207,15 @@ calculateBadness:       ld      a,(SlaveCargoTonnes)            ; Badness = 2(sl
                         add     b
                         ret
                         
+PlayerDeath:            call    copyCommanderFromSave           ; load last loaded/saved commander
+                        ZeroA                                   ; set current laser to front
+                        call    LoadLaserToCurrent
+                        call    InitMainLoop
+                        call    ResetPlayerShip
+                        ret
+                    ;    clear out all other objects
+                    ;    create debris 
+                    ;    if cargo presetn then create a cargo
+                    ;    
+                    ;    enqueve message game over
+                    ;    go to load commander page

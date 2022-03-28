@@ -243,7 +243,29 @@ UnivExplodeShip:        ld      a,(UBnkaiatkecm)
                         ld      (UbnKEnergy),a
                         ;TODO
                         ret
-                        
+
+UnivSetDemoPostion:     call    UnivSetSpawnPosition
+                        ld  a,%10000001
+                        ld  (UBnkaiatkecm),a                    ; set hostinle, no AI, has ECM
+                        ld      (ShipNewBitsAddr),a             ; initialise new bits logic
+                        ld      a,$FF
+                        ld      (UBnKRotZCounter),a             ; no pitch
+                        ld      (UBnKRotXCounter),a             ; set roll to maxi on station
+                        ZeroA
+                        ld      (UBnKxsgn),a
+                        ld      (UBnKysgn),a
+                        ld      (UBnKzsgn),a
+                        ld      hl,0
+                        ld      (UBnKxlo),hl
+                        ld      (UBnKylo),hl
+                        ld      a,(ShipTypeAddr)
+                        ld      hl,$05B0                            ; so its a negative distance behind
+                        JumpIfANENusng ShipTypeStation, .SkipFurther
+                        ld      a,5
+                        add     h
+                        ld      h,a
+.SkipFurther            ld      (UBnKzlo),hl
+                        ret
 ; --------------------------------------------------------------
 ; This sets the position of the current ship randomly, called after spawing
 UnivSetSpawnPosition:   call    InitialiseOrientation

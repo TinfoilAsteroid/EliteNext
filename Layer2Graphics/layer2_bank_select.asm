@@ -1,6 +1,7 @@
 
 varL2_BANK_SELECTED			 DB	0
 varL2_BUFFER_MODE            DB 0
+varL2_ACCESS_MODE            DB 0
 
 asm_l2_double_buffer_on:    ld      a,8
                             ld      (varL2_BUFFER_MODE),a
@@ -10,6 +11,28 @@ asm_l2_double_buffer_off:   xor     a
                             ld      (varL2_BUFFER_MODE),a
                             ret
 
+asm_disable_l2_readwrite:   ld      bc, IO_LAYER2_PORT
+                            in      (c)
+                            ld      (varL2_ACCESS_MODE),a
+                            and     LAYER2_DISABLE_MEM_ACCESS
+                            out     (c),a
+                            ret
+
+asm_restore_l2_readwrite:   ld      a,(varL2_ACCESS_MODE)
+                            and     LAYER2_READ_WRITE_MASK
+                            ld      d,a
+                            ld      bc, IO_LAYER2_PORT
+                            in      (c)
+                            ld      (varL2_ACCESS_MODE),a
+                            and     d
+                            out     (c),a
+                            ret  
+
+asm_enable_l2_readwrite:    ld      bc, IO_LAYER2_PORT
+                            in      (c)
+                            or      LAYER2_READ_WRITE_MASK
+                            out     (c),a
+                            ret                               
     
 ; "asm_l2_bank_select"
 ; " a = sepecific bank mask value to select, does not set varL2_BANK_SELECTED"

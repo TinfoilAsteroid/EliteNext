@@ -25,6 +25,13 @@ SetMemToN:              MACRO   mem,value
                         ld      (mem),a
                         ENDM
 
+ldCopyStringLen:        MACRO   source, target, strlen
+                        ld      hl,source
+                        ld      de, target
+                        ld      bc, strlen
+                        ldir
+                        ENDM
+
 ldCopyTextAtHLtoDE:     MACRO
 .CopyLoop:              ld      a,(hl)
                         ld      (de),a

@@ -10,7 +10,7 @@ TestVector:             DB $03, $41, $23
                         DW TestVectorNormals
                         DB $04,$01
                         DW TestVectorVertices
-                        DB 0,0                      ; Type and Tactics
+                        DB ShipTypeDebug,0                      ; Type and Tactics
                         DB 0
 
 TestVectorVertices	    DB $00,$40,$00,$1F,$00,$00 

@@ -10,7 +10,7 @@ Logo:	                DB $00, $26, $49
                         DW LogoNormals
                         DB $01, $00
                         DW LogoVertices
-                        DB 0,0                      ; Type and Tactics
+                        DB ShipTypeText,0                      ; Type and Tactics
                         DB 0
 
 LogoVertices:	DB $00, $09, $37, $5F, $00, $00

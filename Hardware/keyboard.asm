@@ -82,6 +82,9 @@ c_Pressed_PlanetData    equ 36 * 2
 c_Pressed_CursorUp      equ 37 * 2
 c_Pressed_CursorDown    equ 38 * 2
 c_Pressed_Find          equ 39 * 2
+c_Pressed_Yes           equ 40 * 2
+c_Pressed_No            equ 41 * 2
+
 
 ; half row 1
 VK_CAPS  				equ 0
@@ -173,6 +176,8 @@ KeyCode_Quit         	equ VK_Y
 KeyCode_PlanetData   	equ VK_0
 KeyCode_CursorUp        equ VK_Q
 KeyCode_CursorDown      equ VK_A
+KeyCode_PressedYes      equ VK_Y
+KeyCode_PressedNo       equ VK_N
 
 Keys					DS	40          ; This is the list of key states for all the VK keys presssed i.e. VK_CAPS through to VK_B
 c_KeyBoardLen 			equ $ - Keys
@@ -189,6 +194,7 @@ KeyboardMap             DW  Keys+KeyCode_Front        ,Keys+KeyCode_Aft         
                         DW  Keys+KeyCode_GalacticChrt ,Keys+KeyCode_LocalChart   ,Keys+KeyCode_MarketPrices ,Keys+KeyCode_Status       ,Keys+KeyCode_Inventory    
                         DW  Keys+KeyCode_GameSkip     ,Keys+KeyCode_Save         ,Keys+KeyCode_Freeze       ,Keys+KeyCode_Resume       ,Keys+KeyCode_Recentre     
                         DW  Keys+KeyCode_Quit         ,Keys+KeyCode_PlanetData   ,Keys+KeyCode_CursorUp     ,Keys+KeyCode_CursorDown   ,Keys+KeyCode_Find
+                        DW  Keys+KeyCode_PressedYes   ,Keys+KeyCode_PressedNo
 
 ASCII_Map:              DB "#","Z","X","C","V"
                         DB "A","S","D","F","G"
@@ -411,7 +417,7 @@ is_key_up_state:        GetKeyStateAddressHL
                         ld      a,(hl)
                         cp      0
                         ret
-                        
+
 ; returns z is set if c_ key is pressed
 is_key_pressed:         GetKeyStateAddressHL
                         ld      a,(hl)                          ; a = keystate

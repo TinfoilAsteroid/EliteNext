@@ -1,0 +1,142 @@
+# file opened: testwrite.asm
+ 1    0000               DEVICE ZXSPECTRUMNEXT
+ 2    0000
+ 3    0000               CSPECTMAP testwrite.map
+ 4    0000               OPT --zxnext=cspect --syntax=a --reversepop
+ 5    0000              ; test file write
+ 6    0000              ; sjasmplus --msg=all --lst=testw.txt testwrite.asm
+ 7    0000              ; cSpect.exe -brk -debug -16bit -s28  -map=testwrite.map -rewind -sound -w3 -zxnext -cur -mmc=.\ testwrite.nex
+ 8    0000
+ 9    0000
+10    0000
+11    0000              M_GETSETDRV             equ $89
+12    0000              F_OPEN                  equ $9a
+13    0000              F_CLOSE                 equ $9b
+14    0000              F_READ                  equ $9d
+15    0000              F_WRITE                 equ $9e
+16    0000              F_SEEK                  equ $9f
+17    0000              FA_READ                 equ $01
+18    0000              FA_APPEND               equ $06
+19    0000              FA_OVERWRITE            equ $0C
+20    0000
+21    0000
+22    0000                              org     $5c5c
+23    5C5C FB           IM2Routine:     ei
+24    5C5D ED 4D                        reti
+25    5C5F                              org     $5d00
+26    5D00              VectorTable:
+27    5D00 5C 5C 5C 5C                  dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+27    5D04 5C 5C 5C 5C
+27    5D08 5C 5C 5C 5C
+27    5D0C 5C 5C 5C 5C
+27    5D10 5C 5C 5C 5C
+27    5D14 5C 5C 5C 5C
+27    5D18 5C 5C 5C 5C
+27    5D1C 5C 5C 5C 5C
+28    5D20 5C 5C 5C 5C                  dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+28    5D24 5C 5C 5C 5C
+28    5D28 5C 5C 5C 5C
+28    5D2C 5C 5C 5C 5C
+28    5D30 5C 5C 5C 5C
+28    5D34 5C 5C 5C 5C
+28    5D38 5C 5C 5C 5C
+28    5D3C 5C 5C 5C 5C
+29    5D40 5C 5C 5C 5C                  dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+29    5D44 5C 5C 5C 5C
+29    5D48 5C 5C 5C 5C
+29    5D4C 5C 5C 5C 5C
+29    5D50 5C 5C 5C 5C
+29    5D54 5C 5C 5C 5C
+29    5D58 5C 5C 5C 5C
+29    5D5C 5C 5C 5C 5C
+30    5D60 5C 5C 5C 5C                  dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+30    5D64 5C 5C 5C 5C
+30    5D68 5C 5C 5C 5C
+30    5D6C 5C 5C 5C 5C
+30    5D70 5C 5C 5C 5C
+30    5D74 5C 5C 5C 5C
+30    5D78 5C 5C 5C 5C
+30    5D7C 5C 5C 5C 5C
+31    5D80 5C 5C 5C 5C                  dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+31    5D84 5C 5C 5C 5C
+31    5D88 5C 5C 5C 5C
+31    5D8C 5C 5C 5C 5C
+31    5D90 5C 5C 5C 5C
+31    5D94 5C 5C 5C 5C
+31    5D98 5C 5C 5C 5C
+31    5D9C 5C 5C 5C 5C
+32    5DA0 5C 5C 5C 5C                  dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+32    5DA4 5C 5C 5C 5C
+32    5DA8 5C 5C 5C 5C
+32    5DAC 5C 5C 5C 5C
+32    5DB0 5C 5C 5C 5C
+32    5DB4 5C 5C 5C 5C
+32    5DB8 5C 5C 5C 5C
+32    5DBC 5C 5C 5C 5C
+33    5DC0 5C 5C 5C 5C                  dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+33    5DC4 5C 5C 5C 5C
+33    5DC8 5C 5C 5C 5C
+33    5DCC 5C 5C 5C 5C
+33    5DD0 5C 5C 5C 5C
+33    5DD4 5C 5C 5C 5C
+33    5DD8 5C 5C 5C 5C
+33    5DDC 5C 5C 5C 5C
+34    5DE0 5C 5C 5C 5C                  dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+34    5DE4 5C 5C 5C 5C
+34    5DE8 5C 5C 5C 5C
+34    5DEC 5C 5C 5C 5C
+34    5DF0 5C 5C 5C 5C
+34    5DF4 5C 5C 5C 5C
+34    5DF8 5C 5C 5C 5C
+34    5DFC 5C 5C 5C 5C
+35    5E00 5C 5C                        dw      IM2Routine
+36    5E02
+37    5E02              EliteNextStartup:       ORG         $8000
+38    8000 3E 5D                        ld      a,VectorTable>>8
+39    8002 ED 47                        ld      i,a
+40    8004 ED 5E                        im      2                       ; Setup IM2 mode
+41    8006 FB                           ei
+42    8007 AF           GetDefaultDrive:         xor	    a	; a = 0 means get default drive into A
+43    8008 3E 41                                ld      a,"A"
+44    800A CF                                   rst	    $08
+45    800B 89                                   db	    $89
+46    800C 6F                                   ld      l,a
+47    800D
+48    800D 21 37 80                             ld          hl,Filename
+49    8010 DD 21 42 80                          ld          ix,testfile
+50    8014 01 64 00                             ld          bc,100
+51    8017 C5 DD E5     OpenFile:               push	bc,,ix   			; store size& save address
+52    801A E5                                   push	hl		        	; get name into ix
+53    801B DD E1                                pop	    ix
+54    801D 06 0C                                ld      b,FA_OVERWRITE		; mode open for writing
+55    801F E5 DD E5                             push	hl,,ix
+56    8022 DD E5                                push	ix
+57    8024 3A 36 80                             ld	    a,(DefaultDrive)
+58    8027 CF                                   rst	    $08
+59    8028 9A                                   db	    F_OPEN
+60    8029 DD E1 E1                             pop	    hl,,ix
+61    802C F5                                   push    af
+62    802D E5 DD E5                             push	hl,,ix
+63    8030 E1                                   pop	    hl
+64    8031 CF                                   rst	    $08
+65    8032 9E                                   db	    F_WRITE
+66    8033 E1                                   pop	    hl
+67    8034 DD 01                                break
+68    8036
+69    8036 00           DefaultDrive:	        db	0
+70    8037 52 48 54 45  Filename    db "RHTEST.TXT",0
+70    803B 53 54 2E 54
+70    803F 58 54 00
+71    8042
+72    8042 74 65 73 74  testfile    DB "testFile.txt",0
+72    8046 46 69 6C 65
+72    804A 2E 74 78 74
+72    804E 00
+73    804F 00 00 00...              DS 100
+74    80B3
+75    80B3                  SAVENEX OPEN "testwrite.nex", $8000 , $7F00
+76    80B3                  SAVENEX CFG  0,0,0,1
+77    80B3                  SAVENEX AUTO
+78    80B3                  SAVENEX CLOSE
+79    80B3
+# file closed: testwrite.asm

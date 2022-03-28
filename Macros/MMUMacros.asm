@@ -1,3 +1,8 @@
+MMUSelectROMS:       MACRO
+                     nextreg EXSDOSMMU0,        BankROM
+                     nextreg EXSDOSMMU1,        BankROM
+                     ENDM
+
 MMUSelectSpriteBank: MACRO
 					 nextreg SpritememMMU,	    BankSPRITE
 					 ENDM
