@@ -24,7 +24,7 @@ ZI1:
 
 LaunchedOrientation:
     call    InitialiseOrientation
-    FlipMemSign UBnkrotmatNosevX+1;  as its 0 flipping will make no difference
-    FlipMemSign UBnkrotmatNosevY+1;  as its 0 flipping will make no difference
-    FlipMemSign UBnkrotmatNosevZ+1
+    FlipSignMem UBnkrotmatNosevX+1;  as its 0 flipping will make no difference
+    FlipSignMem UBnkrotmatNosevY+1;  as its 0 flipping will make no difference
+    FlipSignMem UBnkrotmatNosevZ+1
     ret

@@ -23,15 +23,3 @@ doRND:                  ld		a,(RandomSeed)					; Get Seed 0
                         ld		(RandomSeed3),a
                         ex		af,af'
                         ret
-
-fillHeapRandom4Points:                      ; counter Y, 4 rnd bytes to edge heap 
-	ld		b,4                                                                                            
-	ld		hl,UbnkLineArray				; line data                                                    
-FillRandom:                                 ; Writes random bytes hl = start address, b = nbr bytes to fill
-EE55:                                                                                                      
-	call	doRND							; get random                                                   
-	ld		(hl),a							; (XX19),Y                                                     
-	inc		hl                                                                                             
-	djnz	FillRandom						; 3to6 = random bytes for seed
-    ret
-    

@@ -45,6 +45,20 @@ JumpIfTooFarAway:       MACRO   target
                         JumpIfAIsNotZero target                       ; LL13 - hop as far , i.e. zhi not 0 after divide by 8
                         ENDM
 
+
+fillHeapRandom4Points:                      ; counter Y, 4 rnd bytes to edge heap 
+	ld		b,4                                                                                            
+	ld		hl,UbnkLineArray				; line data                                                    
+FillRandom:                                 ; Writes random bytes hl = start address, b = nbr bytes to fill
+EE55:                                                                                                      
+	call	doRND							; get random                                                   
+	ld		(hl),a							; (XX19),Y                                                     
+	inc		hl                                                                                             
+	djnz	FillRandom						; 3to6 = random bytes for seed
+    ret
+    
+    
+
 DisplayObject:
 LL9:										; Draw object in current bank                                  ;;;; Display object LL9
    ; DEBUG JumpIfObjectIsPlanet LL25

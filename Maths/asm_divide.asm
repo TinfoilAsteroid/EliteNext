@@ -12,7 +12,7 @@
 ;                                        elase a = e and exit
 ;
 ;
-;
+
 
 AEquAmul256DivD:        JumpIfAGTENusng  d, .Ll28Exit255
                         ld      e,%11111110                 ; Set R to have bits 1-7 set, so we can rotate through 7

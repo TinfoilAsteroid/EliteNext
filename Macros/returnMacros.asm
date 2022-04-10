@@ -65,6 +65,12 @@ ReturnIfMemNeNusng:     MACRO mem, value
                         ret    z
                         ENDM
                         
+ReturnIfRegNotZero:     MACRO reg
+                        ld      a, reg
+                        and     a
+                        ret     nz
+                        ENDM
+
 ReturnIfANotZero:       MACRO
                         and     a
                         ret     nz

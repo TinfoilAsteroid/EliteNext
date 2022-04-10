@@ -25,6 +25,28 @@ JumpIfZero:	            MACRO target
                         ENDM
 
 ;.. Bit routines
+JumpOnLeadSignSet:      MACRO   reg, target
+                        ld      a,reg
+                        and     SignOnly8Bit
+                        jp      nz,target
+                        ENDM
+
+JumpOnLeadSignClear:    MACRO   reg, target
+                        ld      a,reg
+                        and     SignOnly8Bit
+                        jp      z,target
+                        ENDM
+
+JumpOnLeadSignSetA:     MACRO   target
+                        and     SignOnly8Bit
+                        jp      nz,target
+                        ENDM
+
+JumpOnLeadSignClearA:   MACRO   target
+                        and     SignOnly8Bit
+                        jp      z,target
+                        ENDM
+
 JumpOnMemBitSet:        MACRO mem, bitnbr, target
                         ld      a,(mem)
                         bit 	bitnbr,a

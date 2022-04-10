@@ -1133,6 +1133,7 @@ SeedGalaxy0Loop:        push    ix
 ;    include "./ModelRender/draw_object.asm"
 ;    include "./ModelRender/draw_ship_point.asm"
 ;    include "./ModelRender/drawforwards-LL17.asm"
+;    include "./ModelRender/drawforwards-LL17.asm"
     
     INCLUDE	"./Hardware/memfill_dma.asm"
     INCLUDE	"./Hardware/memcopy_dma.asm"
@@ -1149,6 +1150,7 @@ XX12PVarSign3		DB 0
     
     INCLUDE "./Variables/constant_equates.asm"
     INCLUDE "./Variables/general_variables.asm"
+    INCLUDE "./Variables/general_variablesRoutines.asm"
 
     INCLUDE "./Variables/UniverseSlotRoutines.asm"
 
@@ -1164,7 +1166,7 @@ XX12PVarSign3		DB 0
 ; Include all maths libraries to test assembly
     
     INCLUDE "./Maths/addhldesigned.asm"
-    INCLUDE "./Maths/addhlasigned.asm"
+    INCLUDE "./Maths/asm_add.asm"
     INCLUDE "./Maths/Utilities/AddDEToCash.asm"
     INCLUDE "./Maths/DIVD3B2.asm"
     INCLUDE "./Maths/multiply.asm"

@@ -1,4 +1,4 @@
-fdraw; In  flight ship data tables
+; In  flight ship data tables
 ; In  flight ship data tables
 ; In  flight ship data tables
 ; There can be upto &12 objects in flight.
@@ -326,37 +326,6 @@ SunADDHLDESignedv3:     ld      a,h
                         ret
     
 
-    
-;                    include "Universe/InitialiseOrientation.asm"
-;----------------------------------------------------------------------------------------------------------------------------------
-;;;
-;;;Project:
-;;;PROJ:                   ld      hl,(SBnKxlo)                    ; Project K+INWK(x,y)/z to K3,K4 for center to screen
-;;;                        ld      (varP),hl
-;;;                        ld      a,(SBnKxsgn)
-;;;                        call    PLS6                            ; returns result in K (0 1) (unsigned) and K (3) = sign note to no longer does 2's C
-;;;                        ret     c                               ; carry means don't print
-;;;                        ld      hl,(varK)                       ; hl = k (0 1)
-;;;                        ; Now the question is as hl is the fractional part, should this be multiplied by 127 to get the actual range
-;;;                        ld      a,ViewCenterX
-;;;                        add     hl,a                            ; add unsigned a to the 2's C HL to get pixel position
-;;;                        ld      (varK3),hl                      ; K3 = X position on screen
-;;;ProjectY:               ld      hl,(SBnKylo)
-;;;                        ld      (varP),hl
-;;;                        ld      a,(SBnKysgn)
-;;;                        call    PLS6
-;;;                        ret     c
-;;;                        ld      hl,(varK)                       ; hl = k (0 1)
-;;;                        ld      a,ViewCenterY
-;;;                        add     hl,a                            ; add unsigned a to the 2's C HL to get pixel position
-;;;                        ld      (varK4),hl                      ; K3 = X position on screen
-;;;                        ret
-;--------------------------------------------------------------------------------------------------------
-;                        include "./ModelRender/EraseOldLines-EE51.asm"
-;                        include "./ModelRender/TrimToScreenGrad-LL118.asm"
-;                        include "./ModelRender/CLIP-LL145.asm"
-;--------------------------------------------------------------------------------------------------------
-;                        include "./Variables/CopyRotmatToTransMat.asm"
                         include "./Universe/Sun/TransposeSunXX12BySunToSunXX15.asm"
 
 
@@ -537,140 +506,264 @@ LineCount               DB 0
 RaggedSize              DB 0
 MinYOffset              DB 0
 MaxYOffSet              DB 0
-XCentre                 DW  0       ; signed
-YCentre                 DW  0       ; signed
+SunScrnX                DW  0       ; signed
+SunScrnY                DW  0       ; signed
 SunRadius               DB  0       ; unsigned
 ; draw circle               
 
+;
+;DIVD3B2 K(3 2 1 0) = (A P+1 P) / (z_sign z_hi z_lo)
+
+SunVarK                 DS 4
+SunVarP                 DS 3
+SunVarQ                 DS 1
+SunVarR                 DS 1
+SunVarS                 DS 1
+SunVarT                 DS 1
+
+; Needs tuning for registers vs memroy
+SunKEquAHLDivCDE:       ld      (SunVarP),hl
+                        ld      (SunVarP+2),a
+                        ld      (SunVarQ),de
+                        ld      a,c
+                        ld      (SunVarS),a
+SunDivD3B:              ld      a,(SunVarP)                 ; Ensure P is at least 1
+                        or      1
+                        ld      (SunVarP),a
+                        ld      a,(SunVarP+2)               ; T = Sign xor Sign
+                        ld      hl,SunVarS
+                        xor     (hl)
+                        and     SignOnly8Bit
+                        ld      (SunVarT),a
+                        ld      b,0                         ; b = y counter
+                        ld      a,(SunVarP+2)               ; a = abs high byte of p
+                        and     SignMask8Bit                ; .
+                        ld      hl,(SunVarP)                ; shift P left
+.SunDVL9:               JumpIfAGTENusng   64, .SunDV14      ; if high p > 64 then go to DV14
+                        ShiftHLLeft1                        ; 
+                        rl      a                           ; 
+                        inc     b                           ; increase shift count
+                        jp      .SunDVL9
+.SunDV14:               ld      (SunVarP),hl                ; save off var P
+                        ld      (SunVarP+2),a
+                        ld      a,(SunVarS)                 ; a= ABS varS
+                        and     SignMask8Bit
+                        ld      hl,(SunVarQ)                ; HL = vars Q & R
+.SunDVL6:               dec     b                           ; reduce b counter by 1
+                        ShiftHLLeft1                        ; varQRA  shift left
+                        rl      a                           ;
+                        jp      p, .SunDVL6                 ; keep shifting until bit 7 of a is set
+                        ld      (SunVarQ),hl                ; save QR
+.SunDV9:                ld      (SunVarS),a                 ; save S
+                        ;ld      a,h
+                        ;ld      (varQ),a
+                        ld      c,a
+                        ld      a,(SunVarP+2)
+                        push    bc                          ; save shift counter in b
+                        call    DIV16Amul256dCUNDOC
+                        ;call    RequAmul256divQ
+                        ld      a, c
+                        ld      (varR),a
+                        pop     bc                          ; retrieve shift counter
+                        ld      hl,0                        ; set K to 0
+                        ld      (SunVarK),hl                ; .
+                        ld      (SunVarK+2),hl              ; .
+                        bit     7,b                         ; is counter positive
+                        jr      z,.SunDV12                  ; .
+                        ld      a,(varR)                    ;
+.SunDVL8:               sla     a                           ; Shift K by 1 left
+                        ld      hl,SunVarK+1                ; .
+                        rl      (hl)                        ; .
+                        inc     hl                          ; .
+                        rl      (hl)                        ; .
+                        inc     hl                          ; .
+                        rl      (hl)                        ; .
+                        inc     b
+                        jr      nz,.SunDVL8                 ; loop until K is shifted
+                        ld      (SunVarK),a
+                        ld      a,(SunVarK+3)
+                        ld      hl,SunVarT
+                        or      (hl)
+                        ld      (SunVarK+3),a
+                        ret
+.SunDV13:               ld      a,(varR)                    ; when we get here, shift is zero
+                        ld      (SunVarK),a
+                        ld      a,(SunVarK+3)
+                        ld      hl,SunVarT
+                        or      (hl)
+                        ld      (SunVarK+3),a
+                        ret
+.SunDV12:               ld      a,b
+                        and     a
+                        jr      z,.SunDV13
+                        ld      a,(varR)                    ; it probably is already R so need to test
+.SunDVL10:              sra     a                           ; Shift K by 1 left
+                        dec     b
+                        jr      nz,.SunDVL10
+                        ld      (SunVarK),a                 ; as original divide was onyl 8 bits K 1,2,3 don;t matter
+                        ld      a,(SunVarT)
+                        ld      (SunVarK+3),a
+                        ret                        
                         
+                        
+                        
+SunProcessVertex:       MACRO   vertlo, vertsgn
+.SunProjectToEye:       ld      de,(SBnKzlo)                ; X Pos = X / Z
+                        ld      a,(SBnKzsgn)                ; CDE = z
+                        ld      c,a                         ;
+                        ld      hl,(vertlo)                ; AHL = x
+                        ld      a,(vertsgn)                ;
+                        call    SunKEquAHLDivCDE            ; result in sunvarK to K + 3
+                        ld      hl,(SunVarK)                ; result is in DEHL (high to low)
+                        ld      de,(SunVarK+2)              
+.CheckPosOnScreenX:     ld      a,d                         ; a= abs highest byte (k+3)  or k+2
+                        and     SignMask8Bit                ;    
+                        or      e                           ;
+                        ret     nz                          ; off screen
+                        ld      a,h                         ; a = k + 1 can do this as ABS
+                        ReturnIfAGTEusng 4                  ; if > 1024 then return
+                        ld      a,d                         ; get sign back
+                        and     SignOnly8Bit                ; if positive then we are good
+                        jr      z,.calculatedVert
+.XIsNegative:           NegHL                               ; make 2's c as negative                        
+.calculatedVert:
+                        ENDM
+                        
+                            
+                        
+                   ; could probabyl set a variable say "varGood", default as 1 then set to 0 if we end up with a good calulation?? may not need it as we draw here     
 SunUpdateAndRender:     call    SunApplyMyRollAndPitch
 .CheckDrawable:         ld      a,(SBnKzsgn)
                         and     SignOnly8Bit
                         ret     nz
 .CheckDist48:           ReturnIfAGTENusng 48                ; at a distance over 48 its too far away
-                        ld      hl,(SBnKzhi)                ; if the two high bytes are zero then its too close
+                        ld      hl,SBnKzhi                  ; if the two high bytes are zero then its too close
                         or      (hl)
                         ReturnIfAIsZero
-.SunProjectToEye:       ld      de,(SBnKzlo)                ; X Pos = X / Z
-                        ld      a,(SBnKzsgn)                ; CDE = z
-                        ld      c,a                         ;
-                        ld      hl,(SBnKxlo)                ; AHL = x
-                        ld      a,(SBnKxsgn)                ;
-                        call    Div24by24LeadSign           ; could do 16 bit in reality 
-.CheckPosOnScreenX:     ld      a,c                         ;
-                        and     SignMask8Bit                ; a= abs highest byte
-                        ret     nz                          ; off screen
-                        ld      a,d                         ; if high byte >=4 then off screen (we can do this as ABS
-                        cp      4                           ; 
-                        ret     nc                          ; off screen
-                        ld      l,e
-                        ld      a,d
-                        or      c                           ; we know that C can only hold a sign bit if its on screen
-                        ld      h,l
-                        ld      a,ScreenCenterX
-                        call    AddAusngToHLsng             ; correct to center of screen
-                        ld      (XCentre),hl                ; save projected X Position
-.caclYProj:             ld      de,(SBnKzlo)                ; calc center y 
-                        ld      a,(SBnKzsgn)                ; cde = z
-                        ld      c,a                         ;
-                        ld      hl,(SBnKylo)                ; ahl = y
-                        ld      a,(SBnKysgn)                ;
-                        call    Div24by24LeadSign           ;
-.CheckPosOnScreenY:     ld      a,c
-                        and     SignMask8Bit                ; a= abs highest byte
-                        ret     nz                          ; off screen
-                        ld      a,d                         ; if high byte >=4 then off screen (we can do this as ABS
-                        cp      4                           ; 
-                        ret     nc                          ; off screen
-                        ld      l,e
-                        ld      a,d
-                        or      c                           ; we know that C can only hold a sign bit if its on screen
-                        ld      h,l
-                        ld      a,ScreenCenterY
-                        call    HLEequAusngMinusHLsng
-                        ld      (YCentre),hl                  ; save projected T Position
-.ClearLineArray:        ld      hl,SBnKLineArray            ; we load start and end as 0
-                        ld		de, SunLineArraySize        ; just if we get a 0,0 genuine we will not plot it
-                        ld		a,0
-                        call	memfill_dma
-                        ;break
+.calculateX:            SunProcessVertex SBnKxlo, SBnKxsgn
+.calculatedX:           ld      a,ScreenCenterX
+                        call    HL2cEquHLSgnPlusAusgn       ; correct to center of screen
+                        ld      (SunScrnX),hl               ; save projected X Position, 2's compliment
+.calculateY:            SunProcessVertex SBnKylo, SBnKysgn
+.calculatedY:           ld      a,ScreenCenterY
+                        call    HL2cEquHLSgnPlusAusgn       ; correct to center of screen
+                        ld      (SunScrnY),hl               ; save projected Y Position, 2's compliment
+; .........................................................................................................................
 .CalculateRadius:       ld      de,(SBnKzlo)
                         ld      a,(SBnKzsgn)
                         ld      c,a
                         ld      hl,$6000  ; was hl          ; planet radius at Z = 1 006000
                         xor     a
                         call    Div24by24LeadSign           ; radius = AHL/CDE = 24576 / distance z
-                        ld      a,d
-                        cp      0
-                        jr      z,.SkipSetK
-                        ld      e,248                       ;set radius to 248 as maxed out
-.SkipSetK:              ld      hl,SBnKLineArray
+                        ld      a,d                         ; if high byte (d) = 0 then e contains radius
+                        JumpIfAIsZero  .SaveRadius
+.MaxRadius:             ld      e,248                       ;set radius to 248 as maxed out
+.SaveRadius:            ld      a,e
+                        ld      (SunRadius),a               ; save a copy of radius now for later
+; .........................................................................................................................  
+.CheckIfSunOnScreen:    ld      hl,(SunScrnX)               ; get x pixel position
+                        ld      iyh,0                       ; iyh holds draw status, 0= OK
+                        ld      d,0                         ; e still holds radius
+                        ld      a,h
+                        JumpOnLeadSignSet   h,.CheckXNegative
+.CheckXPositive:        ld      a,h
+                        JumpIfAIsZero   .XOnScreen          ; if high byte of h is not zero its definitly on screen
+                        ld      d,0                         ; de = radius
+                        ClearCarryFlag
+                        sbc     hl,de
+                        jp      m   ,.XOnScreen             ; if result was negative then it spans screen
+                        ld      a,h
+                        JumpIfAIsZero   .XOnScreen          ; if high byte of h is not zero then its partially on screen at least
+                        ret                                 ; None of the X coordinates are on screen
+.CheckXNegative:        ld      d,0                         ; de = radius
+                        ClearCarryFlag
+                        adc     hl,de                       ; so we have hl - de
+                        jp      p,.XOnScreen                ; if result was positive then it spans screen so we are good
+                        ret                                 ; else x is totally off the left side of the screen
+; .........................................................................................................................  
+.XOnScreen:             ld      hl,(SunScrnY)               ; now Check Y coordinate
+                        JumpOnLeadSignSet   h,.CheckYNegative
+.CheckYPositive:        ld      a,h
+                        JumpIfAIsNotZero   .PosYCheck2
+                        ld      a,l
+                        and     %10000000
+                        jp      z,.YOnScreen                ; at least 1 row is on screen as > 128
+.PosYCheck2:            ld      d,0                         ; de = radius
+                        ClearCarryFlag
+                        sbc     hl,de
+                        jp      m,.YOnScreen                ; so if its -ve then it spans screen
+                        ld      a,h                         ; if h > 0 then off screen so did not span
+                        ReturnIfANotZero                    ; .
+                        ld      a,l                         ; if l > 128 then off screen so did not span
+                        and     %10000000                   ; .
+                        ReturnIfANotZero                    ; .
+                        jp      .YOnScreen                  ; so Y at least spans
+.CheckYNegative:        ld      d,0                         ; de = radius
+                        ClearCarryFlag
+                        adc     hl,de                       ; so we have hl - de
+                        jp      p,.YOnScreen                ; if result was positive then it spans screen so we are good
+                        ret                                 ; else never gets above 0 so return
+; .........................................................................................................................  
+.YOnScreen:             ld      hl,SBnKLineArray            ; we load start and end as 0
+                        ld		de, SunLineArraySize        ; just if we get a 0,0 genuine we will not plot it
+                        ld		a,0
+                        call	memfill_dma                       
+; .........................................................................................................................  
+.SetRaggedEdgeMax:      ld      de,0
+                        ld      a,(SunRadius)               ; get readius
+                        cp      96                          ; if > 96 then roll carry flag into e
+                        FlipCarryFlag
+                        rl      e                           ; if > 40 then roll carry flag into e
+                        cp      40
+                        FlipCarryFlag
+                        rl      e
+                        cp      16                          ; if > 16 then roll carry flag into e
+                        FlipCarryFlag
+                        rl     e
+                        ld      a,e                         ; a = ragged size from %00000111 to %00000000
+                        ld      (RaggedSize),a
+; .........................................................................................................................  
+.SkipSetK:              ld      hl,SBnKLineArray            ; prep line array details ready for filling
                         ld      (LineArrayPtr),hl
                         xor     a
                         ld      (LineCount),a
                         ld      d,0
-.SetRaggedEdgeMax:      ld      a,e
-                        ld      e,0
-                        ld      (SunRadius),a
-                        cp      96
-                        FlipCarryFlag
-                        rl      e
-                        cp      40
-                        FlipCarryFlag
-                        rl      e
-                        cp      16
-                        FlipCarryFlag
-                        rl     e
-                        ld      a,e
-                        ; DEBUGGING DIAG for FUZZING CODE, LOOKS OK THOUGH ld      a,%00000001; DEBUG RAGGED
-                        ld      (RaggedSize),a
-.GetMinY:               ld      hl,(YCentre)
-                        ld      a,h
-                        and     SignOnly8Bit
-                        jr      nz,.NegativeY               ; if its neative then we start with 0 as it can only go up screen after radius
-                        ld      a,(SunRadius)               ; raged does not affect Y axis
-                        ld      e,a
-                        ld      d,0
-                        ClearCarryFlag
-                        sbc     hl,de                       ; hl now is a 2's c value if its negative else still +ve
-                        jp      m, .NegativeY
-                        ld      a,h
-                        and     SignMask8Bit
-                        ret     nz                          ; if its off screen then its not to be processed
-                        ld      a,l
-                        ReturnIfAGTENusng 128                ; if min is off screen then not to be processed
-                        jp      .SetMinY
-.NegativeY:             xor     a
-.SetMinY:               ld      (MinYOffset),a              ; so now we have Y top of screen
-.GetMaxY:               ld      hl,(YCentre)
-                        ld      a,h
-                        and     SignMask8Bit
-                        jr      nz,.MaxPosY                 ; if its neative then we start with 0 as it can only go up screen after radius
+; .........................................................................................................................  
+.GetMinY:               ld      hl,(SunScrnY)               ; now calculate start Y position
                         ld      a,(SunRadius)
-                        add     hl,a
-                        ld      a,l
-                        JumpIfAGTENusng 128, .MaxPosY
-                        ld      a,e
-                        add     a,l
-                        JumpIfAGTENusng 128, .MaxPosY
-                        JumpIfOverflow     .MaxPosY
-                        ld      a,e
-                        call    AddAusngToHLsng
+                        ld      e,a
+                        ld      d,a
+                        ClearCarryFlag
+                        sbc     hl,de
+                        jp      p,.DoneMinY
+                        ld      hl,0                        ; if its negative then we start with 0 as it can only go up screen after radius
+.DoneMinY:              ReturnIfRegNotZero h                ; if h > 0 then off the screen
+                        ld      a,l                         ; check if l > 127
+                        and     SignOnly8Bit                ; .
+                        ret     nz                          ; if bit is set then > 128
+.SetMinY:               ld      a,l             
+                        ld      (MinYOffset),a              ; so now we have Y top of screen
+.GetMaxY:               ld      hl,(SunScrnY)               ; get hl = Y + radius, note if we got here then this can never be a negative result but can go from -ve hl to +ve result
+                        ld      a,(SunRadius)               ; hl = hl + radius
+                        ld      d,0                         ; .
+                        ld      e,a                         ; .
+                        ClearCarryFlag                      ; .
+                        adc     hl,de                       ; .
                         ld      a,h
-                        and     SignOnly8Bit
-                        ret     nz                ; if max is negative then its off screen too
-                        ld      a,h
-                        and     SignMask8Bit                ; if h had a value then its max Y as well
-                        ld      a,l
-                        JumpIfAGTENusng 128, .MaxPosY         ; if l > 127 then max Y as well
-                        jr      nz, .MaxPosY
-                        jp      .SetMinY
-.MaxPosY:               ld      a,127
-.SetMaxY                ld      (MaxYOffSet),a              ; so now we have min and max Y coordinates and proj holds center
-                        ;break
+                        and     a
+                        jr      z,.YHiOK
+.YHiGTE127:             ld      hl,127
+                        jp      .SetMaxY
+.YHiOK:                 ld      a,l                         ; clamp at 127
+                        and     SignOnly8Bit                ; .
+                        jp      z,.SetMaxY
+                        ld      hl,127
+.SetMaxY                ld      a,l
+                        ld      (MaxYOffSet),a              ; so now we have min and max Y coordinates and SunScrnX & Y holds center
                         call    SunDrawCircle
                         call    SunDraw
                         ret
+                        ; b8 04 00 02 00 00 60 01 00 gives a 0.5 so we have the cal wrong as its +-1 so should be * result of divide by 128
 ;.. Now we caluclate the circle of the star
 ;.. its from MinY down the screen to MaxY center ProjX,ProjY.                
 ;.. We can use the circle draw logic gtom Bressenham's algorithm
@@ -716,9 +809,9 @@ SunDrawCircle:          ld      a,(SunRadius)
 .CheckRadius:           ReturnIfAIsZero                         ; elimiate zero or single pixel
                         JumpIfAEqNusng  1, SunCircleSinglePixel
                        ; JumpIfAGTENusng 127, SunFullScreen      ; if its covering whole then just make it yellow
-.MakeCentreX2C:         MemSignedTo2C XCentre                   ; convert 16 bit signed to 2's compliment
-.MakeCentreY2C:         MemSignedTo2C YCentre                   ; .
-.BoundsCheck            ld      hl,(YCentre)
+; already done .MakeCentreX2C:         MemSignedTo2C SunScrnX                   ; convert 16 bit signed to 2's compliment
+; already done .MakeCentreY2C:         MemSignedTo2C SunScrnY                   ; .
+.BoundsCheck            ld      hl,(SunScrnY)
                         push    hl
                         ld      a,(SunRadius)
                         add     hl,a
@@ -732,7 +825,7 @@ SunDrawCircle:          ld      a,(SunRadius)
                         ld      a,h
                         ReturnIfAGTENusng  1                     ; really shoudl be signed TODO
 
-                        ld      hl,(XCentre)
+                        ld      hl,(SunScrnX)
                         push    hl
                         ld      a,(SunRadius)
                         add     hl,a
@@ -775,7 +868,7 @@ SunDrawCircle:          ld      a,(SunRadius)
                         ret		c                               ;
 .ProcessLoop:	        exx                                     ; save out registers
 ; Process CY+Y CX+X & CY+Y CX-X..................................
-.Plot1:                 ld      hl, (YCentre)
+.Plot1:                 ld      hl, (SunScrnY)
 .Get1YRow:              ld      a,ixh                           
                         add     hl,a                            ; Check to see if CY+Y (note is add hl ,a usginedf only??)
 .Check1YRowOnScreen:    CheckRowHLOnScreen .NoTopPixelPair
@@ -784,9 +877,9 @@ SunDrawCircle:          ld      a,(SunRadius)
                         ld      a,ixl
                         call    ProcessXRowA
                         jp      .Plot2
-.NoTopPixelPair:        break
+.NoTopPixelPair:        ;break
 ; Process CY-Y CX+X & CY-Y CX-X..................................
-.Plot2:                 ld      hl, (YCentre)
+.Plot2:                 ld      hl, (SunScrnY)
 .Get2YRow:              ld      d,0
                         ld      e,ixh
                         ClearCarryFlag
@@ -797,9 +890,9 @@ SunDrawCircle:          ld      a,(SunRadius)
                         ld      a,ixl
                         call    ProcessXRowA
                         jp      .Plot3
-.NoBottomPixelPair:     break
+.NoBottomPixelPair:     ;break
 ; Process CY+X CX+Y & CY+X CX-Y..................................
-.Plot3:                 ld      hl, (YCentre)
+.Plot3:                 ld      hl, (SunScrnY)
 .Get3YRow:              ld      a,ixl                          
                         add     hl,a                            ; Check to see if CY+Y
 .Check3YRowOnScreen:    CheckRowHLOnScreen .NoTop3PixelPair
@@ -808,9 +901,9 @@ SunDrawCircle:          ld      a,(SunRadius)
                         ld      a,ixh
                         call    ProcessXRowA
                         jp      .Plot4
-.NoTop3PixelPair:       break
+.NoTop3PixelPair:       ;break
 ; Process CY-X CX+Y & CY-X CX-Y..................................
-.Plot4:                 ld      hl, (YCentre)
+.Plot4:                 ld      hl, (SunScrnY)
 .Get4YRow:              ld      d,0
                         ld      e,ixl
                         ClearCarryFlag
@@ -837,12 +930,12 @@ SunDrawCircle:          ld      a,(SunRadius)
                         inc de	    
                         inc ixl				    ; X=X+1
                         jp      .CircleLoop
-SunCircleSinglePixel:     ld      hl,(XCentre)
+SunCircleSinglePixel:     ld      hl,(SunScrnX)
                         ld      a,h
                         and     a
                         ret     nz                  ; if the high byte is set then no pixel
                         ld      c,l
-                        ld      hl,(YCentre)
+                        ld      hl,(SunScrnY)
                         ld      a,h
                         and     a
                         ret     nz                  ; if the high byte is set then no pixel
@@ -855,7 +948,7 @@ SunCircleSinglePixel:     ld      hl,(XCentre)
                         ret
 
 ProcessXRowA:           ;break
-                        ld      hl,(XCentre)                    ; get X Center
+                        ld      hl,(SunScrnX)                    ; get X Center
                         push    af                              ; save A (curent offset +/- value
                         add     hl,a                            ; Hl = HL + offset
                         ld      a,h                             ; is HL negative?, if so then set C to 0
@@ -879,7 +972,7 @@ ProcessXRowA:           ;break
 .ProcessSubtract:       pop     af                              ; get offset back
                         ld      e,a                             ; but goes into DE as its a subtract
                         ld      d,0
-                        ld      hl,(XCentre)                    ; so do subtract
+                        ld      hl,(SunScrnX)                    ; so do subtract
                         ClearCarryFlag                          ; .
                         sbc     hl,de                           ; .
                         jp      m,.XCoordLeftNegative           ; again test for min max
