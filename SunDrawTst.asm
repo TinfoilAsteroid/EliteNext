@@ -1,6 +1,6 @@
  DEVICE ZXSPECTRUMNEXT
 
- CSPECTMAP clipTst.map
+ CSPECTMAP sunDrawTst.map
  OPT --zxnext=cspect --syntax=a --reversepop
 
 DEBUGSEGSIZE   equ 1
@@ -82,23 +82,34 @@ STEPDEBUG               equ 1
                         call        l1_set_border                        
 Initialise:             MMUSelectLayer2
                         call 		l2_initialise
-                        call		l2_cls
+                        call        asm_l2_double_buffer_on
 ;..................................................................................................................................
-                        MMUSelectLayer2
-SunLoop:                MMUSelectSun
-                        ld          hl,$0001
+SunLoop:                MMUSelectLayer2
+                        call		l2_cls
+                        MMUSelectSun
+                        ld          hl,$0081
                         ld          (SBnKxlo),hl
+                        ld          hl,$0001
                         ld          (SBnKylo),hl
                         ld          hl,$0160
                         ld          (SBnKzlo),hl
-                        ZeroA
+                        ld          a,$80
                         ld          (SBnKxsgn),a
+                        ZeroA
                         ld          (SBnKysgn),a
                         ld          (SBnKzsgn),a
                         call        SunUpdateAndRender
+                       ; ld          hl, 300
+                       ; ld          (SunScrnX),hl
+                       ; ld          hl, 170
+                       ; ld          (SunScrnY),hl
                         MMUSelectLayer2
+                      ;  call        SunCalculateRadius
+                       ; call        YOnScreen
+                        call        l2_flip_buffers
                         jp          SunLoop
 ;..................................................................................................................................
+
 
     INCLUDE	"./Hardware/memfill_dma.asm"
     INCLUDE	"./Hardware/memcopy_dma.asm"
@@ -282,7 +293,7 @@ VarBackface                 DB 0
 	ORG	    SunBankAddr,BankSunData
     INCLUDE "./Universe/Sun/sun_data.asm"
 
-    SAVENEX OPEN "TestSunRender.nex", $8000 , $7F00
+    SAVENEX OPEN "sunDrawTst.nex", $8000 , $7F00
     SAVENEX CFG  0,0,0,1
     SAVENEX AUTO
     SAVENEX CLOSE

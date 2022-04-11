@@ -629,7 +629,19 @@ SunProcessVertex:       MACRO   vertlo, vertsgn
 .calculatedVert:
                         ENDM
                         
-                            
+; .........................................................................................................................
+SunCalculateRadius:     ld      de,(SBnKzlo)
+                        ld      a,(SBnKzsgn)
+                        ld      c,a
+                        ld      hl,$6000  ; was hl          ; planet radius at Z = 1 006000
+                        xor     a
+                        call    Div24by24LeadSign           ; radius = AHL/CDE = 24576 / distance z
+                        ld      a,d                         ; if high byte (d) = 0 then e contains radius
+                        JumpIfAIsZero  .SaveRadius
+.MaxRadius:             ld      e,248                       ;set radius to 248 as maxed out
+.SaveRadius:            ld      a,e
+                        ld      (SunRadius),a               ; save a copy of radius now for later
+                        ret    
                         
                    ; could probabyl set a variable say "varGood", default as 1 then set to 0 if we end up with a good calulation?? may not need it as we draw here     
 SunUpdateAndRender:     call    SunApplyMyRollAndPitch
@@ -641,25 +653,22 @@ SunUpdateAndRender:     call    SunApplyMyRollAndPitch
                         or      (hl)
                         ReturnIfAIsZero
 .calculateX:            SunProcessVertex SBnKxlo, SBnKxsgn
-.calculatedX:           ld      a,ScreenCenterX
-                        call    HL2cEquHLSgnPlusAusgn       ; correct to center of screen
+.calculatedX:           ld      e,ScreenCenterX
+                        ld      d,0
+                        ClearCarryFlag
+                        adc     hl,de
+                        ;call    HL2cEquHLSgnPlusAusgn       ; correct to center of screen
                         ld      (SunScrnX),hl               ; save projected X Position, 2's compliment
 .calculateY:            SunProcessVertex SBnKylo, SBnKysgn
-.calculatedY:           ld      a,ScreenCenterY
-                        call    HL2cEquHLSgnPlusAusgn       ; correct to center of screen
+.calculatedY:           ld      e,ScreenCenterY
+                        ld      d,a
+                        ex      de,hl
+                        ClearCarryFlag
+                        sbc     hl,de
+                        ;call    HL2cEquHLSgnPlusAusgn       ; correct to center of screen
                         ld      (SunScrnY),hl               ; save projected Y Position, 2's compliment
 ; .........................................................................................................................
-.CalculateRadius:       ld      de,(SBnKzlo)
-                        ld      a,(SBnKzsgn)
-                        ld      c,a
-                        ld      hl,$6000  ; was hl          ; planet radius at Z = 1 006000
-                        xor     a
-                        call    Div24by24LeadSign           ; radius = AHL/CDE = 24576 / distance z
-                        ld      a,d                         ; if high byte (d) = 0 then e contains radius
-                        JumpIfAIsZero  .SaveRadius
-.MaxRadius:             ld      e,248                       ;set radius to 248 as maxed out
-.SaveRadius:            ld      a,e
-                        ld      (SunRadius),a               ; save a copy of radius now for later
+                        call    SunCalculateRadius
 ; .........................................................................................................................  
 .CheckIfSunOnScreen:    ld      hl,(SunScrnX)               ; get x pixel position
                         ld      iyh,0                       ; iyh holds draw status, 0= OK
@@ -687,24 +696,24 @@ SunUpdateAndRender:     call    SunApplyMyRollAndPitch
                         JumpIfAIsNotZero   .PosYCheck2
                         ld      a,l
                         and     %10000000
-                        jp      z,.YOnScreen                ; at least 1 row is on screen as > 128
+                        jp      z,YOnScreen                ; at least 1 row is on screen as > 128
 .PosYCheck2:            ld      d,0                         ; de = radius
                         ClearCarryFlag
                         sbc     hl,de
-                        jp      m,.YOnScreen                ; so if its -ve then it spans screen
+                        jp      m,YOnScreen                ; so if its -ve then it spans screen
                         ld      a,h                         ; if h > 0 then off screen so did not span
                         ReturnIfANotZero                    ; .
                         ld      a,l                         ; if l > 128 then off screen so did not span
                         and     %10000000                   ; .
                         ReturnIfANotZero                    ; .
-                        jp      .YOnScreen                  ; so Y at least spans
+                        jp      YOnScreen                  ; so Y at least spans
 .CheckYNegative:        ld      d,0                         ; de = radius
                         ClearCarryFlag
                         adc     hl,de                       ; so we have hl - de
-                        jp      p,.YOnScreen                ; if result was positive then it spans screen so we are good
+                        jp      p,YOnScreen                ; if result was positive then it spans screen so we are good
                         ret                                 ; else never gets above 0 so return
 ; .........................................................................................................................  
-.YOnScreen:             ld      hl,SBnKLineArray            ; we load start and end as 0
+YOnScreen:             ld      hl,SBnKLineArray            ; we load start and end as 0
                         ld		de, SunLineArraySize        ; just if we get a 0,0 genuine we will not plot it
                         ld		a,0
                         call	memfill_dma                       
@@ -727,12 +736,11 @@ SunUpdateAndRender:     call    SunApplyMyRollAndPitch
                         ld      (LineArrayPtr),hl
                         xor     a
                         ld      (LineCount),a
-                        ld      d,0
 ; .........................................................................................................................  
 .GetMinY:               ld      hl,(SunScrnY)               ; now calculate start Y position
                         ld      a,(SunRadius)
                         ld      e,a
-                        ld      d,a
+                        ld      d,0
                         ClearCarryFlag
                         sbc     hl,de
                         jp      p,.DoneMinY
@@ -805,48 +813,46 @@ SetIYMinusOffset:       MACRO   reg
                         ENDM
                       
 
-SunDrawCircle:          ld      a,(SunRadius)                  
-.CheckRadius:           ReturnIfAIsZero                         ; elimiate zero or single pixel
-                        JumpIfAEqNusng  1, SunCircleSinglePixel
-                       ; JumpIfAGTENusng 127, SunFullScreen      ; if its covering whole then just make it yellow
-; already done .MakeCentreX2C:         MemSignedTo2C SunScrnX                   ; convert 16 bit signed to 2's compliment
-; already done .MakeCentreY2C:         MemSignedTo2C SunScrnY                   ; .
-.BoundsCheck            ld      hl,(SunScrnY)
-                        push    hl
-                        ld      a,(SunRadius)
-                        add     hl,a
-                        bit     7,h
-                        ret     nz                              ; if Y + radius is negative then off the screen
-                        pop     hl
-                        ld      d,0
-                        ld      e,a
-                        ClearCarryFlag
-                        sbc     hl,de
-                        ld      a,h
-                        ReturnIfAGTENusng  1                     ; really shoudl be signed TODO
-
-                        ld      hl,(SunScrnX)
-                        push    hl
-                        ld      a,(SunRadius)
-                        add     hl,a
-                        bit     7,h
-                        ret     nz                              ; if Y + radius is negative then off the screen
-                        pop     hl
-                        ld      d,0
-                        ld      e,a
-                        ClearCarryFlag
-                        sbc     hl,de
-                        ld      a,h
-
-                        ReturnIfAGTENusng 1                      ; really shoudl be signed TODO                        
-                        
+;;;-SunDrawCircle:          ld      a,(SunRadius)                  
+;;;-.CheckRadius:           ReturnIfAIsZero                         ; elimiate zero or single pixel
+;;;-                        JumpIfAEqNusng  1, SunCircleSinglePixel
+;;;-                       ; JumpIfAGTENusng 127, SunFullScreen      ; if its covering whole then just make it yellow
+;;;-; already done .MakeCentreX2C:         MemSignedTo2C SunScrnX                   ; convert 16 bit signed to 2's compliment
+;;;-; already done .MakeCentreY2C:         MemSignedTo2C SunScrnY                   ; .
+;;;-.BoundsCheck            ld      hl,(SunScrnY)
+;;;-                        push    hl
+;;;-                        ld      a,(SunRadius)
+;;;-                        add     hl,a
+;;;-                        bit     7,h
+;;;-                        ret     nz                              ; if Y + radius is negative then off the screen
+;;;-                        pop     hl
+;;;-                        ld      d,0
+;;;-                        ld      e,a
+;;;-                        ClearCarryFlag
+;;;-                        sbc     hl,de
+;;;-                        ld      a,h
+;;;-                        ReturnIfAGTENusng  1                     ; really shoudl be signed TODO
+;;;-
+;;;-                        ld      hl,(SunScrnX)
+;;;-                        push    hl
+;;;-                        ld      a,(SunRadius)
+;;;-                        add     hl,a
+;;;-                        bit     7,h
+;;;-                        ret     nz                              ; if Y + radius is negative then off the screen
+;;;-                        pop     hl
+;;;-                        ld      d,0
+;;;-                        ld      e,a
+;;;-                        ClearCarryFlag
+;;;-                        sbc     hl,de
+;;;-                        ld      a,h
+;;;-
+;;;-                        ReturnIfAGTENusng 1                      ; really shoudl be signed TODO                        
+SunDrawCircle                        
                         ; ** BNOTE Ptuichj abnd roll has a bug as piitch increases z axis value
 .PrepCircleData:       ; ld      ixl,0
                        ; ld		(.Plot1+1),bc			        ; save origin into DE reg in code
-                       ld      a,(SunRadius)
+                        ld      a,(SunRadius)
                         ld		ixh,a							; ixh = radius
-
-
                         ld		ixl,0						    ; ixl = delta (y)
 .calcd:	                ld		h,0                             ; de = radius * 2
                         ld		l,a                             ; .

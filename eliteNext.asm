@@ -274,16 +274,18 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
                         call   l2_cls_upper_two_thirds
                         MMUSelectLayer1
 .UpdateSun:             MMUSelectSun
-.DEBUGFORCE:            ;ld      hl,$0000
-                        ;ld      (SBnKxlo),hl
-                        ;ld      (SBnKylo),hl
-                        ;xor     a
-                        ;ld      (SBnKxsgn),a
-                        ;ld      (SBnKysgn),a
-                        ;ld      hl,$0200
-                        ;ld      (SBnKzlo),hl
-                        ;ld      a,$00
-                        ;ld      (SBnKzsgn),a
+.DEBUGFORCE:            
+                       ;ld          hl,$0081
+                       ;ld          (SBnKxlo),hl
+                       ;ld          hl,$0001
+                       ;ld          (SBnKylo),hl
+                       ; ld          hl,$0160
+                       ; ld          (SBnKzlo),hl
+                        ;ld          a,$80
+                        ;ld          (SBnKxsgn),a
+                        ;ld          (SBnKysgn),a
+                       ; ZeroA
+                      ;  ld          (SBnKzsgn),a
                         call    SunUpdateAndRender
 ;..Later this will be done via self modifying code to load correct stars routine for view..........................................
 DrawDustForwards:       ld     a,$DF
