@@ -243,10 +243,18 @@ mulCHLbyDSigned:        ld      a,d                 ; get sign from d
 ;  34 * 1E = 618 H = 18 +A = 22 carry = 6
 ;  5  * 1E = 096 C = 96 + 6 = 9C
 ;  CHL = 9C2214
- 
+;mult3
 ; DELC = HLE * D, uses HL, DE, C , A , IYH
 ; HLE = multiplicand D = multiplier
 ; tested by mathstestsun.asm all passed
+; Algorithm
+; AC =  E * D   (save carry)         H    L    E
+; DE =  L * D                                  D
+;  L =  A + E + carry                         E*D (lo)
+; DE =  H * D                             L*D+ ^ (hi)
+;  E =  A + E + carry                H*D (lo) + carry
+;                                
+;
 mulHLEbyDSigned:        ld      a,d                 ; get sign from d
                         xor     h                   ; xor with h to get resultant sign
                         and     SignOnly8Bit        ; .
@@ -257,29 +265,89 @@ mulHLEbyDSigned:        ld      a,d                 ; get sign from d
                         ld      a,d                 ; d = ABS D
                         and     SignMask8Bit        ; .
                         ld      d,a                 ; .
-; At this point HLE = ABS (HLE), A = ABS(D)                        
-.mul1:                  mul     de                  ; C = E * D
-                        ex      af,af'              ; save mulitplier
+.testEitherSideZero:    or      a
+                        jr      z,.ResultZero
+                        ld      a,h
+                        or      l
+                        or      e
+                        jr      z,.ResultZero
+; At this point HLE = ABS (HLE), A = ABS(D) 
+                        ld      b,d                 ; save Quotient
+.mul1:                  mul     de                  ; C = E * D             
                         ld      c,e                 ; C = p0
-                        ld      a,d                 ; save carry and get back multiplier
-                        ex      af,af'
+                        ld      iyl,d               ; save carry (p1)
 .mul2:                  ld      e,l                 ; L = L * D
-                        ld      d,a                 ; .
+                        ld      d,b                 ; .
                         mul     de                  ; .
-                        ex      af,af'              ; .
-.carrybyte1:            add     a,e                 ; L = L + carry byte
+                        ld      a,iyl               ; get back p1
+.carrybyte1:            add     a,e                 ; L = L + E
                         ld      l,a                 ; .
-                        ld      a,d
-                        ex      af,af'              ; save new carry byte
-.mul3:                  ld      e,h                 ; e = H * D
-                        ld      d,a                 
-                        mul     de
-                        ex      af,af'
-                        adc     a,e                 ; 
-                        ld      e,a
-                        ld      d,iyh
+                        ld      iyl,d               ; save new carry byte
+.mul3:                  ld      e,h                 ; E = H * D
+                        ld      d,b                 ; .
+                        mul     de                  ; .
+                        ld      a,iyl
+                        adc     a,e                 ; .
+                        ld      e,a                 ; .
+.ItsNotZero:            ld      a,d                 ;
+                        adc     a,0                 ; final carry bit
+                        or      iyh                 ; bring back sign
+                        ld      d,a                 ; s = sign
+                        ret
+.ResultZero:            ld      de,0
+                        ZeroA
+                        ld      c,a
+                        ld      l,a
                         ret
 
+;;;
+;;;
+;;;mulHLEbyDSigned:        ld      a,d                 ; get sign from d
+;;;                        xor     h                   ; xor with h to get resultant sign
+;;;                        and     SignOnly8Bit        ; .
+;;;                        ld      iyh,a               ; iyh = copy of sign
+;;;                        ld      a,h                 ; now HLE = ABS (HLE)
+;;;                        and     SignMask8Bit        ; .
+;;;                        ld      h,a                 ; .
+;;;                        ld      a,d                 ; d = ABS D
+;;;                        and     SignMask8Bit        ; .
+;;;                        ld      d,a                 ; .
+;;;.testEitherSideZero:    or      a
+;;;                        jr      z,.ResultZero
+;;;                        ld      a,h
+;;;                        or      l
+;;;                        or      e
+;;;                        jr      z,.ResultZero
+;;;; At this point HLE = ABS (HLE), A = ABS(D)                        
+;;;.mul1:                  mul     de                  ; C = E * D             
+;;;                        ex      af,af'              ; save mulitplier
+;;;                        ld      c,e                 ; C = p0
+;;;                        ld      a,d                 ; save carry (p1)
+;;;                        ex      af,af'              ; .
+;;;.mul2:                  ld      e,l                 ; L = L * D
+;;;                        ld      d,a                 ; .
+;;;                        mul     de                  ; .
+;;;                        ex      af,af'              ; .
+;;;.carrybyte1:            add     a,e                 ; L = L + E
+;;;                        ld      l,a                 ; .
+;;;                        ld      a,d
+;;;                        ex      af,af'              ; save new carry byte
+;;;.mul3:                  ld      e,h                 ; E = H * D
+;;;                        ld      d,a                 ; .
+;;;                        mul     de                  ; .
+;;;                        ex      af,af'              ; .
+;;;                        adc     a,e                 ; .
+;;;                        ld      e,a                 ; .
+;;;.ItsNotZero:            ld      a,d                 ;
+;;;                        adc     a,0                 ; final carry bit
+;;;                        or      iyh                 ; bring back sign
+;;;                        ld      d,a                 ; s = sign
+;;;                        ret
+;;;.ResultZero:            ld      de,0
+;;;                        ZeroA
+;;;                        ld      c,a
+;;;                        ld      l,a
+;;;                        ret
  
 ; multiplication of two S156-bit numbers into a 16-bit 2'd compliment product
 ; enter : de = 16-bit multiplicand

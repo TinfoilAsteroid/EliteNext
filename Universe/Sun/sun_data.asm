@@ -191,10 +191,10 @@ CreateSun:              call    ResetSBnKData
                         and     %00000011
                         ld      (SBnKxsgn),a
                         ld      (SBnKysgn),a
-                     ; DEBUG   ld      hl, $0000
-                     ; DEBUG   ld      (SBnKzhi),hl
-                     ; DEBUG   ld      a, $E3
-                     ; DEBUG   ld      (SBnKzlo),a
+                        ld      hl, $0000
+                        ld      (SBnKzhi),hl
+                        ld      a, $E3
+                        ld      (SBnKzlo),a
                         ret
 ; --------------------------------------------------------------                        
 ; This sets current universe object to a planet,they use sign + 23 bit positions
@@ -613,6 +613,7 @@ SunProcessVertex:       MACRO   vertlo, vertsgn
                         ld      c,a                         ;
                         ld      hl,(vertlo)                ; AHL = x
                         ld      a,(vertsgn)                ;
+                        l***TODO THIS DOES NOT WORK
                         call    SunKEquAHLDivCDE            ; result in sunvarK to K + 3
                         ld      hl,(SunVarK)                ; result is in DEHL (high to low)
                         ld      de,(SunVarK+2)              
@@ -630,25 +631,29 @@ SunProcessVertex:       MACRO   vertlo, vertsgn
                         ENDM
                         
 ; .........................................................................................................................
-SunCalculateRadius:     ld      de,(SBnKzlo)
-                        ld      a,(SBnKzsgn)
-                        ld      c,a
+; we only hit this if z is positive so we can ignore signs
+SunCalculateRadius:     ld      bc,(SBnKzlo)                ; DBC = z position
+                        ld      a,(SBnKzsgn)                ; 
+                        ld      d,a                         ; 
                         ld      hl,$6000  ; was hl          ; planet radius at Z = 1 006000
-                        xor     a
-                        call    Div24by24LeadSign           ; radius = AHL/CDE = 24576 / distance z
-                        ld      a,d                         ; if high byte (d) = 0 then e contains radius
+                        call    Div16by24usgn               ; radius = HL/DBC = 24576 / distance z
+                        or      h                           ; if A or H are not 0 then max Radius
                         JumpIfAIsZero  .SaveRadius
 .MaxRadius:             ld      e,248                       ;set radius to 248 as maxed out
-.SaveRadius:            ld      a,e
+.SaveRadius:            ld      a,l                         ; l = resultant radius
+                        or      1                           ; at least radius 1 (never even so need to test)
                         ld      (SunRadius),a               ; save a copy of radius now for later
+                        ld      e,a                         ; as later code expects it to be in e
                         ret    
                         
                    ; could probabyl set a variable say "varGood", default as 1 then set to 0 if we end up with a good calulation?? may not need it as we draw here     
 SunUpdateAndRender:     call    SunApplyMyRollAndPitch
 .CheckDrawable:         ld      a,(SBnKzsgn)
-                        and     SignOnly8Bit
-                        ret     nz
-.CheckDist48:           ReturnIfAGTENusng 48                ; at a distance over 48 its too far away
+;                        and     SignOnly8Bit
+;                        ret     nz
+;.CheckDist48:           ld      a,b                         ; we don;t need to worry about
+; If we check > 48 unsigned then negative also gets rejected in one test
+                        ReturnIfAGTENusng 48                ; at a distance over 48 its too far away
                         ld      hl,SBnKzhi                  ; if the two high bytes are zero then its too close
                         or      (hl)
                         ReturnIfAIsZero

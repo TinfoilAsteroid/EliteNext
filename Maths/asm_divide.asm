@@ -11,8 +11,36 @@
 ;               if bit 7 of flag was set then loop
 ;                                        elase a = e and exit
 ;
+; ">BC_Div_DE: BC = BC / DE. HL = remainder fast divide with unrolled loop BC/DE ==> BC, remainder in HL
 ;
-
+;INPUTS: hl = dividend dbc = divisor
+;OUTPUTS: hl/de -> AHL = quotient CDE = remainder, Carryflag set if divide by 0
+Div16by24usgn:          inc     d                           ; can we fast retu
+                        dec     d
+                        jr      nz,.ResultZero
+                        ld      de,bc                       ; so prep for bc/de
+                        ld      bc,hl
+.div16by16usng:         ld      a,d
+                        or      e
+                        jr      z,.DivideByZero
+                        inc     d
+                        dec     d
+                        call    BC_Div_DE
+                        ZeroA
+                        ex      de,hl                       ; de = remainder (need to fix c after hl = nothing of worth)
+                        ld      hl,bc                       ; hl = result (a is zero from above)
+                        ld      c,a                         ; now fix c
+                        ret 
+.ResultZero:            xor     a                           ; set AHL to 0 as d was 0 so h is zero
+                        ld      c,a                         ; c = 0
+                        ex      de,hl                       ; de = hl
+                        ld      l,h                         ; xora clears carry flag too
+                        ret
+.DivideByZero:          ld      a,$FF
+                        ld      h,a
+                        ld      l,a
+                        SetCarryFlag
+                        ret
 
 AEquAmul256DivD:        JumpIfAGTENusng  d, .Ll28Exit255
                         ld      e,%11111110                 ; Set R to have bits 1-7 set, so we can rotate through 7

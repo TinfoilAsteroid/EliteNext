@@ -6,9 +6,9 @@
   5   0000
   6   0000              testStartup:            ORG         $8000
   7   8000
-  8   8000 DD 21 9B 86                          ld      ix, TestCase1
-  9   8004 3A 3C 87     .TestLoop:              ld      a,(testCounter)
- 10   8007 21 3B 87                             ld      hl, testTotal
+  8   8000 DD 21 6C 86                          ld      ix, TestCase1
+  9   8004 3A 0D 87     .TestLoop:              ld      a,(testCounter)
+ 10   8007 21 0C 87                             ld      hl, testTotal
  11   800A BE                                   cp      (hl)
  12   800B 28 5C                                jr      z,.Done
  13   800D DD 7E 00                             ld      a,(ix+testCase.XLo)
@@ -47,7 +47,7 @@
  46   8053              .COK:
  47   8053 FD 7D                                ld      a,iyl
  48   8055 DD 77 0F                             ld      (ix+testCase.PassFail),a
- 49   8058 21 3C 87                             ld      hl,testCounter
+ 49   8058 21 0D 87                             ld      hl,testCounter
  50   805B 34                                   inc     (hl)
  51   805C DD E5                                push    ix
  52   805E E1                                   pop     hl
@@ -105,97 +105,99 @@
  41+  806E              ShipTypeStation     equ 2
  42+  806E              ShipTypeMissile     equ 1
  43+  806E              ShipTypeNormal      equ 0
- 44+  806E              ShipTypeEmpty       equ 255
- 45+  806E              ; TacticsControl
- 46+  806E              ShipIsTrader        equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
- 47+  806E              ShipIsBountyHunter  equ Bit1Only   ;
- 48+  806E              ShipIsHostile       equ Bit2Only   ;
- 49+  806E              ShipNotHostile      equ Bit2Clear   ;
- 50+  806E              ShipIsPirate        equ Bit3Only   ;
- 51+  806E              ShipIsDocking       equ Bit4Only   ;
- 52+  806E              ShipIsBystander     equ Bit5Only   ;
- 53+  806E              ShipIsCop           equ Bit6Only   ;
- 54+  806E              ShipIsScoopDockEsc  equ Bit7Only   ;
- 55+  806E              ShipAIEnabled       equ Bit7Only   ;
- 56+  806E              ShipExploding       equ Bit5Only
- 57+  806E              ShipKilled          equ Bit7Clear
- 58+  806E
- 59+  806E              ; UniverseAIControl
- 60+  806E              ShipCanAnger        equ %00000001
- 61+  806E
- 62+  806E
- 63+  806E              ShipMaxDistance     equ 192
- 64+  806E              HyperSpaceTimers    equ $0B0B
- 65+  806E
- 66+  806E
- 67+  806E              MaxNumberOfStars	equ 11
- 68+  806E              ConsoleRefreshInterval  equ 4
- 69+  806E
- 70+  806E              ShipTypeSize		equ	32 			;??????? just a guess for now
- 71+  806E              ShipSST				equ 4			; its a space station
- 72+  806E              UniverseBasePage 	equ 70			; Base memory bank for universe Item #0
- 73+  806E              ShipDataBasePage	equ	90			; Needs 2mb upgrade but what the heck
- 74+  806E              ShipCountMax		equ	2			; For now just 2 ships to debug
- 75+  806E              LineLimitPerShip	equ 70			; Max lines per ship
- 76+  806E              FaceLimitPerShip	equ	70			; Same as line limit to simplify some logic
- 77+  806E              ; "NEED TO DEFINE SHIPTYPESIZE TODO"
- 78+  806E              PlayerDocked		equ	$FF
- 79+  806E
- 80+  806E              ; Memory page managment	(Refers to a memory slot as a place to access data)
- 81+  806E              ShipDataSlot		equ	6			; this may move into rom swap out space later
- 82+  806E              UniverseObjectSlot	equ	7
- 83+  806E
- 84+  806E              KeyForwardsView		equ	$20
- 85+  806E              ; Game specific equates
- 86+  806E              MissileDropHeight   equ 5           ; how far the missile is ejected on launch in y axis
- 87+  806E
- 88+  806E              ;...Game Colour Mapping
- 89+  806E              L2DustColour        equ L2ColourGREY_1
- 90+  806E              L2SunScannerBright  equ 252
- 91+  806E              L2SunScanner        equ 180
- 92+  806E
- 93+  806E
- 94+  806E              ; Ship Data
- 95+  806E              ;;;;	.XX21	\ -> &5600 \ Table of pointers to ships' data given to XX0
- 96+  806E              ;;;;00 7F			 EQUW &7F00 \ type  1 is #MSL  Missile data on page off bottom of screen
- 97+  806E              ;;;;00 00			 EQUW 0     \ type  2 is #SST  Space Station, Coriolis or Dodo.
- 98+  806E              ;;;;00 00			 EQUW 0     \ type  3 is #ESC  Escape capsule
- 99+  806E              ;;;;00 00			 EQUW 0     \ type  4 is #PLT  Plate, alloys
-100+  806E              ;;;;00 00			 EQUW 0     \ type  5 is #OIL  Cargo cannister
-101+  806E              ;;;;00 00			 EQUW 0     \ type  6 is       Boulder
-102+  806E              ;;;;00 00			 EQUW 0     \ type  7 is #AST  Asteroid
-103+  806E              ;;;;00 00			 EQUW 0     \ type  8 is #SPL  Splinter, rock.
-104+  806E              ;;;;00 00			 EQUW 0     \ type  9 is #SHU  Shuttle
-105+  806E              ;;;;00 00			 EQUW 0     \ type 10 is       Transporter
-106+  806E              ;;;;00 00			 EQUW 0     \ type 11 is #CYL  Cobra Mk III,  Boa
-107+  806E              ;;;;00 00			 EQUW 0     \ type 12 is       Python
-108+  806E              ;;;;00 00			 EQUW 0     \ type 13 is       Last of three traders
-109+  806E              ;;;;00 00			 EQUW 0     \ type 14 is #ANA  Anaconda
-110+  806E              ;;;;00 00			 EQUW 0     \ type 15 is #WRM  Worm with Anaconda
-111+  806E              ;;;;00 00			 EQUW 0     \ type 16 is #COP  Viper
-112+  806E              ;;;;00 00			 EQUW 0     \ type 17 is       First pirate
-113+  806E              ;;;;00 00			 EQUW 0     \ type 18 is
-114+  806E              ;;;;00 00			 EQUW 0     \ type 19 is #KRA  Krait small pirate
-115+  806E              ;;;;00 00			 EQUW 0     \ type 20 is #ADA  Adder
-116+  806E              ;;;;00 00			 EQUW 0     \ type 21 is
-117+  806E              ;;;;00 00			 EQUW 0     \ type 22 is
-118+  806E              ;;;;00 00			 EQUW 0     \ type 23 is
-119+  806E              ;;;;00 00			 EQUW 0     \ type 24 is #CYL2 Last strong pirate
-120+  806E              ;;;;00 00			 EQUW 0     \ type 25 is #ASP  Asp Mk II
-121+  806E              ;;;;00 00			 EQUW 0     \ type 26 is #FER  Fer de Lance
-122+  806E              ;;;;00 00			 EQUW 0     \ type 27 is
-123+  806E              ;;;;00 00			 EQUW 0     \ type 28 is	Last of three bounty hunters
-124+  806E              ;;;;00 00			 EQUW 0     \ type 29 is #THG  Thargoid
-125+  806E              ;;;;00 00			 EQUW 0     \ type 30 is #TGL  Thargon
-126+  806E              ;;;;00 00			 EQUW 0     \ type 31 is #CON  Constrictor
-127+  806E              ;;;;	.E%	\ -> &563E \ Hull NEWB bits are escpod, cop, inno, ?, pirate, angry, hunter, trader.
-128+  806E              ;;;;			\ NEWB examples
-129+  806E              ;;;;\ 21			EQUB &21    \ 0010 0001    9 Shuttle has no escape pod, inno, trader.
-130+  806E              ;;;;\ 61			EQUB &61    \ 0110 0001   10 Tansporter no escape pod, Cop, inno, trader.
-131+  806E              ;;;;\ A0			EQUB &A0    \ 1010 0000   11 Cobra has Escape pod, inno, not a trader.
-132+  806E              ;;;;\ C2			EQUB &C2    \ 1100 0010   16 Viper has Escape pod, Cop, hunter.
-133+  806E              ;;;;\ 8C			EQUB &8C    \ 1000 1100   19 Krait pirate has escape pod, is pirate and angry.
-134+  806E
+ 44+  806E              ShipTypeText        equ 253
+ 45+  806E              ShipTypeDebug       equ 254
+ 46+  806E              ShipTypeEmpty       equ 255
+ 47+  806E              ; TacticsControl
+ 48+  806E              ShipIsTrader        equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
+ 49+  806E              ShipIsBountyHunter  equ Bit1Only   ;
+ 50+  806E              ShipIsHostile       equ Bit2Only   ;
+ 51+  806E              ShipNotHostile      equ Bit2Clear   ;
+ 52+  806E              ShipIsPirate        equ Bit3Only   ;
+ 53+  806E              ShipIsDocking       equ Bit4Only   ;
+ 54+  806E              ShipIsBystander     equ Bit5Only   ;
+ 55+  806E              ShipIsCop           equ Bit6Only   ;
+ 56+  806E              ShipIsScoopDockEsc  equ Bit7Only   ;
+ 57+  806E              ShipAIEnabled       equ Bit7Only   ;
+ 58+  806E              ShipExploding       equ Bit5Only
+ 59+  806E              ShipKilled          equ Bit7Clear
+ 60+  806E
+ 61+  806E              ; UniverseAIControl
+ 62+  806E              ShipCanAnger        equ %00000001
+ 63+  806E
+ 64+  806E
+ 65+  806E              ShipMaxDistance     equ 192
+ 66+  806E              HyperSpaceTimers    equ $0B0B
+ 67+  806E
+ 68+  806E
+ 69+  806E              MaxNumberOfStars	equ 11
+ 70+  806E              ConsoleRefreshInterval  equ 4
+ 71+  806E
+ 72+  806E              ShipTypeSize		equ	32 			;??????? just a guess for now
+ 73+  806E              ShipSST				equ 4			; its a space station
+ 74+  806E              UniverseBasePage 	equ 70			; Base memory bank for universe Item #0
+ 75+  806E              ShipDataBasePage	equ	90			; Needs 2mb upgrade but what the heck
+ 76+  806E              ShipCountMax		equ	2			; For now just 2 ships to debug
+ 77+  806E              LineLimitPerShip	equ 70			; Max lines per ship
+ 78+  806E              FaceLimitPerShip	equ	70			; Same as line limit to simplify some logic
+ 79+  806E              ; "NEED TO DEFINE SHIPTYPESIZE TODO"
+ 80+  806E              PlayerDocked		equ	$FF
+ 81+  806E
+ 82+  806E              ; Memory page managment	(Refers to a memory slot as a place to access data)
+ 83+  806E              ShipDataSlot		equ	6			; this may move into rom swap out space later
+ 84+  806E              UniverseObjectSlot	equ	7
+ 85+  806E
+ 86+  806E              KeyForwardsView		equ	$20
+ 87+  806E              ; Game specific equates
+ 88+  806E              MissileDropHeight   equ 5           ; how far the missile is ejected on launch in y axis
+ 89+  806E
+ 90+  806E              ;...Game Colour Mapping
+ 91+  806E              L2DustColour        equ L2ColourGREY_1
+ 92+  806E              L2SunScannerBright  equ 252
+ 93+  806E              L2SunScanner        equ 180
+ 94+  806E
+ 95+  806E
+ 96+  806E              ; Ship Data
+ 97+  806E              ;;;;	.XX21	\ -> &5600 \ Table of pointers to ships' data given to XX0
+ 98+  806E              ;;;;00 7F			 EQUW &7F00 \ type  1 is #MSL  Missile data on page off bottom of screen
+ 99+  806E              ;;;;00 00			 EQUW 0     \ type  2 is #SST  Space Station, Coriolis or Dodo.
+100+  806E              ;;;;00 00			 EQUW 0     \ type  3 is #ESC  Escape capsule
+101+  806E              ;;;;00 00			 EQUW 0     \ type  4 is #PLT  Plate, alloys
+102+  806E              ;;;;00 00			 EQUW 0     \ type  5 is #OIL  Cargo cannister
+103+  806E              ;;;;00 00			 EQUW 0     \ type  6 is       Boulder
+104+  806E              ;;;;00 00			 EQUW 0     \ type  7 is #AST  Asteroid
+105+  806E              ;;;;00 00			 EQUW 0     \ type  8 is #SPL  Splinter, rock.
+106+  806E              ;;;;00 00			 EQUW 0     \ type  9 is #SHU  Shuttle
+107+  806E              ;;;;00 00			 EQUW 0     \ type 10 is       Transporter
+108+  806E              ;;;;00 00			 EQUW 0     \ type 11 is #CYL  Cobra Mk III,  Boa
+109+  806E              ;;;;00 00			 EQUW 0     \ type 12 is       Python
+110+  806E              ;;;;00 00			 EQUW 0     \ type 13 is       Last of three traders
+111+  806E              ;;;;00 00			 EQUW 0     \ type 14 is #ANA  Anaconda
+112+  806E              ;;;;00 00			 EQUW 0     \ type 15 is #WRM  Worm with Anaconda
+113+  806E              ;;;;00 00			 EQUW 0     \ type 16 is #COP  Viper
+114+  806E              ;;;;00 00			 EQUW 0     \ type 17 is       First pirate
+115+  806E              ;;;;00 00			 EQUW 0     \ type 18 is
+116+  806E              ;;;;00 00			 EQUW 0     \ type 19 is #KRA  Krait small pirate
+117+  806E              ;;;;00 00			 EQUW 0     \ type 20 is #ADA  Adder
+118+  806E              ;;;;00 00			 EQUW 0     \ type 21 is
+119+  806E              ;;;;00 00			 EQUW 0     \ type 22 is
+120+  806E              ;;;;00 00			 EQUW 0     \ type 23 is
+121+  806E              ;;;;00 00			 EQUW 0     \ type 24 is #CYL2 Last strong pirate
+122+  806E              ;;;;00 00			 EQUW 0     \ type 25 is #ASP  Asp Mk II
+123+  806E              ;;;;00 00			 EQUW 0     \ type 26 is #FER  Fer de Lance
+124+  806E              ;;;;00 00			 EQUW 0     \ type 27 is
+125+  806E              ;;;;00 00			 EQUW 0     \ type 28 is	Last of three bounty hunters
+126+  806E              ;;;;00 00			 EQUW 0     \ type 29 is #THG  Thargoid
+127+  806E              ;;;;00 00			 EQUW 0     \ type 30 is #TGL  Thargon
+128+  806E              ;;;;00 00			 EQUW 0     \ type 31 is #CON  Constrictor
+129+  806E              ;;;;	.E%	\ -> &563E \ Hull NEWB bits are escpod, cop, inno, ?, pirate, angry, hunter, trader.
+130+  806E              ;;;;			\ NEWB examples
+131+  806E              ;;;;\ 21			EQUB &21    \ 0010 0001    9 Shuttle has no escape pod, inno, trader.
+132+  806E              ;;;;\ 61			EQUB &61    \ 0110 0001   10 Tansporter no escape pod, Cop, inno, trader.
+133+  806E              ;;;;\ A0			EQUB &A0    \ 1010 0000   11 Cobra has Escape pod, inno, not a trader.
+134+  806E              ;;;;\ C2			EQUB &C2    \ 1100 0010   16 Viper has Escape pod, Cop, hunter.
+135+  806E              ;;;;\ 8C			EQUB &8C    \ 1000 1100   19 Krait pirate has escape pod, is pirate and angry.
+136+  806E
 # file closed: ../Variables/constant_equates.asm
  63   806E                                      INCLUDE "../Hardware/L2ColourDefines.asm"
 # file opened: ../Hardware/L2ColourDefines.asm
@@ -303,197 +305,226 @@
  25+  806E                                      ENDM
  26+  806E
  27+  806E              ;.. Bit routines
- 28+  806E              JumpOnMemBitSet:        MACRO mem, bitnbr, target
- 29+  806E ~                                    ld      a,(mem)
- 30+  806E ~                                    bit 	bitnbr,a
+ 28+  806E              JumpOnLeadSignSet:      MACRO   reg, target
+ 29+  806E ~                                    ld      a,reg
+ 30+  806E ~                                    and     SignOnly8Bit
  31+  806E ~                                    jp      nz,target
  32+  806E                                      ENDM
  33+  806E
- 34+  806E              JumpOnMemBitClear:      MACRO mem, bitnbr, target
- 35+  806E ~                                    ld      a,(mem)
- 36+  806E ~                                    bit 	bitnbr,a
+ 34+  806E              JumpOnLeadSignClear:    MACRO   reg, target
+ 35+  806E ~                                    ld      a,reg
+ 36+  806E ~                                    and     SignOnly8Bit
  37+  806E ~                                    jp      z,target
  38+  806E                                      ENDM
  39+  806E
- 40+  806E              JumpOnABit5Set:         MACRO   target
- 41+  806E ~                                    and     Bit5Only
+ 40+  806E              JumpOnLeadSignSetA:     MACRO   target
+ 41+  806E ~                                    and     SignOnly8Bit
  42+  806E ~                                    jp      nz,target
  43+  806E                                      ENDM
  44+  806E
- 45+  806E              JumpOnABit5Clear:       MACRO   target
- 46+  806E ~                                    and     Bit5Only
+ 45+  806E              JumpOnLeadSignClearA:   MACRO   target
+ 46+  806E ~                                    and     SignOnly8Bit
  47+  806E ~                                    jp      z,target
  48+  806E                                      ENDM
  49+  806E
- 50+  806E              JumpOnBitMaskSet:       MACRO   bitmask, target
- 51+  806E ~                                    and     bitmask
- 52+  806E ~                                    jp      nz,target
- 53+  806E                                      ENDM
- 54+  806E
- 55+  806E              JumpOnBitMaskClear:     MACRO   bitmask, target
- 56+  806E ~                                    and     bitmask
- 57+  806E ~                                    jp      z,target
- 58+  806E                                      ENDM
- 59+  806E
- 60+  806E              JumpOnBitSet:           MACRO  reg, bitnbr, target
- 61+  806E ~                                    bit 	bitnbr,reg
- 62+  806E ~                                    jp      nz,target
- 63+  806E                                      ENDM
- 64+  806E
- 65+  806E              JumpOnBitClear:         MACRO  reg, bitnbr, target
- 66+  806E ~                                    bit 	bitnbr,reg
- 67+  806E ~                                    jp      z,target
- 68+  806E                                      ENDM
- 69+  806E
- 70+  806E              ; Comparison Routines
- 71+  806E              JumpIfAGTEusng:         MACRO
- 72+  806E ~                                    jp		nc,target
- 73+  806E                                      ENDM
- 74+  806E
- 75+  806E              JumpIfAGTENusng:        MACRO reg,target
- 76+  806E ~                                    cp     reg
- 77+  806E ~                                    jp		nc,target
- 78+  806E                                      ENDM
- 79+  806E
- 80+  806E              JumpIfAGTEMemusng:      MACRO mem,target
- 81+  806E ~                                    ld      hl,mem
- 82+  806E ~                                    cp      (hl)
- 83+  806E ~                                    jp		nc,target
- 84+  806E                                      ENDM
- 85+  806E
- 86+  806E              JumpIfALTMemusng:       MACRO mem,target
- 87+  806E ~                                    ld      hl,mem
- 88+  806E ~                                    cp      (hl)
- 89+  806E ~                                    jp		c,target
+ 50+  806E              JumpOnMemBitSet:        MACRO mem, bitnbr, target
+ 51+  806E ~                                    ld      a,(mem)
+ 52+  806E ~                                    bit 	bitnbr,a
+ 53+  806E ~                                    jp      nz,target
+ 54+  806E                                      ENDM
+ 55+  806E
+ 56+  806E              JumpOnMemBitClear:      MACRO mem, bitnbr, target
+ 57+  806E ~                                    ld      a,(mem)
+ 58+  806E ~                                    bit 	bitnbr,a
+ 59+  806E ~                                    jp      z,target
+ 60+  806E                                      ENDM
+ 61+  806E
+ 62+  806E              JumpOnABit5Set:         MACRO   target
+ 63+  806E ~                                    and     Bit5Only
+ 64+  806E ~                                    jp      nz,target
+ 65+  806E                                      ENDM
+ 66+  806E
+ 67+  806E              JumpOnABit5Clear:       MACRO   target
+ 68+  806E ~                                    and     Bit5Only
+ 69+  806E ~                                    jp      z,target
+ 70+  806E                                      ENDM
+ 71+  806E
+ 72+  806E              JumpOnBitMaskSet:       MACRO   bitmask, target
+ 73+  806E ~                                    and     bitmask
+ 74+  806E ~                                    jp      nz,target
+ 75+  806E                                      ENDM
+ 76+  806E
+ 77+  806E              JumpOnBitMaskClear:     MACRO   bitmask, target
+ 78+  806E ~                                    and     bitmask
+ 79+  806E ~                                    jp      z,target
+ 80+  806E                                      ENDM
+ 81+  806E
+ 82+  806E              JumpOnBitSet:           MACRO  reg, bitnbr, target
+ 83+  806E ~                                    bit 	bitnbr,reg
+ 84+  806E ~                                    jp      nz,target
+ 85+  806E                                      ENDM
+ 86+  806E
+ 87+  806E              JumpOnBitClear:         MACRO  reg, bitnbr, target
+ 88+  806E ~                                    bit 	bitnbr,reg
+ 89+  806E ~                                    jp      z,target
  90+  806E                                      ENDM
  91+  806E
- 92+  806E              JumpIfMemGTENusng:      MACRO mem, value, target
- 93+  806E ~                                    ld     a,(mem)
- 94+  806E ~                                    cp     value
- 95+  806E ~                                    jp	  nc,target
- 96+  806E                                      ENDM
- 97+  806E
- 98+  806E              JumpIfMemGTEMemusng:    MACRO mem, address, target
- 99+  806E ~                                    ld   a,(mem)
-100+  806E ~                                    ld   hl,address
-101+  806E ~                                    cp   (hl)
-102+  806E ~                                    jp	  nc,target
-103+  806E                                      ENDM
-104+  806E
-105+  806E              JumpIfMemEqMemusng:     MACRO mem, address, target
-106+  806E ~                                    ld   a,(mem)
-107+  806E ~                                    ld   hl,address
-108+  806E ~                                    cp   (hl)
-109+  806E ~                                    jp	  z,target
-110+  806E                                      ENDM
-111+  806E
-112+  806E              JumpIfMemTrue:          MACRO mem, target
-113+  806E ~                                    ld      a,(mem)
-114+  806E ~                                    and     a
-115+  806E ~                                    jp      z, target
-116+  806E                                      ENDM
-117+  806E
-118+  806E              JumpIfMemFalse:         MACRO mem, target
-119+  806E ~                                    ld      a,(mem)
-120+  806E ~                                    and     a
-121+  806E ~                                    jp      nz, target
-122+  806E                                      ENDM
-123+  806E
-124+  806E              JumpIfATrue:            MACRO target
-125+  806E ~                                    and     a
-126+  806E ~                                    jp      z, target
-127+  806E                                      ENDM
-128+  806E
-129+  806E              JumpIfAFalse:           MACRO target
-130+  806E ~                                    and     a
-131+  806E ~                                    jp      nz, target
+ 92+  806E              ; Comparison Routines
+ 93+  806E              JumpIfAGTEusng:         MACRO
+ 94+  806E ~                                    jp		nc,target
+ 95+  806E                                      ENDM
+ 96+  806E
+ 97+  806E              JumpIfAGTENusng:        MACRO reg,target
+ 98+  806E ~                                    cp     reg
+ 99+  806E ~                                    jp		nc,target
+100+  806E                                      ENDM
+101+  806E
+102+  806E              JumpIfAGTEMemusng:      MACRO mem,target
+103+  806E ~                                    ld      hl,mem
+104+  806E ~                                    cp      (hl)
+105+  806E ~                                    jp		nc,target
+106+  806E                                      ENDM
+107+  806E
+108+  806E              JumpIfALTMemusng:       MACRO mem,target
+109+  806E ~                                    ld      hl,mem
+110+  806E ~                                    cp      (hl)
+111+  806E ~                                    jp		c,target
+112+  806E                                      ENDM
+113+  806E
+114+  806E              JumpIfMemGTENusng:      MACRO mem, value, target
+115+  806E ~                                    ld     a,(mem)
+116+  806E ~                                    cp     value
+117+  806E ~                                    jp	  nc,target
+118+  806E                                      ENDM
+119+  806E
+120+  806E              JumpIfMemGTEMemusng:    MACRO mem, address, target
+121+  806E ~                                    ld   a,(mem)
+122+  806E ~                                    ld   hl,address
+123+  806E ~                                    cp   (hl)
+124+  806E ~                                    jp	  nc,target
+125+  806E                                      ENDM
+126+  806E
+127+  806E              JumpIfMemEqMemusng:     MACRO mem, address, target
+128+  806E ~                                    ld   a,(mem)
+129+  806E ~                                    ld   hl,address
+130+  806E ~                                    cp   (hl)
+131+  806E ~                                    jp	  z,target
 132+  806E                                      ENDM
 133+  806E
-134+  806E              JumpIfALTusng:          MACRO target
-135+  806E ~                                    jp		c,target
-136+  806E                                      ENDM
-137+  806E
-138+  806E              JumpIfALTNusng:         MACRO value, target
-139+  806E ~                                    cp      value
-140+  806E ~                                    jp		c, target
-141+  806E                                      ENDM
-142+  806E
-143+  806E              JumpIfMemLTNusng:       MACRO mem, value, target
-144+  806E ~                                    ld      a,(mem)
-145+  806E ~                                    cp      value
-146+  806E ~                                    jp	  c,target
-147+  806E                                      ENDM
-148+  806E
-149+  806E              JumpIfMemLTMemusng:     MACRO mem, value, target
-150+  806E ~                                    ld    a,(mem)
-151+  806E ~                                    ld    hl,value
-152+  806E ~                                    cp    (hl)
-153+  806E ~                                    jp	  c,target
-154+  806E                                      ENDM
-155+  806E
-156+  806E              JumpIfMemEqNusng:       MACRO mem,value,target
-157+  806E ~                                    ld  a,(mem)
-158+  806E ~                                    cp  value
-159+  806E ~                                    jp  z,target
-160+  806E                                      ENDM
-161+  806E
-162+  806E              JumpIfMemNeNusng:       MACRO mem,value,target
-163+  806E ~                                    ld  a,(mem)
-164+  806E ~                                    cp  value
-165+  806E ~                                    jp  nz,target
-166+  806E                                      ENDM
-167+  806E
-168+  806E              JumpIfMemZero:          MACRO mem,target
-169+  806E ~                                    ld  a,(mem)
-170+  806E ~                                    and a
-171+  806E ~                                    jp  z,target
-172+  806E                                      ENDM
-173+  806E
-174+  806E              JumpIfMemNotZero:       MACRO mem,target
-175+  806E ~                                    ld  a,(mem)
-176+  806E ~                                    and a
-177+  806E ~                                    jp  nz,target
-178+  806E                                      ENDM
-179+  806E
-180+  806E              JumpIfALTMemHLusng:     MACRO target
+134+  806E              JumpIfMemNeMemusng:     MACRO mem, address, target
+135+  806E ~                                    ld   a,(mem)
+136+  806E ~                                    ld   hl,address
+137+  806E ~                                    cp   (hl)
+138+  806E ~                                    jp	  nz,target
+139+  806E                                      ENDM
+140+  806E
+141+  806E              JumpIfMemTrue:          MACRO mem, target
+142+  806E ~                                    ld      a,(mem)
+143+  806E ~                                    and     a
+144+  806E ~                                    jp      z, target
+145+  806E                                      ENDM
+146+  806E
+147+  806E              JumpIfMemFalse:         MACRO mem, target
+148+  806E ~                                    ld      a,(mem)
+149+  806E ~                                    and     a
+150+  806E ~                                    jp      nz, target
+151+  806E                                      ENDM
+152+  806E
+153+  806E              JumpIfATrue:            MACRO target
+154+  806E ~                                    and     a
+155+  806E ~                                    jp      z, target
+156+  806E                                      ENDM
+157+  806E
+158+  806E              JumpIfAFalse:           MACRO target
+159+  806E ~                                    and     a
+160+  806E ~                                    jp      nz, target
+161+  806E                                      ENDM
+162+  806E
+163+  806E              JumpIfALTusng:          MACRO target
+164+  806E ~                                    jp		c,target
+165+  806E                                      ENDM
+166+  806E
+167+  806E              JumpIfALTNusng:         MACRO value, target
+168+  806E ~                                    cp      value
+169+  806E ~                                    jp		c, target
+170+  806E                                      ENDM
+171+  806E
+172+  806E              JumpIfMemLTNusng:       MACRO mem, value, target
+173+  806E ~                                    ld      a,(mem)
+174+  806E ~                                    cp      value
+175+  806E ~                                    jp	  c,target
+176+  806E                                      ENDM
+177+  806E
+178+  806E              JumpIfMemLTMemusng:     MACRO mem, value, target
+179+  806E ~                                    ld    a,(mem)
+180+  806E ~                                    ld    hl,value
 181+  806E ~                                    cp    (hl)
 182+  806E ~                                    jp	  c,target
 183+  806E                                      ENDM
 184+  806E
-185+  806E              JumpIfANENusng:         MACRO value, target
-186+  806E ~                                    cp     value
-187+  806E ~                                    jp      nz,target
-188+  806E                                      ENDM
-189+  806E
-190+  806E              JumpIfANEMemusng:       MACRO  value, target
-191+  806E ~                                    ld    hl,value
-192+  806E ~                                    cp    (hl)
-193+  806E ~                                    jp      nz,target
-194+  806E                                      ENDM
-195+  806E
-196+  806E              JumpIfAEqNusng:         MACRO value, target
-197+  806E ~                                    cp     value
-198+  806E ~                                    jp      z,target
-199+  806E                                      ENDM
-200+  806E
-201+  806E              JumpIfAIsZero:	        MACRO target
-202+  806E ~                                    and a   ; cp 0 - changed to and a for optimisation but affects other flags
-203+  806E ~                                    jp	z, target
-204+  806E                                      ENDM
-205+  806E
-206+  806E              JumpIfAIsNotZero:       MACRO target
-207+  806E ~                                    cp	0
-208+  806E ~                                    jp	nz,target
-209+  806E                                      ENDM
-210+  806E
-211+  806E              IfResultZeroGoto:	    MACRO target
-212+  806E ~                                    jp	z,target
-213+  806E                                      ENDM
-214+  806E
-215+  806E              IfResultNotZeroGoto:    MACRO target
-216+  806E ~                                    jp	nz,target
+185+  806E              JumpIfMemEqNusng:       MACRO mem,value,target
+186+  806E ~                                    ld  a,(mem)
+187+  806E ~                                    cp  value
+188+  806E ~                                    jp  z,target
+189+  806E                                      ENDM
+190+  806E
+191+  806E              JumpIfMemNeNusng:       MACRO mem,value,target
+192+  806E ~                                    ld  a,(mem)
+193+  806E ~                                    cp  value
+194+  806E ~                                    jp  nz,target
+195+  806E                                      ENDM
+196+  806E
+197+  806E              JumpIfMemZero:          MACRO mem,target
+198+  806E ~                                    ld  a,(mem)
+199+  806E ~                                    and a
+200+  806E ~                                    jp  z,target
+201+  806E                                      ENDM
+202+  806E
+203+  806E              JumpIfMemNotZero:       MACRO mem,target
+204+  806E ~                                    ld  a,(mem)
+205+  806E ~                                    and a
+206+  806E ~                                    jp  nz,target
+207+  806E                                      ENDM
+208+  806E
+209+  806E              JumpIfALTMemHLusng:     MACRO target
+210+  806E ~                                    cp    (hl)
+211+  806E ~                                    jp	  c,target
+212+  806E                                      ENDM
+213+  806E
+214+  806E              JumpIfANENusng:         MACRO value, target
+215+  806E ~                                    cp     value
+216+  806E ~                                    jp      nz,target
 217+  806E                                      ENDM
 218+  806E
+219+  806E              JumpIfANEMemusng:       MACRO  value, target
+220+  806E ~                                    ld    hl,value
+221+  806E ~                                    cp    (hl)
+222+  806E ~                                    jp      nz,target
+223+  806E                                      ENDM
+224+  806E
+225+  806E              JumpIfAEqNusng:         MACRO value, target
+226+  806E ~                                    cp     value
+227+  806E ~                                    jp      z,target
+228+  806E                                      ENDM
+229+  806E
+230+  806E              JumpIfAIsZero:	        MACRO target
+231+  806E ~                                    and a   ; cp 0 - changed to and a for optimisation but affects other flags
+232+  806E ~                                    jp	z, target
+233+  806E                                      ENDM
+234+  806E
+235+  806E              JumpIfAIsNotZero:       MACRO target
+236+  806E ~                                    cp	0
+237+  806E ~                                    jp	nz,target
+238+  806E                                      ENDM
+239+  806E
+240+  806E              IfResultZeroGoto:	    MACRO target
+241+  806E ~                                    jp	z,target
+242+  806E                                      ENDM
+243+  806E
+244+  806E              IfResultNotZeroGoto:    MACRO target
+245+  806E ~                                    jp	nz,target
+246+  806E                                      ENDM
+247+  806E
 # file closed: ../Macros/jumpMacros.asm
  66   806E                                      INCLUDE "../Macros/ldCopyMacros.asm"
 # file opened: ../Macros/ldCopyMacros.asm
@@ -524,145 +555,145 @@
  25+  806E ~                                    ld      (mem),a
  26+  806E                                      ENDM
  27+  806E
- 28+  806E              ldCopyTextAtHLtoDE:     MACRO
- 29+  806E ~            .CopyLoop:              ld      a,(hl)
- 30+  806E ~                                    ld      (de),a
- 31+  806E ~                                    cp      0
- 32+  806E ~                                    jp      z,.DoneCopy
- 33+  806E ~                                    inc     hl
- 34+  806E ~                                    inc     de
- 35+  806E ~                                    jr      .CopyLoop
- 36+  806E ~            .DoneCopy:
- 37+  806E                                      ENDM
- 38+  806E
- 39+  806E              ldClearTextLoop:        MACRO   TextSize
- 40+  806E ~                                    ld      b,a
- 41+  806E ~                                    ld      a,TextSize
- 42+  806E ~            .ClearLoop:             ld      (hl),a
- 43+  806E ~                                    inc     hl
- 44+  806E ~                                    djnz    .ClearLoop
- 45+  806E                                      ENDM
- 46+  806E
- 47+  806E              ldCopyByte:             MACRO memfrom, memto
- 48+  806E ~                                    ld       a,(memfrom)
- 49+  806E ~                                    ld       (memto),a
- 50+  806E                                      ENDM
- 51+  806E
- 52+  806E
- 53+  806E              ldCopyByteABS:          MACRO memfrom, memto
- 54+  806E ~                                    ld       a,(memfrom)
- 55+  806E ~                                    and		$7F
+ 28+  806E              ldCopyStringLen:        MACRO   source, target, strlen
+ 29+  806E ~                                    ld      hl,source
+ 30+  806E ~                                    ld      de, target
+ 31+  806E ~                                    ld      bc, strlen
+ 32+  806E ~                                    ldir
+ 33+  806E                                      ENDM
+ 34+  806E
+ 35+  806E              ldCopyTextAtHLtoDE:     MACRO
+ 36+  806E ~            .CopyLoop:              ld      a,(hl)
+ 37+  806E ~                                    ld      (de),a
+ 38+  806E ~                                    cp      0
+ 39+  806E ~                                    jp      z,.DoneCopy
+ 40+  806E ~                                    inc     hl
+ 41+  806E ~                                    inc     de
+ 42+  806E ~                                    jr      .CopyLoop
+ 43+  806E ~            .DoneCopy:
+ 44+  806E                                      ENDM
+ 45+  806E
+ 46+  806E              ldClearTextLoop:        MACRO   TextSize
+ 47+  806E ~                                    ld      b,a
+ 48+  806E ~                                    ld      a,TextSize
+ 49+  806E ~            .ClearLoop:             ld      (hl),a
+ 50+  806E ~                                    inc     hl
+ 51+  806E ~                                    djnz    .ClearLoop
+ 52+  806E                                      ENDM
+ 53+  806E
+ 54+  806E              ldCopyByte:             MACRO memfrom, memto
+ 55+  806E ~                                    ld       a,(memfrom)
  56+  806E ~                                    ld       (memto),a
  57+  806E                                      ENDM
  58+  806E
- 59+  806E              ldCopy2Byte             MACRO  memfrom, memto
- 60+  806E ~                                    ld       hl,(memfrom)
- 61+  806E ~                                    ld       (memto),hl
- 62+  806E                                      ENDM
- 63+  806E
- 64+  806E              ldWriteConst            MACRO  memfrom, memto
- 65+  806E ~                                    ld       a,memfrom
- 66+  806E ~                                    ld       (memto),a
- 67+  806E                                      ENDM
- 68+  806E
- 69+  806E              ldWriteZero             MACRO  memto
- 70+  806E ~                                    xor      a
- 71+  806E ~                                    ld       (memto),a
- 72+  806E                                      ENDM
- 73+  806E
- 74+  806E              ldIXLaFromN:	        MACRO memfrom
- 75+  806E ~                                    ld		a,(memfrom)
- 76+  806E ~                                    ld		ixl,a
- 77+  806E                                      ENDM
- 78+  806E
- 79+  806E              ldIXHaFromN:	        MACRO memfrom
- 80+  806E ~                                    ld		a,(memfrom)
- 81+  806E ~                                    ld		ixh,a
- 82+  806E                                      ENDM
- 83+  806E
- 84+  806E              ldIYLaFromN:	        MACRO memfrom
- 85+  806E ~                                    ld		a,(memfrom)
- 86+  806E ~                                    ld		iyl,a
- 87+  806E                                      ENDM
- 88+  806E
- 89+  806E              ldIYHaFromN:	        MACRO memfrom
- 90+  806E ~                                    ld		a,(memfrom)
- 91+  806E ~                                    ld		iyh,a
- 92+  806E                                      ENDM
- 93+  806E
- 94+  806E              ldhlde:			        MACRO
- 95+  806E ~                                    ld		h,d
- 96+  806E ~                                    ld		l,e
- 97+  806E                                      ENDM
- 98+  806E
- 99+  806E              ldhlbc:			        MACRO
-100+  806E ~                                    ld		h,b
-101+  806E ~                                    ld		l,c
-102+  806E                                      ENDM
-103+  806E
-104+  806E              ldbcde:			        MACRO
-105+  806E ~                                    ld		b,d
-106+  806E ~                                    ld		c,e
-107+  806E                                      ENDM
-108+  806E
-109+  806E              lddebc:			        MACRO
-110+  806E ~                                    ld		d,b
-111+  806E ~                                    ld		e,c
-112+  806E                                      ENDM
-113+  806E
-114+  806E              ldbchl:			        MACRO
-115+  806E ~                                    ld		b,h
-116+  806E ~                                    ld		c,l
-117+  806E                                      ENDM
-118+  806E
-119+  806E              lddeiy:			        MACRO
-120+  806E ~                                    ld		d,iyh
-121+  806E ~                                    ld		e,iyl
-122+  806E                                      ENDM
-123+  806E
-124+  806E              ldiyde:			        MACRO
-125+  806E ~                                    ld		iyh,d
-126+  806E ~                                    ld		iyl,e
-127+  806E                                      ENDM
-128+  806E
-129+  806E
-130+  806E              FourLDIInstrunctions:   MACRO
-131+  806E ~                                    ldi
-132+  806E ~                                    ldi
-133+  806E ~                                    ldi
-134+  806E ~                                    ldi
-135+  806E                                      ENDM
-136+  806E
-137+  806E              FiveLDIInstrunctions:   MACRO
-138+  806E ~                                    ldi
-139+  806E ~                                    ldi
-140+  806E ~                                    ldi
-141+  806E ~                                    ldi
-142+  806E ~                                    ldi
-143+  806E                                      ENDM
-144+  806E
-145+  806E              SixLDIInstrunctions:    MACRO
+ 59+  806E
+ 60+  806E              ldCopyByteABS:          MACRO memfrom, memto
+ 61+  806E ~                                    ld       a,(memfrom)
+ 62+  806E ~                                    and		$7F
+ 63+  806E ~                                    ld       (memto),a
+ 64+  806E                                      ENDM
+ 65+  806E
+ 66+  806E              ldAtHLtoMem:            MACRO   memto
+ 67+  806E ~                                    ld      a,(hl)
+ 68+  806E ~                                    ld      (memto),a
+ 69+  806E                                      ENDM
+ 70+  806E
+ 71+  806E              ldCopy2Byte             MACRO  memfrom, memto
+ 72+  806E ~                                    ld       hl,(memfrom)
+ 73+  806E ~                                    ld       (memto),hl
+ 74+  806E                                      ENDM
+ 75+  806E
+ 76+  806E              ldWriteConst            MACRO  memfrom, memto
+ 77+  806E ~                                    ld       a,memfrom
+ 78+  806E ~                                    ld       (memto),a
+ 79+  806E                                      ENDM
+ 80+  806E
+ 81+  806E              ldWriteZero             MACRO  memto
+ 82+  806E ~                                    xor      a
+ 83+  806E ~                                    ld       (memto),a
+ 84+  806E                                      ENDM
+ 85+  806E
+ 86+  806E              ldIXLaFromN:	        MACRO memfrom
+ 87+  806E ~                                    ld		a,(memfrom)
+ 88+  806E ~                                    ld		ixl,a
+ 89+  806E                                      ENDM
+ 90+  806E
+ 91+  806E              ldIXHaFromN:	        MACRO memfrom
+ 92+  806E ~                                    ld		a,(memfrom)
+ 93+  806E ~                                    ld		ixh,a
+ 94+  806E                                      ENDM
+ 95+  806E
+ 96+  806E              ldIYLaFromN:	        MACRO memfrom
+ 97+  806E ~                                    ld		a,(memfrom)
+ 98+  806E ~                                    ld		iyl,a
+ 99+  806E                                      ENDM
+100+  806E
+101+  806E              ldIYHaFromN:	        MACRO memfrom
+102+  806E ~                                    ld		a,(memfrom)
+103+  806E ~                                    ld		iyh,a
+104+  806E                                      ENDM
+105+  806E
+106+  806E              ldhlde:			        MACRO
+107+  806E ~                                    ld		h,d
+108+  806E ~                                    ld		l,e
+109+  806E                                      ENDM
+110+  806E
+111+  806E              ldhlbc:			        MACRO
+112+  806E ~                                    ld		h,b
+113+  806E ~                                    ld		l,c
+114+  806E                                      ENDM
+115+  806E
+116+  806E              ldbcde:			        MACRO
+117+  806E ~                                    ld		b,d
+118+  806E ~                                    ld		c,e
+119+  806E                                      ENDM
+120+  806E
+121+  806E              lddebc:			        MACRO
+122+  806E ~                                    ld		d,b
+123+  806E ~                                    ld		e,c
+124+  806E                                      ENDM
+125+  806E
+126+  806E              ldbchl:			        MACRO
+127+  806E ~                                    ld		b,h
+128+  806E ~                                    ld		c,l
+129+  806E                                      ENDM
+130+  806E
+131+  806E              lddeiy:			        MACRO
+132+  806E ~                                    ld		d,iyh
+133+  806E ~                                    ld		e,iyl
+134+  806E                                      ENDM
+135+  806E
+136+  806E              ldiyde:			        MACRO
+137+  806E ~                                    ld		iyh,d
+138+  806E ~                                    ld		iyl,e
+139+  806E                                      ENDM
+140+  806E
+141+  806E
+142+  806E              FourLDIInstrunctions:   MACRO
+143+  806E ~                                    ldi
+144+  806E ~                                    ldi
+145+  806E ~                                    ldi
 146+  806E ~                                    ldi
-147+  806E ~                                    ldi
-148+  806E ~                                    ldi
-149+  806E ~                                    ldi
+147+  806E                                      ENDM
+148+  806E
+149+  806E              FiveLDIInstrunctions:   MACRO
 150+  806E ~                                    ldi
 151+  806E ~                                    ldi
-152+  806E                                      ENDM
-153+  806E
-154+  806E              EightLDIInstrunctions:  MACRO
-155+  806E ~            		                ldi
-156+  806E ~            		                ldi
-157+  806E ~            		                ldi
-158+  806E ~            		                ldi
-159+  806E ~            		                ldi
-160+  806E ~            		                ldi
-161+  806E ~            		                ldi
-162+  806E ~            		                ldi
-163+  806E                                      ENDM
-164+  806E
-165+  806E              NineLDIInstrunctions:  MACRO
-166+  806E ~            		                ldi
+152+  806E ~                                    ldi
+153+  806E ~                                    ldi
+154+  806E ~                                    ldi
+155+  806E                                      ENDM
+156+  806E
+157+  806E              SixLDIInstrunctions:    MACRO
+158+  806E ~                                    ldi
+159+  806E ~                                    ldi
+160+  806E ~                                    ldi
+161+  806E ~                                    ldi
+162+  806E ~                                    ldi
+163+  806E ~                                    ldi
+164+  806E                                      ENDM
+165+  806E
+166+  806E              EightLDIInstrunctions:  MACRO
 167+  806E ~            		                ldi
 168+  806E ~            		                ldi
 169+  806E ~            		                ldi
@@ -672,6 +703,18 @@
 173+  806E ~            		                ldi
 174+  806E ~            		                ldi
 175+  806E                                      ENDM
+176+  806E
+177+  806E              NineLDIInstrunctions:  MACRO
+178+  806E ~            		                ldi
+179+  806E ~            		                ldi
+180+  806E ~            		                ldi
+181+  806E ~            		                ldi
+182+  806E ~            		                ldi
+183+  806E ~            		                ldi
+184+  806E ~            		                ldi
+185+  806E ~            		                ldi
+186+  806E ~            		                ldi
+187+  806E                                      ENDM
 # file closed: ../Macros/ldCopyMacros.asm
  67   806E                                      INCLUDE "../Macros/ShiftMacros.asm"
 # file opened: ../Macros/ShiftMacros.asm
@@ -970,32 +1013,76 @@
 155+  806E ~                                    ld      (SpaceStationSafeZone),a
 156+  806E                                      ENDM
 157+  806E
-158+  806E              CoolLasers:             MACRO
-159+  806E ~                                    ld      a,(GunTemperature)
-160+  806E ~                                    and     a
-161+  806E ~                                    jr      z,.AlreadyCool
-162+  806E ~                                    dec     a
-163+  806E ~                                    ld      (GunTemperature),a
-164+  806E ~            .AlreadyCool:
-165+  806E                                      ENDM
-166+  806E
-167+  806E
-168+  806E              InitEventCounter:       MACRO
-169+  806E ~                                    xor     a
-170+  806E ~                                    ld      (EventCounter),a
+158+  806E              ClearTemperatures:      MACRO
+159+  806E ~                                    xor     a
+160+  806E ~                                    ld      (CabinTemperature),a
+161+  806E ~                                    ld      (GunTemperature),a
+162+  806E                                      ENDM
+163+  806E
+164+  806E              CoolCabin:              MACRO
+165+  806E ~                                    ld      a,(CabinTemperature)
+166+  806E ~                                    and     a
+167+  806E ~                                    jr      z,.AlreadyCool
+168+  806E ~                                    dec     a
+169+  806E ~                                    ld      (CabinTemperature),a
+170+  806E ~            .AlreadyCool:
 171+  806E                                      ENDM
 172+  806E
-173+  806E              ClearMissJump:          MACRO
-174+  806E ~                                    ld      a,$FF
-175+  806E ~                                    ld      (MissJumpFlag),a
-176+  806E                                      ENDM
-177+  806E
+173+  806E              CoolLasers:             MACRO
+174+  806E ~                                    ld      a,(GunTemperature)
+175+  806E ~                                    and     a
+176+  806E ~                                    jr      z,.AlreadyCool
+177+  806E ~                                    dec     a
+178+  806E ~                                    ld      (GunTemperature),a
+179+  806E ~            .AlreadyCool:
+180+  806E                                      ENDM
+181+  806E
+182+  806E              ; type 255 is "not fitted"
+183+  806E
+184+  806E
+185+  806E              InitEventCounter:       MACRO
+186+  806E ~                                    xor     a
+187+  806E ~                                    ld      (EventCounter),a
+188+  806E                                      ENDM
+189+  806E
+190+  806E              ClearMissJump:          MACRO
+191+  806E ~                                    ld      a,$FF
+192+  806E ~                                    ld      (MissJumpFlag),a
+193+  806E                                      ENDM
+194+  806E
+195+  806E
+196+  806E              DrainSystem:            MACRO   SystemMem, DrainMem
+197+  806E ~                                    ld      a,(DrainMem)
+198+  806E ~                                    ld      b,a
+199+  806E ~                                    ld      a,(SystemMem)
+200+  806E ~                                    sub     a,b
+201+  806E ~                                    ld      (SystemMem),a
+202+  806E ~                                    jr      c,.ZeroSystem
+203+  806E ~                                    jp      .ExitPoint
+204+  806E ~            .ZeroSystem:            ZeroA
+205+  806E ~                                    ld      (SystemMem),a
+206+  806E ~            .ExitPoint
+207+  806E                                      ENDM
+208+  806E
+209+  806E              BoostSystem:            MACRO   SystemMem, BoostMem
+210+  806E ~                                    ld      a,(BoostMem)
+211+  806E ~                                    ld      b,a
+212+  806E ~                                    ld      a,(SystemMem)
+213+  806E ~                                    add     b
+214+  806E ~                                    ld      (SystemMem),a
+215+  806E ~                                    jr      c, .MaxSystem
+216+  806E ~                                    jp      .ExitPoint
+217+  806E ~            .MaxSystem:             ld      a,255
+218+  806E ~                                    ld      (SystemMem),a
+219+  806E ~            .ExitPoint
+220+  806E                                      ENDM
+221+  806E
 # file closed: ../Variables/general_variables_macros.asm
  70   806E                                      INCLUDE "../Maths/multiply.asm"
 # file opened: ../Maths/multiply.asm
   1+  806E              HLequSRmulQdiv256:      ;X.Y=x1lo.S*M/256  	\ where M/256 is gradient
-  2+  806E 2A FA 82                             ld  hl,(varRS)
-  3+  8071 3A F9 82                             ld  a,(varQ)
+  2+  806E 2A F7 82                             ld  hl,(varRS)
+  3+  8071 3A F6 82                             ld  a,(varQ)
   4+  8074 C5 D5        HLeqyHLmulAdiv256:      push    bc,,de
   5+  8076 11 00 00                             ld  de,0        ; de = XY
   6+  8079 47                                   ld  b,a         ; b = Q
@@ -1042,7 +1129,7 @@
  43+  8093                                 ; .MAD	\ -> &22AD  \ Multiply and Add  (DE also) X.A(Lo.Hi) = Q*A + R.S (Lo.Hi)
  44+  8093              madXAequQmulAaddRS:     MacroDEEquQmulASigned
  44+  8093 57          >                        ld      d,a                         ; save a into d
- 44+  8094 3A F9 82    >                        ld      a,(varQ)
+ 44+  8094 3A F6 82    >                        ld      a,(varQ)
  44+  8097 5F          >                        ld      e,a
  44+  8098 AA          >                        xor     d                           ; a = a xor var Q
  44+  8099 E6 80       >                        and     SignOnly8Bit
@@ -1057,7 +1144,7 @@
  44+  80A6 7A          >                        ld      a,d
  44+  80A7 B0          >                        or      b                           ; de = a * Q leading sign bit
  44+  80A8 57          >                        ld      d,a
- 45+  80A9 2A FA 82     madDEaddRS:             ld		hl,(varR)
+ 45+  80A9 2A F7 82     madDEaddRS:             ld		hl,(varR)
  46+  80AC CD B5 80                             call	madXAAddHLDESigned
  47+  80AF EB                                   ex      de,hl                       ; de = R.S + DE
  48+  80B0                                      ClearCarryFlag
@@ -1441,478 +1528,481 @@
  72+  8204 E1           BET1MAXD                DB  -31             ; max dive
  73+  8205 00           XC						DB	0               ; 2C
  74+  8206 00           YC						DB 	0               ; 2D
- 75+  8207 00           InnerHyperCount			DB 	0				; 2F QQ22+1
- 76+  8208 00           OuterHyperCount			DB 	0				; 2E QQ22
- 77+  8209 00           HyperCircle             DB  0
- 78+  820A              ;... ECM logic. If another ship adds ECM then we just set the loop A and B to starting values so they overlap
- 79+  820A 00           ECMActive				DB 	0				; 30		ECM Active flag
- 80+  820B 00           ECMLoopA                DB  0
- 81+  820C 00           ECMLoopB                DB  0
- 82+  820D 00 00        JSTX                    DW  0               ;           Joystick analog value
- 83+  820F 00           ALPHA					DB	0				; 8D        Alpha with bit 7 sign
- 84+  8210 00           ALP1					DB 	0				; 31		ALP1	Roll magnitude Also Apha
- 85+  8211 00           ALP2					DB  0				; 32		ALP2	Roll Sign
- 86+  8212 00           ALP2FLIP				DB  0				; 33		ALP2	negated roll sign
- 87+  8213 1F           ALP1MAXR                DB  31               ;   Maximum roll, added becuase we may allow different ship types
- 88+  8214 E1           ALP1MAXL                DB  -31             ;   Maximum roll, added becuase we may allow different ship types
- 89+  8215
- 90+  8215
- 91+  8215
- 92+  8215              MAXMESSAGES             EQU 5
- 93+  8215              MESSAGETIMELIMIT        EQU 20
- 94+  8215              MESSAGESIZE             EQU 33
- 95+  8215              MESSAGELINE             EQU $0001
- 96+  8215
- 97+  8215 00           MessageCount            DB  0                ; used for enquing messages later
- 98+  8216 00           MessageCurrent          DB  0
- 99+  8217 05 00        MessageIndex            DW  MAXMESSAGES
-100+  8219 00 00 00...  MessageQueue            DS  MAXMESSAGES * MESSAGESIZE
-101+  82BE 05           MessageTimeout          DB  MAXMESSAGES
-102+  82BF 00 00 00...  IndexedWork				DS	37				; General purpose work space when doing temp arrays
-103+  82E4
-104+  82E4              ; MOVED TO Universe XX19					DB	0				; page 0 &67
-105+  82E4              ; MOVED TO Universe XX20					DB	0				; page 0 &67 also used as XX19+1 for XX19 being a word
-106+  82E4              ;DEFUNCT EQUATE NormalCountCopyBy4		equ	XX20			; Also used for normal * 4 holding variable
-107+  82E4 00           XX21					DB  0				; this may be part of XX20/xx21 accordign to spawn new shipXX21		DW	0				; Ah XX21 is hull pointer  hull pointer lo as it can;t hold HULLINDX as 16bit array
-108+  82E5              ;XX21 is the pointer table to the pages for ship types. this will be repalaced by paging so just need an equate for first page
-109+  82E5
-110+  82E5
-111+  82E5 00 00 00...  SystemSeed				DS  5				;	6C		QQ15	Current Galaxy Seed
-112+  82EA              											;	6D		QQ15+1
-113+  82EA              											;	6E		QQ15+2
-114+  82EA              											;	6F		QQ15+3
-115+  82EA              											;	70		QQ15+4
-116+  82EA              											;	71		QQ15+5
-117+  82EA 00           QQ17					DB	0				;   72
-118+  82EB 00           XX18xlo                 DB  0               ;	72		XX18   xlo
-119+  82EC 00           XX18xhi                 DB  0               ;	73		XX18+1 xhi
-120+  82ED 00           XX18xsg                 DB  0               ;	74		XX18+2 xsgn
-121+  82EE 00           XX18ylo                 DB  0               ;	75		XX18   ylo
-122+  82EF 00           XX18yhi                 DB  0               ;	76		XX18+1 yhi
-123+  82F0 00           XX18ysg                 DB  0               ;	77		XX18+2 ysgn
-124+  82F1 00           XX18zlo                 DB  0               ;	78		XX18   zlo
-125+  82F2 00           XX18zhi                 DB  0               ;	79		XX18+1 zhi
-126+  82F3 00           XX18zsg                 DB  0               ;	7A		XX18+2 zsgn
-127+  82F4
-128+  82F4 28           SHIPMAXSPEED            DB  40              ; variable to facilitate ship editing later
-129+  82F5 00           DELTA					DB 	0				; 7D 		DELTA  \ bpl -2 inserted here to stall from title code if byte check fails
-130+  82F6 00           DELT4Lo					DB 	0				; 7E
-131+  82F7 00           DELT4Hi					DB 	0				; 7F
-132+  82F8              DELTA4                  equ                 DELT4Lo
-133+  82F8
-134+  82F8
-135+  82F8              ; Not thise must be in this order else 16 bit fetches will fail
-136+  82F8 00           varU                    DB  0               ;   80
-137+  82F9 00           varQ					DB  0 				;	81
-138+  82FA 00           varR					DB  0 				;	82
-139+  82FB 00           varS					DB  0 				;	83
-140+  82FC              varRS                   equ varR
-141+  82FC
-142+  82FC 00 00        varU16                  DW  0               ; 16 bit variant on varU as I can't use above for this
-143+  82FE
-144+  82FE 00           XSAV					DB	0				; 84	   XSAV usef for nearby ship count outer
-145+  82FF 00           YSAV                    DB  0               ; 85
-146+  8300 00           XX17					DB	0				; 86
-147+  8301              RequiredScale			equ  XX17			; use to hold calculated scale in drawing ship
-148+  8301              varXX17                 equ  XX17
-149+  8301 00           ScreenChanged           DB  0
-150+  8302 00           ScreenIndex             DB  0
-151+  8303 00           CursorKeysPressed       DB  0               ; mapping of the current key presses
-152+  8304                                                          ; 7    6    5    4     3    2        1    0
-153+  8304                                                          ; Up   Down Left Right Home Recentre
-154+  8304 00           InvertedYAxis           DB  0
-155+  8305 00           MenuIdMax				DB	0				;	87		MenuIdMax		QQ11
-156+  8306              											; Bit 7 Set  ShortRangeChart    $80
-157+  8306              											; Bit 6 Set  Galactic Chart     $40
-158+  8306              											; Bit 5 Set  Market Place       $20
-159+  8306              											; Bit 4 Set  Status Screen      $10
-160+  8306              											; Bit 3 Set  Display Inventory  $08
-161+  8306                                                          ; Bit 2 Set  Planet Data        $04
-162+  8306                                                          ; View bit combinations if the ones above not matched
-163+  8306                                                          ; bits 1 0
-164+  8306                                                          ;      1 1  Front view , i.e. $03
-165+  8306                                                          ;      1 0  Aft View          $02
-166+  8306                                                          ;      0 1  Left View         $01
-167+  8306                                                          ;      0 0  Right view        $00
-168+  8306              											; Bit 0 Set  Data On System
-169+  8306              											; 0  Space View (Not a menu)
-170+  8306 00           ZZDust					DB	0				;	88		ZZDust (Poss 16 bit need to check)
-171+  8307 00           XX13                    DB  0               ;   89
-172+  8308 00           TYPE					DB	0				; 8C used for ship type in drawing
-173+  8309              ;Docked flag = 00 = in free space
-174+  8309              ;              FF = Docked
-175+  8309              ;              FE = transition
-176+  8309              ;              FD = Setup open space and transition to not docked
-177+  8309              ;              FC = Hyperspace manimation
-178+  8309              ;              FB = Hyperspace complete
-179+  8309 00           DockedFlag				DB	0				; 8E -
-180+  830A 00           GamePaused              DB  0
-181+  830B 00           varSWAP                 DB  0               ; 90 , general purpose swap variable
-182+  830C 00           varCNT                  DB  0               ; 93
-183+  830D
-184+  830D 00           varK					DB	0				; 40
-185+  830E 00           varKp1					DB	0				; 41
-186+  830F 00           varKp2					DB	0				; 42
-187+  8310 00           varKp3					DB	0				; 43
-188+  8311
-189+  8311 00           varK2                   DB  0               ; 9B
-190+  8312 00           varK2p1                 DB  0               ; 9C K2 plus 1
-191+  8313 00           varK2p2                 DB  0               ; 9D K2 plus 2
-192+  8314 00           varK2p3                 DB  0               ; 9E K2 plus 3
-193+  8315
-194+  8315 00           Point                   DB  0               ; 9F      POINT
-195+  8316
-196+  8316 00           varT					DB	0				; D1
-197+  8317
-198+  8317 00 00 00...  varVector9ByteWork      DS  9
-199+  8320
-200+  8320 00 00 00 00  varK3					DS	4				; D2
-201+  8324 00           varK3p2					DB	0				; 42
-202+  8325 00           varK3p3					DB	0				; 43
-203+  8326              varK3p1					equ varK3+1			; D3
-204+  8326 00 00 00 00  varK4					DS	4				; E0
-205+  832A              varK4p1					equ varK4+1			; D3
-206+  832A
-207+  832A
-208+  832A              ;Heap
-209+  832A
-210+  832A 00 00        HeapStart				DS	2				; &0100 XX3 50 bytes for now
-211+  832C 00 00 00...  HeapData				DS	50
-212+  835E              ; Contains 				X 16 bit, Y ;MissileArmedStatus		DB	0				; 0344 MSAR   using MissileTarget, if missile is not armed tehn target is FF
-213+  835E              ; TODO will need an read for a list of missiles, who they are targeting an the target current vector for AI persuit
-214+  835E              ; i.e. a list of programmed missiles in universe slot list code
-215+  835E 00 00 00...  DampingKeys				DS  7				; 0387 - 038D
-216+  8365              ;  #&6 Does K toggle keyboard/joystick control -  03CD certainly makes keyboard not work anymore.
-217+  8365              ;  #&5 Does J reverse both joystick channels
-218+  8365              ;  #&4 Does Y reverse joystick Y channel			03CB
-219+  8365              ;  #&2 Does X toggle startup message display ? PATG?	03C9
-220+  8365              ;  #&3 Does F toggle flashing information			03CA
-221+  8365              ;  #&1 Does A toggle keyboard auto-recentering ?
-222+  8365              ;  #&0 Caps-lock toggles keyboard flight damping
-223+  8365 00           NbrMissiles				DB	0				; 038B	Does this clash with Dampingkeys?
-224+  8366 00           FugitiveInnocentStatus	DB	0				; 038C	FIST
-225+  8367 00 00 00...  StockAvaliabiliy		DS 	16				; 038D - 039C Stock inventory in station
-226+  8377 00           AlienItemsAvaliability  DB	0				; 039D
-227+  8378 00           RandomMarketSeed		DB	0				; 039E   \ QQ26	\ random byte for each system vist (for market)
-228+  8379 00 00        KillTally  				DW	0				; 039F - 03A0 \ TALLY   \ kills lo hi
-229+  837B 00           COMP     				DB	0				; 03A1 2nd competion byte used for save integrity checks?
-230+  837C              											;
-231+  837C 00           MCH						DB	0				; 03A4  \ MCH  \ old message to erase
-232+  837D 00           MarketPrice				DB	0				; 03AA QQ24
-233+  837E 00           MaxStockAvaliable		DB  0				; 03AB   \ QQ25     \ max available
-234+  837F 00           SystemEconomy			DB  0				; 03AC \ QQ28   \ the economy byte of present system (0 is Rich Ind.)
-235+  8380 00           CargoItem				DB	0				; 03AD (I think its item type just scooped) QQ29
-236+  8381 00 00        ShipLineStackPointer	DW	0				; 03B0 & 03B1 ship Lines pointer reset to top LS% = &0CFF (make DW for z80 and direct hl pointer)
-237+  8383              											; this is ship lines stack pointer so may be redundant with paging
-238+  8383              											; LS = line stack so we will have one for now to remove later
-239+  8383 00           COK						DB	0				; 0366 Competition Byte what ? Does some file check and accelleration check
-240+  8384 00           DisplayEcononmy			DB	0				; 03B8
-241+  8385 00           DisplayGovernment		DB  0				; 03B9 Is it target? 03B9 \ QQ4	 \ Government, 0 is Anarchy.
-242+  8386 00           DisplayTekLevel			DB	0				; 03BA   \ QQ5	\ Tech
-243+  8387 00 00        DisplayPopulation		DW	0				; 03BB \ QQ6  \ population*10
-244+  8389 00 00        DisplayProductivity		DW	0				; 03BD \ QQ7   \ productivity*10
-245+  838B 00 00        Distance          		DW	0				; 03BE \ QQ8 distince in 0.1LY units
-246+  838D 00 00        DisplayRadius			DW	0
-247+  838F              ; --- Used in creation of sun and planet----;
-248+  838F 00           PlanetXPos              DS  1
-249+  8390 00           PlanetYPos              DS  1
-250+  8391 00           PlanetZPos              DS  1
-251+  8392 00           PlanetType              DS  1
-252+  8393 00           SunXPos                 DS  1
-253+  8394 00           SunYPos                 DS  1
-254+  8395 00           SunZPos                 DS  1
-255+  8396              ; -- Current Missile Runbtime data
-256+  8396 00           CurrentMissileBank:     DB      0                                   ; used by missile logic as local copy of missile bank number
-257+  8397 00 00        MissileXPos             DW      0
-258+  8399 00           MissileXSgn             DB      0
-259+  839A 00 00        MissileYPos             DW      0
-260+  839C 00           MissileYSgn             DB      0
-261+  839D 00 00        MissileZPos             DW      0
-262+  839F 00           MissileZSgn             DB      0
-263+  83A0 00 00        CurrentTargetXpos       DS      2
-264+  83A2 00 00        CurrentTargetXsgn       DS      2
-265+  83A4 00 00        CurrentTargetYpos       DS      2
-266+  83A6 00 00        CurrentTargetYsgn       DS      2
-267+  83A8 00 00        CurrentTargetZpos       DS      2
-268+  83AA 00 00        CurrentTargetZsgn       DS      2
-269+  83AC 00 00        TargetVectorXpos        DS      2
-270+  83AE 00 00        TargetVectorXsgn        DS      2
-271+  83B0 00 00        TargetVectorYpos        DS      2
-272+  83B2 00 00        TargetVectorYsgn        DS      2
-273+  83B4 00 00        TargetVectorZpos        DS      2
-274+  83B6 00 00        TargetVectorZsgn        DS      2
-275+  83B8 00           CurrentMissileBlastRange:      DB  0                       ; TODO Initi for runtime copied in when setting up a missile
-276+  83B9 00           CurrentMissileBlastDamage:     DB  0                       ; TODO Initi for runtime copied in when setting up a missile
-277+  83BA 00           CurrentMissileDetonateRange:   DB  0                       ; TODO Initi for runtime copied in when setting up a missile, allows for proximity missiles
-278+  83BB 00           CurrentMissileDetonateDamage:  DB  0                       ; TODO Initi for runtime copied in when setting up a missile
-279+  83BC
-280+  83BC              ; --- Main Loop Data -----------------------;
-281+  83BC 00           CurrentUniverseAI       DB  0               ; current ship unviverse slot due an AI update
-282+  83BD 00           SelectedUniverseSlot    DB  0
-283+  83BE 00           SetStationAngryFlag     DB  0               ; used to semaphore angry space station
-284+  83BF 00           ShipBlastCheckCounter   DB  0
-285+  83C0 00           EventCounter    		DB 	0				; 8A
-286+  83C1 00           MissJumpFlag            DB  0
-287+  83C2 00           PlayerMisJump			DB	0				; $0341 witchspace misjump
-288+  83C3 00           HyperSpaceFX			DB	0				; 0348 HFX (probabyl BBC specific
-289+  83C4 00           ExtraVessels			DB	0				; 0349 EV Use d by cops, extra vessels still to spawn?
-290+  83C5 00           Delay					DB	0				; 034A Delay general purpose eg. spawing EV or when printign messages
-291+  83C6 00           CurrentMissileCheck:    DB  0               ; if > Universe Slot list then free for next missile
-292+  83C7 00           MessageForDestroyed		DB	0				; 034B Message flag for item + destroyed
-293+  83C8              UniverseSlotListSize    equ	12
-294+  83C8 00 00 00...  UniverseSlotList        DS  UniverseSlotListSize
-295+  83D4 00 00 00...  UniverseSlotType        DS  UniverseSlotListSize ; base type, e.g. missile, cargo etc,
-296+  83E0              ; Probably not needed UniverseTypeCount       DS  UniverseSlotListSize
-297+  83E0 04           ConsoleRefreshCounter   DB  ConsoleRefreshInterval ; Every 4 interations the console will update twice (once for primary and once for seconday buffer)
-298+  83E1 00           ConsoleRedrawFlag       DB  0
-299+  83E2 00           TextInputMode           DB  0
-300+  83E3              ; --- Current System Data ------------------;
-301+  83E3 00           SpaceStationSafeZone    DB  0               ; Flag to determine if we are in safe zone
-302+  83E4 00           ExtraVesselsCounter     DB  0
-303+  83E5 00           JunkCount				DB  0				; $033E
-304+  83E6 00           AsteroidCount           DB  0               ; Not used as yet
-305+  83E7 00           TransporterCount        DB  0
-306+  83E8 00           CopCount                DB  0
-307+  83E9 00           PirateCount             DB  0
-308+  83EA              ; --- Galaxy Data --------------------------;
-309+  83EA 00           Galaxy      			DB	0				; 0367 Galaxy (incremented with galactiv drive
-310+  83EB 00 00 00...  WorkingSeeds			DS	6
-311+  83F1 00 00 00...  PresentSystemSeeds		DS	6				; 03B2 - 03B7
-312+  83F7 00 00 00...  GalaxySeeds				DS	6				; 035B - 0360 QQ21
-313+  83FD 00           PresentSystemX			DB	0				; System we are currently in
-314+  83FE 00           PresentSystemY			DB  0				; System we are currently in
-315+  83FF 00           TargetSystemX			DB	0				; System we are targeting for jump
-316+  8400 00           TargetSystemY			DB	0				; System we are targeting for jump
-317+  8401 00           GovPresentSystem		DB	0				; 03AE Govenment
-318+  8402 00           TekPresentSystem		DB	0				; 03AF Technology
-319+  8403
-320+  8403 00           CompassColor			DB	0				; 03C5
-321+  8404 00           SoundToggle				DB	0				; 03C6
-322+  8405 00           KeyboardRecenterToggle	DB	0				; 03C8
-323+  8406 00           PATGMask				DB	0				; &03C9    \ PATG	\ Mask to scan keyboard X-key, for misjump
-324+  8407 00           FlashToggle				DB  0				; 03CA \ FLH \ flash toggle
-325+  8408 00           ReverseJoystick			DB	0				; 03CB \ JSTGY \ Y reverse joystick Y channel
-326+  8409 00           JoystickToggle			DB	0				; 03CD  \ JSTK    \ K toggle keyboard/joystick
-327+  840A 00           DigitalJoystick			DB	0				; 03CE \ JDB   \ . = toggle between keyboard and bitpaddle
-328+  840B 00           DiskReadFailFlag		DB	0				; 03CF \ CATF \ Disk catalog fail flag
-329+  840C
-330+  840C              ; Working Data
-331+  840C
-332+  840C              ;UniverseTable			DS	26				; 1741  \ address pointers for 13 ships INF on pages &9. 37 bytes each.
-333+  840C              ; $0900 =	EQUW page9+37* 0 \ copied to inner worskpace INWK on zero-page when needed
-334+  840C              ; $0925 =	EQUW page9+37* 1
-335+  840C              ; $094A =	EQUW page9+37* 2
-336+  840C              ; $096F =	EQUW page9+37* 3
-337+  840C              ; $0994 =	EQUW page9+37* 4
-338+  840C              ; $09B9 =	EQUW page9+37* 5
-339+  840C              ; $09DE =	EQUW page9+37* 6
-340+  840C              ; $0A03 =	EQUW page9+37* 7
-341+  840C              ; $0A28 =	EQUW page9+37* 8
-342+  840C              ; $0A4D =	EQUW page9+37* 9
-343+  840C              ; $0A72 =	EQUW page9+37*10
-344+  840C              ; $0A97 =	EQUW page9+37*11
-345+  840C              ; $0ABC =	EQUW page9+37*12 \ allwk up to &0ABC while heap for edges working down from &CFF.
-346+  840C
-347+  840C
-348+  840C
-349+  840C              ; 0b00 is start address of data to save
-350+  840C              ; Now MissionData VarTP					DB	0				; 0358 TP? The Plan  \ mission uses lower 4 bits
-351+  840C              											; Bit mask XXXX10XX - Thargoid plan mission
-352+  840C
-353+  840C 00           MissionData				DB	0				; &0B00	  \ look at data, first byte is TP mission bits
-354+  840D
-355+  840D 00 00        FileNameStringPointer	DW	0				;0C00	   \ pointer to filename string
-356+  840F 00 00        CommanderLoadAddress	DW	0				;0C03
-357+  8411 00 00        LengthOfFile			DW	0				;0C0B
-358+  8413 00 00        SaveDataEndAddress		DW	0				;&0C0F	      \ &0C00 is end address of data to save
-359+  8415
-360+  8415 00 00 00...  EdgesBuffer				DS 50
-361+  8447              EdgesBufferSP			equ	$				; Was $0CFF			; Heap pointer for edges buffer
-362+  8447              ShipLinesBufferSP		equ EdgesBufferSP	; was $0CFF
-363+  8447
-364+  8447 00 00 00...  ShipLineStack			DS  70			; For now but will be in the page later
-365+  848D              ShipLineStackTop		equ $ - ShipLineStack
-366+  848D
-367+  848D 00 00 00...  LSO						DS 	$C0				;0E00 Line Buffer Solar of 192 lines (may be 191 in reality)
-368+  854D              ; LSX vector overlaps with LSO
-369+  854D 00           LSX2					DB	0				; &0EC0	    \ LSX2 bline buffer size?
-370+  854E 00           LSY2					DB	0           	; &0F0E	    \ LSY2
-371+  854F
-372+  854F              ; Star Positions are 16 bit 3d coordinates
-373+  854F 00 00 00...  varDust                 DS  MaxNumberOfStars * 6
-374+  8591 00 00 00...  varDustSceen            DS  MaxNumberOfStars * 2 ; To optimise star list to wipe from screen
-375+  85A7 00           varStarX                DB  0
-376+  85A8 00           varStarY                DB  0
-377+  85A9 00 00 00...  varDustX                DS MaxNumberOfStars *2
-378+  85BF 00 00 00...  varDustY                DS MaxNumberOfStars *2
-379+  85D5 00 00 00...  varDustZ                DS MaxNumberOfStars *2
-380+  85EB              ; -- Player Runtime Data
-381+  85EB 00           GunTemperature          DB  0
-382+  85EC 00           CabinTemperature        DB  0
-383+  85ED 00           PlayerForwardSheild0	DB	0 ; ?????
-384+  85EE 00           PlayerForwardSheild1    DB	0
-385+  85EF 00           PlayerForwardSheild2    DB	0
-386+  85F0 00           ForeShield				DB	0				; 03A5
-387+  85F1 00           AftShield				DB	0				; 03A6
-388+  85F2 00           PlayerEnergy			DB	0				; 03A7
-389+  85F3 00           CompassX				DB	0				; 03A8
-390+  85F4 00           CompassY				DB	0				; 03A9
-391+  85F5 00           MissileTarget			DB  0				; 45
-392+  85F6 00           MissileLaunchFlag       DB  0
-393+  85F7 00 00 00...  CommanderName           DS  15
-394+  8606 00           CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
-395+  8607 00           BadnessStatus           DB  0
-396+  8608              ; -- Input variables
-397+  8608 00           JoystickX				DB	0				; 034C JSTX
-398+  8609 00           JoystickY				DB	0				; 034D JSTY
-399+  860A 00           XSAV2 					DB	0				; 034E used to temporary save 6502 X reg
-400+  860B 00           YSAV2 					DB	0				; 034F used to temporary save 6502 Y reg
-401+  860C
-402+  860C              ; -- Console drawing data
-403+  860C              FShieldStart            equ $8410
-404+  860C              AShieldStart            equ $8D10
-405+  860C              FuelStart               equ $9410
-406+  860C
-407+  860C              EnergyBar4Start         equ $A5D5
-408+  860C              EnergyBar3Start         equ $ADD5
-409+  860C              EnergyBar2Start         equ $B5D5
-410+  860C              EnergyBar1Start         equ $BDD5
-411+  860C              ; 70 /2 = 35 values
-412+  860C              ;                            0                             1                             2                             3
-413+  860C              ;                            0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6
-414+  860C 01 02 02 03  FuelMapping             DB  01,02,02,03,04,04,05,06,06,07,08,09,10,10,11,12,13,14,14,15,16,16,17,19,20,21,21,22,23,24,25,26,27,28,30,31,31
-414+  8610 04 04 05 06
-414+  8614 06 07 08 09
-414+  8618 0A 0A 0B 0C
-414+  861C 0D 0E 0E 0F
-414+  8620 10 10 11 13
-414+  8624 14 15 15 16
-414+  8628 17 18 19 1A
-414+  862C 1B 1C 1E 1F
-414+  8630 1F
-415+  8631              SpeedoStart             equ $84D1
-416+  8631              ;                            0                             1                             2                             3                             4
-417+  8631              ;                            0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0
-418+  8631 01 02 02 03  SpeedoMapping           DB  01,02,02,03,04,04,05,06,06,07,08,09,10,10,11,12,13,14,14,15,16,16,17,18,19,20,20,21,22,23,24,24,25,26,26,27,28,28,29,30,31
-418+  8635 04 04 05 06
-418+  8639 06 07 08 09
-418+  863D 0A 0A 0B 0C
-418+  8641 0D 0E 0E 0F
-418+  8645 10 10 11 12
-418+  8649 13 14 14 15
-418+  864D 16 17 18 18
-418+  8651 19 1A 1A 1B
-418+  8655 1C 1C 1D 1E
-418+  8659 1F
-419+  865A
-420+  865A              DialMiddleXPos          equ $E1
-421+  865A              RollMiddle              equ $8CE0
-422+  865A              PitchMiddle             equ $94E0
-423+  865A
-424+  865A
-425+  865A              ResetPlayerShip:        ZeroThrottle
-425+  865A AF          >                        xor     a
-425+  865B 32 F5 82    >                        ld      (DELTA),a
-425+  865E 32 F6 82    >                        ld      (DELT4Lo),a
-425+  8661 32 F7 82    >                        ld      (DELT4Lo+1),a
-426+  8664                                      ZeroPitch
-426+  8664 AF          >                        xor     a
-426+  8665 32 01 82    >                        ld      (BET2),a
-426+  8668 32 02 82    >                        ld      (BET2FLIP),a
-426+  866B 32 FF 81    >                        ld      (JSTY),a
-426+  866E 32 FE 81    >                        ld      (BETA),a
-427+  8671                                      ZeroRoll
-427+  8671 AF          >                        xor     a                              ; zero roll and climb
-427+  8672 32 11 82    >                        ld      (ALP2),a
-427+  8675 32 12 82    >                        ld      (ALP2FLIP),a
-427+  8678 32 0D 82    >                        ld      (JSTX),a
-427+  867B 32 0F 82    >                        ld      (ALPHA),a
-428+  867E                                      ClearMissileTarget
-428+  867E AF          >                        xor     a                           ; Set missile target to FF
-428+  867F 3D          >                        dec     a
-428+  8680 32 F5 85    >                        ld      (MissileTarget),a
-428+  8683             >                        SetMemFalse MissileLaunchFlag
-428+  8683 3E FF       >                        ld      a,$FF
-428+  8685 32 F6 85    >                        ld      (MissileLaunchFlag),a
-429+  8688                                      ClearECM
-429+  8688 AF          >                        xor     a
-429+  8689 32 0B 82    >                        ld      (ECMLoopA),a
-429+  868C 32 0C 82    >                        ld      (ECMLoopB),a
-430+  868F                                      ChargeEnergyAndShields
-430+  868F 3E FF       >                        ld      a,$FF
-430+  8691 32 F2 85    >                        ld      (PlayerEnergy),a
-430+  8694 32 F0 85    >                        ld      (ForeShield),a
-430+  8697 32 F1 85    >                        ld      (AftShield),a
-431+  869A C9                                   ret
-432+  869B
+ 75+  8207              ;... ECM logic. If another ship adds ECM then we just set the loop A and B to starting values so they overlap
+ 76+  8207 00           ECMActive				DB 	0				; 30		ECM Active flag
+ 77+  8208 00           ECMLoopA                DB  0
+ 78+  8209 00           ECMLoopB                DB  0
+ 79+  820A 00 00        JSTX                    DW  0               ;           Joystick analog value
+ 80+  820C 00           ALPHA					DB	0				; 8D        Alpha with bit 7 sign
+ 81+  820D 00           ALP1					DB 	0				; 31		ALP1	Roll magnitude Also Apha
+ 82+  820E 00           ALP2					DB  0				; 32		ALP2	Roll Sign
+ 83+  820F 00           ALP2FLIP				DB  0				; 33		ALP2	negated roll sign
+ 84+  8210 1F           ALP1MAXR                DB  31               ;   Maximum roll, added becuase we may allow different ship types
+ 85+  8211 E1           ALP1MAXL                DB  -31             ;   Maximum roll, added becuase we may allow different ship types
+ 86+  8212
+ 87+  8212
+ 88+  8212
+ 89+  8212              MAXMESSAGES             EQU 5
+ 90+  8212              MESSAGETIMELIMIT        EQU 20
+ 91+  8212              MESSAGESIZE             EQU 33
+ 92+  8212              MESSAGELINE             EQU $0001
+ 93+  8212
+ 94+  8212 00           MessageCount            DB  0                ; used for enquing messages later
+ 95+  8213 00           MessageCurrent          DB  0
+ 96+  8214 05 00        MessageIndex            DW  MAXMESSAGES
+ 97+  8216 00 00 00...  MessageQueue            DS  MAXMESSAGES * MESSAGESIZE
+ 98+  82BB 05           MessageTimeout          DB  MAXMESSAGES
+ 99+  82BC 00 00 00...  IndexedWork				DS	37				; General purpose work space when doing temp arrays
+100+  82E1
+101+  82E1              ; MOVED TO Universe XX19					DB	0				; page 0 &67
+102+  82E1              ; MOVED TO Universe XX20					DB	0				; page 0 &67 also used as XX19+1 for XX19 being a word
+103+  82E1              ;DEFUNCT EQUATE NormalCountCopyBy4		equ	XX20			; Also used for normal * 4 holding variable
+104+  82E1 00           XX21					DB  0				; this may be part of XX20/xx21 accordign to spawn new shipXX21		DW	0				; Ah XX21 is hull pointer  hull pointer lo as it can;t hold HULLINDX as 16bit array
+105+  82E2              ;XX21 is the pointer table to the pages for ship types. this will be repalaced by paging so just need an equate for first page
+106+  82E2
+107+  82E2
+108+  82E2 00 00 00...  SystemSeed				DS  5				;	6C		QQ15	Current Galaxy Seed
+109+  82E7              											;	6D		QQ15+1
+110+  82E7              											;	6E		QQ15+2
+111+  82E7              											;	6F		QQ15+3
+112+  82E7              											;	70		QQ15+4
+113+  82E7              											;	71		QQ15+5
+114+  82E7 00           QQ17					DB	0				;   72
+115+  82E8 00           XX18xlo                 DB  0               ;	72		XX18   xlo
+116+  82E9 00           XX18xhi                 DB  0               ;	73		XX18+1 xhi
+117+  82EA 00           XX18xsg                 DB  0               ;	74		XX18+2 xsgn
+118+  82EB 00           XX18ylo                 DB  0               ;	75		XX18   ylo
+119+  82EC 00           XX18yhi                 DB  0               ;	76		XX18+1 yhi
+120+  82ED 00           XX18ysg                 DB  0               ;	77		XX18+2 ysgn
+121+  82EE 00           XX18zlo                 DB  0               ;	78		XX18   zlo
+122+  82EF 00           XX18zhi                 DB  0               ;	79		XX18+1 zhi
+123+  82F0 00           XX18zsg                 DB  0               ;	7A		XX18+2 zsgn
+124+  82F1
+125+  82F1 28           SHIPMAXSPEED            DB  40              ; variable to facilitate ship editing later
+126+  82F2 00           DELTA					DB 	0				; 7D 		DELTA  \ bpl -2 inserted here to stall from title code if byte check fails
+127+  82F3 00           DELT4Lo					DB 	0				; 7E
+128+  82F4 00           DELT4Hi					DB 	0				; 7F
+129+  82F5              DELTA4                  equ                 DELT4Lo
+130+  82F5
+131+  82F5
+132+  82F5              ; Not thise must be in this order else 16 bit fetches will fail
+133+  82F5 00           varU                    DB  0               ;   80
+134+  82F6 00           varQ					DB  0 				;	81
+135+  82F7 00           varR					DB  0 				;	82
+136+  82F8 00           varS					DB  0 				;	83
+137+  82F9              varRS                   equ varR
+138+  82F9
+139+  82F9 00 00        varU16                  DW  0               ; 16 bit variant on varU as I can't use above for this
+140+  82FB
+141+  82FB 00           XSAV					DB	0				; 84	   XSAV usef for nearby ship count outer
+142+  82FC 00           YSAV                    DB  0               ; 85
+143+  82FD 00           XX17					DB	0				; 86
+144+  82FE              RequiredScale			equ  XX17			; use to hold calculated scale in drawing ship
+145+  82FE              varXX17                 equ  XX17
+146+  82FE 00           ScreenChanged           DB  0
+147+  82FF 00           ScreenIndex             DB  0
+148+  8300 00           InvertedYAxis           DB  0
+149+  8301 00           MenuIdMax				DB	0				;	87		MenuIdMax		QQ11
+150+  8302              											; Bit 7 Set  ShortRangeChart    $80
+151+  8302              											; Bit 6 Set  Galactic Chart     $40
+152+  8302              											; Bit 5 Set  Market Place       $20
+153+  8302              											; Bit 4 Set  Status Screen      $10
+154+  8302              											; Bit 3 Set  Display Inventory  $08
+155+  8302                                                          ; Bit 2 Set  Planet Data        $04
+156+  8302                                                          ; View bit combinations if the ones above not matched
+157+  8302                                                          ; bits 1 0
+158+  8302                                                          ;      1 1  Front view , i.e. $03
+159+  8302                                                          ;      1 0  Aft View          $02
+160+  8302                                                          ;      0 1  Left View         $01
+161+  8302                                                          ;      0 0  Right view        $00
+162+  8302              											; Bit 0 Set  Data On System
+163+  8302              											; 0  Space View (Not a menu)
+164+  8302 00           ZZDust					DB	0				;	88		ZZDust (Poss 16 bit need to check)
+165+  8303 00           XX13                    DB  0               ;   89
+166+  8304 00           TYPE					DB	0				; 8C used for ship type in drawing
+167+  8305              ;Docked flag = 00 = in free space
+168+  8305              ;              FF = Docked
+169+  8305              ;              FE = transition
+170+  8305              ;              FD = Setup open space and transition to not docked
+171+  8305              ;              FC = Hyperspace manimation
+172+  8305              ;              FB = Hyperspace complete
+173+  8305 00           DockedFlag				DB	0				; 8E -
+174+  8306 00           GamePaused              DB  0
+175+  8307 00           varSWAP                 DB  0               ; 90 , general purpose swap variable
+176+  8308 00           varCNT                  DB  0               ; 93
+177+  8309
+178+  8309 00           varK					DB	0				; 40
+179+  830A 00           varKp1					DB	0				; 41
+180+  830B 00           varKp2					DB	0				; 42
+181+  830C 00           varKp3					DB	0				; 43
+182+  830D
+183+  830D 00           varK2                   DB  0               ; 9B
+184+  830E 00           varK2p1                 DB  0               ; 9C K2 plus 1
+185+  830F 00           varK2p2                 DB  0               ; 9D K2 plus 2
+186+  8310 00           varK2p3                 DB  0               ; 9E K2 plus 3
+187+  8311
+188+  8311 00           Point                   DB  0               ; 9F      POINT
+189+  8312
+190+  8312 00           varT					DB	0				; D1
+191+  8313
+192+  8313 00 00 00...  varVector9ByteWork      DS  9
+193+  831C
+194+  831C 00 00 00 00  varK3					DS	4				; D2
+195+  8320 00           varK3p2					DB	0				; 42
+196+  8321 00           varK3p3					DB	0				; 43
+197+  8322              varK3p1					equ varK3+1			; D3
+198+  8322 00 00 00 00  varK4					DS	4				; E0
+199+  8326              varK4p1					equ varK4+1			; D3
+200+  8326
+201+  8326
+202+  8326              ;Heap
+203+  8326
+204+  8326 00 00        HeapStart				DS	2				; &0100 XX3 50 bytes for now
+205+  8328 00 00 00...  HeapData				DS	50
+206+  835A              ; Contains 				X 16 bit, Y ;MissileArmedStatus		DB	0				; 0344 MSAR   using MissileTarget, if missile is not armed tehn target is FF
+207+  835A              ; TODO will need an read for a list of missiles, who they are targeting an the target current vector for AI persuit
+208+  835A              ; i.e. a list of programmed missiles in universe slot list code
+209+  835A 00 00 00...  DampingKeys				DS  7				; 0387 - 038D
+210+  8361              ;  #&6 Does K toggle keyboard/joystick control -  03CD certainly makes keyboard not work anymore.
+211+  8361              ;  #&5 Does J reverse both joystick channels
+212+  8361              ;  #&4 Does Y reverse joystick Y channel			03CB
+213+  8361              ;  #&2 Does X toggle startup message display ? PATG?	03C9
+214+  8361              ;  #&3 Does F toggle flashing information			03CA
+215+  8361              ;  #&1 Does A toggle keyboard auto-recentering ?
+216+  8361              ;  #&0 Caps-lock toggles keyboard flight damping
+217+  8361 00           NbrMissiles				DB	0				; 038B	Does this clash with Dampingkeys?
+218+  8362 00           FugitiveInnocentStatus	DB	0				; 038C	FIST
+219+  8363 00 00 00...  StockAvaliabiliy		DS 	16				; 038D - 039C Stock inventory in station
+220+  8373 00           AlienItemsAvaliability  DB	0				; 039D
+221+  8374 00           RandomMarketSeed		DB	0				; 039E   \ QQ26	\ random byte for each system vist (for market)
+222+  8375 00 00        KillTally  				DW	0				; 039F - 03A0 \ TALLY   \ kills lo hi
+223+  8377 00           COMP     				DB	0				; 03A1 2nd competion byte used for save integrity checks?
+224+  8378              											;
+225+  8378 00           MCH						DB	0				; 03A4  \ MCH  \ old message to erase
+226+  8379 00           MarketPrice				DB	0				; 03AA QQ24
+227+  837A 00           MaxStockAvaliable		DB  0				; 03AB   \ QQ25     \ max available
+228+  837B 00           SystemEconomy			DB  0				; 03AC \ QQ28   \ the economy byte of present system (0 is Rich Ind.)
+229+  837C 00           CargoItem				DB	0				; 03AD (I think its item type just scooped) QQ29
+230+  837D 00 00        ShipLineStackPointer	DW	0				; 03B0 & 03B1 ship Lines pointer reset to top LS% = &0CFF (make DW for z80 and direct hl pointer)
+231+  837F              											; this is ship lines stack pointer so may be redundant with paging
+232+  837F              											; LS = line stack so we will have one for now to remove later
+233+  837F 00           COK						DB	0				; 0366 Competition Byte what ? Does some file check and accelleration check
+234+  8380 00           DisplayEcononmy			DB	0				; 03B8
+235+  8381 00           DisplayGovernment		DB  0				; 03B9 Is it target? 03B9 \ QQ4	 \ Government, 0 is Anarchy.
+236+  8382 00           DisplayTekLevel			DB	0				; 03BA   \ QQ5	\ Tech
+237+  8383 00 00        DisplayPopulation		DW	0				; 03BB \ QQ6  \ population*10
+238+  8385 00 00        DisplayProductivity		DW	0				; 03BD \ QQ7   \ productivity*10
+239+  8387 00 00        Distance          		DW	0				; 03BE \ QQ8 distince in 0.1LY units
+240+  8389 00 00        DisplayRadius			DW	0
+241+  838B              ; --- Used in creation of sun and planet----;
+242+  838B 00           PlanetXPos              DS  1
+243+  838C 00           PlanetYPos              DS  1
+244+  838D 00           PlanetZPos              DS  1
+245+  838E 00           PlanetType              DS  1
+246+  838F 00           SunXPos                 DS  1
+247+  8390 00           SunYPos                 DS  1
+248+  8391 00           SunZPos                 DS  1
+249+  8392              ; -- Current Missile Runbtime data
+250+  8392 00           CurrentMissileBank:     DB      0                                   ; used by missile logic as local copy of missile bank number
+251+  8393 00 00        MissileXPos             DW      0
+252+  8395 00           MissileXSgn             DB      0
+253+  8396 00 00        MissileYPos             DW      0
+254+  8398 00           MissileYSgn             DB      0
+255+  8399 00 00        MissileZPos             DW      0
+256+  839B 00           MissileZSgn             DB      0
+257+  839C 00 00        CurrentTargetXpos       DS      2
+258+  839E 00 00        CurrentTargetXsgn       DS      2
+259+  83A0 00 00        CurrentTargetYpos       DS      2
+260+  83A2 00 00        CurrentTargetYsgn       DS      2
+261+  83A4 00 00        CurrentTargetZpos       DS      2
+262+  83A6 00 00        CurrentTargetZsgn       DS      2
+263+  83A8 00 00        TargetVectorXpos        DS      2
+264+  83AA 00 00        TargetVectorXsgn        DS      2
+265+  83AC 00 00        TargetVectorYpos        DS      2
+266+  83AE 00 00        TargetVectorYsgn        DS      2
+267+  83B0 00 00        TargetVectorZpos        DS      2
+268+  83B2 00 00        TargetVectorZsgn        DS      2
+269+  83B4 00           CurrentMissileBlastRange:      DB  0                       ; TODO Initi for runtime copied in when setting up a missile
+270+  83B5 00           CurrentMissileBlastDamage:     DB  0                       ; TODO Initi for runtime copied in when setting up a missile
+271+  83B6 00           CurrentMissileDetonateRange:   DB  0                       ; TODO Initi for runtime copied in when setting up a missile, allows for proximity missiles
+272+  83B7 00           CurrentMissileDetonateDamage:  DB  0                       ; TODO Initi for runtime copied in when setting up a missile
+273+  83B8
+274+  83B8              ; --- Main Loop Data -----------------------;
+275+  83B8 00           CurrentUniverseAI       DB  0               ; current ship unviverse slot due an AI update
+276+  83B9 00           SelectedUniverseSlot    DB  0
+277+  83BA 00           SetStationAngryFlag     DB  0               ; used to semaphore angry space station
+278+  83BB 00           ShipBlastCheckCounter   DB  0
+279+  83BC 00           InnerHyperCount			DB 	0				; 2F QQ22+1
+280+  83BD 00           OuterHyperCount			DB 	0				; 2E QQ22
+281+  83BE 00           EventCounter            DB  0
+282+  83BF 00           HyperCircle             DB  0
+283+  83C0 00           MissJumpFlag            DB  0
+284+  83C1 00           PlayerMisJump			DB	0				; $0341 witchspace misjump
+285+  83C2 00           HyperSpaceFX			DB	0				; 0348 HFX (probabyl BBC specific
+286+  83C3 00           ExtraVessels			DB	0				; 0349 EV Use d by cops, extra vessels still to spawn?
+287+  83C4 00           Delay					DB	0				; 034A Delay general purpose eg. spawing EV or when printign messages
+288+  83C5 00           CurrentMissileCheck:    DB  0               ; if > Universe Slot list then free for next missile
+289+  83C6 00           MessageForDestroyed		DB	0				; 034B Message flag for item + destroyed
+290+  83C7              UniverseSlotListSize    equ	12
+291+  83C7 00 00 00...  UniverseSlotList        DS  UniverseSlotListSize
+292+  83D3 00 00 00...  UniverseSlotType        DS  UniverseSlotListSize ; base type, e.g. missile, cargo etc,
+293+  83DF              ; Probably not needed UniverseTypeCount       DS  UniverseSlotListSize
+294+  83DF 04           ConsoleRefreshCounter   DB  ConsoleRefreshInterval ; Every 4 interations the console will update twice (once for primary and once for seconday buffer)
+295+  83E0 00           ConsoleRedrawFlag       DB  0
+296+  83E1 00           TextInputMode           DB  0
+297+  83E2 00           CursorKeysPressed       DB  0               ; mapping of the current key presses
+298+  83E3                                                          ; 7    6    5    4     3    2        1    0
+299+  83E3                                                          ; Up   Down Left Right Home Recentre
+300+  83E3 00           FireLaserPressed        DB  0
+301+  83E4              ; --- Current System Data ------------------;
+302+  83E4 00           SpaceStationSafeZone    DB  0               ; Flag to determine if we are in safe zone
+303+  83E5 00           ExtraVesselsCounter     DB  0
+304+  83E6 00           JunkCount				DB  0				; $033E
+305+  83E7 00           AsteroidCount           DB  0               ; Not used as yet
+306+  83E8 00           TransporterCount        DB  0
+307+  83E9 00           CopCount                DB  0
+308+  83EA 00           PirateCount             DB  0
+309+  83EB              ; --- Galaxy Data --------------------------;
+310+  83EB 00           Galaxy      			DB	0				; 0367 Galaxy (incremented with galactiv drive
+311+  83EC 00 00 00...  WorkingSeeds			DS	6
+312+  83F2 00 00 00...  PresentSystemSeeds		DS	6				; 03B2 - 03B7
+313+  83F8 00 00 00...  GalaxySeeds				DS	6				; 035B - 0360 QQ21
+314+  83FE 00           PresentSystemX			DB	0				; System we are currently in
+315+  83FF 00           PresentSystemY			DB  0				; System we are currently in
+316+  8400 00           TargetSystemX			DB	0				; System we are targeting for jump
+317+  8401 00           TargetSystemY			DB	0				; System we are targeting for jump
+318+  8402 00           GovPresentSystem		DB	0				; 03AE Govenment
+319+  8403 00           TekPresentSystem		DB	0				; 03AF Technology
+320+  8404
+321+  8404 00           CompassColor			DB	0				; 03C5
+322+  8405 00           SoundToggle				DB	0				; 03C6
+323+  8406 00           KeyboardRecenterToggle	DB	0				; 03C8
+324+  8407 00           PATGMask				DB	0				; &03C9    \ PATG	\ Mask to scan keyboard X-key, for misjump
+325+  8408 00           FlashToggle				DB  0				; 03CA \ FLH \ flash toggle
+326+  8409 00           ReverseJoystick			DB	0				; 03CB \ JSTGY \ Y reverse joystick Y channel
+327+  840A 00           JoystickToggle			DB	0				; 03CD  \ JSTK    \ K toggle keyboard/joystick
+328+  840B 00           DigitalJoystick			DB	0				; 03CE \ JDB   \ . = toggle between keyboard and bitpaddle
+329+  840C 00           DiskReadFailFlag		DB	0				; 03CF \ CATF \ Disk catalog fail flag
+330+  840D
+331+  840D              ; Working Data
+332+  840D
+333+  840D              ;UniverseTable			DS	26				; 1741  \ address pointers for 13 ships INF on pages &9. 37 bytes each.
+334+  840D              ; $0900 =	EQUW page9+37* 0 \ copied to inner worskpace INWK on zero-page when needed
+335+  840D              ; $0925 =	EQUW page9+37* 1
+336+  840D              ; $094A =	EQUW page9+37* 2
+337+  840D              ; $096F =	EQUW page9+37* 3
+338+  840D              ; $0994 =	EQUW page9+37* 4
+339+  840D              ; $09B9 =	EQUW page9+37* 5
+340+  840D              ; $09DE =	EQUW page9+37* 6
+341+  840D              ; $0A03 =	EQUW page9+37* 7
+342+  840D              ; $0A28 =	EQUW page9+37* 8
+343+  840D              ; $0A4D =	EQUW page9+37* 9
+344+  840D              ; $0A72 =	EQUW page9+37*10
+345+  840D              ; $0A97 =	EQUW page9+37*11
+346+  840D              ; $0ABC =	EQUW page9+37*12 \ allwk up to &0ABC while heap for edges working down from &CFF.
+347+  840D
+348+  840D
+349+  840D
+350+  840D              ; 0b00 is start address of data to save
+351+  840D              ; Now MissionData VarTP					DB	0				; 0358 TP? The Plan  \ mission uses lower 4 bits
+352+  840D              											; Bit mask XXXX10XX - Thargoid plan mission
+353+  840D
+354+  840D 00           MissionData				DB	0				; &0B00	  \ look at data, first byte is TP mission bits
+355+  840E
+356+  840E 00 00        FileNameStringPointer	DW	0				;0C00	   \ pointer to filename string
+357+  8410 00 00        CommanderLoadAddress	DW	0				;0C03
+358+  8412 00 00        LengthOfFile			DW	0				;0C0B
+359+  8414 00 00        SaveDataEndAddress		DW	0				;&0C0F	      \ &0C00 is end address of data to save
+360+  8416
+361+  8416 00 00 00...  EdgesBuffer				DS 50
+362+  8448              EdgesBufferSP			equ	$				; Was $0CFF			; Heap pointer for edges buffer
+363+  8448              ShipLinesBufferSP		equ EdgesBufferSP	; was $0CFF
+364+  8448
+365+  8448 00 00 00...  ShipLineStack			DS  70			; For now but will be in the page later
+366+  848E              ShipLineStackTop		equ $ - ShipLineStack
+367+  848E
+368+  848E 00 00 00...  LSO						DS 	$C0				;0E00 Line Buffer Solar of 192 lines (may be 191 in reality)
+369+  854E              ; LSX vector overlaps with LSO
+370+  854E 00           LSX2					DB	0				; &0EC0	    \ LSX2 bline buffer size?
+371+  854F 00           LSY2					DB	0           	; &0F0E	    \ LSY2
+372+  8550
+373+  8550              ; Star Positions are 16 bit 3d coordinates
+374+  8550 00 00 00...  varDust                 DS  MaxNumberOfStars * 6
+375+  8592 00 00 00...  varDustSceen            DS  MaxNumberOfStars * 2 ; To optimise star list to wipe from screen
+376+  85A8 00           varStarX                DB  0
+377+  85A9 00           varStarY                DB  0
+378+  85AA 00 00 00...  varDustX                DS MaxNumberOfStars *2
+379+  85C0 00 00 00...  varDustY                DS MaxNumberOfStars *2
+380+  85D6 00 00 00...  varDustZ                DS MaxNumberOfStars *2
+381+  85EC              ; -- Player Runtime Data
+382+  85EC 00           GunTemperature          DB  0
+383+  85ED 00           CabinTemperature        DB  0
+384+  85EE 00           PlayerForwardSheild0	DB	0 ; ?????
+385+  85EF 00           PlayerForwardSheild1    DB	0
+386+  85F0 00           PlayerForwardSheild2    DB	0
+387+  85F1 00           ForeShield				DB	0				; 03A5
+388+  85F2 00           AftShield				DB	0				; 03A6
+389+  85F3 00           PlayerEnergy			DB	0				; 03A7
+390+  85F4 00           CompassX				DB	0				; 03A8
+391+  85F5 00           CompassY				DB	0				; 03A9
+392+  85F6 00           MissileTarget			DB  0				; 45
+393+  85F7 00           MissileLaunchFlag       DB  0
+394+  85F8 00 00 00...  CommanderName           DS  15
+395+  8607 00           CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
+396+  8608 00           BadnessStatus           DB  0
+397+  8609              ; need to add copy table routines
+398+  8609 00           CurrLaserType           DB  0               ; current view laser type, copied in from LaserType array
+399+  860A 00           CurrLaserDamage         DB  0               ; copied in from LaserDamagedFlag array
+400+  860B 00           CurrLaserPulseRate      DB  0               ; current view laser amount of pulses
+401+  860C 00           CurrLaserPulseOnTime    DB  0               ; how many cycles the laser is on
+402+  860D 00           CurrLaserPulseOffTime   DB  0               ; how many cycles the laser is on
+403+  860E 00           CurrLaserPulseRest      DB  0               ; current view laser delay setup between pulses
+404+  860F              ; Count down timers must be aligned like this to work
+405+  860F 00           CurrLaserPulseOnCount   DB  0               ; how many cycles the laser is on timer
+406+  8610 00           CurrLaserPulseOffCount  DB  0               ; how many cycles the laser is on timer
+407+  8611 00           CurrLaserPulseRestCount DB  0               ; countdown after shooting for next shot
+408+  8612 00           CurrLaserPulseRateCount DB  0               ; current view laser current pulses fired
+409+  8613              ;note rapidly changing views could reset these so need to consider it in an array
+410+  8613
+411+  8613              ; LaserType
+412+  8613              ; LaserPulseRate                          ; how many pulses can be fired before long pause
+413+  8613              ; LaserPulsePause                         ; time before next pulse - 0 = beam
+414+  8613              ; LaserPulseRest                          ; time before pulse count resets to 0
+415+  8613              ; LaserDamageOutput                       ; amount of damage for a laser hit
+416+  8613              ; LaserEnergyDrain                        ; amount of energy drained by cycle
+417+  8613              ; LaserHeat                               ; amount of heat generated
+418+  8613              ; LaserDurability                         ; probabability out of 255 that a hit on unshielded will add random amount of damage
+419+  8613              ; LaserDurabilityAmount                   ; max amount of damagage can be sustained in one damage hit
+420+  8613              ; LaserInMarkets                          ; can this laser be purchased 0 = yes 1 = no
+421+  8613              ; LaserTechLevel                          ; minimum tech level system to buy from
+422+  8613
+423+  8613 00           CurrLaserBurstRate      DB  0
+424+  8614 00           CurrLaserBurstCount     DB  0
+425+  8615 00           CurrLaserDamageOutput   DB  0
+426+  8616 00           CurrLaserEnergyDrain    DB  0
+427+  8617 00           CurrLaserHeat           DB  0
+428+  8618 00           CurrLaserDurability     DB  0
+429+  8619 00           CurrLaserDurabilityAmount DB  0
+430+  861A
+431+  861A              ; -- Input variables
+432+  861A 00           JoystickX				DB	0				; 034C JSTX
+433+  861B 00           JoystickY				DB	0				; 034D JSTY
+434+  861C 00           XSAV2 					DB	0				; 034E used to temporary save 6502 X reg
+435+  861D 00           YSAV2 					DB	0				; 034F used to temporary save 6502 Y reg
+436+  861E
+437+  861E              ; -- Console drawing data
+438+  861E              FShieldStart            equ $8410
+439+  861E              AShieldStart            equ $8D10
+440+  861E              FuelStart               equ $9410
+441+  861E
+442+  861E              EnergyBar4Start         equ $A5D5
+443+  861E              EnergyBar3Start         equ $ADD5
+444+  861E              EnergyBar2Start         equ $B5D5
+445+  861E              EnergyBar1Start         equ $BDD5
+446+  861E              ; 70 /2 = 35 values
+447+  861E              ;                            0                             1                             2                             3
+448+  861E              ;                            0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6
+449+  861E 01 02 02 03  FuelMapping             DB  01,02,02,03,04,04,05,06,06,07,08,09,10,10,11,12,13,14,14,15,16,16,17,19,20,21,21,22,23,24,25,26,27,28,30,31,31
+449+  8622 04 04 05 06
+449+  8626 06 07 08 09
+449+  862A 0A 0A 0B 0C
+449+  862E 0D 0E 0E 0F
+449+  8632 10 10 11 13
+449+  8636 14 15 15 16
+449+  863A 17 18 19 1A
+449+  863E 1B 1C 1E 1F
+449+  8642 1F
+450+  8643              SpeedoStart             equ $84D1
+451+  8643              ;                            0                             1                             2                             3                             4
+452+  8643              ;                            0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0
+453+  8643 01 02 02 03  SpeedoMapping           DB  01,02,02,03,04,04,05,06,06,07,08,09,10,10,11,12,13,14,14,15,16,16,17,18,19,20,20,21,22,23,24,24,25,26,26,27,28,28,29,30,31
+453+  8647 04 04 05 06
+453+  864B 06 07 08 09
+453+  864F 0A 0A 0B 0C
+453+  8653 0D 0E 0E 0F
+453+  8657 10 10 11 12
+453+  865B 13 14 14 15
+453+  865F 16 17 18 18
+453+  8663 19 1A 1A 1B
+453+  8667 1C 1C 1D 1E
+453+  866B 1F
+454+  866C
+455+  866C              DialMiddleXPos          equ $E1
+456+  866C              RollMiddle              equ $8CE0
+457+  866C              PitchMiddle             equ $94E0
+458+  866C
+459+  866C
+460+  866C
+461+  866C
+462+  866C
 # file closed: ../Variables/general_variables.asm
- 72   869B
- 73   869B                                      STRUCT testCase
- 74   869B ~            XLo                     BYTE 1
- 75   869B ~            XHi                     BYTE 2
- 76   869B ~            XSgn                    BYTE 3
- 77   869B ~            DVal                    BYTE 4
- 78   869B ~            ExpectedC               BYTE 5
- 79   869B ~            ExpectedL               BYTE 6
- 80   869B ~            ExpectedE               BYTE 7
- 81   869B ~            ExpectedD               BYTE 8
- 82   869B ~            ActualC                 BYTE 9
- 83   869B ~            ActualL                 BYTE 10
- 84   869B ~            ActualE                 BYTE 11
- 85   869B ~            ActualD                 BYTE 12
- 86   869B ~            Padding1                BYTE 13
- 87   869B ~            Padding2                BYTE 14
- 88   869B ~            Padding3                BYTE 15
- 89   869B ~            PassFail                BYTE 16
- 90   869B                                      ENDS
- 91   869B              ;                            01   02   03   04   05   06   07   08   09   10   11   12   13   14   15   16
- 92   869B 05 05 00 05  TestCase1               DB  $05, $05, $00, $05, $19, $19, $00, $00, $00, $00, $00, $00, $00, $00, $01, $00
- 92   869F 19 19 00 00
- 92   86A3 00 00 00 00
- 92   86A7 00 00 01 00
- 93   86AB 05 05 03 05  TestCase2               DB  $05, $05, $03, $05, $19, $19, $0F, $00, $00, $00, $00, $00, $00, $00, $02, $00
- 93   86AF 19 19 0F 00
- 93   86B3 00 00 00 00
- 93   86B7 00 00 02 00
- 94   86BB 05 05 83 05  TestCase3               DB  $05, $05, $83, $05, $19, $19, $0F, $80, $00, $00, $00, $00, $00, $00, $03, $00
- 94   86BF 19 19 0F 80
- 94   86C3 00 00 00 00
- 94   86C7 00 00 03 00
- 95   86CB 05 05 03 85  TestCase4               DB  $05, $05, $03, $85, $19, $19, $0F, $80, $00, $00, $00, $00, $00, $00, $04, $00
- 95   86CF 19 19 0F 80
- 95   86D3 00 00 00 00
- 95   86D7 00 00 04 00
- 96   86DB 05 0A 00 05  TestCase5               DB  $05, $0A, $00, $05, $19, $32, $00, $00, $00, $00, $00, $00, $00, $00, $05, $00
- 96   86DF 19 32 00 00
- 96   86E3 00 00 00 00
- 96   86E7 00 00 05 00
- 97   86EB 0A 05 80 05  TestCase6               DB  $0A, $05, $80, $05, $32, $19, $00, $80, $00, $00, $00, $00, $00, $00, $06, $00
- 97   86EF 32 19 00 80
- 97   86F3 00 00 00 00
- 97   86F7 00 00 06 00
- 98   86FB 05 05 80 05  TestCase7               DB  $05, $05, $80, $05, $19, $19, $00, $80, $00, $00, $00, $00, $00, $00, $07, $00
- 98   86FF 19 19 00 80
- 98   8703 00 00 00 00
- 98   8707 00 00 07 00
- 99   870B 05 05 83 0A  TestCase8               DB  $05, $05, $83, $0A, $32, $32, $1E, $80, $00, $00, $00, $00, $00, $00, $08, $00
- 99   870F 32 32 1E 80
- 99   8713 00 00 00 00
- 99   8717 00 00 08 00
-100   871B 05 05 83 CA  TestCase9               DB  $05, $05, $83, $CA, $72, $73, $DF, $00, $00, $00, $00, $00, $00, $00, $09, $00
-100   871F 72 73 DF 00
-100   8723 00 00 00 00
-100   8727 00 00 09 00
-101   872B 05 05 03 CA  TestCase10              DB  $05, $05, $03, $CA, $72, $73, $DF, $80, $00, $00, $00, $00, $00, $00, $10, $00
-101   872F 72 73 DF 80
-101   8733 00 00 00 00
-101   8737 00 00 10 00
-102   873B 0A           testTotal               DB  ($-TestCase1)/16
-103   873C 00           testCounter             DB   0
-104   873D
-105   873D
-106   873D                  SAVENEX OPEN "mathssun.nex", $8000 , $7F00
-107   873D                  SAVENEX CFG  0,0,0,1
-108   873D                  SAVENEX AUTO
-109   873D                  SAVENEX CLOSE
-110   873D
+ 72   866C
+ 73   866C                                      STRUCT testCase
+ 74   866C ~            XLo                     BYTE 1
+ 75   866C ~            XHi                     BYTE 2
+ 76   866C ~            XSgn                    BYTE 3
+ 77   866C ~            DVal                    BYTE 4
+ 78   866C ~            ExpectedC               BYTE 5
+ 79   866C ~            ExpectedL               BYTE 6
+ 80   866C ~            ExpectedE               BYTE 7
+ 81   866C ~            ExpectedD               BYTE 8
+ 82   866C ~            ActualC                 BYTE 9
+ 83   866C ~            ActualL                 BYTE 10
+ 84   866C ~            ActualE                 BYTE 11
+ 85   866C ~            ActualD                 BYTE 12
+ 86   866C ~            Padding1                BYTE 13
+ 87   866C ~            Padding2                BYTE 14
+ 88   866C ~            Padding3                BYTE 15
+ 89   866C ~            PassFail                BYTE 16
+ 90   866C                                      ENDS
+ 91   866C              ;                            01   02   03   04   05   06   07   08   09   10   11   12   13   14   15   16
+ 92   866C 05 05 00 05  TestCase1               DB  $05, $05, $00, $05, $19, $19, $00, $00, $00, $00, $00, $00, $00, $00, $01, $00
+ 92   8670 19 19 00 00
+ 92   8674 00 00 00 00
+ 92   8678 00 00 01 00
+ 93   867C 05 05 03 05  TestCase2               DB  $05, $05, $03, $05, $19, $19, $0F, $00, $00, $00, $00, $00, $00, $00, $02, $00
+ 93   8680 19 19 0F 00
+ 93   8684 00 00 00 00
+ 93   8688 00 00 02 00
+ 94   868C 05 05 83 05  TestCase3               DB  $05, $05, $83, $05, $19, $19, $0F, $80, $00, $00, $00, $00, $00, $00, $03, $00
+ 94   8690 19 19 0F 80
+ 94   8694 00 00 00 00
+ 94   8698 00 00 03 00
+ 95   869C 05 05 03 85  TestCase4               DB  $05, $05, $03, $85, $19, $19, $0F, $80, $00, $00, $00, $00, $00, $00, $04, $00
+ 95   86A0 19 19 0F 80
+ 95   86A4 00 00 00 00
+ 95   86A8 00 00 04 00
+ 96   86AC 05 0A 00 05  TestCase5               DB  $05, $0A, $00, $05, $19, $32, $00, $00, $00, $00, $00, $00, $00, $00, $05, $00
+ 96   86B0 19 32 00 00
+ 96   86B4 00 00 00 00
+ 96   86B8 00 00 05 00
+ 97   86BC 0A 05 80 05  TestCase6               DB  $0A, $05, $80, $05, $32, $19, $00, $80, $00, $00, $00, $00, $00, $00, $06, $00
+ 97   86C0 32 19 00 80
+ 97   86C4 00 00 00 00
+ 97   86C8 00 00 06 00
+ 98   86CC 05 05 80 05  TestCase7               DB  $05, $05, $80, $05, $19, $19, $00, $80, $00, $00, $00, $00, $00, $00, $07, $00
+ 98   86D0 19 19 00 80
+ 98   86D4 00 00 00 00
+ 98   86D8 00 00 07 00
+ 99   86DC 05 05 83 0A  TestCase8               DB  $05, $05, $83, $0A, $32, $32, $1E, $80, $00, $00, $00, $00, $00, $00, $08, $00
+ 99   86E0 32 32 1E 80
+ 99   86E4 00 00 00 00
+ 99   86E8 00 00 08 00
+100   86EC 05 05 83 CA  TestCase9               DB  $05, $05, $83, $CA, $72, $73, $DF, $00, $00, $00, $00, $00, $00, $00, $09, $00
+100   86F0 72 73 DF 00
+100   86F4 00 00 00 00
+100   86F8 00 00 09 00
+101   86FC 05 05 03 CA  TestCase10              DB  $05, $05, $03, $CA, $72, $73, $DF, $80, $00, $00, $00, $00, $00, $00, $10, $00
+101   8700 72 73 DF 80
+101   8704 00 00 00 00
+101   8708 00 00 10 00
+102   870C 0A           testTotal               DB  ($-TestCase1)/16
+103   870D 00           testCounter             DB   0
+104   870E
+105   870E
+106   870E                  SAVENEX OPEN "mathssun.nex", $8000 , $7F00
+107   870E                  SAVENEX CFG  0,0,0,1
+108   870E                  SAVENEX AUTO
+109   870E                  SAVENEX CLOSE
+110   870E
 # file closed: mathstestssun.asm

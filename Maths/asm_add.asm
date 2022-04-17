@@ -92,8 +92,8 @@ AddBCHtoDELsigned:      ld      a,b                 ; Are the values both the sa
                         ld      iyl,a               ; iyl = d sign
                         and     SignMask8Bit        ; .
                         ld      d,a                 ; .
-                        push    hl                  ; hl = bc - de
-                        ld      hl,bc               ; if bc < de then there is a carry
+                        push    hl                  ; save hl
+                        ld      hl,bc               ; hl = bc - de, if bc < de then there is a carry
                         sbc     hl,de               ;
                         pop     hl                  ;
                         jr      c,.BCHltDEL
@@ -205,7 +205,7 @@ addhlcsigned:
         ex      de,hl                       ; hl = value de = pointer to start if INKW[x]
         ret     c                           ; if carry was set then we can exit now
 .nocarry:        
-        call    negate16hl                  ; get hl back to positive, a is still inkw+2
+        NegHL                               ; get hl back to positive, a is still inkw+2
         or      b                           ; b is still varT
         ex      de,hl                       ; de = value hl = pointer to start if INKW[x]
         ld      (hl),e
