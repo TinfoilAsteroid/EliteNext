@@ -33,8 +33,8 @@ Div16by24usgn:          inc     d                           ; can we fast retu
                         ret 
 .ResultZero:            xor     a                           ; set AHL to 0 as d was 0 so h is zero
                         ld      c,a                         ; c = 0
-                        ex      de,hl                       ; de = hl
-                        ld      l,h                         ; xora clears carry flag too
+                        ld      h,a
+                        ld      l,a
                         ret
 .DivideByZero:          ld      a,$FF
                         ld      h,a
@@ -239,16 +239,41 @@ Div1616:            ld hl,0
                     ld c,a
                     ret
 
+
+EDivC_Iteration:        MACRO
+                        rl  e
+                        rla
+                        sub c
+                        jr  nc,.Div8_NoAdd
+                        add a,c
+.Div8_NoAdd:            
+                        ENDM
+
+; Divide E by divider C Out: A = result, B = rest
+E_Div_C:                ZeroA
+                        EDivC_Iteration
+                        EDivC_Iteration
+                        EDivC_Iteration
+                        EDivC_Iteration
+                        EDivC_Iteration
+                        EDivC_Iteration
+                        EDivC_Iteration
+                        EDivC_Iteration
+                        ld      b,a
+                        ld      a,e
+                        rla
+                        cpl
+                        ret
+                        
 	
-	
-BCDIVDE_Iteration: MACRO 
-				   rla
-				   adc	hl,hl
-				   add	hl,de
-				   jr	c,1F
-				   sbc	hl,de
-1:				   
-				   ENDM
+BCDIVDE_Iteration:      MACRO 
+                        rla
+                        adc	    hl,hl
+                        add	    hl,de
+                        jr	    c,1F
+                        sbc	    hl,de
+1:				        
+                        ENDM
 				   
 	
 ; ">BC_Div_DE: BC = BC / DE. HL = remainder fast divide with unrolled loop"

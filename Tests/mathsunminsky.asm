@@ -221,6 +221,7 @@ SBnKysgn                DB 0
 SBnKzlo                 DB 0
 SBnKzhi                 DB 0
 SBnKzsgn                DB 0
+
 SunAlphaMulX            DS 4
 SunAlphaMulY            DS 4
 SunBetaMulZ             DS 4

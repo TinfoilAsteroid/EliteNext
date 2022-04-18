@@ -521,6 +521,78 @@ SunVarR                 DS 1
 SunVarS                 DS 1
 SunVarT                 DS 1
 
+; Optimisation
+; if a <> 0
+;       divide AH by CD
+; if h <> 0
+;      if c <> 0 return 0
+;      else
+;        divide HL by DE
+; if l <>0
+;      if c or d <> 0 return 0
+;      else
+;        divide l by e
+;
+SunAHLequAHLDivCDE:     ld      b,a                         ; save a reg
+                        ld      a,c                         ; check for divide by zero
+                        or      d                           ; .
+                        or      e                           ; .
+                        JumpIfZero      .divideByZero       ; .
+                        ld      a,b                         ; get a back
+                        JumpIfAIsNotZero    .divideAHLbyCDE
+.AIsZero:               ld      a,h
+                        JumpIfAIsNotZero    .divideHLbyDE
+.HIsZero:               ld      a,l
+                        JumpIfAIsNotZero    .divideLbyE
+.resultIsZero:          ZeroA
+                        ld      h,a                        ; result is zero so set hlde
+                        ld      l,a                        ; result is zero so set hlde
+                        ld      de,hl
+                        ClearCarryFlag
+                        ret
+.divideByZero:          ld      a,$FF
+                        ld      h,a
+                        ld      l,a
+                        ld      de,hl
+                        SetCarryFlag
+; AHL = ahl/cde, this could be a genuine 24 bit divide
+; if AHL is large and cde small then the value will be big so will be off screen so we can risk 16 bit divide
+.divideAHLbyCDE:        call    Div24by24
+                        ex      hl,de                         ; ahl is result
+                        ld      a,c                           ; ahl is result
+                        ClearCarryFlag
+;.divideAHLbyCDE:        ld      b,a                         ; we need to set BC to AH
+;                        ld      e,d                         ; and DE to CD
+;                        ld      d,c                         ; but make sure we do it in the right
+;                        ld      c,h                         ; order so we don't trash values
+;                        call    BC_Div_DE                   ; bc = result
+;                        ld      a,b
+;                        ld      h,c
+;                        ld      l,0
+                        ret 
+; AHL = 0hl/0de as A is zero
+.divideHLbyDE:          ld      a,c                         ;'if c = 0 then result must be zero
+                        JumpIfAIsNotZero   .resultIsZero
+                        ld      bc,hl
+                        call    BC_Div_DE                   ; BC = HL/DE
+                        ld      hl,bc
+                        ZeroA                               ; so we can set A to Zero
+                        ClearCarryFlag
+                        ret
+; AHL = 00l/00e as A and H are zero
+.divideLbyE:            ld      a,c                         ; if d = 0 then result must be zero
+                        or      d
+                        JumpIfAIsNotZero   .resultIsZero
+                        ld      c,e
+                        ld      e,l
+                        call    E_Div_C
+                        ld      l,a
+                        ZeroA
+                        ld      h,a
+                        ClearCarryFlag
+                        ret      
+
+
 ; Needs tuning for registers vs memroy
 SunKEquAHLDivCDE:       ld      (SunVarP),hl
                         ld      (SunVarP+2),a
@@ -607,28 +679,42 @@ SunDivD3B:              ld      a,(SunVarP)                 ; Ensure P is at lea
                         
                         
                         
-SunProcessVertex:       MACRO   vertlo, vertsgn
+SunProcessVertex:       ld      b,a                         ; save sign byte
 .SunProjectToEye:       ld      de,(SBnKzlo)                ; X Pos = X / Z
                         ld      a,(SBnKzsgn)                ; CDE = z
-                        ld      c,a                         ;
-                        ld      hl,(vertlo)                ; AHL = x
-                        ld      a,(vertsgn)                ;
-                        l***TODO THIS DOES NOT WORK
-                        call    SunKEquAHLDivCDE            ; result in sunvarK to K + 3
-                        ld      hl,(SunVarK)                ; result is in DEHL (high to low)
-                        ld      de,(SunVarK+2)              
-.CheckPosOnScreenX:     ld      a,d                         ; a= abs highest byte (k+3)  or k+2
-                        and     SignMask8Bit                ;    
-                        or      e                           ;
-                        ret     nz                          ; off screen
-                        ld      a,h                         ; a = k + 1 can do this as ABS
-                        ReturnIfAGTEusng 4                  ; if > 1024 then return
-                        ld      a,d                         ; get sign back
-                        and     SignOnly8Bit                ; if positive then we are good
-                        jr      z,.calculatedVert
+                        ld      iyh,a                       ; save sign
+                        ClearSignBitA     
+                        ; Addeed as it neds to be AHL/0CD to force * 256 and get correct screen position on scaling
+;                        ld      c,a                         ;
+                        ld      e,d
+                        ld      d,a
+                        ld      c,0
+                        ; added above to correct positioning as in reality its X/(Z/256)
+                        ld      a,b                         ; restore sign byte
+                        ld      iyl,a                       ; save sign
+                        ClearSignBitA
+                        call SunAHLequAHLDivCDE             ; AHL = AHL/CDE unsigned
+.CheckPosOnScreenX:     JumpIfAIsNotZero .IsOffScreen         ; if A has a value then its way too large regardless of sign
+                        JumpOnLeadSignSet h, .IsOffScreen      ; or bit 7 set of h
+                        ld      a,h
+                        ReturnIfAGTEusng 4                  ; if a > 1024 then its way too large regardless of sign
+                        ld      a,iyh                       ; now deal with the sign
+                        xor     iyl
+                        SignBitOnlyA                        ; a= resultant sign
+                        jr      z,.calculatedVert           ; result is positive so we don't 2's compliment it
 .XIsNegative:           NegHL                               ; make 2's c as negative                        
-.calculatedVert:
-                        ENDM
+.calculatedVert:        ClearCarryFlag
+                        ret
+.IsOffScreen:           ld      hl,$7FFF
+                        ld      a,iyh
+                        xor     iyl
+                        SignBitOnlyA
+                        jr      z,.calculatedOffScreen
+                        inc     hl                          ; set hl to $8001 i.e. -32768
+                        inc     hl                          ; .
+.calculatedOffScreen:   SetCarryFlag
+                        ret
+                        
                         
 ; .........................................................................................................................
 ; we only hit this if z is positive so we can ignore signs
@@ -645,28 +731,43 @@ SunCalculateRadius:     ld      bc,(SBnKzlo)                ; DBC = z position
                         ld      (SunRadius),a               ; save a copy of radius now for later
                         ld      e,a                         ; as later code expects it to be in e
                         ret    
+
+; Shorter version when sun does not need to be processed to screen                        
+SunUpdateCompass:       ld      a,(SBnKxsgn)
+                        ld      hl,(SBnKxlo)
+                        call    SunProcessVertex  
+                        ld      (SunCompassX),hl
+                        ld      a,(SBnKysgn)
+                        ld      hl,(SBnKylo)
+                        call    SunProcessVertex
+                        ld      (SunCompassY),hl
+                        ret
                         
                    ; could probabyl set a variable say "varGood", default as 1 then set to 0 if we end up with a good calulation?? may not need it as we draw here     
 SunUpdateAndRender:     call    SunApplyMyRollAndPitch
 .CheckDrawable:         ld      a,(SBnKzsgn)
-;                        and     SignOnly8Bit
-;                        ret     nz
-;.CheckDist48:           ld      a,b                         ; we don;t need to worry about
-; If we check > 48 unsigned then negative also gets rejected in one test
-                        ReturnIfAGTENusng 48                ; at a distance over 48 its too far away
+                        JumpIfAGTENusng 48,  SunUpdateCompass ; at a distance over 48 its too far away
                         ld      hl,SBnKzhi                  ; if the two high bytes are zero then its too close
                         or      (hl)
-                        ReturnIfAIsZero
-.calculateX:            SunProcessVertex SBnKxlo, SBnKxsgn
+                        JumpIfAIsZero       SunUpdateCompass
+.calculateX:            ld      a,(SBnKxsgn)
+                        ld      hl,(SBnKxlo)
+                        call    SunProcessVertex            ; now returns carry set for failure
+                        ld      (SunCompassX),hl
+                        ret     c
 .calculatedX:           ld      e,ScreenCenterX
                         ld      d,0
                         ClearCarryFlag
                         adc     hl,de
                         ;call    HL2cEquHLSgnPlusAusgn       ; correct to center of screen
                         ld      (SunScrnX),hl               ; save projected X Position, 2's compliment
-.calculateY:            SunProcessVertex SBnKylo, SBnKysgn
+.calculateY:            ld      a,(SBnKysgn)
+                        ld      hl,(SBnKylo)
+                        call    SunProcessVertex            ; now returns carry set for failure
+                        ld      (SunCompassY),hl
+                        ret     c
 .calculatedY:           ld      e,ScreenCenterY
-                        ld      d,a
+                        ld      d,0
                         ex      de,hl
                         ClearCarryFlag
                         sbc     hl,de

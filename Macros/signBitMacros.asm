@@ -16,6 +16,12 @@ FlipSignMem:            MACRO mem
                         ld  (mem),a
                         ENDM
 
+SignBitOnlyMem:         MACRO mem
+                        ld      a
+                        and     SignOnly8Bit
+                        ld      (mem),a
+                        ENDM
+                        
 ClearSignBit:           MACRO reg
                         ld      a,reg
                         and     SignMask8Bit
@@ -33,6 +39,12 @@ FlipSignBit:            MACRO   reg
                         xor     SignOnly8Bit
                         ld      reg,a
                         ENDM
+
+SignBitOnly:            MACRO   reg
+                        ld      a,reg
+                        and     SignOnly8Bit
+                        ld      reg,a
+                        ENDM
                         
 ClearSignBitA:          MACRO 
                         and     SignMask8Bit
@@ -45,4 +57,7 @@ SetSignBitA:            MACRO
 FlipSignBitA:           MACRO   
                         xor     SignOnly8Bit
                         ENDM
-                        
+
+SignBitOnlyA:           MACRO
+                        and     SignOnly8Bit
+                        ENDM                        

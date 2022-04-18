@@ -8,3 +8,5 @@ SBnKysgn                    DB  0                       ; INWK +5
 SBnKzlo                     DB  0                       ; INWK +6
 SBnKzhi                     DB  0                       ; INWK +7
 SBnKzsgn                    DB  0                       ; INWK +8
+SunCompassX                 DW  0
+SunCompassY                 DW  0

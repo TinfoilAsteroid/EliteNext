@@ -446,9 +446,7 @@ UpscaleSunPosition:     ld      de,(SBnKzhi)                ; de = abs z & save 
                         or      e
                         ld      e,a
                         ret
-                        
-                        
-                        
+
 
 UpdateCompassSun:       MMUSelectSun
                         call    ScaleSunPos                 ; get as 7 bit signed
@@ -464,7 +462,7 @@ UpdateCompassSun:       MMUSelectSun
 .normaliseZSqr:         pop     de                          ; get saved from stack 2
                         ld      d,e                         ; de = z ^ 
                         mul                                 ; .
-.normaliseSqrt:         add     hl,de                       ; hl = x^2 + y^2 + x^2
+.normaliseSqrt:         add     hl,de                       ; hl = x^2 + y^2 + z^2
                         add     hl,bc       
                         ex      de,hl
                         call    asm_sqrt                    ; (Q) = hl = sqrt (x^2 + y^2 + x^2)
@@ -488,22 +486,23 @@ UpdateCompassSun:       MMUSelectSun
                         jr      z,.DoneNormX 
                         neg
 .DoneNormX:             ld      ixh,a                       ; ixh = (signed 2's c x /q * 96) / 10
-.NormaliseZ:            ld      d,iyl                       ; d = q
+; Dont actually need z
+;.NormaliseZ:            ld      d,iyl                       ; d = q
                         pop     hl                          ; hl z scaled
-                        ld      a,h                         ; c = sign
-                        and     SignOnly8Bit                ; .
-                        ld      c,a                         ; .
-                        push    bc                          ; save sign to stack
-                        ld      a,l                         ; e = a /q * 96
-                        call    AequAdivQmul96ABS              ; .
-                        ld      e,a                         ; a = e / 10
-                        EDiv10Inline                        ; .
-                        ld      a,h                         ; retrieve sign
-                        pop     bc                          ; retrieve sign
-                        bit     7,c                         ; if sign is negative then 2'c value
-                        jr      z,.DoneNormZ 
-                        neg
-.DoneNormZ:             ld      ixl,a                       ; .
+;                        ld      a,h                         ; c = sign
+;                        and     SignOnly8Bit                ; .
+;                        ld      c,a                         ; .
+;                        push    bc                          ; save sign to stack
+;                        ld      a,l                         ; e = a /q * 96
+;                        call    AequAdivQmul96ABS              ; .
+;                        ld      e,a                         ; a = e / 10
+;                        EDiv10Inline                        ; .
+;                        ld      a,h                         ; retrieve sign
+;                        pop     bc                          ; retrieve sign
+;                        bit     7,c                         ; if sign is negative then 2'c value
+;                        jr      z,.DoneNormZ 
+;                        neg
+;.DoneNormZ:             ld      ixl,a                       ; .
 .NormaliseY:            ld      d,iyl                       ; d = q
                         pop     hl                          ; hl y scaled
                         ld      a,h                         ; c = sign

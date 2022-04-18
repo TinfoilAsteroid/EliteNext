@@ -228,13 +228,13 @@ JumpIfAEqNusng:         MACRO value, target
                         ENDM
 
 JumpIfAIsZero:	        MACRO target
-                        and a   ; cp 0 - changed to and a for optimisation but affects other flags
-                        jp	z, target
+                        and     a   ; cp 0 - changed to and a for optimisation but affects other flags
+                        jp	    z, target
                         ENDM
 
 JumpIfAIsNotZero:       MACRO target
-                        cp	0
-                        jp	nz,target
+                        and     a
+                        jp	    nz,target
                         ENDM
 
 IfResultZeroGoto:	    MACRO target
