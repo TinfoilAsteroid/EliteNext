@@ -232,6 +232,12 @@ JumpIfAIsZero:	        MACRO target
                         jp	    z, target
                         ENDM
 
+JumpIfRegIsNotZero:     MACRO   reg, target
+                        ld      a,reg
+                        and     a
+                        jp	    nz,target
+                        ENDM
+
 JumpIfAIsNotZero:       MACRO target
                         and     a
                         jp	    nz,target

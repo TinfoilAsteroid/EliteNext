@@ -238,6 +238,9 @@ ScannerX                    equ 128
 ScannerY                    equ 171 
 SunScanCenterX              equ 92
 SunScanCenterY              equ 171 
+PlanetScanCenterX           equ 164
+PlanetScanCenterY           equ 171
+
     
 compass_sun_move:       ld		a,compass_sun
                         nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
@@ -254,22 +257,14 @@ compass_sun_move:       ld		a,compass_sun
 compass_station_move:   ld		a,compass_station
                         nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
 ; write out X position bits 1 to 8
-                        ld		a,c
-                        ld      hl,compass_offset
-                        add		hl,a                                ; hl = full x position
-                        ld		a,l
+                        ld      a, PlanetScanCenterX-compass_offset
+                        add     a,c
                         nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
 ; write out Y position bits 1 to 8
-                        ex		de,hl								; de = full x position
-                        ld		a,b
-                        ld      hl,compass_offset           ;TODO Needs to be subtract
-                        add		hl,a
-                        ld		a,l                                 ; hl = full y position
+                        ld      a, PlanetScanCenterY-compass_offset
+                        sub     b
                         nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
-; write out MSB of X as its an anchor  
-                        ld		a,d									; de = MSB of X (hl bit 0)
-                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; lower y
-                        ret  
+                        ret    
                         
 ReticuleCentreX      EQU (256/2)+32 -1
 ReticuleCentreY      EQU (192/2)+32 -1
@@ -363,10 +358,9 @@ show_compass_sun_behind: ShowSprite  compass_sun, compass_sun_behind
 show_compass_station_infront: ShowSprite  compass_station, compass_station_infront
                          ret
 
-show_compass_statin_behind:   ShowSprite  compass_station, compass_station_behind
+show_compass_station_behind:  ShowSprite  compass_station, compass_station_behind
                          ret
-  
-  
+    
 sprite_laser:           LeftLaser  0,0,laser_sprite1 ,laser_pattern_1
                         LeftLaser  2,0,laser_sprite2 ,laser_pattern_2
                         LeftLaser  4,1,laser_sprite3 ,laser_pattern_3

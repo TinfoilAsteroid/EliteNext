@@ -91,12 +91,18 @@ ReturnIfMemNotZero:     MACRO mem
                         and     a
                         ret    nz
                         ENDM
-    
+      
 ReturnIfAGTEusng:       MACRO value
                         cp    value
                         ret	 nc
                         ENDM
     
+ReturnIfRegLTNusng:     MACRO reg, value
+                        ld      a,reg
+                        cp      value
+                        ret	    c
+                        ENDM
+
 ReturnIfALTNusng:       MACRO value
                         cp    value
                         ret	 c

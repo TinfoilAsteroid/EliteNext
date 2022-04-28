@@ -1,0 +1,20 @@
+;-- XX15 --------------------------------------------------------------------------------------------------------------------------
+PBnKXScaled                 DB  0               ; XX15+0Xscaled
+PBnKXScaledSign             DB  0               ; XX15+1xsign
+PBnKYScaled                 DB  0               ; XX15+2yscaled
+PBnKYScaledSign             DB  0               ; XX15+3ysign
+PBnKZScaled                 DB  0               ; XX15+4zscaled
+PBnKZScaledSign             DB  0               ; XX15+5zsign
+
+PXX15                       equ PBnKXScaled
+PXX15VecX                   equ PXX15
+PXX15VecY                   equ PXX15+1
+PXX15VecZ                   equ PXX15+2
+PBnKXPoint                  equ PXX15
+PBnKXPointLo                equ PXX15+0
+PBnKXPointHi                equ PXX15+1
+PBnKXPointSign              equ PXX15+2
+PBnKYPoint                  equ PXX15+3
+PBnKYPointLo                equ PXX15+3
+PBnKYPointHi                equ PXX15+4
+PBnKYPointSign              equ PXX15+5

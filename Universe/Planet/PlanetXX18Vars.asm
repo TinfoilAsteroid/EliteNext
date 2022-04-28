@@ -1,0 +1,14 @@
+;-- XX18 --------------------------------------------------------------------------------------------------------------------------
+PBnKDrawCam0xLo             DB  0               ; XX18+0
+PBnKDrawCam0xHi             DB  0               ; XX18+1
+PBnKDrawCam0xSgn            DB  0               ; XX18+2
+PBnKDrawCam0x               equ PBnKDrawCam0xLo
+PBnKDrawCam0yLo             DB  0               ; XX18+3
+PBnKDrawCam0yHi             DB  0               ; XX18+4
+PBnKDrawCam0ySgn            DB  0               ; XX18+5
+PBnKDrawCam0y               equ PBnKDrawCam0yLo
+PBnKDrawCam0zLo             DB  0               ; XX18+6
+PBnKDrawCam0zHi             DB  0               ; XX18+7
+PBnKDrawCam0zSgn            DB  0               ; XX18+8
+PBnKDrawCam0z               equ PBnKDrawCam0zLo
+PXX18                       equ PBnKDrawCam0xLo

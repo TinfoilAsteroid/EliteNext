@@ -65,7 +65,7 @@ MMUSelectSun:        MACRO
                      ENDM
 
 MMUSelectPlanet:     MACRO
-                     nextreg PlanetMMU,         PlanetBankAddr
+                     nextreg PlanetMMU,         BankPlanetData
                      ENDM
 
 MMUSelectUniverseA:  MACRO

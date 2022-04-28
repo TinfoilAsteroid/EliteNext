@@ -287,6 +287,8 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
                        ; ZeroA
                       ;  ld          (SBnKzsgn),a
                         call    SunUpdateAndRender
+.UpdatePlanet:          MMUSelectPlanet
+                        call    PlanetUpdateAndRender
 ;..Later this will be done via self modifying code to load correct stars routine for view..........................................
 DrawDustForwards:       ld     a,$DF
                         ld     (line_gfx_colour),a                         
@@ -337,22 +339,23 @@ ScreenLoopBank:         ld      a,$0
                         MMUSelectScreenA
 ScreenLoopJP:           call    $0000
 LoopRepeatPoint:        ld      a,(DockedFlag)
-HandleLaunched:         JumpIfAEqNusng  $FD, WeHaveCompletedLaunch
-                        JumpIfAEqNusng  $FE, WeAreInTransition
-                        JumpIfAEqNusng  $FC, WeAreHJumping
-                        JumpIfAEqNusng  $FB, WeAreHEntering
-                        JumpIfAEqNusng  $FA, WeHaveCompletedHJump
+HandleLaunched:         JumpIfAEqNusng  StateCompletedLaunch,   WeHaveCompletedLaunch
+                        JumpIfAEqNusng  StateInTransition,      WeAreInTransition
+                        JumpIfAEqNusng  StateHJumping,          WeAreHJumping
+                        JumpIfAEqNusng  StateHEntering,         WeAreHEntering
+                        JumpIfAEqNusng  StateCompletedHJump,    WeHaveCompletedHJump
+                        
                         jp  DoubleBufferCheck
 WeHaveCompletedLaunch:  call    LaunchedFromStation
                         jp      DoubleBufferCheck
 WeAreHJumping:          call    hyperspace_Lightning
                         jp      c,DoubleBufferCheck
-                        ld      a,$FB
+                        ld      a,StateHEntering
                         ld      (DockedFlag),a
                         jp      DoubleBufferCheck
-WeAreHEntering:         ld      a,$FA
+WeAreHEntering:         ld      a,StateCompletedHJump
                         ld      (DockedFlag),a
-                        jp  DoubleBufferCheck
+                        jp      DoubleBufferCheck
 
 
 ; to create planet position 
@@ -389,6 +392,8 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not worki
                         HalveFugitiveStatus                    ; halves status and brings bit into carry
                         MMUSelectSun
                         call    CreateSun                      ; create the local sun and set position based on seed
+                        MMUSelectPlanet
+                        call    CreatePlanet
 ;TODO                        call    generateSunAndPlanetPos        ; uses current carry state too
 ;TODO.CreateSun:             call    SetSunSlot
 ; PROBABLY NOT NEEDED NOW                      MMUSelectShipBank1
@@ -662,10 +667,12 @@ DrawForwardShips:       xor     a
 .DrawSunCompass:        MMUSelectSun
                         call    UpdateCompassSun                ; Always update the sun position
                         call    UpdateScannerSun                ; Always attempt to put the sun on the scanner 
-.CheckPlanetCompass:    JumpIfMemFalse SpaceStationSafeZone, .DrawSpaceStationCompass
-.DrawPlanetCompass:                        
-             
-.DrawSpaceStationCompass:
+.CheckPlanetCompass:    JumpIfMemFalse SpaceStationSafeZone, .DrawStationCompass
+.DrawPlanetCompass:     MMUSelectPlanet
+                        call    UpdateCompassPlanet
+                        call    UpdateScannerPlanet
+                        ret
+.DrawStationCompass:
 
                         ret    
 ;..................................................................................................................................
@@ -908,7 +915,9 @@ ScreenTransitionForced  DB $FF
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 LaunchedFromStation:    MMUSelectSun
-                        call    CreateSun                      ; create the local sun and set position based on seed
+                        call    CreateSunLaunched                   ; create the local sun and set position based on seed
+                        MMUSelectPlanet
+                        call    CreatePlanetLaunched
                         call    ClearUnivSlotList
                         call    SetSlot0ToSpaceStation              ; set slot 1 to space station
                         MMUSelectUniverseN 0                        ; Prep Target universe
@@ -1503,7 +1512,7 @@ UNIVDATABlock12     DB $FF
     SLOT    PlanetBankAddr
     PAGE    BankPlanetData
 	ORG	    PlanetBankAddr,BankPlanetData
-    ;TODO INCLUDE "./Universe/planet_data.asm"
+    INCLUDE "./Universe/Planet/planet_data.asm"
 
     SLOT    GalaxyDataAddr
     PAGE    BankGalaxyData1

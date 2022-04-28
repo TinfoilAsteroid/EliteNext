@@ -10,7 +10,8 @@
 ; This means each gets its own line list, inwork etc
 
 ; "Runtime Ship Data paged into in Bank 7"
-StartOfSun:        DB "Sun and Planet X"
+;                      0123456789ABCDEF
+StartOfSun:        DB "Sun Data ......."
 ; NOTE we can cheat and pre allocate segs just using a DS for now
 CheckRowHLOnScreen:     MACRO   failtarget
                         ld      a,h                             ; is h byte set, i.e > 256 or < 0
@@ -195,6 +196,20 @@ CreateSun:              call    ResetSBnKData
                         ld      (SBnKzhi),hl
                         ld      a, $E3
                         ld      (SBnKzlo),a
+                        ret
+; --------------------------------------------------------------
+; This creates a sun relative to space station on launch
+CreateSunLaunched:      call    ResetSBnKData
+                        ld      hl,0
+                        ld      a,0
+                        ld      (SBnKxlo),hl
+                        ld      (SBnKylo),hl
+                        ld      hl,$E000
+                        ld      (SBnKzlo),hl
+                        ld      (SBnKxsgn),a
+                        ld      (SBnKzsgn),a
+                        ld      a,$06
+                        ld      (SBnKysgn),a
                         ret
 ; --------------------------------------------------------------                        
 ; This sets current universe object to a planet,they use sign + 23 bit positions

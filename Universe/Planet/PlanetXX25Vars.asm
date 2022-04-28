@@ -1,0 +1,14 @@
+;-- XX25 --------------------------------------------------------------------------------------------------------------------------
+PBnKProjxLo                 DB  0
+PBnKProjxHi                 DB  0
+PBnKProjxSgn                DB  0
+PBnKProjx                   EQU PBnKProjxLo
+PBnKProjyLo                 DB  0
+PBnKProjyHi                 DB  0
+PBnKProjySgn                DB  0
+PBnKProjy                   EQU PBnKProjyLo
+PBnKProjzLo                 DB  0
+PBnKProjzHi                 DB  0
+PBnKProjzSgn                DB  0
+PBnKProjz                   EQU PBnKProjzLo
+PXX25                       EQU PBnKProjxLo

@@ -76,7 +76,7 @@ game_reset:									;.RESET	\ -> &3682 \ New player ship, called by TITLE
 	ld		(hl),a							; These must be defined continguous
 	inc		hl
 	djnz	.ClearBetaLoop
-	ld		a,PlayerDocked					; Set up in dock which happens to be also $FF
+	ld		a,StatePlayerDocked 			; Set up in dock which happens to be also $FF
 	ld		(DockedFlag),a
 	ld		hl, PlayerForwardSheild0		; Load player field 0 to 2 with FF
 	ld		(hl),a
@@ -209,7 +209,7 @@ load_ships:				; sod selective load from disk, get them all in
 reset_ships:
 	call		load_ships                  ; LSHIPS \ Load ship(s) files
 	call		game_reset                  ; RESET  \ new player ship, controls, dust field.
-	ld			a,PlayerDocked              ; Docked flag set
+	ld			a,StatePlayerDocked         ; Docked flag set
 	ld			(DockedFlag),a              ; QQ12
 	ld			(MenuIdMax),a               ; QQ11  \ menu id max
 	ld			a,KeyForwardsView           ; red key #f0, forward view. 

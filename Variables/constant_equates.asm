@@ -57,8 +57,15 @@ ShipIsScoopDockEsc  equ Bit7Only   ;
 ShipAIEnabled       equ Bit7Only   ; 
 ShipExploding       equ Bit5Only
 ShipKilled          equ Bit7Clear
-
-; UniverseAIControl
+; Main Loop State
+StatePlayerDocked    equ $FF
+StateCompletedLaunch equ $FD
+StateInTransition    equ $FE
+StateHJumping        equ $FC
+StateHEntering       equ $FB
+StateCompletedHJump  equ $FA
+StateNormal          equ 0
+; UniverseAIControl     
 ShipCanAnger        equ %00000001
 
 
@@ -77,7 +84,6 @@ ShipCountMax		equ	2			; For now just 2 ships to debug
 LineLimitPerShip	equ 70			; Max lines per ship
 FaceLimitPerShip	equ	70			; Same as line limit to simplify some logic
 ; "NEED TO DEFINE SHIPTYPESIZE TODO"
-PlayerDocked		equ	$FF
 
 ; Memory page managment	(Refers to a memory slot as a place to access data)
 ShipDataSlot		equ	6			; this may move into rom swap out space later
