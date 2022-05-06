@@ -1,7 +1,9 @@
-Gecko:	                DB $00, $26, $49
+Gecko:	                DB $00
+                        DW $2649
                         DW GeckoEdges
                         DB GeckoEdgesSize
                         DB $00, $1A
+                        DB GeckoVertSize /6 
                         DB GeckoVertSize
                         DB GeckoEdgesCnt
                         DB $00, $37

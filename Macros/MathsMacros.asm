@@ -1,4 +1,9 @@
 
+DEEquSquareA:           MACRO
+                        ld  d,a
+                        ld  e,a
+                        mul de
+                        ENDM
 
 ApplyMyRollToVector:    MACRO angle, vectorX, vectorY
                         ldCopyByte angle,varQ               ; Set Q = a = alpha (the roll angle to rotate through)
@@ -47,3 +52,21 @@ EDiv10Inline:           MACRO
                         add     hl,hl
                         ENDM
                         
+cpHLDE:                 MACRO
+                        push    hl
+                        and     a
+                        sbc     hl,de
+                        pop     hl
+                        ENDM
+
+;Unsigned
+;If HL == DE, then Z flag is set.
+;If HL != DE, then Z flag is reset.
+;If HL <  DE, then C flag is set.
+;If HL >= DE, then C flag is reset.
+;
+;Signed
+;If HL == DE, then Z flag is set.
+;If HL != DE, then Z flag is reset.
+;If HL <  DE, then S and P/V are different.
+;If HL >= DE, then S and P/V are the same.

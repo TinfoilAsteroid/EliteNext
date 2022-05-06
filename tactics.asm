@@ -8,9 +8,7 @@ MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check 
 .ItsNotAStation:        and     ShipIsBystander                         ; check if space station present if its a bystander
                         call    nz, SetStationAngry                     ; Set Space Station if present, Angry
                         ld      a,(UBnkaiatkecm)                        ; get AI data
-                        ReturnIfAIsZero                                 ; if 0 then no AI attached
-                        or      ShipAIEnabled                           ; set AI Enabled set to ensure its set
-                        ld      (UBnkaiatkecm),a                        ; .
+                        ReturnOnBitClear a, ShipAIEnabledBitNbr         ; if 0 then no AI attached so it can't get angry
                         ld      c,a                                     ; Copy to c in case we need it later
                         SetMemToN UBnKAccel, 2                          ; set accelleration to 2 to speed up
                         sla     a                                       ; set pitch to 4

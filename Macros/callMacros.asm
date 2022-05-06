@@ -45,6 +45,17 @@ CallIfMemFalse:         MACRO mem, target
                         call    nz, target
                         ENDM
 
+CallIfMemZero:          MACRO mem, target
+                        ld      a,(mem)
+                        and     a
+                        call    z, target
+                        ENDM     
+
+CallIfMemNotZero:       MACRO mem, target
+                        ld      a,(mem)
+                        and     a
+                        call    nz, target
+                        ENDM    
 CallIfATrue:            MACRO target
                         and     a
                         call    z, target
@@ -54,3 +65,13 @@ CallIfAFalse:           MACRO target
                         and     a
                         call    nz, target
                         ENDM
+                        
+CallIfAZero:            MACRO target
+                        and     a
+                        call    z, target
+                        ENDM                        
+
+CallIfANotZero:         MACRO target
+                        and     a
+                        call    nz, target
+                        ENDM                                                

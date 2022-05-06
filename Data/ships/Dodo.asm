@@ -1,7 +1,9 @@
-Dodo:	                DB $00, $7E, $90
+Dodo:	                DB $00
+                        DW $7E90
                         DW DodoEdges
                         DB DodoEdgesSize
                         DB $00, $36
+                        DB DodoVertSize /6 
                         DB DodoVertSize
                         DB DodoEdgesCnt
                         DB $00, $00

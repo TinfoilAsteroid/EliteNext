@@ -1,7 +1,9 @@
-ShuttleType9:	            DB $0F, $09, $C4
+ShuttleType9:	            DB $0F
+                            DW $09C4
                             DW ShuttleType9Edges
                             DB ShuttleType9EdgesSize
                             DB $00, $26
+                            DB ShuttleType9VertSize /6 
                             DB ShuttleType9VertSize
                             DB ShuttleType9EdgesCnt
                             DB $00, $00
@@ -14,25 +16,25 @@ ShuttleType9:	            DB $0F, $09, $C4
                             DB 0
 
 
-ShuttleType9Vertices:	DB $00, $11, $17, $5F, $FF, $FF
-	DB $11, $00, $17, $9F, $FF, $FF
-	DB $00, $12, $17, $1F, $FF, $FF
-	DB $12, $00, $17, $1F, $FF, $FF
-	DB $14, $14, $1B, $FF, $12, $39
-	DB $14, $14, $1B, $BF, $34, $59
-	DB $14, $14, $1B, $3F, $56, $79
-	DB $14, $14, $1B, $7F, $17, $89
-	DB $05, $00, $1B, $30, $99, $99
-	DB $00, $02, $1B, $70, $99, $99
-	DB $05, $00, $1B, $A9, $99, $99
-	DB $00, $03, $1B, $29, $99, $99
-	DB $00, $09, $23, $50, $0A, $BC
-	DB $03, $01, $1F, $47, $FF, $02
-	DB $04, $0B, $19, $08, $01, $F4
-	DB $0B, $04, $19, $08, $A1, $3F
-	DB $03, $01, $1F, $C7, $6B, $23
-	DB $03, $0B, $19, $88, $F8, $C0
-	DB $0A, $04, $19, $88, $4F, $18
+ShuttleType9Vertices:	DB $00, $11, $17, $5F, $FF, $FF ; 01
+                        DB $11, $00, $17, $9F, $FF, $FF ; 02
+                        DB $00, $12, $17, $1F, $FF, $FF ; 03
+                        DB $12, $00, $17, $1F, $FF, $FF ; 04
+                        DB $14, $14, $1B, $FF, $12, $39 ; 05
+                        DB $14, $14, $1B, $BF, $34, $59 ; 06
+                        DB $14, $14, $1B, $3F, $56, $79 ; 07
+                        DB $14, $14, $1B, $7F, $17, $89 ; 08
+                        DB $05, $00, $1B, $30, $99, $99 ; 09
+                        DB $00, $02, $1B, $70, $99, $99 ; 10
+                        DB $05, $00, $1B, $A9, $99, $99 ; 11
+                        DB $00, $03, $1B, $29, $99, $99 ; 12
+                        DB $00, $09, $23, $50, $0A, $BC ; 13
+                        DB $03, $01, $1F, $47, $FF, $02 ; 14
+                        DB $04, $0B, $19, $08, $01, $F4 ; 15
+                        DB $0B, $04, $19, $08, $A1, $3F ; 16
+                        DB $03, $01, $1F, $C7, $6B, $23 ; 17
+                        DB $03, $0B, $19, $88, $F8, $C0 ; 18
+                        DB $0A, $04, $19, $88, $4F, $18 ; 19
 
 ShuttleType9VertSize: equ $ - ShuttleType9Vertices	
 	

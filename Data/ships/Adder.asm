@@ -1,7 +1,9 @@
-Adder:	                DB $00, $09, $C4
+Adder:	                DB $00
+                        DW $09C4
                         DW AdderEdges
                         DB AdderEdgesSize
                         DB $00, $16
+                        DB AdderVertSize / 6
                         DB AdderVertSize
                         DB AdderEdgesCnt
                         DB $00, $28

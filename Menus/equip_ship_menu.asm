@@ -514,7 +514,7 @@ eqshp_LeftPressed:      ld      a,(Galaxy)
                         ld      hl,EquipmentFitted
                         ld      a,c                 ; get back current laser ref
                         add     hl,a
-                        ld      (hl),0              ; remove laser from equipment
+                        ld      (hl),EquipmentItemNotFitted; remove laser from equipment
                         call    eqip_refesh_buffer
                         ld      a,(ix+8)
                         cp      $FF
@@ -596,7 +596,7 @@ eqshp_RightPressed:     ld      a,(Galaxy)
                         JumpIfAGTENusng  EQ_FRONT_PULSE,.AddLaser
 .AddNormalItem:         ld      hl,EquipmentFitted
                         add     hl,a
-                        ld      (hl),$FF
+                        ld      (hl),EquipmentItemFitted
                         ld      a,"*"
                         jp      .AddedItem
 .MaxFuelOut:            MaxFuelMacro
@@ -634,11 +634,11 @@ eqshp_RightPressed:     ld      a,(Galaxy)
                         ld      hl,EquipmentFitted
                         ld      a,c                 ; get back current laser ref
                         add     hl,a
-                        ld      (hl),0              ; remove laser from equipment
+                        ld      (hl),EquipmentItemNotFitted  ; remove laser from equipment
 .BuyLaser:              ld      hl,EquipmentFitted
                         ld      a,(ix+6)
                         add     hl,a
-                        ld      (hl),$FF
+                        ld      (hl),EquipmentItemFitted
                         ld      a,(ix+9)            ; get laser position
                         ld      hl,LaserType
                         add     hl,a

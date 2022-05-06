@@ -1,7 +1,9 @@
-TransportType10:	    DB $00, $09, $C4
+TransportType10:	    DB $00
+                        DW $09C4
                         DW TransportType10Edges
                         DB TransportType10EdgesSize
                         DB $30, $1A
+                        DB TransportType10VertSize /6 
                         DB TransportType10VertSize
                         DB TransportType10EdgesCnt
                         DB $00, $00

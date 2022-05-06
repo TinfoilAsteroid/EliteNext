@@ -1,7 +1,9 @@
-Cobra_Mk_3_P:	        DB $01, $23, $41
+Cobra_Mk_3_P:	        DB $01
+                        DW $2341
                         DW Cobra_Mk_3_PEdges
                         DB Cobra_Mk_3_PEdgesSize
                         DB $54, $2A
+                        DB Cobra_Mk_3_PVertSize /6 
                         DB Cobra_Mk_3_PVertSize
                         DB Cobra_Mk_3_PEdgesCnt
                         DB $00, $AF

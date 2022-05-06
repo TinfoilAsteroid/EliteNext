@@ -1,7 +1,9 @@
-Monitor:	            DB $04, $36, $00
+Monitor:	            DB $04
+                        DW $3600
                         DW MonitorEdges
                         DB MonitorEdgesSize
                         DB $00, $2A
+                        DB MonitorVertSize /6 
                         DB MonitorVertSize
                         DB MonitorEdgesCnt
                         DB $01, $90

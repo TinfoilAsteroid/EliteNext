@@ -1,7 +1,9 @@
-Rattler:	            DB $02, $17, $70
+Rattler:	            DB $02
+                        DW $1770
                         DW RattlerEdges
                         DB RattlerEdgesSize
                         DB $00, $2A
+                        DB RattlerVertSize /6 
                         DB RattlerVertSize
                         DB RattlerEdgesCnt
                         DB $00, $96
@@ -14,21 +16,21 @@ Rattler:	            DB $02, $17, $70
                         DB ShipCanAnger
 
 
-RattlerVertices:	DB $00, $00, $3C, $1F, $89, $23
-	DB $28, $00, $28, $1F, $9A, $34
-	DB $28, $00, $28, $9F, $78, $12
-	DB $3C, $00, $00, $1F, $AB, $45
-	DB $3C, $00, $00, $9F, $67, $01
-	DB $46, $00, $28, $3F, $CC, $5B
-	DB $46, $00, $28, $BF, $CC, $06
-	DB $00, $14, $28, $3F, $FF, $FF
-	DB $00, $14, $28, $7F, $FF, $FF
-	DB $0A, $06, $28, $AA, $CC, $CC
-	DB $0A, $06, $28, $EA, $CC, $CC
-	DB $14, $00, $28, $AA, $CC, $CC
-	DB $0A, $06, $28, $2A, $CC, $CC
-	DB $0A, $06, $28, $6A, $CC, $CC
-	DB $14, $00, $28, $2A, $CC, $CC
+RattlerVertices:	    DB $00, $00, $3C, $1F, $89, $23
+                        DB $28, $00, $28, $1F, $9A, $34
+                        DB $28, $00, $28, $9F, $78, $12
+                        DB $3C, $00, $00, $1F, $AB, $45
+                        DB $3C, $00, $00, $9F, $67, $01
+                        DB $46, $00, $28, $3F, $CC, $5B
+                        DB $46, $00, $28, $BF, $CC, $06
+                        DB $00, $14, $28, $3F, $FF, $FF
+                        DB $00, $14, $28, $7F, $FF, $FF
+                        DB $0A, $06, $28, $AA, $CC, $CC
+                        DB $0A, $06, $28, $EA, $CC, $CC
+                        DB $14, $00, $28, $AA, $CC, $CC
+                        DB $0A, $06, $28, $2A, $CC, $CC
+                        DB $0A, $06, $28, $6A, $CC, $CC
+                        DB $14, $00, $28, $2A, $CC, $CC
 
 RattlerVertSize: equ $ - RattlerVertices	
 

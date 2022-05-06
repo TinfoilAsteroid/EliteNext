@@ -1,7 +1,9 @@
-Asteroid:	            DB $00, $19, $00
+Asteroid:	            DB $00
+                        DW $1900
                         DW AsteroidEdges
                         DB AsteroidEdgesSize
                         DB $00, $22
+                        DB AsteroidVertSize /6 
                         DB AsteroidVertSize
                         DB AsteroidEdgesCnt
                         DB $00, $05

@@ -1,7 +1,9 @@
-Iguana:	                DB $01, $0D, $AC
+Iguana:	                DB $01
+                        DW $0DAC
                         DW IguanaEdges
                         DB IguanaEdgesSize
                         DB $00, $1A
+                        DB IguanaVertSize /6 
                         DB IguanaVertSize
                         DB IguanaEdgesCnt
                         DB $00, $96

@@ -1,7 +1,9 @@
-Ophidian:	            DB $02, $0E, $88
+Ophidian:	            DB $02
+                        DW $0E88
                         DW OphidianEdges
                         DB OphidianEdgesSize
                         DB $00, $3C
+                        DB OphidianVertSize /6 
                         DB OphidianVertSize
                         DB OphidianEdgesCnt
                         DB $00, $32
@@ -13,26 +15,26 @@ Ophidian:	            DB $02, $0E, $88
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
                         
-OphidianVertices:	    DB $14, $00, $46, $9F, $68, $02
-                        DB $14, $00, $46, $1F, $67, $01
-                        DB $00, $0A, $28, $1F, $22, $01
-                        DB $1E, $00, $1E, $9F, $8A, $24
-                        DB $1E, $00, $1E, $1F, $79, $13
-                        DB $00, $10, $0A, $1F, $FF, $FF
-                        DB $14, $0A, $32, $3F, $9B, $35
-                        DB $14, $0A, $32, $BF, $AB, $45
-                        DB $1E, $00, $32, $BF, $BB, $4A
-                        DB $28, $00, $32, $B0, $FF, $FF
-                        DB $1E, $00, $1E, $B0, $FF, $FF
-                        DB $1E, $00, $32, $3F, $BB, $39
-                        DB $28, $00, $32, $30, $FF, $FF
-                        DB $1E, $00, $1E, $30, $FF, $FF
-                        DB $00, $0A, $32, $7F, $BB, $9A
-                        DB $00, $10, $14, $5F, $FF, $FF
-                        DB $0A, $04, $32, $30, $BB, $BB
-                        DB $0A, $02, $32, $70, $BB, $BB
-                        DB $0A, $02, $32, $F0, $BB, $BB
-                        DB $0A, $04, $32, $B0, $BB, $BB
+OphidianVertices:	    DB $14, $00, $46, $9F, $68, $02 ; 01
+                        DB $14, $00, $46, $1F, $67, $01 ; 02
+                        DB $00, $0A, $28, $1F, $22, $01 ; 03
+                        DB $1E, $00, $1E, $9F, $8A, $24 ; 04
+                        DB $1E, $00, $1E, $1F, $79, $13 ; 05
+                        DB $00, $10, $0A, $1F, $FF, $FF ; 06
+                        DB $14, $0A, $32, $3F, $9B, $35 ; 07
+                        DB $14, $0A, $32, $BF, $AB, $45 ; 08
+                        DB $1E, $00, $32, $BF, $BB, $4A ; 09
+                        DB $28, $00, $32, $B0, $FF, $FF ; 10
+                        DB $1E, $00, $1E, $B0, $FF, $FF ; 11
+                        DB $1E, $00, $32, $3F, $BB, $39 ; 12
+                        DB $28, $00, $32, $30, $FF, $FF ; 13
+                        DB $1E, $00, $1E, $30, $FF, $FF ; 14
+                        DB $00, $0A, $32, $7F, $BB, $9A ; 15
+                        DB $00, $10, $14, $5F, $FF, $FF ; 16
+                        DB $0A, $04, $32, $30, $BB, $BB ; 17
+                        DB $0A, $02, $32, $70, $BB, $BB ; 18
+                        DB $0A, $02, $32, $F0, $BB, $BB ; 19
+                        DB $0A, $04, $32, $B0, $BB, $BB ; 20
 
 OphidianVertSize:       equ $ - OphidianVertices
 OphidianEdges:	        DB $1F, $06, $00, $04

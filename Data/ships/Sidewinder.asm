@@ -1,7 +1,9 @@
-Sidewinder:	            DB $00, $10, $81
+Sidewinder:	            DB $00
+                        DW $1081
                         DW SidewinderEdges
                         DB SidewinderEdgesSize
                         DB $00, $1E
+                        DB SidewinderVertSize /6 
                         DB SidewinderVertSize
                         DB SidewinderEdgesCnt
                         DB $00, $32

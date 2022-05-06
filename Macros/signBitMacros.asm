@@ -1,3 +1,14 @@
+SetMemBitN              MACRO mem,bitnbr
+                        ld      hl,mem
+                        set     bitnbr,(hl)
+                        ENDM
+
+ClearMemBitN            MACRO mem,bitnbr
+                        ld      hl,mem
+                        res     bitnbr,(hl)
+                        ENDM
+
+                        
 ClearSignBitMem:        MACRO mem
                         ld      a,(mem)
                         and     SignMask8Bit

@@ -1,7 +1,9 @@
-Rock_Hermit:	        DB $07, $19, $00
+Rock_Hermit:	        DB $07
+                        DW $1900
                         DW Rock_HermitEdges
                         DB Rock_HermitEdgesSize
                         DB $00, $32
+                        DB Rock_HermitVertSize /6 
                         DB Rock_HermitVertSize
                         DB Rock_HermitEdgesCnt
                         DB $00, $00
@@ -15,14 +17,14 @@ Rock_Hermit:	        DB $07, $19, $00
 
 	
 Rock_HermitVertices:	DB $00, $50, $00, $1F, $FF, $FF
-	DB $50, $0A, $00, $DF, $FF, $FF
-	DB $00, $50, $00, $5F, $FF, $FF
-	DB $46, $28, $00, $5F, $FF, $FF
-	DB $3C, $32, $00, $1F, $65, $DC
-	DB $32, $00, $3C, $1F, $FF, $FF
-	DB $28, $00, $46, $9F, $10, $32
-	DB $00, $1E, $4B, $3F, $FF, $FF
-	DB $00, $32, $3C, $7F, $98, $BA
+                        DB $50, $0A, $00, $DF, $FF, $FF
+                        DB $00, $50, $00, $5F, $FF, $FF
+                        DB $46, $28, $00, $5F, $FF, $FF
+                        DB $3C, $32, $00, $1F, $65, $DC
+                        DB $32, $00, $3C, $1F, $FF, $FF
+                        DB $28, $00, $46, $9F, $10, $32
+                        DB $00, $1E, $4B, $3F, $FF, $FF
+                        DB $00, $32, $3C, $7F, $98, $BA
 
 	
 Rock_HermitVertSize: equ $ - Rock_HermitVertices	

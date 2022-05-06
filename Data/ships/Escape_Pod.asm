@@ -1,7 +1,9 @@
-Escape_Pod:             DB $20, $01, $00
+Escape_Pod:             DB $20
+                        DW $0100
                         DW Escape_PodEdges
                         DB Escape_PodEdgesSize
                         DB $00, $16
+                        DB Escape_PodVertSize /6 
                         DB Escape_PodVertSize
                         DB Escape_PodEdgesCnt
                         DB $00, $00

@@ -1,7 +1,9 @@
-Cobra_Mk_1:	            DB $03, $26, $49
+Cobra_Mk_1:	            DB $03
+                        DW $2649
                         DW Cobra_Mk_1Edges
                         DB Cobra_Mk_1EdgesSize
                         DB $28, $1A
+                        DB Cobra_Mk_1VertSize /6 
                         DB Cobra_Mk_1VertSize
                         DB Cobra_Mk_1EdgesCnt
                         DB $00, $4B

@@ -43,6 +43,12 @@ ReturnIfMemisZero:      MACRO mem
                         ret    z
                         ENDM
                         
+ReturnIfMemIsNegative:  MACRO mem
+                        ld      a,(mem)
+                        and     $80
+                        ret     nz
+                        ENDM
+                        
 ReturnIfBitMaskClear    MACRO   bitmask
                         and     bitmask
                         ret     z

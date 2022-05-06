@@ -54,6 +54,9 @@ draw_front_view:        MMUSelectLayer1
                         call    sprite_cls_cursors
                         call    sprite_reticule
                         call    sprite_laser
+                        call    sprite_targetting
+                        call    sprite_lock
+                        call    sprite_targetting_hide      ; do not show targeting initially
                        ; call    sprite_laser_show
                         MMUSelectConsoleBank
                         ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
@@ -67,9 +70,41 @@ draw_front_view:        MMUSelectLayer1
                         call        InitialiseStars
                         xor         a
                         ld          (DockedFlag),a              ; we can never be docked if we hit a view screen
+                        ld          (CurrentLock),a             ; we are on no targetting sprites
+                        ld          (ShowingLock),a
                         ret
 
-
+CurrentLock             DB      0
+ShowingLock             DB      0
+update_front_view:      ld      a,(MissileTargettingFlag)
+                        JumpIfANEquNusng StageMissileNoTarget,  .NoTarget
+                        JumpIfANEquNusng StageMissileTargeting, .Targetting
+                        bit     7,a
+                        jr      nz, .Locked
+                        call    sprite_targetting_hide
+                        ret
+.NoTarget:              ld      a,(ShowingLock)
+                        ReturnIfAIsZero
+                        MMUSelectSpriteBank
+                        call        sprite_targetting_hide
+                        ret
+.Targetting:            CallIfMemZero CurrentLock, sprite_targetting
+                        CallIfMemZero ShowingLock, sprite_targetting_show
+                        ld      hl,$0100                        ; set both bytes in one go
+                        ld      (CurrentLock),hl
+                        ret
+.Locked:                CallIfMemNotZero CurrentLock, sprite_lock
+                        CallIfMemZero ShowingLock, sprite_targetting_show
+                        ld      hl,$0101                        ; set both bytes in one go
+                        ld      (CurrentLock),hl
+                        ret     
+                
+                        ld      a,(ShowingLock)
+                        
+                        MMUSelectSpriteBank
+                        call        sprite_targetting_show
+                        ld      a,(CurrentLock)
+                        ReturnIfAIsZero
 
 
                         ;  1......................  2......................  3......................  4......................  5......................  6...................... 7......................  8......................
@@ -322,7 +357,7 @@ input_front_view:       xor         a
 .InsufficientFuel
 .NotHyperspace:         
 .CheckForLaserPressed:  call    IsLaserUseable                      ; no laser or destroyed?
-                        jr      z,.CheckForMissile
+                        jr      z,.CheckTargetting
 .CanLaserStillFire:     SetMemFalse FireLaserPressed                ; default to no laser
                         ld      a,(CurrLaserPulseRate)              ; if not beam type
                         JumpIfAIsZero .BeamType                     ; .
@@ -334,34 +369,35 @@ input_front_view:       xor         a
                         or      (hl)                                ;    
                         inc     hl  ; CurrLaserPulseRestCount       ;       and not in rest phase.
                         or      (hl)                                ;    .
-                        jr      nz, .CheckForMissile                ;    .
+                        jr      nz, .CheckTargetting                ;    .
 .IsFirePressed:         ld      a,c_Pressed_FireLaser               ;       if fire is pressed
                         call    is_key_up_state                     ;       .
-                        jr      z,.CheckForMissile                  ;       .
+                        jr      z,.CheckTargetting                  ;       .
 .CanProcesFire:         ld      a,(CurrLaserPulseRateCount)         ;            pulse rate count ++
                         inc     a                                   ;            .
 .StillHavePulsesLeft:   ld      (CurrLaserPulseRateCount),a         ;            .
                         ldCopyByte CurrLaserPulseOnTime, CurrLaserPulseOnCount  ; pulse on count = pulse on time
                      ;   ldCopyByte CurrLaserPulseOffTime, CurrLaserPulseOffCount; pulse off count = pulse off time
                      ;   ldCopyByte CurrLaserPulseRest, CurrLaserPulseRestCount  ; pulse rest count = pulse rest time
-                        jp      .CheckForMissile                   
+                        jp      .CheckTargetting                   
 .BeamType:              ld      a,c_Pressed_FireLaser               ; else (beam type) if fire is pressed
                         call    is_key_up_state                     ;                   .
-                        jr      z,.CheckForMissile                  ;                   .
+                        jr      z,.CheckTargetting                  ;                   .
                         SetMemTrue FireLaserPressed                 ;                   set pulse on to 1
-                        jp      .CheckForMissile
+                        jp      .CheckTargetting
 .PulseLimitReached:     ;ZeroA                                       ;
                         ;ld      (CurrLaserPulseRateCount),a         ;
                         ;ldCopyByte CurrLaserPulseRest, CurrLaserPulseRestCount   ; start the rest phase
-                        
+; . Here we check to see if the target lock has been pressed                        
+.CheckTargetting:       call    TargetMissileTest
 .CheckForMissile:       ld      a,c_Pressed_FireMissile             ; launch pressed?
                         call    is_key_pressed
                         jr      nz,.NotMissileLaunch
                         AnyMissilesLeft                             
                         jr      z,.NotMissileLaunch                 ; no missiles in rack
-                        IsMissileLockedOn
+                        call    IsMissileLockedOn
                         jr      z,.MissileNotLocked
-.MissileLaunch:         SetMemTrue  MissileLaunchFlag
+.MissileLaunch:         SetMissileLaunch
 .MissileNotLocked:                       ; later on we need a "bing bong" nose for trying to launch an unlocked missile
 .NotMissileLaunch:
                         ret

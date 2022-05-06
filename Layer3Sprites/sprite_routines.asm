@@ -36,9 +36,10 @@ laser_sprite13                      equ	laser_sprite12   +1
 laser_sprite14                      equ	laser_sprite13   +1
 laser_sprite15                      equ	laser_sprite14   +1
 laser_sprite16                      equ laser_sprite15   +1
-
 compass_sun                         equ laser_sprite16   +1
 compass_station                     equ compass_sun      +1
+targetting_sprite1                  equ compass_station  +1
+targetting_sprite2                  equ targetting_sprite1   +1
 
 glactic_pattern_1					equ 0
 glactic_hyper_pattern_1             equ 2
@@ -51,6 +52,8 @@ laser_pattern_2                     equ 13
 laser_pattern_3                     equ 14
 laser_pattern_4                     equ 15
 laser_pattern_5                     equ 16
+targetting_pattern                  equ 23
+lock_pattern                        equ 24
 
 compass_sun_infront                 equ 17
 compass_sun_behind                  equ 18
@@ -266,9 +269,13 @@ compass_station_move:   ld		a,compass_station
                         nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                         ret    
                         
-ReticuleCentreX      EQU (256/2)+32 -1
-ReticuleCentreY      EQU (192/2)+32 -1
-ReticuleOffset       EQU 8
+ReticuleCentreX         EQU (256/2)+32 -1
+ReticuleCentreY         EQU (192/2)+32 -1
+ReticuleOffset          EQU 8
+
+TargetetingCentreX1     EQU ReticuleCentreX -32
+TargetetingCentreX2     EQU ReticuleCentreX +16
+TargetetingCentreY      EQU ReticuleCentreY -7
     
 sprite_reticule:        ld      a,reticlule_sprite1                 ; LEFT ARM
                         nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
@@ -415,6 +422,59 @@ sprite_reticule_hide:   HideSprite reticlule_sprite1
                         HideSprite reticlule_sprite4
                         ret
 
+                            
+sprite_targetting:      ld      a,targetting_sprite1                 ; LEFT ARM
+                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+                        ld      a,TargetetingCentreX1
+                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+                        ld		a,TargetetingCentreY 
+                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                        xor     a
+                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+                        ld      a,targetting_pattern | %10000000
+                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+.right:                 ld      a,targetting_sprite2                ; RIGHT ARM
+                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+                        ld      a,TargetetingCentreX2
+                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+                        ld		a,TargetetingCentreY
+                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                        ld      a,%00001000
+                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring horizontal
+                        ld      a,targetting_pattern | %10000000
+                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+                        ret
+
+sprite_lock:            ld      a,targetting_sprite1                 ; LEFT ARM
+                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+                        ld      a,TargetetingCentreX1
+                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+                        ld		a,TargetetingCentreY 
+                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                        xor     a
+                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+                        ld      a,lock_pattern | %10000000
+                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+.right:                 ld      a,targetting_sprite2                 ; RIGHT ARM
+                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+                        ld      a,TargetetingCentreX2
+                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+                        ld		a,TargetetingCentreY
+                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                        ld      a,%00001000
+                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring horizontal
+                        ld      a,lock_pattern | %10000000
+                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+                        ret
+                            
+sprite_targetting_hide: HideSprite targetting_sprite1
+                        HideSprite targetting_sprite2
+                        ret
+
+sprite_targetting_show: ShowSprite targetting_sprite1, targetting_pattern
+                        ShowSprite targetting_sprite2, targetting_pattern
+                        ret
+
 sprite_laser_hide:      HideSprite laser_sprite1
                         HideSprite laser_sprite2
                         HideSprite laser_sprite3
@@ -444,6 +504,7 @@ sprite_cls_cursors:     call	sprite_galactic_hide
                         call    sprite_reticule_hide
                         call    sprite_laser_hide
                         call    sprite_compass_hide
+                        call    sprite_targetting_hide
                         ret
 
 init_sprites:           call		sprite_cls_cursors

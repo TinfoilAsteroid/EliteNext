@@ -23,10 +23,12 @@
 ;;;		Byte 2 = Y Lo			
 ;;;		Byte 3 = Z Lo			
 
-CargoType5              DB $00, $90, $01
+CargoType5              DB $00
+                        DW $0190
                         DW CargoType5Edges
                         DB CargoType5EdgesSize
                         DB $00,$12
+                        DB CargoType5VertSize /6 
                         DB CargoType5VertSize
                         DB CargoType5EdgesCnt
                         DB $00,$00
@@ -35,7 +37,7 @@ CargoType5              DB $00, $90, $01
                         DW CargoType5Normals
                         DB $02,$00
                         DW CargoType5Vertices
-                        DB ShipTypeJunk             ; Type
+                        DB ShipTypeScoopable        ; Type
                         DB 0                        ; Tactics
                         DB 0
 ; So cargo is               Edge offset $0050  Face Offset $008C, Verices will alwys be +20, LineMax 31 -> 4  EdgeCnt 15  VertexCnt 60 -> 10     FaceCn 28 -> 7

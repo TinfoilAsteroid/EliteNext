@@ -1,10 +1,12 @@
 ;                      0    1    2    3   4   5   6   7   8   9   10  11  12  13  14  15   16                    17                  18  19     20                     21 
 ;					   Scp  Missile   Edg Edg Lin Gun Exp Vtx Edg Bounty  Face             Edg                   Face                           Vertices
 ;                      Deb  Lock      Lo  Hi  x4  Vtx Cnt x6  X1  lo  hi  x4  Dot Erg Spd  hi                    Hi                  Q   Laser  Lo                     hi                
-Constrictor:    	    DB $F3, $49, $26
+Constrictor:    	    DB $F3
+                        DW $2649
                         DW ConstrictorEdges
                         DB ConstrictorEdgesSize
                         DB $00,$2E
+                        DB ConstrictorVertSize /6 
                         DB ConstrictorVertSize
                         DB ConstrictorEdgesCnt
                         DB $18,$00

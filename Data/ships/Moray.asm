@@ -1,7 +1,9 @@
-Moray:	                DB $01, $03, $84
+Moray:	                DB $01
+                        DW $0384
                         DW MorayEdges
                         DB MorayEdgesSize
                         DB $00, $1A
+                        DB MorayVertSize /6 
                         DB MorayVertSize
                         DB MorayEdgesCnt
                         DB $00, $32

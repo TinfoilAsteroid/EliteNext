@@ -1,7 +1,9 @@
-TestVector:             DB $03, $41, $23
+TestVector:             DB $03
+                        DW $4123
                         DW TestVectorEdges
                         DB TestVectorEdgesSize
                         DB $54,$2A
+                        DB TestVectorVertSize /6 
                         DB TestVectorVertSize
                         DB TestVectorEdgesCnt
                         DB $00,$00

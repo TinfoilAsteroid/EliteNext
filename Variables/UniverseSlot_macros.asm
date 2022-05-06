@@ -44,8 +44,20 @@ JumpIfSpaceStation:     MACRO   Target
                         ld      a,(hl)
                         cp      ShipTypeStation
                         ENDM
-                        
 
+ClearSlotMem:           MACRO   mem
+                        ld      a,(mem)
+                        call    ClearSlotA
+                        ENDM
+                        
+IsSlotEmpty:            MACRO
+                        ld      hl,UniverseSlotList
+                        add     hl,a
+                        ld      a,(hl)
+                        cp      0
+                        ENDM
+
+                        
 ; Checks if slot is empty else A = ship type
 ReturnIfSlotAEmpty:     MACRO
                         ld      hl,UniverseSlotList

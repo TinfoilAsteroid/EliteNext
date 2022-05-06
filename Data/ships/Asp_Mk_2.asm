@@ -1,7 +1,9 @@
-Asp_Mk_2:	           DB $00, $0E, $10
+Asp_Mk_2:	            DB $00
+                        DW $0E10
                         DW Asp_Mk_2Edges
                         DB Asp_Mk_2EdgesSize
                         DB $20, $1A
+                        DB Asp_Mk_2VertSize /6 
                         DB Asp_Mk_2VertSize
                         DB Asp_Mk_2EdgesCnt
                         DB $00, $C8
@@ -30,7 +32,7 @@ Asp_Mk_2Vertices:	    DB $00, $12, $00, $56, $01, $22 ;01
                         DB $00, $04, $2D, $6A, $BB, $BB ;16
                         DB $00, $04, $2D, $28, $BB, $BB ;17
                         DB $00, $07, $49, $4A, $04, $04 ;18
-                        DB $00, $07, $53, $4A, $04, $04
+                        DB $00, $07, $53, $4A, $04, $04 ;19
 Asp_Mk_2VertSize:       equ $ - Asp_Mk_2Vertices	
 Asp_Mk_2Edges:	        DB $16, $12, $00, $04           ;01
                         DB $16, $01, $00, $10           ;02

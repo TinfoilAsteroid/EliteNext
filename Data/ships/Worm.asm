@@ -1,7 +1,9 @@
-Worm:	                DB $00, $26, $49
+Worm:	                DB $00
+                        DW $2649
                         DW WormEdges
                         DB WormEdgesSize
                         DB $00, $12
+                        DB WormVertSize /6 
                         DB WormVertSize
                         DB WormEdgesCnt
                         DB $00, $00

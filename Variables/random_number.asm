@@ -2,7 +2,7 @@ doRandom2:									; .DORND2	\ -> &3F85 \ Restricted for explosion dust.
 doRND2:
 	and		a								; fast clear carry  leave bit0 of RAND+2 at 0. 
 doRandom:									;.DORND	\ -> &3F86 \ do random, new A, X.
-; "doRandom, Random Seed update, new value in A & B)"
+; "doRandom, Random Seed update, new value in A & C)"
 doRND:                  ld		a,(RandomSeed)					; Get Seed 0
                         rl		a								; Rotate L including carry
                         ld		c,a								; c =  double lo
@@ -22,4 +22,22 @@ doRND:                  ld		a,(RandomSeed)					; Get Seed 0
                         ld		a,c
                         ld		(RandomSeed3),a
                         ex		af,af'
+                        ret
+
+saveRandomSeeds:        ld      hl,RandomSeed
+                        ld      de,RandomSeedSave
+                        ld      bc,4
+                        ldi
+                        ldi
+                        ldi
+                        ldi
+                        ret
+
+restoreRandomSeeds:     ld      hl,RandomSeedSave
+                        ld      de,RandomSeed
+                        ld      bc,4
+                        ldi
+                        ldi
+                        ldi
+                        ldi
                         ret

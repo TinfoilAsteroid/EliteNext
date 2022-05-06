@@ -1,7 +1,9 @@
-Splinter:	            DB $B0, $01, $00
+Splinter:	            DB $B0
+                        DW $0100
                         DW SplinterEdges
                         DB SplinterEdgesSize
                         DB $00, $16
+                        DB SplinterVertSize /6 
                         DB SplinterVertSize
                         DB SplinterEdgesCnt
                         DB $00, $00

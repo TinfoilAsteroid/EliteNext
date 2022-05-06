@@ -1,7 +1,9 @@
-Chameleon:	            DB $03, $0F, $A0
+Chameleon:	            DB $03
+                        DW $0FA0
                         DW ChameleonEdges
                         DB ChameleonEdgesSize
                         DB $00, $1A
+                        DB ChameleonVertSize /6 
                         DB ChameleonVertSize
                         DB ChameleonEdgesCnt
                         DB $00, $C8

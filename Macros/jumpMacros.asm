@@ -1,7 +1,7 @@
 JumpIfPositive:	        MACRO target
                         jp		p, target
                         ENDM
-
+                        
 JumpIfNegative:	        MACRO target
                         jp		m, target
                         ENDM
@@ -59,6 +59,15 @@ JumpOnMemBitClear:      MACRO mem, bitnbr, target
                         jp      z,target
                         ENDM
 
+
+JumpOnABitSet:          MACRObitnbr, target
+                        bit 	bitnbr,a
+                        jp      z,target
+
+JumpOnABitClear:        MACRObitnbr, target
+                        bit 	bitnbr,a
+                        jp      nz,target
+                        
 JumpOnABit5Set:         MACRO   target
                         and     Bit5Only 
                         jp      nz,target
@@ -75,6 +84,18 @@ JumpOnBitMaskSet:       MACRO   bitmask, target
                         ENDM
 
 JumpOnBitMaskClear:     MACRO   bitmask, target
+                        and     bitmask
+                        jp      z,target
+                        ENDM
+                        
+JumpOnMemBitMaskSet:    MACRO   mem, bitmask, target
+                        ld      a,(mem)
+                        and     bitmask
+                        jp      nz,target
+                        ENDM
+
+JumpOnMemBitMaskClear:  MACRO   mem, bitmask, target
+                        ld      a,(mem)
                         and     bitmask
                         jp      z,target
                         ENDM
@@ -216,6 +237,11 @@ JumpIfANENusng:         MACRO value, target
                         jp      nz,target
                         ENDM
 
+JumpIfANEquNusng:       MACRO value, target
+                        cp     value
+                        jp     z,target
+                        ENDM
+                        
 JumpIfANEMemusng:       MACRO  value, target
                         ld    hl,value
                         cp    (hl)

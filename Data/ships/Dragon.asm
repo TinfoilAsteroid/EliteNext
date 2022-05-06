@@ -1,7 +1,9 @@
-Dragon:	                DB $00, $66, $50
+Dragon:	                DB $00
+                        DW $5066
                         DW DragonEdges
                         DB DragonEdgesSize
                         DB $00, $3C
+                        DB DragonVertSize /6 
                         DB DragonVertSize
                         DB DragonEdgesCnt
                         DB $00, $00

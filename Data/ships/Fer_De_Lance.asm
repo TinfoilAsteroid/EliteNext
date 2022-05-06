@@ -1,7 +1,9 @@
-Fer_De_Lance:	        DB $00, $06, $40
+Fer_De_Lance:	        DB $00
+                        DW $0640
                         DW Fer_De_LanceEdges
                         DB Fer_De_LanceEdgesSize
                         DB $00, $1A
+                        DB Fer_De_LanceVertSize /6 
                         DB Fer_De_LanceVertSize
                         DB Fer_De_LanceEdgesCnt
                         DB $00, $00

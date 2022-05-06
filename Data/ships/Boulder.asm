@@ -1,7 +1,9 @@
-Boulder:	            DB $00, $03, $84
+Boulder:	            DB $00
+                        DW $0384
                         DW BoulderEdges
                         DB BoulderEdgesSize
                         DB $00, $0E
+                        DB BoulderVertSize /6 
                         DB BoulderVertSize
                         DB BoulderEdgesCnt
                         DB $00, $01

@@ -1,7 +1,9 @@
-Plate:	                DB $80, $00, $64
+Plate:	                DB $80
+                        DW $0064
                         DW PlateEdges
                         DB PlateEdgesSize
                         DB $00, $0A
+                        DB PlateVertSize /6 
                         DB PlateVertSize
                         DB PlateEdgesCnt
                         DB $00, $00
@@ -14,9 +16,9 @@ Plate:	                DB $80, $00, $64
                         DB ShipCanAnger
 
 	
-PlateVertices:	DB $0F, $16, $09, $FF, $FF, $FF
-	DB $0F, $26, $09, $BF, $FF, $FF
-	DB $13, $20, $0B, $14, $FF, $FF
+PlateVertices:	        DB $0F, $16, $09, $FF, $FF, $FF
+                        DB $0F, $26, $09, $BF, $FF, $FF
+                        DB $13, $20, $0B, $14, $FF, $FF
 
 PlateVertSize: equ $ - PlateVertices	
 	

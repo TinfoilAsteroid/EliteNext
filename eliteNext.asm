@@ -249,19 +249,20 @@ CallCursorRoutine:      call    $0000
 SkipInputHandlers:      
 ;.. For Docked flag its - 0 = in free space, FF = Docked, FE transition, FD = Setup open space and transition to not docked
 TestAreWeDocked:        ld      a,(DockedFlag)                                ; if if we are in free space do universe update
-                        JumpIfANENusng  0, SkipUniveseUpdate                  ; else we skip it. As we are also in dock/transition then no models should be updated so we dont; need to draw
-
+                        JumpIfANENusng  0, UpdateLoop                        ; else we skip it. As we are also in dock/transition then no models should be updated so we dont; need to draw
 .UpdateEventCounter:    ld      hl,EventCounter                               ; evnery 256 cycles we do a trigger test
                         dec     (hl)
                         call    z,LoopEventTriggered
-                        CallIfMemTrue   MissileLaunchFlag, LaunchPlayerMissile
+                        ld      a,(MissileTargettingFlag)                     ; if bit 7 is clear then we have a target and launch requested
+                        and     $80
+                        call    z,  LaunchPlayerMissile
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
 ;.. First update Sun...............................................................................................................
 .UpdateShips:           call    UpdateUniverseObjects
                         JumpIfMemNeNusng ScreenTransitionForced, $FF, BruteForceChange                          ; if we docked then a transition would have been forced
 CheckIfViewUpdate:      ld      a,$00                                         ; if this is set to a view number then we process a view
-                        JumpIfAIsZero  MenusLoop                                  ; This will change as more screens are added TODO
+                        JumpIfAIsZero  UpdateLoop                             ; This will change as more screens are added TODO
 ;..Processing a view...............................................................................................................
 ;..Display any message ............................................................................................................
 .CheckHyperspaceMessage:AnyHyperSpaceMacro .HandleMessages
@@ -326,15 +327,10 @@ ProcessShipModels:      call   DrawForwardShips                               ; 
                         ; every 4 frames needs to do 2 updates so updates both copies of buffer
                         ; now will CLS bottom thrid
                         CallIfMemTrue ConsoleRedrawFlag, UpdateConsole
-                        jp LoopRepeatPoint                                    ; And we are done with views, so check if there was a special command to do
 ;..If we were not in views then we were in display screens/menus...................................................................
-MenusLoop:              ld      hl,(ScreenLoopJP+1)
-                        ld      a,h
-                        or      l
-                        jp      z,LoopRepeatPoint
+UpdateLoop:             JumpIfMemZero ScreenLoopJP+1,LoopRepeatPoint
 ;..This is the screen update routine for menus.....................................................................................
 ;.. Also used by transition routines
-SkipUniveseUpdate:      JumpIfMemZero ScreenLoopJP+1,LoopRepeatPoint
 ScreenLoopBank:         ld      a,$0
                         MMUSelectScreenA
 ScreenLoopJP:           call    $0000
@@ -411,8 +407,9 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not worki
                         
 LoopEventTriggered:     call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
                         ret     c                                   ; then may as well just skip routine
+.DEBUGTEST:             SetMemFalse SpaceStationSafeZone                        
 .SpawnIsPossible:       ld      iyh,c                               ; save slot free in iyh
-.AreWeInWhichSpace:     JumpIfMemFalse MissJumpFlag, .WitchSpaceEvent
+.AreWeInWhichSpace:     JumpIfMemTrue MissJumpFlag, .WitchSpaceEvent
 .JunkOrNot:             call    doRandom                            ; if random > 35 then its not junk
                         JumpIfAGTENusng 35, .NotJunk                ; .
 .JunkLimitHitTest:      TestRoomForJunk .NotJunk                    ; can we fit in any junk
@@ -502,9 +499,10 @@ LaunchPlayerMissile:    call    FindNextFreeSlotInC                 ; Check if w
 .LaunchGood:            ld      a,ShipID_Missile                    ; TODO For now only 1 missile type
                         GetByteAInTable ShipPackList                ; swap in missile data
                         call    SpawnShipTypeA                      ; spawn the ship
-                        ld      a,(MissileTarget)
+                        ld      a,(MissileTargettingFlag)           ; Get target from computer
                         ld      (UBnKMissileTarget),a               ; load target Data
-                        call    UnivSetPlayerMissile
+                        call    UnivSetPlayerMissile                ; .
+                        ClearMissileTarget                          ; reset targetting
                         ret
 .MissileMissFire:       ret ; TODO bing bong noise misfire message
 
@@ -563,6 +561,22 @@ BruteForceChange:       ld      d,a
 
 ;..................................................................................................................................
 ;..Process A ship..................................................................................................................
+; Apply Damage b to ship based on shield value of a
+; returns a with new shield value
+ApplyDamage:            ClearCarryFlag
+                        sbc     b
+                        ret     nc                  ; no carry so was not negative
+                        
+.KilledShield:          neg                         ; over hit shield
+                        ld      c,a                 ; save overhit in c
+                        ld      a,(PlayerEnergy)    ; and apply it to player energy
+                        ClearCarryFlag
+                        sbc     c
+                        jp      p,.DoneDamage       ; if result was 0 or more then completed damage
+.KilledPlayer:          xor     a
+.DoneDamage:            ld      (PlayerEnergy),a
+                        xor     a                   ; shield is gone
+                        ret
 
 ;..Update Universe Objects.........................................................................................................
 UpdateUniverseObjects:  xor     a
@@ -570,20 +584,105 @@ UpdateUniverseObjects:  xor     a
 .UpdateUniverseLoop:    ld      d,a                                             ; d is unaffected by GetTypeInSlotA
 ;.. If the slot is empty (FF) then skip this slot..................................................................................
                         call    GetTypeAtSlotA
+                        ld      iyl,a                                           ; save type into iyl for later
                         cp      $FF
-                        jr      z,.ProcessedUniverseSlot            
+                        jp      z,.ProcessedUniverseSlot            
 .UniverseObjectFound:   ld      a,d                                             ; Get back Universe slot as we want it
                         MMUSelectUniverseA                                      ; and we apply roll and pitch
                         call    ApplyMyRollAndPitch
                         call    ApplyShipRollAndPitch
 ;.. If its a space station then see if we are ready to dock........................................................................
+.CheckExploding:        ld      a,(UBnKexplDsp)                                 ; is it destroyed
+                        and     %10100000                                       ; or exploding
+                        jp      nz,.ProcessedUniverseSlot                       ; then no action
+.CheckIfClose:          ld      hl,(UBnKxlo)                                    ; chigh byte check or just too far away
+                        ld      de,(UBnKylo)                                    ; .
+                        ld      bc,(UBnKzlo)                                    ; .
+                        or      h                                               ; .
+                        or      d                                               ; .
+                        or      b                                               ; .
+                        jp      nz,.CollisionDone                                    ; .
+.CheckLowBit7Close:     or      l                                               ; if bit 7 of low is set then still too far
+                        or      e                                               ; .
+                        or      c                                               ; .
+                        ld      iyh,a                                           ; save it in case we need to check bit 6 in collision check
+                        and     $80                                             ; .
+                        jp      nz,.CollisionDone                                    ; .
 .CheckIfDockable:       ld      a,(ShipTypeAddr)                                ; Now we have the correct bank
-                        JumpIfANENusng  ShipTypeStation, .NotDockingCheck       ; if its not a station so we don't test docking
-.IsDockableAngryCheck:  JumpOnMemBitSet ShipNewBitsAddr, 4, .NotDockingCheck    ; if it is angry then we dont test docking
-                        call    DockingCheck                                    ; So it is a candiate to test docking. Now we do the position and angle checks
-                       ; ReturnIfMemEquN ScreenTransitionForced, $FF             ; if we docked then a transition would have been forced
-.NotDockingCheck:       CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, UpdateShip
-.ProcessedUniverseSlot: ld      a,(SelectedUniverseSlot)                        ; Move to next ship cycling if need be to 0
+                        JumpIfANENusng  ShipTypeStation, .CollisionCheck        ; if its not a station so we don't test docking
+.IsDockableAngryCheck:  JumpOnMemBitSet ShipNewBitsAddr, 4, .CollisionCheck     ; if it is angry then we dont test docking
+.CheckHighNoseZ:        JumpIfMemLTNusng  UBnkrotmatNosevZ+1 , 214, .CollisionCheck ; get get high byte of rotmat this is the magic angle to be within 26 degrees +/-
+.GetStationVector:      call    GetStationVectorToWork                          ; Normalise position into XX15 as in effect its a vector from out ship to it given we are always 0,0,0, returns with A holding vector z
+                        JumpIfALTNusng  89, .CollisionCheck                     ; if the z axis <89 the we are not in the 22 degree angle,m if its negative then unsigned comparison will cater for this
+.CheckAbsRoofXHi:       ld      a,(UBnkrotmatRoofvX+1)                          ; get abs roof vector high
+                        and     SignMask8Bit                                    ; .
+                        JumpIfALTNusng 80, .CollisionCheck                      ; note 80 decimal for 36.6 degrees horizontal
+;.. Its passed all validation and we are docking...................................................................................
+.WeAreDocking:          MMUSelectLayer1
+                        ld        a,$6
+                        call      l1_set_border
+.EnterDockingBay:       ForceTransition ScreenDocking                           ;  Force transition 
+                        ret                                                     ;  don't bother with other objects
+                        ; So it is a candiate to test docking. Now we do the position and angle checks
+.CollisionCheck:        ld      a,iyl
+                        JumpIfAEqNusng ShipTypeStation, .HaveCollided           ; stations dont check bit 6
+                        JumpIfAEqNusng ShipTypeMissile, .CollisionDone          ; Missile collisions are done in the tactics code
+.VeryCloseCheck:        ld      a,iyh                                           ; bit 6 is still too far
+                        and     %11000000                                       ; .
+                        jr      nz,.CollisionDone                                    ; .
+.ScoopableCheck:        ld      a,iyl                                           ; so if its not scoopable
+                        JumpIfANENusng  ShipTypeScoopable, .HaveCollided        ; then its a collision
+.ScoopsEquiped:         ld      a,(FuelScoop)                                   ; if there is no scoop then impact
+                        JumpIfANENusng  EquipmentItemNbr updatotFitted, .HaveCollided   ; 
+.ScoopRegion:           ld      a,(UBnKysgn)                                    ; if the y axis is negative then we are OK
+                        JumpIfAIsZero   .HaveCollided                           ; else its a collision
+.CollectedCargo:        call    ShipCargoType
+.DoWeHaveCapacity:      ld      d,a                                             ; save cargotype
+                        call    CanWeScoopCargoD
+                        jr      c, .NoRoom
+.CanScoop:              call    AddCargoTypeD
+.NoRoom:                ClearSlotMem    SelectedUniverseSlot                    ; we only need to clear slot list as univ ship is now junk
+                        jp      .CollisionDone
+; ... Generic collision
+.HaveCollided:          JumpIfMemLTNusng DELTA, 5, .SmallBump
+.BigBump:               ld      a,(UBnKEnergy)                                  ; get energy level which gives us an approximate to size and health
+                        SetCarryFlag
+                        rla                                                     ; divide by 2 but also bring in carry so its 128 + energy / 2
+                        ld      b,a
+                        call    KillShip                                        ; mark ship as dead (if possible)
+                        jp      .ApplyDamage
+.SmallBump:             ld      a,(DELTA)                                       ; if out ship speed < 5 then set damage to 
+                        ld      b,a
+                        call    DamageShip                                      ; dent target too  TODO make damge totally proportional to speed
+                        jp      .ApplyDamage
+.ApplyDamage:           call    SetSpeedZero
+                        ld      a,(UBnKzsgn)                                    ; front or back
+                        and     $80
+                        jr      nz,.HitRear
+                        ld      a,(ForeShield)
+                        call    ApplyDamage
+                        ld      (ForeShield),a
+                        jp      .CollisionDone
+.HitRear:               ld      a,(AftShield)
+                        call    ApplyDamage
+                        ld      (AftShield),a
+; Now check laser
+.CollisionDone:         call    ShipInSights
+                        jr      nc,.ProcessedUniverseSlot                        ; for laser and missile we can check once
+                        ld      a,(CurrLaserPulseOnTime)
+                        JumpIfAIsZero   .PlayerMissileLock                      ; if no pulse on time then check missile
+                        ld      a,(CurrLaserDamage)
+                        call    DamageShip
+                        ld      a,(UBnKexplDsp)                                 ; is it destroyed
+                        and     %10100000      
+                        jp      nz,.ProcessedUniverseSlot                        ; can't lock on debris
+; Now check missile lock
+.PlayerMissileLock:     JumpIfMemNeNusng MissileTargettingFlag, StageMissileTargeting, .ProcessedUniverseSlot
+.LockPlayerMissile:     ld      a,(SelectedUniverseSlot)                        ; set to locked and nto launchedd
+                        LockMissileToA                                          ; .                        
+.ProcessedUniverseSlot: 
+.AreWeReadyForAI:       CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, UpdateShip
+                        ld      a,(SelectedUniverseSlot)                        ; Move to next ship cycling if need be to 0
                         inc     a                                               ; .
                         JumpIfAGTENusng   UniverseSlotListSize, .UpdateAICounter    ; .
                         ld      (SelectedUniverseSlot),a
@@ -600,36 +699,7 @@ UpdateUniverseObjects:  xor     a
                         call    SetShipHostile
                         SetMemFalse    SetStationAngryFlag
                         ret
-;..................................................................................................................................
-;.. Quickly eliminate space stations too far away..................................................................................
-DockingCheck:           ld      bc,(UBnKxlo)
-                        ld      hl,(UBnKylo)
-                        ld      de,(UBnKzlo)
-                        ld      a,b
-                        or      h
-                        or      d
-                        ret     nz
-.CheckIfInRangeLo:      ld      a,c
-                        or      l
-                        or      e
-                        and     %11000000                           ; Note we should make this 1 test for scoop or collision too
-                        ret     nz
-;.. Now check to see if we are comming in at a viable angle........................................................................
-.CheckDockingAngle:     ld      a,(UBnkrotmatNosevZ+1)              ; get get high byte of rotmat
-                        ReturnIfALTNusng 214                       ; this is the magic angle to be within 26 degrees +/-
-                        call    GetStationVectorToWork              ; Normalise position into XX15 as in effect its a vector from out ship to it given we are always 0,0,0, returns with A holding vector z
-                        bit     7,a                                 ; if its negative
-                        ret     nz                                  ; we are flying away from it
-                        ReturnIfALTNusng 89                         ; if the axis <89 the we are not in the 22 degree angle
-                        ld      a,(UBnkrotmatRoofvX+1)              ; get roof vector high
-                        and     SignMask8Bit
-                        ReturnIfALTNusng 80                         ; note 80 decimal for 36.6 degrees
-;.. Its passed all validation and we are docking...................................................................................
-.AreDocking:            MMUSelectLayer1
-                        ld        a,$6
-                        call      l1_set_border
-.EnterDockingBay:       ForceTransition ScreenDocking
-                        ret
+
 
 ;..................................................................................................................................                        
 ;; TODODrawForwardSun:         MMUSelectSun
@@ -652,8 +722,16 @@ DrawForwardShips:       xor     a
 ; Add in a fast check for ship behind to process nodes and if behind jump to processed Draw ship
 .SelectShipToDraw:       ld      a,(CurrentShipUniv)
                         MMUSelectUniverseA
+.CheckIfExploding:      JumpOnMemBitMaskClear   UBnkaiatkecm, ShipExploding, .ProcessUnivShip
+.ShipIsExploding        ld      a,(ShipExplosionDuration)   ; Reduce explosion counter
+                        dec     a                           ; on zero we just exit which means main
+                        ld      (ShipExplosionDuration),a   ; loop can remove it from the slot list
+                        jp      nz,.ProcessUnivShip         ; if its not zero we can continue
+.ClearDebris:           ClearSlotMem CurrentShipUniv
+                        jp      ProcessedDrawShip
                         ; Need check for exploding here
 .ProcessUnivShip:       call    ProcessShip          ; TODFO TUNE THIS   ;; call    ProcessUnivShip
+; Debris still appears on radar                        
 .UpdateRadar: 
 ;;;Does nothing                       ld      a,BankFrontView
 ;;;Does nothing                       MMUSelectScreenA
@@ -678,7 +756,7 @@ DrawForwardShips:       xor     a
 ;..................................................................................................................................
 CurrentShipUniv:        DB      0
 
-;;;ProcessUnivShip:        call    CheckDistance               ; Will check for negative Z and skip (how do we deal with read and side views? perhaps minsky transformation handles that?)
+;;;ProcessUnivShip:        call    CheckVisible               ; Will check for negative Z and skip (how do we deal with read and side views? perhaps minsky transformation handles that?)
 ;;;                        ret     c
 ;;;                        ld      a,(UbnkDrawAsDot)
 ;;;                        and     a
@@ -856,7 +934,7 @@ GetStationVectorToWork: ld      hl,UBnKxlo
                         or      b
                         ld      (XX15VecZ),a         ; note this is now a signed highbyte                        
                         call    normaliseXX1596fast 
-                        ret                             ; will return with a holding Vector Z
+                        ret                          ; will return with a holding Vector Z
 
 TidyCounter             DB  0
 
@@ -896,7 +974,7 @@ ScreenCmdr:             DB 0,   ScreenStatus    , low addr_Pressed_Status,      
                         DB 0,   ScreenPlanet    , low addr_Pressed_PlanetData,   high addr_Pressed_PlanetData,   BankMenuSystem,      low draw_system_data_menu,   high draw_system_data_menu,    $00,                  $00,                    $00,$00,$00,$00,                        $00,                        $01,$00
                         DB 1,   ScreenEquip     , low addr_Pressed_Equip,        high addr_Pressed_Equip,        BankMenuEquipS,      low draw_eqshp_menu,         high draw_eqshp_menu,          low loop_eqshp_menu,  high loop_eqshp_menu,   $00,$00,$00,$00,                        $00,                        $01,$00
                         DB 1,   ScreenLaunch    , low addr_Pressed_Launch,       high addr_Pressed_Launch,       BankLaunchShip,      low draw_launch_ship,        high draw_launch_ship,         low loop_launch_ship, high loop_launch_ship,  $00,$01,$01,$00,                        $00,                        $01,$00
-ScreenKeyFront:         DB 2,   ScreenFront     , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
+ScreenKeyFront:         DB 2,   ScreenFront     , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          low update_front_view,high update_front_view, $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
                         DB 2,   ScreenAft       , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
                         DB 2,   ScreenLeft      , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
                         DB 2,   ScreenRight     , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
@@ -1048,61 +1126,35 @@ SetInitialShipPosition: ld      hl,$0000
                         ld      (DELTA4),hl
                         ret    
 
+; Checks to see if current ship swapped in is in our sights
+; we don;t need to deal with planets or sun as they have their own memory bank
+ShipInSights:           ClearCarryFlag                          ; Carry clear no hit
+                        ReturnIfMemIsNegative UBnKzsgn
+                        ld      a,(UBnKexplDsp)                 ; get exploding flag and or with x and y high
+                        ld      hl,(UBnKxlo)                    ; do 16 bit fetch as we will often need both bytes
+                        ld      bc,(UBnKylo)                    ; .
+                        or      h
+                        or      b
+                        ret     nz                              ; if exploding or x hi or y hi are set then its nto targetable
+                        ld      a,l                             ; hl =xlo ^ 2
+                        DEEquSquareA                            ; .
+                        ld      hl,de                           ; .
+                        ld      a,c                             ; de = de = ylo ^ 2
+                        DEEquSquareA                            ; .
+                        add     hl,de                           ; hl = xlo ^ 2 + ylo ^ 2
+                        ret     c                               ; if there was a carry then out of line of sight
+                        ld      de,(MissileLockLoAddr)          ; get targettable area ^ 2 from blueprint copy
+                        cpHLDE                                  ; now compare x^2 + y^2 to target area
+                        jr      z,.EdgeHit                      ; if its an edge hit then we need to set carry
+                        ret                                     ; if its < area then its a hit and carry is set, we will not work on = 
+.EdgeHit:               SetCarryFlag                            ; its an edge hit then we need to set carry
+                        ret
+                        
 
             INCLUDE "./Views/ConsoleDrawing.asm"
             INCLUDE "./Tables/message_queue.asm"
             INCLUDE "./Tables/LaserStatsTable.asm"
             INCLUDE "./Tables/ShipClassTable.asm"
-
-
-
-;.absXhi:                        
-;                        ld      a,ScannerX
-;                        JumpOnBitSet d,7,ScannerNegX
-;                        add     a,e
-;                        jp      ScannerZCoord
-;ScannerNegX:            sub     e
-;ScannerZCoord:          ld      e,a
-;                        srl     c
-;                        srl     c
-;                        ld      a,ScannerY
-;                        JumpOnBitSet b,7,ScannerNegZ
-;                        sub     c
-;                        jp      ScannerYCoord
-;ScannerNegZ:            add     a,c
-;ScannerYCoord:          ld      d,a                     ; now de = pixel pos d = y e = x  for base of stick X & Z , so need Y Stick height
-;                        JumpOnBitSet h,7,ScannerStickDown
-;                        sub     l                       ; a already holds actual Y
-;                        JumpIfAGTENusng 128,ScannerHeightDone
-;                        ld      a,128
-;                        jp      ScannerHeightDone
-;ScannerStickDown:       add     a,l     
-;                        JumpIfAGTENusng 191,ScannerHeightDone
-;                        ld      a,191
-;ScannerHeightDone:      ld      c,e            ; Now sort out line from point DE horzontal by a
-;                        ld      b,d
-;                        ld      d,a
-;                        cp      b
-;                        jp      z,Scanner0Height
-;                        ld      e,194 ; Should be coloured based on status but this will do for now
-;                        push    bc
-;                        push    de
-;                        MMUSelectLayer2  
-;                        call    l2_draw_vert_line_to
-;                        pop     de
-;                        pop     bc
-;Scanner0Height:         ld      b,d
-;                       push    bc
-;                       ld      a,255
-;                       MMUSelectLayer2  
-;                       call    l2_plot_pixel
-;                       pop     bc
-;                       inc     c
-;                       ld      a,255
-;                       MMUSelectLayer2  
-;                       call    l2_plot_pixel
-                        ret
-
 
 SeedGalaxy0:            xor     a
                         MMUSelectGalaxyA

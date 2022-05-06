@@ -1,7 +1,9 @@
-Ghavial:	            DB $03, $26, $00
+Ghavial:	            DB $03
+                        DW $2600
                         DW GhavialEdges
                         DB GhavialEdgesSize
                         DB $00, $22
+                        DB GhavialVertSize /6 
                         DB GhavialVertSize
                         DB GhavialEdgesCnt
                         DB $00, $64

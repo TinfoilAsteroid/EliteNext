@@ -35,8 +35,11 @@ RotationUnity		equ $60
 DBCheckCode			equ $DB
 MaxVisibility		equ $1F
 FarInFront			equ $C0
-
+; Equipment Flags     
+EquipmentItemFitted     equ $FF
+EquipmentItemNotFitted  equ 0
 ; Universe Managment
+ShipTypeScoopable   equ 4         ; a sub set of junk
 ShipTypeJunk        equ 3
 ShipTypeStation     equ 2
 ShipTypeMissile     equ 1
@@ -45,18 +48,27 @@ ShipTypeText        equ 253
 ShipTypeDebug       equ 254
 ShipTypeEmpty       equ 255
 ; TacticsControl
-ShipIsTrader        equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
-ShipIsBountyHunter  equ Bit1Only   ; 
-ShipIsHostile       equ Bit2Only   ;
-ShipNotHostile      equ Bit2Clear   ;
-ShipIsPirate        equ Bit3Only   ; 
-ShipIsDocking       equ Bit4Only   ; 
-ShipIsBystander     equ Bit5Only   ; 
-ShipIsCop           equ Bit6Only   ; 
-ShipIsScoopDockEsc  equ Bit7Only   ; 
-ShipAIEnabled       equ Bit7Only   ; 
-ShipExploding       equ Bit5Only
-ShipKilled          equ Bit7Clear
+ShipExplosionDuration   equ 75         ; amount of frames an explosion lasts for
+ShipIsTrader            equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
+ShipIsBountyHunter      equ Bit1Only   ; 
+ShipIsHostile           equ Bit2Only   ;
+ShipNotHostile          equ Bit2Clear   ;
+ShipIsPirate            equ Bit3Only   ; 
+ShipIsDot               equ Bit3Only
+ShipIsNotDot            equ Bit3Clear
+ShipIsDotBitNbr         equ 3
+ShipKilled              equ Bit4Only    ; Ship has just been marked as killed so initiate cloud of debris
+ShipKilledBitNbr        equ 4
+ShipIsDocking           equ Bit4Only   ; 
+ShipIsBystander         equ Bit5Only   ; 
+ShipIsVisible           equ Bit6Only
+ShipIsVisibleBitNbr     equ 6
+ShipIsCop               equ Bit6Only   ; 
+ShipIsScoopDockEsc      equ Bit7Only   ; 
+ShipAIEnabled           equ Bit7Only   ; 
+ShipAIDisabled          equ Bit7Clear
+ShipAIEnabledBitNbr     equ 7
+ShipExploding           equ Bit5Only
 ; Main Loop State
 StatePlayerDocked    equ $FF
 StateCompletedLaunch equ $FD
@@ -65,6 +77,9 @@ StateHJumping        equ $FC
 StateHEntering       equ $FB
 StateCompletedHJump  equ $FA
 StateNormal          equ 0
+; Missile Stage flags , $8x = locked to ship id x, $0x = fire at ship id x requested
+StageMissileNoTarget equ $FF
+StageMissileTargeting equ $FE
 ; UniverseAIControl     
 ShipCanAnger        equ %00000001
 

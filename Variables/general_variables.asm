@@ -36,11 +36,11 @@ SLSP 		DW	0				; &03B0 \ SLSP \ ship lines pointer
 
 ; Present System Variables
 
-RandomSeed				DB	43			; 00 DEBUG JUST SOME START VALUES
-RandomSeed1				DB	32	; 01
-RandomSeed2				DB	12			; 02
-RandomSeed3				DB	66			; 03
-
+RandomSeed				DB	43			    ; 00 DEBUG JUST SOME START VALUES
+RandomSeed1				DB	32	            ; 01
+RandomSeed2				DB	12			    ; 02
+RandomSeed3				DB	66			    ; 03
+RandomSeedSave          DS  4               ; used in explosion routine to save randoms
 varT1					DB	0				; 06
 SClo					DB 0				; 07
 SChi					DB 0				; 08
@@ -389,8 +389,14 @@ AftShield				DB	0				; 03A6
 PlayerEnergy			DB	0				; 03A7
 CompassX				DB	0				; 03A8
 CompassY				DB	0				; 03A9
-MissileTarget			DB  0				; 45
-MissileLaunchFlag       DB  0
+; Simplification of missile targetting
+; $FF no missile targettting enabled
+; $FE missile targetting, no target selected
+; bit 7 set then tagetting and lower nibble holds missile target and launching
+; bit 7 clear launch at selected target in lower nibble
+MissileTargettingFlag   DB  0
+;;MissileTarget			DB  0				; 45
+;;MissileLaunchFlag       DB  0
 CommanderName           DS  15
 CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
 BadnessStatus           DB  0

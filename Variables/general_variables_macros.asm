@@ -84,22 +84,23 @@ AnyMissilesLeft:        MACRO
                         ENDM
 
 SetMissileTargetA:      MACRO
-                        ld      (MissileTarget),a
-                        ENDM
-
-IsMissileLockedOn:      MACRO
-                        ld      a,(MissileTarget)
-                        cp      $FF
-                        ret     z
-                        ReturnIfSlotAEmpty                  ; if target slot is empty
-                        ret                                 ; will return as nz now
+                        ld      (MissileTargettingFlag),a   ; Set to slot number clearing bit 7
                         ENDM
 
 ClearMissileTarget:     MACRO
-                        xor     a                           ; Set missile target to FF
-                        dec     a
-                        ld      (MissileTarget),a
-                        SetMemFalse MissileLaunchFlag
+                        ld      a,StageMissileNoTarget
+                        ld      (MissileTargettingFlag),a           ; reset targetting
+                        ENDM
+
+SetMissileLaunch:       MACRO
+                        ld      a,(MissileTargettingFlag)
+                        and     $0F
+                        ld      (MissileTargettingFlag),a                        
+                        ENDM 
+                        
+LockMissileToA:         MACRO
+                        or      $80
+                        ld      (MissileTargettingFlag),a
                         ENDM
                         
 ClearECM:               MACRO   
@@ -191,7 +192,7 @@ ClearMissJump:          MACRO
                         ld      a,$FF
                         ld      (MissJumpFlag),a
                         ENDM
-                        
+
 
 DrainSystem:            MACRO   SystemMem, DrainMem
                         ld      a,(DrainMem)

@@ -1,7 +1,9 @@
-Anaconda:	            DB $07, $27, $10
+Anaconda:	            DB $07
+                        DW $2710
                         DW AnacondaEdges
                         DB AnacondaEdgesSize
                         DB $30, $2E
+                        DB AnacondaVertSize / 6
                         DB AnacondaVertSize
                         DB AnacondaEdgesCnt
                         DB $00, $00

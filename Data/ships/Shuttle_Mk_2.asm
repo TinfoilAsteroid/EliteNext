@@ -1,7 +1,9 @@
-Shuttle_Mk_2:	        DB $0F, $09, $C4
+Shuttle_Mk_2:	        DB $0F
+                        DW $09C4
                         DW Shuttle_Mk_2Edges
                         DB Shuttle_Mk_2EdgesSize
                         DB $00, $26
+                        DB Shuttle_Mk_2VertSize /6 
                         DB Shuttle_Mk_2VertSize
                         DB Shuttle_Mk_2EdgesCnt
                         DB $00, $00

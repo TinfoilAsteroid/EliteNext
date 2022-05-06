@@ -1,8 +1,10 @@
 ;\ -> &5BA1 \ Python = Type 12
-Python:                 DB $05, $00, $19
+Python:                 DB $05
+                        DW $1900
                         DW PythonEdges
                         DB PythonEdgesSize
                         DB $00,$2A
+                        DB PythonVertSize /6 
                         DB PythonVertSize
                         DB PythonEdgesCnt
                         DB $00,$00

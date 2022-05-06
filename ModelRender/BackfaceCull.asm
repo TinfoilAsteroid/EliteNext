@@ -333,7 +333,7 @@ ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then 
 
                       
 
-CheckDistance:          ld      a,(UBnKzsgn)                 ; Is the ship behind us
+CheckVisible:           ld      a,(UBnKzsgn)                 ; Is the ship behind us
 .CheckBehind:           and     SignOnly8Bit                 ; which means z sign is negative
                         jr      nz,.ShipNoDraw               ; .
 .CheckViewPort:         ld      hl,(UBnKzlo)                 ; now check to see if its within 90 degree arc
@@ -359,13 +359,18 @@ CheckDistance:          ld      a,(UBnKzsgn)                 ; Is the ship behin
                         srl     a
                         srl     a
                         ld      (UBnkDrawAllFaces),a        ; XX4 = "all faces" distance
-                        SetATrue
-                        ld      (UBnKDrawAsDot),a           ; set draw as dot to 0, i.e. false
+                        ld      a,(UBnkaiatkecm)            ; its visible but a dot
+                        or      ShipIsVisible               ; Visible and not a dot
+                        and     ShipIsNotDot                ;
+                        ld      (UBnkaiatkecm),a            ;
                         ClearCarryFlag
                         ret
-.ShipNoDraw:            SetCarryFlag                        ; ship is behind so do not draw, so we don't care abour draw as dot
+.ShipNoDraw:            ClearMemBitN  UBnkaiatkecm  , ShipIsVisibleBitNbr ; Assume its hidden
+                        SetCarryFlag                        ; ship is behind so do not draw, so we don't care abour draw as dot
                         ret
-.ShipIsADot:            SetMemFalse UBnKDrawAsDot           ; use the same logic as process nodes to do 1 point
+.ShipIsADot:            ld      a,(UBnkaiatkecm)            ; its visible but a dot
+                        or      ShipIsVisible | ShipIsDot   ; 
+                        ld      (UBnkaiatkecm),a            ; 
                         ClearCarryFlag
                         ret
                         

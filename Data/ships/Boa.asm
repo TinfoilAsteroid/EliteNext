@@ -1,7 +1,9 @@
-Boa:	                DB $05, $13, $24
+Boa:	                DB $05
+                        DW $1324
                         DW BoaEdges
                         DB BoaEdgesSize
                         DB $00, $26
+                        DB BoaVertSize /6 
                         DB BoaVertSize
                         DB BoaEdgesCnt
                         DB $00, $00
@@ -12,19 +14,19 @@ Boa:	                DB $05, $13, $24
                         DW BoaVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
-BoaVertices:	        DB $00, $00, $5D, $1F, $FF, $FF
-                        DB $00, $28, $57, $38, $02, $33
-                        DB $26, $19, $63, $78, $01, $44
-                        DB $26, $19, $63, $F8, $12, $55
-                        DB $26, $28, $3B, $BF, $23, $69
-                        DB $26, $28, $3B, $3F, $03, $6B
-                        DB $3E, $00, $43, $3F, $04, $8B
-                        DB $18, $41, $4F, $7F, $14, $8A
-                        DB $18, $41, $4F, $FF, $15, $7A
-                        DB $3E, $00, $43, $BF, $25, $79
-                        DB $00, $07, $6B, $36, $02, $AA
-                        DB $0D, $09, $6B, $76, $01, $AA
-                        DB $0D, $09, $6B, $F6, $12, $CC
+BoaVertices:	        DB $00, $00, $5D, $1F, $FF, $FF ; 01
+                        DB $00, $28, $57, $38, $02, $33 ; 02
+                        DB $26, $19, $63, $78, $01, $44 ; 03
+                        DB $26, $19, $63, $F8, $12, $55 ; 04
+                        DB $26, $28, $3B, $BF, $23, $69 ; 05
+                        DB $26, $28, $3B, $3F, $03, $6B ; 06
+                        DB $3E, $00, $43, $3F, $04, $8B ; 07
+                        DB $18, $41, $4F, $7F, $14, $8A ; 08
+                        DB $18, $41, $4F, $FF, $15, $7A ; 09
+                        DB $3E, $00, $43, $BF, $25, $79 ; 10
+                        DB $00, $07, $6B, $36, $02, $AA ; 11
+                        DB $0D, $09, $6B, $76, $01, $AA ; 12
+                        DB $0D, $09, $6B, $F6, $12, $CC ; 13
 BoaVertSize:            equ $ - BoaVertices	
 BoaEdges:	            DB $1F, $6B, $00, $14
                         DB $1F, $8A, $00, $1C

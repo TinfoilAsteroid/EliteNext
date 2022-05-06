@@ -311,7 +311,7 @@ XX12                        equ UBnkXX12xLo
 varXX12                     equ UBnkXX12xLo
 ; Post clipping the results are now 8 bit
 UBnkVisibility              DB  0               ; replaces general purpose xx4 in rendering
-UbnKDrawAsDot               DB  0               ; if 0 then OK, if 1 then just draw dot of line heap
+;UbnKDrawAsDot               DB  0               ; if 0 then OK, if 1 then just draw dot of line heap
 UBnkProjectedY              DB  0
 UBnkProjectedX              DB  0
 UBnkProjected               equ UBnkProjectedY  ; resultant projected position

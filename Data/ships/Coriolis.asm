@@ -1,7 +1,9 @@
-Coriolis:	            DB $00, $64, $00
+Coriolis:	            DB $00
+                        DW $6400
                         DW CoriolisEdges
                         DB CoriolisEdgesSize
                         DB $00, $36
+                        DB CoriolisVertSize /6 
                         DB CoriolisVertSize
                         DB CoriolisEdgesCnt
                         DB $00, $00

@@ -1,7 +1,9 @@
-Python_P:	            DB $02, $19, $00
+Python_P:	            DB $02
+                        DW $1900
                         DW Python_PEdges
                         DB Python_PEdgesSize
                         DB $00, $2A
+                        DB Python_PVertSize /6 
                         DB Python_PVertSize
                         DB Python_PEdgesCnt
                         DB $00, $C8
@@ -13,17 +15,17 @@ Python_P:	            DB $02, $19, $00
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
 
-Python_PVertices:	DB $00, $00, $E0, $1F, $10, $32
-	DB $00, $30, $30, $1F, $10, $54
-	DB $60, $00, $10, $3F, $FF, $FF
-	DB $60, $00, $10, $BF, $FF, $FF
-	DB $00, $30, $20, $3F, $54, $98
-	DB $00, $18, $70, $3F, $89, $CC
-	DB $30, $00, $70, $BF, $B8, $CC
-	DB $30, $00, $70, $3F, $A9, $CC
-	DB $00, $30, $30, $5F, $32, $76
-	DB $00, $30, $20, $7F, $76, $BA
-	DB $00, $18, $70, $7F, $BA, $CC
+Python_PVertices:	    DB $00, $00, $E0, $1F, $10, $32
+                        DB $00, $30, $30, $1F, $10, $54
+                        DB $60, $00, $10, $3F, $FF, $FF
+                        DB $60, $00, $10, $BF, $FF, $FF
+                        DB $00, $30, $20, $3F, $54, $98
+                        DB $00, $18, $70, $3F, $89, $CC
+                        DB $30, $00, $70, $BF, $B8, $CC
+                        DB $30, $00, $70, $3F, $A9, $CC
+                        DB $00, $30, $30, $5F, $32, $76
+                        DB $00, $30, $20, $7F, $76, $BA
+                        DB $00, $18, $70, $7F, $BA, $CC
 
 Python_PVertSize: equ $ - Python_PVertices	
 	

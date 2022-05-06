@@ -11,6 +11,8 @@ CargoTonnes             DB  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 SlaveCargoTonnes		equ CargoTonnes+3
 NarcoticsCargoTonnes	equ CargoTonnes+6
 FirearmsCargoTonnes		equ CargoTonnes+10
+GoldCargoKGs:           equ CargoTonnes+15
+AlienItemsTonnes        equ CargoTonnes+17
 ; For each view laser a localised copy of the stats
 ; TODO - need to add code to maintain on load/save/equipment transactions
 LaserType               DS  4               ; quick reference to laser type
@@ -28,6 +30,7 @@ LaserDamagedFlag        DS  4               ; probabiliy out of 255 that it will
 QQ20                    equ CargoTonnes
 EquipmentFitted         DS  EQ_ITEM_COUNT    ; Series of flags for if each item is fitted
 ECMPresent				EQU EquipmentFitted + EQ_ECM				; 0380
+FuelScoop               EQU EquipmentFitted + EQ_FUEL_SCOOPS
 EnergyBomb				EQU EquipmentFitted + EQ_ENERGY_BOMB		; 0382	Also random hyperspeace in Elite A
 ExtraEnergyUnit			EQU EquipmentFitted + EQ_ENERGY_UNIT        ; 0383
 DockingComputer 		EQU EquipmentFitted + EQ_DOCK_COMP    		; 0384

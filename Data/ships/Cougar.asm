@@ -1,7 +1,9 @@
-Cougar:	                DB $03, $13, $24
+Cougar:	                DB $03
+                        DW $1324
                         DW CougarEdges
                         DB CougarEdgesSize
                         DB $00, $2A
+                        DB CougarVertSize /6 
                         DB CougarVertSize
                         DB CougarEdgesCnt
                         DB $00, $00

@@ -30,10 +30,10 @@ UBnKMissileBlastDamage:     DB  0                       ; copied in when setting
 UBnKMissileDetonateRange:   DB  0                       ; copied in when setting up a missile, allows for proximity missiles
 UBnKMissileDetonateDamage:  DB  0                       ; copied in when setting up a missile
 ; -- Metadata for ship to help with bank managment
-UBnKShipType                DB  0
-UbnKShipBankNbr             DB  0
-UBnkShipModelBank           DB  0
-UBnkShipModelNbr            DB  0
+UBnKShipType                DB  0                       ; Ship id, use blue print for type class
+UbnKShipBankNbr             DB  0                       ; Present ship universe bank number
+UBnkShipModelBank           DB  0                       ; Bank nbr ship was from
+UBnkShipModelNbr            DB  0                       ; Ship Id from ships table
 ; -- Ship AI data
 UBnKMissleHitToProcess      DB  0                       ; This is used for enquing missle blasts as we can only do one missile at a time, could make it multi but neeed to smooth CPU usage
 UBnKMissileTarget           DB  0                       ; This is the bank number for the target from 0 to n if the missile is not hostile to us
@@ -42,24 +42,39 @@ UBnKAccel                   DB  0                       ; INWK +28
 UBnKRotXCounter             DB  0                       ; INWK +29
 UBnKRotZCounter             DB  0                       ; INWK +30
 UBnKexplDsp                 DB  0                       ; INWK +31 clear exploding/display state|missiles
-; Flags work as follows:
-; 7 - Flag ship to be killed with debris
-; 6 - Invisible/Erase (also mentions Laser Firing?)
-; 5 - Ship is exploding if set, note if its a missile and one already equeued this will have to linger
-;     linger can be done by not erasing ship unit missile equeue handled
-; 4 -
-; 3 - Display state - Plot as a Dot
-; 2 - Nbr of Missiles bit 2
-; 1 - Nbr of Missiles bit 1
-; 0 - Nbr of Missiles bit 0
 UBnkDrawAllFaces            DB  0
 UBnkaiatkecm                DB  0                       ; INWK +32 ai_attack_univ_ecm i.e. AI type
+UBnKSpawnObject             DB  0
 UBnkCam0yLo                 DB  0                       ; INWK +33 ????
 UBnkCam0yHi                 DB  0                       ; INWK +34?????
-UbnKEnergy                  DB  0                       ; INWK +35
+UBnKEnergy                  DB  0                       ; INWK +35
+UBnKCloudCounter            DB  0                       ; cloud pixels
+UBnKCloudSize               DB  0                       ; cloud pixels
 UBnKRuntimeSize             EQU $-UBnKShipType
 ; Flags work as follows:
-;Bit	Description
+; UBnKSpawnObject - signals on death to spawn cargo items
+; 0 -                   Spawn Cargo 1
+; 1 -                   Spawn Cargo 2
+; 2 -                   Spawn Cargo 3
+; 3 -                   Spawn Cargo 4
+; 4 -                   Spawn Alloy 1
+; 5 -                   Spawn Alloy 2
+; 6 -                   Spawn Alloy 3
+; 7 -                   Spawn Alloy 4
+
+; UBnkaiatkecm 
+; Bit	                Description
+; 7 -                   AI Enabled Flag
+; 6 -                   Ship Visible = ShipOnScreen/NotCloaked (cleared or set by check visible or cloaking override)
+; 5 -                   Ship is exploding if set, note if its a missile and one already equeued this will have to linger
+;                       linger can be done by not erasing ship unit missile equeue handled
+; 4 -                   Ship marked as exploded, cleared once aknowledged then bit 5 takes over and UBnKCloudCounter
+; 3 -                   Display state - Plot as a Dot
+; 2 -                   Nbr of Missiles bit 2
+; 1 -                   Nbr of Missiles bit 1
+; 0 -                   Nbr of Missiles bit 0
+; ShipNewBitsAddr (in blueprint)
+;Bit	                Description
 ;#0	Trader flag         * 0 = not a trader  * 1 = trader
 ;                       80% of traders are peaceful and mind their own business plying their trade between the planet and space station, but 20% of them moonlight as bounty hunters (see bit #1)
 ;                       Ships that are traders: Escape pod, Shuttle, Transporter, Anaconda, Rock hermit, Worm

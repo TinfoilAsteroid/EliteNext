@@ -18,10 +18,12 @@
 ; 18   => 18
 ; 19   => 19
 ;\ -> &5C93  \ Viper = Type 16
-Viper:                  DB $00, $F9, $15
+Viper:                  DB $00
+                        DW $15F9
                         DW ViperEdges
                         DB ViperEdgesSize
                         DB $00,$2A
+                        DB ViperVertSize /6 
                         DB ViperVertSize
                         DB ViperEdgesCnt
                         DB $00,$00

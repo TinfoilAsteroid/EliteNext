@@ -47,7 +47,7 @@ SetSlotAToClassB:       ld      hl,UniverseSlotType
                         add     hl,a
                         ld      (hl),b
                         ret                     
-                        
+
 ; Clears all except slot A, used when say restarting a space station post launch
 ClearFreeSlotListSaveA: ld      d,a
                         ld      c,0

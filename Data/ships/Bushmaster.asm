@@ -1,7 +1,9 @@
-Bushmaster:	            DB $00, $10, $9A
+Bushmaster:	            DB $00
+                        DW $109A
                         DW BushmasterEdges
                         DB BushmasterEdgesSize
                         DB $00, $1E
+                        DB BushmasterVertSize /6 
                         DB BushmasterVertSize
                         DB BushmasterEdgesCnt
                         DB $00, $96

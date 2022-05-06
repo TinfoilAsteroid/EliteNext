@@ -1,8 +1,10 @@
 
-Krait:                  DB $01, $10, $0E
+Krait:                  DB $01
+                        DW $100E
                         DW KraitEdges
                         DB KraitEdgesSize
                         DB $00, $12
+                        DB KraitVertSize /6 
                         DB KraitVertSize
                         DB KraitEdgesCnt
                         DB $64,$00

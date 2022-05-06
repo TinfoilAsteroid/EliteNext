@@ -1,7 +1,9 @@
-Thargon:	            DB $F0, $06, $40
+Thargon:	            DB $F0
+                        DW $0640
                         DW ThargonEdges
                         DB ThargonEdgesSize
                         DB $00, $12
+                        DB ThargonVertSize /6 
                         DB ThargonVertSize
                         DB ThargonEdgesCnt
                         DB $00, $32

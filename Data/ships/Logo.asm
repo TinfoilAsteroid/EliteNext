@@ -1,7 +1,9 @@
-Logo:	                DB $00, $26, $49
+Logo:	                DB $00
+                        DW $2649
                         DW LogoEdges
                         DB LogoEdgesSize
                         DB $00, $36
+                        DB LogoVertSize /6 
                         DB LogoVertSize
                         DB LogoEdgesCnt
                         DB $00, $00
