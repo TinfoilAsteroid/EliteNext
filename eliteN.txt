@@ -1185,77 +1185,84 @@
   59  0000                                      INCLUDE "./Macros/MathsMacros.asm"
 # file opened: ./Macros/MathsMacros.asm
    1+ 0000
-   2+ 0000              DEEquSquareA:           MACRO
-   3+ 0000 ~                                    ld  d,a
-   4+ 0000 ~                                    ld  e,a
-   5+ 0000 ~                                    mul de
-   6+ 0000                                      ENDM
-   7+ 0000
-   8+ 0000              ApplyMyRollToVector:    MACRO angle, vectorX, vectorY
-   9+ 0000 ~                                    ldCopyByte angle,varQ               ; Set Q = a = alpha (the roll angle to rotate through)
-  10+ 0000 ~                                    ldCopy2Byte vectorY, varR           ; RS =  nosev_y
-  11+ 0000 ~                                    ldCopyByte  vectorX, varP           ; set P to nosevX lo (may be redundant)
-  12+ 0000 ~                                    ld a,(vectorX+1)                    ; Set A = -nosev_x_hi
-  13+ 0000 ~                                    xor $80                             ;
-  14+ 0000 ~                                    call  madXAequQmulAaddRS            ; Set (A X) = Q * A + (S R) = = alpha * -nosev_x_hi + nosev_y
-  15+ 0000 ~                                    ld  (vectorY),de                    ; nosev_y = nosev_y - alpha * nosev_x_hi
-  16+ 0000 ~                                    ldCopy2Byte vectorX, varR           ; Set (S R) = nosev_x
-  17+ 0000 ~                                    ld  a,(vectorY+1)                   ;  Set A = nosev_y_hi
-  18+ 0000 ~                                    call madXAequQmulAaddRS             ; Set (A X) = Q * A + (S R)
-  19+ 0000 ~                                    ld  (vectorX),de                    ; nosev_x = nosev_x + alpha * nosev_y_hi
-  20+ 0000                                      ENDM
-  21+ 0000
-  22+ 0000              SignedHLTo2C:           MACRO
-  23+ 0000 ~                                    bit     7,h
-  24+ 0000 ~                                    jr      z,.Done2c
-  25+ 0000 ~                                    ld      a,h
-  26+ 0000 ~                                    and     SignMask8Bit
-  27+ 0000 ~                                    ld      h,a
-  28+ 0000 ~                                    NegHL
-  29+ 0000 ~            .Done2c:
-  30+ 0000                                      ENDM
-  31+ 0000
-  32+ 0000              MemSignedTo2C:          MACRO   memfrom
-  33+ 0000 ~                                    ld      hl,(memfrom)
-  34+ 0000 ~                                    bit     7,h
-  35+ 0000 ~                                    jr      z,.Done2c
-  36+ 0000 ~                                    ld      a,h
-  37+ 0000 ~                                    and     SignMask8Bit
-  38+ 0000 ~                                    ld      h,a
-  39+ 0000 ~            .Done2c:                ld      (memfrom),hl
-  40+ 0000                                      ENDM
-  41+ 0000
-  42+ 0000
-  43+ 0000                  ;returns result in H
-  44+ 0000              EDiv10Inline:           MACRO
-  45+ 0000 ~                                    ld      d,0
-  46+ 0000 ~                                    ld      hl,de
-  47+ 0000 ~                                    add     hl,hl
-  48+ 0000 ~                                    add     hl,de
-  49+ 0000 ~                                    add     hl,hl
-  50+ 0000 ~                                    add     hl,hl
-  51+ 0000 ~                                    add     hl,de
-  52+ 0000 ~                                    add     hl,hl
-  53+ 0000                                      ENDM
-  54+ 0000
-  55+ 0000              cpHLDE:                 MACRO
-  56+ 0000 ~                                    push    hl
-  57+ 0000 ~                                    and     a
-  58+ 0000 ~                                    sbc     hl,de
-  59+ 0000 ~                                    pop     hl
+   2+ 0000              ABSa2c:                 MACRO
+   3+ 0000 ~                                    bit     7,a
+   4+ 0000 ~                                    jp      z,.DoneABSa
+   5+ 0000 ~                                    neg
+   6+ 0000 ~            .DoneABSa:
+   7+ 0000                                      ENDM
+   8+ 0000
+   9+ 0000              DEEquSquareA:           MACRO
+  10+ 0000 ~                                    ld  d,a
+  11+ 0000 ~                                    ld  e,a
+  12+ 0000 ~                                    mul de
+  13+ 0000                                      ENDM
+  14+ 0000
+  15+ 0000              ApplyMyRollToVector:    MACRO angle, vectorX, vectorY
+  16+ 0000 ~                                    ldCopyByte angle,varQ               ; Set Q = a = alpha (the roll angle to rotate through)
+  17+ 0000 ~                                    ldCopy2Byte vectorY, varR           ; RS =  nosev_y
+  18+ 0000 ~                                    ldCopyByte  vectorX, varP           ; set P to nosevX lo (may be redundant)
+  19+ 0000 ~                                    ld a,(vectorX+1)                    ; Set A = -nosev_x_hi
+  20+ 0000 ~                                    xor $80                             ;
+  21+ 0000 ~                                    call  madXAequQmulAaddRS            ; Set (A X) = Q * A + (S R) = = alpha * -nosev_x_hi + nosev_y
+  22+ 0000 ~                                    ld  (vectorY),de                    ; nosev_y = nosev_y - alpha * nosev_x_hi
+  23+ 0000 ~                                    ldCopy2Byte vectorX, varR           ; Set (S R) = nosev_x
+  24+ 0000 ~                                    ld  a,(vectorY+1)                   ;  Set A = nosev_y_hi
+  25+ 0000 ~                                    call madXAequQmulAaddRS             ; Set (A X) = Q * A + (S R)
+  26+ 0000 ~                                    ld  (vectorX),de                    ; nosev_x = nosev_x + alpha * nosev_y_hi
+  27+ 0000                                      ENDM
+  28+ 0000
+  29+ 0000              SignedHLTo2C:           MACRO
+  30+ 0000 ~                                    bit     7,h
+  31+ 0000 ~                                    jr      z,.Done2c
+  32+ 0000 ~                                    ld      a,h
+  33+ 0000 ~                                    and     SignMask8Bit
+  34+ 0000 ~                                    ld      h,a
+  35+ 0000 ~                                    NegHL
+  36+ 0000 ~            .Done2c:
+  37+ 0000                                      ENDM
+  38+ 0000
+  39+ 0000              MemSignedTo2C:          MACRO   memfrom
+  40+ 0000 ~                                    ld      hl,(memfrom)
+  41+ 0000 ~                                    bit     7,h
+  42+ 0000 ~                                    jr      z,.Done2c
+  43+ 0000 ~                                    ld      a,h
+  44+ 0000 ~                                    and     SignMask8Bit
+  45+ 0000 ~                                    ld      h,a
+  46+ 0000 ~            .Done2c:                ld      (memfrom),hl
+  47+ 0000                                      ENDM
+  48+ 0000
+  49+ 0000
+  50+ 0000                  ;returns result in H
+  51+ 0000              EDiv10Inline:           MACRO
+  52+ 0000 ~                                    ld      d,0
+  53+ 0000 ~                                    ld      hl,de
+  54+ 0000 ~                                    add     hl,hl
+  55+ 0000 ~                                    add     hl,de
+  56+ 0000 ~                                    add     hl,hl
+  57+ 0000 ~                                    add     hl,hl
+  58+ 0000 ~                                    add     hl,de
+  59+ 0000 ~                                    add     hl,hl
   60+ 0000                                      ENDM
   61+ 0000
-  62+ 0000              ;Unsigned
-  63+ 0000              ;If HL == DE, then Z flag is set.
-  64+ 0000              ;If HL != DE, then Z flag is reset.
-  65+ 0000              ;If HL <  DE, then C flag is set.
-  66+ 0000              ;If HL >= DE, then C flag is reset.
-  67+ 0000              ;
-  68+ 0000              ;Signed
-  69+ 0000              ;If HL == DE, then Z flag is set.
-  70+ 0000              ;If HL != DE, then Z flag is reset.
-  71+ 0000              ;If HL <  DE, then S and P/V are different.
-  72+ 0000              ;If HL >= DE, then S and P/V are the same.
+  62+ 0000              cpHLDE:                 MACRO
+  63+ 0000 ~                                    push    hl
+  64+ 0000 ~                                    and     a
+  65+ 0000 ~                                    sbc     hl,de
+  66+ 0000 ~                                    pop     hl
+  67+ 0000                                      ENDM
+  68+ 0000
+  69+ 0000              ;Unsigned
+  70+ 0000              ;If HL == DE, then Z flag is set.
+  71+ 0000              ;If HL != DE, then Z flag is reset.
+  72+ 0000              ;If HL <  DE, then C flag is set.
+  73+ 0000              ;If HL >= DE, then C flag is reset.
+  74+ 0000              ;
+  75+ 0000              ;Signed
+  76+ 0000              ;If HL == DE, then Z flag is set.
+  77+ 0000              ;If HL != DE, then Z flag is reset.
+  78+ 0000              ;If HL <  DE, then S and P/V are different.
+  79+ 0000              ;If HL >= DE, then S and P/V are the same.
 # file closed: ./Macros/MathsMacros.asm
   60  0000                                      INCLUDE "./Macros/MMUMacros.asm"
 # file opened: ./Macros/MMUMacros.asm
@@ -2964,11 +2971,11 @@
  650  84A4 37          >                        scf
  651  84A5 17                                   rla                                                     ; divide by 2 but also bring in carry so its 128 + energy / 2
  652  84A6 47                                   ld      b,a
- 653  84A7 CD 92 DA                             call    KillShip                                        ; mark ship as dead (if possible)
+ 653  84A7 CD B3 DA                             call    KillShip                                        ; mark ship as dead (if possible)
  654  84AA C3 B7 84                             jp      .ApplyDamage
  655  84AD 3A CC 9D     .SmallBump:             ld      a,(DELTA)                                       ; if out ship speed < 5 then set damage to
  656  84B0 47                                   ld      b,a
- 657  84B1 CD B4 DA                             call    DamageShip                                      ; dent target too  TODO make damge totally proportional to speed
+ 657  84B1 CD D5 DA                             call    DamageShip                                      ; dent target too  TODO make damge totally proportional to speed
  658  84B4 C3 B7 84                             jp      .ApplyDamage
  659  84B7 CD 4B A2     .ApplyDamage:           call    SetSpeedZero
  660  84BA 3A 14 C0                             ld      a,(UBnKzsgn)                                    ; front or back
@@ -2998,7 +3005,7 @@
  677  84EF A7          >                        and a
  677  84F0 CA 01 85    >                        jp  z,.NoLaser
  678  84F3 3A EA A0     .LaserDamage:           ld      a,(CurrLaserDamageOutput)
- 679  84F6 CD B4 DA                             call    DamageShip
+ 679  84F6 CD D5 DA                             call    DamageShip
  680  84F9 3A 36 C0                             ld      a,(UBnKexplDsp)                                 ; is it destroyed
  681  84FC E6 A0                                and     %10100000
  682  84FE C2 11 85                             jp      nz,.ProcessedUniverseSlot                        ; can't lock on debris
@@ -3548,7 +3555,7 @@
    6+ 8889 ED 92 56    >                     nextreg UniverseMMU,       a
    7+ 888C 21 00 C0                             ld		hl,UniverseBankAddr
    8+ 888F 11 00 00                             ld		de,dmaCopySrcAddr
-   9+ 8892 01 07 1C                             ld		bc,UnivBankSize
+   9+ 8892 01 28 1C                             ld		bc,UnivBankSize
   10+ 8895 CD BB 99                             call	memcopy_dma
   11+ 8898 F1 C1                                pop		bc,,af
   12+ 889A 57                                   ld      d,a
@@ -8118,44 +8125,47 @@
    3+ A347 A7           	and		a								; fast clear carry  leave bit0 of RAND+2 at 0.
    4+ A348              doRandom:									;.DORND	\ -> &3F86 \ do random, new A, X.
    5+ A348              ; "doRandom, Random Seed update, new value in A & C)"
-   6+ A348 3A C2 9C     doRND:                  ld		a,(RandomSeed)					; Get Seed 0
-   7+ A34B CB 17                                rl		a								; Rotate L including carry
-   8+ A34D 4F                                   ld		c,a								; c =  double lo
-   9+ A34E 21 C4 9C     .AddSeed2:              ld		hl,RandomSeed2
-  10+ A351 8E                                   adc		a,(hl)							; RAND+2
-  11+ A352 32 C2 9C     .SaveAtoSeed:           ld		(RandomSeed),a					; and save RAND
-  12+ A355 08           .SaveBtoSeed2:          ex		af,af'
-  13+ A356 79                                   ld		a,c
-  14+ A357 32 C4 9C                             ld		(RandomSeed2),a
-  15+ A35A 08                                   ex		af,af'
-  16+ A35B 3A C3 9C                             ld		a,(RandomSeed1)
-  17+ A35E 4F                                   ld		c,a								; C = Seed1
-  18+ A35F 21 C5 9C     .AddSeed3:              ld		hl,RandomSeed3
-  19+ A362 8E                                   adc		a,(hl)
-  20+ A363 32 C3 9C                             ld		(RandomSeed1),a
-  21+ A366 08                                   ex		af,af'
-  22+ A367 79                                   ld		a,c
-  23+ A368 32 C5 9C                             ld		(RandomSeed3),a
-  24+ A36B 08                                   ex		af,af'
-  25+ A36C C9                                   ret
-  26+ A36D
-  27+ A36D 21 C2 9C     saveRandomSeeds:        ld      hl,RandomSeed
-  28+ A370 11 C6 9C                             ld      de,RandomSeedSave
-  29+ A373 01 04 00                             ld      bc,4
-  30+ A376 ED A0                                ldi
-  31+ A378 ED A0                                ldi
-  32+ A37A ED A0                                ldi
-  33+ A37C ED A0                                ldi
-  34+ A37E C9                                   ret
-  35+ A37F
-  36+ A37F 21 C6 9C     restoreRandomSeeds:     ld      hl,RandomSeedSave
-  37+ A382 11 C2 9C                             ld      de,RandomSeed
-  38+ A385 01 04 00                             ld      bc,4
-  39+ A388 ED A0                                ldi
-  40+ A38A ED A0                                ldi
-  41+ A38C ED A0                                ldi
-  42+ A38E ED A0                                ldi
-  43+ A390 C9                                   ret
+   6+ A348              ; uses a c h l registers
+   7+ A348              doRND:                  ;exx                                     ; protect bc,de,hl
+   8+ A348 3A C2 9C                             ld		a,(RandomSeed)					; Get Seed 0
+   9+ A34B CB 17                                rl		a								; Rotate L including carry
+  10+ A34D 4F                                   ld		c,a								; c =  double lo
+  11+ A34E 21 C4 9C     .AddSeed2:              ld		hl,RandomSeed2
+  12+ A351 8E                                   adc		a,(hl)							; RAND+2
+  13+ A352 32 C2 9C     .SaveAtoSeed:           ld		(RandomSeed),a					; and save RAND
+  14+ A355 08           .SaveBtoSeed2:          ex		af,af'
+  15+ A356 79                                   ld		a,c
+  16+ A357 32 C4 9C                             ld		(RandomSeed2),a
+  17+ A35A 08                                   ex		af,af'
+  18+ A35B 3A C3 9C                             ld		a,(RandomSeed1)
+  19+ A35E 4F                                   ld		c,a								; C = Seed1
+  20+ A35F 21 C5 9C     .AddSeed3:              ld		hl,RandomSeed3
+  21+ A362 8E                                   adc		a,(hl)
+  22+ A363 32 C3 9C                             ld		(RandomSeed1),a
+  23+ A366 08                                   ex		af,af'
+  24+ A367 79                                   ld		a,c
+  25+ A368 32 C5 9C                             ld		(RandomSeed3),a
+  26+ A36B 08                                   ex		af,af'
+  27+ A36C                                      ;exx                                     ; get bc,de,hl back
+  28+ A36C C9                                   ret
+  29+ A36D
+  30+ A36D 21 C2 9C     saveRandomSeeds:        ld      hl,RandomSeed
+  31+ A370 11 C6 9C                             ld      de,RandomSeedSave
+  32+ A373 01 04 00                             ld      bc,4
+  33+ A376 ED A0                                ldi
+  34+ A378 ED A0                                ldi
+  35+ A37A ED A0                                ldi
+  36+ A37C ED A0                                ldi
+  37+ A37E C9                                   ret
+  38+ A37F
+  39+ A37F 21 C6 9C     restoreRandomSeeds:     ld      hl,RandomSeedSave
+  40+ A382 11 C2 9C                             ld      de,RandomSeed
+  41+ A385 01 04 00                             ld      bc,4
+  42+ A388 ED A0                                ldi
+  43+ A38A ED A0                                ldi
+  44+ A38C ED A0                                ldi
+  45+ A38E ED A0                                ldi
+  46+ A390 C9                                   ret
 # file closed: ./Variables/random_number.asm
 1222  A391                  INCLUDE "./Variables/galaxy_seed.asm"
 # file opened: ./Variables/galaxy_seed.asm
@@ -17047,30 +17057,31 @@
   44+ E164 18 E5                                jr      l2_plot_pixel_no_check
   45+ E166                                      ;***Implicit ret due to jr
   46+ E166
-  47+ E166 78           DebrisPixel:            ld      a,b
-  48+ E167 FE 7F                                cp      127
-  49+ E169 D0                                   ret     nc
-  50+ E16A 3E FC                                ld      a, L2DebrisColour
-  51+ E16C 18 DD                                jr      l2_plot_pixel_no_check
-  52+ E16E                                      ;***Implicit ret due to jr
-  53+ E16E
-  54+ E16E F5           l2_plot_pixel_y_test:   push	af
-  55+ E16F 78                                   ld		a,b
-  56+ E170 FE C0                                cp		192
-  57+ E172 30 03                                jr		nc,.clearup
-  58+ E174 F1                                   pop		af
-  59+ E175 18 C0                                jr		l2_plot_pixel
-  60+ E177 F1           .clearup:               pop		af
-  61+ E178 C9                                   ret
-  62+ E179
-  63+ E179              l2_point_pixel_y_safe:	MACRO
-  64+ E179 ~            						push	hl
-  65+ E179 ~            						push	bc
-  66+ E179 ~            						call	l2_plot_pixel
-  67+ E179 ~            						pop		bc
-  68+ E179 ~            						pop		hl
-  69+ E179              						ENDM
-  70+ E179
+  47+ E166              ; in bc = yx iyl = colour
+  48+ E166 78           DebrisPixel:            ld      a,b
+  49+ E167 FE 7F                                cp      127
+  50+ E169 D0                                   ret     nc
+  51+ E16A FD 7D                                ld      a, iyl
+  52+ E16C 18 DD                                jr      l2_plot_pixel_no_check
+  53+ E16E                                      ;***Implicit ret due to jr
+  54+ E16E
+  55+ E16E F5           l2_plot_pixel_y_test:   push	af
+  56+ E16F 78                                   ld		a,b
+  57+ E170 FE C0                                cp		192
+  58+ E172 30 03                                jr		nc,.clearup
+  59+ E174 F1                                   pop		af
+  60+ E175 18 C0                                jr		l2_plot_pixel
+  61+ E177 F1           .clearup:               pop		af
+  62+ E178 C9                                   ret
+  63+ E179
+  64+ E179              l2_point_pixel_y_safe:	MACRO
+  65+ E179 ~            						push	hl
+  66+ E179 ~            						push	bc
+  67+ E179 ~            						call	l2_plot_pixel
+  68+ E179 ~            						pop		bc
+  69+ E179 ~            						pop		hl
+  70+ E179              						ENDM
+  71+ E179
 # file closed: ./Layer2Graphics/layer2_plot_pixel.asm
 1350  E179                  INCLUDE "./Layer2Graphics/layer2_print_character.asm"
 # file opened: ./Layer2Graphics/layer2_print_character.asm
@@ -34670,45 +34681,25 @@
   16++D8D0 23                                   inc     hl
   17++D8D1 46                                   ld      b,(hl)                          ; bc = point1 Y,X
   18++D8D2 23                                   inc     hl
-  19++D8D3              ;;DEBUGTEST        push bc
-  20++D8D3              ;;DEBUGTEST        push hl
-  21++D8D3              ;;DEBUGTEST        push de
-  22++D8D3              ;;DEBUGTEST        ld  a,$3F
-  23++D8D3              ;;DEBUGTEST        MMUSelectLayer2
-  24++D8D3              ;;DEBUGTEST        call    l2_plot_pixel
-  25++D8D3              ;;DEBUGTEST        pop de
-  26++D8D3              ;;DEBUGTEST        pop hl
-  27++D8D3              ;;DEBUGTEST        pop bc
-  28++D8D3 5E                                   ld      e,(hl)                          ; c = varX1
-  29++D8D4 23                                   inc     hl
-  30++D8D5 56                                   ld      d,(hl)                          ; de = point2 Y,X
-  31++D8D6              ;;DEBUGTEST       push bc
-  32++D8D6              ;;DEBUGTEST       push hl
-  33++D8D6              ;;DEBUGTEST       push de
-  34++D8D6              ;;DEBUGTEST       push de
-  35++D8D6              ;;DEBUGTEST       pop  bc
-  36++D8D6              ;;DEBUGTEST       ld  a,$3F
-  37++D8D6              ;;DEBUGTEST       MMUSelectLayer2
-  38++D8D6              ;;DEBUGTEST       call    l2_plot_pixel
-  39++D8D6              ;;DEBUGTEST       pop de
-  40++D8D6              ;;DEBUGTEST       pop hl
-  41++D8D6              ;;DEBUGTEST       pop bc
-  42++D8D6 23                                   inc     hl
-  43++D8D7 E5                                   push	hl
-  44++D8D8 FD E5                                push    iy
-  45++D8DA 60                                   ld      h,b
-  46++D8DB 69                                   ld      l,c
-  47++D8DC                ;  call    l2_draw_any_line                ; call version of LOIN that used BCDE
-  48++D8DC FD 7D                                ld		a,iyl							; get colour back before calling line draw
-  49++D8DE                                      MMUSelectLayer2
-  49++D8DE ED 91 57 39 >					 nextreg L2memMMU,		    BankLAYER2
-  50++D8E2 CD D2 EA                             call    LineHLtoDE
-  51++D8E5 FD E1                                pop     iy
-  52++D8E7 E1                                   pop	    hl
-  53++D8E8 FD 25                                dec     iyh
-  54++D8EA 20 E3                                jr		nz,DrawXX19ClippedLines
-  55++D8EC C9                                   ret                                     ; --- Wireframe end  \ LL118-1
-  56++D8ED
+  19++D8D3 5E                                   ld      e,(hl)                          ; c = varX1
+  20++D8D4 23                                   inc     hl
+  21++D8D5 56                                   ld      d,(hl)                          ; de = point2 Y,X
+  22++D8D6 23                                   inc     hl
+  23++D8D7 E5                                   push	hl
+  24++D8D8 FD E5                                push    iy
+  25++D8DA 60                                   ld      h,b
+  26++D8DB 69                                   ld      l,c
+  27++D8DC                ;  call    l2_draw_any_line                ; call version of LOIN that used BCDE
+  28++D8DC FD 7D                                ld		a,iyl							; get colour back before calling line draw
+  29++D8DE                                      MMUSelectLayer2
+  29++D8DE ED 91 57 39 >					 nextreg L2memMMU,		    BankLAYER2
+  30++D8E2 CD D2 EA                             call    LineHLtoDE
+  31++D8E5 FD E1                                pop     iy
+  32++D8E7 E1                                   pop	    hl
+  33++D8E8 FD 25                                dec     iyh
+  34++D8EA 20 E3                                jr		nz,DrawXX19ClippedLines
+  35++D8EC C9                                   ret                                     ; --- Wireframe end  \ LL118-1
+  36++D8ED
 # file closed: ././ModelRender/DrawLines.asm
 1485+ D8ED              ; ---------------------------------------------------------------------------------------------------------------------------------
 1486+ D8ED
@@ -34822,456 +34813,476 @@
 1583+ D9A6              ;............................................................
 1584+ D9A6 CD 1D D9     .CarryOnWithDraw:       call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
 1585+ D9A9 CD 81 D1                             call    CullV2
-1586+ D9AC CD 4F DB                             call    PrepLines
+1586+ D9AC CD 70 DB                             call    PrepLines
 1587+ D9AF CD C1 D8                             call    DrawLines
 1588+ D9B2 C9                                   ret
 1589+ D9B3              ;............................................................
-1590+ D9B3              .ExplodingCloud:        ClearMemBitN  UBnkaiatkecm, ShipKilledBitNbr ; acknowledge ship exploding
-1590+ D9B3 21 38 C0    >                        ld      hl,UBnkaiatkecm
-1590+ D9B6 CB A6       >                        res     ShipKilledBitNbr,(hl)
-1591+ D9B8 3A 3D C0     .UpdateCloudCounter:    ld      a,(UBnKCloudCounter)        ; counter += 4 until > 255
-1592+ D9BB 3C                                   inc a ;add     4                           ; we do this early as we now have logic for
-1593+ D9BC DA 6E DA                             jp      c,.FinishedExplosion        ; display or not later
-1594+ D9BF 32 3D C0                             ld      (UBnKCloudCounter),a        ; .
-1595+ D9C2              .SkipHiddenShip:        ReturnOnMemBitClear  UBnkaiatkecm , ShipIsVisibleBitNbr
-1595+ D9C2 3A 38 C0    >                        ld     a,(UBnkaiatkecm)
-1595+ D9C5 CB 77       >                        bit 	ShipIsVisibleBitNbr,a
-1595+ D9C7 C8          >                        ret		z
-1596+ D9C8              .IsShipADot:            JumpOnABitSet ShipIsDotBitNbr, .itsJustADot ; if its dot distance then explosion is a dot, TODO later we will do as a coloured dot
-1596+ D9C8 CB 5F       >                        bit 	ShipIsDotBitNbr, a
-1596+ D9CA C2 82 D9    >                        jp      nz,.itsJustADot
-1597+ D9CD 2A 12 C0     .CalculateZ:            ld      hl,(UBnKzlo)                ; al = hl = z
-1598+ D9D0 7C                                   ld      a,h                         ; .
-1599+ D9D1                                      JumpIfALTNusng 32,.CalcFromZ        ; if its >= 32 then set a to FE and we are done
-1599+ D9D1 FE 20       >                        cp      32
-1599+ D9D3 DA DB D9    >                        jp		c, .CalcFromZ
-1600+ D9D6 3E FE                                ld      a,$FE                       ; .
-1601+ D9D8 C3 E6 D9                             jp      .DoneZDist                  ; .
-1602+ D9DB              .CalcFromZ:             ShiftHLLeft1                        ; else
-1602+ D9DB CB 25       >			   sla l
-1602+ D9DD CB 14       >			   rl  h
-1603+ D9DF                                      ShiftHLLeft1                        ; hl = hl * 2
+1590+ D9B3 CD 1D D9     .ExplodingCloud:        call    ProcessNodes
+1591+ D9B6                                      ClearMemBitN  UBnkaiatkecm, ShipKilledBitNbr ; acknowledge ship exploding
+1591+ D9B6 21 38 C0    >                        ld      hl,UBnkaiatkecm
+1591+ D9B9 CB A6       >                        res     ShipKilledBitNbr,(hl)
+1592+ D9BB 3A 3D C0     .UpdateCloudCounter:    ld      a,(UBnKCloudCounter)        ; counter += 4 until > 255
+1593+ D9BE C6 04                                add     4                           ; we do this early as we now have logic for
+1594+ D9C0 DA 82 DA                             jp      c,.FinishedExplosion        ; display or not later
+1595+ D9C3 32 3D C0                             ld      (UBnKCloudCounter),a        ; .
+1596+ D9C6              .SkipHiddenShip:        ReturnOnMemBitClear  UBnkaiatkecm , ShipIsVisibleBitNbr
+1596+ D9C6 3A 38 C0    >                        ld     a,(UBnkaiatkecm)
+1596+ D9C9 CB 77       >                        bit 	ShipIsVisibleBitNbr,a
+1596+ D9CB C8          >                        ret		z
+1597+ D9CC              .IsShipADot:            JumpOnABitSet ShipIsDotBitNbr, .itsJustADot ; if its dot distance then explosion is a dot, TODO later we will do as a coloured dot
+1597+ D9CC CB 5F       >                        bit 	ShipIsDotBitNbr, a
+1597+ D9CE C2 82 D9    >                        jp      nz,.itsJustADot
+1598+ D9D1 2A 12 C0     .CalculateZ:            ld      hl,(UBnKzlo)                ; al = hl = z
+1599+ D9D4 7C                                   ld      a,h                         ; .
+1600+ D9D5                                      JumpIfALTNusng 32,.CalcFromZ        ; if its >= 32 then set a to FE and we are done
+1600+ D9D5 FE 20       >                        cp      32
+1600+ D9D7 DA DF D9    >                        jp		c, .CalcFromZ
+1601+ D9DA 26 FE                                ld      h,$FE                       ; .
+1602+ D9DC C3 EA D9                             jp      .DoneZDist                  ; .
+1603+ D9DF              .CalcFromZ:             ShiftHLLeft1                        ; else
 1603+ D9DF CB 25       >			   sla l
 1603+ D9E1 CB 14       >			   rl  h
-1604+ D9E3                                      SetCarryFlag                        ; h = h * 3 rolling in lower bit
-1604+ D9E3 37          >                        scf
-1605+ D9E4 CB 14                                rl  h                               ;
-1606+ D9E6 06 00        .DoneZDist:             ld      b,0
-1607+ D9E8 4C                                   ld      c,h                         ; d = a= h = VarQ which is z distance
-1608+ D9E9 3A 3D C0                             ld      a,(UBnKCloudCounter)        ; and a = cloud counter
-1609+ D9EC 57                                   ld      d,a
-1610+ D9ED 1E 00                                ld      e,0
-1611+ D9EF 7A                                   ld      a,d
-1612+ D9F0                                      JumpIfALTNusng  28,.SetCloudRadius
-1612+ D9F0 FE 1C       >                        cp      28
-1612+ D9F2 DA FA D9    >                        jp		c, .SetCloudRadius
-1613+ D9F5 16 FE        .MaxCloudRadius:        ld      d,$FE
-1614+ D9F7 C3 06 DA                             jp      .SizedUpCloud
-1615+ D9FA              .SetCloudRadius:        ShiftDELeft1                        ; bc = 8 * bc
-1615+ D9FA CB 23       >			   sla e
-1615+ D9FC CB 12       >			   rl  d
-1616+ D9FE                                      ShiftDELeft1                        ; .
-1616+ D9FE CB 23       >			   sla e
-1616+ DA00 CB 12       >			   rl  d
-1617+ DA02                                      ShiftDELeft1                        ; .
-1617+ DA02 CB 23       >			   sla e
-1617+ DA04 CB 12       >			   rl  d
-1618+ DA06 7A           .SizedUpCloud:          ld      a,d
-1619+ DA07 32 3E C0                             ld      (UBnKCloudRadius),a
-1620+ DA0A DD 67                                ld      ixh,a                       ; ixh = calculated cloud radius
-1621+ DA0C 3A 3D C0     .ProcessCloudLoop:      ld      a,(UBnKCloudCounter)
-1622+ DA0F                                      JumpOnABitClear 7,  .DoneCloudCounter
-1622+ DA0F CB 7F       >                        bit 	7, a
-1622+ DA11 CA 16 DA    >                        jp      z,.DoneCloudCounter
-1623+ DA14 ED 44                                neg                                 ; if its negative then make it positive (note original did just invert)
-1624+ DA16 CB 2F        .DoneCloudCounter:      sra a                               ; U = (a /8) bit 0 set so minimum 1
-1625+ DA18 CB 2F                                sra a                               ;
-1626+ DA1A CB 2F                                sra a                               ;
-1627+ DA1C F6 01                                or  1                               ;
-1628+ DA1E 32 CF 9D                             ld      (varU),a                    ;
-1629+ DA21 3A 17 C3     .ExplosionVerts:        ld      a,(VertexCountAddr)         ; now for each vertex
-1630+ DA24 47                                   ld      b,a                         ; .
-1631+ DA25 21 D1 C0                             ld      hl,UBnkNodeArray            ; c = number of vertices
-1632+ DA28 C5 E5        .ExplosionVertLoop:         push    bc,,hl
-1633+ DA2A DD 68                                    ld      ixl,b                   ; save counter
-1634+ DA2C 4E                                       ld      c,(hl)                  ; get vertex into hl and de
-1635+ DA2D 23                                       inc     hl
-1636+ DA2E 46                                       ld      b,(hl)
-1637+ DA2F 23                                       inc     hl
-1638+ DA30 5E                                       ld      e,(hl)
-1639+ DA31 23                                       inc     hl
-1640+ DA32 56                                       ld      d,(hl)                  ; now hl is done with and we can use it
-1641+ DA33 3A CF 9D     .LoopSubParticles:          ld      a,(varU)                    ; nbr of particles per vertex
-1642+ DA36 FD 67                                    ld      iyh,a                       ; save it
-1643+ DA38 E5 D5 C5     .ProcessAParticle:              push    hl,,de,,bc                  ; save loop counter, x y we dont need hl now so optimise TODO
-1644+ DA3B EB                                           ex      de,hl                       ; hl = de (Y)
-1645+ DA3C DD 54                                        ld      d,ixh                       ; d = z distance
-1646+ DA3E CD 75 DA                                     call    HLEquARandCloud
-1647+ DA41 7C                                           ld      a,h
-1648+ DA42                                              JumpIfAIsNotZero   .NextIteration
-1648+ DA42 A7          >                        and     a
-1648+ DA43 C2 5E DA    >                        jp	    nz,.NextIteration
-1649+ DA46 EB                                           ex      de,hl                   ; de = result for y
-1650+ DA47 E1                                           pop     hl                      ; get x back from bc on stack
-1651+ DA48 E5                                           push    hl                      ; put bc (which is now in hl) back on the stack
-1652+ DA49 D5                                           push    de                      ; save de
-1653+ DA4A DD 54                                        ld      d,ixh                   ; d = z distance
-1654+ DA4C CD 75 DA                                     call    HLEquARandCloud             ; now calc x into hl
-1655+ DA4F 7C                                           ld      a,h
-1656+ DA50 D1                                           pop     de                      ; get de back
-1657+ DA51                                              JumpIfAIsNotZero   .NextIteration ; doing pop here clears stack up
-1657+ DA51 A7          >                        and     a
-1657+ DA52 C2 5E DA    >                        jp	    nz,.NextIteration
-1658+ DA55 43                                           ld      b,e
-1659+ DA56 4D                                           ld      c,l
-1660+ DA57                                              MMUSelectLayer2
-1660+ DA57 ED 91 57 39 >					 nextreg L2memMMU,		    BankLAYER2
-1661+ DA5B CD 66 E1                                     call    DebrisPixel
-1662+ DA5E C1 D1 E1     .NextIteration:             pop    hl,,de,,bc                  ; ready for next iteration
-1663+ DA61 FD 25                                    dec     iyh
-1664+ DA63 20 D3                                    jr      nz,.ProcessAParticle        ;
-1665+ DA65 E1 C1        .NextVert:              pop     bc,,hl                          ; recover loop counter and source pointer
-1666+ DA67 3E 04                                ld      a,4                             ; move to next vertex group
-1667+ DA69 ED 31                                add     hl,a                            ;
-1668+ DA6B 10 BB                                djnz    .ExplosionVertLoop              ;
-1669+ DA6D C9                                   ret
-1670+ DA6E 3A 2C C0     .FinishedExplosion:     ld      a,(UbnKShipUnivBankNbr)         ; get slot number
-1671+ DA71 CD BC A2                             call    ClearSlotA                      ; gauranted to be in main memory as non bankables
-1672+ DA74 C9                                   ret
-1673+ DA75                                      ; set flags and signal to remove from slot list
-1674+ DA75
-1675+ DA75              ; Hl = HlL +/- (Random * projected cloud size)
-1676+ DA75              ; In - d = z distance, hl = vert hi lo
-1677+ DA75              ; Out hl = adjusted distance
-1678+ DA75              ; uses registers hl, de
-1679+ DA75 E5           HLEquARandCloud:        push    hl
-1680+ DA76 CD 48 A3                             call    doRandom                    ; a= random * 2
-1681+ DA79 E1                                   pop     hl
-1682+ DA7A 17                                   rla                                 ;
-1683+ DA7B 38 0A                                jr      c,.Negative                 ; if buit 7 went into carry
-1684+ DA7D 5F           .Positive:              ld  e,a
-1685+ DA7E ED 30                                mul
-1686+ DA80 5A                                   ld  e,d
-1687+ DA81 16 00                                ld  d,0
-1688+ DA83                                      ClearCarryFlag
-1688+ DA83 B7          >                        or a
-1689+ DA84 ED 5A                                adc     hl,de                       ; hl = hl + a
-1690+ DA86 C9                                   ret
-1691+ DA87 5F           .Negative:              ld  e,a
-1692+ DA88 ED 30                                mul
-1693+ DA8A 5A                                   ld  e,d
-1694+ DA8B 16 00                                ld  d,0
-1695+ DA8D                                      ClearCarryFlag
-1695+ DA8D B7          >                        or a
-1696+ DA8E ED 52                                sbc     hl,de                       ; hl = hl + a
-1697+ DA90 C9                                   ret
-1698+ DA91
-1699+ DA91              GetExperiencePoints:    ; TODO calculate experience points
-1700+ DA91                                      ; TODO mission updates check
-1701+ DA91 C9                                   ret
-1702+ DA92
-1703+ DA92              ; ......................................................
-1704+ DA92 3A 26 C3     KillShip:               ld      a,(ShipTypeAddr)            ; we can't destroy stations in a collision
-1705+ DA95 FE 02                                cp      ShipTypeStation             ; for destructable one we will have a special type of ship
-1706+ DA97 C8                                   ret     z
-1707+ DA98 3A 38 C0                             ld      a,(UBnkaiatkecm)            ; remove AI, mark killed, mark exploding
-1708+ DA9B F6 30                                or      ShipExploding | ShipKilled  ; .
-1709+ DA9D E6 7F                                and     ShipAIDisabled              ; .
-1710+ DA9F 32 38 C0                             ld      (UBnkaiatkecm),a            ; .
-1711+ DAA2                                      SetMemToN   UBnKexplDsp, ShipExplosionDuration ; set debris cloud timer, also usered in main to remove from slots
-1711+ DAA2 3E 4B       >                        ld      a,ShipExplosionDuration
-1711+ DAA4 32 36 C0    >                        ld      (UBnKexplDsp),a
-1712+ DAA7                                      ldWriteZero UBnKEnergy              ; Zero ship energy
-1712+ DAA7 AF          >                        xor      a
-1712+ DAA8 32 3C C0    >                        ld       (UBnKEnergy),a
-1713+ DAAB 32 3E C0                             ld      (UBnKCloudRadius),a
-1714+ DAAE 3E 12                                ld      a,18
-1715+ DAB0 32 3D C0                             ld      (UBnKCloudCounter),a        ; Zero cloud
-1716+ DAB3                                      ; TODO logic to spawn cargo/plates goes here
-1717+ DAB3 C9                                   ret
-1718+ DAB4
-1719+ DAB4              ; in a = damage
-1720+ DAB4 47           DamageShip:             ld      b,a                         ; b = a = damage comming in
-1721+ DAB5 3A 26 C3                             ld      a,(ShipTypeAddr)            ; we can't destroy stations in a collision
-1722+ DAB8 FE 02                                cp      ShipTypeStation             ; for destructable one we will have a special type of ship
-1723+ DABA C8                                   ret     z
-1724+ DABB 3A 3C C0                             ld      a,(UBnKEnergy)              ; get current energy level
-1725+ DABE                                      ClearCarryFlag
-1725+ DABE B7          >                        or a
-1726+ DABF 98                                   sbc     a,b                         ; subtract damage
-1727+ DAC0 D2 C7 DA     .Overkilled:            jp      nc,.DoneDamage              ; if no carry then its not gone negative
-1728+ DAC3 CD 92 DA                             call    KillShip                    ; else kill it
-1729+ DAC6 C9                                   ret
-1730+ DAC7 32 3C C0     .DoneDamage:            ld      (UBnKEnergy),a
-1731+ DACA C9                                   ret
-1732+ DACB              ; need recovery for energy too
-1733+ DACB              ; Shall we have a "jolt ship off course routine for when it gets hit by a blast or collision)
-1734+ DACB
-1735+ DACB              ;-LL49-----------------------------------------------------------------------------------------------------------------------------
-1736+ DACB              ;  Entering Here we have the following:
-1737+ DACB              ;  XX15(1 0) = vertex x-coordinate but sign not populated
-1738+ DACB              ;  XX15(3 2) = vertex y-coordinate but sign not populated
-1739+ DACB              ;  XX15(5 4) = vertex z-coordinate but sign not populated
-1740+ DACB              ;
-1741+ DACB              ;  XX16(  1 0)sidev_x   (3 2)roofv_x   (5 4)nosev_x
-1742+ DACB              ;  XX16(  7 6)sidev_y   (9 8)roofv_y (11 10)nosev_y
-1743+ DACB              ;  XX16(13 12)sidev_z (15 14)roofv_z (17 16)nosev_z
-1744+ DACB              ;--------------------------------------------------------------------------------------------------------
-1745+ DACB              AddLaserBeamLine:
-1746+ DACB              ; this code is a bag of shit and needs re-writing
-1747+ DACB              GetGunVertexNode:
-1748+ DACB 3A 15 C3             ld          a,(GunVertexAddr)                   ; Hull byte#6, gun vertex*4 (XX0),Y
-1749+ DACE 21 D1 C0             ld          hl,UBnkNodeArray                    ; list of lines to read
-1750+ DAD1 ED 31                add         hl,a                                ; HL = address of GunVertexOnNodeArray
-1751+ DAD3 FD 2E 00             ld          iyl,0
-1752+ DAD6              MoveX1PointToXX15:
-1753+ DAD6 4E                   ld          c,(hl)                              ;
-1754+ DAD7 23                   inc         hl
-1755+ DAD8 46                   ld          b,(hl)                              ; bc = x1 of gun vertex
-1756+ DAD9 23                   inc         hl
-1757+ DADA ED 43 87 C0          ld          (UBnkX1),bc
-1758+ DADE 0C                   inc         c
-1759+ DADF C8                   ret         z                                   ; was c 255?
-1760+ DAE0 04                   inc         b
-1761+ DAE1 C8                   ret         z                                   ; was c 255?
-1762+ DAE2              MoveY1PointToXX15:
-1763+ DAE2 4E                   ld          c,(hl)                              ;
-1764+ DAE3 23                   inc         hl
-1765+ DAE4 46                   ld          b,(hl)                              ; bc = y1 of gun vertex
-1766+ DAE5 23                   inc         hl
-1767+ DAE6 ED 43 89 C0          ld          (UBnkY1),bc
-1768+ DAEA              SetX2PointToXX15:
-1769+ DAEA 01 00 00             ld          bc,0                                ; set X2 to 0
-1770+ DAED ED 43 8B C0          ld          (UBnkX2),bc
-1771+ DAF1 3A 12 C0             ld          a,(UBnKzlo)
-1772+ DAF4 4F                   ld          c,a
-1773+ DAF5              SetY2PointToXX15:
-1774+ DAF5 ED 43 8D C0          ld          (UBnkY2),bc                         ; set Y2to 0
-1775+ DAF9 3A 0E C0             ld          a,(UBnKxsgn)
-1776+ DAFC                      JumpOnBitClear a,7,LL74SkipDec
-1776+ DAFC CB 7F       >                        bit 	7,a
-1776+ DAFE CA 06 DB    >                        jp      z,LL74SkipDec
-1777+ DB01              LL74DecX2:
-1778+ DB01 3E FF                ld          a,$FF
-1779+ DB03 32 8B C0             ld          (UBnkX2Lo),a                        ; rather than dec (hl) just load with 255 as it will always be that at this code point
-1780+ DB06              LL74SkipDec:
-1781+ DB06 CD 6F C9             call        ClipLine                            ; LL145 \ clip test on XX15 XX12 vector, returns carry
-1782+ DB09 38 71                jr          c,CalculateNewLines                 ; LL170 clip returned carry set so not visibile if carry set skip the rest (laser not firing)
-1783+ DB0B              ; Here we are usign hl to replace VarU as index
-1784+ DB0B 2A D3 9D             ld          hl,(varU16)
-1785+ DB0E 3A 87 C0             ld          a,(UBnKx1Lo)
-1786+ DB11 77                   ld          (hl),a
-1787+ DB12 23                   inc         hl
-1788+ DB13 3A 89 C0             ld          a,(UbnKy1Lo)
-1789+ DB16 77                   ld          (hl),a
-1790+ DB17 23                   inc         hl
-1791+ DB18 3A 8B C0             ld          a,(UBnkX2Lo)
-1792+ DB1B 77                   ld          (hl),a
-1793+ DB1C 23                   inc         hl
-1794+ DB1D 3A 8D C0             ld          a,(UbnKy2Lo)
-1795+ DB20 77                   ld          (hl),a
-1796+ DB21 FD 2C                inc         iyl                                 ; iyl holds as a counter to iterations
-1797+ DB23 23                   inc         hl
-1798+ DB24 FD 2C                inc         iyl                                 ; ready for next byte
-1799+ DB26 22 D3 9D             ld          (varU16),hl
-1800+ DB29 C9                   ret
-1801+ DB2A
-1802+ DB2A                  INCLUDE "Universe/Ships/PrepLines.asm"
+1604+ D9E3                                      ShiftHLLeft1                        ; hl = hl * 2
+1604+ D9E3 CB 25       >			   sla l
+1604+ D9E5 CB 14       >			   rl  h
+1605+ D9E7                                      SetCarryFlag                        ; h = h * 3 rolling in lower bit
+1605+ D9E7 37          >                        scf
+1606+ D9E8 CB 14                                rl  h                               ;
+1607+ D9EA 06 00        .DoneZDist:             ld      b,0                         ; bc = cloud z distance calculateed
+1608+ D9EC 4C                                   ld      c,h                         ; .
+1609+ D9ED 3A 3D C0     .CalcCloudRadius:       ld      a,(UBnKCloudCounter)        ; de = cloud counter * 256
+1610+ D9F0 57                                   ld      d,a                         ;
+1611+ D9F1 1E 00                                ld      e,0                         ;
+1612+ D9F3 CD 41 B0                             call    DEequDEDivBC                ; de = cloud counter * 256 / z distance
+1613+ D9F6 7A                                   ld      a,d                         ; if radius >= 28
+1614+ D9F7                                      JumpIfALTNusng  28,.SetCloudRadius  ; then set raidus in d to $FE
+1614+ D9F7 FE 1C       >                        cp      28
+1614+ D9F9 DA 01 DA    >                        jp		c, .SetCloudRadius
+1615+ D9FC 16 FE        .MaxCloudRadius:        ld      d,$FE                       ;
+1616+ D9FE C3 0D DA                             jp      .SizedUpCloud               ;
+1617+ DA01              .SetCloudRadius:        ShiftDELeft1                        ; de = 8 * de
+1617+ DA01 CB 23       >			   sla e
+1617+ DA03 CB 12       >			   rl  d
+1618+ DA05                                      ShiftDELeft1                        ; .
+1618+ DA05 CB 23       >			   sla e
+1618+ DA07 CB 12       >			   rl  d
+1619+ DA09                                      ShiftDELeft1                        ; .
+1619+ DA09 CB 23       >			   sla e
+1619+ DA0B CB 12       >			   rl  d
+1620+ DA0D 7A           .SizedUpCloud:          ld      a,d                         ; cloudradius = a = d or (cloudcounter * 8 / 256)
+1621+ DA0E 32 3E C0                             ld      (UBnKCloudRadius),a         ; .
+1622+ DA11 DD 67                                ld      ixh,a                       ; ixh = a = calculated cloud radius
+1623+ DA13 3A 3D C0     .CalcSubParticleColour: ld      a,(UBnKCloudCounter)        ; colur fades away
+1624+ DA16 ED 23                                swapnib                             ; divive by 16
+1625+ DA18 E6 0F                                and     $0F                         ; mask off upper bytes
+1626+ DA1A CB 2F                                sra     a                           ; divide by 32
+1627+ DA1C 21 8E DA                             ld      hl,DebrisColourTable
+1628+ DA1F ED 31                                add     hl,a
+1629+ DA21 7E                                   ld      a,(hl)
+1630+ DA22 FD 6F                                ld      iyl,a                       ; iyl = pixel colours
+1631+ DA24 3A 3D C0     .CalcSubParticleCount:  ld      a,(UBnKCloudCounter)        ; cloud counter = abs (cloud counter) in effect if > 127 then shrinks it
+1632+ DA27                                      ABSa2c                              ; a = abs a
+1632+ DA27 CB 7F       >                        bit     7,a
+1632+ DA29 CA 2E DA    >                        jp      z,.DoneABSa
+1632+ DA2C ED 44       >                        neg
+1632+ DA2E             >.DoneABSa:
+1633+ DA2E CB 2F        .ParticlePositive:      sra a                               ; iyh = (a /8)
+1634+ DA30 CB 2F                                sra a                               ; .
+1635+ DA32 CB 2F                                sra a                               ; .
+1636+ DA34 F6 01                                or  1                               ; bit 0 set so minimum 1
+1637+ DA36 DD 6F        .DoneSubParticleCount:  ld      ixl,a                       ; ixl = nbr particles per vertex
+1638+ DA38 3A 17 C3     .ForEachVertex:         ld      a,(VertexCountAddr)         ; load vertex count into b
+1639+ DA3B 47                                   ld      b,a                         ; .
+1640+ DA3C 21 D1 C0                             ld      hl,UBnkNodeArray            ; hl = list of vertices
+1641+ DA3F C5 E5        .ExplosionVertLoop:     push    bc,,hl                      ; save vertex counter in b and pointer to verticles in hl
+1642+ DA41 DD 68                                    ld      ixl,b                   ; save counter
+1643+ DA43 4E                                       ld      c,(hl)                  ; get vertex into bc and de
+1644+ DA44 23                                       inc     hl                      ; .
+1645+ DA45 46                                       ld      b,(hl)                  ; .
+1646+ DA46 23                                       inc     hl                      ; .
+1647+ DA47 5E                                       ld      e,(hl)                  ; .
+1648+ DA48 23                                       inc     hl                      ; .
+1649+ DA49 56                                       ld      d,(hl)                  ; now hl is done with and we can use it
+1650+ DA4A DD 7D        .LoopSubParticles:          ld      a,ixl                   ; iyh = loop iterator for nbr of particles per vertex
+1651+ DA4C FD 67                                    ld      iyh,a                   ;
+1652+ DA4E                                          ;break
+1653+ DA4E D5 C5        .ProcessAParticle:          push    de,,bc                  ; save y then x coordinates
+1654+ DA50 EB                                           ex      de,hl               ; hl = de (Y)
+1655+ DA51 DD 54                                        ld      d,ixh               ; d = cloud radius
+1656+ DA53 CD 96 DA                                     call    HLEquARandCloud     ; vertex = vertex +/- (random * projected cloud side /256)
+1657+ DA56 7C                                           ld      a,h                 ; if off screen skip
+1658+ DA57                                              JumpIfAIsNotZero  .NextIteration
+1658+ DA57 A7          >                        and     a
+1658+ DA58 C2 73 DA    >                        jp	    nz,.NextIteration
+1659+ DA5B EB                                           ex      de,hl               ; de = result for y which was put into hl
+1660+ DA5C E1                                           pop     hl                  ; get x back from bc on stack
+1661+ DA5D E5                                           push    hl                  ; put bc (which is now in hl) back on the stack
+1662+ DA5E D5                                           push    de                  ; save de
+1663+ DA5F DD 54                                        ld      d,ixh               ; d = cloud radius
+1664+ DA61 CD 96 DA                                     call    HLEquARandCloud     ; vertex = vertex +/- (random * projected cloud side /256)
+1665+ DA64 D1                                           pop     de                  ; get de back doing pop here clears stack up
+1666+ DA65 7C                                           ld      a,h                 ; if high byte has a value then off screen
+1667+ DA66                                              JumpIfAIsNotZero .NextIteration ;
+1667+ DA66 A7          >                        and     a
+1667+ DA67 C2 73 DA    >                        jp	    nz,.NextIteration
+1668+ DA6A 43                                           ld      b,e                 ; bc = y x of pixel from e and c regs
+1669+ DA6B 4D                                           ld      c,l                 ; iyl already has colour
+1670+ DA6C                                              MMUSelectLayer2             ; plot it with debris code as this can chop y > 128
+1670+ DA6C ED 91 57 39 >					 nextreg L2memMMU,		    BankLAYER2
+1671+ DA70 CD 66 E1                                     call    DebrisPixel         ; .
+1672+ DA73 C1 D1        .NextIteration:             pop    de,,bc                   ; ready for next iteration, get back y and x coordinates
+1673+ DA75 FD 25                                    dec    iyh                      ; one partcile done
+1674+ DA77 20 D5                                    jr      nz,.ProcessAParticle    ; until all done
+1675+ DA79 E1 C1        .NextVert:              pop     bc,,hl                      ; recover loop counter and source pointer
+1676+ DA7B 3E 04                                ld      a,4                         ; move to next vertex group
+1677+ DA7D ED 31                                add     hl,a                        ;
+1678+ DA7F 10 BE                                djnz    .ExplosionVertLoop          ;
+1679+ DA81 C9                                   ret
+1680+ DA82              .FinishedExplosion:     ;break
+1681+ DA82 3A 2B C0                             ld      a,(UBnKSlotNumber)          ; get slot number
+1682+ DA85 CD BC A2                             call    ClearSlotA                  ; gauranted to be in main memory as non bankables
+1683+ DA88                                      ClearMemBitN UBnkaiatkecm, ShipExplodingBitNbr
+1683+ DA88 21 38 C0    >                        ld      hl,UBnkaiatkecm
+1683+ DA8B CB AE       >                        res     ShipExplodingBitNbr,(hl)
+1684+ DA8D C9                                   ret
+1685+ DA8E
+1686+ DA8E
+1687+ DA8E FC D8 B4 90  DebrisColourTable:      DB L2ColourYELLOW_1, L2ColourYELLOW_2, L2ColourYELLOW_3, L2ColourYELLOW_4, L2ColourYELLOW_5, L2ColourYELLOW_6, L2ColourYELLOW_7,L2ColourGREY_4
+1687+ DA92 6C 48 24 25
+1688+ DA96                                      ; set flags and signal to remove from slot list
+1689+ DA96
+1690+ DA96              ; Hl = HlL +/- (Random * projected cloud size)
+1691+ DA96              ; In - d = z distance, hl = vert hi lo
+1692+ DA96              ; Out hl = adjusted distance
+1693+ DA96              ; uses registers hl, de
+1694+ DA96 E5           HLEquARandCloud:        push    hl                          ; random number geneator upsets hl register
+1695+ DA97 CD 48 A3                             call    doRandom                    ; a= random * 2
+1696+ DA9A E1                                   pop     hl
+1697+ DA9B 17                                   rla                                 ;
+1698+ DA9C 38 0A                                jr      c,.Negative                 ; if buit 7 went into carry
+1699+ DA9E 5F           .Positive:              ld  e,a
+1700+ DA9F ED 30                                mul
+1701+ DAA1 5A                                   ld  e,d
+1702+ DAA2 16 00                                ld  d,0
+1703+ DAA4                                      ClearCarryFlag
+1703+ DAA4 B7          >                        or a
+1704+ DAA5 ED 5A                                adc     hl,de                       ; hl = hl + a
+1705+ DAA7 C9                                   ret
+1706+ DAA8 5F           .Negative:              ld  e,a
+1707+ DAA9 ED 30                                mul
+1708+ DAAB 5A                                   ld  e,d
+1709+ DAAC 16 00                                ld  d,0
+1710+ DAAE                                      ClearCarryFlag
+1710+ DAAE B7          >                        or a
+1711+ DAAF ED 52                                sbc     hl,de                       ; hl = hl + a
+1712+ DAB1 C9                                   ret
+1713+ DAB2
+1714+ DAB2              GetExperiencePoints:    ; TODO calculate experience points
+1715+ DAB2                                      ; TODO mission updates check
+1716+ DAB2 C9                                   ret
+1717+ DAB3
+1718+ DAB3              ; ......................................................
+1719+ DAB3 3A 26 C3     KillShip:               ld      a,(ShipTypeAddr)            ; we can't destroy stations in a collision
+1720+ DAB6 FE 02                                cp      ShipTypeStation             ; for destructable one we will have a special type of ship
+1721+ DAB8 C8                                   ret     z
+1722+ DAB9 3A 38 C0                             ld      a,(UBnkaiatkecm)            ; remove AI, mark killed, mark exploding
+1723+ DABC F6 30                                or      ShipExploding | ShipKilled  ; .
+1724+ DABE E6 7F                                and     ShipAIDisabled              ; .
+1725+ DAC0 32 38 C0                             ld      (UBnkaiatkecm),a            ; .
+1726+ DAC3                                      SetMemToN   UBnKexplDsp, ShipExplosionDuration ; set debris cloud timer, also usered in main to remove from slots
+1726+ DAC3 3E 4B       >                        ld      a,ShipExplosionDuration
+1726+ DAC5 32 36 C0    >                        ld      (UBnKexplDsp),a
+1727+ DAC8                                      ldWriteZero UBnKEnergy              ; Zero ship energy
+1727+ DAC8 AF          >                        xor      a
+1727+ DAC9 32 3C C0    >                        ld       (UBnKEnergy),a
+1728+ DACC 32 3E C0                             ld      (UBnKCloudRadius),a
+1729+ DACF 3E 12                                ld      a,18
+1730+ DAD1 32 3D C0                             ld      (UBnKCloudCounter),a        ; Zero cloud
+1731+ DAD4                                      ; TODO logic to spawn cargo/plates goes here
+1732+ DAD4 C9                                   ret
+1733+ DAD5
+1734+ DAD5              ; in a = damage
+1735+ DAD5 47           DamageShip:             ld      b,a                         ; b = a = damage comming in
+1736+ DAD6 3A 26 C3                             ld      a,(ShipTypeAddr)            ; we can't destroy stations in a collision
+1737+ DAD9 FE 02                                cp      ShipTypeStation             ; for destructable one we will have a special type of ship
+1738+ DADB C8                                   ret     z
+1739+ DADC 3A 3C C0                             ld      a,(UBnKEnergy)              ; get current energy level
+1740+ DADF                                      ClearCarryFlag
+1740+ DADF B7          >                        or a
+1741+ DAE0 98                                   sbc     a,b                         ; subtract damage
+1742+ DAE1 D2 E8 DA     .Overkilled:            jp      nc,.DoneDamage              ; if no carry then its not gone negative
+1743+ DAE4 CD B3 DA                             call    KillShip                    ; else kill it
+1744+ DAE7 C9                                   ret
+1745+ DAE8 32 3C C0     .DoneDamage:            ld      (UBnKEnergy),a
+1746+ DAEB C9                                   ret
+1747+ DAEC              ; need recovery for energy too
+1748+ DAEC              ; Shall we have a "jolt ship off course routine for when it gets hit by a blast or collision)
+1749+ DAEC
+1750+ DAEC              ;-LL49-----------------------------------------------------------------------------------------------------------------------------
+1751+ DAEC              ;  Entering Here we have the following:
+1752+ DAEC              ;  XX15(1 0) = vertex x-coordinate but sign not populated
+1753+ DAEC              ;  XX15(3 2) = vertex y-coordinate but sign not populated
+1754+ DAEC              ;  XX15(5 4) = vertex z-coordinate but sign not populated
+1755+ DAEC              ;
+1756+ DAEC              ;  XX16(  1 0)sidev_x   (3 2)roofv_x   (5 4)nosev_x
+1757+ DAEC              ;  XX16(  7 6)sidev_y   (9 8)roofv_y (11 10)nosev_y
+1758+ DAEC              ;  XX16(13 12)sidev_z (15 14)roofv_z (17 16)nosev_z
+1759+ DAEC              ;--------------------------------------------------------------------------------------------------------
+1760+ DAEC              AddLaserBeamLine:
+1761+ DAEC              ; this code is a bag of shit and needs re-writing
+1762+ DAEC              GetGunVertexNode:
+1763+ DAEC 3A 15 C3             ld          a,(GunVertexAddr)                   ; Hull byte#6, gun vertex*4 (XX0),Y
+1764+ DAEF 21 D1 C0             ld          hl,UBnkNodeArray                    ; list of lines to read
+1765+ DAF2 ED 31                add         hl,a                                ; HL = address of GunVertexOnNodeArray
+1766+ DAF4 FD 2E 00             ld          iyl,0
+1767+ DAF7              MoveX1PointToXX15:
+1768+ DAF7 4E                   ld          c,(hl)                              ;
+1769+ DAF8 23                   inc         hl
+1770+ DAF9 46                   ld          b,(hl)                              ; bc = x1 of gun vertex
+1771+ DAFA 23                   inc         hl
+1772+ DAFB ED 43 87 C0          ld          (UBnkX1),bc
+1773+ DAFF 0C                   inc         c
+1774+ DB00 C8                   ret         z                                   ; was c 255?
+1775+ DB01 04                   inc         b
+1776+ DB02 C8                   ret         z                                   ; was c 255?
+1777+ DB03              MoveY1PointToXX15:
+1778+ DB03 4E                   ld          c,(hl)                              ;
+1779+ DB04 23                   inc         hl
+1780+ DB05 46                   ld          b,(hl)                              ; bc = y1 of gun vertex
+1781+ DB06 23                   inc         hl
+1782+ DB07 ED 43 89 C0          ld          (UBnkY1),bc
+1783+ DB0B              SetX2PointToXX15:
+1784+ DB0B 01 00 00             ld          bc,0                                ; set X2 to 0
+1785+ DB0E ED 43 8B C0          ld          (UBnkX2),bc
+1786+ DB12 3A 12 C0             ld          a,(UBnKzlo)
+1787+ DB15 4F                   ld          c,a
+1788+ DB16              SetY2PointToXX15:
+1789+ DB16 ED 43 8D C0          ld          (UBnkY2),bc                         ; set Y2to 0
+1790+ DB1A 3A 0E C0             ld          a,(UBnKxsgn)
+1791+ DB1D                      JumpOnBitClear a,7,LL74SkipDec
+1791+ DB1D CB 7F       >                        bit 	7,a
+1791+ DB1F CA 27 DB    >                        jp      z,LL74SkipDec
+1792+ DB22              LL74DecX2:
+1793+ DB22 3E FF                ld          a,$FF
+1794+ DB24 32 8B C0             ld          (UBnkX2Lo),a                        ; rather than dec (hl) just load with 255 as it will always be that at this code point
+1795+ DB27              LL74SkipDec:
+1796+ DB27 CD 6F C9             call        ClipLine                            ; LL145 \ clip test on XX15 XX12 vector, returns carry
+1797+ DB2A 38 71                jr          c,CalculateNewLines                 ; LL170 clip returned carry set so not visibile if carry set skip the rest (laser not firing)
+1798+ DB2C              ; Here we are usign hl to replace VarU as index
+1799+ DB2C 2A D3 9D             ld          hl,(varU16)
+1800+ DB2F 3A 87 C0             ld          a,(UBnKx1Lo)
+1801+ DB32 77                   ld          (hl),a
+1802+ DB33 23                   inc         hl
+1803+ DB34 3A 89 C0             ld          a,(UbnKy1Lo)
+1804+ DB37 77                   ld          (hl),a
+1805+ DB38 23                   inc         hl
+1806+ DB39 3A 8B C0             ld          a,(UBnkX2Lo)
+1807+ DB3C 77                   ld          (hl),a
+1808+ DB3D 23                   inc         hl
+1809+ DB3E 3A 8D C0             ld          a,(UbnKy2Lo)
+1810+ DB41 77                   ld          (hl),a
+1811+ DB42 FD 2C                inc         iyl                                 ; iyl holds as a counter to iterations
+1812+ DB44 23                   inc         hl
+1813+ DB45 FD 2C                inc         iyl                                 ; ready for next byte
+1814+ DB47 22 D3 9D             ld          (varU16),hl
+1815+ DB4A C9                   ret
+1816+ DB4B
+1817+ DB4B                  INCLUDE "Universe/Ships/PrepLines.asm"
 # file opened: ./Universe/Ships/PrepLines.asm
-   1++DB2A              ;--------------------------------------------------------------------------------------------------------
-   2++DB2A                  INCLUDE "./ModelRender/getVertexNodeAtAToX1Y1.asm"
+   1++DB4B              ;--------------------------------------------------------------------------------------------------------
+   2++DB4B                  INCLUDE "./ModelRender/getVertexNodeAtAToX1Y1.asm"
 # file opened: ././ModelRender/getVertexNodeAtAToX1Y1.asm
-   1++DB2A              ;--------------------------------------------------------------------------------------------------------
-   2++DB2A              ; a = byteoffset to node array as its pre computed to x4 bytes
-   3++DB2A 21 D1 C0     getVertexNodeAtAToX1Y1: ld          hl,UBnkNodeArray                    ; hl = edgelist  current pointer
-   4++DB2D ED 31                                add         hl,a                                ; hl = address of Node
-   5++DB2F 7E                                   ld          a,(hl)                              ; get edge list nbr 1 edge
-   6++DB30 11 87 C0                             ld          de,UBnkX1
-   7++DB33 ED A0                                ldi                                             ; x1 lo
-   8++DB35 ED A0                                ldi                                             ; x1 hi
-   9++DB37 ED A0                                ldi                                             ; y1 lo
-  10++DB39 ED A0                                ldi                                             ; y1 hi
-  11++DB3B C9                                   ret
-  12++DB3C
+   1++DB4B              ;--------------------------------------------------------------------------------------------------------
+   2++DB4B              ; a = byteoffset to node array as its pre computed to x4 bytes
+   3++DB4B 21 D1 C0     getVertexNodeAtAToX1Y1: ld          hl,UBnkNodeArray                    ; hl = edgelist  current pointer
+   4++DB4E ED 31                                add         hl,a                                ; hl = address of Node
+   5++DB50 7E                                   ld          a,(hl)                              ; get edge list nbr 1 edge
+   6++DB51 11 87 C0                             ld          de,UBnkX1
+   7++DB54 ED A0                                ldi                                             ; x1 lo
+   8++DB56 ED A0                                ldi                                             ; x1 hi
+   9++DB58 ED A0                                ldi                                             ; y1 lo
+  10++DB5A ED A0                                ldi                                             ; y1 hi
+  11++DB5C C9                                   ret
+  12++DB5D
 # file closed: ././ModelRender/getVertexNodeAtAToX1Y1.asm
-   3++DB3C                  INCLUDE "./ModelRender/getVertexNodeAtAToX2Y2.asm"
+   3++DB5D                  INCLUDE "./ModelRender/getVertexNodeAtAToX2Y2.asm"
 # file opened: ././ModelRender/getVertexNodeAtAToX2Y2.asm
-   1++DB3C              ;--------------------------------------------------------------------------------------------------------
-   2++DB3C              ; a = byteoffset to node array as its pre computed to x4 bytes
-   3++DB3C 21 D1 C0     getVertexNodeAtAToX2Y2: ld          hl,UBnkNodeArray                    ; hl = edgelist  current pointer
-   4++DB3F ED 31                                add         hl,a                                ; hl = address of Node
-   5++DB41 7E                                   ld          a,(hl)                              ; get edge list nbr 1 edge
-   6++DB42 11 8B C0                             ld          de,UBnkX2
-   7++DB45 ED A0                                ldi                                             ; x1 lo
-   8++DB47 ED A0                                ldi                                             ; x1 hi
-   9++DB49 ED A0                                ldi                                             ; y1 lo
-  10++DB4B ED A0                                ldi                                             ; y1 hi
-  11++DB4D C9                                   ret
+   1++DB5D              ;--------------------------------------------------------------------------------------------------------
+   2++DB5D              ; a = byteoffset to node array as its pre computed to x4 bytes
+   3++DB5D 21 D1 C0     getVertexNodeAtAToX2Y2: ld          hl,UBnkNodeArray                    ; hl = edgelist  current pointer
+   4++DB60 ED 31                                add         hl,a                                ; hl = address of Node
+   5++DB62 7E                                   ld          a,(hl)                              ; get edge list nbr 1 edge
+   6++DB63 11 8B C0                             ld          de,UBnkX2
+   7++DB66 ED A0                                ldi                                             ; x1 lo
+   8++DB68 ED A0                                ldi                                             ; x1 hi
+   9++DB6A ED A0                                ldi                                             ; y1 lo
+  10++DB6C ED A0                                ldi                                             ; y1 hi
+  11++DB6E C9                                   ret
 # file closed: ././ModelRender/getVertexNodeAtAToX2Y2.asm
-   4++DB4E                  INCLUDE "./ModelRender/GetFaceAtA.asm"
+   4++DB6F                  INCLUDE "./ModelRender/GetFaceAtA.asm"
 # file opened: ././ModelRender/GetFaceAtA.asm
-   1++DB4E              ;--------------------------------------------------------------------------------------------------------
-   2++DB4E              GetFaceAtA:         MACRO
-   3++DB4E ~                                ld          hl,UbnkFaceVisArray
-   4++DB4E ~                                add         hl,a
-   5++DB4E ~                                ld          a,(hl)                              ; get face visibility
-   6++DB4E                                  ENDM
-   7++DB4E
+   1++DB6F              ;--------------------------------------------------------------------------------------------------------
+   2++DB6F              GetFaceAtA:         MACRO
+   3++DB6F ~                                ld          hl,UbnkFaceVisArray
+   4++DB6F ~                                add         hl,a
+   5++DB6F ~                                ld          a,(hl)                              ; get face visibility
+   6++DB6F                                  ENDM
+   7++DB6F
 # file closed: ././ModelRender/GetFaceAtA.asm
-   5++DB4E              ;--------------------------------------------------------------------------------------------------------
-   6++DB4E              ; LL72 Goes through each edge in to determine if they are on a visible face, if so load start and end to line array as clipped lines
-   7++DB4E               ;   DEFINE NOBACKFACECULL 1
-   8++DB4E 00           PLEDGECTR           DB          0
-   9++DB4F
-  10++DB4F              PrepLines:
-  11++DB4F              ; FOR NOW BRUTE FORCE IF OFF SCREEN
-  12++DB4F
-  13++DB4F              ; TODO add in onced DOEXP is finished
-  14++DB4F              ;        ld          a,(UBnkexplDsp)                     ; INWK+31  \ display/exploding state|missiles
-  15++DB4F              ;        JumpOnBitClear  a,5,EE31                        ; bit5 of mask, if zero no explosion
-  16++DB4F              ;        or          8
-  17++DB4F              ;        ld          (UBnkexplDsp),a                     ; else else set bit3 to erase old line
-  18++DB4F              ;        jp          DOEXP                               ; erase using Do Explosion and use implicit return
-  19++DB4F              ;EE31:                                                   ; no explosion
-  20++DB4F              ;        JumpOnBitClear  a,3,LL74                        ; clear is hop to do New lines
-  21++DB4F              ;        call        ClearLine                           ; LL155    \ else erase lines in XX19 heap at LINEstr down
-  22++DB4F              ;        ld          a, $08                              ; set bit 3 of a and fall into LL74
-  23++DB4F              ;
-  24++DB4F              ;--------------------------------------------------------------------------------------------------------
-  25++DB4F              InitialiseLineRead:
-  26++DB4F                      ;break
-  27++DB4F                      ldWriteZero UbnkLineArrayLen                    ; current line array index = 0
-  27++DB4F AF          >                        xor      a
-  27++DB50 32 03 C3    >                        ld       (UbnkLineArrayLen),a
-  28++DB53                      ldWriteZero UbnkLineArrayBytes                  ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
-  28++DB53 AF          >                        xor      a
-  28++DB54 32 04 C3    >                        ld       (UbnkLineArrayBytes),a
-  29++DB57                      ldWriteZero PLEDGECTR
-  29++DB57 AF          >                        xor      a
-  29++DB58 32 4E DB    >                        ld       (PLEDGECTR),a
-  30++DB5B 3A 19 C3             ld          a,(EdgeCountAddr)
-  31++DB5E DD 67                ld          ixh,a                               ; ixh = XX17 = Total number of edges to traverse
-  32++DB60 FD 2E 00             ld          iyl,0                               ; ixl = current edge index
-  33++DB63 21 11 C2             ld          hl,UbnkLineArray                    ; head of array
-  34++DB66 22 D3 9D             ld          (varU16),hl                         ; store current line array pointer un varU16
-  35++DB69                      ldCopyByte  EdgeCountAddr, XX17                 ; XX17  = total number of edges to traverse edge counter
-  35++DB69 3A 19 C3    >                        ld       a,(EdgeCountAddr)
-  35++DB6C 32 D7 9D    >                        ld       (XX17),a
-  36++DB6F 3A 36 C0             ld          a,(UBnKexplDsp)                     ; get explosion status
-  37++DB72                      JumpOnBitClear a,6,CalculateNewLines            ; LL170 bit6 of display state clear (laser not firing) \ Calculate new lines
-  37++DB72 CB 77       >                        bit 	6,a
-  37++DB74 CA 7C DB    >                        jp      z,CalculateNewLines
-  38++DB77 E6 BF                and         $BF                                 ; else laser is firing, clear bit6.
-  39++DB79 32 36 C0             ld          (UBnKexplDsp),a                     ; INWK+31
-  40++DB7C              ;   TODO commentedout as teh subroutine is a mess   call        AddLaserBeamLine                    ; add laser beam line to draw list
-  41++DB7C              ; NOw we can calculate hull after including laser line
-  42++DB7C              CalculateNewLines:
-  43++DB7C              LL170:                                                  ;(laser not firing) \ Calculate new lines   \ their comment
-  44++DB7C              CheckEdgesForVisibility:
-  45++DB7C 21 19 C4             ld          hl,UBnkHullEdges
-  46++DB7F                      ; TODO change heap to 3 separate arrays and break them down during copy of ship hull data
-  47++DB7F 22 D2 9C             ld          (varV),hl                           ; V \ is pointer to where edges data start
-  48++DB82 3A 14 C3             ld          a,(LineX4Addr)
-  49++DB85 47                   ld          b,a                                 ; nbr of bytes of edge data
-  50++DB86              LL75Loop:                                               ; count Visible edges
-  51++DB86              IsEdgeInVisibilityRange:
-  52++DB86 2A D2 9C             ld          hl,(varV)
-  53++DB89 E5                   push        hl
-  54++DB8A FD E1                pop         iy
-  55++DB8C                      IFDEF NOBACKFACECULL
-  56++DB8C ~                        jp          VisibileEdge; DEBUGTODO
-  57++DB8C                      ENDIF
-  58++DB8C 3A BE 9C             ld          a,(LastNormalVisible)               ; XX4 is visibility range
-  59++DB8F 57                   ld          d,a                                 ; d holds copy of XX4
-  60++DB90              ; Get Edge Byte 0
-  61++DB90 FD 7E 00             ld          a,(IY+0)                            ; edge data byte#0 is visibility distance
-  62++DB93                      JumpIfALTNusng d,LL78EdgeNotVisible             ; XX4   \ visibility LLx78 edge not visible
-  62++DB93 BA          >                        cp      d
-  62++DB94 DA E6 DB    >                        jp		c, LL78EdgeNotVisible
-  63++DB97              EdgeMayBeVisibile:
-  64++DB97              ; Get Edge Byte 1
-  65++DB97              IsFace1Visibile:                                        ; edges have 2 faces to test
-  66++DB97 FD 7E 01             ld          a,(IY+1)                            ; (V),Y \ edge data byte#1 bits 0 to 3 face 1 4 to 7 face 2
-  67++DB9A 4F                   ld          c,a                                 ;  c = a copy of byte 1
-  68++DB9B E6 0F                and         $0F                                 ;
-  69++DB9D                      GetFaceAtA
-  69++DB9D 21 B3 C0    >                    ld          hl,UbnkFaceVisArray
-  69++DBA0 ED 31       >                    add         hl,a
-  69++DBA2 7E          >                    ld          a,(hl)                              ; get face visibility
-  70++DBA3              ;       jp  VisibileEdge; DEBUG BODGE TEST TODO
-  71++DBA3                      JumpIfAIsNotZero VisibileEdge                     ; LL70 visible edge
-  71++DBA3 A7          >                        and     a
-  71++DBA4 C2 B8 DB    >                        jp	    nz,VisibileEdge
-  72++DBA7              IsFace2Visibile:
-  73++DBA7 79                   ld          a,c                                 ; restore byte 1 from c register
-  74++DBA8 ED 23                swapnib                                         ;
-  75++DBAA E6 0F                and         $0F                                 ; swap high byte into low byte
-  76++DBAC E5                   push        hl
-  77++DBAD                      GetFaceAtA
-  77++DBAD 21 B3 C0    >                    ld          hl,UbnkFaceVisArray
-  77++DBB0 ED 31       >                    add         hl,a
-  77++DBB2 7E          >                    ld          a,(hl)                              ; get face visibility
-  78++DBB3 E1                   pop         hl
-  79++DBB4                      JumpIfAIsZero LL78EdgeNotVisible                ; edge not visible
-  79++DBB4 A7          >                        and     a   ; cp 0 - changed to and a for optimisation but affects other flags
-  79++DBB5 CA E6 DB    >                        jp	    z, LL78EdgeNotVisible
-  80++DBB8              VisibileEdge:                                           ; Now we need to node id from bytes 2 - start and 3 - end
-  81++DBB8              ;LL79--Visible edge--------------------------------------
-  82++DBB8              ; Get Edge Byte 2
-  83++DBB8 FD 7E 02             ld          a,(IY+2)                            ; get Node id
-  84++DBBB CD 2A DB             call        getVertexNodeAtAToX1Y1              ; get the points X1Y1 from node
-  85++DBBE FD 7E 03             ld          a,(IY+3)
-  86++DBC1 CD 3C DB             call        getVertexNodeAtAToX2Y2              ; get the points X2Y2 from node
-  87++DBC4 CD 6F C9             call        ClipLine
-  88++DBC7 38 1D                jr          c,LL78EdgeNotVisible                ; LL78 edge not visible
-  89++DBC9              LL80:                                                   ; ll80 \ Shove visible edge onto XX19 ship lines heap counter U
-  90++DBC9 ED 5B D3 9D          ld          de,(varU16)                         ; clipped edges heap address
-  91++DBCD 21 87 C0             ld          hl,UBnkNewX1
-  92++DBD0                      FourLDIInstrunctions
-  92++DBD0 ED A0       >                        ldi
-  92++DBD2 ED A0       >                        ldi
-  92++DBD4 ED A0       >                        ldi
-  92++DBD6 ED A0       >                        ldi
-  93++DBD8 ED 53 D3 9D          ld          (varU16),de                         ; update U16 with current address
-  94++DBDC 21 03 C3             ld          hl,UbnkLineArrayLen                 ; we have loaded one line
-  95++DBDF 34                   inc         (hl)
-  96++DBE0 7E                   ld          a,(hl)
-  97++DBE1                      JumpIfAGTENusng LineArraySize,CompletedLineGeneration   ; have we hit max lines for a model hop over jmp to Exit edge data loop
-  97++DBE1 FE 32       >                        cp     LineArraySize
-  97++DBE3 D2 FC DB    >                        jp		nc,CompletedLineGeneration
-  98++DBE6              ; If we hit here we skip the write of line arryay u16
-  99++DBE6              LL78EdgeNotVisible:                                     ; also arrive here if Edge not visible, loop next data edge.
- 100++DBE6              LL78:
- 101++DBE6 2A D2 9C             ld          hl,(varV)                           ; varV is current edge address
- 102++DBE9 3E 04                ld          a,4
- 103++DBEB ED 31                add         hl,a
- 104++DBED 22 D2 9C             ld          (varV),hl
- 105++DBF0 21 4E DB             ld          hl,PLEDGECTR                        ;
- 106++DBF3 34                   inc         (hl)                                ;
- 107++DBF4 7E                   ld          a,(hl)                              ; current edge index ++
- 108++DBF5                      JumpIfANEMemusng XX17,LL75Loop                  ; compare with total number of edges
- 108++DBF5 21 D7 9D    >                        ld    hl,XX17
- 108++DBF8 BE          >                        cp    (hl)
- 108++DBF9 C2 86 DB    >                        jp      nz,LL75Loop
- 109++DBFC              CompletedLineGeneration:
- 110++DBFC              LL81:
- 111++DBFC              LL81SHPPT:                                              ; SHPPT ship is a point arrives here with Acc=2, bottom entry in heap
- 112++DBFC 3A 03 C3             ld          a,(UbnkLineArrayLen)                ; UbnkLineArrayLen = nbr of lines loaded
- 113++DBFF CB 27                sla         a
- 114++DC01 CB 27                sla         a                                   ; multiple by 4 to equal number of bytes
- 115++DC03 32 04 C3             ld          (UbnkLineArrayBytes),a              ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
- 116++DC06              ExitEdgeDataLoop:
- 117++DC06 C9                   ret
- 118++DC07
+   5++DB6F              ;--------------------------------------------------------------------------------------------------------
+   6++DB6F              ; LL72 Goes through each edge in to determine if they are on a visible face, if so load start and end to line array as clipped lines
+   7++DB6F               ;   DEFINE NOBACKFACECULL 1
+   8++DB6F 00           PLEDGECTR           DB          0
+   9++DB70
+  10++DB70              PrepLines:
+  11++DB70              ; FOR NOW BRUTE FORCE IF OFF SCREEN
+  12++DB70
+  13++DB70              ; TODO add in onced DOEXP is finished
+  14++DB70              ;        ld          a,(UBnkexplDsp)                     ; INWK+31  \ display/exploding state|missiles
+  15++DB70              ;        JumpOnBitClear  a,5,EE31                        ; bit5 of mask, if zero no explosion
+  16++DB70              ;        or          8
+  17++DB70              ;        ld          (UBnkexplDsp),a                     ; else else set bit3 to erase old line
+  18++DB70              ;        jp          DOEXP                               ; erase using Do Explosion and use implicit return
+  19++DB70              ;EE31:                                                   ; no explosion
+  20++DB70              ;        JumpOnBitClear  a,3,LL74                        ; clear is hop to do New lines
+  21++DB70              ;        call        ClearLine                           ; LL155    \ else erase lines in XX19 heap at LINEstr down
+  22++DB70              ;        ld          a, $08                              ; set bit 3 of a and fall into LL74
+  23++DB70              ;
+  24++DB70              ;--------------------------------------------------------------------------------------------------------
+  25++DB70              InitialiseLineRead:
+  26++DB70                      ;break
+  27++DB70                      ldWriteZero UbnkLineArrayLen                    ; current line array index = 0
+  27++DB70 AF          >                        xor      a
+  27++DB71 32 03 C3    >                        ld       (UbnkLineArrayLen),a
+  28++DB74                      ldWriteZero UbnkLineArrayBytes                  ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
+  28++DB74 AF          >                        xor      a
+  28++DB75 32 04 C3    >                        ld       (UbnkLineArrayBytes),a
+  29++DB78                      ldWriteZero PLEDGECTR
+  29++DB78 AF          >                        xor      a
+  29++DB79 32 6F DB    >                        ld       (PLEDGECTR),a
+  30++DB7C 3A 19 C3             ld          a,(EdgeCountAddr)
+  31++DB7F DD 67                ld          ixh,a                               ; ixh = XX17 = Total number of edges to traverse
+  32++DB81 FD 2E 00             ld          iyl,0                               ; ixl = current edge index
+  33++DB84 21 11 C2             ld          hl,UbnkLineArray                    ; head of array
+  34++DB87 22 D3 9D             ld          (varU16),hl                         ; store current line array pointer un varU16
+  35++DB8A                      ldCopyByte  EdgeCountAddr, XX17                 ; XX17  = total number of edges to traverse edge counter
+  35++DB8A 3A 19 C3    >                        ld       a,(EdgeCountAddr)
+  35++DB8D 32 D7 9D    >                        ld       (XX17),a
+  36++DB90 3A 36 C0             ld          a,(UBnKexplDsp)                     ; get explosion status
+  37++DB93                      JumpOnBitClear a,6,CalculateNewLines            ; LL170 bit6 of display state clear (laser not firing) \ Calculate new lines
+  37++DB93 CB 77       >                        bit 	6,a
+  37++DB95 CA 9D DB    >                        jp      z,CalculateNewLines
+  38++DB98 E6 BF                and         $BF                                 ; else laser is firing, clear bit6.
+  39++DB9A 32 36 C0             ld          (UBnKexplDsp),a                     ; INWK+31
+  40++DB9D              ;   TODO commentedout as teh subroutine is a mess   call        AddLaserBeamLine                    ; add laser beam line to draw list
+  41++DB9D              ; NOw we can calculate hull after including laser line
+  42++DB9D              CalculateNewLines:
+  43++DB9D              LL170:                                                  ;(laser not firing) \ Calculate new lines   \ their comment
+  44++DB9D              CheckEdgesForVisibility:
+  45++DB9D 21 19 C4             ld          hl,UBnkHullEdges
+  46++DBA0                      ; TODO change heap to 3 separate arrays and break them down during copy of ship hull data
+  47++DBA0 22 D2 9C             ld          (varV),hl                           ; V \ is pointer to where edges data start
+  48++DBA3 3A 14 C3             ld          a,(LineX4Addr)
+  49++DBA6 47                   ld          b,a                                 ; nbr of bytes of edge data
+  50++DBA7              LL75Loop:                                               ; count Visible edges
+  51++DBA7              IsEdgeInVisibilityRange:
+  52++DBA7 2A D2 9C             ld          hl,(varV)
+  53++DBAA E5                   push        hl
+  54++DBAB FD E1                pop         iy
+  55++DBAD                      IFDEF NOBACKFACECULL
+  56++DBAD ~                        jp          VisibileEdge; DEBUGTODO
+  57++DBAD                      ENDIF
+  58++DBAD 3A BE 9C             ld          a,(LastNormalVisible)               ; XX4 is visibility range
+  59++DBB0 57                   ld          d,a                                 ; d holds copy of XX4
+  60++DBB1              ; Get Edge Byte 0
+  61++DBB1 FD 7E 00             ld          a,(IY+0)                            ; edge data byte#0 is visibility distance
+  62++DBB4                      JumpIfALTNusng d,LL78EdgeNotVisible             ; XX4   \ visibility LLx78 edge not visible
+  62++DBB4 BA          >                        cp      d
+  62++DBB5 DA 07 DC    >                        jp		c, LL78EdgeNotVisible
+  63++DBB8              EdgeMayBeVisibile:
+  64++DBB8              ; Get Edge Byte 1
+  65++DBB8              IsFace1Visibile:                                        ; edges have 2 faces to test
+  66++DBB8 FD 7E 01             ld          a,(IY+1)                            ; (V),Y \ edge data byte#1 bits 0 to 3 face 1 4 to 7 face 2
+  67++DBBB 4F                   ld          c,a                                 ;  c = a copy of byte 1
+  68++DBBC E6 0F                and         $0F                                 ;
+  69++DBBE                      GetFaceAtA
+  69++DBBE 21 B3 C0    >                    ld          hl,UbnkFaceVisArray
+  69++DBC1 ED 31       >                    add         hl,a
+  69++DBC3 7E          >                    ld          a,(hl)                              ; get face visibility
+  70++DBC4              ;       jp  VisibileEdge; DEBUG BODGE TEST TODO
+  71++DBC4                      JumpIfAIsNotZero VisibileEdge                     ; LL70 visible edge
+  71++DBC4 A7          >                        and     a
+  71++DBC5 C2 D9 DB    >                        jp	    nz,VisibileEdge
+  72++DBC8              IsFace2Visibile:
+  73++DBC8 79                   ld          a,c                                 ; restore byte 1 from c register
+  74++DBC9 ED 23                swapnib                                         ;
+  75++DBCB E6 0F                and         $0F                                 ; swap high byte into low byte
+  76++DBCD E5                   push        hl
+  77++DBCE                      GetFaceAtA
+  77++DBCE 21 B3 C0    >                    ld          hl,UbnkFaceVisArray
+  77++DBD1 ED 31       >                    add         hl,a
+  77++DBD3 7E          >                    ld          a,(hl)                              ; get face visibility
+  78++DBD4 E1                   pop         hl
+  79++DBD5                      JumpIfAIsZero LL78EdgeNotVisible                ; edge not visible
+  79++DBD5 A7          >                        and     a   ; cp 0 - changed to and a for optimisation but affects other flags
+  79++DBD6 CA 07 DC    >                        jp	    z, LL78EdgeNotVisible
+  80++DBD9              VisibileEdge:                                           ; Now we need to node id from bytes 2 - start and 3 - end
+  81++DBD9              ;LL79--Visible edge--------------------------------------
+  82++DBD9              ; Get Edge Byte 2
+  83++DBD9 FD 7E 02             ld          a,(IY+2)                            ; get Node id
+  84++DBDC CD 4B DB             call        getVertexNodeAtAToX1Y1              ; get the points X1Y1 from node
+  85++DBDF FD 7E 03             ld          a,(IY+3)
+  86++DBE2 CD 5D DB             call        getVertexNodeAtAToX2Y2              ; get the points X2Y2 from node
+  87++DBE5 CD 6F C9             call        ClipLine
+  88++DBE8 38 1D                jr          c,LL78EdgeNotVisible                ; LL78 edge not visible
+  89++DBEA              LL80:                                                   ; ll80 \ Shove visible edge onto XX19 ship lines heap counter U
+  90++DBEA ED 5B D3 9D          ld          de,(varU16)                         ; clipped edges heap address
+  91++DBEE 21 87 C0             ld          hl,UBnkNewX1
+  92++DBF1                      FourLDIInstrunctions
+  92++DBF1 ED A0       >                        ldi
+  92++DBF3 ED A0       >                        ldi
+  92++DBF5 ED A0       >                        ldi
+  92++DBF7 ED A0       >                        ldi
+  93++DBF9 ED 53 D3 9D          ld          (varU16),de                         ; update U16 with current address
+  94++DBFD 21 03 C3             ld          hl,UbnkLineArrayLen                 ; we have loaded one line
+  95++DC00 34                   inc         (hl)
+  96++DC01 7E                   ld          a,(hl)
+  97++DC02                      JumpIfAGTENusng LineArraySize,CompletedLineGeneration   ; have we hit max lines for a model hop over jmp to Exit edge data loop
+  97++DC02 FE 32       >                        cp     LineArraySize
+  97++DC04 D2 1D DC    >                        jp		nc,CompletedLineGeneration
+  98++DC07              ; If we hit here we skip the write of line arryay u16
+  99++DC07              LL78EdgeNotVisible:                                     ; also arrive here if Edge not visible, loop next data edge.
+ 100++DC07              LL78:
+ 101++DC07 2A D2 9C             ld          hl,(varV)                           ; varV is current edge address
+ 102++DC0A 3E 04                ld          a,4
+ 103++DC0C ED 31                add         hl,a
+ 104++DC0E 22 D2 9C             ld          (varV),hl
+ 105++DC11 21 6F DB             ld          hl,PLEDGECTR                        ;
+ 106++DC14 34                   inc         (hl)                                ;
+ 107++DC15 7E                   ld          a,(hl)                              ; current edge index ++
+ 108++DC16                      JumpIfANEMemusng XX17,LL75Loop                  ; compare with total number of edges
+ 108++DC16 21 D7 9D    >                        ld    hl,XX17
+ 108++DC19 BE          >                        cp    (hl)
+ 108++DC1A C2 A7 DB    >                        jp      nz,LL75Loop
+ 109++DC1D              CompletedLineGeneration:
+ 110++DC1D              LL81:
+ 111++DC1D              LL81SHPPT:                                              ; SHPPT ship is a point arrives here with Acc=2, bottom entry in heap
+ 112++DC1D 3A 03 C3             ld          a,(UbnkLineArrayLen)                ; UbnkLineArrayLen = nbr of lines loaded
+ 113++DC20 CB 27                sla         a
+ 114++DC22 CB 27                sla         a                                   ; multiple by 4 to equal number of bytes
+ 115++DC24 32 04 C3             ld          (UbnkLineArrayBytes),a              ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
+ 116++DC27              ExitEdgeDataLoop:
+ 117++DC27 C9                   ret
+ 118++DC28
 # file closed: ./Universe/Ships/PrepLines.asm
-1803+ DC07
-1804+ DC07              UnivBankSize  EQU $ - StartOfUniv
-1805+ DC07
+1818+ DC28
+1819+ DC28              UnivBankSize  EQU $ - StartOfUniv
+1820+ DC28
 # file closed: ./Universe/Ships/univ_ship_data.asm
-1476  DC07                  DISPLAY "Universe Data - Bytes free ",/D, $2000 - (UnivBankSize)
-1477  DC07                  SLOT    UniverseBankAddr
-1478  DC07                  PAGE    BankUNIVDATA1
-1479  DC07              	ORG	UniverseBankAddr,BankUNIVDATA1
+1476  DC28                  DISPLAY "Universe Data - Bytes free ",/D, $2000 - (UnivBankSize)
+1477  DC28                  SLOT    UniverseBankAddr
+1478  DC28                  PAGE    BankUNIVDATA1
+1479  DC28              	ORG	UniverseBankAddr,BankUNIVDATA1
 1480  C000 FF           UNIVDATABlock1      DB $FF
 1481  C001 00 00 00...                      DS $1FFF                 ; just allocate 8000 bytes for now
 1482  E000

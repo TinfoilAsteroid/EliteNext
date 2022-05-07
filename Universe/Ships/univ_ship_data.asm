@@ -1587,9 +1587,10 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
                         call    DrawLines
                         ret 
 ;............................................................  
-.ExplodingCloud:        ClearMemBitN  UBnkaiatkecm, ShipKilledBitNbr ; acknowledge ship exploding
+.ExplodingCloud:        call    ProcessNodes
+                        ClearMemBitN  UBnkaiatkecm, ShipKilledBitNbr ; acknowledge ship exploding
 .UpdateCloudCounter:    ld      a,(UBnKCloudCounter)        ; counter += 4 until > 255
-                        inc a ;add     4                           ; we do this early as we now have logic for
+                        add     4                           ; we do this early as we now have logic for
                         jp      c,.FinishedExplosion        ; display or not later
                         ld      (UBnKCloudCounter),a        ; .
 .SkipHiddenShip:        ReturnOnMemBitClear  UBnkaiatkecm , ShipIsVisibleBitNbr
@@ -1597,86 +1598,100 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
 .CalculateZ:            ld      hl,(UBnKzlo)                ; al = hl = z
                         ld      a,h                         ; .
                         JumpIfALTNusng 32,.CalcFromZ        ; if its >= 32 then set a to FE and we are done
-                        ld      a,$FE                       ; .
+                        ld      h,$FE                       ; .
                         jp      .DoneZDist                  ; .
 .CalcFromZ:             ShiftHLLeft1                        ; else
                         ShiftHLLeft1                        ; hl = hl * 2
                         SetCarryFlag                        ; h = h * 3 rolling in lower bit
                         rl  h                               ; 
-.DoneZDist:             ld      b,0
-                        ld      c,h                         ; d = a= h = VarQ which is z distance
-                        ld      a,(UBnKCloudCounter)        ; and a = cloud counter
-                        ld      d,a
-                        ld      e,0
-                        ld      a,d
-                        JumpIfALTNusng  28,.SetCloudRadius
-.MaxCloudRadius:        ld      d,$FE
-                        jp      .SizedUpCloud
-.SetCloudRadius:        ShiftDELeft1                        ; bc = 8 * bc
+.DoneZDist:             ld      b,0                         ; bc = cloud z distance calculateed
+                        ld      c,h                         ; .
+.CalcCloudRadius:       ld      a,(UBnKCloudCounter)        ; de = cloud counter * 256
+                        ld      d,a                         ;
+                        ld      e,0                         ;
+                        call    DEequDEDivBC                ; de = cloud counter * 256 / z distance
+                        ld      a,d                         ; if radius >= 28
+                        JumpIfALTNusng  28,.SetCloudRadius  ; then set raidus in d to $FE
+.MaxCloudRadius:        ld      d,$FE                       ;
+                        jp      .SizedUpCloud               ;
+.SetCloudRadius:        ShiftDELeft1                        ; de = 8 * de
                         ShiftDELeft1                        ; .
                         ShiftDELeft1                        ; .
-.SizedUpCloud:          ld      a,d
-                        ld      (UBnKCloudRadius),a
-                        ld      ixh,a                       ; ixh = calculated cloud radius
-.ProcessCloudLoop:      ld      a,(UBnKCloudCounter)
-                        JumpOnABitClear 7,  .DoneCloudCounter
-                        neg                                 ; if its negative then make it positive (note original did just invert)
-.DoneCloudCounter:      sra a                               ; U = (a /8) bit 0 set so minimum 1
-                        sra a                               ;
-                        sra a                               ;
-                        or  1                               ;
-                        ld      (varU),a                    ;
-.ExplosionVerts:        ld      a,(VertexCountAddr)         ; now for each vertex
+.SizedUpCloud:          ld      a,d                         ; cloudradius = a = d or (cloudcounter * 8 / 256)
+                        ld      (UBnKCloudRadius),a         ; .
+                        ld      ixh,a                       ; ixh = a = calculated cloud radius
+.CalcSubParticleColour: ld      a,(UBnKCloudCounter)        ; colur fades away
+                        swapnib                             ; divive by 16
+                        and     $0F                         ; mask off upper bytes
+                        sra     a                           ; divide by 32
+                        ld      hl,DebrisColourTable
+                        add     hl,a
+                        ld      a,(hl)
+                        ld      iyl,a                       ; iyl = pixel colours
+.CalcSubParticleCount:  ld      a,(UBnKCloudCounter)        ; cloud counter = abs (cloud counter) in effect if > 127 then shrinks it
+                        ABSa2c                              ; a = abs a
+.ParticlePositive:      sra a                               ; iyh = (a /8) 
+                        sra a                               ; .
+                        sra a                               ; .
+                        or  1                               ; bit 0 set so minimum 1
+.DoneSubParticleCount:  ld      ixl,a                       ; ixl = nbr particles per vertex
+.ForEachVertex:         ld      a,(VertexCountAddr)         ; load vertex count into b
                         ld      b,a                         ; .
-                        ld      hl,UBnkNodeArray            ; c = number of vertices
-.ExplosionVertLoop:         push    bc,,hl
+                        ld      hl,UBnkNodeArray            ; hl = list of vertices
+.ExplosionVertLoop:     push    bc,,hl                      ; save vertex counter in b and pointer to verticles in hl
                             ld      ixl,b                   ; save counter
-                            ld      c,(hl)                  ; get vertex into hl and de
-                            inc     hl
-                            ld      b,(hl)
-                            inc     hl
-                            ld      e,(hl)
-                            inc     hl
+                            ld      c,(hl)                  ; get vertex into bc and de
+                            inc     hl                      ; .
+                            ld      b,(hl)                  ; .
+                            inc     hl                      ; .
+                            ld      e,(hl)                  ; .
+                            inc     hl                      ; .
                             ld      d,(hl)                  ; now hl is done with and we can use it 
-.LoopSubParticles:          ld      a,(varU)                    ; nbr of particles per vertex
-                            ld      iyh,a                       ; save it
-.ProcessAParticle:              push    hl,,de,,bc                  ; save loop counter, x y we dont need hl now so optimise TODO
-                                ex      de,hl                       ; hl = de (Y)
-                                ld      d,ixh                       ; d = z distance
-                                call    HLEquARandCloud
-                                ld      a,h
-                                JumpIfAIsNotZero   .NextIteration
-                                ex      de,hl                   ; de = result for y
-                                pop     hl                      ; get x back from bc on stack
-                                push    hl                      ; put bc (which is now in hl) back on the stack
-                                push    de                      ; save de
-                                ld      d,ixh                   ; d = z distance
-                                call    HLEquARandCloud             ; now calc x into hl
-                                ld      a,h
-                                pop     de                      ; get de back
-                                JumpIfAIsNotZero   .NextIteration ; doing pop here clears stack up
-                                ld      b,e
-                                ld      c,l
-                                MMUSelectLayer2
-                                call    DebrisPixel
-.NextIteration:             pop    hl,,de,,bc                  ; ready for next iteration
-                            dec     iyh
-                            jr      nz,.ProcessAParticle        ;
-.NextVert:              pop     bc,,hl                          ; recover loop counter and source pointer
-                        ld      a,4                             ; move to next vertex group
-                        add     hl,a                            ;
-                        djnz    .ExplosionVertLoop              ;         
+.LoopSubParticles:          ld      a,ixl                   ; iyh = loop iterator for nbr of particles per vertex
+                            ld      iyh,a                   ; 
+                            ;break
+.ProcessAParticle:          push    de,,bc                  ; save y then x coordinates
+                                ex      de,hl               ; hl = de (Y)
+                                ld      d,ixh               ; d = cloud radius
+                                call    HLEquARandCloud     ; vertex = vertex +/- (random * projected cloud side /256)
+                                ld      a,h                 ; if off screen skip
+                                JumpIfAIsNotZero  .NextIteration
+                                ex      de,hl               ; de = result for y which was put into hl
+                                pop     hl                  ; get x back from bc on stack
+                                push    hl                  ; put bc (which is now in hl) back on the stack
+                                push    de                  ; save de
+                                ld      d,ixh               ; d = cloud radius
+                                call    HLEquARandCloud     ; vertex = vertex +/- (random * projected cloud side /256)
+                                pop     de                  ; get de back doing pop here clears stack up
+                                ld      a,h                 ; if high byte has a value then off screen
+                                JumpIfAIsNotZero .NextIteration ; 
+                                ld      b,e                 ; bc = y x of pixel from e and c regs
+                                ld      c,l                 ; iyl already has colour
+                                MMUSelectLayer2             ; plot it with debris code as this can chop y > 128
+                                call    DebrisPixel         ; .
+.NextIteration:             pop    de,,bc                   ; ready for next iteration, get back y and x coordinates
+                            dec    iyh                      ; one partcile done
+                            jr      nz,.ProcessAParticle    ; until all done
+.NextVert:              pop     bc,,hl                      ; recover loop counter and source pointer
+                        ld      a,4                         ; move to next vertex group
+                        add     hl,a                        ;
+                        djnz    .ExplosionVertLoop          ;         
                         ret
-.FinishedExplosion:     ld      a,(UbnKShipUnivBankNbr)         ; get slot number
-                        call    ClearSlotA                      ; gauranted to be in main memory as non bankables
+.FinishedExplosion:     ;break
+                        ld      a,(UBnKSlotNumber)          ; get slot number
+                        call    ClearSlotA                  ; gauranted to be in main memory as non bankables
+                        ClearMemBitN UBnkaiatkecm, ShipExplodingBitNbr
                         ret
+
+
+DebrisColourTable:      DB L2ColourYELLOW_1, L2ColourYELLOW_2, L2ColourYELLOW_3, L2ColourYELLOW_4, L2ColourYELLOW_5, L2ColourYELLOW_6, L2ColourYELLOW_7,L2ColourGREY_4
                         ; set flags and signal to remove from slot list        
 
 ; Hl = HlL +/- (Random * projected cloud size)
 ; In - d = z distance, hl = vert hi lo
 ; Out hl = adjusted distance
 ; uses registers hl, de
-HLEquARandCloud:        push    hl
+HLEquARandCloud:        push    hl                          ; random number geneator upsets hl register
                         call    doRandom                    ; a= random * 2
                         pop     hl
                         rla                                 ;

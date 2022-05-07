@@ -3,7 +3,9 @@ doRND2:
 	and		a								; fast clear carry  leave bit0 of RAND+2 at 0. 
 doRandom:									;.DORND	\ -> &3F86 \ do random, new A, X.
 ; "doRandom, Random Seed update, new value in A & C)"
-doRND:                  ld		a,(RandomSeed)					; Get Seed 0
+; uses a c h l registers
+doRND:                  ;exx                                     ; protect bc,de,hl
+                        ld		a,(RandomSeed)					; Get Seed 0
                         rl		a								; Rotate L including carry
                         ld		c,a								; c =  double lo
 .AddSeed2:              ld		hl,RandomSeed2
@@ -22,6 +24,7 @@ doRND:                  ld		a,(RandomSeed)					; Get Seed 0
                         ld		a,c
                         ld		(RandomSeed3),a
                         ex		af,af'
+                        ;exx                                     ; get bc,de,hl back
                         ret
 
 saveRandomSeeds:        ld      hl,RandomSeed

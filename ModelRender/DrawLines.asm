@@ -16,29 +16,9 @@ DrawXX19ClippedLines:   ld      c,(hl)                          ; (XX19),Y c = v
                         inc     hl
                         ld      b,(hl)                          ; bc = point1 Y,X
                         inc     hl
-;;DEBUGTEST        push bc
-;;DEBUGTEST        push hl
-;;DEBUGTEST        push de
-;;DEBUGTEST        ld  a,$3F
-;;DEBUGTEST        MMUSelectLayer2
-;;DEBUGTEST        call    l2_plot_pixel
-;;DEBUGTEST        pop de
-;;DEBUGTEST        pop hl
-;;DEBUGTEST        pop bc
                         ld      e,(hl)                          ; c = varX1
                         inc     hl
                         ld      d,(hl)                          ; de = point2 Y,X
-;;DEBUGTEST       push bc
-;;DEBUGTEST       push hl
-;;DEBUGTEST       push de
-;;DEBUGTEST       push de
-;;DEBUGTEST       pop  bc
-;;DEBUGTEST       ld  a,$3F
-;;DEBUGTEST       MMUSelectLayer2
-;;DEBUGTEST       call    l2_plot_pixel
-;;DEBUGTEST       pop de
-;;DEBUGTEST       pop hl
-;;DEBUGTEST       pop bc
                         inc     hl
                         push	hl
                         push    iy

@@ -1,4 +1,11 @@
 
+ABSa2c:                 MACRO
+                        bit     7,a
+                        jp      z,.DoneABSa
+                        neg
+.DoneABSa:              
+                        ENDM                        
+
 DEEquSquareA:           MACRO
                         ld  d,a
                         ld  e,a

@@ -44,10 +44,11 @@ ShipPixel:              push    af
                         jr      l2_plot_pixel_no_check
                         ;***Implicit ret due to jr
 
+; in bc = yx iyl = colour
 DebrisPixel:            ld      a,b
                         cp      127
                         ret     nc
-                        ld      a, L2DebrisColour
+                        ld      a, iyl
                         jr      l2_plot_pixel_no_check
                         ;***Implicit ret due to jr
 
