@@ -30,10 +30,12 @@ UBnKMissileBlastDamage:     DB  0                       ; copied in when setting
 UBnKMissileDetonateRange:   DB  0                       ; copied in when setting up a missile, allows for proximity missiles
 UBnKMissileDetonateDamage:  DB  0                       ; copied in when setting up a missile
 ; -- Metadata for ship to help with bank managment
-UBnKShipType                DB  0                       ; Ship id, use blue print for type class
-UbnKShipBankNbr             DB  0                       ; Present ship universe bank number
+UBnKStartOfRuntimeData:
+UBnKSlotNumber              DB  0
+UbnKShipUnivBankNbr         DB  0                       ; Present ship universe bank number
 UBnkShipModelBank           DB  0                       ; Bank nbr ship was from
-UBnkShipModelNbr            DB  0                       ; Ship Id from ships table
+UBnKShipModelNbr            DB  0                       ; Ship Id with in the bank
+UBnKShipModeID              DB  0                       ; Absolute ship id
 ; -- Ship AI data
 UBnKMissleHitToProcess      DB  0                       ; This is used for enquing missle blasts as we can only do one missile at a time, could make it multi but neeed to smooth CPU usage
 UBnKMissileTarget           DB  0                       ; This is the bank number for the target from 0 to n if the missile is not hostile to us
@@ -49,8 +51,8 @@ UBnkCam0yLo                 DB  0                       ; INWK +33 ????
 UBnkCam0yHi                 DB  0                       ; INWK +34?????
 UBnKEnergy                  DB  0                       ; INWK +35
 UBnKCloudCounter            DB  0                       ; cloud pixels
-UBnKCloudSize               DB  0                       ; cloud pixels
-UBnKRuntimeSize             EQU $-UBnKShipType
+UBnKCloudRadius             DB  0                       ; cloud pixels
+UBnKRuntimeSize             EQU $-UBnKStartOfRuntimeData
 ; Flags work as follows:
 ; UBnKSpawnObject - signals on death to spawn cargo items
 ; 0 -                   Spawn Cargo 1

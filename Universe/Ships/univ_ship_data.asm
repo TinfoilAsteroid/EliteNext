@@ -232,7 +232,8 @@ ShipMissileBlast:       ld      a,(CurrentMissileBlastDamage)
                         ret
 ; --------------------------------------------------------------                        
 ; This sets the ship as a shower of explosiondwd
-UnivExplodeShip:        ld      a,(UBnkaiatkecm)
+UnivExplodeShip:        break   
+                        ld      a,(UBnkaiatkecm)
                         or      ShipExploding | ShipKilled      ; Set Exlpoding flag and mark as just been killed
                         and     Bit7Clear                       ; Remove AI
                         ld      (UBnkaiatkecm),a
@@ -304,7 +305,7 @@ UnivSetSpawnPosition:   call    InitialiseOrientation
 ; --------------------------------------------------------------                        
 ; This sets the cargo type or carryflag set for not cargo
 ; Later this will be done via a loadable lookup table
-ShipCargoType:          ld      a,(UBnKShipType)
+ShipCargoType:          ld      a,(ShipTypeAddr)
                         JumpIfAEqNusng ShipID_CargoType5, .CargoCanister
 .IsItThargon:           JumpIfAEqNusng ShipID_Thargon,    .Thargon
 .IsItAlloy:             JumpIfAEqNusng ShipID_Plate,      .Plate
@@ -349,21 +350,23 @@ ResetStationLaunch:     ld  a,%10000001                         ; Has AI and 1 M
 
 ; Initialiase data, iyh must equal slot number
 ;                   iyl must be ship type
-UnivInitRuntime:        ld      (UbnKShipBankNbr),a
+;                   a  = current bank number
+UnivInitRuntime:        ld      (UbnKShipUnivBankNbr),a     ; actual bank nmber related to the slot
                         ld      bc,UBnKRuntimeSize
-                        ld      hl,UBnKShipType
+                        ld      hl,UBnKStartOfRuntimeData
                         ZeroA
 .InitLoop:              ld      (hl),a
                         inc     hl
                         djnz    .InitLoop            
+.SetEnergy:             ldCopyByte EnergyAddr, UBnKEnergy
 .SetBankData:           ld      a,iyh
-                        ld      (UbnKShipBankNbr),a
+                        ld      (UBnKSlotNumber),a
                         ld      a,iyl
-                        ld      (UBnKShipType),a
+                        ld      (UBnKShipModeID),a
                         call    GetShipBankId                ; this will mostly be debugging info
                         ld      (UBnkShipModelBank),a        ; this will mostly be debugging info
                         ld      a,b                          ; this will mostly be debugging info
-                        ld      (UBnkShipModelNbr),a         ; this will mostly be debugging info
+                        ld      (UBnKShipModelNbr),a         ; this will mostly be debugging info
                         ret
 
 
@@ -1514,7 +1517,7 @@ ProcessNodes:           ZeroA
                         call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
                         call    InverseXX16                      ;#11; Invert rotation matrix
                         ld      hl,UBnkHullVerticies
-                        ld      a,(VertexCountAddr)              ; get Hull byte#8 = number of vertices *6                                   ;;;
+                        ld      a,(VertexCtX6Addr)               ; get Hull byte#9 = number of vertices *6                                   ;;;
 GetActualVertexCount:   ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
                         ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
                         ld      d,6
@@ -1552,15 +1555,14 @@ ReadyForNextPoint:      push	iy                                  ; copy screen p
                         ret                                         
 
 ; ...........................................................
-ProcessShip:            call    CheckVisible                ; checks for z -ve and outside view frustrum
-                        ret     c                           ; carry flag means drop out
+ProcessShip:            call    CheckVisible                ; checks for z -ve and outside view frustrum, sets up flags for next bit
 .IsItADot:              ld      a,(UBnkaiatkecm)
                         and     ShipIsVisible | ShipIsDot | ShipExploding  ; first off set if we can draw or need to update explosion
                         ret     z                           ; if none of these flags are set we can fast exit
-                        JumpIfABitSet ShipExploding, .ExplodingCloud; we always do the cloud processing even if invisible
+                        JumpOnABitSet ShipExplodingBitNbr, .ExplodingCloud; we always do the cloud processing even if invisible
 ;............................................................  
 .DetermineDrawType:     ReturnOnBitClear    a, ShipIsVisibleBitNbr          ; if its not visible exit early
-                        JumpIfABitClear ShipIsDotBitNbr, .CarryOnWithDraw   ; if not dot do normal draw
+                        JumpOnABitClear ShipIsDotBitNbr, .CarryOnWithDraw   ; if not dot do normal draw
 ;............................................................  
 .itsJustADot:           call    ProcessDot
                         SetMemBitN  UBnkaiatkecm , ShipIsDotBitNbr ; set is a dot flag
@@ -1576,147 +1578,123 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
                         ld      a,L2ColourWHITE_1           ; just draw a pixel
                         ld      a,224
                         MMUSelectLayer2                     ; then go to update radar
-                        call    l2_plot_pixel               ; 
-                        ClearCarryFlag
+                        call    ShipPixel                   ; 
                         ret
 ;............................................................  
 .CarryOnWithDraw:       call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
-                        ld      a,(UBnkaiatkecm)
-                        and     ShipExploding               ; if exploding flag is set do explosion instead
-                        jp      nz, .ExplodingCloud
                         call    CullV2
                         call    PrepLines
                         call    DrawLines
-                        ClearCarryFlag
                         ret 
 ;............................................................  
 .ExplodingCloud:        ClearMemBitN  UBnkaiatkecm, ShipKilledBitNbr ; acknowledge ship exploding
 .UpdateCloudCounter:    ld      a,(UBnKCloudCounter)        ; counter += 4 until > 255
-                        add     4                           ; we do this early as we now have logic for
+                        inc a ;add     4                           ; we do this early as we now have logic for
                         jp      c,.FinishedExplosion        ; display or not later
                         ld      (UBnKCloudCounter),a        ; .
-.IsShipADot:            JumpOnMemBitSet UBnkaiatkecm, ShipIsDotBitNbr, .itsJustADot ; if its dot distance then explosion is a dot, TODO later we will do as a coloured dot
-.CalculateZ:            ld      hl,(UBnKzlo)                ; d = zlo * 8 (bit 0 set)
-                        ld      a,h                         ;     or if z hi > 32 set it to $FE
-                        JumpIfALTNusng 32,.CalcFromZ        ; .
+.SkipHiddenShip:        ReturnOnMemBitClear  UBnkaiatkecm , ShipIsVisibleBitNbr
+.IsShipADot:            JumpOnABitSet ShipIsDotBitNbr, .itsJustADot ; if its dot distance then explosion is a dot, TODO later we will do as a coloured dot
+.CalculateZ:            ld      hl,(UBnKzlo)                ; al = hl = z
+                        ld      a,h                         ; .
+                        JumpIfALTNusng 32,.CalcFromZ        ; if its >= 32 then set a to FE and we are done
                         ld      a,$FE                       ; .
                         jp      .DoneZDist                  ; .
-.CalcFromZ:             ShiftHLLeft1                        ; .
-                        ShiftHLLeft1                        ; .
-                        SetCarryFlag                        ; .
-                        rl  l                               ; .
-.DoneZDist:             ld      a,h                         ; ixh = VarQ which is z distance
-                        ld      ixh,a                       ; .
-                        ld      d,a                         ; we need it for divide instruction
-.CalcCloudRaidus:       call    DIV16Amul256dCUNDOC         ; bc = A * 256 / C
-                        ld      a,b
-                        JumpIfALTNusgn  28,.SetCloudRaidus
-.MaxCloudRadius:        ld      b,$FE
+.CalcFromZ:             ShiftHLLeft1                        ; else
+                        ShiftHLLeft1                        ; hl = hl * 2
+                        SetCarryFlag                        ; h = h * 3 rolling in lower bit
+                        rl  h                               ; 
+.DoneZDist:             ld      b,0
+                        ld      c,h                         ; d = a= h = VarQ which is z distance
+                        ld      a,(UBnKCloudCounter)        ; and a = cloud counter
+                        ld      d,a
+                        ld      e,0
+                        ld      a,d
+                        JumpIfALTNusng  28,.SetCloudRadius
+.MaxCloudRadius:        ld      d,$FE
                         jp      .SizedUpCloud
-.SetCloudRadius:        ShiftBCLeft1                        ; bc = 8 * bc
-                        ShiftBCLeft1                        ; .
-                        ShiftBCLeft1                        ; .
-.SetCloudRadius:        ld      a,b
-                        ld      (UBnkCloudRadius),a
+.SetCloudRadius:        ShiftDELeft1                        ; bc = 8 * bc
+                        ShiftDELeft1                        ; .
+                        ShiftDELeft1                        ; .
+.SizedUpCloud:          ld      a,d
+                        ld      (UBnKCloudRadius),a
+                        ld      ixh,a                       ; ixh = calculated cloud radius
 .ProcessCloudLoop:      ld      a,(UBnKCloudCounter)
-                        JumpOnLeadSignClear a, .DoneCloudCounter
+                        JumpOnABitClear 7,  .DoneCloudCounter
                         neg                                 ; if its negative then make it positive (note original did just invert)
-.DoneCloudCounter:      rra                                 ; U = (a /8) bit 0 set so minimum 1
-                        rra                                 ;
-                        rra                                 ;
+.DoneCloudCounter:      sra a                               ; U = (a /8) bit 0 set so minimum 1
+                        sra a                               ;
+                        sra a                               ;
                         or  1                               ;
                         ld      (varU),a                    ;
-.ExplosionVerts:        ld      a,(VertexCountAddr)          ; now for each vertex
+.ExplosionVerts:        ld      a,(VertexCountAddr)         ; now for each vertex
                         ld      b,a                         ; .
                         ld      hl,UBnkNodeArray            ; c = number of vertices
-.ExplosionVertLoop:     push    bc,,hl
-                        ld      ixl,b                       ; save counter
-                        ld      bc,(hl)                     ; get vertex
-                        inc     hl                          ; into hl and de
-                        inc     hl                          ; 
-                        ld      de,(hl)                     ; 
-                        inc     hl                          ; into hl and de
-                        inc     hl                          ; move hl to next vertex
-.LoopSubParticles:      ld      a,(varU)                    ; nbr of particles per vertex
-                        ld      iyh,a                       ; save it
-.ProcessAParticle:      push    hl,,de,,bc                  ; save loop counter, x y
-                        ex      de,hl                       ; hl = de (Y)
-                        ld      d,ixh                       ; d = z distance
-                        call    XAERandVert
-                        ld      a,h
-                        JumpIfAIsNotZero   .NextIteration
-                        ex      de,hl                       ; de = result for y
-                        pop     hl                          ; get x back from bc on stack
-                        push    hl                          ; put bc (which is now in hl) back on the stack
-                        push    de                          ; save de
-                        ld      d,ixh                       ; d = z distance
-                        call    XAERandVert                 ; now calc x into hl
-                        ld      a,h
-                        JumpIfAIsNotZero   .SkipPixelY
-                        pop     de                          ; get de back
-                        ld      b,e
-                        ld      c,l
-                        call    DebrisPixel
-.NextIteration:         push    hl,,de,,bc                  ; ready for next iteration
-                        dec     iyh
-                        jr      nz,.ProcessAParticle
-.NextVert:              pop     bc,,hl
-                        ld      a,b                         ; as we are skipping i
-                        add     6                           ; 
-                        ld      b,a                         ; 
-                        
-                        
-.SkipPixelY:            pop     hl                          ; hl is junk
-                        jp      .NextIteration
-                        
-                        
-                        if  negative bit not set
-                                if  x <= $BF
-                                    Y1 = x
-                                    AR = X Org 
-                                    call   xloAhi = ylo +/-rnd * cloud radius
-                                    if  negative bit not set
-                                        plot pixel                        
-                        loopsubpartciles
-                        loopexplosionvert
-                        
+.ExplosionVertLoop:         push    bc,,hl
+                            ld      ixl,b                   ; save counter
+                            ld      c,(hl)                  ; get vertex into hl and de
+                            inc     hl
+                            ld      b,(hl)
+                            inc     hl
+                            ld      e,(hl)
+                            inc     hl
+                            ld      d,(hl)                  ; now hl is done with and we can use it 
+.LoopSubParticles:          ld      a,(varU)                    ; nbr of particles per vertex
+                            ld      iyh,a                       ; save it
+.ProcessAParticle:              push    hl,,de,,bc                  ; save loop counter, x y we dont need hl now so optimise TODO
+                                ex      de,hl                       ; hl = de (Y)
+                                ld      d,ixh                       ; d = z distance
+                                call    HLEquARandCloud
+                                ld      a,h
+                                JumpIfAIsNotZero   .NextIteration
+                                ex      de,hl                   ; de = result for y
+                                pop     hl                      ; get x back from bc on stack
+                                push    hl                      ; put bc (which is now in hl) back on the stack
+                                push    de                      ; save de
+                                ld      d,ixh                   ; d = z distance
+                                call    HLEquARandCloud             ; now calc x into hl
+                                ld      a,h
+                                pop     de                      ; get de back
+                                JumpIfAIsNotZero   .NextIteration ; doing pop here clears stack up
+                                ld      b,e
+                                ld      c,l
+                                MMUSelectLayer2
+                                call    DebrisPixel
+.NextIteration:             pop    hl,,de,,bc                  ; ready for next iteration
+                            dec     iyh
+                            jr      nz,.ProcessAParticle        ;
+.NextVert:              pop     bc,,hl                          ; recover loop counter and source pointer
+                        ld      a,4                             ; move to next vertex group
+                        add     hl,a                            ;
+                        djnz    .ExplosionVertLoop              ;         
+                        ret
+.FinishedExplosion:     ld      a,(UbnKShipUnivBankNbr)         ; get slot number
+                        call    ClearSlotA                      ; gauranted to be in main memory as non bankables
+                        ret
+                        ; set flags and signal to remove from slot list        
 
-                        
-.FinishedExplosion:     ; set flags and signal to remove from slot list        
-
+; Hl = HlL +/- (Random * projected cloud size)
 ; In - d = z distance, hl = vert hi lo
 ; Out hl = adjusted distance
 ; uses registers hl, de
-XAERandVert:            call    doRandom                    ; a= random * 2
+HLEquARandCloud:        push    hl
+                        call    doRandom                    ; a= random * 2
+                        pop     hl
                         rla                                 ;
                         jr      c,.Negative                 ; if buit 7 went into carry
-.Positive:              call    DIV16Amul256dCUNDOC         ; a = (random * 2) * Q/256
-                        ld      e,a
-                        ld      d,0
+.Positive:              ld  e,a
+                        mul
+                        ld  e,d
+                        ld  d,0
                         ClearCarryFlag
                         adc     hl,de                       ; hl = hl + a
                         ret
-.Negative:              call    DIV16Amul256dCUNDOC
-                        ld      e,a
-                        ld      d,0
+.Negative:              ld  e,a
+                        mul
+                        ld  e,d
+                        ld  d,0
                         ClearCarryFlag
-                        adc     hl,de                       ; hl = hl + a
+                        sbc     hl,de                       ; hl = hl + a
                         ret
-                        
-                        
-
-                                A = S
-                        else
-                                call    DIV16Amul256dCUNDOC X = A * Q /256 - T
-                                A = S                        
-                        
-; Initialises ship killed, clears killed flag sets up UBnkHullEdges with a list of points to plot offset from eye projection
-; each pixel is now 
-;       delta speed
-;       1 offset x y   
-;       2 offset x -y   
-;       3 offset -x y   
-;       4 offset -x -y   
 
 GetExperiencePoints:    ; TODO calculate experience points
                         ; TODO mission updates check
@@ -1738,15 +1716,16 @@ KillShip:               ld      a,(ShipTypeAddr)            ; we can't destroy s
                         ; TODO logic to spawn cargo/plates goes here
                         ret
                         
-DamageShip:             ld      b,a
+; in a = damage                        
+DamageShip:             ld      b,a                         ; b = a = damage comming in
                         ld      a,(ShipTypeAddr)            ; we can't destroy stations in a collision
                         cp      ShipTypeStation             ; for destructable one we will have a special type of ship
                         ret     z
-                        ld      a,(UBnKEnergy)
+                        ld      a,(UBnKEnergy)              ; get current energy level
                         ClearCarryFlag
-                        sbc     a,b
-.Overkilled:            jp      m,.DoneDamage
-                        call    KillShip
+                        sbc     a,b                         ; subtract damage
+.Overkilled:            jp      nc,.DoneDamage              ; if no carry then its not gone negative
+                        call    KillShip                    ; else kill it
                         ret
 .DoneDamage:            ld      (UBnKEnergy),a
                         ret

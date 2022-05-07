@@ -366,12 +366,10 @@ CheckVisible:           ld      a,(UBnKzsgn)                 ; Is the ship behin
                         ClearCarryFlag
                         ret
 .ShipNoDraw:            ClearMemBitN  UBnkaiatkecm  , ShipIsVisibleBitNbr ; Assume its hidden
-                        SetCarryFlag                        ; ship is behind so do not draw, so we don't care abour draw as dot
                         ret
 .ShipIsADot:            ld      a,(UBnkaiatkecm)            ; its visible but a dot
                         or      ShipIsVisible | ShipIsDot   ; 
                         ld      (UBnkaiatkecm),a            ; 
-                        ClearCarryFlag
                         ret
                         
 

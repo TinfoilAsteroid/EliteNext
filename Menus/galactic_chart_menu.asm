@@ -137,10 +137,6 @@ draw_galactic_chart_menu:   InitNoDoubleBuffer
                             call    galaxy_system_under_cursor
                             call    gc_name_if_possible
                             SetMemFalse TextInputMode
-;IFDEF DOUBLEBUFFER
-;    MMUSelectLayer2
-;    call  l2_flip_buffers
-;ENDIF
                             ret
 
 gcDelayVal                  equ $0A

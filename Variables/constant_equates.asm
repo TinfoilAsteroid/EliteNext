@@ -39,14 +39,15 @@ FarInFront			equ $C0
 EquipmentItemFitted     equ $FF
 EquipmentItemNotFitted  equ 0
 ; Universe Managment
-ShipTypeScoopable   equ 4         ; a sub set of junk
-ShipTypeJunk        equ 3
-ShipTypeStation     equ 2
-ShipTypeMissile     equ 1
-ShipTypeNormal      equ 0
-ShipTypeText        equ 253
-ShipTypeDebug       equ 254
-ShipTypeEmpty       equ 255
+ShipTotalModelCount     equ 44
+ShipTypeScoopable       equ 4         ; a sub set of junk
+ShipTypeJunk            equ 3
+ShipTypeStation         equ 2
+ShipTypeMissile         equ 1
+ShipTypeNormal          equ 0
+ShipTypeText            equ 253
+ShipTypeDebug           equ 254
+ShipTypeEmpty           equ 255
 ; TacticsControl
 ShipExplosionDuration   equ 75         ; amount of frames an explosion lasts for
 ShipIsTrader            equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
@@ -69,6 +70,7 @@ ShipAIEnabled           equ Bit7Only   ;
 ShipAIDisabled          equ Bit7Clear
 ShipAIEnabledBitNbr     equ 7
 ShipExploding           equ Bit5Only
+ShipExplodingBitNbr     equ 5
 ; Main Loop State
 StatePlayerDocked    equ $FF
 StateCompletedLaunch equ $FD
@@ -89,7 +91,7 @@ HyperSpaceTimers    equ $0B0B
 
 
 MaxNumberOfStars	equ 11
-ConsoleRefreshInterval  equ 4
+ConsoleRefreshInterval  equ 5
 
 ShipTypeSize		equ	32 			;??????? just a guess for now
 ShipSST				equ 4			; its a space station
@@ -112,6 +114,7 @@ MissileDropHeight   equ 5           ; how far the missile is ejected on launch i
 L2DustColour        equ L2ColourGREY_1
 L2SunScannerBright  equ 252
 L2SunScanner        equ 180
+L2DebrisColour      equ L2ColourYELLOW_1
 
 
 ; Ship Data

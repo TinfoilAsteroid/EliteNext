@@ -60,13 +60,15 @@ JumpOnMemBitClear:      MACRO mem, bitnbr, target
                         ENDM
 
 
-JumpOnABitSet:          MACRObitnbr, target
-                        bit 	bitnbr,a
-                        jp      z,target
-
-JumpOnABitClear:        MACRObitnbr, target
-                        bit 	bitnbr,a
+JumpOnABitSet:          MACRO   bitnbr, target
+                        bit 	bitnbr, a
                         jp      nz,target
+                        ENDM
+
+JumpOnABitClear:        MACRO   bitnbr, target
+                        bit 	bitnbr, a
+                        jp      z,target
+                        ENDM
                         
 JumpOnABit5Set:         MACRO   target
                         and     Bit5Only 

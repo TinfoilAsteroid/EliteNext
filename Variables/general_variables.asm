@@ -400,20 +400,7 @@ MissileTargettingFlag   DB  0
 CommanderName           DS  15
 CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
 BadnessStatus           DB  0
-; need to add copy table routines
-CurrLaserType           DB  0               ; current view laser type, copied in from LaserType array
-CurrLaserDamage         DB  0               ; copied in from LaserDamagedFlag array
-CurrLaserPulseRate      DB  0               ; current view laser amount of pulses
-CurrLaserPulseOnTime    DB  0               ; how many cycles the laser is on
-CurrLaserPulseOffTime   DB  0               ; how many cycles the laser is on
-CurrLaserPulseRest      DB  0               ; current view laser delay setup between pulses
-; Count down timers must be aligned like this to work
-CurrLaserPulseOnCount   DB  0               ; how many cycles the laser is on timer
-CurrLaserPulseOffCount  DB  0               ; how many cycles the laser is on timer
-CurrLaserPulseRestCount DB  0               ; countdown after shooting for next shot
-CurrLaserPulseRateCount DB  0               ; current view laser current pulses fired
 ;note rapidly changing views could reset these so need to consider it in an array
-
 ; LaserType                
 ; LaserPulseRate                          ; how many pulses can be fired before long pause
 ; LaserPulsePause                         ; time before next pulse - 0 = beam
@@ -425,6 +412,13 @@ CurrLaserPulseRateCount DB  0               ; current view laser current pulses 
 ; LaserDurabilityAmount                   ; max amount of damagage can be sustained in one damage hit
 ; LaserInMarkets                          ; can this laser be purchased 0 = yes 1 = no
 ; LaserTechLevel                          ; minimum tech level system to buy from
+; need to add copy table routines
+CurrLaserType           DB  0               ; current view laser type, copied in from LaserType array
+CurrLaserDamage         DB  0               ; copied in from LaserDamagedFlag array
+CurrLaserPulseRate      DB  0               ; current view laser amount of pulses
+CurrLaserPulseOnTime    DB  0               ; how many cycles the laser is on
+CurrLaserPulseOffTime   DB  0               ; how many cycles the laser is on
+CurrLaserPulseRest      DB  0               ; current view laser delay setup between pulses
 
 CurrLaserBurstRate      DB  0
 CurrLaserBurstCount     DB  0
@@ -433,6 +427,12 @@ CurrLaserEnergyDrain    DB  0
 CurrLaserHeat           DB  0
 CurrLaserDurability     DB  0
 CurrLaserDurabilityAmount DB  0
+
+; Count down timers must be aligned like this to work
+CurrLaserPulseOnCount   DB  0               ; how many cycles the laser is on timer
+CurrLaserPulseOffCount  DB  0               ; how many cycles the laser is on timer
+CurrLaserPulseRestCount DB  0               ; countdown after shooting for next shot
+CurrLaserPulseRateCount DB  0               ; current view laser current pulses fired
 
 ; -- Input variables
 JoystickX				DB	0				; 034C JSTX  

@@ -86,7 +86,7 @@ update_front_view:      ld      a,(MissileTargettingFlag)
 .NoTarget:              ld      a,(ShowingLock)
                         ReturnIfAIsZero
                         MMUSelectSpriteBank
-                        call        sprite_targetting_hide
+                        call     sprite_targetting_hide
                         ret
 .Targetting:            CallIfMemZero CurrentLock, sprite_targetting
                         CallIfMemZero ShowingLock, sprite_targetting_show
@@ -98,14 +98,6 @@ update_front_view:      ld      a,(MissileTargettingFlag)
                         ld      hl,$0101                        ; set both bytes in one go
                         ld      (CurrentLock),hl
                         ret     
-                
-                        ld      a,(ShowingLock)
-                        
-                        MMUSelectSpriteBank
-                        call        sprite_targetting_show
-                        ld      a,(CurrentLock)
-                        ReturnIfAIsZero
-
 
                         ;  1......................  2......................  3......................  4......................  5......................  6...................... 7......................  8......................
                         ;  1......................  2......................  3......................  4......................  5......................  6...................... 7......................  8......................

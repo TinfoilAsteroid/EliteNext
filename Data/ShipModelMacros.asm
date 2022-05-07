@@ -69,7 +69,7 @@ McopyNormsToUniverse:   MACRO
 MCopyShipToUniverse:    MACRO       banklabel
                         ld          hl,UBnkShipModelBank
                         ld          (hl),banklabel
-                        ld          (UBnkShipModelNbr),a
+                        ld          (UBnKShipModelNbr),a
 .GetHullDataLength:     ld          hl,ShipModelSizeTable
                         add         hl,a
                         add         hl,a                        ; we won't multiply by 2 as GetInfo is a general purpose routines so would end up x 4

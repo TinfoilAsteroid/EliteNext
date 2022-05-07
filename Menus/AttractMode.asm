@@ -79,8 +79,10 @@ AttractMode:            MMUSelectLayer1
 SelectARandomShip:      ld      b,1                             ; Demo screen uses slot 1
                         MMUSelectUniverseN  1
                         MMUSelectShipBank1
+                        ld      iyh, 1
 .SelectRandom:          call    doRandom
                         JumpIfAGTENusng ShipID_Rattler+1, .SelectRandom
+                        ld      iyl,a
                         call    GetShipBankId                       ; find actual memory location of data
                         MMUSelectShipBankA
                         ld      a,b
@@ -88,6 +90,7 @@ SelectARandomShip:      ld      b,1                             ; Demo screen us
                         ld      a,(ShipTypeAddr)
                         bit     7,a                                 ; is it a type we don't want in attract mode
                         jr      nz,.SelectRandom
+                        ld      a,1                                 ; slot 1, iyh and iyl already set
                         call    UnivInitRuntime                       
                         call    UnivSetDemoPostion
                         ld      hl,AttractDuration

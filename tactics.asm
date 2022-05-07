@@ -24,7 +24,7 @@ PlayerHitByMissile:     ret; TODO , do hit set up blast radius etc
 
 SetStationAngry:        call    IsSpaceStationPresent                   ; only if present
                         ret     c
-                        ld      a,(UbnKShipBankNbr)                     ; save current bank
+                        ld      a,(UbnKShipUnivBankNbr)                     ; save current bank
                         ld      iyh,a
                         MMUSelectUniverseN 0                            ; space station is always 0
                         call    SetShipHostile

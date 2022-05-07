@@ -42,7 +42,45 @@ Div16by24usgn:          inc     d                           ; can we fast retu
                         SetCarryFlag
                         ret
 
-AEquAmul256DivD:        JumpIfAGTENusng  d, .Ll28Exit255
+;DIVD4 P-R=A/Qunsg  \P.R = A/Q unsigned called by Hall
+HLEquAmul256DivD:       ld		b,8							; counter
+                        sla		a							; 
+                        ld		h,a							; r a * 2 we will build result in hl
+.DivideLoop:            rl		a							; a = a * 2
+                        jr      c,.StraightToSubtraction    ; jump on carry to subtraction
+                        cp      d                           ; what was var Q
+                        jr		c,.SkipSubtraction	        ; if a < d skip subtraction, note this will come to skip subtraction with carry the wrong way round
+.StraightToSubtraction: ClearCarryFlag                      ; in 6502 the borrow flag is inverted carry, z80 just uses carry so we need to clear it
+                        sbc     a,d                         ; a = a - q
+                        ClearCarryFlag                      ; set carry so it gets shifted into bit 0 of b. we do this as we have to flip carry due to jr c from earlier cp d
+.SkipSubtraction:       ccf                                 ; we need to do this as 6502 does opposite on carry, i.e. if we jumped direct here then carry would be set in z80
+                        rl      h                           ; roll d left bringing in carry if there was an sbc performed
+                        djnz    .DivideLoop                 ; 8 cycles
+.CalculateRemainder:    cp      d                           ; calulate 256 * a / d if q >= q then answer will not fit in one byte d is still set, a holds remainder to be subtracted
+                        jr      nc, .RemainderTooBig
+                        ClearCarryFlag                      ; remove carry as the previous cp will have set it and mess up the sla in the remainder loop
+.InitRemainderLoop:     ld      b,%11111110                 ; loop for bits 1 to 7
+                        ld      l,b                         ; and set l to capture result bits (R)
+.RemainderLoop:         sla     a                           ; shift a left
+                        jr      c, .RemainderSubtraction    ; if there was a carry go to subtraction
+                        cp      d                           ; if a < d then skip subtraction
+                        jr      c,.RemainderSkipSubtract    ; .
+                        sbc     d                           ; a > q so a = a - q, carry will be clear here
+.RemainderSkipSubtract: ccf                                 ; as the jr used z80 we need to flip the carry to behave like 6502
+                        rl      l                           ; rotate counter to the left
+                        jr      c, .RemainderLoop           ; if there was a bit pushed to carry then loop
+                        ret
+.RemainderSubtraction:  sbc     d                           ; as the carry came from an sla we want to retain it
+                        SetCarryFlag                        ; roll in a carry bit to result
+                        rl      l                           ;
+                        jr      c, .RemainderLoop           ; and loop if there was a carry bit that came out
+                        ret                       
+.RemainderTooBig:       ld      l,$FF                       ; now hl = result
+                        ret
+
+AEquAmul256DivD:        cp      d
+                        jr      z,.BothSame
+                        jr      nc,.DgtA
                         ld      e,%11111110                 ; Set R to have bits 1-7 set, so we can rotate through 7
 .DivideLoop:            sla     a                        
                         jr      c,.LL29
@@ -60,7 +98,9 @@ AEquAmul256DivD:        JumpIfAGTENusng  d, .Ll28Exit255
                         jr      c,.DivideLoop               ; if a bit was spat off teh end then loop
                         ld      a,e                         ; stick result in a
                         ret
-.Ll28Exit255:           ld  a,255                           ; Fail with FF as result
+.BothSame:              ld  a,1
+                        ret
+.DgtA:                  ld  a,255                           ; Fail with FF as result
                         ret
 
 

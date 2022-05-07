@@ -14,10 +14,10 @@ FaceCtX4Offset		    equ 13
 DotOffset			    equ 14
 EnergyOffset		    equ 15
 SpeedOffset			    equ 16
-FaceAddyOffset		    equ 18
+FaceAddyOffset		    equ 17
 QOffset				    equ 19
 LaserOffset			    equ 20
-VerticiesAddyOffset     equ 22
+VerticiesAddyOffset     equ 21
 ShipTypeOffset          equ 23
 ShipNewBitsOffset       equ 24
 ShipAIFlagsOffset       equ 25

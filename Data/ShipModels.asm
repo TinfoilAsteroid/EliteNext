@@ -127,7 +127,7 @@ CopyNormalDataToUBnkC:
 
 
                         IFDEF SHIPBANKA
-CopyShipDataToUBnk: 
+CopyShipDataToUBnk:     
 CopyShipDataToUBnkA:    push        af
                         ld          a,BankShipModelsA
                         ENDIF
@@ -141,7 +141,7 @@ CopyShipDataToUBnkC:    push        af
                         ENDIF
                         ld          (UBnkShipModelBank),a
                         pop         af                              ; save the current ship number and bank in case we need it later, say for a space station
-                        ld			(UBnkShipModelNbr),a			; mark ship type in bank
+                        ld			(UBnKShipModelNbr),a			; mark ship type in bank
                         
 .GetHullDataLength:     ld          hl,ShipModelSizeTable
                         add         hl,a

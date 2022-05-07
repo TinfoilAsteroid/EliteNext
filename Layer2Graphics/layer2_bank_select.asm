@@ -37,6 +37,14 @@ asm_enable_l2_readwrite:    ld      bc, IO_LAYER2_PORT
 ; "asm_l2_bank_select"
 ; " a = sepecific bank mask value to select, does not set varL2_BANK_SELECTED"
 asm_l2_bank_select:         ld      d,a
+                            cp      0
+                            jr      z,.NotBreakDebug
+                            cp      $40
+                            jr      z,.NotBreakDebug
+                            cp      $80
+                            jr      z,.NotBreakDebug
+                            break
+.NotBreakDebug:                            
                             ld      a,(varL2_BUFFER_MODE)
                             or		LAYER2_VISIBLE_MASK  |  LAYER2_WRITE_ENABLE_MASK
                             or      d; | LAYER2_SHADOW_SCREEN_MASK
@@ -99,3 +107,4 @@ asm_l2_row_bank_select:     cp 		64			; row < 64?
                             sub		128	
                             ret
 		
+        

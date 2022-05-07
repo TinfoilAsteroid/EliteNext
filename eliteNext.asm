@@ -227,7 +227,7 @@ InitialiseMainLoop:     call    InitMainLoop
 
 ;..................................................................................................................................
 MainLoop:	            call    doRandom                            ; redo the seeds every frame
-                        UpdateLaserCounters
+                        UpdateLaserCounters                         ; update laser counters every frame
                         CoolLasers
                         call    scan_keyboard                       ; perform the physical input scan
 ;.. This bit allows cycling of ships on universe 0 in demo.........................................................................
@@ -272,7 +272,18 @@ CheckIfViewUpdate:      ld      a,$00                                         ; 
                         call    UpdateMessageTimer
                       
 .NoMessages:            MMUSelectLayer2
-                        call   l2_cls_upper_two_thirds
+CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
+                        dec     (hl)
+                        jp      z,.ConsoleDrawBuffer1                                ; when it hits 0 then frame 1 of console is drawm
+                        jp      m,.ConsoleDrawBuffer2                                ; need top also do next frame for double buffering
+.ConsoleNotDraw:        SetMemFalse ConsoleRedrawFlag                        
+                        jp      .JustViewPortCLS
+.ConsoleDrawBuffer2:     ld      (hl),ConsoleRefreshInterval                         
+.ConsoleDrawBuffer1:     SetMemTrue ConsoleRedrawFlag
+                        call    l2_cls                                              ; Clear layer 2 for graphics
+                        jp      .ViewPortCLSDone
+.JustViewPortCLS:       call   l2_cls_upper_two_thirds
+.ViewPortCLSDone:
                         MMUSelectLayer1
 .UpdateSun:             MMUSelectSun
 .DEBUGFORCE:            
@@ -295,20 +306,6 @@ DrawDustForwards:       ld     a,$DF
                         ld     (line_gfx_colour),a                         
 DustUpdateBank:         MMUSelectViewFront                                    ; This needs to be self modifying
 DustUpdateRoutine:      call   DustForward                                   ; This needs to be self modifying
-PrepLayer2:             ld      hl,ConsoleRefreshCounter
-                        dec     (hl)
-                        jp      z,ConsoleDraw
-                        jp      m,ConsoleDrawReset
-.ConsoleNotDraw:        SetMemFalse ConsoleRedrawFlag                        
-                        jp      ProcessPlanet
-ConsoleDraw:            SetMemTrue ConsoleRedrawFlag
-                        MMUSelectLayer2 
-                        call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
-                        jp      ProcessPlanet
-ConsoleDrawReset:       SetMemTrue ConsoleRedrawFlag
-                        ld      (hl),ConsoleRefreshInterval                     
-                        MMUSelectLayer2 
-                        call    l2_cls_lower_third                                  ; Clear layer 2 for graphics
 ;ProcessSun:             call    DrawForwardSun
 ProcessLaser:           ld      a,(CurrLaserPulseRate)
                         JumpIfAIsNotZero .CheckForPulse
@@ -428,6 +425,7 @@ LoopEventTriggered:     call    FindNextFreeSlotInC                 ; c= slot nu
                         ld      a,b
 .FailIfAsteroidInSafe:  ReturnIfAEqNusng   ShipID_Asteroid          ; we can't spawn asteroids near a space station
 .NotInSafeZone:         AddJunkCount                                ; so its an increase in junk
+                        ld      a,b                                 ; get ship type back
                         jp      SpawnShipTypeA
                         ;.......implicit ret
 ;... Handle spawing of non junk type object
@@ -508,11 +506,13 @@ LaunchPlayerMissile:    call    FindNextFreeSlotInC                 ; Check if w
 
 ; a = ship type, iyh = universe slot to create in
 SpawnShipTypeA:         ld      iyl,a                               ; save ship type
+                        ReturnIfAGTENusng   ShipTotalModelCount     ; current ship count limit 
                         MMUSelectShipBank1                          ; select bank 1
                         ld      a,iyh                               ; select unverse free slot
                         ld      b,iyl
                         call    SetSlotAToTypeB
                         MMUSelectUniverseA                          ; .
+                        push    af                                  ; save computed bank number
                         ld      a, iyl                              ; retrive ship type
                         ;call    SetSlotAToTypeB                    ; record in the lookup tables
                         call    GetShipBankId                       ; find actual memory location of data
@@ -520,7 +520,8 @@ SpawnShipTypeA:         ld      iyl,a                               ; save ship 
                         ld      a,b                                 ; b = computed ship id for bank
                         call    CopyShipToUniverse
                         call    UnivSetSpawnPosition                ; set initial spawn position
-                        call    UnivInitRuntime                     ; Clear runtime data before startup
+                        pop     af                                  ; we need bank nbr in a
+                        call    UnivInitRuntime                     ; Clear runtime data before startup, iy h and l are already set up
                         ld      a,(ShipTypeAddr)
                         ld      b,a
                         ld      a,iyl
@@ -633,7 +634,7 @@ UpdateUniverseObjects:  xor     a
 .ScoopableCheck:        ld      a,iyl                                           ; so if its not scoopable
                         JumpIfANENusng  ShipTypeScoopable, .HaveCollided        ; then its a collision
 .ScoopsEquiped:         ld      a,(FuelScoop)                                   ; if there is no scoop then impact
-                        JumpIfANENusng  EquipmentItemNbr updatotFitted, .HaveCollided   ; 
+                        JumpIfANENusng  EquipmentItemFitted, .HaveCollided      ; .
 .ScoopRegion:           ld      a,(UBnKysgn)                                    ; if the y axis is negative then we are OK
                         JumpIfAIsZero   .HaveCollided                           ; else its a collision
 .CollectedCargo:        call    ShipCargoType
@@ -669,13 +670,17 @@ UpdateUniverseObjects:  xor     a
 ; Now check laser
 .CollisionDone:         call    ShipInSights
                         jr      nc,.ProcessedUniverseSlot                        ; for laser and missile we can check once
-                        ld      a,(CurrLaserPulseOnTime)
-                        JumpIfAIsZero   .PlayerMissileLock                      ; if no pulse on time then check missile
-                        ld      a,(CurrLaserDamage)
+                        ld      a,(CurrLaserPulseRate)
+                        JumpIfAIsNotZero .CheckForPulse
+                        JumpIfMemFalse FireLaserPressed,     .NoLaser
+                        jp      .LaserDamage
+.CheckForPulse:         JumpIfMemZero CurrLaserPulseOnCount, .NoLaser
+.LaserDamage:           ld      a,(CurrLaserDamageOutput)
                         call    DamageShip
                         ld      a,(UBnKexplDsp)                                 ; is it destroyed
                         and     %10100000      
                         jp      nz,.ProcessedUniverseSlot                        ; can't lock on debris
+.NoLaser:   
 ; Now check missile lock
 .PlayerMissileLock:     JumpIfMemNeNusng MissileTargettingFlag, StageMissileTargeting, .ProcessedUniverseSlot
 .LockPlayerMissile:     ld      a,(SelectedUniverseSlot)                        ; set to locked and nto launchedd
@@ -722,15 +727,7 @@ DrawForwardShips:       xor     a
 ; Add in a fast check for ship behind to process nodes and if behind jump to processed Draw ship
 .SelectShipToDraw:       ld      a,(CurrentShipUniv)
                         MMUSelectUniverseA
-.CheckIfExploding:      JumpOnMemBitMaskClear   UBnkaiatkecm, ShipExploding, .ProcessUnivShip
-.ShipIsExploding        ld      a,(ShipExplosionDuration)   ; Reduce explosion counter
-                        dec     a                           ; on zero we just exit which means main
-                        ld      (ShipExplosionDuration),a   ; loop can remove it from the slot list
-                        jp      nz,.ProcessUnivShip         ; if its not zero we can continue
-.ClearDebris:           ClearSlotMem CurrentShipUniv
-                        jp      ProcessedDrawShip
-                        ; Need check for exploding here
-.ProcessUnivShip:       call    ProcessShip          ; TODFO TUNE THIS   ;; call    ProcessUnivShip
+.ProcessUnivShip:       call    ProcessShip          ; The whole explosion logic is now encapsulated in process ship ;TODO TUNE THIS   ;; call    ProcessUnivShip
 ; Debris still appears on radar                        
 .UpdateRadar: 
 ;;;Does nothing                       ld      a,BankFrontView
@@ -1000,7 +997,9 @@ LaunchedFromStation:    MMUSelectSun
                         call    SetSlot0ToSpaceStation              ; set slot 1 to space station
                         MMUSelectUniverseN 0                        ; Prep Target universe
                         MMUSelectShipBank1                          ; Bank in the ship model code
-                        call    UnivInitRuntime                     ; Zerp ship runtime data
+                        ld      iyh,0                               ; Zero ship runtime data
+                        ld      iyl,ShipTypeStation                 ; and mark as spece station
+                        call    UnivInitRuntime                     ; its always slot 0
                         ld      a,CoriloisStation
                         call    GetShipBankId             
                         MMUSelectShipBankA                          ; Select the correct bank found

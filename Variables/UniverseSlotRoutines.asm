@@ -1,3 +1,4 @@
+; Note this code is core code and can not be in a memory bank unless do explosion code is changed too
 ClearSlotCount:         xor     a
                         ld      hl,UniverseSlotList
                         ld      b, UniverseSlotListSize ; prbably not needed + UniverseSlotTypeSize
