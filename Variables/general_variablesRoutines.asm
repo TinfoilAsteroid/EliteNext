@@ -89,6 +89,30 @@ SetSpeedZero:           ld      a,0
                         ld      l,a                                             ;
                         ld      (DELT4Lo),hl                                    ;
                         ret
+                        
+RechargeShip:           ld      a,(PlayerEnergy)
+                        bit     7,a
+                        jr      z,.UpdatePlayerEnergy
+.ShieldCharge:          ld      hl,ForeShield
+                        inc     (hl)
+                        jr      nz,.DoneForeShield
+.ForeOverCharge:        dec     (hl)
+.DoneForeShield:        inc     hl                                              ; point to aft shield
+                        inc     (hl)
+                        jr      nz,.DoneAftShield
+                        dec     (hl)                                            ; back to 255
+.DoneAftShield:         inc     hl                                              ; point to energy
+.UpdatePlayerEnergy:    inc     (hl)
+                        jr      z,.OverflowedEnergy
+                        ld      a,(ExtraEnergyUnit)
+                        ReturnIfANENusng EquipmentItemFitted                    ; if energy unit fitted an extra step
+.EnergyUnitFitted:      inc     (hl)
+                        jr      z,.OverflowedEnergy
+                        ret
+.OverflowedEnergy:      dec     (hl)                                            ;  restore to 255
+                        ret
+.SkipShieldCharge:      ld      hl,PlayerEnergy
+                        jr      .UpdatePlayerEnergy
 
 ; sets carry to true if target
 IsMissileLockedOn:      ld      a,(MissileTargettingFlag)

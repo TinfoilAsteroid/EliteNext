@@ -384,9 +384,9 @@ CabinTemperature        DB  0
 PlayerForwardSheild0	DB	0 ; ????? 
 PlayerForwardSheild1    DB	0
 PlayerForwardSheild2    DB	0
-ForeShield				DB	0				; 03A5
-AftShield				DB	0				; 03A6
-PlayerEnergy			DB	0				; 03A7
+ForeShield				DB	0				; These three must be contiguous
+AftShield				DB	0				; .
+PlayerEnergy			DB	0				; and in this order
 CompassX				DB	0				; 03A8
 CompassY				DB	0				; 03A9
 ; Simplification of missile targetting

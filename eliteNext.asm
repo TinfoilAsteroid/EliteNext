@@ -252,7 +252,10 @@ TestAreWeDocked:        ld      a,(DockedFlag)                                ; 
                         JumpIfANENusng  0, UpdateLoop                        ; else we skip it. As we are also in dock/transition then no models should be updated so we dont; need to draw
 .UpdateEventCounter:    ld      hl,EventCounter                               ; evnery 256 cycles we do a trigger test
                         dec     (hl)
-                        call    z,LoopEventTriggered
+.ProcessEvent:          call    z,LoopEventTriggered
+.ProcessRecharge:       ld      a,(EventCounter)
+                        and     7
+                        call    z, RechargeShip
                         ld      a,(MissileTargettingFlag)                     ; if bit 7 is clear then we have a target and launch requested
                         and     $80
                         call    z,  LaunchPlayerMissile

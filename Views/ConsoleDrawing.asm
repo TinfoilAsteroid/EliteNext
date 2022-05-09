@@ -115,19 +115,20 @@ UpdateConsole:          ld      a,(DELTA)
                         ld      bc,FuelStart
                         ld      d,a
                         call    DrawColourCodedBar                        
-.ForeShield:            ld      a,(ForeShield)
+.FrontShield:           ld      a,(ForeShield)
                         srl     a
                         srl     a
                         srl     a               
                         ld      bc,FShieldStart
-                        call    DrawColourCodedBar                        
+                        ld      d,a
+                        call    DrawColourCodedBar
 .AftShield:             ld      a,(AftShield)
                         srl     a
                         srl     a
                         srl     a               
                         ld      bc,AShieldStart
                         ld      d,a
-                        call    DrawColourCodedBar  ;ld		(ForeShield),a
+                        call    DrawColourCodedBar  
 ;PlayerEnergy                      
 ; BNEED LASER temp
 ; NEED CABIN TEMP
@@ -758,11 +759,11 @@ UpdateCompassStation:   MMUSelectShipBankN 0
                         ld      a,h                         ; retrieve sign
                         pop     bc                          ; retrieve sign
                         cp      0
-                        jr      z,.DoneNormY                 ; in case we end up with - 0
+                        jr      z,.DoneNormY                ; in case we end up with - 0
                         bit     7,c                         ; if sign is negative then 2'c value
                         jr      z,.DoneNormY
                         neg
-.DoneNormY:             ld      b,a                       ; .
+.DoneNormY:             ld      b,a                         ; .
                         ld      c,ixh
 .SetSprite:             MMUSelectSpriteBank
                         call    compass_sun_move
