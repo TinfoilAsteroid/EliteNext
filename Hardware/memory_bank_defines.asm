@@ -5,6 +5,7 @@ StartOfBank     	    equ $0000
 	
 membank0 			    equ $0000
 dmaCopySrcAddr		    equ	$0000
+MathsTablesAddr         equ $0000
 membank1 			    equ $2000
 membank2 			    equ $4000
 membank3 			    equ $6000
@@ -40,6 +41,7 @@ ConsoleImageAddr        equ $e000
 GalaxyDataAddr          equ $e000
 
 EXSDOSMMU0              equ MMU_SLOT_0_REGISTER
+MathsTablesMMU          equ MMU_SLOT_0_REGISTER
 EXSDOSMMU1              equ MMU_SLOT_1_REGISTER
 DMACpySourceMMU		    equ	MMU_SLOT_0_REGISTER
 SunMMU 		            equ MMU_SLOT_6_REGISTER
@@ -111,5 +113,7 @@ BankGalaxyData4         equ 95
 BankGalaxyData5         equ 96
 BankGalaxyData6         equ 97
 BankGalaxyData7         equ 98
+
+BankMathsTables         equ 99
 
 BankROM                 equ 255

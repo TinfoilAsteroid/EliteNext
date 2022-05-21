@@ -1,3 +1,6 @@
+
+
+
 ;
 ;   Set flags E to 11111110
 ;   Loop:   A << 2
@@ -15,6 +18,7 @@
 ;
 ;INPUTS: hl = dividend dbc = divisor
 ;OUTPUTS: hl/de -> AHL = quotient CDE = remainder, Carryflag set if divide by 0
+
 Div16by24usgn:          inc     d                           ; can we fast retu
                         dec     d
                         jr      nz,.ResultZero

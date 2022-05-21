@@ -1,5 +1,6 @@
  DEVICE ZXSPECTRUMNEXT
  DEFINE  DOUBLEBUFFER 1
+ DEFINE  LOGMATHS     1
  CSPECTMAP eliteN.map
  OPT --zxnext=cspect --syntax=a --reversepop
 
@@ -138,8 +139,9 @@ STEPDEBUG               equ 1
 
 TopOfStack              equ $7F00
 
-EliteNextStartup:       ORG         $8000
-                        di
+                        ORG         $8000
+EliteNextStartup:       di
+                        DISPLAY "Starting Assembly At ", EliteNextStartup
                         ; "STARTUP"
                         ; Make sure  rom is in page 0 during load
                         MMUSelectLayer2
@@ -1279,6 +1281,10 @@ XX12PVarSign3		DB 0
     INCLUDE "./Hardware/drive_access.asm"
 
     INCLUDE "./Menus/common_menu.asm"
+
+EndOfNonBanked:
+    DISPLAY "Non Banked Code Ends At", EndOfNonBanked
+
 ; ARCHIVED INCLUDE "Menus/draw_fuel_and_crosshair.asm"
 ;INCLUDE "./title_page.asm"
 
@@ -1287,6 +1293,8 @@ XX12PVarSign3		DB 0
 ;    SEG RESETUNIVSEG
 ;seg     CODE_SEG,       4:              $0000,       $8000                 ; flat address
 ;seg     RESETUNIVSEG,   BankResetUniv:  StartOfBank, ResetUniverseAddr      
+
+
 
 ;	ORG ResetUniverseAddr
 ;INCLUDE "./GameEngine/resetUniverse.asm"
@@ -1549,13 +1557,6 @@ UNIVDATABlock11     DB $FF
 UNIVDATABlock12     DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
  
-    SLOT    GalaxyDataAddr
-    PAGE    BankGalaxyData0
-	ORG GalaxyDataAddr, BankGalaxyData0
-    INCLUDE "./Universe/Galaxy/galaxy_data.asm"                                                            
-    
-    DISPLAY "Galaxy Data - Bytes free ",/D, $2000 - ($- GalaxyDataAddr)
-
 ; Bank 83  ------------------------------------------------------------------------------------------------------------------------
     SLOT    SunBankAddr
     PAGE    BankSunData
@@ -1568,43 +1569,63 @@ UNIVDATABlock12     DB $FF
 	ORG	    PlanetBankAddr,BankPlanetData
     INCLUDE "./Universe/Planet/planet_data.asm"
 
-    SLOT    GalaxyDataAddr
-    PAGE    BankGalaxyData1
-	ORG GalaxyDataAddr, BankGalaxyData1
+; Bank 91  ------------------------------------------------------------------------------------------------------------------------
+                        SLOT    GalaxyDataAddr
+                        PAGE    BankGalaxyData0
+                        ORG GalaxyDataAddr, BankGalaxyData0
+                        INCLUDE "./Universe/Galaxy/galaxy_data.asm"                                                            
+                        
+                        DISPLAY "Galaxy Data - Bytes free ",/D, $2000 - ($- GalaxyDataAddr)
+
+; Bank 92  ------------------------------------------------------------------------------------------------------------------------
+                        SLOT    GalaxyDataAddr
+                        PAGE    BankGalaxyData1
+                        ORG GalaxyDataAddr, BankGalaxyData1
 GALAXYDATABlock1         DB $FF
                          DS $1FFF                 ; just allocate 8000 bytes for now  
-
-    SLOT    GalaxyDataAddr
-    PAGE    BankGalaxyData2
-	ORG GalaxyDataAddr, BankGalaxyData2
+; Bank 93  ------------------------------------------------------------------------------------------------------------------------
+                        SLOT    GalaxyDataAddr
+                        PAGE    BankGalaxyData2
+                        ORG GalaxyDataAddr, BankGalaxyData2
 GALAXYDATABlock2         DB $FF
                          DS $1FFF                 ; just allocate 8000 bytes for now
-    SLOT    GalaxyDataAddr
-    PAGE    BankGalaxyData3
-	ORG GalaxyDataAddr, BankGalaxyData3
+; Bank 94  ------------------------------------------------------------------------------------------------------------------------
+                        SLOT    GalaxyDataAddr
+                        PAGE    BankGalaxyData3
+                        ORG GalaxyDataAddr, BankGalaxyData3
 GALAXYDATABlock3         DB $FF
                          DS $1FFF                 ; just allocate 8000 bytes for now
-    SLOT    GalaxyDataAddr
-    PAGE    BankGalaxyData4
-	ORG GalaxyDataAddr, BankGalaxyData4
+; Bank 95  ------------------------------------------------------------------------------------------------------------------------
+                        SLOT    GalaxyDataAddr
+                        PAGE    BankGalaxyData4
+                        ORG GalaxyDataAddr, BankGalaxyData4
 GALAXYDATABlock4         DB $FF
                          DS $1FFF                 ; just allocate 8000 bytes for now
-    SLOT    GalaxyDataAddr
-    PAGE    BankGalaxyData5
-	ORG GalaxyDataAddr,BankGalaxyData5
+; Bank 96  ------------------------------------------------------------------------------------------------------------------------
+                        SLOT    GalaxyDataAddr
+                        PAGE    BankGalaxyData5
+                        ORG GalaxyDataAddr,BankGalaxyData5
 GALAXYDATABlock5         DB $FF
                          DS $1FFF                 ; just allocate 8000 bytes for now
-    SLOT    GalaxyDataAddr
-    PAGE    BankGalaxyData6
-	ORG GalaxyDataAddr,BankGalaxyData6
+; Bank 97  ------------------------------------------------------------------------------------------------------------------------
+                        SLOT    GalaxyDataAddr
+                        PAGE    BankGalaxyData6
+                        ORG GalaxyDataAddr,BankGalaxyData6
 GALAXYDATABlock6         DB $FF
                          DS $1FFF                 ; just allocate 8000 bytes for now
-    SLOT    GalaxyDataAddr
-    PAGE    BankGalaxyData7
-	ORG GalaxyDataAddr,BankGalaxyData7
+; Bank 98  ------------------------------------------------------------------------------------------------------------------------
+                        SLOT    GalaxyDataAddr
+                        PAGE    BankGalaxyData7
+                        ORG GalaxyDataAddr,BankGalaxyData7
 GALAXYDATABlock7         DB $FF
                          DS $1FFF                 ; just allocate 8000 bytes for now
-
+; Bank 99  ------------------------------------------------------------------------------------------------------------------------
+                        SLOT    MathsTablesAddr
+                        PAGE    BankMathsTables
+                        ORG     MathsTablesAddr,BankMathsTables
+                        INCLUDE "./Maths/logmaths.asm"
+                        INCLUDE "./Tables/antilogtable.asm"
+                        INCLUDE "./Tables/logtable.asm"
 
 
 

@@ -1607,10 +1607,18 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
 .DoneZDist:             ld      b,0                         ; bc = cloud z distance calculateed
                         ld      c,h                         ; .
 .CalcCloudRadius:       ld      a,(UBnKCloudCounter)        ; de = cloud counter * 256
+        IFDEF LOGMATHS
+                        MMUSelectMathsTables
+                        ld      b,h
+                        call    AEquAmul256DivBLog
+                        ld      d,a
+                        MMUSelectROM0
+        ELSE
                         ld      d,a                         ;
                         ld      e,0                         ;
                         call    DEequDEDivBC                ; de = cloud counter * 256 / z distance
                         ld      a,d                         ; if radius >= 28
+        ENDIF
                         JumpIfALTNusng  28,.SetCloudRadius  ; then set raidus in d to $FE
 .MaxCloudRadius:        ld      d,$FE                       ;
                         jp      .SizedUpCloud               ;

@@ -1,6 +1,14 @@
+MMUSelectROM0:       MACRO
+                     nextreg EXSDOSMMU0,        BankROM 
+                     ENDM
+
 MMUSelectROMS:       MACRO
                      nextreg EXSDOSMMU0,        BankROM
                      nextreg EXSDOSMMU1,        BankROM
+                     ENDM
+                     
+MMUSelectMathsTables:MACRO
+                     nextreg MathsTablesMMU,    BankMathsTables
                      ENDM
 
 MMUSelectSpriteBank: MACRO
