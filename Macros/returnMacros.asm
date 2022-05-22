@@ -1,4 +1,4 @@
-ReturnOnBitSet:         MACRO  reg, bitnbr,
+ReturnOnBitSet:         MACRO  reg, bitnbr
                         bit 	bitnbr,reg
                         ret     nz
                         ENDM
