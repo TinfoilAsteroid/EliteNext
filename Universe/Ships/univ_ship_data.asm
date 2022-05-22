@@ -26,9 +26,7 @@ StartOfUnivN:       DB "X"
 ;                    [sidev x y z ] side vector (right)
 ;;rotXCounter                 equ UBnkrotXCounter         ; INWK +29
 ;;rotZCounter                 equ UBnkrotZCounter         ; INWK +30UBnkDrawCam0xLo   DB  0               ; XX18+0
-univRAT      DB  0               ; 99
-univRAT2     DB  0               ; 9A
-univRAT2Val  DB  0               ; 9A
+
 
                         INCLUDE "./Universe/Ships/XX16Vars.asm"
                         INCLUDE "./Universe/Ships/XX25Vars.asm"
@@ -212,13 +210,24 @@ ResetUbnkPosition:      ld      hl,UBnKxlo
 
 ; --------------------------------------------------------------                        
 ; This sets the position of the current ship if its a player launched missile
-UnivSetPlayerMissile:   call    InitialiseOrientation           ; Player  facing
+UnivSetPlayerMissile:   call    InitialiseOrientation           ; Copy in Player  facing
                         call    ResetUbnkPosition               ; home position
-                        ld      a,MissileDropHeight
-                        ld      (UBnKylo),a
-                        ld      a,$80
-                        ld      (UBnKysgn),a
-                        MaxUnivSpeed
+                        ld      a,MissileDropHeight             ; the missile launches from underneath
+                        ld      (UBnKylo),a                     ; so its -ve drop height
+                        ld      a,$80                           ;
+                        ld      (UBnKysgn),a                    ;
+                        ld      a,3                             ; set accelleration
+                        ld      (UBnKAccel),a                   ;
+                        ZeroA
+                        ld      (UBnKRotXCounter),a
+                        ld      (UBnKRotZCounter),a
+                        ld      a,3
+                        ld      (UBnKRAT),a
+                        inc     a
+                        ld      (UBnKRAT2),a
+                        ld      a,22
+                        ld      (UBnKCNT2),a
+                        MaxUnivSpeed                            ; and immediatley full speed (for now at least) TODO
                         ret
 ; --------------------------------------------------------------
 ; this applies blast damage to ship

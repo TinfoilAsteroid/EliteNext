@@ -46,17 +46,17 @@ SetSignBit:             MACRO   reg
                         ENDM
                         
 FlipSignBit:            MACRO   reg
-                        ld      a,reg
+                        ld      a, reg
                         xor     SignOnly8Bit
                         ld      reg,a
                         ENDM
 
 SignBitOnly:            MACRO   reg
-                        ld      a,reg
+                        ld      a, reg
                         and     SignOnly8Bit
                         ld      reg,a
                         ENDM
-                        
+
 ClearSignBitA:          MACRO 
                         and     SignMask8Bit
                         ENDM

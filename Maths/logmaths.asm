@@ -30,7 +30,6 @@ AntiLogHL:              ex      de,hl
                         ShiftHLRight1                           ; now must be >= 255
                         ld      a,l
                         ret
-                
 
 AEquAmul256DivBLogLT:   JumpIfAIsZero   .ResultIsZero
                         ld      hl,LogTable                     ; de = log a

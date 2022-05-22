@@ -1,7 +1,36 @@
 ;Ship Tactics
+ShipAIJumpTable:      DW    NormalAI,   MissileAI,  StationAI,  JunkAI,     ScoopableAI
+                      DW    ThargoidAI, NoAI,       NoAI,       NoAI,       NoAI
+
+;----------------------------------------------------------------------------------------------------------------------------------
+; Main entry point to tactics. Every time it will do a a tidy and the do AI logic
+UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
+                       ld      hl,TidyCounter
+                       dec     (hl)
+                       ret     nz
+                       ld      a,16
+                       ld      (TidyCounter),a
+                        ; call    TIDY TIDY IS BROKEN
+                       ; add AI in here too
+                       ld       a,(ShipTypeAddr)
+                       ld       hl,ShipAIJumpTable
+                       add      hl,a
+                       add      hl,a
+                       jp       (hl)                                    ; Follow the AI Jump Table
+                        ret
+
+
+
 ; used  when no pre-checks are requrired, e.g. if forcing a space station from main loop
 
+NormalAI:               ret
+StationAI:              ret
+JunkAI:                 ret
+ScoopableAI:            ret
+ThargoidAI:             ret
+NoAI:                   ret
 
+;----------------------------------------------------------------------------------------------------------------------------------
 ; set angry if possible, if its an innocent then flag the space station to get angry
 MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check bit 5 of newb flags
                         JumpIfMemEqNusng ShipTypeAddr, ShipTypeStation, .SetNewbAngry
@@ -18,10 +47,14 @@ MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check 
 .SetNewbAngry:          call    SetShipHostile
                         ret
 
+;----------------------------------------------------------------------------------------------------------------------------------
 MissileDidHitUs:        ret ; TODO
 
+;----------------------------------------------------------------------------------------------------------------------------------
 PlayerHitByMissile:     ret; TODO , do hit set up blast radius etc
-
+;----------------------------------------------------------------------------------------------------------------------------------
+MissileHitShipA:        ret; TODO hit ship do explosion, check for near by and if player is near and missile type logic, e.g. AP or HE
+;----------------------------------------------------------------------------------------------------------------------------------
 SetStationAngry:        call    IsSpaceStationPresent                   ; only if present
                         ret     c
                         ld      a,(UbnKShipUnivBankNbr)                     ; save current bank
@@ -32,6 +65,7 @@ SetStationAngry:        call    IsSpaceStationPresent                   ; only i
                         MMUSelectUniverseA                              ;
                         ret
 
+;----------------------------------------------------------------------------------------------------------------------------------
 CheckMissileBlastInit:  ZeroA
                         ld      (CurrentMissileCheck),a
                         ld      hl,UBnKxlo                      ; Copy Blast Coordinates
@@ -44,6 +78,7 @@ CheckMissileBlastInit:  ZeroA
                         call    c, MissileDidHitUs              ; Then we get hit
                         ret
                         
+;----------------------------------------------------------------------------------------------------------------------------------
 CheckPointRange:        MACRO   ShipPos, ShipSign, MissilePos, MissileSign
                         ld      a,(MissilePos)                      ; check X Coord
                         ld      hl,(ShipSign)
@@ -118,10 +153,10 @@ MissileHitUsCheckPos:   ld      hl, (UBnKxlo)
                         ReturnIfAGTENusng    c                      ; return no carry if z far
 .ItsAHit:               SetCarryFlag:                               ; So must have hit
                         ret
-                        
+
 ;...................................................................                        
 ;... Now the tactics if current ship is the missile
-MissileLogic:           JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
+MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
 .CheckForECM:           JumpIfMemTrue ECMActive,.ECMIsActive
 .IsMissileHostile:      ld      a,(ShipNewBitsAddr)                 ; is missle attacking us?
                         and     ShipIsHostile
@@ -150,7 +185,112 @@ MissileLogic:           JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
                         ld      bc,3*3
                         ldir
                         ld a,iyl
-.CalculateMissileVector:;TODOcall    TacticsPosMinusTarget              ; calculate vector to target
+;--- calculatge VSSUB Vector from current position to target into matrix K3
+.CalculateMissileVector:ld      a,(UBnKMissileTarget)               ; get target ship slot number from UBnKMissileTarget
+                        MMUSelectShipARead                          ; MMU Seect page 0 to slot number
+.CalcMissileToTargetX:  ld      hl,(UBnKxlo)                        ; Note this needs to be 24 bit for space stations
+                        ld      de,(ZeroPageUBnKxlo)
+                        ld      a,(UBnKxsgn)
+                        ld      b,a
+                        ld      a,(ZeroPageUBnKxsgn)                     ; turn it negative so we can use add as subtract
+                        FlipSignBitA
+                        ld      c,a
+                        call    ADDHLDESignBC                       ;AHL = BHL + CDE
+                        ld      (TacticsVectorX),hl
+                        ld      (TacticsVectorX+2),a
+.CalcMissileToTargetY:  ld      hl,(UBnKylo)                        ; Note this needs to be 24 bit for space stations
+                        ld      de,(ZeroPageUBnKylo)
+                        ld      a,(UBnKysgn)
+                        ld      b,a
+                        ld      a,(ZeroPageUBnKysgn)                     ; turn it negative so we can use add as subtract
+                        FlipSignBitA
+                        ld      c,a
+                        call    ADDHLDESignBC                       ;AHL = BHL + CDE
+                        ld      (TacticsVectorY),hl
+                        ld      (TacticsVectorY+2),a
+.CalcMissileToTargetZ:  ld      hl,(UBnKzlo)                        ; Note this needs to be 24 bit for space stations
+                        ld      de,(ZeroPageUBnKzlo)
+                        ld      a,(UBnKzsgn)
+                        ld      b,a
+                        ld      a,(ZeroPageUBnKzsgn)                     ; turn it negative so we can use add as subtract
+                        FlipSignBitA
+                        ld      c,a
+                        call    ADDHLDESignBC                       ;AHL = BHL + CDE
+                        ld      (TacticsVectorZ),hl
+                        ld      (TacticsVectorZ+2),a
+ ; if or ABS all high bytes is <> 0
+.CheckDistance:         ld      hl,(UBnKxhi)
+                        ld      a,h
+                        ld      de,(UBnKyhi)
+                        or      d
+                        ld      bc,(UBnKzhi)
+                        or      b
+                        ClearSignBitA
+                        JumpIfNotZero       .FarAway
+                        or      l
+                        or      e
+                        or      c
+                        JumpIfNotZero       .FarAway
+.CloseMissileExplode:   ld      a,(UBnKMissileTarget) 
+                        jp      MissileHitShipA
+.FarAway:                                      
+                        ; then 
+                        ;   *far away
+                        ;   if target has ECM and enough energy to use it
+                        ;       then
+                        ;           if random < 16
+                        ;             then
+                        ;               fire ECM destroying missile
+                        ;       else 
+                        ;           normalise vector K3 into XX15
+                        ;           AX = nosev . XX15
+                        ;           CNT = A (high byte of dot product)
+                        ;           negate vector in XX15 so it points opposite direction
+                        ;           negate value of CNT so +ve if facing or -ve if facing same way
+                        ;           AX = roofv.XX15
+                        ;           SaveA
+                        ;           ships pitch counter = calculate teh shipt pitch counter (jsr nroll)
+                        ;           get roll counter from ship byte 29 (value = abs(byte 29 * 2) ,e. shift left                        
+                        ;           if roll counter < 32
+                        ;               AX = sidev . XX15
+                        ;               A = A xor pitch counter sigh
+                        ;               byte 29 = calcualte nroll to get ship pitch counter into
+                        ;           get back CNT
+                        ;           if CNT >= 0 AND CNT < CNT2 ** how is CNT2 set up?
+                        ;             then
+                        ;               Accelleration (byte 28) = 3
+                        ;               return
+                        ;           A = ABS(CNT)  
+                        ;          if |CNT| >=  18
+                        ;            then
+                        ;              ship accelleration = -2
+                        ;  ret
+                        
+                        
+                        
+
+                        ;       
+                        ; else 
+                        ;   *close enough for a detoniation
+                        ;   if target is a space station, set space station to trigger ECM and destroy missile (note that compromised station will not trigger ECM)
+                        ;   process missile hit object
+                        ;   work out if blast hit anythign else including us
+                        
+.ProcessMissileHit:     ld      a,(CurrentMissileCheck)
+                        ReturnIfAGTENusng UniverseSlotListSize  ; need to wait another loop
+.ActivateNewExplosion:  jp  CheckMissileBlastInit               ; initialise
+                        ; DUMMY RET get a free return by using jp
+.ECMIsActive:           call    UnivExplodeShip                 ; ECM detonates missile
+                        SetMemTrue  UBnKMissleHitToProcess      ; Enque an explosion
+                        jp      .ProcessMissileHit              ; lets see if we can enqueue now
+                        ; DUMMY RET get a free return as activenewexplosion does jp to init with a free ret
+
+
+TacticsVectorX:         DS 3
+TacticsVectorY:         DS 3
+TacticsVectorZ:         DS 3
+
+;TODOcall    TacticsPosMinusTarget              ; calculate vector to target
 ;;TODO                        check range
 ;;TODO                        if target has ecm then 7% chance it will active, reduce target energy (i.e. damage)
 ;;TODO                        else
@@ -188,15 +328,6 @@ MissileLogic:           JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
 ;                         end if
 ;                 end if
 ;         end if                     
-.ProcessMissileHit:     ld      a,(CurrentMissileCheck)
-                        ReturnIfAGTENusng UniverseSlotListSize  ; need to wait another loop
-.ActivateNewExplosion:  jp  CheckMissileBlastInit               ; initialise
-                        ; DUMMY RET get a free return by using jp
-.ECMIsActive:           call    UnivExplodeShip                 ; ECM detonates missile
-                        SetMemTrue  UBnKMissleHitToProcess      ; Enque an explosion
-                        jp      .ProcessMissileHit              ; lets see if we can enqueue now
-                        ; DUMMY RET get a free return as activenewexplosion does jp to init with a free ret
-
 
 
             ;            else if ship is angry at us

@@ -42,8 +42,9 @@ GalaxyDataAddr          equ $e000
 
 EXSDOSMMU0              equ MMU_SLOT_0_REGISTER
 MathsTablesMMU          equ MMU_SLOT_0_REGISTER
-EXSDOSMMU1              equ MMU_SLOT_1_REGISTER
+ShipReadMMU             equ MMU_SLOT_0_REGISTER
 DMACpySourceMMU		    equ	MMU_SLOT_0_REGISTER
+EXSDOSMMU1              equ MMU_SLOT_1_REGISTER
 SunMMU 		            equ MMU_SLOT_6_REGISTER
 PlanetMMU 		        equ MMU_SLOT_6_REGISTER
 UniverseMMU 		    equ MMU_SLOT_6_REGISTER

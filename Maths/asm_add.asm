@@ -1,3 +1,78 @@
+;; calcs HLB + DEC where B and C are signs
+;; result HL with A as sign
+;; special handling if result is zero forcign sign bit to be zero
+AHLEquBHLaddCDE:        ld      a,b
+                        xor     c
+                        and     SignOnly8Bit
+                        JumpIfNegative   .OppositeSigns
+.SameSigns:             ld      ixh,b                      ; ixh = b
+                        ClearSignBit b                      ; b = ABS b
+                        add     hl,de                      ; hl = hl + de
+                        ld      a,b                        ; a = b + c + carry
+                        adc     c                          ; 
+                        ld      b,a                        ; 
+                        ld      a,ixh                      ; 
+                        SignBitOnlyA                        ; 
+                        or      b                          ; 
+                        ret                                ; 
+.OppositeSigns:         ld      ixh,b
+                        ld      ixl,c
+                        ClearSignBit c                      ; c = ABS C
+                        ld      a,b
+                        ClearSignBitA
+                        sbc     c
+                        JumpIfNegative  .OppositeCDEgtBHL
+                        sbc     hl,de
+                        JumpIfNegative  .OppositeCDEgtBHL
+                        ld      b,a
+                        ld      a,ixh
+                        SignBitOnlyA                        ; 
+                        or      b                          ; 
+                        ret                                ; 
+.OppositeCDEgtBHL:      ex      de,hl
+                        ld      a,b
+                        ld      b,c
+                        ld      c,a
+                        jp      .OppositeSigns
+
+ADDHLDESignBC:          ld      a,b
+                        and     SignOnly8Bit
+                        xor     c                           ;if b sign and c sign were different then bit 7 of a will be 1 which means 
+                        JumpIfNegative ADDHLDEsBCOppSGN     ;Signs are opposite there fore we can subtract to get difference
+ADDHLDEsBCSameSigns:    ld      a,b
+                        or      c
+                        JumpIfNegative ADDHLDEsBCSameNeg    ; optimisation so we can just do simple add if both positive
+                        add     hl,de                       ; both positive so a will already be zero
+                        ret
+ADDHLDEsBCSameNeg:      add     hl,de
+                        ld      a,b
+                        or      c                           ; now set bit for negative value, we won't bother with overflow for now TODO
+                        ret
+ADDHLDEsBCOppSGN:       ClearCarryFlag
+                        sbc     hl,de
+                        jr      c,ADDHLDEsBCOppInvert
+ADDHLDEsBCOppSGNNoCarry: ld      a,b                        ; we got here so hl > de therefore we can just take hl's previous sign bit
+                        ret
+ADDHLDEsBCOppInvert:    NegHL                               ; if result was zero then set sign to zero (which doing h or l will give us for free)
+                        ld      a,b
+                        xor     SignOnly8Bit                ; flip sign bit
+                        ret   
+
+                        
+addhldesigned:          bit     7,h
+                        jr      nz,.noneghl
+                        call    negate16hl
+.noneghl:               bit     7,d
+                        jr      nz,.nonegde
+                        call    negate16de
+.nonegde:               add     hl,de                       ; do 2'd c add      
+                        xor     a                           ; assume positive
+                        bit     7,h
+                        ret     z                           ; if not set then can exit early
+                        call    negate16hl
+                        ld      a,$FF
+                        ret
+
 
 ; HL(2sc) = HL (signed) + A (unsigned), uses HL, DE, A
 HL2cEquHLSgnPlusAusgn:  ld      d,0

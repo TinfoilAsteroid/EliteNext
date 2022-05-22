@@ -28,8 +28,13 @@ MMUSelectLayer2: 	 MACRO
 					 ENDM					 
 					 
 MMUSelectResetUniv:  MACRO
-                     nextreg  ResetUniverseMMU, BankResetUniv
+                     nextreg ResetUniverseMMU, BankResetUniv
                      ENDM
+
+MMUSelectShipARead:  MACRO
+                     add    a,BankUNIVDATA0 
+                     nextreg ShipReadMMU,       a
+                     ENDM                     
 
 MMUSelectShipBank1:  MACRO
 					 nextreg ShipModelMMU,	    BankShipModels1

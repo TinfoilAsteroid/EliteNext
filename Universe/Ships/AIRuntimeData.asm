@@ -1,4 +1,5 @@
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
+StartOfShipRuntimeData      EQU $
 UBnKxlo                     DB  0                       ; INWK+0
 UBnKxhi                     DB  0                       ; there are hi medium low as some times these are 24 bit
 UBnKxsgn                    DB  0                       ; INWK+2
@@ -8,6 +9,16 @@ UBnKysgn                    DB  0                       ; INWK +5
 UBnKzlo                     DB  0                       ; INWK +6
 UBnKzhi                     DB  0                       ; INWK +7
 UBnKzsgn                    DB  0                       ; INWK +8
+;-Zero page for when we page data temporarily into page zero to read a second ship, e.g. missile tracking
+ZeroPageUBnKxlo             EQU UBnKxlo    - StartOfShipRuntimeData
+ZeroPageUBnKxhi             EQU UBnKxhi    - StartOfShipRuntimeData
+ZeroPageUBnKxsgn            EQU UBnKxsgn   - StartOfShipRuntimeData
+ZeroPageUBnKylo             EQU UBnKylo    - StartOfShipRuntimeData
+ZeroPageUBnKyhi             EQU UBnKyhi    - StartOfShipRuntimeData
+ZeroPageUBnKysgn            EQU UBnKysgn   - StartOfShipRuntimeData
+ZeroPageUBnKzlo             EQU UBnKzlo    - StartOfShipRuntimeData
+ZeroPageUBnKzhi             EQU UBnKzhi    - StartOfShipRuntimeData
+ZeroPageUBnKzsgn            EQU UBnKzsgn   - StartOfShipRuntimeData
 ;-Rotation Matrix of Ship----------------------------------------------------------------------------------------------------------
 ; Rotation data is stored as lohi, but only 15 bits with 16th bit being  a sign bit. Note this is NOT 2'c compliment
 ; Note they seem to have to be after camera position not quite found why yet, can only assume it does an iy or ix indexed copy? Bu oddly does not affect space station.
@@ -38,11 +49,18 @@ UBnKShipModelNbr            DB  0                       ; Ship Id with in the ba
 UBnKShipModeID              DB  0                       ; Absolute ship id
 ; -- Ship AI data
 UBnKMissleHitToProcess      DB  0                       ; This is used for enquing missle blasts as we can only do one missile at a time, could make it multi but neeed to smooth CPU usage
-UBnKMissileTarget           DB  0                       ; This is the bank number for the target from 0 to n if the missile is not hostile to us
+UBnKMissileTarget           DB  0                       ; This is the ship slot number for the target from 0 to n if the missile is not hostile to us
 UBnKspeed                   DB  0                       ; INWK +27
 UBnKAccel                   DB  0                       ; INWK +28
 UBnKRotXCounter             DB  0                       ; INWK +29
 UBnKRotZCounter             DB  0                       ; INWK +30
+UBnKRAT                     DB  0                       ; temporary for rotation magnitude or roll counter, for debugging state
+UBnKRAT2                    DB  0                       ; temporary for rotation threshold
+UBnKCNT                     DB  0                       ; temp for calculating roll and pitch
+UBnKCNT2                    DB  0                       ; roll threshold, max angle boynd ship will slow down
+univRAT                     DB  0               ; 99
+univRAT2                    DB  0               ; 9A
+univRAT2Val                 DB  0               ; 9A
 UBnKexplDsp                 DB  0                       ; INWK +31 clear exploding/display state|missiles
 UBnkDrawAllFaces            DB  0
 UBnkaiatkecm                DB  0                       ; INWK +32 ai_attack_univ_ecm i.e. AI type
