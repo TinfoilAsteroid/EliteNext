@@ -14,6 +14,7 @@ Coriolis:	            DB $00
                         DW CoriolisVertices
                         DB ShipTypeStation,0                        ; Type and Tactics                        
                         DB 0                                        ; can't anger arbitrarily needs to see innocent bystander shot
+                        DB $FF                                      ; will always have ECM
 CoriolisVertices:	    DB $A0, $00, $A0, $1F, $10, $62
                         DB $00, $A0, $A0, $1F, $20, $83
                         DB $A0, $00, $A0, $9F, $30, $74

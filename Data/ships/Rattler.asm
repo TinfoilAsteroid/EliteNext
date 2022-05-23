@@ -14,6 +14,7 @@ Rattler:	            DB $02
                         DW RattlerVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $90                      ; chance of ECM module
 
 
 RattlerVertices:	    DB $00, $00, $3C, $1F, $89, $23

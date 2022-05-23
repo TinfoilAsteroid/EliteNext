@@ -14,6 +14,7 @@ Thargon:	            DB $F0
                         DW ThargonVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $00                      ; chance of ECM module
 
 	
 ThargonVertices:	    DB $09, $00, $28, $9F, $01, $55

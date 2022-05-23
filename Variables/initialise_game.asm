@@ -72,7 +72,7 @@ game_reset:									;.RESET	\ -> &3682 \ New player ship, called by TITLE
 	xor		a
 	ld		b,7
 	ld		hl, BETA
-.ClearBetaLoop:								; Clears out BETA, BET1, XC, YC, both HyperCount, ECMActive
+.ClearBetaLoop:								; Clears out BETA, BET1, XC, YC, both HyperCount, ECMCountDown
 	ld		(hl),a							; These must be defined continguous
 	inc		hl
 	djnz	.ClearBetaLoop
@@ -111,10 +111,8 @@ Reset2:										; .RES2	\ -> &3697  \ Reset2
 .SpaceStationSetup:	
 	ld		a,(SpaceStationPresent)			; \ space station present, 0 is SUN.
 	cp		0
-	call	nz,.SpaceStationBulb			;  SPBLB  \ space station bulb
-	ld		a,(ECMActive)					;  E.C.M. active
-	cp		0
-	call	nz,.NoResetECMSound				; call sound reset if needed
+	call	nz,.SpaceStationBulb			;  SPBLB  \ space station bulb	
+    CallIfMemNotZero ECMCountDown, .NoResetECMSound ;  E.C.M. active call sound reset if needed
 .ResetScanner:
 ; "TODO call	WipeScanner"						; WPSHPS \ wipe ships on scanner
 ; "TODO call	ZeroData"						; zero-out &311-&34B

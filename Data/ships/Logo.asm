@@ -14,6 +14,7 @@ Logo:	                DB $00
                         DW LogoVertices
                         DB ShipTypeText,0                      ; Type and Tactics
                         DB 0
+                        DB $FF                      ; chance of ECM module
 
 LogoVertices:	DB $00, $09, $37, $5F, $00, $00
 	DB $0A, $09, $1E, $DF, $00, $00

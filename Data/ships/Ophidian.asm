@@ -14,6 +14,7 @@ Ophidian:	            DB $02
                         DW OphidianVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $C0                      ; chance of ECM module
                         
 OphidianVertices:	    DB $14, $00, $46, $9F, $68, $02 ; 01
                         DB $14, $00, $46, $1F, $67, $01 ; 02

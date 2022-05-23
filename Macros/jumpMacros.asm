@@ -270,7 +270,12 @@ JumpIfAIsNotZero:       MACRO target
                         and     a
                         jp	    nz,target
                         ENDM
-
+                        
+JumpIfMemIsNotZero:     MACRO value, target
+                        ld      a,(value)
+                        and     a
+                        jp	    nz,target
+                        ENDM
 IfResultZeroGoto:	    MACRO target
                         jp	z,target
                         ENDM

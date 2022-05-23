@@ -21,7 +21,8 @@ VerticiesAddyOffset     equ 21
 ShipTypeOffset          equ 23
 ShipNewBitsOffset       equ 24
 ShipAIFlagsOffset       equ 25
-ShipDataLength          equ ShipAIFlagsOffset+1
+ShipECMFittedChanceOffset     equ 26
+ShipDataLength          equ ShipECMFittedChanceOffset+1
 
 CobraTablePointer       equ 43
 ;29 faulty

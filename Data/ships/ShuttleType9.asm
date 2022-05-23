@@ -14,6 +14,7 @@ ShuttleType9:	            DB $0F
                             DW ShuttleType9Vertices
 	                        DB 0,0                      ; Type and Tactics
                             DB 0
+                            DB $80                      ; chance of ECM module
 
 
 ShuttleType9Vertices:	DB $00, $11, $17, $5F, $FF, $FF ; 01

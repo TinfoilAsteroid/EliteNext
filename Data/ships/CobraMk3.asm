@@ -19,6 +19,7 @@ CobraMk3    		    DB $03
                         DB 0,0                      ; Type and Tactics                        
                         DB ShipCanAnger
                     ; missiles = 3             
+                        DB $70                      ; chance of ECM module
 CobraMk3Vertices	    DB $20,$00,$4C,$1F,$FF,$FF 
                         DB $20,$00,$4C,$9F,$FF,$FF 
                         DB $00,$1A,$18,$1F,$FF,$FF 

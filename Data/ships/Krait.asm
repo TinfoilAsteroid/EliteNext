@@ -15,6 +15,7 @@ Krait:                  DB $01
                         DW KraitVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $D0                      ; chance of ECM module
 KraitVertices:          DB $00, $00, $60, $1F, $01, $23 
                         DB $00, $12, $30, $3F, $03, $45 
                         DB $00, $12, $30, $7F, $12, $45 

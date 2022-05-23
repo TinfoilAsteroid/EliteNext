@@ -2,6 +2,15 @@
 ShipAIJumpTable:      DW    NormalAI,   MissileAI,  StationAI,  JunkAI,     ScoopableAI
                       DW    ThargoidAI, NoAI,       NoAI,       NoAI,       NoAI
 
+
+ZeroBankFireECM:        ld      a,ECMCounterMax                 ; set ECM time
+                        ld      (ZeroPageUBnKECMCountDown),a            ;
+                        ld      a,(ECMCountDown)
+                        ReturnIfALTNusng ECMCounterMax
+                        ld      a,ECMCounterMax
+                        ld      (ECMCountDown),a
+                        ret
+
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Main entry point to tactics. Every time it will do a a tidy and the do AI logic
 UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
@@ -157,7 +166,7 @@ MissileHitUsCheckPos:   ld      hl, (UBnKxlo)
 ;...................................................................                        
 ;... Now the tactics if current ship is the missile
 MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
-.CheckForECM:           JumpIfMemTrue ECMActive,.ECMIsActive
+.CheckForECM:           JumpIfMemNotZero ECMCountDown,.ECMIsActive        ; If ECM is running then kill the missile
 .IsMissileHostile:      ld      a,(ShipNewBitsAddr)                 ; is missle attacking us?
                         and     ShipIsHostile
                         JumpIfNotZero .MissileTargetingShip
@@ -189,9 +198,11 @@ MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
 .CalculateMissileVector:ld      a,(UBnKMissileTarget)               ; get target ship slot number from UBnKMissileTarget
                         MMUSelectShipARead                          ; MMU Seect page 0 to slot number
 .CalcMissileToTargetX:  ld      hl,(UBnKxlo)                        ; Note this needs to be 24 bit for space stations
+                        DISPLAY "Expected lo read on ZeroPageUBnKxlo here"
                         ld      de,(ZeroPageUBnKxlo)
                         ld      a,(UBnKxsgn)
                         ld      b,a
+                        DISPLAY "Expected lo read on ZeroPageUBnKxsgn here"
                         ld      a,(ZeroPageUBnKxsgn)                     ; turn it negative so we can use add as subtract
                         FlipSignBitA
                         ld      c,a
@@ -199,9 +210,11 @@ MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
                         ld      (TacticsVectorX),hl
                         ld      (TacticsVectorX+2),a
 .CalcMissileToTargetY:  ld      hl,(UBnKylo)                        ; Note this needs to be 24 bit for space stations
+                        DISPLAY "Expected lo read on ZeroPageUBnKylo here"
                         ld      de,(ZeroPageUBnKylo)
                         ld      a,(UBnKysgn)
                         ld      b,a
+                        DISPLAY "Expected lo read on ZeroPageUBnKysgn here"
                         ld      a,(ZeroPageUBnKysgn)                     ; turn it negative so we can use add as subtract
                         FlipSignBitA
                         ld      c,a
@@ -209,9 +222,11 @@ MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
                         ld      (TacticsVectorY),hl
                         ld      (TacticsVectorY+2),a
 .CalcMissileToTargetZ:  ld      hl,(UBnKzlo)                        ; Note this needs to be 24 bit for space stations
+                        DISPLAY "Expected lo read on ZeroPageUBnKzlo here"
                         ld      de,(ZeroPageUBnKzlo)
                         ld      a,(UBnKzsgn)
                         ld      b,a
+                        DISPLAY "Expected lo read on ZeroPageUBnKzsgn here"
                         ld      a,(ZeroPageUBnKzsgn)                     ; turn it negative so we can use add as subtract
                         FlipSignBitA
                         ld      c,a
@@ -233,16 +248,19 @@ MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
                         JumpIfNotZero       .FarAway
 .CloseMissileExplode:   ld      a,(UBnKMissileTarget) 
                         jp      MissileHitShipA
-.FarAway:                                      
-                        ; then 
-                        ;   *far away
-                        ;   if target has ECM and enough energy to use it
-                        ;       then
-                        ;           if random < 16
-                        ;             then
-                        ;               fire ECM destroying missile
-                        ;       else 
-                        ;           normalise vector K3 into XX15
+;   *far away
+                        DISPLAY "Expected lo read macro on ZeroPageUBnKECMFitted here"
+.FarAway:               JumpIfMemFalse      ZeroPageUBnKECMFitted, .NoECM                   ; if target has ECM and enough energy to use it
+                        DISPLAY "Expected lo read macro on ZeroPageUBnKEnergy here"
+                        JumpIfMemLTNusng    ZeroPageUBnKEnergy,    ECMCounterMax, .NoECM    ; .
+                        DISPLAY "Expected lo read macro on ZeroPageUBnKECMCountDown here"
+                        JumpIfMemIsNotZero   ZeroPageUBnKECMCountDown, .NoECM                ; . ECM is already active
+.TestIfUsingECM:        ld      a,(RandomSeed2)                                             ; if random < 16
+                        JumpIfAGTENusng     16, .UpdateMissilePos                           ;   then fire ECM destroying missile
+.ZeroPageFireECM:       jp      ZeroBankFireECM                                             ; with an implicit return
+;                       implicit ret
+.NoECM:
+.UpdateMissilePos:      ;           normalise vector K3 into XX15
                         ;           AX = nosev . XX15
                         ;           CNT = A (high byte of dot product)
                         ;           negate vector in XX15 so it points opposite direction
@@ -264,7 +282,7 @@ MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
                         ;          if |CNT| >=  18
                         ;            then
                         ;              ship accelleration = -2
-                        ;  ret
+                        ret
                         
                         
                         

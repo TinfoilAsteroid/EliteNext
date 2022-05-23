@@ -14,6 +14,7 @@ Worm:	                DB $00
                         DW WormVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $B0                      ; chance of ECM module
 WormVertices:	        DB $0A, $0A, $23, $5F, $02, $77
                         DB $0A, $0A, $23, $DF, $03, $77
                         DB $05, $06, $0F, $1F, $01, $24

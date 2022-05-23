@@ -71,14 +71,16 @@ ShipAIDisabled          equ Bit7Clear
 ShipAIEnabledBitNbr     equ 7
 ShipExploding           equ Bit5Only
 ShipExplodingBitNbr     equ 5
+; Equipment Defaults
+ECMCounterMax           equ $80
 ; Main Loop State
-StatePlayerDocked    equ $FF
-StateCompletedLaunch equ $FD
-StateInTransition    equ $FE
-StateHJumping        equ $FC
-StateHEntering       equ $FB
-StateCompletedHJump  equ $FA
-StateNormal          equ 0
+StatePlayerDocked       equ $FF
+StateCompletedLaunch    equ $FD
+StateInTransition       equ $FE
+StateHJumping           equ $FC
+StateHEntering          equ $FB
+StateCompletedHJump     equ $FA
+StateNormal             equ 0
 ; Missile Stage flags , $8x = locked to ship id x, $0x = fire at ship id x requested
 StageMissileNoTarget equ $FF
 StageMissileTargeting equ $FE

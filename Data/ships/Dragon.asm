@@ -14,6 +14,7 @@ Dragon:	                DB $00
                         DW DragonVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $B0                      ; chance of ECM module
 DragonVertices:	        DB $00, $00, $FA, $1F, $6B, $05
                         DB $D8, $00, $7C, $1F, $67, $01
                         DB $D8, $00, $7C, $3F, $78, $12

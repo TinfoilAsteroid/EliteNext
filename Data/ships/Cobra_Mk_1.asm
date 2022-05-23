@@ -14,6 +14,7 @@ Cobra_Mk_1:	            DB $03
                         DW Cobra_Mk_1Vertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $30                      ; chance of ECM module
 Cobra_Mk_1Vertices:	    DB $12, $01, $32, $DF, $01, $23
                         DB $12, $01, $32, $5F, $01, $45
                         DB $42, $00, $07, $9F, $23, $88

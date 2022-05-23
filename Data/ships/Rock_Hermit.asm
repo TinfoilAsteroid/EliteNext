@@ -14,6 +14,7 @@ Rock_Hermit:	        DB $07
                         DW Rock_HermitVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $30                      ; chance of ECM module
 
 	
 Rock_HermitVertices:	DB $00, $50, $00, $1F, $FF, $FF

@@ -118,6 +118,7 @@ VerticesAddyAddr            equ UBnkHullCopy + VerticiesAddyOffset
 ShipTypeAddr                equ UBnkHullCopy + ShipTypeOffset       
 ShipNewBitsAddr             equ UBnkHullCopy + ShipNewBitsOffset    
 ShipAIFlagsAddr             equ UBnkHullCopy + ShipAIFlagsOffset
+ShipECMFittedChanceAddr     equ UBnkHullCopy + ShipECMFittedChanceOffset
 ; Static Ship Data. This is copied in when creating the universe object
 XX0                         equ UBnkHullCopy        ; general hull index pointer TODO find biggest ship design
 
@@ -207,6 +208,28 @@ ResetUbnkPosition:      ld      hl,UBnKxlo
                         inc     hl
                         djnz    .zeroLoop
                         ret
+
+FireECM:                ld      a,ECMCounterMax                 ; set ECM time
+                        ld      (UBnKECMCountDown),a            ;
+                        ld      a,(ECMCountDown)
+                        ReturnIfALTNusng ECMCounterMax
+                        ld      a,ECMCounterMax
+                        ld      (ECMCountDown),a
+                        ret
+
+; A ship normally needs enough energy to fire ECM but if its shot then
+; it may be too low, in which case the ECM does a saftey shutdown and returns 1 energy
+; plus a 50% chance it will blow the ECM up
+UpdateECM:              ld      a,(UBnKECMCountDown)
+                        ReturnIfAIsZero
+                        dec     a
+                        ld      (UBnKECMCountDown),a
+                        ld      hl,UBnKEnergy
+                        dec     (hl)
+                        ret     p
+.ExhaustedEnergy:       call    UnivExplodeShip                 ; if it ran out of energy it was as it was also shot or collided as it checks in advance. Main ECM loop will continue as a compromise as multiple ships can fire ECM simultaneously
+                        ret
+                        
 
 ; --------------------------------------------------------------                        
 ; This sets the position of the current ship if its a player launched missile
@@ -364,6 +387,7 @@ UnivInitRuntime:        ld      (UbnKShipUnivBankNbr),a     ; actual bank nmber 
                         ld      bc,UBnKRuntimeSize
                         ld      hl,UBnKStartOfRuntimeData
                         ZeroA
+                        ld      (UBnKECMCountDown),a
 .InitLoop:              ld      (hl),a
                         inc     hl
                         djnz    .InitLoop            
@@ -376,6 +400,17 @@ UnivInitRuntime:        ld      (UbnKShipUnivBankNbr),a     ; actual bank nmber 
                         ld      (UBnkShipModelBank),a        ; this will mostly be debugging info
                         ld      a,b                          ; this will mostly be debugging info
                         ld      (UBnKShipModelNbr),a         ; this will mostly be debugging info
+                        ld      a,(ShipAIFlagsAddr)          ; get laser and missile details
+                        and     %00000111                    ; mask for missiles
+                        ld      (UBnKMissilesLeft),a
+                        ld      a,(ShipECMFittedChanceOffset)
+                        ld      b,a
+.FetchLatestRandom:     ld      a,(RandomSeed3)              
+                        JumpIfALTNusng b, .ECMFitted
+.ECMNotFitted:          SetMemFalse UBnKECMFitted
+                        jp      .DoneECM
+.ECMFitted:             SetMemTrue  UBnKECMFitted
+.DoneECM:               ; TODO set up laser power
                         ret
 
 

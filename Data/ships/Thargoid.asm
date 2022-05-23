@@ -14,6 +14,7 @@ Thargoid:	            DB $00
                         DW ThargoidVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $FF                      ; chance of ECM module
 
 ThargoidVertices:	    DB $20, $30, $30, $5F, $40, $88 ; 01
                         DB $20, $44, $00, $5F, $10, $44 ; 02

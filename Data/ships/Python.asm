@@ -15,6 +15,7 @@ Python:                 DB $05
                         DW PythonVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $E0                      ; chance of ECM module
 
 PythonVertices:         DB $00, $00, $E0, $1F, $10, $32 
                         DB $00, $30, $30, $1E, $10, $54 

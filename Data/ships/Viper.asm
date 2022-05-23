@@ -34,6 +34,7 @@ Viper:                  DB $00
                         DW ViperVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $FF                      ; chance of ECM module
                         
 ViperVertices:          DB $00, $00, $48, $1F, $21, $43 
                         DB $00, $10, $18, $1E, $10, $22 

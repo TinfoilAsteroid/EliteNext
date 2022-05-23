@@ -14,6 +14,7 @@ Asp_Mk_2:	            DB $00
                         DW Asp_Mk_2Vertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $80                      ; chance of ECM module
 Asp_Mk_2Vertices:	    DB $00, $12, $00, $56, $01, $22 ;01
                         DB $00, $09, $2D, $7F, $12, $BB ;02
                         DB $2B, $00, $2D, $3F, $16, $BB ;03

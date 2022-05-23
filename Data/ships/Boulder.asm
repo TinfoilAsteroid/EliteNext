@@ -14,6 +14,7 @@ Boulder:	            DB $00
                         DW BoulderVertices
                         DB ShipTypeJunk,0                      ; Type and Tactics  its only junk for spawing logic                     
                         DB 0
+                        DB $A0                      ; chance of ECM module
 BoulderVertices:	    DB $12, $25, $0B, $BF, $01, $59
                         DB $1E, $07, $0C, $1F, $12, $56
                         DB $1C, $07, $0C, $7F, $23, $67

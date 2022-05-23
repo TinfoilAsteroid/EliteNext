@@ -14,6 +14,7 @@ Gecko:	                DB $00
                         DW GeckoVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $60                      ; chance of ECM module
 GeckoVertices:	        DB $0A, $04, $2F, $DF, $03, $45
                         DB $0A, $04, $2F, $5F, $01, $23
                         DB $10, $08, $17, $BF, $05, $67

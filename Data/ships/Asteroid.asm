@@ -14,6 +14,7 @@ Asteroid:	            DB $00
                         DW AsteroidVertices
                         DB ShipTypeJunk,0                      ; Type and Tactics
                         DB 0
+                        DB $00                      ; chance of ECM module
 AsteroidVertices:	    DB $00, $50, $00, $1F, $FF, $FF ;01
                         DB $50, $0A, $00, $DF, $FF, $FF ;02
                         DB $00, $50, $00, $5F, $FF, $FF ;03

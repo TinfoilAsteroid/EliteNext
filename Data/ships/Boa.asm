@@ -14,6 +14,7 @@ Boa:	                DB $05
                         DW BoaVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $A0                      ; chance of ECM module
 BoaVertices:	        DB $00, $00, $5D, $1F, $FF, $FF ; 01
                         DB $00, $28, $57, $38, $02, $33 ; 02
                         DB $26, $19, $63, $78, $01, $44 ; 03

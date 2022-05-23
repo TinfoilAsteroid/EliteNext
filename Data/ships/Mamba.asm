@@ -14,6 +14,7 @@ Mamba:	                DB $01
                         DW MambaVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $E0                      ; chance of ECM module
 
 MambaVertices:	DB $00, $00, $40, $1F, $10, $32
                 DB $40, $08, $20, $FF, $20, $44

@@ -14,6 +14,7 @@ Anaconda:	            DB $07
                         DW AnacondaVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $D0                      ; chance of ECM module
 AnacondaVertices:	    DB $00, $07, $3A, $3E, $01, $55 ;01
                         DB $2B, $0D, $25, $FE, $01, $22 ;02
                         DB $1A, $2F, $03, $FE, $02, $33 ;03

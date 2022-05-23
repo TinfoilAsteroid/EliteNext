@@ -14,6 +14,7 @@ Plate:	                DB $80
                         DW PlateVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $00                      ; chance of ECM module
 
 	
 PlateVertices:	        DB $0F, $16, $09, $FF, $FF, $FF

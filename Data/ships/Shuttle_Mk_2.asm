@@ -14,6 +14,7 @@ Shuttle_Mk_2:	        DB $0F
                         DW Shuttle_Mk_2Vertices
                         DB 0,0                      ; Type and Tactics
                         DB 0
+                        DB $80                      ; chance of ECM module
 
 	
 Shuttle_Mk_2Vertices:	DB $00, $00, $28, $1F, $23, $01

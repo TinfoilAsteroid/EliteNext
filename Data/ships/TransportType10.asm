@@ -14,6 +14,7 @@ TransportType10:	    DB $00
                         DW TransportType10Vertices
                         DB 0,0                      ; Type and Tactics
                         DB 0
+                        DB $FF                      ; chance of ECM module
 
 TransportType10Vertices:DB $00, $0A, $1A, $3F, $06, $77     ;01
                         DB $19, $04, $1A, $BF, $01, $77     ;02

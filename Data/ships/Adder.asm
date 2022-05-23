@@ -14,6 +14,7 @@ Adder:	                DB $00
                         DW AdderVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $80                      ; chance of ECM module
 AdderVertices:	        DB $12, $00, $28, $9F, $01, $BC     ;01
                         DB $12, $00, $28, $1F, $01, $23     ;02
                         DB $1E, $00, $18, $3F, $23, $45     ;03

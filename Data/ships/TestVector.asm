@@ -14,6 +14,7 @@ TestVector:             DB $03
                         DW TestVectorVertices
                         DB ShipTypeDebug,0                      ; Type and Tactics
                         DB 0
+                        DB $00                      ; chance of ECM module
 
 TestVectorVertices	    DB $00,$40,$00,$1F,$00,$00 
                         DB $00,$20,$00,$1F,$00,$00 

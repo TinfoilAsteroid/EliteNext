@@ -14,6 +14,7 @@ Splinter:	            DB $B0
                         DW SplinterVertices
                         DB 0,0                      ; Type and Tactics
                         DB 0
+                        DB $00                      ; chance of ECM module
 
 SplinterVertices:	    DB $18, $19, $10, $DF, $12, $33
                         DB $00, $0C, $0A, $3F, $02, $33

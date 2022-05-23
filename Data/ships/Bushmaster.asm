@@ -17,6 +17,7 @@ Bushmaster:	            DB $00                          ; 00 scoop debris
                         DW BushmasterVertices           ; 21 Verticies adddress
                         DB 0,0                          ; 23 type, new bits
                         DB ShipCanAnger                 ; 25 ai flags
+                        DB $70                          ; chance of ECM module
 BushmasterVertices:	    DB $00, $00, $3C, $1F, $23, $01  ; 01
                         DB $32, $00, $14, $1F, $57, $13  ; 02
                         DB $32, $00, $14, $9F, $46, $02  ; 03

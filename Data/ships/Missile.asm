@@ -14,6 +14,7 @@ Missile:	            DB $00
                         DW MissileVertices
                         DB ShipTypeMissile,0                      ; Type and Tactics
                         DB 0
+                        DB $00                      ; chance of ECM module
 
 MissileVertices:	DB $00, $00, $44, $1F, $10, $32
                     DB $08, $08, $24, $5F, $21, $54

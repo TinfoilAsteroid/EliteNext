@@ -17,6 +17,8 @@ UpdateUniverseObjects:  xor     a
 .CheckExploding:        ld      a,(UBnKexplDsp)                                 ; is it destroyed
                         and     %10100000                                       ; or exploding
                         jp      nz,.ProcessedUniverseSlot                       ; then no action
+.CheckIfMissile:        JumpIfMemEqNusng ShipTypeAddr, ShipTypeMissile, .CollisionDone ; Missiles don't have ECM and do collision checks on their tactics phase
+.ProcessECM:            call    UpdateECM                                       ; Update ECM Counters         
 .CheckIfClose:          ld      hl,(UBnKxlo)                                    ; chigh byte check or just too far away
                         ld      de,(UBnKylo)                                    ; .
                         ld      bc,(UBnKzlo)                                    ; .

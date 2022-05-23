@@ -73,8 +73,7 @@ BET1MAXD                DB  -31             ; max dive
 XC						DB	0               ; 2C
 YC						DB 	0               ; 2D
 ;... ECM logic. If another ship adds ECM then we just set the loop A and B to starting values so they overlap
-ECMActive				DB 	0				; 30		ECM Active flag
-ECMLoopA                DB  0
+ECMCountDown            DB  0
 ECMLoopB                DB  0
 JSTX                    DW  0               ;           Joystick analog value
 ALPHA					DB	0				; 8D        Alpha with bit 7 sign

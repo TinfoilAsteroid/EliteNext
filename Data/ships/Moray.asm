@@ -14,6 +14,7 @@ Moray:	                DB $01
                         DW MorayVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $C0                      ; chance of ECM module
                         
 MorayVertices:	        DB $0F, $00, $41, $1F, $02, $78
                         DB $0F, $00, $41, $9F, $01, $67

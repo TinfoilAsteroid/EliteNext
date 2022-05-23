@@ -14,6 +14,7 @@ Monitor:	            DB $04
                         DW MonitorVertices
                         DB 0,0                      ; Type and Tactics
                         DB ShipCanAnger
+                        DB $40                      ; chance of ECM module
 
 MonitorVertices:	    DB $00, $0A, $8C, $1F, $FF, $FF
                         DB $14, $28, $14, $3F, $23, $01

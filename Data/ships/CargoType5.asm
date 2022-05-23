@@ -40,6 +40,7 @@ CargoType5              DB $00
                         DB ShipTypeScoopable        ; Type
                         DB 0                        ; Tactics
                         DB 0
+                        DB $0                      ; chance of ECM module
 ; So cargo is               Edge offset $0050  Face Offset $008C, Verices will alwys be +20, LineMax 31 -> 4  EdgeCnt 15  VertexCnt 60 -> 10     FaceCn 28 -> 7
 CargoType5Vertices		DB $18,$10,$00,$1F,$10,$55 	; 60 bytes in total for data
                         DB $18,$05,$0F,$1F,$10,$22 

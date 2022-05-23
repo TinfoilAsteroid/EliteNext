@@ -18,6 +18,7 @@ Constrictor:    	    DB $F3
                         DB 0,0                      ; Type and Tactics                        
                     ; missiles = 3             
                         DB ShipCanAnger
+                        DB $FF                      ; chance of ECM module
 ConstrictorVertices     DB $14, $07, $50, $5F, $02, $99 
                         DB $14, $07, $50, $DF, $01, $99 
                         DB $36, $07, $28, $DF, $14, $99 

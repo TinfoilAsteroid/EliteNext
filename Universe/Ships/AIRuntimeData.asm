@@ -49,7 +49,7 @@ UBnKShipModelNbr            DB  0                       ; Ship Id with in the ba
 UBnKShipModeID              DB  0                       ; Absolute ship id
 ; -- Ship AI data
 UBnKMissleHitToProcess      DB  0                       ; This is used for enquing missle blasts as we can only do one missile at a time, could make it multi but neeed to smooth CPU usage
-UBnKMissileTarget           DB  0                       ; This is the ship slot number for the target from 0 to n if the missile is not hostile to us
+UBnKMissileTarget           DB  0                       ; This is the ship slot number for the target from 0 to n if the missile is not hostile to us, if the target is $FF then its us
 UBnKspeed                   DB  0                       ; INWK +27
 UBnKAccel                   DB  0                       ; INWK +28
 UBnKRotXCounter             DB  0                       ; INWK +29
@@ -68,6 +68,12 @@ UBnKSpawnObject             DB  0
 UBnkCam0yLo                 DB  0                       ; INWK +33 ????
 UBnkCam0yHi                 DB  0                       ; INWK +34?????
 UBnKEnergy                  DB  0                       ; INWK +35
+UBnKECMCountDown            DB  0                       ; counts down ECM usage if activated reducing energy too in update loop
+UBnKECMFitted               DB  0                       ; Does ship have ECM, true false
+ZeroPageUBnKEnergy          EQU UBnKEnergy    - StartOfShipRuntimeData
+ZeroPageUBnKECMCountDown    EQU ECMCountDown  - StartOfShipRuntimeData
+ZeroPageUBnKECMFitted       EQU UBnKECMFitted - StartOfShipRuntimeData
+UBnKMissilesLeft            DB  0
 UBnKCloudCounter            DB  0                       ; cloud pixels
 UBnKCloudRadius             DB  0                       ; cloud pixels
 UBnKRuntimeSize             EQU $-UBnKStartOfRuntimeData
@@ -92,7 +98,7 @@ UBnKRuntimeSize             EQU $-UBnKStartOfRuntimeData
 ; 3 -                   Display state - Plot as a Dot
 ; 2 -                   Nbr of Missiles bit 2
 ; 1 -                   Nbr of Missiles bit 1
-; 0 -                   Nbr of Missiles bit 0
+; 0 -                   ECM present flag
 ; ShipNewBitsAddr (in blueprint)
 ;Bit	                Description
 ;#0	Trader flag         * 0 = not a trader  * 1 = trader

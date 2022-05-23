@@ -106,8 +106,7 @@ LockMissileToA:         MACRO
                         
 ClearECM:               MACRO   
                         xor     a
-                        ld      (ECMLoopA),a
-                        ld      (ECMLoopB),a
+                        ld      (ECMCountDown),a
                         ENDM
                         
 ChargeEnergyAndShields: MACRO
