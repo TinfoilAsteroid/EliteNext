@@ -1,4 +1,4 @@
-;; calcs HLB + DEC where B and C are signs
+;; calcs BHB + CDE where B and C are signs and may be 24 bit
 ;; result HL with A as sign
 ;; special handling if result is zero forcign sign bit to be zero
 AHLEquBHLaddCDE:        ld      a,b
@@ -35,6 +35,7 @@ AHLEquBHLaddCDE:        ld      a,b
                         ld      c,a
                         jp      .OppositeSigns
 
+                        
 ADDHLDESignBC:          ld      a,b
                         and     SignOnly8Bit
                         xor     c                           ;if b sign and c sign were different then bit 7 of a will be 1 which means 

@@ -50,7 +50,7 @@ UBnKShipModeID              DB  0                       ; Absolute ship id
 ; -- Ship AI data
 UBnKMissleHitToProcess      DB  0                       ; This is used for enquing missle blasts as we can only do one missile at a time, could make it multi but neeed to smooth CPU usage
 UBnKMissileTarget           DB  0                       ; This is the ship slot number for the target from 0 to n if the missile is not hostile to us, if the target is $FF then its us
-UBnKspeed                   DB  0                       ; INWK +27
+UBnKSpeed                   DB  0                       ; INWK +27
 UBnKAccel                   DB  0                       ; INWK +28
 UBnKRotXCounter             DB  0                       ; INWK +29
 UBnKRotZCounter             DB  0                       ; INWK +30

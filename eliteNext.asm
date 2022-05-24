@@ -1047,8 +1047,8 @@ GALAXYDATABlock7         DB $FF
                         INCLUDE "./Tables/antilogtable.asm"
                         INCLUDE "./Tables/logtable.asm"
 
-
-
+    
+                        DISPLAY "Currrently 9 warnings of low memory reads, if warning count does not match this then its a failure"
     SAVENEX OPEN "EliteN.nex", $8000 , $7F00
     SAVENEX CFG  0,0,0,1
     SAVENEX AUTO

@@ -156,12 +156,12 @@ RandomUnivPitchAndRoll: MACRO
 RandomUnivSpeed:        MACRO
                         call    doRandom
                         and     31
-                        ld      (UBnKspeed),a
+                        ld      (UBnKSpeed),a
                         ENDM
                         
 MaxUnivSpeed:           MACRO
                         ld      a,31
-                        ld      (UBnKspeed),a
+                        ld      (UBnKSpeed),a
                         ENDM
                         
 ZeroUnivAccelleration:  MACRO
@@ -230,6 +230,24 @@ UpdateECM:              ld      a,(UBnKECMCountDown)
 .ExhaustedEnergy:       call    UnivExplodeShip                 ; if it ran out of energy it was as it was also shot or collided as it checks in advance. Main ECM loop will continue as a compromise as multiple ships can fire ECM simultaneously
                         ret
                         
+UpdateSpeedAndPitch:    ld      a,(UBnKAccel)
+                        JumpIfAIsZero .SkipAccelleration
+                        ld      b,a
+                        ld      a,(UBnKSpeed)
+                        ClearCarryFlag
+                        adc     a,b
+                        JumpIfPositive  .DoneAccelleration
+.SpeedNegative:         ZeroA
+.DoneAccelleration:     ld      b,a
+                        ld      a,(SpeedAddr)
+                        JumpIfAGTENusng b, .SpeedInLimits
+                        ld      b,a
+.SpeedInLimits:         ld      a,b
+                        ld      (UBnKSpeed),a
+                        ZeroA
+                        ld      (UBnKAccel),a
+.SkipAccelleration:     ; handle roll and pitch rates                     
+                        ret
 
 ; --------------------------------------------------------------                        
 ; This sets the position of the current ship if its a player launched missile
@@ -1525,6 +1543,7 @@ EyeStoreYPoint:                                    ; also from LL62, XX3 node he
 ; ---------------------------------------------------------------------------------------------------------------------------------    
             INCLUDE "./Universe/Ships/ApplyMyRollAndPitch.asm"
             INCLUDE "./Universe/Ships/ApplyShipRollAndPitch.asm"
+            INCLUDE "./Universe/Ships/ApplyShipSpeed.asm"
             INCLUDE "./ModelRender/DrawLines.asm"
 ; ---------------------------------------------------------------------------------------------------------------------------------    
 

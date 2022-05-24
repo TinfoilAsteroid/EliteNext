@@ -117,7 +117,11 @@ AHLequHLmulE:           ld d,h                      ; xh
                         adc a,0
                         ret
 
-
+HLE0quH0mulE:           ld      d,h                 ; .
+                        ld      h,e                 ; .
+                        mul     de                  ; de = xh * yl
+                        ex      de,hl
+                        ret
 
    ; multiplication of two 16-bit numbers into a 32-bit product
    ;

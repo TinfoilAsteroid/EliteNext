@@ -11,8 +11,11 @@ UpdateUniverseObjects:  xor     a
                         jp      z,.ProcessedUniverseSlot            
 .UniverseObjectFound:   ld      a,d                                             ; Get back Universe slot as we want it
                         MMUSelectUniverseA                                      ; and we apply roll and pitch
-                        call    ApplyMyRollAndPitch
+                        call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
                         call    ApplyShipRollAndPitch
+                        call    ApplyShipSpeed
+                        call    UpdateSpeedAndPitch                             ; update based on rates of speed roll and pitch accelleration/decelleration
+;.. apply ships movement                        
 ;.. If its a space station then see if we are ready to dock........................................................................
 .CheckExploding:        ld      a,(UBnKexplDsp)                                 ; is it destroyed
                         and     %10100000                                       ; or exploding
