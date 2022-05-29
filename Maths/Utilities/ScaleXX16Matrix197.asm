@@ -3,8 +3,7 @@ ScaleXX16Matrix197:
                         ld		b,9                 ; Interate though all 9 matrix elements
                         ld		hl,UBnkTransmatSidev ; within XX16 (transmat)
                         MMUSelectMathsTables
-.ScaleXX16Loop:         ld		a,(hl)              ; set DE = matrix value
-                        ld		e,a                 ;
+.ScaleXX16Loop:         ld		e,(hl)              ; set DE = matrix value              ;
                         inc		hl                  ;
                         ld		a,(hl)              ;
                         ld		d,a                 ;

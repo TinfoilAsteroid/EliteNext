@@ -284,21 +284,23 @@ LaunchPlayerMissile:    call    FindNextFreeSlotInC                 ; Check if w
 SpawnShipTypeA:         ld      iyl,a                               ; save ship type
                         ReturnIfAGTENusng   ShipTotalModelCount     ; current ship count limit 
                         MMUSelectShipBank1                          ; select bank 1
-                        ld      a,iyh                               ; select unverse free slot
-                        ld      b,iyl
-                        call    SetSlotAToTypeB
-                        MMUSelectUniverseA                          ; .
-                        push    af                                  ; save computed bank number
-                        ld      a, iyl                              ; retrive ship type
+                        ld      a,iyh                               ; A = slot number
+                        ld      b,iyl                               ; b = ship type
+                        call    SetSlotAToTypeB                     ; Allocate slot as used
+                        MMUSelectUniverseA                          ; .   
+.MarkUnivDiags:         ld      b, iyh                              ; mark diagnostics for bank number in memory
+                        add     "A"
+                        ld      (StartOfUnivN),a                    ; to help debugging
+.CopyOverShipData:      ld      a,iyl                               ; .                                                                      
                         ;call    SetSlotAToTypeB                    ; record in the lookup tables
                         call    GetShipBankId                       ; find actual memory location of data
                         MMUSelectShipBankA
                         ld      a,b                                 ; b = computed ship id for bank
                         call    CopyShipToUniverse
                         call    UnivSetSpawnPosition                ; set initial spawn position
-                        pop     af                                  ; we need bank nbr in a
                         call    UnivInitRuntime                     ; Clear runtime data before startup, iy h and l are already set up
-                        ld      a,(ShipTypeAddr)
+                        ld      a,(ShipTypeAddr)                    ; get ship type
+                        ld      (ShipTypeCopy),a                    ; to help debugging 
                         ld      b,a
                         ld      a,iyl
                         call    SetSlotAToClassB

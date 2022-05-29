@@ -9,16 +9,6 @@ UBnKysgn                    DB  0                       ; INWK +5
 UBnKzlo                     DB  0                       ; INWK +6
 UBnKzhi                     DB  0                       ; INWK +7
 UBnKzsgn                    DB  0                       ; INWK +8
-;-Zero page for when we page data temporarily into page zero to read a second ship, e.g. missile tracking
-ZeroPageUBnKxlo             EQU UBnKxlo    - StartOfShipRuntimeData
-ZeroPageUBnKxhi             EQU UBnKxhi    - StartOfShipRuntimeData
-ZeroPageUBnKxsgn            EQU UBnKxsgn   - StartOfShipRuntimeData
-ZeroPageUBnKylo             EQU UBnKylo    - StartOfShipRuntimeData
-ZeroPageUBnKyhi             EQU UBnKyhi    - StartOfShipRuntimeData
-ZeroPageUBnKysgn            EQU UBnKysgn   - StartOfShipRuntimeData
-ZeroPageUBnKzlo             EQU UBnKzlo    - StartOfShipRuntimeData
-ZeroPageUBnKzhi             EQU UBnKzhi    - StartOfShipRuntimeData
-ZeroPageUBnKzsgn            EQU UBnKzsgn   - StartOfShipRuntimeData
 ;-Rotation Matrix of Ship----------------------------------------------------------------------------------------------------------
 ; Rotation data is stored as lohi, but only 15 bits with 16th bit being  a sign bit. Note this is NOT 2'c compliment
 ; Note they seem to have to be after camera position not quite found why yet, can only assume it does an iy or ix indexed copy? Bu oddly does not affect space station.
@@ -70,9 +60,6 @@ UBnkCam0yHi                 DB  0                       ; INWK +34?????
 UBnKEnergy                  DB  0                       ; INWK +35
 UBnKECMCountDown            DB  0                       ; counts down ECM usage if activated reducing energy too in update loop
 UBnKECMFitted               DB  0                       ; Does ship have ECM, true false
-ZeroPageUBnKEnergy          EQU UBnKEnergy    - StartOfShipRuntimeData
-ZeroPageUBnKECMCountDown    EQU ECMCountDown  - StartOfShipRuntimeData
-ZeroPageUBnKECMFitted       EQU UBnKECMFitted - StartOfShipRuntimeData
 UBnKMissilesLeft            DB  0
 UBnKCloudCounter            DB  0                       ; cloud pixels
 UBnKCloudRadius             DB  0                       ; cloud pixels

@@ -9,8 +9,11 @@
 ; This means each gets its own line list, inwork etc
 
 ; "Runtime Ship Data paged into in Bank 7"
+;                       1234567890123456                                        
 StartOfUniv:        DB "Universe PG"
 StartOfUnivN:       DB "X"
+ShipUnivBoilerPad   DS 3
+ShipTypeCopy        DB 0
 ; NOTE we can cheat and pre allocate segs just using a DS for now
 
 ;   \ -> & 565D \ See ship data files chosen and loaded after flight code starts running.
@@ -230,28 +233,31 @@ UpdateECM:              ld      a,(UBnKECMCountDown)
 .ExhaustedEnergy:       call    UnivExplodeShip                 ; if it ran out of energy it was as it was also shot or collided as it checks in advance. Main ECM loop will continue as a compromise as multiple ships can fire ECM simultaneously
                         ret
                         
-UpdateSpeedAndPitch:    ld      a,(UBnKAccel)
+                        
+; --------------------------------------------------------------                        
+; update ship speed and pitch based on adjustments from AI Tactics
+UpdateSpeedAndPitch:    ld      a,(UBnKAccel)                   ; only apply non zero accelleration
                         JumpIfAIsZero .SkipAccelleration
-                        ld      b,a
-                        ld      a,(UBnKSpeed)
+                        ld      b,a                             ; b = accelleration in 2's c
+                        ld      a,(UBnKSpeed)                   ; a = speed + accelleration
                         ClearCarryFlag
                         adc     a,b
-                        JumpIfPositive  .DoneAccelleration
-.SpeedNegative:         ZeroA
-.DoneAccelleration:     ld      b,a
-                        ld      a,(SpeedAddr)
-                        JumpIfAGTENusng b, .SpeedInLimits
-                        ld      b,a
-.SpeedInLimits:         ld      a,b
-                        ld      (UBnKSpeed),a
-                        ZeroA
-                        ld      (UBnKAccel),a
+                        JumpIfPositive  .DoneAccelleration      ; if speed < 0 
+.SpeedNegative:         ZeroA                                   ;    then speed = 0
+.DoneAccelleration:     ld      b,a                             ; if speed > speed limit
+                        ld      a,(SpeedAddr)                   ;    speed = limit
+                        JumpIfAGTENusng b, .SpeedInLimits       ; .  
+                        ld      b,a                             ; .
+.SpeedInLimits:         ld      a,b                             ; .
+                        ld      (UBnKSpeed),a                   ; .
+                        ZeroA                                   ; acclleration = 0
+                        ld      (UBnKAccel),a                   ; for next AI update
 .SkipAccelleration:     ; handle roll and pitch rates                     
                         ret
 
 ; --------------------------------------------------------------                        
 ; This sets the position of the current ship if its a player launched missile
-UnivSetPlayerMissile:   call    InitialiseOrientation           ; Copy in Player  facing
+UnivSetPlayerMissile:   call    InitialisePlayerMissileOrientation  ; Copy in Player  facing
                         call    ResetUbnkPosition               ; home position
                         ld      a,MissileDropHeight             ; the missile launches from underneath
                         ld      (UBnKylo),a                     ; so its -ve drop height
@@ -421,7 +427,7 @@ UnivInitRuntime:        ld      (UbnKShipUnivBankNbr),a     ; actual bank nmber 
                         ld      a,(ShipAIFlagsAddr)          ; get laser and missile details
                         and     %00000111                    ; mask for missiles
                         ld      (UBnKMissilesLeft),a
-                        ld      a,(ShipECMFittedChanceOffset)
+                        ld      a,(ShipECMFittedChanceAddr)
                         ld      b,a
 .FetchLatestRandom:     ld      a,(RandomSeed3)              
                         JumpIfALTNusng b, .ECMFitted
@@ -855,6 +861,7 @@ SetAllFacesHiddenLoop:  ld      (hl),a
 ;;;;......................................................
 ;-LL21---------------------------------------------------------------------------------------------------
                         include "Universe/Ships/NormaliseTransMat.asm"
+                        include "Universe/Ships/NormaliseXX15.asm"
 ;-LL91---------------------------------------------------------------------------------------------------
 
 ; Now we have

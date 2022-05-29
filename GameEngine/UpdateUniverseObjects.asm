@@ -113,8 +113,10 @@ UpdateUniverseObjects:  xor     a
                         LockMissileToA                                          ; .                        
 .ProcessedUniverseSlot: 
 ;...Tactics Section................................................................................................................
-.AreWeReadyForAI:       CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, UpdateShip
-                        ld      a,(SelectedUniverseSlot)                        ; Move to next ship cycling if need be to 0
+.AreWeReadyForAI:       IsSlotMissile                                           ; Missiles update every iteration
+                        jp      z,.UpdateMissile                                ; so we bypass the logic check
+                        CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, UpdateShip
+.DoneAICheck:           ld      a,(SelectedUniverseSlot)                        ; Move to next ship cycling if need be to 0
                         inc     a                                               ; .
                         JumpIfAGTENusng   UniverseSlotListSize, .UpdateAICounter; .
                         ld      (SelectedUniverseSlot),a
@@ -131,7 +133,8 @@ UpdateUniverseObjects:  xor     a
                         call    SetShipHostile
                         SetMemFalse    SetStationAngryFlag
                         ret
-
+.UpdateMissile:         call    UpdateShip                                      ; we do it this way top avoid double calling
+                        jp      .DoneAICheck                                    ; ai if the ai slot to process = missile type
 ;..................................................................................................................................
 
 DrawForwardShips:       xor     a
@@ -183,7 +186,10 @@ TestForNextShip:        ld      a,c_Pressed_Quit
                         ld      b,a
                         xor     a
                         call    SetSlotAToTypeB
+                        push    af
                         MMUSelectUniverseN 2
+                        SetSlotAToUnivClass
+                        pop     af
                         call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
                         ld      a,(currentDemoShip)
                         MMUSelectShipBank1

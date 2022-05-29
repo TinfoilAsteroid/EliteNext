@@ -144,3 +144,13 @@ AEquAmul256Div197Log:   JumpIfAIsZero   .ResultIsZero
                         ret                        
 .ResultIsZero:          ClearCarryFlag
                         ret
+
+AEquAmul256Div197LogSignA:
+                        ld      iyh,a
+                        ClearSignBitA
+                        call    AEquAmul256Div197Log
+                        ld      b,a
+                        ld      a,iyh
+                        SignBitOnlyA
+                        or      b
+                        ret                            

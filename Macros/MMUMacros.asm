@@ -85,6 +85,10 @@ MMUSelectUniverseA:  MACRO
                      add    a,BankUNIVDATA0
                      nextreg UniverseMMU,       a
                      ENDM
+;Version that assumes a pre calulated A, used whn optimising many switches
+MMUSelectUnivBankA:  MACRO
+                     nextreg UniverseMMU,       a
+                     ENDM
 
 MMUSelectUniverseN:  MACRO value
                      nextreg UniverseMMU,       BankUNIVDATA0+value

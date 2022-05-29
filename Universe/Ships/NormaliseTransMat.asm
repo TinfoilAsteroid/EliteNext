@@ -25,6 +25,15 @@ NormDIV16UNDOCSKIP:
     ld      (varR),a
     ret
 
+Norm256mulAdivQSignA:   ld      iyh,a
+                        ClearSignBitA
+                        call    Norm256mulAdivQ              ; do 15 bit unsigned
+                        ld      a,iyh                       ; now correct R reg
+                        SignBitOnlyA
+                        or      c
+                        ld      (varR),a
+                        ret
+                        
 ; Tested OK
 ;LL21        
 NormaliseTransMat:

@@ -3,13 +3,7 @@ ShipAIJumpTable:      DW    NormalAI,   MissileAI,  StationAI,  JunkAI,     Scoo
                       DW    ThargoidAI, NoAI,       NoAI,       NoAI,       NoAI
 
 
-ZeroBankFireECM:        ld      a,ECMCounterMax                 ; set ECM time
-                        ld      (ZeroPageUBnKECMCountDown),a            ;
-                        ld      a,(ECMCountDown)
-                        ReturnIfALTNusng ECMCounterMax
-                        ld      a,ECMCounterMax
-                        ld      (ECMCountDown),a
-                        ret
+
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Main entry point to tactics. Every time it will do a a tidy and the do AI logic
@@ -163,13 +157,28 @@ MissileHitUsCheckPos:   ld      hl, (UBnKxlo)
 .ItsAHit:               SetCarryFlag:                               ; So must have hit
                         ret
 
+SelectMissileBank:      MACRO
+                        ld      a,iyh
+                        MMUSelectUnivBankA
+                        ENDM
+
+SelectTargetBank:       MACRO
+                        ld      a,iyl
+                        MMUSelectUnivBankA
+                        ENDM
+                        
 ;...................................................................                        
-;... Now the tactics if current ship is the missile
+; ... Copy of target data for missile calcs etc
+TacticsTargetShip       DB 0
+TacticsUBnKx            DS 3
+TacticsUBnKy            DS 3 
+TacticsUBnKz            DS 3
+;... Now the tactics if current ship is the missile, when we enter this SelectedUniverseSlot holds slot of missile
 MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
 .CheckForECM:           JumpIfMemNotZero ECMCountDown,.ECMIsActive        ; If ECM is running then kill the missile
 .IsMissileHostile:      ld      a,(ShipNewBitsAddr)                 ; is missle attacking us?
                         and     ShipIsHostile
-                        JumpIfNotZero .MissileTargetingShip
+                        JumpIfZero .MissileTargetingShip            ; Missile is not targetting us
 .MissileTargetingPlayer:ld      hl, (UBnKxlo)                       ; check if missile in range of us
                         ld      a,(UBnKMissileDetonateRange)
                         ld      c,a                                 ; c holds detonation range
@@ -177,90 +186,93 @@ MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
 .MissileNotHitUsYet:    jp      nc, .UpdateTargetingUsPos
 .MissleHitUs:           call    PlayerHitByMissile
                         jp      .ECMIsActive                        ; we use ECM logic to destroy missile which eqneues is
-.UpdateTargetingUsPos:  ret                         //TODO
-.MissileTargetingShip:  ld      a,(UBnKMissileTarget)
+.UpdateTargetingUsPos:  ret                        ;;;;;;***********TODO
+.MissileTargetingShip:  ld      a,(SelectedUniverseSlot)            ; we will use this quite a lot with next bank switching
+.SaveMissileBank:       add     a,BankUNIVDATA0                     ; pre calculate add to optimise
+                        ld      iyh,a
+.SaveTargetBank:        ld      a,(UBnKMissileTarget)               ; target will be used a lot too
+                        add     a,BankUNIVDATA0                     ; pre calculate add to optimise
+                        ld      iyl,a                               ; save target                        
 .IsMissleTargetGone:    JumpIfSlotAEmpty    .ECMIsActive            ; if the target was blown up then detonate
 ;... Note we don't have to check for impact as we already have a loop doing that
-.SelectTargetShip:      ld      iyl,a
-                        MMUSelectUniverseA
-.IsShipExploding:       ld      a,(UBnkaiatkecm)
-                        and     ShipExploding
-                        jr      nz,.UpdateTargetingShipPos
-.ShipIsExploding:       ld      a,iyl                               ; get missile back into memory
-                        MMUSelectUniverseA
+.SelectTargetShip:      ld      a,iyh                               ; paged in target
+                        MMUSelectUnivBankA
+.IsShipExploding:       ld      a,(UBnkaiatkecm)                    ; check exploding status
+                        and     ShipExploding                       ; as if exploding then the missile will also explode
+                        jr      nz,.UpdateTargetingShipX
+.ShipIsExploding:       SelectMissileBank                           ; get missile back into memory
                         jp      .ECMIsActive
-.UpdateTargetingShipPos:ld      hl,UBnKxlo                          ; get missile target pos top temp while 
-                        ld      de,CurrentTargetXpos
-                        ld      bc,3*3
-                        ldir
-                        ld a,iyl
-;--- calculatge VSSUB Vector from current position to target into matrix K3
-.CalculateMissileVector:ld      a,(UBnKMissileTarget)               ; get target ship slot number from UBnKMissileTarget
-                        MMUSelectShipARead                          ; MMU Seect page 0 to slot number
-.CalcMissileToTargetX:  ld      hl,(UBnKxlo)                        ; Note this needs to be 24 bit for space stations
-                        DISPLAY "Expected lo read on ZeroPageUBnKxlo here"
-                        ld      de,(ZeroPageUBnKxlo)
+;--- At this point we already have the target banked in ready for calculating vector
+.UpdateTargetingShipX  :ld      de,(UBnKxlo)                        ; get target ship X
                         ld      a,(UBnKxsgn)
-                        ld      b,a
-                        DISPLAY "Expected lo read on ZeroPageUBnKxsgn here"
-                        ld      a,(ZeroPageUBnKxsgn)                     ; turn it negative so we can use add as subtract
                         FlipSignBitA
-                        ld      c,a
-                        call    ADDHLDESignBC                       ;AHL = BHL + CDE
+                        ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+                        SelectMissileBank
+                        ld      hl,(UBnKxlo)                        ; get missile x
+                        ld      a,(UBnKxsgn)                        ; get missile x sign
+                        ld      b,a
+                        call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
                         ld      (TacticsVectorX),hl
                         ld      (TacticsVectorX+2),a
-.CalcMissileToTargetY:  ld      hl,(UBnKylo)                        ; Note this needs to be 24 bit for space stations
-                        DISPLAY "Expected lo read on ZeroPageUBnKylo here"
-                        ld      de,(ZeroPageUBnKylo)
+.UpdateTargetingShipY  :ld      de,(UBnKylo)                        ; get target ship X
                         ld      a,(UBnKysgn)
-                        ld      b,a
-                        DISPLAY "Expected lo read on ZeroPageUBnKysgn here"
-                        ld      a,(ZeroPageUBnKysgn)                     ; turn it negative so we can use add as subtract
                         FlipSignBitA
-                        ld      c,a
-                        call    ADDHLDESignBC                       ;AHL = BHL + CDE
+                        ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+                        SelectMissileBank
+                        ld      hl,(UBnKylo)                        ; get missile x
+                        ld      a,(UBnKysgn)                        ; get missile x sign
+                        ld      b,a
+                        call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
                         ld      (TacticsVectorY),hl
                         ld      (TacticsVectorY+2),a
-.CalcMissileToTargetZ:  ld      hl,(UBnKzlo)                        ; Note this needs to be 24 bit for space stations
-                        DISPLAY "Expected lo read on ZeroPageUBnKzlo here"
-                        ld      de,(ZeroPageUBnKzlo)
+.UpdateTargetingShipZ  :ld      de,(UBnKzlo)                        ; get target ship X
                         ld      a,(UBnKzsgn)
-                        ld      b,a
-                        DISPLAY "Expected lo read on ZeroPageUBnKzsgn here"
-                        ld      a,(ZeroPageUBnKzsgn)                     ; turn it negative so we can use add as subtract
                         FlipSignBitA
-                        ld      c,a
-                        call    ADDHLDESignBC                       ;AHL = BHL + CDE
+                        ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+                        SelectMissileBank
+                        ld      hl,(UBnKzlo)                        ; get missile x
+                        ld      a,(UBnKzsgn)                        ; get missile x sign
+                        ld      b,a
+                        call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
                         ld      (TacticsVectorZ),hl
                         ld      (TacticsVectorZ+2),a
- ; if or ABS all high bytes is <> 0
-.CheckDistance:         ld      hl,(UBnKxhi)
-                        ld      a,h
-                        ld      de,(UBnKyhi)
-                        or      d
-                        ld      bc,(UBnKzhi)
-                        or      b
-                        ClearSignBitA
-                        JumpIfNotZero       .FarAway
-                        or      l
-                        or      e
-                        or      c
-                        JumpIfNotZero       .FarAway
+; by here missile in in memory and TacticsVector now holds distance
+; if or ABS all high bytes is <> 0
+.CheckDistance:         ld      hl,(TacticsVectorX+1)              ; test if high bytes are set
+                        ld      a,h                                ; .
+                        ld      de,(TacticsVectorY+1)              ; .
+                        or      d                                  ; .
+                        ld      bc,(TacticsVectorZ+1)              ; .
+                        or      b                                  ; .
+                        ClearSignBitA                              ; .
+                        JumpIfNotZero       .FarAway               ; .
+                        or      l                                  ; test for low byte bit 7
+                        or      e                                  ; .
+                        or      c                                  ; .
+                        JumpIfNotZero       .FarAway               ; .
+; If we get here its close enough to detonate
 .CloseMissileExplode:   ld      a,(UBnKMissileTarget) 
                         jp      MissileHitShipA
-;   *far away
-                        DISPLAY "Expected lo read macro on ZeroPageUBnKECMFitted here"
-.FarAway:               JumpIfMemFalse      ZeroPageUBnKECMFitted, .NoECM                   ; if target has ECM and enough energy to use it
-                        DISPLAY "Expected lo read macro on ZeroPageUBnKEnergy here"
-                        JumpIfMemLTNusng    ZeroPageUBnKEnergy,    ECMCounterMax, .NoECM    ; .
-                        DISPLAY "Expected lo read macro on ZeroPageUBnKECMCountDown here"
-                        JumpIfMemIsNotZero   ZeroPageUBnKECMCountDown, .NoECM                ; . ECM is already active
+;   *far away ** TODO need to set memory read write on page 0
+.FarAway:               SelectTargetBank
+                        JumpIfMemFalse      UBnKECMFitted, .NoECM                   ; if target has ECM and enough energy to use it
+                        JumpIfMemLTNusng    UBnKEnergy,    ECMCounterMax, .NoECM    ; .
+                        JumpIfMemIsNotZero   ECMCountDown, .NoECM                ; . ECM is already active
 .TestIfUsingECM:        ld      a,(RandomSeed2)                                             ; if random < 16
                         JumpIfAGTENusng     16, .UpdateMissilePos                           ;   then fire ECM destroying missile
-.ZeroPageFireECM:       jp      ZeroBankFireECM                                             ; with an implicit return
+;. If we get here then target is still paged in to fire ECM
+.ZeroPageFireECM:       jp      FireECM                                             ; with an implicit return
 ;                       implicit ret
+;. If we get here then target is still paged in with no ECM
 .NoECM:
-.UpdateMissilePos:      ;           normalise vector K3 into XX15
+.UpdateMissilePos:      SelectMissileBank
+                        ld      hl,TacticsVectorX                  ;           normalise vector K3 into XX15
+                        ld      de,XX15
+                        ld      bc, 9
+                      ;;; ldir
+                      ;;; call    ** Need a 24 bit normalise here
+                      ;;;         ** can do 16 bit maths as we can take teh view that once a object/space station is 24 bit value away then 
+                      ;;;         ** targeting computer looses track and destructs missiles
                         ;           AX = nosev . XX15
                         ;           CNT = A (high byte of dot product)
                         ;           negate vector in XX15 so it points opposite direction
@@ -307,6 +319,9 @@ MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
 TacticsVectorX:         DS 3
 TacticsVectorY:         DS 3
 TacticsVectorZ:         DS 3
+TacticsNormX:           DS 2
+TacticsNormY:           DS 2
+TacticsNormZ:           DS 2
 
 ;TODOcall    TacticsPosMinusTarget              ; calculate vector to target
 ;;TODO                        check range

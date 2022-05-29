@@ -34,6 +34,15 @@ AreCopsPresent:         MACRO
                         and     a
                         ENDM
                 
+; Class == shiptype
+SetSlotAToUnivClass:    MACRO
+                        ex      af,af'
+                        ld      a,(ShipTypeAddr)
+                        ld      b,a
+                        ex      af,af'
+                        call    SetSlotAToClassB
+                        ENDM
+
 TestRoomForJunk:        MACRO   Target
                         ld      a,3
                         JumpIfALTMemusng    JunkCount, Target
@@ -56,7 +65,12 @@ IsSlotEmpty:            MACRO
                         ld      a,(hl)
                         cp      0
                         ENDM
-
+                        
+IsSlotMissile:          MACRO
+                        ld      hl,UniverseSlotType
+                        ld      a,(hl)
+                        cp      ShipTypeMissile
+                        ENDM
                         
 ; Checks if slot is empty else A = ship type
 ReturnIfSlotAEmpty:     MACRO
