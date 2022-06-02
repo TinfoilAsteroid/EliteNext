@@ -1,15 +1,45 @@
+    DEFINE  MAINLOOP_UPDATE_LASERS
+    DEFINE  MAINLOOP_COOL_LASERS
+    DEFINE  MAINLOOP_ECM
+    DEFINE  MAINLOOP_KEYBOARDSCAN
+;    DEFINE  MAINLOOP_DEMOSHIPS
+    DEFINE  MAINLOOP_INPUTHANDLER
+    DEFINE  MAINLOOP_EVENTHANDLER
+    DEFINE  MAINLOOP_RECHARGE
+    DEFINE  MAINLOOP_LAUNCHMISSILE
+    DEFINE  MAINLOOP_UPDATEUNIVERSE
 MainLoop:	            call    doRandom                                                ; redo the seeds every frame
-                        UpdateLaserCounters                                             ; update laser counters every frame
-                        CoolLasers                  
+                    IFDEF MAINLOOP_UPDATE_LASERS
+                        UpdateLaserOnCounter
+                        UpdateLaserOffCounter
+                        UpdateLaserRestCounter
+                    ENDIF
+                    IFDEF MAINLOOP_COOL_LASERS
+                        CoolLasers
+                    ENDIF
+                    IFDEF MAINLOOP_ECM
+                        INCLUDE "./GameEngine/MainLoop_ECM.asm"
+                    ENDIF
+                    IFDEF MAINLOOP_KEYBOARDSCAN
                         call    scan_keyboard                                           ; perform the physical input scan
+                    ENDIF
 ;.. This bit allows cycling of ships on universe 0 in demo.........................................................................
+                    IFDEF MAINLOOP_DEMOSHIPS
 DemoOfShipsDEBUG:       call    TestForNextShip
+                    ENDIF
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
 InputBlockerCheck:      ld      a,$0
+                    IFDEF MAINLOOP_INPUTHANDLER
                         JumpIfAEqNusng $01, SkipInputHandlers                           ; as we are in a transition the whole update AI is skipped
                         JumpIfMemTrue TextInputMode, SkipInputHandlers                  ; in input mode all keys are processed by input
-                        InputMainMacro
+                        call    ViewKeyTest
+                        call    TestPauseMode
+                        ld      a,(GamePaused)
+                        cp      0
+                        jp      nz,MainLoop
+                        call    MovementKeyTest
 ;.. Process cursor keys for respective screen if the address is 0 then we skill just skip movement.................................
+                    ENDIF
 HandleMovement:         ld      a,(CallCursorRoutine+2)
                         JumpIfAIsZero     TestAreWeDocked
 ;.. Handle displaying correct screen ..............................................................................................
@@ -20,21 +50,30 @@ CallCursorRoutine:      call    $0000
 ;.. Also end up here if we have the screen input blocker set
 SkipInputHandlers:      
 ;.. For Docked flag its - 0 = in free space, FF = Docked, FE transition, FD = Setup open space and transition to not docked
-TestAreWeDocked:        ld      a,(DockedFlag)                                          ; if if we are in free space do universe update
-                        JumpIfANENusng  0, UpdateLoop                                   ; else we skip it. As we are also in dock/transition then no models should be updated so we dont; need to draw
+TestAreWeDocked:        JumpIfMemNeNusng DockedFlag, StateNormal, UpdateLoop            ; if if we are in free space do universe updateelse we skip it. As we are also in dock/transition then no models should be updated so we dont; need to draw
+                    IFDEF MAINLOOP_EVENTHANDLER
 .UpdateEventCounter:    ld      hl,EventCounter                                         ; evnery 256 cycles we do a trigger test
                         dec     (hl)    
 .ProcessEvent:          call    z,LoopEventTriggered    
+                    ENDIF
+                    IFDEF MAINLOOP_RECHARGE
 .ProcessRecharge:       ld      a,(EventCounter)    
                         and     7   
                         call    z, RechargeShip 
+                    ENDIF
+                    IFDEF MAINLOOP_LAUNCHMISSILE
 .PlayerMissileLaunch:   ld      a,(MissileTargettingFlag)                               ; if bit 7 is clear then we have a target and launch requested
                         and     $80
                         call    z,  LaunchPlayerMissile
+                    ENDIF
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
 ;.. First update Sun...............................................................................................................
-.UpdateShips:           call    UpdateUniverseObjects
+UpdateShipsControl:     ld      a,0
+                        and     a
+                    IFDEF MAINLOOP_UPDATEUNIVERSE
+.UpdateShips:           call    z, UpdateUniverseObjects
+                    ENDIF
                         JumpIfMemNeNusng ScreenTransitionForced, $FF, BruteForceChange  ; if we docked then a transition would have been forced
 CheckIfViewUpdate:      ld      a,$00                                                   ; if this is set to a view number then we process a view
                         JumpIfAIsZero  UpdateLoop                                       ; This will change as more screens are added TODO
@@ -53,8 +92,8 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
                         jp      m,.ConsoleDrawBuffer2                                   ; need top also do next frame for double buffering
 .ConsoleNotDraw:        SetMemFalse ConsoleRedrawFlag                        
                         jp      .JustViewPortCLS
-.ConsoleDrawBuffer2:     ld      (hl),ConsoleRefreshInterval                         
-.ConsoleDrawBuffer1:     SetMemTrue ConsoleRedrawFlag
+.ConsoleDrawBuffer2:    ld      (hl),ConsoleRefreshInterval                         
+.ConsoleDrawBuffer1:    SetMemTrue ConsoleRedrawFlag
                         call    l2_cls                                                  ; Clear layer 2 for graphics
                         jp      .ViewPortCLSDone
 .JustViewPortCLS:       call   l2_cls_upper_two_thirds
@@ -276,6 +315,9 @@ LaunchPlayerMissile:    call    FindNextFreeSlotInC                 ; Check if w
                         ld      (UBnKMissileTarget),a               ; load target Data
                         call    UnivSetPlayerMissile                ; .
                         ClearMissileTarget                          ; reset targetting
+                        ld      hl, NbrMissiles
+                        dec     (hl)
+                        
                         ; TODO handle removal of missile from inventory and console
                         ret
 .MissileMissFire:       ret ; TODO bing bong noise misfire message
@@ -330,10 +372,5 @@ DoubleBufferCheck:      ld      a,00
 TestTransition:         ld      a,(ScreenTransitionForced)          ; was there a bruite force screen change in any update loop
                         cp      $FF
                         jp      z,MainLoop
-BruteForceChange:       ld      d,a
-                        ld      e,ScreenMapRow
-                        mul
-                        ld      ix,ScreenKeyMap
-                        add     ix,de                               ; Force screen transition
-                        call    SetScreenAIX
+BruteForceChange:       call    SetScreenA
                         jp MainLoop

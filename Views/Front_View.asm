@@ -57,6 +57,13 @@ draw_front_view:        MMUSelectLayer1
                         call    sprite_targetting
                         call    sprite_lock
                         call    sprite_targetting_hide      ; do not show targeting initially
+                        call    sprite_ECM
+                        call    sprite_missile_1
+                        call    sprite_missile_2
+                        call    sprite_missile_3
+                        call    sprite_missile_4
+                        call    sprite_ecm_hide
+                        call    sprite_missile_all_hide
                        ; call    sprite_laser_show
                         MMUSelectConsoleBank
                         ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
@@ -392,7 +399,18 @@ input_front_view:       xor         a
 .MissileLaunch:         SetMissileLaunch
 .MissileNotLocked:                       ; later on we need a "bing bong" nose for trying to launch an unlocked missile
 .NotMissileLaunch:
-                        ret
+.CheckForECM:           ld      a,(ECMPresent)
+                        JumpIfAEqNusng EquipmentItemNotFitted,.NoECM
+.CheckECMActive:        ld      a,(PlayerECMActiveCount)
+                        JumpIfAIsNotZero .NoECM
+.CheckForKeyPress:      ld      a, c_Pressed_ECM
+                        call    is_key_pressed
+                        jr      nz, .NoECM
+.FireECM:               SetMemToN      PlayerECMActiveCount, ECMCounterMax 
+                        ld      a,(ECMCountDown)
+                        JumpIfAGTENusng ECMCounterMax, .NoECM
+                        SetMemToN      ECMCountDown, ECMCounterMax 
+.NoECM:                 ret
 
 
 

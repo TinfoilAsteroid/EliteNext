@@ -401,8 +401,7 @@ mkt_DownPressed:        ld      a,c_Pressed_CursorDown
                         call    get_key_a_state
                         cp      1
                         jr      z,.ItsOK
-                        break
-.ItsOK:                        ld      a,(mkt_selected_row)
+.ItsOK:                 ld      a,(mkt_selected_row)
                         cp      16
                         ret     z
                         call    mkt_lowlight_row

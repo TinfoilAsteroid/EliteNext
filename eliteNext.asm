@@ -69,51 +69,7 @@ ScreenHyperspace EQU ScreenDocking+1
                         
                         INCLUDE "./Data/ShipIdEquates.asm"
                         
-InputMainMacro:         MACRO
-                        call    ViewKeyTest
-                        call    TestPauseMode
-                        ld      a,(GamePaused)
-                        cp      0
-                        jr      nz,MainLoop
-                        call    MovementKeyTest
-                        ENDM
 
-DecrementIfPossible:    MACRO   memaddr,notpossjp
-                        JumpIfMemZero memaddr, notpossjp
-                        dec     a
-                        ld      (memaddr),a
-                        ENDM
-                        
-UpdateOnCounter:        MACRO
-                        DecrementIfPossible  CurrLaserPulseOnCount, .UpdateOnDone  
-                        JumpIfAIsNotZero     .UpdateOnDone
-                        ldCopyByte CurrLaserPulseOffTime, CurrLaserPulseOffCount
-.UpdateOnDone:
-                        ENDM
-
-UpdateOffCounter:       MACRO
-                        DecrementIfPossible  CurrLaserPulseOffCount,  .UpdateOffDone
-                        JumpIfAIsNotZero     .UpdateOffDone
-                        JumpIfMemNeMemusng   CurrLaserPulseRate, CurrLaserPulseRateCount, .UpdateOffDone
-                        ldCopyByte CurrLaserPulseRest, CurrLaserPulseRestCount
-.UpdateOffDone:
-                        ENDM
-
-UpdateRestCounter:      MACRO
-                        DecrementIfPossible CurrLaserPulseRestCount, .UpdateRestDone                     ; if pulse rest > 0 then  pulse rest --                   
-.DonePulseRest:         JumpIfMemNotZero CurrLaserPulseRestCount, .UpdateRestDone                        ; if pulse rest = 0
-.ResetRate:             ZeroA                                                                           ;    then pulse rate count = 0
-                        ld      (CurrLaserPulseRateCount),a                                             ;    .
-.UpdateRestDone
-                        ENDM
-
-
-UpdateLaserCounters:    MACRO
-                       
-                        UpdateOnCounter
-                        UpdateOffCounter
-                        UpdateRestCounter
-                        ENDM      
 
 UpdateLaserCountersold: MACRO
                         JumpIfMemZero CurrLaserPulseOnCount,   .SkipPulseOn     ; if beam on count > 0 then beam on count --
@@ -137,9 +93,9 @@ UpdateLaserCountersold: MACRO
 charactersetaddr		equ 15360
 STEPDEBUG               equ 1
 
-TopOfStack              equ $7F00
+TopOfStack              equ $6100
 
-                        ORG         $8000
+                        ORG         $6200
 EliteNextStartup:       di
                         DISPLAY "Starting Assembly At ", EliteNextStartup
                         ; "STARTUP"
@@ -157,7 +113,11 @@ EliteNextStartup:       di
                         ld          a,$FF
                         call        l1_set_border
                         MMUSelectSpriteBank
-                        call		sprite_load_sprite_data
+                        call        stream_sprite_data; prite_load_sprite_data
+;;;***                        MMUSelectSpriteDataA
+;;;***                        call        load_sprite_dataA
+;;;***                        MMUSelectSpriteDataB
+;;;***                        call        load_sprite_dataB
 Initialise:             MMUSelectLayer2
                         call 		l2_initialise
                         call        init_keyboard
@@ -370,45 +330,8 @@ TidyCounter             DB  0
 ; cursor key, joystick press
 ; non cursor keys presses
 ;
-; First byte is now docked flag
-; 
-; Padded to 8 bytes to allow a * 8 for addressing    
-; Byte 0   - Docked flag  : 0 = not applicable (always read), 1 = only whilst docked, 2 = only when not docked, 3 = No keypress allowed
-; Byte 1   - Screen Id
-; Byte 2,3 - address of keypress table
-; Byte 4   - Bank with Display code
-; Byte 5,6 - Function for display
-; Byte 7,8 - Main loop update routine
-; Byte 9   - Draw stars Y/N ; also are we in an external view that can have guns?
-; byte 10  - Input Blocker (set to 1 will not allow keyboard screen change until flagged, used by transition screens and pause menus)
-; byte 11  - Double Buffering 0 = no, 1 = yes
-; byte 12,13  - cursor key input routine
-; byte 14  - HyperspaceBlock - can not select this screen if in hyperpace - 00 can , 01 can not
-; byte 15    padding at the momnent (should add in an "AI enabled flag" for optimistation, hold previous value and on change create ships
-;
-;                          0    1                 2                              3                               4                    5                            6                              7                     8                       9   10  11  12                          13                          14  15    
-ScreenKeyMap:           DB 0,   ScreenLocal     , low addr_Pressed_LocalChart,   high addr_Pressed_LocalChart,   BankMenuShrCht,      low draw_local_chart_menu,   high draw_local_chart_menu,    $00,                  $00,                    $00,$00,$00,low local_chart_cursors,    high local_chart_cursors,   $01,$00;low loop_local_chart_menu,   high loop_local_chart_menu
-ScreenKeyGalactic:      DB 0,   ScreenGalactic  , low addr_Pressed_GalacticChrt, high addr_Pressed_GalacticChrt, BankMenuGalCht,      low draw_galactic_chart_menu,high draw_galactic_chart_menu, low loop_gc_menu,     high loop_gc_menu,      $00,$00,$00,low galctic_chart_cursors,  high galctic_chart_cursors, $01,$00
-                        DB 1,   ScreenMarket    , low addr_Pressed_MarketPrices, high addr_Pressed_MarketPrices, BankMenuMarket,      low draw_market_prices_menu, high draw_market_prices_menu,  low loop_market_menu, high loop_market_menu,  $00,$00,$00,$00,                        $00,                        $01,$00
-                        DB 2,   ScreenMarketDsp , low addr_Pressed_MarketPrices, high addr_Pressed_MarketPrices, BankMenuMarket,      low draw_market_prices_menu, high draw_market_prices_menu,  $00,                  $00,                    $00,$00,$00,$00,                        $00,                        $01,$00
-ScreenCmdr:             DB 0,   ScreenStatus    , low addr_Pressed_Status,       high addr_Pressed_Status,       BankMenuStatus,      low draw_status_menu,        high draw_status_menu,         low loop_STAT_menu,  high loop_STAT_menu,     $00,$00,$00,$00,                        $00,                        $01,$00
-                        DB 0,   ScreenInvent    , low addr_Pressed_Inventory,    high addr_Pressed_Inventory,    BankMenuInvent,      low draw_inventory_menu,     high draw_inventory_menu,      $00,                  $00,                    $00,$00,$00,$00,                        $00,                        $01,$00
-                        DB 0,   ScreenPlanet    , low addr_Pressed_PlanetData,   high addr_Pressed_PlanetData,   BankMenuSystem,      low draw_system_data_menu,   high draw_system_data_menu,    $00,                  $00,                    $00,$00,$00,$00,                        $00,                        $01,$00
-                        DB 1,   ScreenEquip     , low addr_Pressed_Equip,        high addr_Pressed_Equip,        BankMenuEquipS,      low draw_eqshp_menu,         high draw_eqshp_menu,          low loop_eqshp_menu,  high loop_eqshp_menu,   $00,$00,$00,$00,                        $00,                        $01,$00
-                        DB 1,   ScreenLaunch    , low addr_Pressed_Launch,       high addr_Pressed_Launch,       BankLaunchShip,      low draw_launch_ship,        high draw_launch_ship,         low loop_launch_ship, high loop_launch_ship,  $00,$01,$01,$00,                        $00,                        $01,$00
-ScreenKeyFront:         DB 2,   ScreenFront     , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          low update_front_view,high update_front_view, $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
-                        DB 2,   ScreenAft       , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
-                        DB 2,   ScreenLeft      , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
-                        DB 2,   ScreenRight     , low addr_Pressed_Front,        high addr_Pressed_Front,        BankFrontView,       low draw_front_view,         high draw_front_view,          $00,                  $00,                    $01,$00,$01,low input_front_view,      high input_front_view,       $00,$00
-                        DB 3,   ScreenDocking   , $FF,                           $FF,                            BankLaunchShip,      low draw_docking_ship,       high draw_docking_ship,        low loop_docking_ship,high loop_docking_ship, $00,$01,$01,$00,                        $00,                        $01,$00
-                        DB 1,   ScreenHyperspace, $FF,                           $FF,                            BankFrontView,       low draw_hyperspace,         high draw_hyperspace,          low loop_hyperspace,  high loop_hyperspace,   $00,$01,$01,$00
+                        INCLUDE "./Tables/ScreenControlTable.asm"
 
-;               DB low addr_Pressed_Aft,          high addr_Pressed_Aft,          BankMenuGalCht,      low SelectFrontView,         high SelectFrontView,          $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-;               DB low addr_Pressed_Left,         high addr_Pressed_Left,         BankMenuGalCht,      low SelectFrontView,         high SelectFrontView,          $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-;               DB low addr_Pressed_Right,        high addr_Pressed_Right,        BankMenuGalCht,      low SelectFrontView,         high SelectFrontView,          $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-ScreenMapRow        EQU ScreenKeyGalactic - ScreenKeyMap
-ScreenMapLen        EQU ($ - ScreenKeyMap) / ScreenMapRow
-ScreenViewsStart    EQU (ScreenKeyFront - ScreenKeyMap)/ScreenMapRow
 ScreenTransitionForced  DB $FF    
     INCLUDE "./GameEngine/resetUniverse.asm"
 
@@ -431,107 +354,22 @@ LaunchedFromStation:    MMUSelectSun
                         ld      a,b                                 ; Select the correct ship
                         call    CopyShipToUniverse
 .BuiltStation:          call    ResetStationLaunch
-.NowInFlight:           xor     a
+.NowInFlight:           ld      a,StateNormal
                         ld      (DockedFlag),a
                         ForceTransition ScreenFront
                         call    ResetPlayerShip
                         ret
     
 InitialiseCommander:    ld      a,(ScreenCmdr+1)
-                        ld      ix,ScreenCmdr
-                        jp      SetScreenAIX
+                        jp      SetScreenA
                 
 InitialiseFrontView:    ld      a,(ScreenKeyFront+1)
-                        ld      ix,ScreenKeyFront
-                        jp      SetScreenAIX
+                        jp      SetScreenA
 ; false ret here as we get it free from jp    
-
-;----------------------------------------------------------------------------------------------------------------------------------
-SetScreenAIX:           ld      (ScreenIndex),a                 ; Set screen index to a
-                        ClearForceTransition                    ; In case it was called by a brute force change in an update loop
-                        ld      (ScreenChanged),a               ; Set screen changed to FF                       
-.IsItAViewPort:         ld      a,(ix+9)                        ; Screen Map Byte 9  - Draw stars Y/N and also guns present
-                        ld      (CheckIfViewUpdate+1),a         ; Set flag to determine if we are on an exterior view
-                        JumpIfAIsZero .NotViewPort              ;
-                        ld      a,(ix+1)                        ; get screen view number
-                        sub     ScreenFront                     ; Now a = screen number 0 = front, 1 = aft, 2 = left 3 = right
-                        MMUSelectCommander                      ; Load view laser to current
-                        call    LoadLaserToCurrent              ;
-.NotViewPort:           ld      a,(ix+4)                        ; Screen Map Byte 4   - Bank with Display code
-                        ld      (ScreenLoopBank+1),a            ; setup loop            
-                        ld      (HandleBankSelect+1),a          ; setup cursor keys
-                        MMUSelectScreenA
-                        ld      a,(ix+5)                        ; Screen Map Byte 5 - Function for display
-                        ld      (ScreenUpdateAddr+1),a
-                        ld      a,(ix+6)                        ; Screen Map Byte 6 - Function for display
-                        ld      (ScreenUpdateAddr+2),a
-                        ld      a,(ix+7)                        ; Screen Map Byte 7 - Main loop update routine
-                        ld      (ScreenLoopJP+1),a
-                        ld      a,(ix+8)                        ; Screen Map Byte 8 - Main loop update routine
-                        ld      (ScreenLoopJP+2),a   
-                        ld      a,(ix+10)                       ; Screen Map Byte 10  - Input Blocker (set to 1 will not allow keyboard screen change until flagged, used by transition screens and pause menus)
-                        ld      (InputBlockerCheck+1),a          ; Set flag to block transitions as needed e.g. launch screen    
-                        ld      a,(ix+11)                       ; Screen Map Byte 11  - Double Buffering 0 = no, 1 = yes
-                        ld      (DoubleBufferCheck+1),a
-                        ld      a,(ix+12)
-                        ld      (CallCursorRoutine+1),a
-                        ld      a,(ix+13)
-                        ld      (CallCursorRoutine+2),a
-                      
-ScreenUpdateAddr:       jp      $0000                          ; We can just drop out now and also get a free ret from caller
 ;----------------------------------------------------------------------------------------------------------------------------------                    
-ViewKeyTest:            ld      a,(ScreenIndex)
-                        ld      c,a
-                        ld      b,ScreenMapLen                  ; For now until add screens are added
-                        ld      ix,ScreenKeyMap
-                        ld      hl,(InnerHyperCount)
-                        ld      a,h
-                        or      l
-                        ld      iyh,a
-ViewScanLoop:           ld      a,iyh
-.HyperspaceCountdown:   and     a
-                        jr      z,.DockedFlag
-                        ld      a,(ix+14)
-                        cp      1
-                        jp      z,NotReadNextKey
-.DockedFlag:            ld      a,(ix+0)                        ; Screen Map Byte 0 Docked flag 
-; 0 = not applicable (always read), 1 = only whilst docked, 2 = only when not docked, 3 = No keypress allowed
-                        cp      3                               ; if not selectable then don't scan this (becuase its a transition screen)
-                        jr      z,NotReadNextKey                ; 
-                        cp      0                               ; if itr a always read skip docking check
-                        jr      z,.NoDocCheck
-.DocCheck:              ld      d,a
-                        ld      a,(DockedFlag)
-                        cp      0                               ; if we are docked
-                        jr      z,.NotDockedCheck
-.DockedCheck:           ld      a,d
-                        cp      1                               ; if we are docked and its a dock only then scan
-                        jr      nz,NotReadNextKey
-                        jr      .NoDocCheck
-.NotDockedCheck:        ld      a,d
-                        cp      2                               ; if we are not docked and its a flight only then scan
-                        jr      nz,NotReadNextKey
-.NoDocCheck:            ld      a,(ix+1)                        ; Screen Map Byte 1 Screen Id
-                        cp      c                               ; is the index the current screen, if so skip the scan
-                        ld      e,a
-                        jr      z,NotReadNextKey   
-                        ld      a,(ix+2)                        ; Screen Map Byte 2 - address of keypress table
-                        cp      $FF                             ; if upper byte is FF then we do not respond
-                        jr      z,NotReadNextKey
-                        ld      (ReadKeyAddr+1),a               ; Poke address into the ld hl,(....) below
-                        ld      a,(ix+3)                        ; Screen Map Byte 3 - address of keypress table
-                        ld      (ReadKeyAddr+2),a
-ReadKeyAddr:            ld      hl,($0000)                      ; address is entry in the pointer table to the actual keypress
-                        ld      a,(hl)                          ; now fetch the actual keypress
-                        JumpIfAIsZero NotReadNextKey
-.ValidScreenChange:     ld      a,e
-                        jp      SetScreenAIX
-;--- CODE WILL NOT FALL TO HERE ---
-NotReadNextKey:         ld      de,ScreenMapRow
-                        add     ix,de                           ; we have only processed 3 of 8 bytes at here
-                        djnz    ViewScanLoop
-                        ret
-
+                        INCLUDE "./GameEngine/SetScreenA.asm"
+                        INCLUDE "./GameEngine/ViewKeyTest.asm"
+;----------------------------------------------------------------------------------------------------------------------------------                    
 SetInitialShipPosition: ld      hl,$0000
                         ld      (UBnKxlo),hl
                         ld      hl,$0000
@@ -718,57 +556,50 @@ EndOfNonBanked:
 
 ;	ORG ResetUniverseAddr
 ;INCLUDE "./GameEngine/resetUniverse.asm"
-; Bank 50
-         
-
-
+; Bank 50  ------------------------------------------------------------------------------------------------------------------------
     SLOT    MenuShrChtAddr
     PAGE    BankMenuShrCht
 	ORG     MenuShrChtAddr,BankMenuShrCht
     INCLUDE "./Menus/short_range_chart_menu.asm"
-; Bank 51
-
+    DISPLAY "Bank ",BankMenuShrCht," - Bytes free ",/D, $2000 - ($-MenuShrChtAddr), " - BankMenuShrCht"
+; Bank 51  ------------------------------------------------------------------------------------------------------------------------
     SLOT    MenuGalChtAddr
     PAGE    BankMenuGalCht
 	ORG     MenuGalChtAddr
     INCLUDE "./Menus//galactic_chart_menu.asm"
-; Bank 52
-
+    DISPLAY "Bank ",BankMenuGalCht," - Bytes free ",/D, $2000 - ($-MenuGalChtAddr), " - BankMenuGalCht"
+; Bank 52  ------------------------------------------------------------------------------------------------------------------------
     SLOT    MenuInventAddr
     PAGE    BankMenuInvent
 	ORG     MenuInventAddr
     INCLUDE "./Menus/inventory_menu.asm"        
-
-; Bank 53
-
+    DISPLAY "Bank ",BankMenuInvent," - Bytes free ",/D, $2000 - ($-MenuInventAddr), " - BankMenuInvent"
+; Bank 53  ------------------------------------------------------------------------------------------------------------------------
     SLOT    MenuSystemAddr
     PAGE    BankMenuSystem
 	ORG     MenuSystemAddr
     INCLUDE "./Menus/system_data_menu.asm"
-
-; Bank 54	
-
+    DISPLAY "Bank ",BankMenuSystem," - Bytes free ",/D, $2000 - ($-MenuSystemAddr), " - BankMenuSystem"
+; Bank 54  ------------------------------------------------------------------------------------------------------------------------
     SLOT    MenuMarketAddr
     PAGE    BankMenuMarket
     ORG     MenuMarketAddr
     INCLUDE "./Menus/market_prices_menu.asm"
-
-; Bank 66	
-
-    SLOT    DispMarketAddr
-    PAGE    BankDispMarket
-    ORG     DispMarketAddr
-    INCLUDE "./Menus/market_prices_disp.asm"
-
-; Bank 55
-
+    DISPLAY "Bank ",BankMenuMarket," - Bytes free ",/D, $2000 - ($-MenuMarketAddr), " - BankMenuMarket"
+; Bank 55  ------------------------------------------------------------------------------------------------------------------------
     SLOT    StockTableAddr
     PAGE    BankStockTable
     ORG     StockTableAddr  
     INCLUDE "./Tables/stock_table.asm"
-
-; Bank 57
-
+    DISPLAY "Bank ",BankStockTable," - Bytes free ",/D, $2000 - ($-StockTableAddr), " - BankStockTable"
+; Bank 56  ------------------------------------------------------------------------------------------------------------------------
+    SLOT    CommanderAddr
+    PAGE    BankCommander
+    ORG     CommanderAddr, BankCommander
+    INCLUDE "./Commander/commanderData.asm"
+    INCLUDE "./Commander/zero_player_cargo.asm"
+    DISPLAY "Bank ",BankCommander," - Bytes free ",/D, $2000 - ($-CommanderAddr), " - BankCommander"
+; Bank 57  ------------------------------------------------------------------------------------------------------------------------
     SLOT    LAYER2Addr
     PAGE    BankLAYER2
     ORG     LAYER2Addr
@@ -790,12 +621,7 @@ EndOfNonBanked:
     INCLUDE "./Layer2Graphics/l2_draw_any_line.asm"
     INCLUDE "./Layer2Graphics/clearLines-LL155.asm"
     INCLUDE "./Layer2Graphics/l2_draw_line_v2.asm"
-; Bank 56  ------------------------------------------------------------------------------------------------------------------------
-    SLOT    CommanderAddr
-    PAGE    BankCommander
-    ORG     CommanderAddr, BankCommander
-    INCLUDE "./Commander/commanderData.asm"
-    INCLUDE "./Commander/zero_player_cargo.asm"
+    DISPLAY "Bank ",BankLAYER2," - Bytes free ",/D, $2000 - ($-LAYER2Addr), " - BankLAYER2"
 ; Bank 58  ------------------------------------------------------------------------------------------------------------------------
     SLOT    LAYER1Addr
     PAGE    BankLAYER1
@@ -804,6 +630,7 @@ EndOfNonBanked:
     INCLUDE "./Layer1Graphics/layer1_attr_utils.asm"
     INCLUDE "./Layer1Graphics/layer1_cls.asm"
     INCLUDE "./Layer1Graphics/layer1_print_at.asm"
+    DISPLAY "Bank ",BankLAYER1," - Bytes free ",/D, $2000 - ($-LAYER1Addr), " - BankLAYER1"
 ; Bank 59  ------------------------------------------------------------------------------------------------------------------------
 ; In the first copy of the banks the "Non number" labels exist. They will map directly in other banks
 ; as the is aligned and data tables are after that
@@ -828,6 +655,13 @@ CopyShipToUniverse1     MCopyShipToUniverse     BankShipModels1
 CopyBodyToUniverse:
 CopyBodyToUniverse1:    MCopyBodyToUniverse     CopyShipToUniverse1
     INCLUDE "./Data/ShipModelMetaData1.asm"
+    DISPLAY "Bank ",BankShipModels1," - Bytes free ",/D, $2000 - ($-ShipModelsAddr), " - BankShipModels1"
+; Bank 66  ------------------------------------------------------------------------------------------------------------------------
+    SLOT    DispMarketAddr
+    PAGE    BankDispMarket
+    ORG     DispMarketAddr
+    INCLUDE "./Menus/market_prices_disp.asm"
+    DISPLAY "Bank ",BankDispMarket," - Bytes free ",/D, $2000 - ($-MenuShrChtAddr), " - BankDispMarket"
 ; Bank 67  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ShipModelsAddr
     PAGE    BankShipModels2
@@ -843,6 +677,7 @@ CopyShipToUniverse2     MCopyShipToUniverse     BankShipModels2
 CopyBodyToUniverse2:    MCopyBodyToUniverse     CopyShipToUniverse2
 
     INCLUDE "./Data/ShipModelMetaData2.asm"
+    DISPLAY "Bank ",BankShipModels2," - Bytes free ",/D, $2000 - ($-ShipModelsAddr), " - BankShipModels2"
 ; Bank 68  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ShipModelsAddr
     PAGE    BankShipModels3
@@ -861,184 +696,216 @@ CopyBodyToUniverse3:    MCopyBodyToUniverse     CopyShipToUniverse3
 ;;Privisioned for more models     SLOT    ShipModelsAddr
 ;;Privisioned for more models     PAGE    BankShipModels4
 ;;Privisioned for more models 	ORG     ShipModelsAddr, BankShipModels4
-
+    DISPLAY "Bank ",BankShipModels3," - Bytes free ",/D, $2000 - ($-ShipModelsAddr), " - BankShipModels3"
 ; Bank 60  ------------------------------------------------------------------------------------------------------------------------
     SLOT    SpritemembankAddr
     PAGE    BankSPRITE
 	ORG     SpritemembankAddr, BankSPRITE
     INCLUDE "./Layer3Sprites/sprite_routines.asm"
     INCLUDE "./Layer3Sprites/sprite_load.asm"
-    INCLUDE "./Layer3Sprites/SpriteSheet.asm"
+;;;***    INCLUDE "./Layer3Sprites/SpriteSheet.asm"
+    DISPLAY "Bank ",BankSPRITE," - Bytes free ",/D, $2000 - ($-ShipModelsAddr), " - BankSPRITE"
 ; Bank 61  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ConsoleImageAddr
     PAGE    BankConsole
 	ORG     ConsoleImageAddr, BankConsole
-
     INCLUDE "./Images/ConsoleImageData.asm"
+    DISPLAY "Bank ",BankConsole," - Bytes free ",/D, $2000 - ($-ConsoleImageAddr), " - BankConsole"
 ; Bank 62  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ViewFrontAddr
     PAGE    BankFrontView
     ORG     ViewFrontAddr  
     INCLUDE "./Views/Front_View.asm"    
+    DISPLAY "Bank ",BankFrontView," - Bytes free ",/D, $2000 - ($-ViewFrontAddr), " - BankFrontView"
 ; Bank 63  ------------------------------------------------------------------------------------------------------------------------
     SLOT    MenuStatusAddr
     PAGE    BankMenuStatus
     ORG     MenuStatusAddr
     INCLUDE "./Menus/status_menu.asm"
-
+    DISPLAY "Bank ",BankMenuStatus," - Bytes free ",/D, $2000 - ($-MenuStatusAddr), " - BankMenuStatus"
 ; Bank 64  ------------------------------------------------------------------------------------------------------------------------
-
     SLOT    MenuEquipSAddr
     PAGE    BankMenuEquipS
     ORG     MenuEquipSAddr  
     INCLUDE "./Menus/equip_ship_menu.asm"    
-
-
-    SLOT    LaunchShipAddr
-    PAGE    BankLaunchShip
-    ORG     LaunchShipAddr
-    INCLUDE "./Transitions/launch_ship.asm"
-
+    DISPLAY "Bank ",BankMenuEquipS," - Bytes free ",/D, $2000 - ($-MenuEquipSAddr), " - BankMenuEquipS"
+; Bank 65  ------------------------------------------------------------------------------------------------------------------------
+                    SLOT    LaunchShipAddr
+                    PAGE    BankLaunchShip
+                    ORG     LaunchShipAddr
+                    INCLUDE "./Transitions/launch_ship.asm"
+                    DISPLAY "Bank ",BankLaunchShip," - Bytes free ",/D, $2000 - ($-LaunchShipAddr), " - BankLaunchShip"
 ; Bank 70  ------------------------------------------------------------------------------------------------------------------------
-    SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA0
-	ORG	    UniverseBankAddr,BankUNIVDATA0
-    INCLUDE "./Universe/Ships/univ_ship_data.asm"
-    DISPLAY "Universe Data - Bytes free ",/D, $2000 - (UnivBankSize)
-    SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA1
-	ORG	UniverseBankAddr,BankUNIVDATA1
+                    SLOT    UniverseBankAddr
+                    PAGE    BankUNIVDATA0
+                    ORG	    UniverseBankAddr,BankUNIVDATA0
+                    INCLUDE "./Universe/Ships/univ_ship_data.asm"
+                    DISPLAY "Bank ",BankUNIVDATA0," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data A"
+; Bank 71  ------------------------------------------------------------------------------------------------------------------------
+                    SLOT    UniverseBankAddr
+                    PAGE    BankUNIVDATA1
+                    ORG	UniverseBankAddr,BankUNIVDATA1
 UNIVDATABlock1      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
-
-    SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA2
-	ORG	UniverseBankAddr,BankUNIVDATA2
+                    DISPLAY "Bank ",BankUNIVDATA1," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data B"
+; Bank 72  ------------------------------------------------------------------------------------------------------------------------    
+                    SLOT    UniverseBankAddr
+                    PAGE    BankUNIVDATA2
+                    ORG	UniverseBankAddr,BankUNIVDATA2
 UNIVDATABlock2      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
-
-    SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA3
-	ORG	UniverseBankAddr,BankUNIVDATA3
+                    DISPLAY "Bank ",BankUNIVDATA2," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data C"
+; Bank 73  ------------------------------------------------------------------------------------------------------------------------    
+                    SLOT    UniverseBankAddr
+                    PAGE    BankUNIVDATA3
+                    ORG	UniverseBankAddr,BankUNIVDATA3
 UNIVDATABlock3      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
-
-    SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA4
-	ORG	UniverseBankAddr,BankUNIVDATA4
+                    DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data D"
+; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
+                    SLOT    UniverseBankAddr
+                    PAGE    BankUNIVDATA4
+                    ORG	UniverseBankAddr,BankUNIVDATA4
 UNIVDATABlock4      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
-
-    SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA5
-	ORG	UniverseBankAddr,BankUNIVDATA5
+                    DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data E"
+; Bank 75  ------------------------------------------------------------------------------------------------------------------------    
+                    SLOT    UniverseBankAddr
+                    PAGE    BankUNIVDATA5
+                    ORG	UniverseBankAddr,BankUNIVDATA5
 UNIVDATABlock5      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
-
-    SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA6
-	ORG	UniverseBankAddr,BankUNIVDATA6
+                    DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data F"
+; Bank 76  ------------------------------------------------------------------------------------------------------------------------    
+                    SLOT    UniverseBankAddr
+                    PAGE    BankUNIVDATA6
+                    ORG	UniverseBankAddr,BankUNIVDATA6
 UNIVDATABlock6      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
-
-    SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA7
-	ORG	UniverseBankAddr,BankUNIVDATA7
+                    DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data G"
+; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
+                    SLOT    UniverseBankAddr
+                    PAGE    BankUNIVDATA7
+                    ORG	UniverseBankAddr,BankUNIVDATA7
 UNIVDATABlock7      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
-
-    SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA8
-	ORG	UniverseBankAddr,BankUNIVDATA8
+                    DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data H"
+; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
+                    SLOT    UniverseBankAddr
+                    PAGE    BankUNIVDATA8
+                    ORG	UniverseBankAddr,BankUNIVDATA8
 UNIVDATABlock8      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
-
-    SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA9
-	ORG	UniverseBankAddr,BankUNIVDATA9
+                    DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data I"
+; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
+                    SLOT    UniverseBankAddr
+                    PAGE    BankUNIVDATA9
+                    ORG	UniverseBankAddr,BankUNIVDATA9
 UNIVDATABlock9      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
-
-    SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA10
-	ORG	UniverseBankAddr,BankUNIVDATA10
+                    DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data J"
+; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
+                    SLOT    UniverseBankAddr
+                    PAGE    BankUNIVDATA10
+                    ORG	UniverseBankAddr,BankUNIVDATA10
 UNIVDATABlock10     DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
-
-    SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA11
-	ORG	UniverseBankAddr,BankUNIVDATA11
+                    DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data K"
+; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
+                    SLOT    UniverseBankAddr
+                    PAGE    BankUNIVDATA11
+                    ORG	UniverseBankAddr,BankUNIVDATA11
 UNIVDATABlock11     DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
-                    
-    SLOT    UniverseBankAddr
-    PAGE    BankUNIVDATA12
-	ORG	UniverseBankAddr,BankUNIVDATA12
+                    DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data L"
+; Bank 74  ------------------------------------------------------------------------------------------------------------------------             
+                    SLOT    UniverseBankAddr
+                    PAGE    BankUNIVDATA12
+                    ORG	UniverseBankAddr,BankUNIVDATA12
 UNIVDATABlock12     DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
- 
+                    DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data M"
 ; Bank 83  ------------------------------------------------------------------------------------------------------------------------
-    SLOT    SunBankAddr
-    PAGE    BankSunData
-	ORG	    SunBankAddr,BankSunData
-    INCLUDE "./Universe/Sun/sun_data.asm"
-
+                        SLOT    SunBankAddr
+                        PAGE    BankSunData
+                        ORG	    SunBankAddr,BankSunData
+                        INCLUDE "./Universe/Sun/sun_data.asm"
+                        DISPLAY "Bank ",BankSunData," - Bytes free ",/D, $2000 - ($-SunBankAddr), " - BankSunData"
 ; Bank 84  ------------------------------------------------------------------------------------------------------------------------
-    SLOT    PlanetBankAddr
-    PAGE    BankPlanetData
-	ORG	    PlanetBankAddr,BankPlanetData
-    INCLUDE "./Universe/Planet/planet_data.asm"
-
+                        SLOT    PlanetBankAddr
+                        PAGE    BankPlanetData
+                        ORG	    PlanetBankAddr,BankPlanetData
+                        INCLUDE "./Universe/Planet/planet_data.asm"
+                        DISPLAY "Bank ",BankPlanetData," - Bytes free ",/D, $2000 - ($-PlanetBankAddr), " - BankPlanetData"
+;;;***; Bank 85  ------------------------------------------------------------------------------------------------------------------------
+;;;***                        SLOT    SpriteDataAAddr
+;;;***                        PAGE    BankSpriteDataA
+;;;***                        ORG     SpriteDataAAddr, BankSpriteDataA
+;;;***                        INCLUDE "./Layer3Sprites/sprite_loadA.asm"
+;;;***                        INCLUDE "./Layer3Sprites/SpriteSheetA.asm"
+;;;***                        DISPLAY "Bank ",BankSpriteDataA," - Bytes free ",/D, $2000 - ($-SpriteDataAAddr), " - BankSpriteDataA"
+;;;***; Bank 86  ------------------------------------------------------------------------------------------------------------------------
+;;;***                        SLOT    SpriteDataBAddr
+;;;***                        PAGE    BankSpriteDataB
+;;;***                        ORG     SpriteDataBAddr, BankSpriteDataB 
+;;;***                        INCLUDE "./Layer3Sprites/sprite_loadB.asm"
+;;;***                        INCLUDE "./Layer3Sprites/SpriteSheetB.asm"
+;;;***                        DISPLAY "Bank ",BankSpriteDataB," - Bytes free ",/D, $2000 - ($-SpriteDataBAddr), " - BankSpriteDataB"
 ; Bank 91  ------------------------------------------------------------------------------------------------------------------------
                         SLOT    GalaxyDataAddr
                         PAGE    BankGalaxyData0
                         ORG GalaxyDataAddr, BankGalaxyData0
                         INCLUDE "./Universe/Galaxy/galaxy_data.asm"                                                            
-                        
-                        DISPLAY "Galaxy Data - Bytes free ",/D, $2000 - ($- GalaxyDataAddr)
-
+                        DISPLAY "Bank ",BankGalaxyData0," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData0"
 ; Bank 92  ------------------------------------------------------------------------------------------------------------------------
                         SLOT    GalaxyDataAddr
                         PAGE    BankGalaxyData1
                         ORG GalaxyDataAddr, BankGalaxyData1
 GALAXYDATABlock1         DB $FF
                          DS $1FFF                 ; just allocate 8000 bytes for now  
+                        DISPLAY "Bank ",BankGalaxyData1," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData1"
 ; Bank 93  ------------------------------------------------------------------------------------------------------------------------
                         SLOT    GalaxyDataAddr
                         PAGE    BankGalaxyData2
                         ORG GalaxyDataAddr, BankGalaxyData2
-GALAXYDATABlock2         DB $FF
-                         DS $1FFF                 ; just allocate 8000 bytes for now
+GALAXYDATABlock2        DB $FF
+                        DS $1FFF                 ; just allocate 8000 bytes for now
+                        DISPLAY "Bank ",BankGalaxyData2," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData2"
 ; Bank 94  ------------------------------------------------------------------------------------------------------------------------
                         SLOT    GalaxyDataAddr
                         PAGE    BankGalaxyData3
                         ORG GalaxyDataAddr, BankGalaxyData3
-GALAXYDATABlock3         DB $FF
-                         DS $1FFF                 ; just allocate 8000 bytes for now
+GALAXYDATABlock3        DB $FF
+                        DS $1FFF                 ; just allocate 8000 bytes for now
+                        DISPLAY "Bank ",BankGalaxyData3," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData3"
 ; Bank 95  ------------------------------------------------------------------------------------------------------------------------
                         SLOT    GalaxyDataAddr
                         PAGE    BankGalaxyData4
                         ORG GalaxyDataAddr, BankGalaxyData4
-GALAXYDATABlock4         DB $FF
-                         DS $1FFF                 ; just allocate 8000 bytes for now
+GALAXYDATABlock4        DB $FF
+                        DS $1FFF                 ; just allocate 8000 bytes for now
+                        DISPLAY "Bank ",BankGalaxyData4," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData4"
 ; Bank 96  ------------------------------------------------------------------------------------------------------------------------
                         SLOT    GalaxyDataAddr
                         PAGE    BankGalaxyData5
                         ORG GalaxyDataAddr,BankGalaxyData5
-GALAXYDATABlock5         DB $FF
-                         DS $1FFF                 ; just allocate 8000 bytes for now
+GALAXYDATABlock5        DB $FF
+                        DS $1FFF                 ; just allocate 8000 bytes for now
+                        DISPLAY "Bank ",BankGalaxyData5," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData5"
 ; Bank 97  ------------------------------------------------------------------------------------------------------------------------
                         SLOT    GalaxyDataAddr
                         PAGE    BankGalaxyData6
                         ORG GalaxyDataAddr,BankGalaxyData6
-GALAXYDATABlock6         DB $FF
-                         DS $1FFF                 ; just allocate 8000 bytes for now
+GALAXYDATABlock6        DB $FF
+                        DS $1FFF                 ; just allocate 8000 bytes for now
+                        DISPLAY "Bank ",BankGalaxyData6," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData6"
 ; Bank 98  ------------------------------------------------------------------------------------------------------------------------
                         SLOT    GalaxyDataAddr
                         PAGE    BankGalaxyData7
                         ORG GalaxyDataAddr,BankGalaxyData7
-GALAXYDATABlock7         DB $FF
-                         DS $1FFF                 ; just allocate 8000 bytes for now
+GALAXYDATABlock7        DB $FF
+                        DS $1FFF                 ; just allocate 8000 bytes for now
+                        DISPLAY "Bank ",BankGalaxyData7," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData7"
 ; Bank 99  ------------------------------------------------------------------------------------------------------------------------
                         SLOT    MathsTablesAddr
                         PAGE    BankMathsTables
@@ -1046,9 +913,9 @@ GALAXYDATABlock7         DB $FF
                         INCLUDE "./Maths/logmaths.asm"
                         INCLUDE "./Tables/antilogtable.asm"
                         INCLUDE "./Tables/logtable.asm"
-
+                        DISPLAY "Bank ",BankMathsTables," - Bytes free ",/D, $2000 - ($-MathsTablesAddr), " - BankMathsTables"
     
-    SAVENEX OPEN "EliteN.nex", $8000 , $7F00
+    SAVENEX OPEN "EliteN.nex", EliteNextStartup , TopOfStack
     SAVENEX CFG  0,0,0,1
     SAVENEX AUTO
     SAVENEX CLOSE

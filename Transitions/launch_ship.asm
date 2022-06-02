@@ -159,7 +159,7 @@ draw_launch_ship:       MMUSelectLayer1
 .SetupGalaxy:           MaxThrottle
                         ZeroThrottle; DEBUG
 ; To launch we need to set docked flag to transition FE and at teh end of the transition set to FD to rebuild universe
-                        ld      a,$FE
+                        ld      a,StateInTransition
                         ld      (DockedFlag),a
                         ret
                 
@@ -198,7 +198,7 @@ draw_docking_ship:      MMUSelectLayer1
                         ld      (current_offsetY),a
 .SetupGalaxy:           xor     a ; palcehodler as it would cause next macro to fail re initialise all universe banks
                         ZeroThrottle
-                        ld      a,$FF
+                        ld      a,StatePlayerDocked
                         ld      (DockedFlag),a ; we don't kill off shipts as we kill them on launch
                         ret
                         
@@ -228,7 +228,7 @@ loop_launch_ship:       call    LaunchTubeEdges
                         ld      a,$80
                         call    l2_draw_box             ; "l2_draw_box bc=rowcol, de=heightwidth a=color"
                         ret 
-.FinishedLaunch:        ld      a,$FD                   ; now seed that we need a universe rebuild post launch
+.FinishedLaunch:        ld      a,StateCompletedLaunch  ; now seed that we need a universe rebuild post launch
                         ld      (DockedFlag),a
                         ret
 

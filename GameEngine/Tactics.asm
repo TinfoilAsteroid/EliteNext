@@ -1,7 +1,7 @@
 ;Ship Tactics
 ShipAIJumpTable:      DW    NormalAI,   MissileAI,  StationAI,  JunkAI,     ScoopableAI
                       DW    ThargoidAI, NoAI,       NoAI,       NoAI,       NoAI
-
+ShipAiJumpTableMax:   EQU ($ - ShipAIJumpTable)/2
 
 
 
@@ -16,11 +16,16 @@ UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
                         ; call    TIDY TIDY IS BROKEN
                        ; add AI in here too
                        ld       a,(ShipTypeAddr)
+                       ReturnIfAGTEusng ShipAiJumpTableMax              ; TODO capture duff jumps whilst debugging in case a new shjip type code is added
                        ld       hl,ShipAIJumpTable
                        add      hl,a
                        add      hl,a
+                       ld       a,(hl)                                  ; contrary to the name
+                       inc      hl                                      ; jp (hl) is really 
+                       ld       h,(hl)                                  ; jp hl
+                       ld       l,a                                     ;
                        jp       (hl)                                    ; Follow the AI Jump Table
-                        ret
+                       ret                                              ; not needed as jp handles this
 
 
 

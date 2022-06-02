@@ -3,7 +3,7 @@ IO_EXT_BANK_PORT 			            EQU $DFFD ; 57341
 IO_BANK_PORT                            EQU $7FFD ; 32765
 REGISTER_NUMBER_PORT					EQU $243B
 REGISTER_VALUE_PORT						EQU $253B
-SPRITE_SLOT_PORT						EQU $303B
+SPRITE_SLOT_PORT						EQU $303B ; port for sprite and pattern index 
 SPRITE_INFO_PORT                        EQU $0057
 SPRITE_PATTERN_UPLOAD_PORT				EQU $005B
 

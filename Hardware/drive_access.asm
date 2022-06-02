@@ -50,9 +50,9 @@ fRead:                  or   	a             ; is it zero?
                         ret		
 		
 ; *******************************************************************************************************
-;	Function	Read bytes from the open file
-;	In:		ix  = address to read into
-;			bc  = amount to read
+;	Function	Write bytes to the open file
+;	In:		ix  = address to read from
+;			bc  = amount to write
 ;	ret:		carry set = error
 ; *******************************************************************************************************
 fWrite:                 or   	a             ; is it zero?

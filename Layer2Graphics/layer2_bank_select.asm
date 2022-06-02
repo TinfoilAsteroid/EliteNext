@@ -43,7 +43,6 @@ asm_l2_bank_select:         ld      d,a
                             jr      z,.NotBreakDebug
                             cp      $80
                             jr      z,.NotBreakDebug
-                            break
 .NotBreakDebug:                            
                             ld      a,(varL2_BUFFER_MODE)
                             or		LAYER2_VISIBLE_MASK  |  LAYER2_WRITE_ENABLE_MASK

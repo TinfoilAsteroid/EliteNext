@@ -1,0 +1,13 @@
+load_sprite_dataB:     ret
+; ld			bc, SPRITE_SLOT_PORT; SPRITE_SLOT_PORT
+                       ; ld          a,25                            ; select sprite pattern 25
+                       ; out			(c),a							; Prime slot upload
+                        ld			de,4	* 256					; nbr of sprites to upload	
+                        ld			hl, Sprite26						; sprites are stored contiguous
+.SpriteLoadLoop:	    ld			bc, SPRITE_PATTERN_UPLOAD_PORT  ; SPRITE_PATTERN_UPLOAD_PORT
+                        outinb										; do final 256th sprite
+                        dec			de
+                        ld			a,d
+                        or			e
+                        jr			nz,.SpriteLoadLoop				; keep on rolling through sprites
+                        ret

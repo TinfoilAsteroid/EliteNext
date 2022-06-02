@@ -90,7 +90,7 @@ TidyRotXSmall:
 		jp		NormaliseRoofV
 ; TIDY is broken
 TIDY:
-        break
+
 ORTHOGALISE:
 ;-- NormaliseNosev
 		call	CopyRotMatNoseVtoXX15		

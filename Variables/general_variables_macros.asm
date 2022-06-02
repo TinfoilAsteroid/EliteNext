@@ -108,6 +108,40 @@ ClearECM:               MACRO
                         xor     a
                         ld      (ECMCountDown),a
                         ENDM
+                      
+UpdateLaserOnCounter:   MACRO
+                        ld      a,(CurrLaserPulseOnCount)
+                        and     a
+                        jr      z,.LaserOnIsDone
+                        dec     a
+                        ld      (CurrLaserPulseOnCount),a
+                        jr      z,.LaserOnIsDone
+                        ldCopyByte CurrLaserPulseOffTime, CurrLaserPulseOffCount
+.LaserOnIsDone:
+                        ENDM
+
+UpdateLaserOffCounter:  MACRO
+                        ld      a,(CurrLaserPulseOffTime)
+                        and     a
+                        jr      z,.LaserOffIsDone
+                        dec     a
+                        ld      (CurrLaserPulseOffTime),a
+                        jr      z,.LaserOffIsDone
+                        ldCopyByte CurrLaserPulseRest, CurrLaserPulseRestCount
+.LaserOffIsDone:
+                        ENDM
+
+UpdateLaserRestCounter: MACRO
+                        ld      a,(CurrLaserPulseRestCount)
+                        and     a
+                        jr      z,.LaserRestIsDone
+                        dec     a
+                        ld      (CurrLaserPulseRestCount),a
+                        jr      z,.LaserRestIsDone
+                        ZeroA                                                                           ;    then pulse rate count = 0
+                        ld      (CurrLaserPulseRateCount),a                                             ;    .
+.LaserRestIsDone
+                        ENDM
                         
 ChargeEnergyAndShields: MACRO
                         ld      a,$FF

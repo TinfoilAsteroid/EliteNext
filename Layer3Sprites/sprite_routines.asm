@@ -20,26 +20,31 @@ reticlule_sprite2                   equ	reticlule_sprite1+1
 reticlule_sprite3                   equ	reticlule_sprite2+1
 reticlule_sprite4                   equ reticlule_sprite3+1
 
-laser_sprite1                       equ	reticlule_sprite4+1
-laser_sprite2                       equ	laser_sprite1    +1
-laser_sprite3                       equ	laser_sprite2    +1
-laser_sprite4                       equ laser_sprite3    +1
-laser_sprite5                       equ	laser_sprite4    +1
-laser_sprite6                       equ	laser_sprite5    +1
-laser_sprite7                       equ	laser_sprite6    +1
-laser_sprite8                       equ laser_sprite7    +1
-laser_sprite9                       equ	laser_sprite8    +1
-laser_sprite10                      equ	laser_sprite9    +1
-laser_sprite11                      equ	laser_sprite10   +1
-laser_sprite12                      equ laser_sprite11   +1
-laser_sprite13                      equ	laser_sprite12   +1
-laser_sprite14                      equ	laser_sprite13   +1
-laser_sprite15                      equ	laser_sprite14   +1
-laser_sprite16                      equ laser_sprite15   +1
-compass_sun                         equ laser_sprite16   +1
-compass_station                     equ compass_sun      +1
-targetting_sprite1                  equ compass_station  +1
-targetting_sprite2                  equ targetting_sprite1   +1
+laser_sprite1                       equ	reticlule_sprite4+1          ; 01
+laser_sprite2                       equ	laser_sprite1    +1          ; 02
+laser_sprite3                       equ	laser_sprite2    +1          ; 03
+laser_sprite4                       equ laser_sprite3    +1          ; 04
+laser_sprite5                       equ	laser_sprite4    +1          ; 05
+laser_sprite6                       equ	laser_sprite5    +1          ; 06
+laser_sprite7                       equ	laser_sprite6    +1          ; 07
+laser_sprite8                       equ laser_sprite7    +1          ; 08
+laser_sprite9                       equ	laser_sprite8    +1          ; 09
+laser_sprite10                      equ	laser_sprite9    +1          ; 10
+laser_sprite11                      equ	laser_sprite10   +1          ; 11
+laser_sprite12                      equ laser_sprite11   +1          ; 12
+laser_sprite13                      equ	laser_sprite12   +1          ; 13
+laser_sprite14                      equ	laser_sprite13   +1          ; 14
+laser_sprite15                      equ	laser_sprite14   +1          ; 15
+laser_sprite16                      equ laser_sprite15   +1          ; 16
+compass_sun                         equ laser_sprite16   +1          ; 17
+compass_station                     equ compass_sun      +1          ; 18
+targetting_sprite1                  equ compass_station  +1          ; 19
+targetting_sprite2                  equ targetting_sprite1   +1      ; 20
+ECM_sprite                          equ targetting_sprite2   +1      ; 21
+missile_sprite1                     equ ECM_sprite       +1          ; 22
+missile_sprite2                     equ missile_sprite1  +1          ; 23
+missile_sprite3                     equ missile_sprite2  +1          ; 24
+missile_sprite4                     equ missile_sprite3  +1          ; 25
 
 glactic_pattern_1					equ 0
 glactic_hyper_pattern_1             equ 2
@@ -54,6 +59,10 @@ laser_pattern_4                     equ 15
 laser_pattern_5                     equ 16
 targetting_pattern                  equ 23
 lock_pattern                        equ 24
+ecm_pattern                         equ 25
+missile_ready_pattern               equ 26
+missile_armed_pattern               equ 27
+missile_locked_pattern              equ 28
 
 compass_sun_infront                 equ 17
 compass_sun_behind                  equ 18
@@ -173,6 +182,8 @@ sprite_galactic_hyper_cursor:ld		a,b
                             ld		e,3
                             call	sprite_single ; sprite_big:
                             ret
+     
+                            
 ; moves hyperspace cursor to target system x position
 sprite_ghc_move:            ld		a,galactic_hyper_sprite
                             nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
@@ -276,12 +287,55 @@ ReticuleOffset          EQU 8
 TargetetingCentreX1     EQU ReticuleCentreX -32
 TargetetingCentreX2     EQU ReticuleCentreX +16
 TargetetingCentreY      EQU ReticuleCentreY -7
-    
+
+sprite_missile_x        EQU 2+32
+sprite_missile_y        EQU 192-8+32
+
+sprite_ecm_x            EQU (6*8) +2 +32
+sprite_ecm_y            EQU 192-15+32
+
+sprite_ECM:             ld      a,ECM_sprite
+                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+                        ld      a,sprite_ecm_x
+                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a	
+                        ld		a,sprite_ecm_y 
+                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                        ld      a,ecm_pattern | %10000000
+                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+                        ret
+
+sprite_missile_ready:   nextreg SPRITE_PORT_INDEX_REGISTER,a
+                        ld      a,c
+                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a	
+                        ld		a,sprite_missile_y 
+                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                        ld      a,missile_ready_pattern | %10000000
+                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+                        ret
+
+sprite_missile_1:       ld      a,missile_sprite1                            
+                        ld      c,sprite_missile_x
+                        jp      sprite_missile_ready
+                           
+sprite_missile_2:       ld      a,missile_sprite2                            
+                        ld      c,sprite_missile_x+15
+                        jp      sprite_missile_ready
+                              
+sprite_missile_3:       ld      a,missile_sprite3                            
+                        ld      c,sprite_missile_x+25
+                        jp      sprite_missile_ready
+                        
+sprite_missile_4:       ld      a,missile_sprite4
+                        ld      c,sprite_missile_x +35
+                        jp      sprite_missile_ready
+
+
+                        
 sprite_reticule:        ld      a,reticlule_sprite1                 ; LEFT ARM
                         nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
                         ld      a,ReticuleCentreX -16 - ReticuleOffset
                         nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
-                        ld		a,ReticuleCentreY 
+                        ld		a,ReticuleCentreY
                         nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                         xor     a
                         nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
@@ -355,7 +409,28 @@ RightLaser:             MACRO   xoffset, yoffset, spriteL, patternL
                         nextreg	SPRITE_PORT_ATTR3_REGISTER,a		 
                         ENDM
                     
-  
+show_ecm_sprite:        ShowSprite  ECM_sprite, ecm_pattern
+                        ret
+
+show_missile_1_ready:   ShowSprite  missile_sprite1, missile_ready_pattern
+                        ret
+
+show_missile_2_ready:   ShowSprite  missile_sprite2, missile_ready_pattern
+                        ret
+
+show_missile_3_ready:   ShowSprite  missile_sprite3, missile_ready_pattern
+                        ret
+
+show_missile_4_ready:   ShowSprite  missile_sprite4, missile_ready_pattern
+                        ret
+
+show_missile_1_armed:   ShowSprite  missile_sprite1, missile_armed_pattern
+                        ret
+
+show_missile_1_locked:  ShowSprite  missile_sprite1, missile_locked_pattern
+                        ret
+
+                        
 show_compass_sun_infront:ShowSprite  compass_sun, compass_sun_infront
                          ret
                          
@@ -422,6 +497,26 @@ sprite_reticule_hide:   HideSprite reticlule_sprite1
                         HideSprite reticlule_sprite4
                         ret
 
+sprite_ecm_hide:        HideSprite ECM_sprite
+                        ret
+
+sprite_missile_1_hide:  HideSprite missile_sprite1
+                        ret
+
+sprite_missile_2_hide:  HideSprite missile_sprite2
+                        ret
+
+sprite_missile_3_hide:  HideSprite missile_sprite3
+                        ret
+
+sprite_missile_4_hide:  HideSprite missile_sprite4
+                        ret
+
+sprite_missile_all_hide:call  sprite_missile_1_hide
+                        call  sprite_missile_2_hide
+                        call  sprite_missile_3_hide
+                        call  sprite_missile_4_hide
+                        ret
                             
 sprite_targetting:      ld      a,targetting_sprite1                 ; LEFT ARM
                         nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
@@ -466,6 +561,8 @@ sprite_lock:            ld      a,targetting_sprite1                 ; LEFT ARM
                         ld      a,lock_pattern | %10000000
                         nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
                         ret
+
+       
                             
 sprite_targetting_hide: HideSprite targetting_sprite1
                         HideSprite targetting_sprite2
@@ -506,7 +603,12 @@ sprite_cls_cursors:     call	sprite_galactic_hide
                         call    sprite_compass_hide
                         call    sprite_targetting_hide
                         ret
-
+                        
+sprite_cls_all:         call    sprite_cls_cursors
+                        call    sprite_ecm_hide
+                        call    sprite_missile_all_hide
+                        ret
+                        
 init_sprites:           call		sprite_cls_cursors
                         nextreg 	SPRITE_LAYERS_SYSTEM_REGISTER,%01000011
                         ret

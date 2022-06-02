@@ -139,11 +139,42 @@ UpdateConsole:          ld      a,(DELTA)
                         JumpIfALTNusng  31 + 1,     Draw1EnergyBar
                         JumpIfALTNusng  (31*2) + 1, Draw2EnergyBars
                         JumpIfALTNusng  (31*3) + 1, Draw3EnergyBars 
-                        jp      Draw4EnergyBars
-; implicit ret
+                        call      Draw4EnergyBars
                         
-                        
-; NEED ENERGY BAR
+.SpriteDraw:            MMUSelectSpriteBank                        
+.DrawECM:               ld      a,(ECMCountDown)   
+                        JumpIfAIsZero   .HideECM                                                 
+.ShowECM:               call    show_ecm_sprite                                                 
+                        jp      .ProcessedECM                                              
+.HideECM:               call    sprite_ecm_hide  
+.ProcessedECM:                      
+.DrawMissiles:          ld      a,(NbrMissiles)  
+                        ld      iyl,a
+                        JumpIfAIsZero   .HideAllMissiles                                                         
+.DrawMissile_1:         ld      a,(MissileTargettingFlag)                                                          
+                        JumpIfAEqNusng  $FF,.Missile1Ready                                                           
+                        JumpIfAEqNusng  $FE,.Missile1Armed                                                           
+.Missile1Locked:        call    show_missile_1_locked                                                       
+                        jp      .DrawMissile_2                                               
+.Missile1Ready:         call    show_missile_1_ready                                                      
+                        jp      .DrawMissile_2                                                   
+.Missile1Armed:         call    show_missile_1_armed                                                      
+.DrawMissile_2:         ld      a,iyl                                       
+                        JumpIfALTNusng 2, .Only1Missile                                                        
+                        call    show_missile_2_ready                                                      
+.DrawMissile_3:         ld      a,iyl                                           
+                        JumpIfALTNusng 3, .Only2Missiles                                                         
+                        call    show_missile_3_ready                                                      
+.DrawMissile_4:         ld      a,iyl                                          
+                        JumpIfALTNusng 4, .Only2Missiles                                                         
+                        call    show_missile_4_ready                                                                                    
+                        ret                              
+.HideAllMissiles:       call    sprite_missile_1_hide                                                       
+.Only1Missile:          call    sprite_missile_2_hide                                                       
+.Only2Missiles:         call    sprite_missile_3_hide                                                       
+.Only3Missiles:         call    sprite_missile_4_hide                                                       
+                        ret
+
 
 .DoneConsole:           ret
     

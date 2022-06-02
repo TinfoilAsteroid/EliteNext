@@ -144,6 +144,7 @@ RequiredScale			equ  XX17			; use to hold calculated scale in drawing ship
 varXX17                 equ  XX17
 ScreenChanged           DB  0
 ScreenIndex             DB  0 
+ScreenIndexTablePointer DW  0
 InvertedYAxis           DB  0
 MenuIdMax				DB	0				;	87		MenuIdMax		QQ11
 											; Bit 7 Set  ShortRangeChart    $80
@@ -214,6 +215,7 @@ DampingKeys				DS  7				; 0387 - 038D
 ;  #&1 Does A toggle keyboard auto-recentering ?
 ;  #&0 Caps-lock toggles keyboard flight damping
 NbrMissiles				DB	0				; 038B	Does this clash with Dampingkeys?
+PlayerECMActiveCount    DB  0               ; Countdown for player ECM
 FugitiveInnocentStatus	DB	0				; 038C	FIST
 StockAvaliabiliy		DS 	16				; 038D - 039C Stock inventory in station
 AlienItemsAvaliability  DB	0				; 039D
@@ -229,7 +231,7 @@ CargoItem				DB	0				; 03AD (I think its item type just scooped) QQ29
 ShipLineStackPointer	DW	0				; 03B0 & 03B1 ship Lines pointer reset to top LS% = &0CFF (make DW for z80 and direct hl pointer)
 											; this is ship lines stack pointer so may be redundant with paging
 											; LS = line stack so we will have one for now to remove later
-COK						DB	0				; 0366 Competition Byte what ? Does some file check and accelleration check
+; not needed as we don't do security on file COK						DB	0				; 0366 Competition Byte what ? Does some file check and accelleration check
 DisplayEcononmy			DB	0				; 03B8
 DisplayGovernment		DB  0				; 03B9 Is it target? 03B9 \ QQ4	 \ Government, 0 is Anarchy.
 DisplayTekLevel			DB	0				; 03BA   \ QQ5	\ Tech

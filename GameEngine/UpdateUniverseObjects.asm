@@ -8,7 +8,7 @@ UpdateUniverseObjects:  xor     a
                         call    GetTypeAtSlotA
                         ld      iyl,a                                           ; save type into iyl for later
                         cp      $FF
-                        jp      z,.ProcessedUniverseSlot            
+                        jp      z,.UniverseSlotIsEmpty            
 .UniverseObjectFound:   ld      a,d                                             ; Get back Universe slot as we want it
                         MMUSelectUniverseA                                      ; and we apply roll and pitch
                         call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
@@ -116,6 +116,7 @@ UpdateUniverseObjects:  xor     a
 .AreWeReadyForAI:       IsSlotMissile                                           ; Missiles update every iteration
                         jp      z,.UpdateMissile                                ; so we bypass the logic check
                         CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, UpdateShip
+.UniverseSlotIsEmpty:
 .DoneAICheck:           ld      a,(SelectedUniverseSlot)                        ; Move to next ship cycling if need be to 0
                         inc     a                                               ; .
                         JumpIfAGTENusng   UniverseSlotListSize, .UpdateAICounter; .

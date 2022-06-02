@@ -76,7 +76,6 @@ LL9NoEraseLines:
 ;...............................................................................................................................................................................
 LL9ZeroAccelRotCtr:
     ldWriteZero UBnkAccel                   ; byte #28 accel (INF),Y                                       ;;;;    set UBnkAccel & UBnkrotZCounter to 0	
-	break
     ld		(UBnkrotZCounter),a				; byte #30 rotz counter (INF),Y                                ;;;;   
 	call	EraseOldLines					; EE51 \ if bit3 set erase old lines in XX19 heap              ;;;;    gosub erase old lines (EE51)   
 ;...............................................................................................................................................................................
