@@ -29,8 +29,8 @@ STAT_current_end        DB 0
 STAT_buffer_rows         EQU     128
 STAT_buffer_row_len      EQU     24
 STAT_eqip_window_len    EQU 10
-STAT_display_buff_len    EQU     STAT_buffer_rows *   STAT_buffer_row_len
-STAT_display_buffer:     DS      STAT_display_buff_len                     ; maxium of 128 items can be coded for
+STAT_display_buff_len   EQU     STAT_buffer_rows *   STAT_buffer_row_len
+STAT_display_buffer:    DS      STAT_display_buff_len                     ; maxium of 128 items can be coded for
 STAT_position			equ $5840 
 STAT_cash_amount    	DS 10
 STAT_cash_UoM           DB " Cr",0
@@ -160,19 +160,18 @@ STAT_buffer_list:       ld      a,(Galaxy)       ; DEBUG as galaxy n is not work
                         call    memfill_dma                                 ; full buffer with ASCII 1 (unprintable character)
                         ld      hl,STAT_display_buffer+STAT_buffer_row_len-1
                         ld      de,STAT_buffer_row_len
-                        ld      b,EQ_ITEM_COUNT - EQ_CARGO_BAY
-                        xor     a
+                        ld      b,STAT_buffer_rows
+                        ZeroA
 .EoLLoop:               ld      (hl),a                                      ; fix all buffer lines with a null
                         add     hl,de
                         djnz    .EoLLoop
-                        ld      b,EQ_ITEM_COUNT - EQ_CARGO_BAY              ; CurrentGameMaxEquipment but minus fuel and missiles
                         ld      ix,EquipmentFitted + STAT_First_Item        ; ix = equipment master table, ignore missiles
                         ld      iy,STAT_display_buffer                      ; iy = target buffer
+                        ld      b,EQ_ITEM_COUNT - EQ_CARGO_BAY              ; we do not include Fuel and Missile counts
                         ld      c,0                                         ; Current Row
                         ld      e,STAT_First_Item
 .ProcessRow:            ld      a,(ix+0)                                    ; Do we own one?
-                        cp      0
-                        jr      z,.DoneFittedCheck
+                        JumpIfAIsZero .NotFitted                            ; optimised check for EquipmentItemNotFitted
 .OwnItem:               push    de,, iy,, ix,, bc
                         ld      hl,ShipEquipNameTable                       ; look up equipment name
                         ld      d,EquipNameTableRowLen                       ; ship equip name row length, e = current equip row
@@ -185,22 +184,26 @@ STAT_buffer_list:       ld      a,(Galaxy)       ; DEBUG as galaxy n is not work
                         add     iy,de                                       ; now iy = start of next column
                         pop     de
                         inc     c
+.NotFitted:
 .DoneFittedCheck:       inc     ix                        
                         inc     e
                         djnz    .ProcessRow
 .DoneProcess:           ld      a,c
                         ld      (STAT_current_end),a
                         ret
+                        
+draw_STAT_boilertext:   ld		b,10
+                        ld		hl,status_boiler_text
+                        call	STAT_print_boiler_text
+                        ret
+                                   
 ;----------------------------------------------------------------------------------------------------------------------------------	
-draw_STAT_maintext:    	InitNoDoubleBuffer
-.Drawbox:               ld		bc,$0101
+draw_STAT_maintext:    	ld		bc,$0101
                         ld		de,$BEFD
                         ld		a,$C0
                         MMUSelectLayer2
                         call	l2_draw_box
-                        ld		b,10
-                        ld		hl,status_boiler_text
-                        call	STAT_print_boiler_text
+                        call    draw_STAT_boilertext
 .PresentSystem:         ld      a,(Galaxy)       ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      bc, (PresentSystemX)
@@ -274,27 +277,27 @@ draw_STAT_maintext:    	InitNoDoubleBuffer
 draw_STAT_items:        MMUSelectLayer1
                         call    l1_cls
                         ; add in all the status stuff later
-                        ld      a,(STAT_current_topItem)
-                        ld      d,STAT_buffer_row_len
-                        ld      e,a
-                        mul
-                        ld      hl,STAT_display_buffer
-                        add     hl,de
-                        ld      a,(STAT_current_topItem)
-                        ld      b,a
-                        ld      a,(STAT_current_end)
-                        sub     b
-                        JumpIfALTNusng  STAT_eqip_window_len, .FillScreen
-.JustWindowing:         ld      b,STAT_eqip_window_len
+                        ld      a,(STAT_current_topItem)                    ; Move to correct top of stat list item
+                        ld      d,STAT_buffer_row_len                       ; so de = offset to first item in display
+                        ld      e,a         
+                        mul         
+                        ld      hl,STAT_display_buffer                      ; hl = pointer to first item in display
+                        add     hl,de                                       ;
+                        ld      a,(STAT_current_topItem)                    ; set a to number of lines to display 
+                        ld      b,a                                         ;
+                        ld      a,(STAT_current_end)                        ;
+                        sub     b                                           ;
+                        JumpIfALTNusng  STAT_eqip_window_len, .FillScreen   ; if there are enough then just do a screen fill
+.JustWindowing:         ld      b,STAT_eqip_window_len                      ; if its more than a screen then window
                         jr      .ReadyToPrint
-.FillScreen:            ld      b,a         ; the mumber of rows to display
+.FillScreen:            ld      b,a                                         ; b = the mumber of rows to display
 .ReadyToPrint:          ld      de,STAT_position
-.DrawARow:              push    de,, hl,, bc                  ; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
+.DrawARow:              push    de,, hl,, bc                                ; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
                         call    l1_print_at:
-                        pop     hl,,bc                      ; get mesage addr back and move down one line
+                        pop     hl,,bc                                      ; get mesage addr back and move down one line
                         ld      de,STAT_buffer_row_len
                         add     hl,de
-                        pop     de                          ; get output row back
+                        pop     de                                           ; get output row back
                         ld      a,8
                         add     a,d
                         ld      d,a
@@ -319,28 +322,6 @@ get_cmdr_condition:     ld			a,(DockedFlag)
 .PlayerIsDocked:        xor			a
                         ret
 
-;;;PrintEquipment:         ld		a,(hl)
-;;;                        cp		0
-;;;                        ret		z
-;;;                        ld		a,b
-;;;PrintEquipmentDirect:	call	expandTokenToString
-;;;                        ld		hl,TextBuffer
-;;;                        ld		de,(equipment_cursor)
-;;;                        call	l1_print_at
-;;;                        ld		bc,(equipment_cursor)
-;;;                        ld		a,b
-;;;                        add		a,8
-;;;                        ld		b,a
-;;;                        ld		(equipment_cursor),bc
-;;;                        cp		equipmax_row
-;;;                        jr		c,.SkipColUpdate
-;;;.ColUpdate:             ld		hl,equipment_position2
-;;;                        ld		(equipment_cursor),hl
-;;;                        ret
-;;;.SkipColUpdate:	        ld		a,b
-;;;                        ld		(equipment_cursor+1), a
-;;;                        ret
-
 draw_status_menu:       InitNoDoubleBuffer
                         ld		a,8
                         ld		(MenuIdMax),a	
@@ -351,6 +332,7 @@ draw_status_menu:       InitNoDoubleBuffer
                         call	l2_draw_box
                         ld		bc,$0A01
                         ld		de,$FEC0
+                        SetMemToN STAT_current_topItem, 0
                         call	l2_draw_horz_line
 .equipment              call    STAT_buffer_list
                         call    draw_STAT_items
@@ -376,6 +358,7 @@ STAT_UpPressed:         xor     a
                         dec     a           ; chjange later to buffering step back 1
                         ld      (STAT_current_topItem),a
                         call    draw_STAT_items
+                        call    draw_STAT_boilertext
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 STAT_DownPressed:       ld      a,STAT_eqip_window_len-1
@@ -400,4 +383,5 @@ STAT_DownPressed:       ld      a,STAT_eqip_window_len-1
 .can_scroll_down:       ld      hl,STAT_current_topItem
                         inc     (hl)
                         call    draw_STAT_items
+                        call    draw_STAT_boilertext
                         ret

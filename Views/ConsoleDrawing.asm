@@ -129,18 +129,6 @@ UpdateConsole:          ld      a,(DELTA)
                         ld      bc,AShieldStart
                         ld      d,a
                         call    DrawColourCodedBar  
-;PlayerEnergy                      
-; BNEED LASER temp
-; NEED CABIN TEMP
-;NEED ALTITUDE   
-; Draw compas - if in range draw station, else do planet                        
-.EnergyBars:            ld      a,(PlayerEnergy)
-                        srl     a                   ; energy = energy / 2 so 31 per bar
-                        JumpIfALTNusng  31 + 1,     Draw1EnergyBar
-                        JumpIfALTNusng  (31*2) + 1, Draw2EnergyBars
-                        JumpIfALTNusng  (31*3) + 1, Draw3EnergyBars 
-                        call      Draw4EnergyBars
-                        
 .SpriteDraw:            MMUSelectSpriteBank                        
 .DrawECM:               ld      a,(ECMCountDown)   
                         JumpIfAIsZero   .HideECM                                                 
@@ -172,11 +160,18 @@ UpdateConsole:          ld      a,(DELTA)
 .HideAllMissiles:       call    sprite_missile_1_hide                                                       
 .Only1Missile:          call    sprite_missile_2_hide                                                       
 .Only2Missiles:         call    sprite_missile_3_hide                                                       
-.Only3Missiles:         call    sprite_missile_4_hide                                                       
-                        ret
-
-
-.DoneConsole:           ret
+.Only3Missiles:         call    sprite_missile_4_hide   
+;PlayerEnergy                      
+; BNEED LASER temp
+; NEED CABIN TEMP
+;NEED ALTITUDE   
+; Draw compas - if in range draw station, else do planet                        
+.EnergyBars:            ld      a,(PlayerEnergy)
+                        srl     a                   ; energy = energy / 2 so 31 per bar
+                        JumpIfALTNusng  31 + 1,     Draw1EnergyBar
+                        JumpIfALTNusng  (31*2) + 1, Draw2EnergyBars
+                        JumpIfALTNusng  (31*3) + 1, Draw3EnergyBars 
+                        jp      Draw4EnergyBars
     
 Draw1EnergyBar:         ld      e,224
                         ld      d,a

@@ -13,4 +13,5 @@
                         and     a
                         jp      z, .DoneCommonECM
                         dec     a
+                        ld      (ECMCountDown),a
 .DoneCommonECM:                        
