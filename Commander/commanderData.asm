@@ -95,6 +95,7 @@ loadCommander:          ld      hl, defaultSaveName             ; default debug 
                         ld      bc, SaveSize
                         call    FileLoad
                         call    copyCommanderFromSave
+                        ClearMissileTargetting
                         ret
                         
  ; For now hard laod, later correctlt sequence gneeral vars and dma fill with 0 for a start
@@ -156,6 +157,7 @@ defaultCommander:       ldCopyStringLen defaultName, CommanderName, 8
                         call	ZeroCargo						; Clear out cargo
 .SetLasers:             ld      a,0                             ; we start on Front view
                         call    LoadLaserToCurrent
+                        ClearMissileTargetting
                         ret     
 
 

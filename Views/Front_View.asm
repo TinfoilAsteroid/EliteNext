@@ -86,7 +86,7 @@ draw_front_view:        MMUSelectLayer1
 CurrentLock             DB      0
 ShowingLock             DB      0
 update_front_view:      ld      a,(MissileTargettingFlag)
-                        JumpIfANEquNusng StageMissileNoTarget,  .NoTarget
+                        JumpIfANEquNusng StageMissileNotTargeting,  .NoTarget
                         JumpIfANEquNusng StageMissileTargeting, .Targetting
                         bit     7,a
                         jr      nz, .Locked

@@ -62,9 +62,11 @@ TestAreWeDocked:        JumpIfMemNeNusng DockedFlag, StateNormal, UpdateLoop    
                         call    z, RechargeShip 
                     ENDIF
                     IFDEF MAINLOOP_LAUNCHMISSILE
-.PlayerMissileLaunch:   ld      a,(MissileTargettingFlag)                               ; if bit 7 is clear then we have a target and launch requested
-                        and     $80
+.PlayerMissileLaunch:   AnyMissilesLeft
+                        jr      z,.NoMissiles                                           ; just in case last one gets destroyed
+                        IsMissileLaunchFlagged
                         call    z,  LaunchPlayerMissile
+.NoMissiles
                     ENDIF
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
@@ -306,7 +308,8 @@ LoopEventTriggered:     call    FindNextFreeSlotInC                 ; c= slot nu
 .WitchSpaceEvent:       ret; TODO for now
 
 
-LaunchPlayerMissile:    call    FindNextFreeSlotInC                 ; Check if we have a slot free
+LaunchPlayerMissile:    break
+                        call    FindNextFreeSlotInC                 ; Check if we have a slot free
                         jr      c,.MissileMissFire                  ; give a miss fire indicator as we have no slots
 .LaunchGood:            ld      a,0                                 ; TODO For now only 1 missile type
                         GetByteAInTable ShipMissileTable            ; swap in missile data
@@ -314,13 +317,13 @@ LaunchPlayerMissile:    call    FindNextFreeSlotInC                 ; Check if w
                         ld      a,(MissileTargettingFlag)           ; Get target from computer
                         ld      (UBnKMissileTarget),a               ; load target Data
                         call    UnivSetPlayerMissile                ; .
-                        ClearMissileTarget                          ; reset targetting
+                        ClearMissileTargetting                      ; reset targetting
                         ld      hl, NbrMissiles
                         dec     (hl)
-                        
                         ; TODO handle removal of missile from inventory and console
                         ret
-.MissileMissFire:       ret ; TODO bing bong noise misfire message
+.MissileMissFire:       ClearMissileTargetting
+                        ret ; TODO bing bong noise misfire message
 
 ; a = ship type, iyh = universe slot to create in
 SpawnShipTypeA:         ld      iyl,a                               ; save ship type

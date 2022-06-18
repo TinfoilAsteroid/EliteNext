@@ -177,8 +177,7 @@ EliteNextStartup:       di
                         SetBorder   $05
 .PostDiag2:             call        WaitForAnyKey                      
                         MMUSelectSpriteBank
-                        call        sprite_diagnostic_clear
-                        call        WaitForAnyKey                      
+                        call        sprite_diagnostic_clear                     
 TidyDEBUG:              ld          a,16
                         ld          (TidyCounter),a
 TestText:               xor			a

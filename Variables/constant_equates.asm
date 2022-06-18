@@ -89,8 +89,8 @@ StateHEntering          equ $FB
 StateCompletedHJump     equ $FA
 StateNormal             equ 0
 ; Missile Stage flags , $8x = locked to ship id x, $0x = fire at ship id x requested
-StageMissileNoTarget equ $FF
-StageMissileTargeting equ $FE
+StageMissileNotTargeting equ $FF
+StageMissileTargeting   equ $FE
 ; UniverseAIControl     
 ShipCanAnger        equ %00000001
 

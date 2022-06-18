@@ -6,7 +6,7 @@ LaserDrainSystems:      DrainSystem PlayerEnergy, CurrLaserEnergyDrain
 ResetPlayerShip:        ZeroThrottle
                         ZeroPitch
                         ZeroRoll
-                        ClearMissileTarget
+                        ClearMissileTargetting
                         ClearECM
                         ChargeEnergyAndShields
                         ClearTemperatures
@@ -90,10 +90,11 @@ SetSpeedZero:           ld      a,0
                         ld      (DELT4Lo),hl                                    ;
                         ret
                         
-RechargeShip:           ld      a,(PlayerEnergy)
-                        bit     7,a
+RechargeShip:           ld      hl,PlayerEnergy                                 ; if enery >= 128 
+                        ld      a,(hl)
+                        bit     7,a                                             ; then we can recharge shields
                         jr      z,.UpdatePlayerEnergy
-.ShieldCharge:          ld      hl,ForeShield
+.ShieldCharge:          ld      hl,ForeShield                                   ; charge front shield
                         inc     (hl)
                         jr      nz,.DoneForeShield
 .ForeOverCharge:        dec     (hl)
@@ -125,15 +126,7 @@ IsMissileLockedOn:      ld      a,(MissileTargettingFlag)
 .TargetSelected:        JumpIfSlotAEmpty .TargetInvalid     ; does slot A have an target
                         SetCarryFlag
                         ret
-.TargetInvalid:         ld      a, StageMissileNoTarget     ; housekeep missile status if target gone
+.TargetInvalid:         ld      a, StageMissileNotTargeting     ; housekeep missile status if target gone
                         ld      (MissileTargettingFlag),a
                         ret
 
-SetMissileTargetting:   MACRO
-                        SetMemTrue MissileTargettingFlag
-                        ENDM
-
-ClearMissileTargetting: MACRO
-                        SetMemTrue MissileTargettingFlag
-                        ENDM
-                        

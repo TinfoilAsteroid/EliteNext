@@ -138,28 +138,28 @@ UpdateConsole:          ld      a,(DELTA)
 .ProcessedECM:                      
 .DrawMissiles:          ld      a,(NbrMissiles)  
                         ld      iyl,a
-                        JumpIfAIsZero   .HideAllMissiles                                                         
-.DrawMissile_1:         ld      a,(MissileTargettingFlag)                                                          
-                        JumpIfAEqNusng  $FF,.Missile1Ready                                                           
-                        JumpIfAEqNusng  $FE,.Missile1Armed                                                           
-.Missile1Locked:        call    show_missile_1_locked                                                       
-                        jp      .DrawMissile_2                                               
-.Missile1Ready:         call    show_missile_1_ready                                                      
-                        jp      .DrawMissile_2                                                   
-.Missile1Armed:         call    show_missile_1_armed                                                      
-.DrawMissile_2:         ld      a,iyl                                       
-                        JumpIfALTNusng 2, .Only1Missile                                                        
-                        call    show_missile_2_ready                                                      
-.DrawMissile_3:         ld      a,iyl                                           
-                        JumpIfALTNusng 3, .Only2Missiles                                                         
-                        call    show_missile_3_ready                                                      
-.DrawMissile_4:         ld      a,iyl                                          
-                        JumpIfALTNusng 4, .Only2Missiles                                                         
-                        call    show_missile_4_ready                                                                                    
+                        JumpIfAIsZero   .HideAllMissiles                    ; First off do we have any missiles                                                     
+.DrawMissile_1:         ld      a,(MissileTargettingFlag)                   ; have we the targetting flag
+                        JumpIfAEqNusng  StageMissileNotTargeting,.MissileReady                   
+                        JumpIfAEqNusng  StageMissileTargeting,   .MissileArmed
+.Missile1Locked:        call    show_missile_1_locked    
+                        jp      .DrawMissile_2           
+.MissileReady:          call    show_missile_1_ready     
+                        jp      .DrawMissile_2           
+.MissileArmed:          call    show_missile_1_armed     
+.DrawMissile_2:         ld      a,iyl                    
+                        JumpIfALTNusng 2, .Only1Missile  
+                        call    show_missile_2_ready     
+.DrawMissile_3:         ld      a,iyl                    
+                        JumpIfALTNusng 3, .Only2Missiles 
+                        call    show_missile_3_ready     
+.DrawMissile_4:         ld      a,iyl                    
+                        JumpIfALTNusng 4, .Only2Missiles 
+                        call    show_missile_4_ready                       
                         ret                              
-.HideAllMissiles:       call    sprite_missile_1_hide                                                       
-.Only1Missile:          call    sprite_missile_2_hide                                                       
-.Only2Missiles:         call    sprite_missile_3_hide                                                       
+.HideAllMissiles:       call    sprite_missile_1_hide    
+.Only1Missile:          call    sprite_missile_2_hide    
+.Only2Missiles:         call    sprite_missile_3_hide    
 .Only3Missiles:         call    sprite_missile_4_hide   
 ;PlayerEnergy                      
 ; BNEED LASER temp

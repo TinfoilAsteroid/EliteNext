@@ -82,7 +82,7 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         ld      (varPhi2),a                 ; set P[2] to high byte to help with ./256
                         ld      (varP),hl                   ; P (2 1 0) = UbnkXlo * Alph1
 ; A = Flip sign                         
-                        ld      a,(ALP2FLIP)                ; flip the current roll angle alpha and xor with x sign
+                        ld      a,(ALP2)                ; flip the current roll angle alpha and xor with x sign
                         ld      hl,UBnKxsgn                 ; and xor with x pos sign
                         xor     (hl)                        ; so now  (A P+2 P+1) = - (x_sign x_hi x_lo) * alpha / 256
 ; AP[2]P[1] =Y + AP[2]P[1] (i.e. Previous APP/256)
@@ -143,7 +143,7 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         call    AHLequHLmulE                ; MLTU2-2 AHL = (y_hi y_lo) * alpha
                         ld      (varPp2),a                  ; store high byte P(2 1 0) = (y_hi y_lo) * alpha
                         ld      (varP),hl  
-                        ld      a,(ALP2)
+                        ld      a,(ALP2FLIP)
                         ld      e,a
                         ld      a,(UBnKysgn)
                         xor     e                           ; a = sign of roll xor y so now we have (A P+2 P+1) = (y_sign y_hi y_lo) * alpha / 256

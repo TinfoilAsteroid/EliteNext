@@ -87,10 +87,21 @@ SetMissileTargetA:      MACRO
                         ld      (MissileTargettingFlag),a   ; Set to slot number clearing bit 7
                         ENDM
 
-ClearMissileTarget:     MACRO
-                        ld      a,StageMissileNoTarget
-                        ld      (MissileTargettingFlag),a           ; reset targetting
+IsMissileLaunchFlagged: MACRO
+                        ld      a,(MissileTargettingFlag)
+                        and     $80
                         ENDM
+
+SetMissileTargetting:   MACRO
+                        ld      a,StageMissileTargeting
+                        ld      (MissileTargettingFlag),a
+                        ENDM
+
+ClearMissileTargetting: MACRO
+                        ld      a,StageMissileNotTargeting
+                        ld      (MissileTargettingFlag),a
+                        ENDM
+
 
 ; Clear targetting bits which signals launch if lower nibble has selected target
 SetMissileLaunch:       MACRO

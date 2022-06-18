@@ -568,18 +568,18 @@ InputName:              SetMemFalse InputChanged
                         SetMemTrue InputChanged
                         ret
 
-TargetMissileTest:      JumpIfMemZero NbrMissiles,      .ClearTargetting
-                        ld      a,(MissileTargettingFlag)   ; if we are comitted to launch
-                        bit     7,a                         ; then don't scan
-                        ret     z                           ; as it will be cleared on launch
-.ScanForKey:            ld      a,c_Pressed_TargetMissle    ; if not pressed we are done
-                        call    is_key_pressed              ; .
-                        ret     nz                          ; .
-.TargetPressed:         ld      a,(MissileTargettingFlag)   ; get flag back
-                        JumpIfAEqNusng StageMissileNoTarget, .SetTargetting
-.ClearTargetting:       SetMemToN   MissileTargettingFlag, StageMissileNoTarget
+TargetMissileTest:      AnyMissilesLeft
+                        JumpIfZero      .ClearTargetting
+                        IsMissileLaunchFlagged                      ; if we are comitted to launch
+                        ret             z                           ; then don't scan as it will be cleared on launch
+.ScanForKey:            ld              a,c_Pressed_TargetMissle    ; if not pressed we are done
+                        call            is_key_pressed              ; .
+                        ret             nz                          ; .
+.TargetPressed:         ld              a,(MissileTargettingFlag)   ; get flag back
+                        JumpIfAEqNusng  StageMissileNotTargeting, .SetTargetting
+.ClearTargetting:       ClearMissileTargetting
                         ret
-.SetTargetting:         SetMemToN   MissileTargettingFlag, StageMissileTargeting                      
+.SetTargetting:         SetMissileTargetting                      
                         ret
 
 MovementKeyTest:        xor     a
