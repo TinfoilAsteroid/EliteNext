@@ -28,6 +28,13 @@ ConstNorm           equ 197
 EliteToken			equ $1E			; Token ID for text messsage ---- E L I T E ----
 BrabenBellToken 	equ $0D
 AcorToken			equ $0C
+; Cursor Bits
+CursorClimb         equ %10000000
+CursorDive          equ %01000000
+CursorLeft          equ %00100000
+CursorRight         equ %00010000
+CursorHome          equ %00001000
+CursorRecenter      equ %00000100
 
 ; Intro Screen
 TitleShip			equ	$8C

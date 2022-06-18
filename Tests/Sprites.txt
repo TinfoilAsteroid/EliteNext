@@ -1,0 +1,512 @@
+# file opened: SpriteTestLoad.asm
+  1   0000                                      DEVICE ZXSPECTRUMNEXT
+  2   0000                                      DEFINE  DOUBLEBUFFER 1
+  3   0000                                      CSPECTMAP Sprites.map
+  4   0000                                      OPT --zxnext=cspect --syntax=a --reversepop
+  5   0000              IO_LAYER2_PORT                          EQU $123B
+  6   0000              IO_EXT_BANK_PORT 			            EQU $DFFD ; 57341
+  7   0000              IO_BANK_PORT                            EQU $7FFD ; 32765
+  8   0000              REGISTER_NUMBER_PORT					EQU $243B
+  9   0000              REGISTER_VALUE_PORT						EQU $253B
+ 10   0000              SPRITE_SLOT_PORT						EQU $303B ; port for sprite and pattern index
+ 11   0000              SPRITE_INFO_PORT                        EQU $0057
+ 12   0000              SPRITE_PATTERN_UPLOAD_PORT				EQU $005B
+ 13   0000
+ 14   0000              MACHINE_ID_REGISTER						EQU 0
+ 15   0000              VERSION_REGISTER						EQU 1
+ 16   0000              RESET_REGISTER		    				EQU 2
+ 17   0000              MACHINE_TYPE_REGISTER					EQU 3
+ 18   0000              PAGE_RAM_REGISTER						EQU 4
+ 19   0000              PERIPHERAL_1_REGISTER					EQU 5
+ 20   0000              PERIPHERAL_2_REGISTER					EQU 6
+ 21   0000              TURBO_MODE_REGISTER						EQU 7
+ 22   0000              PERIPHERAL_3_REGISTER					EQU 8
+ 23   0000              ANTI_BRICK_SYSTEM_REGISTER				EQU 10
+ 24   0000              LAYER2_RAM_PAGE_REGISTER				EQU 18
+ 25   0000              LAYER2_RAM_SHADOW_REGISTER      		EQU 19
+ 26   0000              TRANSPARENCY_COLOUR_REGISTER			EQU 20
+ 27   0000              SPRITE_LAYERS_SYSTEM_REGISTER			EQU 21
+ 28   0000              LAYER2_OFFSET_X_REGISTER				EQU 22
+ 29   0000              LAYER2_OFFSET_Y_REGISTER				EQU 23
+ 30   0000              CLIP_WINDOW_LAYER2_REGISTER				EQU 24
+ 31   0000              CLIP_WINDOW_SPRITES_REGISTER			EQU 25
+ 32   0000              CLIP_WINDOW_ULA_REGISTER				EQU 26
+ 33   0000              CLIP_WINDOW_CONTROL_REGISTER			EQU 28
+ 34   0000              ACTIVE_VIDEO_LINE_MSB_REGISTER			EQU 30
+ 35   0000              ACTIVE_VIDEO_LINE_LSB_REGISTER			EQU 31
+ 36   0000              LINE_INTERRUPT_CONTROL_REGISTER			EQU 34
+ 37   0000              LINE_INTERRUPT_VALUE_LSB_REGISTER		EQU 35
+ 38   0000              KEYMAP_HIGH_ADDRESS_REGISTER			EQU 40
+ 39   0000              KEYMAP_LOW_ADDRESS_REGISTER				EQU 41
+ 40   0000              KEYMAP_HIGH_DATA_REGISTER				EQU 42
+ 41   0000              KEYMAP_LOW_DATA_REGISTER				EQU 43
+ 42   0000              DAC_B_MIRROR_REGISTER                   EQU 44
+ 43   0000              DAC_AB_MIRROR_REGISTER                  EQU 45
+ 44   0000              DAC_C_MORROR_REGISTER                   EQU 46
+ 45   0000              TILEMAP_OFFSET_XMSB_REGISTER            EQU 47
+ 46   0000              TILEMAP_OFFSET_XLSB_REGISTER            EQU 48
+ 47   0000              TILEMAP_OFFSET_YMSB_REGISTER            EQU 49
+ 48   0000              LORES_OFFSET_X_REGISTER					EQU 50
+ 49   0000              LORES_OFFSET_Y_REGISTER					EQU 51
+ 50   0000              SPRITE_PORT_INDEX_REGISTER              EQU 52
+ 51   0000              SPRITE_PORT_ATTR0_REGISTER              EQU 53
+ 52   0000              SPRITE_PORT_ATTR1_REGISTER              EQU 54
+ 53   0000              SPRITE_PORT_ATTR2_REGISTER              EQU 55
+ 54   0000              SPRITE_PORT_ATTR3_REGISTER              EQU 56
+ 55   0000              SPRITE_PORT_ATTR4_REGISTER              EQU 57
+ 56   0000              PALETTE_INDEX_REGISTER					EQU 64
+ 57   0000              PALETTE_VALUE_8BIT_REGISTER				EQU 65
+ 58   0000              PALETTE_FORMAT_REGISTER					EQU 66
+ 59   0000              PALETTE_CONTROL_REGISTER				EQU 67
+ 60   0000              PALETTE_VALUE_9BIT_REGISTER				EQU 68
+ 61   0000              MMU_SLOT_0_REGISTER						EQU 80
+ 62   0000              MMU_SLOT_1_REGISTER						EQU 81
+ 63   0000              MMU_SLOT_2_REGISTER						EQU 82
+ 64   0000              MMU_SLOT_3_REGISTER						EQU 83
+ 65   0000              MMU_SLOT_4_REGISTER						EQU 84
+ 66   0000              MMU_SLOT_5_REGISTER						EQU 85
+ 67   0000              MMU_SLOT_6_REGISTER						EQU 86
+ 68   0000              MMU_SLOT_7_REGISTER						EQU 87
+ 69   0000              COPPER_DATA_REGISTER					EQU 96
+ 70   0000              COPPER_CONTROL_LOW_REGISTER				EQU 97
+ 71   0000              COPPER_CONTROL_HIGH_REGISTER			EQU 98
+ 72   0000              DISPLAY_CONTROL_1_REGISTER              EQU 105
+ 73   0000              LAYER_2_CONTROL_REGISTER                EQU 112
+ 74   0000              LAYER_2_X_OFFSET_MSB_REGISTER           EQU 113
+ 75   0000              DEBUG_LEDS_REGISTER						EQU 255
+ 76   0000
+ 77   0000              galactic_cursor_sprite				equ	0
+ 78   0000              galactic_cursor_sprite1				equ	galactic_cursor_sprite+1
+ 79   0000              galactic_cursor_sprite2				equ	galactic_cursor_sprite1+2
+ 80   0000
+ 81   0000              galactic_hyper_sprite				equ	galactic_cursor_sprite2+1
+ 82   0000              ;galactic_hyper_sprite1				equ galactic_hyper_sprite+1
+ 83   0000              ;galactic_hyper_sprite2				equ	galactic_hyper_sprite1+1
+ 84   0000
+ 85   0000              local_cursor_sprite					equ	galactic_hyper_sprite+1
+ 86   0000              local_cursor_sprite1				equ	local_cursor_sprite+1
+ 87   0000              local_cursor_sprite2				equ	local_cursor_sprite1+1
+ 88   0000
+ 89   0000              local_hyper_sprite					equ	local_cursor_sprite2+1
+ 90   0000              local_hyper_sprite1					equ	local_hyper_sprite+1
+ 91   0000              local_hyper_sprite2					equ	local_hyper_sprite1+2
+ 92   0000
+ 93   0000              reticlule_sprite1                   equ	local_hyper_sprite2+1
+ 94   0000              reticlule_sprite2                   equ	reticlule_sprite1+1
+ 95   0000              reticlule_sprite3                   equ	reticlule_sprite2+1
+ 96   0000              reticlule_sprite4                   equ reticlule_sprite3+1
+ 97   0000
+ 98   0000              EXSDOSMMU0              equ MMU_SLOT_0_REGISTER
+ 99   0000              EXSDOSMMU1              equ MMU_SLOT_1_REGISTER
+100   0000
+101   0000              BankROM                 equ 255
+102   0000
+103   0000              glactic_pattern_1					equ 0
+104   0000              glactic_hyper_pattern_1             equ 2
+105   0000              local_present_cursor                equ 4
+106   0000              local_hyper_pattern                 equ 7
+107   0000              reticule_pattern_1                  equ 10
+108   0000              reticule_pattern_2                  equ 11
+109   0000              laser_pattern_1                     equ 12
+110   0000              laser_pattern_2                     equ 13
+111   0000              laser_pattern_3                     equ 14
+112   0000              laser_pattern_4                     equ 15
+113   0000              laser_pattern_5                     equ 16
+114   0000              targetting_pattern                  equ 23
+115   0000              lock_pattern                        equ 24
+116   0000              ecm_pattern                         equ 25
+117   0000              galactic_chart_y_offset		equ $18
+118   0000              galactic_chart_hyper_offset equ 4
+119   0000              galactic_chart_hyper_x_offset equ 32 - 4
+120   0000              galactic_chart_hyper_y_offset equ 32 - 4 + 24
+121   0000              compass_sun_infront                 equ 17
+122   0000              compass_sun_behind                  equ 18
+123   0000              compass_station_infront             equ 19
+124   0000              compass_station_behind              equ 20
+125   0000              spritecursoroffset					equ 17
+126   0000              spriteborderoffset                  equ 32
+127   0000
+128   0000              COLOUR_TRANSPARENT			 equ $E3
+129   0000
+130   0000              HideSprite:                 MACRO   spritenbr
+131   0000 ~                                        nextreg		SPRITE_PORT_INDEX_REGISTER,spritenbr
+132   0000 ~                                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+133   0000                                          ENDM
+134   0000
+135   0000              ShowSprite                  MACRO   spritenbr, patternnbr
+136   0000 ~                                        ld      a, spritenbr
+137   0000 ~                                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+138   0000 ~                                        ld      a,patternnbr | %10000000
+139   0000 ~                                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+140   0000                                          ENDM
+141   0000
+142   0000              TopOfStack                  equ $6100
+143   0000                                          org    $6200
+144   6200 F3           StartOfCode:                di
+145   6201 ED 91 14 E3  l2_initialise:              nextreg		TRANSPARENCY_COLOUR_REGISTER, 		COLOUR_TRANSPARENT
+146   6205 ED 91 15 43                              nextreg 	SPRITE_LAYERS_SYSTEM_REGISTER,%01000011
+147   6209 ED 91 50 FF                              nextreg EXSDOSMMU0,        BankROM
+148   620D ED 91 51 FF                              nextreg EXSDOSMMU1,        BankROM
+149   6211 CD A7 64                                 call    GetDefaultDrive
+150   6214 CD 92 62                                 call    stream_sprite_data
+151   6217 16 00        sprite_galactic_cursor:     ld		d,galactic_cursor_sprite
+152   6219 1E 00                                    ld		e,0
+153   621B 78                                       ld		a,b
+154   621C C6 18                                    add		a,galactic_chart_y_offset
+155   621E 47                                       ld		b,a
+156   621F CD 16 64                                 call	sprite_big
+157   6222 16 05        sprite_local_cursor:        ld		d,local_cursor_sprite
+158   6224 1E 04                                    ld		e,local_present_cursor
+159   6226 CD 16 64                                 call	sprite_big
+160   6229 16 08        sprite_local_hyper_cursor:  ld		d,local_hyper_sprite
+161   622B 1E 07                                    ld		e,local_hyper_pattern
+162   622D CD 16 64                                 call	sprite_big
+163   6230 78           sprite_galactic_hyper_cursor:ld		a,b
+164   6231 C6 04                                    add		a,galactic_chart_hyper_offset
+165   6233 47                                       ld		b,a
+166   6234 16 04                                    ld		d,galactic_hyper_sprite
+167   6236 1E 03                                    ld		e,3
+168   6238 CD 7B 64                                 call	sprite_single ; sprite_big:
+169   623B DD 01                                    break
+170   623D C3 3D 62     LoopPoint:                  jp      LoopPoint
+171   6240
+172   6240 01 FE FE     l1_set_border:          ld	    bc, 0xFEFE
+173   6243 ED 79                                out		(c),a
+174   6245 C9                                   ret
+175   6246
+176   6246 3E 04        sprite_ghc_move:            ld		a,galactic_hyper_sprite
+177   6248 ED 92 34                                 nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
+178   624B              ; write out X position bits 1 to 8
+179   624B 79                                       ld		a,c
+180   624C 21 1C 00                                 ld      hl,galactic_chart_hyper_x_offset
+181   624F ED 31                                    add		hl,a                                ; hl = full x position
+182   6251 7D                                       ld		a,l
+183   6252 ED 92 35                                 nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+184   6255              ; write out Y position bits 1 to 8
+185   6255 EB                                       ex		de,hl								; de = full x position
+186   6256 CB 38                                    srl		b			    					; row is row / 2
+187   6258 78                                       ld      a,b
+188   6259 21 34 00                                 ld      hl,galactic_chart_hyper_y_offset
+189   625C ED 31                                    add		hl,a
+190   625E 7D                                       ld		a,l                                 ; hl = full y position
+191   625F ED 92 36                                 nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+192   6262              ; write out MSB of X as its an anchor
+193   6262 7A                                       ld		a,d									; de = MSB of X (hl bit 0)
+194   6263 ED 92 37                                 nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; lower y
+195   6266              ; write out msb of y in h must be bit 0 only
+196   6266 3E 00                                    ld		a,%00000000							; big unified composite
+197   6268 B2                                       or		d									; MSB Y
+198   6269 ED 92 39                                 nextreg	SPRITE_PORT_ATTR4_REGISTER,a		; visible 5 bytes pattern e
+199   626C C9                                       ret
+200   626D
+201   626D 3E 08        sprite_lhc_move:            ld		a,local_hyper_sprite
+202   626F ED 92 34                                 nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
+203   6272              ; write out X position bits 1 to 8
+204   6272 79                                       ld		a,c
+205   6273 21 11 00                                 ld      hl,spritecursoroffset
+206   6276 ED 31                                    add		hl,a                                ; hl = full x position
+207   6278 7D                                       ld		a,l
+208   6279 ED 92 35                                 nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+209   627C              ; write out Y position bits 1 to 8
+210   627C EB                                       ex		de,hl								; de = full x position
+211   627D 78                                       ld		a,b
+212   627E 21 11 00                                 ld      hl,spritecursoroffset
+213   6281 ED 31                                    add		hl,a
+214   6283 7D                                       ld		a,l                                 ; hl = full y position
+215   6284 ED 92 36                                 nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+216   6287              ; write out MSB of X as its an anchor
+217   6287 7A                                       ld		a,d									; de = MSB of X (hl bit 0)
+218   6288 ED 92 37                                 nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; lower y
+219   628B              ; write out msb of y in h must be bit 0 only
+220   628B 3E 00                                    ld		a,%00000000							; big unified composite
+221   628D B2                                       or		d									; MSB Y
+222   628E ED 92 39                                 nextreg	SPRITE_PORT_ATTR4_REGISTER,a		; visible 5 bytes pattern e
+223   6291 C9                                       ret
+224   6292
+225   6292 01 3B 30     stream_sprite_data:     ld          bc,SPRITE_SLOT_PORT             ; select pattern 0
+226   6295 AF                                   xor a
+227   6296 ED 79                                out         (c),a
+228   6298 32 0C 63                             ld          (SpriteCounter),a               ; set up counter as it may be a nextos bug that sprites don't load
+229   629B 3E 07                                ld          a,7
+230   629D CD 40 62                             call        l1_set_border
+231   62A0 DD 21 0D 63  .OpenOutputFile:        ld          ix, SpriteFilename
+232   62A4 06 01                                ld          b, FA_READ
+233   62A6 CD BB 64                             call        fOpen
+234   62A9 38 40                                jr          c,.OpenCarrySet
+235   62AB FE 00                                cp          0
+236   62AD 28 44                                jr          z,.OpenFailed
+237   62AF 32 0B 63                             ld          (SpriteFileChannel),a
+238   62B2 16 1D                                ld          d,29
+239   62B4 D5           .streamLoop:            push        de
+240   62B5 21 0C 63                             ld          hl,SpriteCounter
+241   62B8 34                                   inc         (hl)
+242   62B9 DD 21 16 63                          ld          ix, SpriteDatabuffer
+243   62BD 01 00 01                             ld          bc,256
+244   62C0 3A 0B 63                             ld          a,(SpriteFileChannel)
+245   62C3 CD C6 64                             call        fRead
+246   62C6 38 3B                                jr          c,.ReadFailed
+247   62C8 1E FF                                ld          e,255
+248   62CA 01 5B 00     .streamPattern:         ld          bc, SPRITE_PATTERN_UPLOAD_PORT
+249   62CD 21 16 63                             ld          hl, SpriteDatabuffer
+250   62D0 ED 90        .streamPatternLoop:     outinb                                      ; write byte of pattern
+251   62D2 1D                                   dec         e
+252   62D3 20 FB                                jr          nz, .streamPatternLoop          ; carry on writing for "e" iterations
+253   62D5 ED 90                                outinb                                      ; write byte 256
+254   62D7 D1                                   pop         de
+255   62D8 15                                   dec         d
+256   62D9 20 D9                                jr          nz, .streamLoop
+257   62DB 3A 0B 63     .CloseFile:             ld          a,(SpriteFileChannel)
+258   62DE CD DA 64                             call        fClose
+259   62E1 FE 00                                cp          0
+260   62E3 28 16                                jr          z, .CloseFailed
+261   62E5 3E 05                                ld          a,5
+262   62E7 CD 40 62                             call        l1_set_border
+263   62EA C9                                   ret
+264   62EB 3E 06        .OpenCarrySet:          ld          a,6
+265   62ED CD 40 62                             call        l1_set_border
+266   62F0 C3 EB 62                             jp          .OpenCarrySet
+267   62F3 3E 02        .OpenFailed:            ld          a,2
+268   62F5 CD 40 62                             call        l1_set_border
+269   62F8 C3 F3 62                             jp          .OpenFailed
+270   62FB
+271   62FB 3E 03        .CloseFailed:           ld          a,3
+272   62FD CD 40 62                             call        l1_set_border
+273   6300 C3 FB 62                             jp          .CloseFailed
+274   6303 3E 04        .ReadFailed:            ld          a,4
+275   6305 CD 40 62                             call        l1_set_border
+276   6308 C3 03 63                             jp          .ReadFailed
+277   630B
+278   630B 00           SpriteFileChannel       DB  0
+279   630C 00           SpriteCounter   db 0
+280   630D 4E 45 58 54  SpriteFilename:         DB "NEXT.DAT",0
+280   6311 2E 44 41 54
+280   6315 00
+281   6316 00 00 00...  SpriteDatabuffer:       DS  256
+282   6416              sprite_big:
+283   6416 7A           .SetAnchor:	                ld		a,d                                 ; a = sprite nbr, bug fix?
+284   6417 F5                                       push	af									; save id for next few
+285   6418 D5                                       push	de
+286   6419 ED 92 34                                 nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
+287   641C              ; write out X position bits 1 to 8
+288   641C 79                                       ld		a,c
+289   641D 21 11 00                                 ld      hl,spritecursoroffset
+290   6420 ED 31                                    add		hl,a                                ; hl = full x position
+291   6422 7D                                       ld		a,l
+292   6423 ED 92 35                                 nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+293   6426              ; write out Y position bits 1 to 8
+294   6426 EB                                       ex		de,hl								; de = full x position
+295   6427 78                                       ld		a,b
+296   6428 21 11 00                                 ld      hl,spritecursoroffset
+297   642B ED 31                                    add		hl,a
+298   642D 7D                                       ld		a,l                                 ; hl = full y position
+299   642E ED 92 36                                 nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+300   6431              ; write out MSB of X as its an anchor
+301   6431 7A                                       ld		a,d									; de = MSB of X (hl bit 0)
+302   6432 ED 92 37                                 nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; lower y
+303   6435              ; write out sprite pattern
+304   6435 D1                                       pop		de                                  ; de = pattern and sprite nbr
+305   6436 7B                                       ld		a,e
+306   6437 F6 C0                                    or		%11000000							;
+307   6439 ED 92 38                                 nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern e
+308   643C              ; write out msb of y in h must be bit 0 only
+309   643C 3E 00                                    ld		a,%00000000							; big unified composite
+310   643E B4                                       or		h									; MSB Y
+311   643F ED 92 39                                 nextreg	SPRITE_PORT_ATTR4_REGISTER,a		; visible 5 bytes pattern e
+312   6442 F1           .BigSprite1:                pop		af
+313   6443 3C                                       inc		a
+314   6444 F5                                       push	af
+315   6445 ED 92 34                                 nextreg		SPRITE_PORT_INDEX_REGISTER,a
+316   6448 3E 10                                    ld		a,16
+317   644A ED 92 35                                 nextreg		SPRITE_PORT_ATTR0_REGISTER,a	; lower x
+318   644D AF                                       xor 	a
+319   644E ED 92 36                                 nextreg		SPRITE_PORT_ATTR1_REGISTER,a	; lower y
+320   6451 ED 92 37                                 nextreg		SPRITE_PORT_ATTR2_REGISTER,a	; relative setup
+321   6454 3E C1                                    ld		a,%11000001							; relative and 4 bytes of data, pattern 1
+322   6456 ED 92 38                                 nextreg		SPRITE_PORT_ATTR3_REGISTER,a
+323   6459 3E 41                                    ld		a,%01000001							; big unified composite
+324   645B ED 92 39                                 nextreg	SPRITE_PORT_ATTR4_REGISTER,a		; visible 5 bytes pattern e
+325   645E F1           .BigSprite2:                pop		af
+326   645F 3C                                       inc		a
+327   6460 ED 92 34                                 nextreg		SPRITE_PORT_INDEX_REGISTER,a
+328   6463 AF                                       xor		a
+329   6464 ED 92 35                                 nextreg		SPRITE_PORT_ATTR0_REGISTER,a	; lower x
+330   6467 3E 10                                    ld		a,16
+331   6469 ED 92 36                                 nextreg		SPRITE_PORT_ATTR1_REGISTER,a	; lower y
+332   646C AF                                       xor		a
+333   646D ED 92 37                                 nextreg		SPRITE_PORT_ATTR2_REGISTER,a	; relative setup
+334   6470 3E C2                                    ld		a,%11000010							; relative and 4 bytes of data, pattern 2
+335   6472 ED 92 38                                 nextreg		SPRITE_PORT_ATTR3_REGISTER,a
+336   6475 3E 41                                    ld		a,%01000001							; big unified composite
+337   6477 ED 92 39                                 nextreg	SPRITE_PORT_ATTR4_REGISTER,a		; visible 5 bytes pattern e
+338   647A C9                                       ret
+339   647B
+340   647B 7A           sprite_single:          ld		a,d                                 ; a = sprite nbr, bug fix?
+341   647C D5                                   push    de
+342   647D ED 92 34                             nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
+343   6480              ; write out X position bits 1 to 8
+344   6480 79                                   ld		a,c                                 ; a = column (c)
+345   6481 21 20 00                             ld      hl,spriteborderoffset
+346   6484 ED 31                                add		hl,a                                ; hl = full x position
+347   6486 EB                                   ex		de,hl								; de = full x position
+348   6487 7B                                   ld		a,e
+349   6488 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+350   648B              ; write out Y position bits 1 to 8
+351   648B 78                                   ld		a,b                                 ; a = row
+352   648C 21 20 00                             ld      hl,spriteborderoffset
+353   648F ED 31                                add		hl,a
+354   6491 7D                                   ld		a,l                                 ; hl = full y position
+355   6492 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+356   6495              ; write out MSB of X as its an anchor
+357   6495 7A                                   ld		a,d									; de = MSB of X (hl bit 0)
+358   6496 ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; lower y
+359   6499              ; write out sprite pattern
+360   6499 D1                                   pop     de
+361   649A 7B                                   ld		a,e
+362   649B F6 80                                or		%10000000							;
+363   649D ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern e
+364   64A0              ; write out extended attribute
+365   64A0 3E 00                                ld      a,%00000000                         ; its a single sprite
+366   64A2 B4                                   or      h
+367   64A3 ED 92 39                             nextreg	SPRITE_PORT_ATTR4_REGISTER,a
+368   64A6 C9                                   ret
+369   64A7              M_GETSETDRV             equ $89
+370   64A7              F_OPEN                  equ $9a
+371   64A7              F_CLOSE                 equ $9b
+372   64A7              F_READ                  equ $9d
+373   64A7              F_WRITE                 equ $9e
+374   64A7              F_SEEK                  equ $9f
+375   64A7
+376   64A7              FA_READ                 equ $01
+377   64A7              FA_APPEND               equ $06
+378   64A7              FA_OVERWRITE            equ $0C
+379   64A7
+380   64A7              ; Success 1 = default drive, carry reset
+381   64A7              ; Failure HL = -1 , carry set, errno set
+382   64A7 F5 C5 D5 E5  GetDefaultDrive:        push	af,,bc,,de,,hl,,ix
+382   64AB DD E5
+383   64AD AF                                   xor	    a	; a = 0 means get default drive into A
+384   64AE CF                                   rst	    $08
+385   64AF 89                                   db	    $89
+386   64B0 32 BA 64                             ld	    (DefaultDrive),a
+387   64B3 DD E1 E1 D1                          pop		af,,bc,,de,,hl,,ix
+387   64B7 C1 F1
+388   64B9 C9                                   ret
+389   64BA 00           DefaultDrive:	        db	0
+390   64BB
+391   64BB              ; *******************************************************************************************************
+392   64BB              ;	Function:	Open a file read for reading/writing
+393   64BB              ;	In:		ix = filename
+394   64BB              ;			b  = Open filemode
+395   64BB              ;	ret		a  = handle, 0 on error
+396   64BB              ; *******************************************************************************************************
+397   64BB E5           fOpen:	                push	hl
+398   64BC DD E5 E1                             ld      hl,ix
+399   64BF 3A BA 64                             ld	    a,(DefaultDrive)
+400   64C2 CF                                   rst	    $08
+401   64C3 9A                                   db	    F_OPEN
+402   64C4 E1                                   pop	    hl
+403   64C5 C9                                   ret
+404   64C6
+405   64C6              ; *******************************************************************************************************
+406   64C6              ;	Function	Read bytes from the open file
+407   64C6              ;	In:		ix  = address to read into
+408   64C6              ;			bc  = amount to read
+409   64C6              ;	ret:		carry set = error
+410   64C6              ; *******************************************************************************************************
+411   64C6 B7           fRead:                  or   	a             ; is it zero?
+412   64C7 C8                                   ret  	z             ; if so return
+413   64C8 E5                                   push    hl
+414   64C9 DD E5 E1                             ld      hl,ix    	 ; load ix into hl and save hl for later
+415   64CC CF                                   rst	    $08
+416   64CD 9D                                   db	    F_READ
+417   64CE E1                                   pop	    hl
+418   64CF C9                                   ret
+419   64D0
+420   64D0              ; *******************************************************************************************************
+421   64D0              ;	Function	Write bytes to the open file
+422   64D0              ;	In:		ix  = address to read from
+423   64D0              ;			bc  = amount to write
+424   64D0              ;	ret:		carry set = error
+425   64D0              ; *******************************************************************************************************
+426   64D0 B7           fWrite:                 or   	a             ; is it zero?
+427   64D1 C8                                   ret  	z             ; if so return
+428   64D2 E5                                   push	hl
+429   64D3 DD E5 E1                             ld      hl,ix
+430   64D6 CF                                   rst	    $08
+431   64D7 9E                                   db	    F_WRITE
+432   64D8 E1                                   pop	    hl
+433   64D9 C9                                   ret
+434   64DA
+435   64DA              ; *******************************************************************************************************
+436   64DA              ;	Function:	Close open file
+437   64DA              ;	In:		a  = handle
+438   64DA              ;	ret		a  = handle, 0 on error
+439   64DA              ; *******************************************************************************************************
+440   64DA B7           fClose:		            or   	a             ; is it zero?
+441   64DB C8                                   ret  	z             ; if so return
+442   64DC CF                                   rst	    $08
+443   64DD 9B                                   db	    F_CLOSE
+444   64DE C9                                   ret
+445   64DF
+446   64DF              ; *******************************************************************************************************
+447   64DF              ;	Function	Read bytes from the open file
+448   64DF              ;	In:		a   = file handle
+449   64DF              ;			L   = Seek mode (0=start, 1=rel, 2=-rel)
+450   64DF              ;			BCDE = bytes to seek
+451   64DF              ;	ret:		BCDE = file pos from start
+452   64DF              ; *******************************************************************************************************
+453   64DF DD E5 E5     fSeek:                  push	ix,,hl
+454   64E2 CF                                   rst	    $08
+455   64E3 9F                                   db	    F_SEEK
+456   64E4 E1 DD E1                             pop	    ix,,hl
+457   64E7 C9                                   ret
+458   64E8
+459   64E8              ; *******************************************************************************************************
+460   64E8              ; Init the file system
+461   64E8              ; *******************************************************************************************************
+462   64E8 CD A7 64     InitFileSystem:         call    GetDefaultDrive
+463   64EB C9                                   ret
+464   64EC
+465   64EC              ; *******************************************************************************************************
+466   64EC              ; Function:	Load a whole file into memory	(confirmed working on real machine)
+467   64EC              ; In:		hl = file data pointer
+468   64EC              ;		    ix = address to load to
+469   64EC              ;           bc = filelength
+470   64EC              ; *******************************************************************************************************
+471   64EC CD A7 64     FileLoad:	            call    GetDefaultDrive
+472   64EF C5 D5 F5                             push	bc,,de,,af
+473   64F2                                      ; get file size
+474   64F2 C5 DD E5                             push	bc,,ix			; store size, load address,
+475   64F5 E5 DD E1                             ld      ix,hl
+476   64F8 06 01                                ld      b,FA_READ		; mode open for reading
+477   64FA CD BB 64                             call    fOpen
+478   64FD 38 17                                jr	    c,.error_opening; carry set? so there was an error opening and A=error code
+479   64FF FE 00                                cp	    0				; was file handle 0?
+480   6501 28 13                                jr	    z,.error_opening; of so there was an error opening.
+481   6503 DD E1 C1                             pop     bc,,ix          ; get load address back and size back
+482   6506 F5                                   push	af				; remember handle
+483   6507 CD C6 64                             call	fRead			; read data from A to address IX of length BC
+484   650A 38 0C                                jr	    c,.error_reading
+485   650C F1                                   pop	    af			    ; get handle back
+486   650D CD DA 64                             call	fClose			; close file
+487   6510 38 07                                jr	    c,.error_closing
+488   6512 F1 D1 C1                             pop     bc,,de,,af      ; normal exit
+489   6515 C9                                   ret
+490   6516              ;
+491   6516              ; On error, display error code an lock up so we can see it
+492   6516              ;
+493   6516 DD E1        .error_opening:         pop	ix
+494   6518 C1           .error_reading:		    pop	bc	; don't pop a, need error code
+495   6519
+496   6519              .error_closing:
+497   6519 C1           .NormalError:  	        pop	bc	; don't pop into A, return with error code
+498   651A D1                                   pop	de
+499   651B C1                                   pop	bc
+500   651C C9                                   ret
+501   651D
+502   651D                  SAVENEX OPEN "Sprites4.nex", StartOfCode , StartOfCode
+503   651D                  SAVENEX CFG  0,0,0,1
+504   651D                  SAVENEX AUTO
+505   651D                  SAVENEX CLOSE
+506   651D
+# file closed: SpriteTestLoad.asm

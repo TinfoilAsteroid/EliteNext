@@ -171,7 +171,7 @@ ZeroUnivAccelleration:  MACRO
                         xor     a
                         ld      (UBnKAccel),a
                         ENDM
-                        
+
 SetShipHostile:         ld      a,(ShipNewBitsAddr)
                         or      ShipIsHostile 
                         ld      (ShipNewBitsAddr),a
@@ -182,20 +182,6 @@ ClearShipHostile:       ld      a,(ShipNewBitsAddr)
                         ld      (ShipNewBitsAddr),a
                         ret
 
-AequN1xorN2:            MACRO  param1,param2
-                        ld      a,(param1)
-                        xor     param2
-                        ENDM
-
-N0equN1byN2div256:      MACRO param1,param2,param3
-                        ld      a,param3                        ; 
-                        ld      e,a                         ; use e as var Q = value of XX15 [n] lo
-                        ld      a,param2                        ; A = XX16 element
-                        ld      d,a
-                        mul
-                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low                
-                        ld      (param1),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
-                        ENDM
                         
 ; --------------------------------------------------------------
 ResetUBnkData:          ld      hl,StartOfUniv
@@ -275,6 +261,10 @@ UnivSetPlayerMissile:   call    InitialisePlayerMissileOrientation  ; Copy in Pl
                         ld      a,22
                         ld      (UBnKCNT2),a
                         MaxUnivSpeed                            ; and immediatley full speed (for now at least) TODO
+                        SetMemFalse UBnKMissleHitToProcess
+                        ;break
+                        call    ClearShipHostile                ; its a player missile
+                        
                         ret
 ; --------------------------------------------------------------
 ; this applies blast damage to ship
@@ -288,7 +278,7 @@ ShipMissileBlast:       ld      a,(CurrentMissileBlastDamage)
                         ret
 ; --------------------------------------------------------------                        
 ; This sets the ship as a shower of explosiondwd
-UnivExplodeShip:        break   
+UnivExplodeShip:        ;break   
                         ld      a,(UBnkaiatkecm)
                         or      ShipExploding | ShipKilled      ; Set Exlpoding flag and mark as just been killed
                         and     Bit7Clear                       ; Remove AI
@@ -438,91 +428,91 @@ UnivInitRuntime:        ld      (UbnKShipUnivBankNbr),a     ; actual bank nmber 
                         ret
 
 
-ADDHLDESignedv3:        ld      a,h
-                        and     SignOnly8Bit
-                        ld      b,a                         ;save sign bit in b
-                        xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means 
-                        JumpIfNegative ADDHLDEOppSGN        ;Signs are opposite there fore we can subtract to get difference
-ADDHLDESameSigns:       ld      a,b
-                        or      d
-                        JumpIfNegative ADDHLDESameNeg       ; optimisation so we can just do simple add if both positive
-                        add     hl,de
-                        ret
-ADDHLDESameNeg:         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
-                        and     SignMask8Bit                ; we could check the value of b for optimisation
-                        ld      h,a
-                        ld      a,d
-                        and     SignMask8Bit
-                        ld      d,a
-                        add     hl,de
-                        ld      a,SignOnly8Bit
-                        or      h                           ; now set bit for negative value, we won't bother with overflow for now TODO
-                        ld      h,a
-                        ret
-ADDHLDEOppSGN:          ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit                     ; here HL and DE are opposite 
-                        and     SignMask8Bit                ; we could check the value of b for optimisation
-                        ld      h,a
-                        ld      a,d
-                        and     SignMask8Bit
-                        ld      d,a
-                        or      a
-                        sbc     hl,de
-                        jr      c,ADDHLDEOppInvert
-ADDHLDEOppSGNNoCarry:   ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
-                        or      h
-                        ld      h,a                         ; set the previou sign value
-                        ret
-ADDHLDEOppInvert:       NegHL                                                   ; we need to flip the sign and 2'c the Hl result
-                        ld      a,b
-                        xor     SignOnly8Bit                ; flip sign bit
-                        or      h
-                        ld      h,a                         ; recover sign
-                        ret 
-                
+;;; moved to v4 in asm_add ADDHLDESignedv3:        ld      a,h
+;;; moved to v4 in asm_add                         and     SignOnly8Bit
+;;; moved to v4 in asm_add                         ld      b,a                         ;save sign bit in b
+;;; moved to v4 in asm_add                         xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means 
+;;; moved to v4 in asm_add                         JumpIfNegative ADDHLDEOppSGN        ;Signs are opposite there fore we can subtract to get difference
+;;; moved to v4 in asm_add ADDHLDESameSigns:       ld      a,b
+;;; moved to v4 in asm_add                         or      d
+;;; moved to v4 in asm_add                         JumpIfNegative ADDHLDESameNeg       ; optimisation so we can just do simple add if both positive
+;;; moved to v4 in asm_add                         add     hl,de
+;;; moved to v4 in asm_add                         ret
+;;; moved to v4 in asm_add ADDHLDESameNeg:         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
+;;; moved to v4 in asm_add                         and     SignMask8Bit                ; we could check the value of b for optimisation
+;;; moved to v4 in asm_add                         ld      h,a
+;;; moved to v4 in asm_add                         ld      a,d
+;;; moved to v4 in asm_add                         and     SignMask8Bit
+;;; moved to v4 in asm_add                         ld      d,a
+;;; moved to v4 in asm_add                         add     hl,de
+;;; moved to v4 in asm_add                         ld      a,SignOnly8Bit
+;;; moved to v4 in asm_add                         or      h                           ; now set bit for negative value, we won't bother with overflow for now TODO
+;;; moved to v4 in asm_add                         ld      h,a
+;;; moved to v4 in asm_add                         ret
+;;; moved to v4 in asm_add ADDHLDEOppSGN:          ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit                     ; here HL and DE are opposite 
+;;; moved to v4 in asm_add                         and     SignMask8Bit                ; we could check the value of b for optimisation
+;;; moved to v4 in asm_add                         ld      h,a
+;;; moved to v4 in asm_add                         ld      a,d
+;;; moved to v4 in asm_add                         and     SignMask8Bit
+;;; moved to v4 in asm_add                         ld      d,a
+;;; moved to v4 in asm_add                         or      a
+;;; moved to v4 in asm_add                         sbc     hl,de
+;;; moved to v4 in asm_add                         jr      c,ADDHLDEOppInvert
+;;; moved to v4 in asm_add ADDHLDEOppSGNNoCarry:   ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
+;;; moved to v4 in asm_add                         or      h
+;;; moved to v4 in asm_add                         ld      h,a                         ; set the previou sign value
+;;; moved to v4 in asm_add                         ret
+;;; moved to v4 in asm_add ADDHLDEOppInvert:       NegHL                                                   ; we need to flip the sign and 2'c the Hl result
+;;; moved to v4 in asm_add                         ld      a,b
+;;; moved to v4 in asm_add                         xor     SignOnly8Bit                ; flip sign bit
+;;; moved to v4 in asm_add                         or      h
+;;; moved to v4 in asm_add                         ld      h,a                         ; recover sign
+;;; moved to v4 in asm_add                         ret 
+;;; moved to v4 in asm_add                 
 ; we could cheat, flip the sign of DE and just add but its not very optimised
-SUBHLDESignedv3:        ld      a,h
-                        and     SignOnly8Bit
-                        ld      b,a                         ;save sign bit in b
-                        xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means 
-                        JumpIfNegative SUBHLDEOppSGN        ;Signs are opposite therefore we can add
-SUBHLDESameSigns:       ld      a,b
-                        or      d
-                        JumpIfNegative SUBHLDESameNeg       ; optimisation so we can just do simple add if both positive
-                        or      a
-                        sbc     hl,de
-                        JumpIfNegative SUBHLDESameOvrFlw            
-                        ret
-SUBHLDESameNeg:         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
-                        and     SignMask8Bit                ; we could check the value of b for optimisation
-                        ld      h,a
-                        ld      a,d
-                        and     SignMask8Bit
-                        ld      d,a
-                        or      a
-                        sbc     hl,de
-                        JumpIfNegative SUBHLDESameOvrFlw            
-                        ld      a,h                         ; now set bit for negative value, we won't bother with overflow for now TODO
-                        or      SignOnly8Bit
-                        ld      h,a
-                        ret
-SUBHLDESameOvrFlw:      NegHL                                                        ; we need to flip the sign and 2'c the Hl result
-                        ld      a,b
-                        xor     SignOnly8Bit                ; flip sign bit
-                        or      h
-                        ld      h,a                         ; recover sign
-                        ret         
-SUBHLDEOppSGN:          or      a                                               ; here HL and DE are opposite so we can add the values
-                        ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
-                        and     SignMask8Bit                ; we could check the value of b for optimisation
-                        ld      h,a
-                        ld      a,d
-                        and     SignMask8Bit
-                        ld      d,a     
-                        add     hl,de
-                        ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
-                        or      h
-                        ld      h,a                         ; set the previou sign value
-                        ret
+;;;moved into asm_subtract SUBHLDESignedv3:        ld      a,h
+;;;moved into asm_subtract                         and     SignOnly8Bit
+;;;moved into asm_subtract                         ld      b,a                         ;save sign bit in b
+;;;moved into asm_subtract                         xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means 
+;;;moved into asm_subtract                         JumpIfNegative SUBHLDEOppSGN        ;Signs are opposite therefore we can add
+;;;moved into asm_subtract SUBHLDESameSigns:       ld      a,b
+;;;moved into asm_subtract                         or      d
+;;;moved into asm_subtract                         JumpIfNegative SUBHLDESameNeg       ; optimisation so we can just do simple add if both positive
+;;;moved into asm_subtract                         or      a
+;;;moved into asm_subtract                         sbc     hl,de
+;;;moved into asm_subtract                         JumpIfNegative SUBHLDESameOvrFlw            
+;;;moved into asm_subtract                         ret
+;;;moved into asm_subtract SUBHLDESameNeg:         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
+;;;moved into asm_subtract                         and     SignMask8Bit                ; we could check the value of b for optimisation
+;;;moved into asm_subtract                         ld      h,a
+;;;moved into asm_subtract                         ld      a,d
+;;;moved into asm_subtract                         and     SignMask8Bit
+;;;moved into asm_subtract                         ld      d,a
+;;;moved into asm_subtract                         or      a
+;;;moved into asm_subtract                         sbc     hl,de
+;;;moved into asm_subtract                         JumpIfNegative SUBHLDESameOvrFlw            
+;;;moved into asm_subtract                         ld      a,h                         ; now set bit for negative value, we won't bother with overflow for now TODO
+;;;moved into asm_subtract                         or      SignOnly8Bit
+;;;moved into asm_subtract                         ld      h,a
+;;;moved into asm_subtract                         ret
+;;;moved into asm_subtract SUBHLDESameOvrFlw:      NegHL                                                        ; we need to flip the sign and 2'c the Hl result
+;;;moved into asm_subtract                         ld      a,b
+;;;moved into asm_subtract                         xor     SignOnly8Bit                ; flip sign bit
+;;;moved into asm_subtract                         or      h
+;;;moved into asm_subtract                         ld      h,a                         ; recover sign
+;;;moved into asm_subtract                         ret         
+;;;moved into asm_subtract SUBHLDEOppSGN:          or      a                                               ; here HL and DE are opposite so we can add the values
+;;;moved into asm_subtract                         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
+;;;moved into asm_subtract                         and     SignMask8Bit                ; we could check the value of b for optimisation
+;;;moved into asm_subtract                         ld      h,a
+;;;moved into asm_subtract                         ld      a,d
+;;;moved into asm_subtract                         and     SignMask8Bit
+;;;moved into asm_subtract                         ld      d,a     
+;;;moved into asm_subtract                         add     hl,de
+;;;moved into asm_subtract                         ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
+;;;moved into asm_subtract                         or      h
+;;;moved into asm_subtract                         ld      h,a                         ; set the previou sign value
+;;;moved into asm_subtract                         ret
 
     
 SBCHLDESigned:          JumpOnBitSet h,7,SBCHLDEhlNeg
@@ -569,7 +559,7 @@ MVS5RotateAxis:         ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                         ld      a,iyh           ; A = Axis 1 sign
                         ld      d,a             ; de = signed Axis1 / 512
                         or      a               ; clear carry
-                        call    SUBHLDESignedv3 ; hl = roof axis - (roof axis /512) which in effect is roof * (1-1/512)
+                        call    SUBHLDESigned ; hl = roof axis - (roof axis /512) which in effect is roof * (1-1/512)
 ;-Push to stack roof axis - (roofaxis/152)  ----------------------------------------------------------------------------------
                         push    hl              ; save hl on stack PUSH ID 1 (roof axis - roofv aixs /512)
                         ld      a,l
@@ -603,7 +593,7 @@ MVS5RotateAxis:         ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                         pop     hl              ; get back RS POP ID 1
     ;ex     de,hl           ; swapping around so hl = AP and de = SR , shoud not matter though as its an add
 ;-now DE = (roofaxis/512) hl - abs(nosevaxis) --------------------------------------------------------------------------------
-                        call    ADDHLDESignedv3 ; do add using hl and de
+                        call    ADDHLDESignedV4 ; do add using hl and de
                         push    hl              ; we use stack to represent var K here now varK = Nosev axis /16 + (1 - 1/512) * roofv axis PUSH ID 2
 ;-push to stack nosev axis + roofvaxis /512  which is what roofv axis will be ------------------------------------------------  
 ;-- Set up SR = 1 - 1/512 * nosev-----------------------
@@ -622,7 +612,7 @@ MVS5RotateAxis:         ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                     ld      a,iyh
                     ld      d,a
                     or      a               ; clear carry
-                    call    SUBHLDESignedv3
+                    call    SUBHLDESigned
 ;   sbc     hl,de           ; hl = nosev - novesv / 512
                     push    hl              ; save hl on stack  PUSH ID 3
                     ld      a,l
@@ -656,7 +646,7 @@ MVS5RotateAxis:         ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
 ;;; ld      (varP),a        ; PA now equals nosev axis / 16 signed
                     pop     hl              ; get back RS   POP ID 3
 ;   ex      de,hl           ; swapping around so hl = AP and de = SR , shoud not matter though as its an add
-                    call    SUBHLDESignedv3 ; do add using hl and de
+                    call    SUBHLDESigned ; do add using hl and de
 ;-- Update nosev ---------------------------------------
                     ex      de,hl           ; save hl to de
                     ld      hl,(varAxis2)
@@ -720,7 +710,7 @@ DV14:                   ld      (varPhi2),a                     ; scaled, exited
                         and     $7F                             ; denom sg7
                         ; jp mi,DV9                             ; this can never happen as bit 7 is and'ed out
                         ld      hl,(varQ)                       ; demon lo
-DVL6:                   dec     iyl                             ; counter Y back down, roll S. ;  scale Y back
+DVL6:                   dec     iyl                             ; counter Y back down, dddd S. ;  scale Y back
                         ShiftHLLeft1
                         rl      a                               ; mulitply QRS by 2
                         jp      p,DVL6                          ; loop roll S until Abit7 set.
@@ -861,7 +851,7 @@ SetAllFacesHiddenLoop:  ld      (hl),a
 ;;;;......................................................
 ;-LL21---------------------------------------------------------------------------------------------------
                         include "Universe/Ships/NormaliseTransMat.asm"
-                        include "Universe/Ships/NormaliseXX15.asm"
+;;;                        include "Universe/Ships/NormaliseXX15.asm"
 ;-LL91---------------------------------------------------------------------------------------------------
 
 ; Now we have
@@ -944,6 +934,7 @@ XX12CalcZ:              N0equN1byN2div256 varQ,(hl),(UBnkZScaled)       ; Q = |s
                         ret
 
 
+
 ;-- LL51---------------------------------------------------------------------------------------------------------------------------
 ;TESTED OK
 XX12EquXX15DotProductXX16:
@@ -975,7 +966,7 @@ XX12EquScaleDotOrientation:                         ; .LL51 \ -> &4832 \ XX12=XX
                         include "./Maths/Utilities/DotProductXX12XX15.asm"
 ;--------------------------------------------------------------------------------------------------------
 ; scale Normal. IXL is xReg and A is loaded with XX17 holds the scale factor to apply
-                        include "Universe/Ships/ScaleNormal.asm"
+; Not Used in code      include "Universe/Ships/ScaleNormal.asm"
 ;--------------------------------------------------------------------------------------------------------
                         include "./Universe/Ships/ScaleObjectDistance.asm"
 ;--------------------------------------------------------------------------------------------------------

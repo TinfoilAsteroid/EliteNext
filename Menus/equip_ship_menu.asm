@@ -561,7 +561,7 @@ eqshp_RightPressed:     ld      a,(Galaxy)
                         ld      e,a
                         mul
                         add     ix,de
-                        ld      a,(ix+7)                       
+                        ld      a,(ix+7)  
 .CompareCheck:          cp      "*"; not true for missles astyou can buy 1 to 4
                         ret     z
 .Purchasable:           ld      b,a
@@ -576,18 +576,12 @@ eqshp_RightPressed:     ld      a,(Galaxy)
                         ld      a,(ix+1)
                         cp      $FF
                         ret     z
-.CheckCash:             ld      hl,(Cash+2)
-                        ld      a,h
-                        or      l
-                        jr      nz,.MoreThanRequired
-                        ld      hl,(Cash)
-                        ld      a,h
-                        cp      0
-                        jr      nz,.MoreThanRequired
-                        ld      a,(ix+2)
-                        cp      l
-                        jr      nc,.MoreThanRequired
-                        ret                         ; Insufficient Funds
+.CheckCash:             JumpIfMemIsNotZero  Cash+2 , .MoreThanRequired      ; Nothing in game > 65535CR
+                        ld      hl,(Cash)                                   ; hl = lower 16 bits of cash
+                        ld      e,(ix+4)
+                        ld      d,(ix+5)
+                        call	compare16HLDE
+                        ret     c                                           ; Insufficient Funds
 .MoreThanRequired:      ld      a,(ix+6)
                         cp      0
                         jr      z,.MaxFuelOut

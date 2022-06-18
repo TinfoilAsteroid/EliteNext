@@ -45,6 +45,8 @@ draw_front_calc_beta:   ld      b,a
                         ld      (hl),dampenRate
                         ret
                         
+initialise_front_view:  
+                        
 draw_front_view:        MMUSelectLayer1
                         call    l1_cls
                         call    l1_attr_cls

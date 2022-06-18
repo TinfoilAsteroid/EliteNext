@@ -63,9 +63,9 @@ IsLaserUseable:         ld      a,(CurrLaserType)
 InitMainLoop:           call    ClearUnivSlotList
                         xor     a
                         ld      (CurrentUniverseAI),a
-                        ld      (SetStationAngryFlag),a
                         ld      a,3
                         ld      (MenuIdMax),a
+                        SetMemFalse SetStationAngryFlag
                         SetMemFalse DockedFlag
 ;                        call    InitialiseFrontView
                         call    InitialiseCommander

@@ -1,6 +1,7 @@
  DEVICE ZXSPECTRUMNEXT
  DEFINE  DOUBLEBUFFER 1
- DEFINE  LOGMATHS     1
+ ;DEFINE  LOGMATHS     1
+ ;DEFINE  DIAGSPRITES 1
  CSPECTMAP eliteN.map
  OPT --zxnext=cspect --syntax=a --reversepop
 
@@ -89,6 +90,19 @@ UpdateLaserCountersold: MACRO
 .SkipRestCounter:       
                         ENDM
                         
+MessageAt:              MACRO   x,y,message
+                        MMUSelectLayer1
+                        ld      d,y
+                        ld      e,x
+                        ld      hl,message
+                        call    l1_print_at_wrap
+                        ENDM
+                        
+SetBorder:              MACRO   value
+                        MMUSelectLayer1
+                        ld          a,value
+                        call        l1_set_border
+                        ENDM
                         
 charactersetaddr		equ 15360
 STEPDEBUG               equ 1
@@ -97,9 +111,13 @@ TopOfStack              equ $6100
 
                         ORG         $6200
 EliteNextStartup:       di
+.InitiliseFileIO:       call        GetDefaultDrive
+.InitialiseLayerOrder:  
                         DISPLAY "Starting Assembly At ", EliteNextStartup
                         ; "STARTUP"
                         ; Make sure  rom is in page 0 during load
+                        MMUSelectSpriteBank
+                        call		init_sprites
                         MMUSelectLayer2
                         call        asm_disable_l2_readwrite
                         MMUSelectROMS
@@ -110,31 +128,78 @@ EliteNextStartup:       di
                         call		l1_cls
                         ld			a,7
                         call		l1_attr_cls_to_a
-                        ld          a,$FF
-                        call        l1_set_border
-                        MMUSelectSpriteBank
-                        call        stream_sprite_data; prite_load_sprite_data
-;;;***                        MMUSelectSpriteDataA
-;;;***                        call        load_sprite_dataA
-;;;***                        MMUSelectSpriteDataB
-;;;***                        call        load_sprite_dataB
-Initialise:             MMUSelectLayer2
+                        SetBorder   $FF
+.InitialiseL2:          MMUSelectLayer2
                         call 		l2_initialise
+                        call		l2_cls
+.InitialisingMessage:   MessageAt   0,0,InitialiseMessage
+                        SetBorder   $01
+                        MessageAt   0,8,LoadingSpritesMessage
+                        ZeroA
+                        ld          (LoadCounter),a
+.StreamSpriteData:      MMUSelectSpriteBank
+                        call        load_pattern_files; load_sprite_patterns
+;                        call        stream_open_sprite_file
+;                        ld          e,0
+;                        ld          d,29
+;.LoadLoop:              push        de
+;                        push        af
+;                        SetBorder   $02
+;                        ld          a,e
+;                        MMUSelectSpriteBank
+;                        call        stream_select_sprite_a
+;                        pop         af
+;                        MMUSelectSpriteBank
+;                        call        stream_load_sprite
+;                        pop         de
+;                        inc         e
+;                        dec         d
+;                        push        af,,de,,hl,,ix,,iy
+;                        ld          a,(LoadCounter)
+;                        ld          d,16
+;                        ld          e,a
+;                        add         8
+;                        ld          (LoadCounter),a
+;                        ld          hl,SpriteProgress
+;                        MMUSelectLayer1
+;                        call        l1_print_at_wrap
+;                        SetBorder   $03
+;                        pop         af,,de,,hl,,ix,,iy
+;                        jr          nz,.LoadLoop
+;                        SetBorder   $04
+;                        MMUSelectSpriteBank
+;                        call        stream_close_spr_file_a
                         call        init_keyboard
-                        ClearForceTransition
+.PostDiag:                          ClearForceTransition
+                        SetBorder   $04
+                        MMUSelectSpriteBank
+                        call        sprite_diagnostic
+                        SetBorder   $05
+.PostDiag2:             call        WaitForAnyKey                      
+                        MMUSelectSpriteBank
+                        call        sprite_diagnostic_clear
+                        call        WaitForAnyKey                      
 TidyDEBUG:              ld          a,16
                         ld          (TidyCounter),a
 TestText:               xor			a
                         ld      (JSTX),a
 DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks su n
-                        MMUSelectSpriteBank
-                        call		init_sprites
+                        SetBorder   $06
+
+
 .ClearLayer2Buffers:    DoubleBufferIfPossible
                         DoubleBufferIfPossible
 ; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files                        
-InitialiseGalaxies:     call		ResetUniv                       ; Reset ship data
+                        SetBorder   $07
+InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
+                        call		ResetUniv                       ; Reset ship data
                         call        ResetGalaxy                     ; Reset each galaxy copying in code
                         call        SeedAllGalaxies
+                        MMUSelectSpriteBank
+                        call        sprite_cls_all
+                        MMUSelectLayer1
+                        call		l1_cls
+                        SetBorder   $00
 StartAttractMode:       call        AttractMode
                         JumpIfAIsZero  .SkipDefault
                         MMUSelectCommander
@@ -233,9 +298,15 @@ InitialiseMainLoop:     call    InitMainLoop
 ;;;                        ClearCarryFlag
 ;;;                        ret                        
                         
-    
 
 ;----------------------------------------------------------------------------------------------------------------------------------
+InitialiseMessage       DB "Intialising",0
+LoadingSpritesMessage   DB "LoadingSprites",0
+InitialisingGalaxies    DB "IntiailisingGalaxies",0
+LoadCounter             DB 0
+SpriteProgress          DB "*",0
+;----------------------------------------------------------------------------------------------------------------------------------
+
 NeedAMessageQueue:
 
 ;..................................................................................................................................
@@ -492,6 +563,7 @@ XX12PVarSign3		DB 0
     
 ;;    INCLUDE "./Maths/addhldesigned.asm"
     INCLUDE "./Maths/asm_add.asm"
+    INCLUDE "./Maths/asm_subtract.asm"
     INCLUDE "./Maths/Utilities/AddDEToCash.asm"
     INCLUDE "./Maths/DIVD3B2.asm"
     INCLUDE "./Maths/multiply.asm"

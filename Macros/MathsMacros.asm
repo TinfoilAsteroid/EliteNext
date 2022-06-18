@@ -77,3 +77,18 @@ cpHLDE:                 MACRO
 ;If HL != DE, then Z flag is reset.
 ;If HL <  DE, then S and P/V are different.
 ;If HL >= DE, then S and P/V are the same.
+
+N0equN1byN2div256:      MACRO param1,param2,param3
+                        ld      a,param3                        ; 
+                        ld      e,a                         ; use e as var Q = value of XX15 [n] lo
+                        ld      a,param2                        ; A = XX16 element
+                        ld      d,a
+                        mul
+                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low                
+                        ld      (param1),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
+                        ENDM
+
+AequN1xorN2:            MACRO  param1,param2
+                        ld      a,(param1)
+                        xor     param2
+                        ENDM        

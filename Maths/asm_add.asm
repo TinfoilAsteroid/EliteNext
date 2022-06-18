@@ -59,23 +59,64 @@ ADDHLDEsBCOppInvert:    NegHL                               ; if result was zero
                         xor     SignOnly8Bit                ; flip sign bit
                         ret   
 
-                        
-addhldesigned:          bit     7,h
-                        jr      nz,.noneghl
-                        call    negate16hl
-.noneghl:               bit     7,d
-                        jr      nz,.nonegde
-                        call    negate16de
-.nonegde:               add     hl,de                       ; do 2'd c add      
-                        xor     a                           ; assume positive
-                        bit     7,h
-                        ret     z                           ; if not set then can exit early
-                        call    negate16hl
-                        ld      a,$FF
+ADDHLDESignedV4:        ld      a,h
+                        and     SignOnly8Bit
+                        ld      b,a                         ;save sign bit in b
+                        xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means 
+                        JumpIfNegative .ADDHLDEOppSGN       ;Signs are opposite there fore we can subtract to get difference
+.ADDHLDESameSigns:      ld      a,b
+                        or      d
+                        JumpIfNegative .ADDHLDESameNeg      ; optimisation so we can just do simple add if both positive
+                        add     hl,de
                         ret
+.ADDHLDESameNeg:        ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
+                        and     SignMask8Bit                ; we could check the value of b for optimisation
+                        ld      h,a
+                        ld      a,d
+                        and     SignMask8Bit
+                        ld      d,a
+                        add     hl,de
+                        ld      a,SignOnly8Bit
+                        or      h                           ; now set bit for negative value, we won't bother with overflow for now TODO
+                        ld      h,a
+                        ret
+.ADDHLDEOppSGN:         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit                     ; here HL and DE are opposite 
+                        and     SignMask8Bit                ; we could check the value of b for optimisation
+                        ld      h,a
+                        ld      a,d
+                        and     SignMask8Bit
+                        ld      d,a
+                        ClearCarryFlag
+                        sbc     hl,de
+                        jr      c,.ADDHLDEOppInvert
+.ADDHLDEOppSGNNoCarry:  ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
+                        or      h
+                        ld      h,a                         ; set the previou sign value
+                        ret
+.ADDHLDEOppInvert:      NegHL                                                   ; we need to flip the sign and 2'c the Hl result
+                        ld      a,b
+                        xor     SignOnly8Bit                ; flip sign bit
+                        or      h
+                        ld      h,a                         ; recover sign
+                        ret 
+                        
+;;;NOT USED addhldesigned:          bit     7,h
+;;;NOT USED                         jr      nz,.noneghl
+;;;NOT USED                         call    negate16hl
+;;;NOT USED .noneghl:               bit     7,d
+;;;NOT USED                         jr      nz,.nonegde
+;;;NOT USED                         call    negate16de
+;;;NOT USED .nonegde:               add     hl,de                       ; do 2'd c add      
+;;;NOT USED                         xor     a                           ; assume positive
+;;;NOT USED                         bit     7,h
+;;;NOT USED                         ret     z                           ; if not set then can exit early
+;;;NOT USED                         call    negate16hl
+;;;NOT USED                         ld      a,$FF
+;;;NOT USED                         ret
 
 
 ; HL(2sc) = HL (signed) + A (unsigned), uses HL, DE, A
+; 06 06 2022 not used
 HL2cEquHLSgnPlusAusgn:  ld      d,0
                         ld      e,a                         ; set up DE = A
                         ld      a,h
@@ -86,7 +127,7 @@ HL2cEquHLSgnPlusAusgn:  ld      d,0
 .HLPositive:            ClearCarryFlag                      ; now do adc hl,de
                         adc     hl,de                       ; aftert his hl will be 2's c
                         ret
-
+; 06 06 2022 not used
 HLEquHLSgnPlusAusgn:    ld      e,a
                         ld      a,h
                         and     SignMask8Bit
@@ -106,7 +147,7 @@ HLEquHLSgnPlusAusgn:    ld      e,a
                         ret
                         
                         
-
+; 06 06 2022 not used
 ; HL = HL (signed) + A (unsigned), uses HL, DE, A
 AddAusngToHLsng:        ld      d,a
                         ld      e,h
@@ -119,6 +160,7 @@ AddAusngToHLsng:        ld      d,a
                         and     SignOnly8Bit
                         or      h
                         ret
+; 06 06 2022 not used
 ; HL = A (unsigned) - HL (signed), uses HL, DE, BC, A
 HLEequAusngMinusHLsng:  ld      b,h
                         ld      c,a
@@ -213,7 +255,7 @@ AddBCHtoDELsigned:      ld      a,b                 ; Are the values both the sa
                         ld      d,a                ;
                         ret
 
-                        
+; 06 06 2022 not used                       
 ;BHL = AHL + DE where AHL = 16 bit + A sign and DE = 15 bit signed    
 AddAHLtoDEsigned:       ld      b,a                     ; B = A , C = D (save sign bytes)
                         ld      c,d                     ; .
@@ -232,7 +274,7 @@ AddAHLtoDEsigned:       ld      b,a                     ; B = A , C = D (save si
                         ret                             ;      ret
 
 
-
+; 06 06 2022 not used   
 ; a = value to add
 ; b = offset (equivalent to regX)
 ; returns INWK [x] set to new value
@@ -246,6 +288,7 @@ addINWKbasigned:
         ld      b,a                         ; now b = sign bit of a
         ld      a,c                         ; a = original value
         and     SignMask8Bit                ; a = unsigned version of original value
+; 06 06 2022 not used
 ; hl = unsigned version of INWK0[b]
 ; a = value to add, also in c which will optimise later code
 ; b = sign bit of a ( in old code was varT)

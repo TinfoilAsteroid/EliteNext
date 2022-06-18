@@ -1,50 +1,50 @@
 
-galactic_cursor_sprite				equ	0
-galactic_cursor_sprite1				equ	galactic_cursor_sprite+1
-galactic_cursor_sprite2				equ	galactic_cursor_sprite1+2
+galactic_cursor_sprite				equ	0                            ; 00
+galactic_cursor_sprite1				equ	galactic_cursor_sprite+1     ; 01
+galactic_cursor_sprite2				equ	galactic_cursor_sprite1+2    ; 02
+                                                                     ; 
+galactic_hyper_sprite				equ	galactic_cursor_sprite2+1    ; 03
+;galactic_hyper_sprite1				equ galactic_hyper_sprite+1      ; 
+;galactic_hyper_sprite2				equ	galactic_hyper_sprite1+1     ; 
+                                                                      
+local_cursor_sprite					equ	galactic_hyper_sprite+1      ; 04
+local_cursor_sprite1				equ	local_cursor_sprite+1        ; 05
+local_cursor_sprite2				equ	local_cursor_sprite1+1       ; 06
+                                                                     
+local_hyper_sprite					equ	local_cursor_sprite2+1       ; 07
+local_hyper_sprite1					equ	local_hyper_sprite+1         ; 08
+local_hyper_sprite2					equ	local_hyper_sprite1+2        ; 09
+                                                                     
+reticlule_sprite1                   equ	local_hyper_sprite2+1        ; 10
+reticlule_sprite2                   equ	reticlule_sprite1+1          ; 11
+reticlule_sprite3                   equ	reticlule_sprite2+1          ; 12
+reticlule_sprite4                   equ reticlule_sprite3+1          ; 13
 
-galactic_hyper_sprite				equ	galactic_cursor_sprite2+1
-;galactic_hyper_sprite1				equ galactic_hyper_sprite+1
-;galactic_hyper_sprite2				equ	galactic_hyper_sprite1+1
-
-local_cursor_sprite					equ	galactic_hyper_sprite+1
-local_cursor_sprite1				equ	local_cursor_sprite+1
-local_cursor_sprite2				equ	local_cursor_sprite1+1
-
-local_hyper_sprite					equ	local_cursor_sprite2+1
-local_hyper_sprite1					equ	local_hyper_sprite+1
-local_hyper_sprite2					equ	local_hyper_sprite1+2
-
-reticlule_sprite1                   equ	local_hyper_sprite2+1
-reticlule_sprite2                   equ	reticlule_sprite1+1
-reticlule_sprite3                   equ	reticlule_sprite2+1
-reticlule_sprite4                   equ reticlule_sprite3+1
-
-laser_sprite1                       equ	reticlule_sprite4+1          ; 01
-laser_sprite2                       equ	laser_sprite1    +1          ; 02
-laser_sprite3                       equ	laser_sprite2    +1          ; 03
-laser_sprite4                       equ laser_sprite3    +1          ; 04
-laser_sprite5                       equ	laser_sprite4    +1          ; 05
-laser_sprite6                       equ	laser_sprite5    +1          ; 06
-laser_sprite7                       equ	laser_sprite6    +1          ; 07
-laser_sprite8                       equ laser_sprite7    +1          ; 08
-laser_sprite9                       equ	laser_sprite8    +1          ; 09
-laser_sprite10                      equ	laser_sprite9    +1          ; 10
-laser_sprite11                      equ	laser_sprite10   +1          ; 11
-laser_sprite12                      equ laser_sprite11   +1          ; 12
-laser_sprite13                      equ	laser_sprite12   +1          ; 13
-laser_sprite14                      equ	laser_sprite13   +1          ; 14
-laser_sprite15                      equ	laser_sprite14   +1          ; 15
-laser_sprite16                      equ laser_sprite15   +1          ; 16
-compass_sun                         equ laser_sprite16   +1          ; 17
-compass_station                     equ compass_sun      +1          ; 18
-targetting_sprite1                  equ compass_station  +1          ; 19
-targetting_sprite2                  equ targetting_sprite1   +1      ; 20
-ECM_sprite                          equ targetting_sprite2   +1      ; 21
-missile_sprite1                     equ ECM_sprite       +1          ; 22
-missile_sprite2                     equ missile_sprite1  +1          ; 23
-missile_sprite3                     equ missile_sprite2  +1          ; 24
-missile_sprite4                     equ missile_sprite3  +1          ; 25
+laser_sprite1                       equ	reticlule_sprite4+1          ; 14
+laser_sprite2                       equ	laser_sprite1    +1          ; 15
+laser_sprite3                       equ	laser_sprite2    +1          ; 16
+laser_sprite4                       equ laser_sprite3    +1          ; 17
+laser_sprite5                       equ	laser_sprite4    +1          ; 18
+laser_sprite6                       equ	laser_sprite5    +1          ; 19
+laser_sprite7                       equ	laser_sprite6    +1          ; 20
+laser_sprite8                       equ laser_sprite7    +1          ; 21
+laser_sprite9                       equ	laser_sprite8    +1          ; 22
+laser_sprite10                      equ	laser_sprite9    +1          ; 23
+laser_sprite11                      equ	laser_sprite10   +1          ; 24
+laser_sprite12                      equ laser_sprite11   +1          ; 25
+laser_sprite13                      equ	laser_sprite12   +1          ; 26
+laser_sprite14                      equ	laser_sprite13   +1          ; 27
+laser_sprite15                      equ	laser_sprite14   +1          ; 28
+laser_sprite16                      equ laser_sprite15   +1          ; 29
+compass_sun                         equ laser_sprite16   +1          ; 30
+compass_station                     equ compass_sun      +1          ; 31
+targetting_sprite1                  equ compass_station  +1          ; 32
+targetting_sprite2                  equ targetting_sprite1   +1      ; 33
+ECM_sprite                          equ targetting_sprite2   +1      ; 34
+missile_sprite1                     equ ECM_sprite       +1          ; 35
+missile_sprite2                     equ missile_sprite1  +1          ; 36
+missile_sprite3                     equ missile_sprite2  +1          ; 37
+missile_sprite4                     equ missile_sprite3  +1          ; 38
 
 glactic_pattern_1					equ 0
 glactic_hyper_pattern_1             equ 2
@@ -602,6 +602,7 @@ sprite_cls_cursors:     call	sprite_galactic_hide
                         call    sprite_laser_hide
                         call    sprite_compass_hide
                         call    sprite_targetting_hide
+                        call    sprite_missile_all_hide
                         ret
                         
 sprite_cls_all:         call    sprite_cls_cursors
@@ -612,4 +613,92 @@ sprite_cls_all:         call    sprite_cls_cursors
 init_sprites:           call		sprite_cls_cursors
                         nextreg 	SPRITE_LAYERS_SYSTEM_REGISTER,%01000011
                         ret
-	
+
+
+select_sprite_a:        MACRO
+                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+                        ENDM
+
+set_sprite_x_low_a:     MACRO
+                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a
+                        ENDM
+                        
+set_sprite_y_low_a:     MACRO
+                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a
+                        ENDM
+
+set_sprite_x_msb_anc:   MACRO
+                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a
+                        ENDM
+
+set_sprite_pat_a:       MACRO
+                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+                        ENDM
+
+set_sprite_pat_a_nx:    MACRO
+                        and     %10111111
+                        set_sprite_pat_a
+                        ENDM
+
+set_sprite_pat_a_vis:   MACRO
+                        or      %10000000
+                        set_sprite_pat_a
+                        ENDM
+
+set_sprite_hidden:      MACRO
+                        xor     a
+                        set_sprite_pat_a
+                        ENDM
+
+set_sprite_pas_a_vis_nx:MACRO                        
+                        or      %10000000
+                        set_sprite_pat_a_nx
+                        ENDM
+
+set_sprite_extended_a:  MACRO
+                        nextreg	SPRITE_PORT_ATTR4_REGISTER,a
+                        ENDM
+
+diag_x_pos:             DB 32
+diag_y_pos:             DB 64
+diag_sprite_nbr:        DB 0
+
+sprite_diagnostic_clear:ld      b,64
+                        ld      c,0
+.HideLoop:              ld      a,c
+                        HideSprite a
+                        inc     c
+                        djnz    .HideLoop
+                        ret
+
+sprite_diagnostic:      xor a               
+                        ld      (diag_sprite_nbr),a
+                        ld      bc,$303B
+                        out     (c),a
+.sprite_loop:           ld      bc,SPRITE_INFO_PORT
+                        ld      a,(diag_x_pos)
+                        out     (c),a
+                        add     16
+                        ld      (diag_x_pos),a
+                        ld      a,(diag_y_pos)
+                        out     (c),a
+                        xor     a
+                        out     (c),a
+                        ld      a,(diag_sprite_nbr)
+                        or      %10000000
+                        and     %10111111
+                        out     (c),a
+                        ld      a,(diag_sprite_nbr)
+                        inc     a
+                        ld      (diag_sprite_nbr),a
+                        JumpIfALTNusng 14,.sprite_loop
+                        ld      a,64
+                        JumpIfALTNusng  25,.cont
+                        ret
+.cont:                  ld      a,64
+                        ld      (diag_y_pos),a
+                        jr      .sprite_loop
+                        ret
+                                               
+    
+    

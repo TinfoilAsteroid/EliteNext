@@ -10,35 +10,59 @@ DEBUGLOGSUMMARY equ 1
 
 
                         ORG     $8000
-            
-.OpenOutputFile:        ld      ix, Filename
+                        break
+.OpenOutputFile:        ;call    GetDefaultDrive
+                        ld      ix, Filename
                         ld      b, FA_OVERWRITE
-                        call    fOpen
-                        cp      0
-                        jr      z,.OpenFailed
-                        push    af
-.WriteData:             ld      ix,Sprite1
-                        ld      bc,256*29
-                        call    fWrite
-                        jr      c, .WriteFailed
-.CloseFile:             pop     af
-                        call    fClose
-                        cp      0
-                        jr      z, .CloseFailed
-.Complete:              jp      .Complete                        
-            
-            
-.OpenFailed:            ld      a,-1
-                        jp      .OpenFailed
-        
-.WriteFailed:           ld      a,-2
-                        jp      .WriteFailed
-        
-.CloseFailed:           ld      a,-3
-                        jp      .CloseFailed
+                        ld      a,$01
+                        ld      (FileNumber),a
+                        ld      hl,Sprite1
+                        ld      b,29
+.WriteLoop:             push    bc,,hl
+                        call    WriteFile
+                        ld      a,(FileNumber)
+                        inc     a
+                        daa
+                        ld      (FileNumber),a
+                        pop     bc,,hl
+                        ld      de,256
+                        add     hl,de
+                        djnz    .WriteLoop
+                        break
+.Done:                  jp      .Done                        
+                        
+                        
+                        
+WriteFile:              call    FileNbrA
+                        ld      ix,hl
+                        ld      hl,Filename
+                        ld      bc,256
+                        call    FileSave
+                        ret
+                     
+                        
+FileNbrA:               ld      a,(FileNumber)
+                        swapnib
+                        and     %00001111
+                        ld      b,"0"
+                        add     b
+                        ld      (FileNbr),a
+                        ld      a,(FileNumber)
+                        and     %00001111
+                        add     b
+                        ld      (FileNbr+1),a
+                        ret
+                        
+                       
 
-Filename                DB "NextSprt.dat",0
+FileWork                DS 10
+FileNumber:             DB  0
 
+Filename                DB "NESpr"
+FileNbr                 DB "00"
+Extension:              DB ".dat",0
+        
+                        INCLUDE "./Maths/binary_to_decimal.asm"
                         INCLUDE "./Hardware/drive_access.asm"
                         INCLUDE "./Layer3Sprites/SpriteSheet.asm"
 

@@ -103,6 +103,25 @@ ldIYHaFromN:	        MACRO memfrom
                         ld		iyh,a
                         ENDM
 
+; Read a 32 bit value from address HL into BCDE
+ldBCDEatHL:             MACRO
+                        ld      e,(hl)
+                        inc     hl
+                        ld      d,(hl)
+                        inc     hl
+                        ld      c,(hl)
+                        inc     hl
+                        ld      b,(hl)
+                        inc     hl
+                        ENDM
+
+ldBCatHL:               MACRO
+                        ld      c,(hl)
+                        inc     hl
+                        ld      b,(hl)
+                        inc     hl
+                        ENDM
+
 ldhlde:			        MACRO
                         ld		h,d
                         ld		l,e

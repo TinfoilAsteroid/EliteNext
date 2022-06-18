@@ -244,8 +244,7 @@ AlreadyInInputMode:     call    InputName                               ; Call i
 ;----------------------------------------------------------------------------------------------------------------------------------
 galctic_chart_cursors:  ReturnIfMemTrue TextInputMode
                         ld      a,(CursorKeysPressed)
-                        cp      0
-                        ret     z
+                        ReturnIfAIsZero
                         rla
                         call   c,gc_UpPressed
                         rla

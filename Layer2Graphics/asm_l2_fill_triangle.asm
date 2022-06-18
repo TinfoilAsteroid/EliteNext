@@ -1,7 +1,7 @@
 ; ">l2_fillBottomFlatTriangle BC y0x0 DE x1x2, H YCommon, L Colour"
 ; "note >l2_draw_diagonal_save, bc = y0,x0 de=y1,x1,a=array nbr ESOURCE LL30 or LION"
 ; "note line to   bc = left side row,col, d right pixel, e = color"
-l2_fillBottomFlatTriangle:break
+l2_fillBottomFlatTriangle:;break
                         ld		a,l
                         ld		(l2linecolor),a
                         ld		a,c

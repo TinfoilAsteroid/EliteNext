@@ -24,20 +24,30 @@ To compile the code, download sjasmplus and install it and add it to your path. 
 It's messy as I need to sort out the includes (I got in to a tangle porting from snasm to sjasmplus when snasm could no longer assemble my code).
 To run the code I have a sample eliterun.bat, all it does in run cspect with break enabled, -debug is enabled so that it always starts up in debugger (just press F1 to run). 
 
+To install on an SD card 
+copy the Build folder from the repo onto your SD card along with all the contents. This shoudl contain EliteN.nex alogn with the sprite pattersn NESpr01.dat to NESpr29.dat (currently 29 patterns)
+You can rename the folder on your SD card (I call it EliteN) from there use the next browser and select EliteN.nex to run the game
+As its currently got a lot of boot diagnostics, there are a few "press any key" pauses on start up, e.g. sprite diags, clear sprites. so pressing any key 2 or 3 times should get to "load commander"
+
+Note Load Commander is not implemented as yet.
+
 The keys working so far are
-1 – Front view
-5 – Galactic chart 
-6 – Local Chart 
-7 – Local Market
-8 Commander screen
-c Equipment buy screen
-8 Commander status
-9 inventory
-0 Data on selected system
+1 ==> Front view
+5 ==> Galactic chart 
+6 ==> Local Chart 
+7 ==> Local Market
+8 ==> Commander screen
+c ==> Equipment buy screen
+8 ==> Commander status
+9 ==> inventory
+0 ==> Data on selected system
 Cursors QAOP (works on charts and buy screens), left is sell, right is buy
-F to get Find input on galactic chart
-D to centralise cursor on nearest star
-L Launch ship, in which case Q A are dive/climb, OP are roll, W S are throttle
+    * Note rotation is correct for stars but currently reversed for ships as I'm working on that bug
+T ==> Turn on and off missile locking computer (if missiles equipped)
+F ==> to get Find input on galactic chart
+D ==> to centralise cursor on nearest star
+L ==> Launch ship, in which case Q A are dive/climb, OP are roll, W S are throttle
+Space => Fire laser
 Pause and resume are there but I have forgot they keys as the moment, its all in keyboard.asm :)
 
 I'm doing updates, generally about weekly, of udpates so far on Youtube - https://www.youtube.com/channel/UCFPWRIEGUjcGhZV2rRWU5DA

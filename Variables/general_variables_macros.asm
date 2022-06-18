@@ -108,7 +108,22 @@ ClearECM:               MACRO
                         xor     a
                         ld      (ECMCountDown),a
                         ENDM
-                      
+
+                        
+; Will check to see if bit 2 is set, if it is clear, then friendly hence z is set
+;                                    if hit is set then hostile hence z is not set
+IsShipFriendly:         MACRO
+                        ld      a,(ShipNewBitsAddr)
+                        and     ShipNotHostile                  ; mask so we only have hostile bit
+                        ENDM
+                        
+; Will check to see if bit 5 is set, if clear, then not exploding z clear
+;                                    if set    then exploding     z set
+IsShipExploding:        MACRO
+                        ld      a,(UBnkaiatkecm)   
+                        and     ShipExploding                              
+                        ENDM
+
 UpdateLaserOnCounter:   MACRO
                         ld      a,(CurrLaserPulseOnCount)
                         and     a

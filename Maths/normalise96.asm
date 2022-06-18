@@ -1,22 +1,19 @@
-AequAdivDmul96Unsg:     ld			ixl,b						; Get sign bit passed in as bit 7 in b
-                        JumpIfAGTENusng d, TISXAccGTEQ			; if A >= Q then return with a 1 (unity i.e. 96) with the correct sign
-                        ld			c,a
-                        call		asm_div8
-                        ld			a,c							; a = result
-                        srl			a							; result / 4
-                        ld			b,a							; t = t /4
+AequAdivDmul96Unsg:     JumpIfAGTENusng d, .Unity    			; if A >= Q then return with a 1 (unity i.e. 96)
+                        ld          b,%11111111                 ; Loop through 8 bits
+.DivLoop:               sla         a                           ; shift a left
+                        JumpIfALTNusng d, .skipSubtract         ; if a < q skip the following
+                        sub         d
+.skipSubtract:          FlipCarryFlag
+                        rl          b
+                        jr          c,.DivLoop
+                        ld          a,b
+                        srl         a                  			; t = t /4
                         srl			a							; result / 8
+                        ld          b,a
+                        srl         a
                         add			a,b							; result /8 + result /4
-                        ld			b,a							; b = 3/8*Acc (max = 96)
-                        ld			a,ixl						; copy of Acc to look at sign bit
-                        and			$80							; recover sign only
-                        or			b							; now put b back in so we have a leading sign bit (note not 2's compliment)
                         ret
-TISXAccGTEQ:
-;TI4:										;\ clean to +/- unity
-                        ld			a,ixl     					; get saved sign from b
-                        and			$80							; copy of Acc
-                        or			$60							; unity
+.Unity:                 ld			a,$60	    				; unity
                         ret
 	
 	

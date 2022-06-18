@@ -439,8 +439,7 @@ SRCSetUpChart:          call	copy_galaxy_to_system
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 local_chart_cursors:    ld     a,(CursorKeysPressed)
-                        cp      0
-                        ret     z
+                        ReturnIfAIsZero
                         rla
                         call   c,src_UpPressed
                         rla

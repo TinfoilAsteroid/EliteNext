@@ -1,52 +1,57 @@
-;;;sprite_load_sprite_data:ld			bc, SPRITE_SLOT_PORT; SPRITE_SLOT_PORT
-;;;                        xor			a                               ; start with pattern 0
-;;;                        out			(c),a							; Prime slot upload
-;;;                        ld			de,26	* 256						; nbr of sprites to upload	
-;;;                        ld			hl,Sprite1						; sprites are stored contiguous
-;;;SpriteLoadLoop:	        ld			bc, $5b; SPRITE_PATTERN_UPLOAD_PORT
-;;;                        outinb											; do final 256th sprite
-;;;                        dec			de
-;;;                        ld			a,d
-;;;                        or			e
-;;;                        jr			nz,SpriteLoadLoop				; keep on rolling through sprites
-;;;                        ret
 
-stream_sprite_data:     ld          bc,SPRITE_SLOT_PORT             ; select pattern 0
+
+
+FileWork                DS 10
+FileNumber:             DB  0
+
+Filename                DB "NESpr"
+FileNbr                 DB "00"
+Extension:              DB ".dat",0
+
+
+FileNbrA:               ld      a,(FileNumber)
+                        swapnib
+                        and     %00001111
+                        ld      b,"0"
+                        add     b
+                        ld      (FileNbr),a
+                        ld      a,(FileNumber)
+                        and     %00001111
+                        add     b
+                        ld      (FileNbr+1),a
+                        ret
+
+load_pattern_files:     ld          bc,SPRITE_SLOT_PORT             ; select pattern 0
                         ZeroA                                       ;
                         out         (c),a
-.OpenOutputFile:        ld          ix, SpriteFilename
-                        ld          b, FA_READ
-                        call        fOpen
-                        cp          0
-                        jr          z,.OpenFailed
-                        push        af
-                        ld          d,29
-.streamLoop:            push        de
-                        ld          ix, SpriteDatabuffer
+                        ld          a,$01
+                        ld          (FileNumber),a
+                        ld          b,29
+.ReadLoop:              push        bc
+                        call        FileNbrA
+                        call        load_a_pattern
+                        ld          a,(FileNumber)
+                        inc         a
+                        daa 
+                        ld          (FileNumber),a
+                        pop         bc
+                        djnz        .ReadLoop
+                        ret
+                                     ; write byte 256
+
+load_a_pattern:         ld          hl,Filename
+                        ld          ix,SpriteDatabuffer
                         ld          bc,256
-                        call        fRead
-                        jr          c,.ReadFailed
+                        call        FileLoad
                         ld          e,255
 .streamPattern:         ld          bc, SPRITE_PATTERN_UPLOAD_PORT
                         ld          hl, SpriteDatabuffer
 .streamPatternLoop:     outinb                                      ; write byte of pattern
                         dec         e
                         jr          nz, .streamPatternLoop          ; carry on writing for "e" iterations
-                        outinb                                      ; write byte 256
-                        pop         de
-                        dec         d
-                        jr          nz, .streamLoop
-.CloseFile:             pop         af
-                        call        fClose
-                        cp          0
-                        jr          z, .CloseFailed
+                        outinb                         
                         ret
                         
-.OpenFailed:            ld          a,-1
-                        jp          .OpenFailed
-.CloseFailed:           ld          a,-3
-                        jp          .CloseFailed                                
-.ReadFailed:            ld          a,-1
-                        jp          .ReadFailed
-SpriteFilename:         DB "NextSprt.dat",0
 SpriteDatabuffer:       DS  256
+    
+

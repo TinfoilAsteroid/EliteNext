@@ -1,15 +1,15 @@
 CopyFaceToXX15:         ld      a,(hl)                      ; get Normal byte 0                                                                    ;;;     if visibility (bits 4 to 0 of byte 0) > XX4
                         ld      b,a                                                    ;;;      
-                        and     $80
+                        and     SignOnly8Bit
                         ld      (UBnkXScaledSign),a           ; write Sign bits to x sign                                                            ;;;
                         ld      a,b
                         sla     a                           ; move y sign to bit 7                                                                 ;;;   copy sign bits to XX12
                         ld      b,a
-                        and     $80
+                        and     SignOnly8Bit
                         ld      (UBnkYScaledSign),a           ;                                                                                      ;;;
                         ld      a,b
                         sla     a                           ; move y sign to bit 7                                                                 ;;;   copy sign bits to XX12
-                        and     $80
+                        and     SignOnly8Bit
                         ld      (UBnkZScaledSign),a           ;                                                                                      ;;;
                         inc     hl                          ; move to X ccord
                         ld      a,(hl)                      ;                                                                                      ;;;   XX12 x,y,z lo = Normal[loop].x,y,z

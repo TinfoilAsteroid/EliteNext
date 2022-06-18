@@ -28,7 +28,7 @@ FlipSignMem:            MACRO mem
                         ENDM
 
 SignBitOnlyMem:         MACRO mem
-                        ld      a
+                        ld      a, (mem)
                         and     SignOnly8Bit
                         ld      (mem),a
                         ENDM

@@ -213,7 +213,7 @@ DIV16UNDOCSKIP:         djnz DIV16UNDOCLOOP
                         ret
 DEV16ATooLarge:         ld     bc,$00FF
                         ret
-
+; switch to logarithm version
 ; "> asm_div8 C_Div_D - C is the numerator, D is the denominator, A is the remainder, B is 0, C is the result of C/D,D,E,H,L are not changed"
 asm_div8:               ld b,8
                         xor a
@@ -254,7 +254,7 @@ HLDivC_Iteration: 	MACRO
 					ENDM
 
 
-
+; 06 06 2022 Not used
 ; ">div1616: BC = BC / DE. HL = remainder"
 Div1616:            ld hl,0
                     ld a,b
@@ -293,6 +293,7 @@ EDivC_Iteration:        MACRO
 .Div8_NoAdd:            
                         ENDM
 
+; Switch to a logarithm version
 ; Divide E by divider C Out: A = result, B = rest
 E_Div_C:                ZeroA
                         EDivC_Iteration
@@ -359,7 +360,8 @@ BC_Div_DE:              xor a
                         rla
                         ld c,a
                         ret	
-  
+
+; 06 06 2022 not used   
 ;Inputs:
 ;     DE,BC are 8.8 Fixed Point numbers
 ;Outputs:

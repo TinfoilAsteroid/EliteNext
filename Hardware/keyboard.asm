@@ -456,6 +456,34 @@ is_any_key_held:        ld      hl,Keys
 .KeyPressed:            ld      a,c
                         ret    
     
+    
+WaitForNoKey:           ld      hl,KeyAddrTab                   ; de = table of IO ports to read
+                        ld		b,8                             ; 8 ports to ready
+.PortReadLoop:          ld		a,(hl)							; Set up port to read as (hl)$FE
+                        in		a,($FE)							; read port to a
+                        and     %00011111
+                        cp      %00011111
+                        jr      nz ,WaitForNoKey
+                        inc		hl                              ; and ready for next read
+                        djnz    .PortReadLoop
+                        ret
+    
+WaitForAnyKey:          push    af,,de,,bc,,hl
+                        call    WaitForNoKey
+.waitKeyLoop:           ld		hl,KeyAddrTab                   ; de = table of IO ports to read
+                        ld		b,8                             ; 8 ports to ready
+.PortReadLoop:          ld		a,(hl)							; Set up port to read as (hl)$FE
+                        in		a,($FE)							; read port to a
+                        and     %00011111
+                        cp      %00011111
+                        jp      nz,.WaitComplete
+                        ret     nz
+                        inc		hl                              ; and ready for next read
+                        djnz    .PortReadLoop
+                        jp      .waitKeyLoop
+.WaitComplete:          pop     af,,de,,bc,,hl
+                        ret
+
 
 InputString             DS  30              ; used for a 30 character input buffer
                         DB  0               ; end of string marker as a safety
@@ -559,59 +587,59 @@ MovementKeyTest:        xor     a
                         ld      a,(MenuIdMax)
                         and     $FC
                         jr      nz,CursorKeys
-ClimbDiveKeys:          ld      hl,(addr_Pressed_Climb)
+ClimbDiveKeys:          ld      hl,(addr_Pressed_Climb)                 ; Check for Climb
                         ld      a,(hl)
                         JumpIfAIsZero ScanDiveKey
                         ld      a,(CursorKeysPressed)
-                        or      $80
+                        or      CursorClimb
                         ld      (CursorKeysPressed),a
                         jp      ScanLeftKey
-ScanDiveKey:            ld      hl,(addr_Pressed_Dive)
+ScanDiveKey:            ld      hl,(addr_Pressed_Dive)                  ; Check for Dive
                         ld      a,(hl)
                         JumpIfAIsZero ScanLeftKey
                         ld      a,(CursorKeysPressed)
-                        or      $40
+                        or      CursorDive
                         ld      (CursorKeysPressed),a
                         jp      ScanLeftKey
-CursorKeys:             ld      hl,(addr_Pressed_CursorUp)
+CursorKeys:             ld      hl,(addr_Pressed_CursorUp)              ; Check cursor keys
                         ld      a,(hl)
                         JumpIfAIsZero ScanCursorDownKey
                         ld      a,(CursorKeysPressed)
-                        or      $80
+                        or      CursorClimb
                         ld      (CursorKeysPressed),a
                         jp      ScanLeftKey
 ScanCursorDownKey:      ld      hl,(addr_Pressed_CursorDown)
                         ld      a,(hl)
                         JumpIfAIsZero ScanLeftKey
                         ld      a,(CursorKeysPressed)
-                        or      $40
+                        or      CursorDive
                         ld      (CursorKeysPressed),a
 ScanLeftKey:            ld      hl,(addr_Pressed_RollLeft)
                         ld      a,(hl)
                         JumpIfAIsZero ScanRightKey
                         ld      a,(CursorKeysPressed)
-                        or      $20
+                        or      CursorLeft
                         ld      (CursorKeysPressed),a
                         ret
 ScanRightKey:           ld      hl,(addr_Pressed_RollRight)
                         ld      a,(hl)
                         JumpIfAIsZero ScanHomeKey
                         ld      a,(CursorKeysPressed)
-                        or      $10
+                        or      CursorRight
                         ld      (CursorKeysPressed),a
                         ret
 ScanHomeKey:            ld      hl,(addr_Pressed_HomeCursor)
                         ld      a,(hl)
                         JumpIfAIsZero ScanRecentreKey
                         ld      a,(CursorKeysPressed)
-                        or      $08
+                        or      CursorHome
                         ld      (CursorKeysPressed),a
                         ret
 ScanRecentreKey:        ld      hl,(addr_Pressed_Recentre)
                         ld      a,(hl)
                         ReturnIfAIsZero
                         ld      a,(CursorKeysPressed)
-                        or      $04
+                        or      CursorRecenter
                         ld      (CursorKeysPressed),a
                         ret
 

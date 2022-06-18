@@ -183,6 +183,11 @@ JumpIfAFalse:           MACRO target
                         jp      nz, target
                         ENDM
 
+JumpIfANotFalse:        MACRO target
+                        cp      $FF
+                        jp      nz, target
+                        ENDM
+
 JumpIfALTusng:          MACRO target
                         jp		c,target
                         ENDM
