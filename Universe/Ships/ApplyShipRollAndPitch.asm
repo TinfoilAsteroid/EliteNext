@@ -40,11 +40,11 @@ ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)             ; get roll magni
                         ret     z                           ; if no work to do then exit
 .CheckRollDamping:      cp      SignMask8Bit
                         jr      z,.NoRollDamping
-.ApplyRollDamping:      dec      a                     ; pitch = pitch-1
+.ApplyRollDamping:      dec      a                          ; pitch = pitch-1
 .NoRollDamping          ld      (univRAT2Val),a
                         ld      b,a
                         or      c                           ; bring sign back in
-                        ld      (UBnKRotXCounter),a             ; rotZCounter = updated value
+                        ld      (UBnKRotXCounter),a         ; rotXCounter = updated value
 .RollSAxis:           	ld	    hl,UBnkrotmatRoofvX; UBnkrotmatSidevX	
                         ld	    (varAxis1),hl
                         ld	    hl,UBnkrotmatSidevX; UBnkrotmatSidevY

@@ -1552,9 +1552,9 @@ ProcessDot:            ; break
                         call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
                         call    InverseXX16                      ;#11; Invert rotation matrix
                         ld      hl,0
-                        ld      (UBnkXScaled),a
-                        ld      (UBnkYScaled),a
-                        ld      (UBnkZScaled),a
+                        ld      (UBnkXScaled),hl
+                        ld      (UBnkYScaled),hl
+                        ld      (UBnkZScaled),hl
                         xor     a
                         call    XX12EquNodeDotOrientation
                         call    TransposeXX12ByShipToXX15

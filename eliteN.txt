@@ -34592,11 +34592,11 @@
   40++D898 C8                                   ret     z                           ; if no work to do then exit
   41++D899 FE 7F        .CheckRollDamping:      cp      SignMask8Bit
   42++D89B 28 01                                jr      z,.NoRollDamping
-  43++D89D 3D           .ApplyRollDamping:      dec      a                     ; pitch = pitch-1
+  43++D89D 3D           .ApplyRollDamping:      dec      a                          ; pitch = pitch-1
   44++D89E 32 40 C0     .NoRollDamping          ld      (univRAT2Val),a
   45++D8A1 47                                   ld      b,a
   46++D8A2 B1                                   or      c                           ; bring sign back in
-  47++D8A3 32 38 C0                             ld      (UBnKRotXCounter),a             ; rotZCounter = updated value
+  47++D8A3 32 38 C0                             ld      (UBnKRotXCounter),a         ; rotXCounter = updated value
   48++D8A6 21 1F C0     .RollSAxis:           	ld	    hl,UBnkrotmatRoofvX; UBnkrotmatSidevX
   49++D8A9 22 FE 7F                             ld	    (varAxis1),hl
   50++D8AC 21 19 C0                             ld	    hl,UBnkrotmatSidevX; UBnkrotmatSidevY
@@ -34763,9 +34763,9 @@
 1552+ D976 CD AE CE                             call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
 1553+ D979 CD 7B CD                             call    InverseXX16                      ;#11; Invert rotation matrix
 1554+ D97C 21 00 00                             ld      hl,0
-1555+ D97F 32 92 C0                             ld      (UBnkXScaled),a
-1556+ D982 32 94 C0                             ld      (UBnkYScaled),a
-1557+ D985 32 96 C0                             ld      (UBnkZScaled),a
+1555+ D97F 22 92 C0                             ld      (UBnkXScaled),hl
+1556+ D982 22 94 C0                             ld      (UBnkYScaled),hl
+1557+ D985 22 96 C0                             ld      (UBnkZScaled),hl
 1558+ D988 AF                                   xor     a
 1559+ D989 CD 1E 79                             call    XX12EquNodeDotOrientation
 1560+ D98C CD 1F CC                             call    TransposeXX12ByShipToXX15
