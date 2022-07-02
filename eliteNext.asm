@@ -712,7 +712,7 @@ EndOfNonBanked:
     INCLUDE "./Data/ShipModelMacros.asm"
     INCLUDE "./Data/ShipBank1Label.asm"
 GetShipBankId:
-GetShipBank1Id:        MGetShipBankId ShipBankTable
+GetShipBank1Id:         MGetShipBankId ShipBankTable
 CopyVertsToUniv:
 CopyVertsToUniv1:       McopyVertsToUniverse
 CopyEdgesToUniv:

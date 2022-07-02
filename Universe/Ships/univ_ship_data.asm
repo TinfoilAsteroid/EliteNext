@@ -12,8 +12,9 @@
 ;                       1234567890123456                                        
 StartOfUniv:        DB "Universe PG"
 StartOfUnivN:       DB "X"
-ShipUnivBoilerPad   DS 3
-ShipTypeCopy        DB 0
+StartOfUnivPad:     DS 2
+StartOfUnivM:       DB 0
+StartOfUnivT        DB 0
 ; NOTE we can cheat and pre allocate segs just using a DS for now
 
 ;   \ -> & 565D \ See ship data files chosen and loaded after flight code starts running.

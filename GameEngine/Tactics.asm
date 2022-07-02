@@ -184,8 +184,7 @@ TacticsDotProduct2      DS 2
 TacticsDotProduct3      DS 2
 
 ;... Now the tactics if current ship is the missile, when we enter this SelectedUniverseSlot holds slot of missile
-MissileAI:              ;break
-                        JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
+MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
 .CheckForECM:           JumpIfMemNotZero ECMCountDown,.ECMIsActive  ; If ECM is running then kill the missile
 .IsMissileHostile:      IsShipFriendly                              ; is missle attacking us?
                         JumpIfZero .MissileTargetingShip            ; Missile is friendly then z is set else targetting us
@@ -418,7 +417,10 @@ NormalizeTactics:       ld      hl, (TacticsVectorX)        ; pull XX15 into reg
                         ShiftDERight1
                         ShiftBCRight1
                         jp      .ScaleLoop
-.DoneScaling:           push    hl,,de,,bc
+.DoneScaling:           ShiftHLRight1                       ; as the values now need to be sign magnitued
+                        ShiftDERight1                       ; e.g. S + 7 bit we need an extra shift
+                        ShiftBCRight1                       ; now values are in L E C
+                        push    hl,,de,,bc                  ; save vecrtor x y and z nwo they are scaled to 1 byte
                         ld      d,e                         ; hl = y ^ 2
                         mul     de                          ; .
                         ex      de,hl                       ; .
@@ -429,28 +431,29 @@ NormalizeTactics:       ld      hl, (TacticsVectorX)        ; pull XX15 into reg
                         ld      e,c
                         mul     de
                         add     hl,de                       ; hl =  y^ 2 + x ^ 2 + z ^ 2
+                        ex      de,hl                       ; fix as hl was holding square
                         call    asm_sqrt                    ; hl = sqrt (de) = sqrt (x ^ 2 + y ^ 2 + z ^ 2)
                         ; add in logic if h is low then use lower bytes for all 
                         ld      a,l
                         ld      iyh,a
                         ld      d,a
-                        pop     bc
-                        ld      a,c
-                        call    AequAdivDmul96Unsg
+                        pop     bc                          ; retrive tacticsvectorz scaled
+                        ld      a,c                         ; a = scaled byte
+                        call    AequAdivDmul96;AequAdivDmul96Unsg          ; This rountine I think is wrong and retuins bad values
                         ld      (TacticsVectorZ),a
                         pop     de
                         ld      a,e
                         ld      d,iyh                        
-                        call    AequAdivDmul96Unsg
+                        call    AequAdivDmul96;AequAdivDmul96Unsg
                         ld      (TacticsVectorY),a
                         pop     hl
                         ld      a,l
                         ld      d,iyh                        
-                        call    AequAdivDmul96Unsg
+                        call    AequAdivDmul96;AequAdivDmul96Unsg
                         ld      (TacticsVectorX),a
-                        SignBitOnlyMem TacticsVectorX+1
-                        SignBitOnlyMem TacticsVectorY+1
-                        SignBitOnlyMem TacticsVectorZ+1
+                        SignBitOnlyMem TacticsVectorX+1     ; now upper byte is sign only
+                        SignBitOnlyMem TacticsVectorY+1     ; (could move it to lower perhaps later if 
+                        SignBitOnlyMem TacticsVectorZ+1     ;  its worth it)
                         ret
 
         

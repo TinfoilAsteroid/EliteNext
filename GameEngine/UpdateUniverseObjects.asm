@@ -1,6 +1,46 @@
 ;..................................................................................................................................                        
 CurrentShipUniv:        DB      0
 ;..................................................................................................................................                        
+; if ship is destroyed or exploding then z flag is clear, else z flag is set
+IsShipDestroyedOrExploding: MACRO
+                            ld      a,(UBnKexplDsp)                                 ; is it destroyed
+                            and     %10100000                                       ; or exploding
+                            ENDM
+
+JumpIfShipNotClose:         MACRO   NotCloseTarget
+.CheckIfClose:              ld      hl,(UBnKxlo)                                    ; chigh byte check or just too far away
+                            ld      de,(UBnKylo)                                    ; .
+                            ld      bc,(UBnKzlo)                                    ; .
+                            or      h                                               ; .
+                            or      d                                               ; .
+                            or      b                                               ; .
+                            jp      nz,NotCloseTarget                               ; .
+.CheckLowBit7Close:         or      l                                               ; if bit 7 of low is set then still too far
+                            or      e                                               ; .
+                            or      c                                               ; .
+                            ld      iyh,a                                           ; save it in case we need to check bit 6 in collision check
+                            and     $80                                             ; .
+                            jp      nz,NotCloseTarget                              ; .    
+                            ENDM
+
+VeryCloseCheck:             MACRO
+                            ld      a,iyh                                           ; bit 6 is still too far
+                            and     %11000000  
+                            ENDM
+
+JumpIfNotDockingCheck:      MACRO   NotDocking
+.CheckIfDockable:           ld      a,(ShipTypeAddr)                                ; Now we have the correct bank
+                            JumpIfANENusng  ShipTypeStation, NotDocking             ; if its not a station so we don't test docking
+.IsDockableAngryCheck:      JumpOnMemBitSet ShipNewBitsAddr, ShipAngryNewBitNbr, NotDocking ; if it is angry then we dont test docking
+.CheckHighNoseZ:            JumpIfMemLTNusng  UBnkrotmatNosevZ+1 , 214, NotDocking  ; get get high byte of rotmat this is the magic angle to be within 26 degrees +/-
+.GetStationVector:          call    GetStationVectorToWork                          ; Normalise position into XX15 as in effect its a vector from out ship to it given we are always 0,0,0, returns with A holding vector z
+                            JumpIfALTNusng  89, NotDocking                          ; if the z axis <89 the we are not in the 22 degree angle,m if its negative then unsigned comparison will cater for this
+.CheckAbsRoofXHi:           ld      a,(UBnkrotmatRoofvX+1)                          ; get abs roof vector high
+                            and     SignMask8Bit                                    ; .
+                            JumpIfALTNusng 80, NotDocking                           ; note 80 decimal for 36.6 degrees horizontal
+                            ENDM
+
+;..................................................................................................................................                        
 UpdateUniverseObjects:  xor     a
                         ld      (SelectedUniverseSlot),a
 .UpdateUniverseLoop:    ld      d,a                                             ; d is unaffected by GetTypeInSlotA
@@ -17,33 +57,13 @@ UpdateUniverseObjects:  xor     a
                         call    UpdateSpeedAndPitch                             ; update based on rates of speed roll and pitch accelleration/decelleration
 ;.. apply ships movement                        
 ;.. If its a space station then see if we are ready to dock........................................................................
-.CheckExploding:        ld      a,(UBnKexplDsp)                                 ; is it destroyed
-                        and     %10100000                                       ; or exploding
+.CheckExploding:        IsShipDestroyedOrExploding
                         jp      nz,.ProcessedUniverseSlot                       ; then no action
+;.. we can't collide with missiles, they collide with us as part of tactics
 .CheckIfMissile:        JumpIfMemEqNusng ShipTypeAddr, ShipTypeMissile, .CollisionDone ; Missiles don't have ECM and do collision checks on their tactics phase
 .ProcessECM:            call    UpdateECM                                       ; Update ECM Counters         
-.CheckIfClose:          ld      hl,(UBnKxlo)                                    ; chigh byte check or just too far away
-                        ld      de,(UBnKylo)                                    ; .
-                        ld      bc,(UBnKzlo)                                    ; .
-                        or      h                                               ; .
-                        or      d                                               ; .
-                        or      b                                               ; .
-                        jp      nz,.CollisionDone                                    ; .
-.CheckLowBit7Close:     or      l                                               ; if bit 7 of low is set then still too far
-                        or      e                                               ; .
-                        or      c                                               ; .
-                        ld      iyh,a                                           ; save it in case we need to check bit 6 in collision check
-                        and     $80                                             ; .
-                        jp      nz,.CollisionDone                                    ; .
-.CheckIfDockable:       ld      a,(ShipTypeAddr)                                ; Now we have the correct bank
-                        JumpIfANENusng  ShipTypeStation, .CollisionCheck        ; if its not a station so we don't test docking
-.IsDockableAngryCheck:  JumpOnMemBitSet ShipNewBitsAddr, 4, .CollisionCheck     ; if it is angry then we dont test docking
-.CheckHighNoseZ:        JumpIfMemLTNusng  UBnkrotmatNosevZ+1 , 214, .CollisionCheck ; get get high byte of rotmat this is the magic angle to be within 26 degrees +/-
-.GetStationVector:      call    GetStationVectorToWork                          ; Normalise position into XX15 as in effect its a vector from out ship to it given we are always 0,0,0, returns with A holding vector z
-                        JumpIfALTNusng  89, .CollisionCheck                     ; if the z axis <89 the we are not in the 22 degree angle,m if its negative then unsigned comparison will cater for this
-.CheckAbsRoofXHi:       ld      a,(UBnkrotmatRoofvX+1)                          ; get abs roof vector high
-                        and     SignMask8Bit                                    ; .
-                        JumpIfALTNusng 80, .CollisionCheck                      ; note 80 decimal for 36.6 degrees horizontal
+.CheckIfClose:          JumpIfShipNotClose .PostCollisionTest
+.CheckIfDockable:       JumpIfNotDockingCheck .CollisionCheck                   ; check if we are docking or colliding
 ;.. Its passed all validation and we are docking...................................................................................
 .WeAreDocking:          MMUSelectLayer1
                         ld        a,$6
@@ -51,12 +71,12 @@ UpdateUniverseObjects:  xor     a
 .EnterDockingBay:       ForceTransition ScreenDocking                           ;  Force transition 
                         ret                                                     ;  don't bother with other objects
                         ; So it is a candiate to test docking. Now we do the position and angle checks
+;.. else we are just colliding and have to handle that
 .CollisionCheck:        ld      a,iyl
                         JumpIfAEqNusng ShipTypeStation, .HaveCollided           ; stations dont check bit 6
-                        JumpIfAEqNusng ShipTypeMissile, .CollisionDone          ; Missile collisions are done in the tactics code
-.VeryCloseCheck:        ld      a,iyh                                           ; bit 6 is still too far
-                        and     %11000000                                       ; .
-                        jr      nz,.CollisionDone                                    ; .
+                        JumpIfAEqNusng ShipTypeMissile, .PostCollisionTest      ; Missile collisions are done in the tactics code
+.VeryCloseCheck:        VeryCloseCheck                                          ; bit 6 is still too far
+                        jr      nz,.PostCollisionTest                            ; .
 .ScoopableCheck:        ld      a,iyl                                           ; so if its not scoopable
                         JumpIfANENusng  ShipTypeScoopable, .HaveCollided        ; then its a collision
 .ScoopsEquiped:         ld      a,(FuelScoop)                                   ; if there is no scoop then impact
@@ -69,7 +89,7 @@ UpdateUniverseObjects:  xor     a
                         jr      c, .NoRoom
 .CanScoop:              call    AddCargoTypeD
 .NoRoom:                ClearSlotMem    SelectedUniverseSlot                    ; we only need to clear slot list as univ ship is now junk
-                        jp      .CollisionDone
+                        jp      .PostCollisionTest
 ; ... Generic collision
 .HaveCollided:          JumpIfMemLTNusng DELTA, 5, .SmallBump
 .BigBump:               ld      a,(UBnKEnergy)                                  ; get energy level which gives us an approximate to size and health
@@ -93,8 +113,9 @@ UpdateUniverseObjects:  xor     a
 .HitRear:               ld      a,(AftShield)
                         call    ApplyDamage
                         ld      (AftShield),a
-; Now check laser
-.CollisionDone:         call    ShipInSights
+.CollisionDone:         
+;.. Now check laser to see if the ship is being shot in sights
+.PostCollisionTest:     call    ShipInSights
                         jr      nc,.ProcessedUniverseSlot                        ; for laser and missile we can check once
                         ld      a,(CurrLaserPulseRate)
                         JumpIfAIsNotZero .CheckForPulse
@@ -113,28 +134,25 @@ UpdateUniverseObjects:  xor     a
                         LockMissileToA                                          ; .                        
 .ProcessedUniverseSlot: 
 ;...Tactics Section................................................................................................................
-.AreWeReadyForAI:       IsSlotMissile                                           ; Missiles update every iteration
+.AreWeReadyForAI:       ld      a,(SelectedUniverseSlot)
+                        IsSlotMissile                                           ; Missiles update every iteration
                         jp      z,.UpdateMissile                                ; so we bypass the logic check
-                        CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, UpdateShip
+.CheckIfSlotAITurn:     CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, UpdateShip
 .UniverseSlotIsEmpty:
-.DoneAICheck:           ld      a,(SelectedUniverseSlot)                        ; Move to next ship cycling if need be to 0
+.DoneAICheck:           ld      a,(SelectedUniverseSlot)                        ; Move to next ship in loop
                         inc     a                                               ; .
-                        JumpIfAGTENusng   UniverseSlotListSize, .UpdateAICounter; .
-                        ld      (SelectedUniverseSlot),a
-                        jp      .UpdateUniverseLoop
-.UpdateAICounter:       ld      a,(CurrentUniverseAI)
-                        inc     a
-                        cp      12
-                        jr      c,.IterateAI
-                        xor     a
-.IterateAI:             ld      (CurrentUniverseAI),a
-.CheckIfStationAngry:   ReturnIfMemFalse  SetStationAngryFlag
+                        JumpIfAGTENusng   UniverseSlotListSize, .UpdateAICounter; if we are beyond the loop then update the mast AI counter and we are done
+                        ld      (SelectedUniverseSlot),a                        ; else update loop pointer
+                        jp      .UpdateUniverseLoop                             ; if there are more to go we continue
+.UpdateAICounter:       IncMemMaxNCycle CurrentUniverseAI , UniverseSlotListSize
+.CheckIfStationAngry:   ReturnIfMemFalse  SetStationAngryFlag                   ; we coudl move this to pre loop so its only done once
 .SetStationAngryIfPoss: ReturnIfMemNeNusng UniverseSlotList, ShipTypeStation
                         MMUSelectUniverseN 0
                         call    SetShipHostile
                         SetMemFalse    SetStationAngryFlag
                         ret
-.UpdateMissile:         call    UpdateShip                                      ; we do it this way top avoid double calling
+.UpdateMissile:         ;break
+                        call    UpdateShip                                      ; we do it this way top avoid double calling
                         jp      .DoneAICheck                                    ; ai if the ai slot to process = missile type
 ;..................................................................................................................................
 

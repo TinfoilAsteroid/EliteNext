@@ -56,6 +56,7 @@ ShipTypeText            equ 253
 ShipTypeDebug           equ 254
 ShipTypeEmpty           equ 255
 ; TacticsControl
+ShipAngryNewBitNbr      equ 4
 ShipExplosionDuration   equ 75         ; amount of frames an explosion lasts for
 ShipIsTrader            equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
 ShipIsBountyHunter      equ Bit1Only   ; 

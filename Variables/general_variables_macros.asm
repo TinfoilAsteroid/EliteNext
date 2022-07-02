@@ -10,6 +10,25 @@ CountLengthHL:          MACRO   Limiter
                         ret
                         ENDM
 
+IncMemMaxN:             MACRO   mem, maxvalue
+                        ld      a,(mem)
+                        cp      maxvalue
+                        jr      c,.IncMaxed
+                        inc     a
+                        ld      (mem),a
+.IncMaxed:
+                        ENDM
+
+IncMemMaxNCycle:        MACRO   mem, cyclevalue
+                        ld      a,(mem)
+                        inc     a
+                        cp      cyclevalue
+                        jr      c,.IncMaxed
+                        xor     a
+.IncMaxed:              ld      (mem),a
+                        ENDM
+                        
+
 HalfLengthHL:           MACRO
                         ld      b,0
 .CountLenLoop:          ld      a,(hl)

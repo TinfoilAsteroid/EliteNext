@@ -325,31 +325,9 @@ LaunchPlayerMissile:    break
 .MissileMissFire:       ClearMissileTargetting
                         ret ; TODO bing bong noise misfire message
 
-; a = ship type, iyh = universe slot to create in
-SpawnShipTypeA:         ld      iyl,a                               ; save ship type
-                        ReturnIfAGTENusng   ShipTotalModelCount     ; current ship count limit 
-                        MMUSelectShipBank1                          ; select bank 1
-                        ld      a,iyh                               ; A = slot number
-                        ld      b,iyl                               ; b = ship type
-                        call    SetSlotAToTypeB                     ; Allocate slot as used
-                        MMUSelectUniverseA                          ; .   
-.MarkUnivDiags:         ld      b, iyh                              ; mark diagnostics for bank number in memory
-                        add     "A"
-                        ld      (StartOfUnivN),a                    ; to help debugging
-.CopyOverShipData:      ld      a,iyl                               ; .                                                                      
-                        ;call    SetSlotAToTypeB                    ; record in the lookup tables
-                        call    GetShipBankId                       ; find actual memory location of data
-                        MMUSelectShipBankA
-                        ld      a,b                                 ; b = computed ship id for bank
-                        call    CopyShipToUniverse
-                        call    UnivSetSpawnPosition                ; set initial spawn position
-                        call    UnivInitRuntime                     ; Clear runtime data before startup, iy h and l are already set up
-                        ld      a,(ShipTypeAddr)                    ; get ship type
-                        ld      (ShipTypeCopy),a                    ; to help debugging 
-                        ld      b,a
-                        ld      a,iyl
-                        call    SetSlotAToClassB
-                        ret
+
+                        include "./SpawnShipTypeA.asm"
+
 
                         ; reset main loop counters
                         ; from BBC TT18 jump code

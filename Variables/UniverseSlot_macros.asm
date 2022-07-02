@@ -68,10 +68,12 @@ IsSlotEmpty:            MACRO
                         
 IsSlotMissile:          MACRO
                         ld      hl,UniverseSlotType
+                        add     hl,a
                         ld      a,(hl)
                         cp      ShipTypeMissile
                         ENDM
                         
+
 ; Checks if slot is empty else A = ship type
 ReturnIfSlotAEmpty:     MACRO
                         ld      hl,UniverseSlotList
