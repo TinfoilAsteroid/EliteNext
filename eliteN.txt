@@ -2333,7 +2333,7 @@
  111  0000
  112  0000                                      ORG         $6200
  113  6200 F3           EliteNextStartup:       di
- 114  6201 CD 54 A2     .InitiliseFileIO:       call        GetDefaultDrive
+ 114  6201 CD BC A2     .InitiliseFileIO:       call        GetDefaultDrive
  115  6204              .InitialiseLayerOrder:
  116  6204                                      DISPLAY "Starting Assembly At ", EliteNextStartup
  117  6204                                      ; "STARTUP"
@@ -13864,7 +13864,7 @@
  179+ 9F55 00 00 00     TacticsUBnKx            DS 3
  180+ 9F58 00 00 00     TacticsUBnKy            DS 3
  181+ 9F5B 00 00 00     TacticsUBnKz            DS 3
- 182+ 9F5E 00 00        TacticsDotProduct       DS 2
+ 182+ 9F5E 00 00        TacticsDotProduct1      DS 2
  183+ 9F60 00 00        TacticsDotProduct2      DS 2
  184+ 9F62 00 00        TacticsDotProduct3      DS 2
  185+ 9F64
@@ -13872,11 +13872,11 @@
  187+ 9F64              MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
  187+ 9F64 3A 34 C0    >                        ld      a,(UBnKMissleHitToProcess)
  187+ 9F67 A7          >                        and     a
- 187+ 9F68 CA EC A0    >                        jp      z, .ProcessMissileHit
+ 187+ 9F68 CA EA A0    >                        jp      z, .ProcessMissileHit
  188+ 9F6B              .CheckForECM:           JumpIfMemNotZero ECMCountDown,.ECMIsActive  ; If ECM is running then kill the missile
  188+ 9F6B 3A 3A 80    >                        ld  a,(ECMCountDown)
  188+ 9F6E A7          >                        and a
- 188+ 9F6F C2 F5 A0    >                        jp  nz,.ECMIsActive
+ 188+ 9F6F C2 F3 A0    >                        jp  nz,.ECMIsActive
  189+ 9F72              .IsMissileHostile:      IsShipFriendly                              ; is missle attacking us?
  189+ 9F72 3A 32 C3    >                        ld      a,(ShipNewBitsAddr)
  189+ 9F75 E6 FB       >                        and     ShipNotHostile                  ; mask so we only have hostile bit
@@ -13888,7 +13888,7 @@
  194+ 9F81 CD 34 9F                             call    MissileHitUsCheckPos
  195+ 9F84 D2 8D 9F     .MissileNotHitUsYet:    jp      nc, .UpdateTargetingUsPos
  196+ 9F87 CD 3F 9E     .MissleHitUs:           call    PlayerHitByMissile
- 197+ 9F8A C3 F5 A0                             jp      .ECMIsActive                        ; we use ECM logic to destroy missile which eqneues is
+ 197+ 9F8A C3 F3 A0                             jp      .ECMIsActive                        ; we use ECM logic to destroy missile which eqneues is
  198+ 9F8D C9           .UpdateTargetingUsPos:  ret                        ;;;;;;***********TODO
  199+ 9F8E              ;--- Missile is targeting other ship
  200+ 9F8E 3A ED 81     .MissileTargetingShip:  ld      a,(SelectedUniverseSlot)            ; we will use this quite a lot with next bank switching
@@ -13902,7 +13902,7 @@
  206+ 9F9F ED 31       >                        add     hl,a
  206+ 9FA1 7E          >                        ld      a,(hl)
  206+ 9FA2 3C          >                        inc     a
- 206+ 9FA3 CA F5 A0    >                        jp      z,.ECMIsActive    ; if slot was ff inc would make it 0
+ 206+ 9FA3 CA F3 A0    >                        jp      z,.ECMIsActive    ; if slot was ff inc would make it 0
  206+ 9FA6 3D          >                        dec     a           ; get original value back for later
  207+ 9FA7              ;... Note we don't have to check for impact as we already have a loop doing that
  208+ 9FA7              .SelectTargetShip:      SelectTargetBank
@@ -13916,1157 +13916,1213 @@
  212+ 9FB3 FD 7C       >                        ld      a,iyh
  212+ 9FB5             >                        MMUSelectUnivBankA
  212+ 9FB5 ED 92 56    >                     nextreg UniverseMMU,       a
- 213+ 9FB8 C3 F5 A0                             jp      .ECMIsActive
+ 213+ 9FB8 C3 F3 A0                             jp      .ECMIsActive
  214+ 9FBB              ;--- At this point we already have the target banked in ready for calculating vector
  215+ 9FBB              .UpdateTargetingShipX
- 215+ 9FBB ED 5B 10 C0   ld      de,(UBnKxlo)                        ; get target ship X
- 216+ 9FBF 3A 12 C0                             ld      a,(UBnKxsgn)                        ; and flip sign so we have missile - target
- 217+ 9FC2                                      FlipSignBitA
- 217+ 9FC2 EE 80       >                        xor     SignOnly8Bit
- 218+ 9FC4 4F                                   ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
- 219+ 9FC5                                      SelectMissileBank
- 219+ 9FC5 FD 7C       >                        ld      a,iyh
- 219+ 9FC7             >                        MMUSelectUnivBankA
- 219+ 9FC7 ED 92 56    >                     nextreg UniverseMMU,       a
- 220+ 9FCA 2A 10 C0                             ld      hl,(UBnKxlo)                        ; get missile x
- 221+ 9FCD 3A 12 C0                             ld      a,(UBnKxsgn)                        ; get missile x sign
- 222+ 9FD0 47                                   ld      b,a
- 223+ 9FD1 CD C9 8F                             call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
- 224+ 9FD4 22 FF A0                             ld      (TacticsVectorX),hl
- 225+ 9FD7 32 01 A1                             ld      (TacticsVectorX+2),a
- 226+ 9FDA              .UpdateTargetingShipY:  SelectTargetBank
- 226+ 9FDA FD 7D       >                        ld      a,iyl
- 226+ 9FDC             >                        MMUSelectUnivBankA
- 226+ 9FDC ED 92 56    >                     nextreg UniverseMMU,       a
- 227+ 9FDF ED 5B 13 C0                          ld      de,(UBnKylo)                        ; get target ship X
- 228+ 9FE3 3A 15 C0                             ld      a,(UBnKysgn)
- 229+ 9FE6                                      FlipSignBitA
- 229+ 9FE6 EE 80       >                        xor     SignOnly8Bit
- 230+ 9FE8 4F                                   ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
- 231+ 9FE9                                      SelectMissileBank
- 231+ 9FE9 FD 7C       >                        ld      a,iyh
- 231+ 9FEB             >                        MMUSelectUnivBankA
- 231+ 9FEB ED 92 56    >                     nextreg UniverseMMU,       a
- 232+ 9FEE 2A 13 C0                             ld      hl,(UBnKylo)                        ; get missile x
- 233+ 9FF1 3A 15 C0                             ld      a,(UBnKysgn)                        ; get missile x sign
- 234+ 9FF4 47                                   ld      b,a
- 235+ 9FF5 CD C9 8F                             call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
- 236+ 9FF8 22 02 A1                             ld      (TacticsVectorY),hl
- 237+ 9FFB 32 04 A1                             ld      (TacticsVectorY+2),a
- 238+ 9FFE              .UpdateTargetingShipZ:  SelectTargetBank
- 238+ 9FFE FD 7D       >                        ld      a,iyl
- 238+ A000             >                        MMUSelectUnivBankA
- 238+ A000 ED 92 56    >                     nextreg UniverseMMU,       a
- 239+ A003 ED 5B 16 C0                          ld      de,(UBnKzlo)                        ; get target ship X
- 240+ A007 3A 18 C0                             ld      a,(UBnKzsgn)
- 241+ A00A                                      FlipSignBitA
- 241+ A00A EE 80       >                        xor     SignOnly8Bit
- 242+ A00C 4F                                   ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
- 243+ A00D                                      SelectMissileBank
- 243+ A00D FD 7C       >                        ld      a,iyh
- 243+ A00F             >                        MMUSelectUnivBankA
- 243+ A00F ED 92 56    >                     nextreg UniverseMMU,       a
- 244+ A012 2A 16 C0                             ld      hl,(UBnKzlo)                        ; get missile x
- 245+ A015 3A 18 C0                             ld      a,(UBnKzsgn)                        ; get missile x sign
- 246+ A018 47                                   ld      b,a
- 247+ A019 CD C9 8F                             call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
- 248+ A01C 22 05 A1                             ld      (TacticsVectorZ),hl
- 249+ A01F 32 07 A1                             ld      (TacticsVectorZ+2),a
- 250+ A022              ; by here missile in in memory and TacticsVector now holds distance
- 251+ A022              ; if or ABS all high bytes is <> 0
- 252+ A022 2A 00 A1     .CheckDistance:         ld      hl,(TacticsVectorX+1)              ; test if high bytes are set
- 253+ A025 7C                                   ld      a,h                                ; .
- 254+ A026 ED 5B 03 A1                          ld      de,(TacticsVectorY+1)              ; .
- 255+ A02A B2                                   or      d                                  ; .
- 256+ A02B ED 4B 06 A1                          ld      bc,(TacticsVectorZ+1)              ; .
- 257+ A02F B0                                   or      b                                  ; .
- 258+ A030                                      ClearSignBitA                              ; .
- 258+ A030 E6 7F       >                        and     SignMask8Bit
- 259+ A032                                      JumpIfNotZero       .FarAway               ; .
- 259+ A032 C2 41 A0    >                        jp	nz,.FarAway
- 260+ A035 B5                                   or      l                                  ; test for low byte bit 7
- 261+ A036 B3                                   or      e                                  ; .
- 262+ A037 B1                                   or      c                                  ; .
- 263+ A038                                      JumpIfNotZero       .FarAway               ; .
- 263+ A038 C2 41 A0    >                        jp	nz,.FarAway
- 264+ A03B              ; If we get here its close enough to detonate
- 265+ A03B 3A 35 C0     .CloseMissileExplode:   ld      a,(UBnKMissileTarget)
- 266+ A03E C3 40 9E                             jp      MissileHitShipA
- 267+ A041              ;   *far away ** TODO need to set memory read write on page 0
- 268+ A041              .FarAway:               SelectTargetBank
- 268+ A041 FD 7D       >                        ld      a,iyl
- 268+ A043             >                        MMUSelectUnivBankA
- 268+ A043 ED 92 56    >                     nextreg UniverseMMU,       a
- 269+ A046                                      JumpIfMemFalse      UBnKECMFitted, .NoECM                   ; if target has ECM and enough energy to use it
- 269+ A046 3A 49 C0    >                        ld      a,(UBnKECMFitted)
- 269+ A049 A7          >                        and     a
- 269+ A04A C2 67 A0    >                        jp      nz, .NoECM
- 270+ A04D                                      JumpIfMemLTNusng    UBnKEnergy,    ECMCounterMax, .NoECM    ; .
- 270+ A04D 3A 47 C0    >                        ld      a,(UBnKEnergy)
- 270+ A050 FE 80       >                        cp      ECMCounterMax
- 270+ A052 DA 67 A0    >                        jp	  c,.NoECM
- 271+ A055                                      JumpIfMemIsNotZero   ECMCountDown, .NoECM                ; . ECM is already active
- 271+ A055 3A 3A 80    >                        ld      a,(ECMCountDown)
- 271+ A058 A7          >                        and     a
- 271+ A059 C2 67 A0    >                        jp	    nz,.NoECM
- 272+ A05C 3A 1D 80     .TestIfUsingECM:        ld      a,(RandomSeed2)                                             ; if random < 16
- 273+ A05F                                      JumpIfAGTENusng     16, .UpdateMissilePos                           ;   then fire ECM destroying missile
- 273+ A05F FE 10       >                        cp     16
- 273+ A061 D2 67 A0    >                        jp		nc,.UpdateMissilePos
- 274+ A064              ;. If we get here then target is still paged in to fire ECM
- 275+ A064 C3 66 C5     .ZeroPageFireECM:       jp      FireECM                                             ; with an implicit return
- 276+ A067              ;                       implicit ret
- 277+ A067              ;. If we get here then target is still paged in with no ECM
- 278+ A067              .NoECM:
- 279+ A067                                    ;;;         ** can do 16 bit maths as we can take teh view that once a object/space station is 24 bit value away then
- 280+ A067                                    ;;;         ** targeting computer looses track and destructs missiles
- 281+ A067              ;--- Now we can actually update the missile AI
- 282+ A067              .UpdateMissilePos:      ;break
- 283+ A067                                      SelectMissileBank
- 283+ A067 FD 7C       >                        ld      a,iyh
- 283+ A069             >                        MMUSelectUnivBankA
- 283+ A069 ED 92 56    >                     nextreg UniverseMMU,       a
- 284+ A06C                                      ;call    ReduceTacticVectors                 ; get vectors down to 5 bit + sign bit
- 285+ A06C CD 70 A1                             call    NormalizeTactics                    ; Normalise vector
- 286+ A06F CD 11 A1                             call    XX12EquTacticsDotNosev              ; SA = nose . XX15
- 287+ A072 32 5E 9F                             ld      (TacticsDotProduct),a               ; CNT = A (high byte of dot product)
- 288+ A075                                      FlipSignMem TacticsVectorX+1                ; negate vector in XX15 so it points opposite direction
- 288+ A075 3A 00 A1    >                        ld  a,(TacticsVectorX+1)
- 288+ A078 EE 80       >                        xor SignOnly8Bit
- 288+ A07A 32 00 A1    >                        ld  (TacticsVectorX+1),a
- 289+ A07D                                      FlipSignMem TacticsVectorY+1                ; .
- 289+ A07D 3A 03 A1    >                        ld  a,(TacticsVectorY+1)
- 289+ A080 EE 80       >                        xor SignOnly8Bit
- 289+ A082 32 03 A1    >                        ld  (TacticsVectorY+1),a
- 290+ A085                                      FlipSignMem TacticsVectorZ+1                ; .
- 290+ A085 3A 06 A1    >                        ld  a,(TacticsVectorZ+1)
- 290+ A088 EE 80       >                        xor SignOnly8Bit
- 290+ A08A 32 06 A1    >                        ld  (TacticsVectorZ+1),a
- 291+ A08D 3A 2A 81                             ld      a,(varS)
- 292+ A090 EE 80                                xor SignOnly8Bit
- 293+ A092 32 5F 9F                             ld      (TacticsDotProduct+1),a             ;  negate value of CNT so +ve if facing or -ve if facing same way
- 294+ A095 CD 64 A1                             call    XX12EquTacticsDotRoofv              ;  AX = roofv.XX15
- 295+ A098 32 60 9F                             ld      (TacticsDotProduct2),a              ;  SaveA
- 296+ A09B 3A 2A 81                             ld      a,(varS)                            ;  .
- 297+ A09E 32 61 9F                             ld      (TacticsDotProduct2+1),a            ;  .
- 298+ A0A1                                      FlipSignBitA                                ; use the flip version of dot product
- 298+ A0A1 EE 80       >                        xor     SignOnly8Bit
- 299+ A0A3 06 03                                ld      b,3                                 ; and pitch to maxium 3
- 300+ A0A5 B0                                   or      b                                   ; .
- 301+ A0A6 32 39 C0                             ld      (UBnKRotZCounter),a                 ; .
- 302+ A0A9 3A 38 C0                             ld      a,(UBnKRotXCounter)                 ; a = abs roll counter
- 303+ A0AC                                      ClearSignBitA                               ;
- 303+ A0AC E6 7F       >                        and     SignMask8Bit
- 304+ A0AE                                      JumpIfAGTENusng 16, .AlreadyRolling
- 304+ A0AE FE 10       >                        cp     16
- 304+ A0B0 D2 CA A0    >                        jp		nc,.AlreadyRolling
- 305+ A0B3 CD 6A A1                             call    XX12EquTacticsDotSidev              ; get dot product of xx15. sidev
- 306+ A0B6 32 60 9F                             ld      (TacticsDotProduct2),a              ; This will be positive if XX15 is pointing in the same direction
- 307+ A0B9 3A 2A 81                             ld      a,(varS)                            ;
- 308+ A0BC 32 61 9F                             ld      (TacticsDotProduct2+1),a            ;
- 309+ A0BF                                      SetSignBitA                                   ; Set the ship's roll counter to 5, with the sign set to positive if the pitch counter and dot product have different signs
- 309+ A0BF F6 80       >                        or      SignOnly8Bit
- 310+ A0C1 21 39 C0                             ld      hl,UBnKRotZCounter
- 311+ A0C4 AE                                   xor     (hl)
- 312+ A0C5 F6 05                                or      5
- 313+ A0C7 32 38 C0                             ld      (UBnKRotXCounter),a
- 314+ A0CA 3A 5F 9F     .AlreadyRolling:        ld      a,(TacticsDotProduct+1)             ; Fetch the dot product, and if it's negative jump to
- 315+ A0CD                                      JumpIfAIsNotZero    .SlowDown               ; slow down routine
- 315+ A0CD A7          >                        and     a
- 315+ A0CE C2 DF A0    >                        jp	    nz,.SlowDown
- 316+ A0D1 3A 5E 9F                             ld      a,(TacticsDotProduct)
- 317+ A0D4                                      JumpIfALTNusng  22, .SlowDown
- 317+ A0D4 FE 16       >                        cp      22
- 317+ A0D6 DA DF A0    >                        jp		c, .SlowDown
- 318+ A0D9 3E 03        .Accellerate:           ld      a,3                                 ; full accelleration
- 319+ A0DB 32 37 C0                             ld      (UBnKAccel),a
- 320+ A0DE C9                                   ret
- 321+ A0DF 3A 60 9F     .SlowDown:              ld      a,(TacticsDotProduct2)              ; this is already abs so no need to do abs
- 322+ A0E2                                      ReturnIfALTNusng  18                        ; If A < 18 then the ship is way off the XX15 vector, so return without slowing down, as it still has quite a bit ofturning to do to get on course
- 322+ A0E2 FE 12       >                        cp    18
- 322+ A0E4 D8          >                        ret	 c
- 323+ A0E5 3E FE                                ld      a,$FE                               ; A = -3 as missiles are more nimble and can brake more quickly
- 324+ A0E7 32 37 C0                             ld      (UBnKAccel),a
- 325+ A0EA C9                                   ret
- 326+ A0EB                                      ;
- 327+ A0EB                                      ;           ships pitch counter = calculate teh shipt pitch counter (jsr nroll)
- 328+ A0EB                                      ;           get roll counter from ship byte 29 (value = abs(byte 29 * 2) ,e. shift left
- 329+ A0EB                                      ;           if roll counter < 32
- 330+ A0EB                                      ;               AX = sidev . XX15
- 331+ A0EB                                      ;               A = A xor pitch counter sigh
- 332+ A0EB                                      ;               byte 29 = calcualte nroll to get ship pitch counter into
- 333+ A0EB                                      ;           get back CNT
- 334+ A0EB                                      ;           if CNT >= 0 AND CNT < CNT2 ** how is CNT2 set up?
- 335+ A0EB                                      ;             then
- 336+ A0EB                                      ;               Accelleration (byte 28) = 3
- 337+ A0EB                                      ;               return
- 338+ A0EB                                      ;           A = ABS(CNT)
- 339+ A0EB                                      ;          if |CNT| >=  18
- 340+ A0EB                                      ;            then
- 341+ A0EB                                      ;              ship accelleration = -2
- 342+ A0EB C9                                   ret
- 343+ A0EC
- 344+ A0EC
- 345+ A0EC
- 346+ A0EC
- 347+ A0EC                                      ;
- 348+ A0EC                                      ; else
- 349+ A0EC                                      ;   *close enough for a detoniation
- 350+ A0EC                                      ;   if target is a space station, set space station to trigger ECM and destroy missile (note that compromised station will not trigger ECM)
- 351+ A0EC                                      ;   process missile hit object
- 352+ A0EC                                      ;   work out if blast hit anythign else including us
- 353+ A0EC
- 354+ A0EC 3A F9 81     .ProcessMissileHit:     ld      a,(CurrentMissileCheck)
- 355+ A0EF                                      ReturnIfAGTENusng UniverseSlotListSize  ; need to wait another loop
- 355+ A0EF FE 0C       >                        cp    UniverseSlotListSize
- 355+ A0F1 D0          >                        ret	 nc
- 356+ A0F2 C3 59 9E     .ActivateNewExplosion:  jp  CheckMissileBlastInit               ; initialise
- 357+ A0F5                                      ; DUMMY RET get a free return by using jp
- 358+ A0F5 CD F5 C5     .ECMIsActive:           call    UnivExplodeShip                 ; ECM detonates missile
- 359+ A0F8                                      SetMemTrue  UBnKMissleHitToProcess      ; Enque an explosion
- 359+ A0F8 AF          >                        xor     a
- 359+ A0F9 32 34 C0    >                        ld      (UBnKMissleHitToProcess),a
- 360+ A0FC C3 EC A0                             jp      .ProcessMissileHit              ; lets see if we can enqueue now
- 361+ A0FF                                      ; DUMMY RET get a free return as activenewexplosion does jp to init with a free ret
- 362+ A0FF
- 363+ A0FF
- 364+ A0FF 00 00 00     TacticsVectorX:         DS 3
- 365+ A102 00 00 00     TacticsVectorY:         DS 3
- 366+ A105 00 00 00     TacticsVectorZ:         DS 3
- 367+ A108 00 00        TacticsNormX:           DS 2
- 368+ A10A 00 00        TacticsNormY:           DS 2
- 369+ A10C 00 00        TacticsNormZ:           DS 2
- 370+ A10E 01           TacticsNormalisedX      DB  1                                   ; normalised version, NormXYZ still hold sign bits
- 371+ A10F 01           TacticsNormalisedY      DB  1                                   ;
- 372+ A110 01           TacticsNormalisedZ      DB  1                                   ;
- 373+ A111              ; Tested OK
- 374+ A111              ;LL21
- 375+ A111
- 376+ A111
- 377+ A111 21 59 C0     XX12EquTacticsDotNosev: ld      hl,UBnkTransmatNosevX
- 378+ A114              XX12EquTacticsDotHL:    N0equN1byN2div256 varT, (hl), (TacticsVectorX)       ; T = (hl) * regXX15fx /256
- 378+ A114 3A FF A0    >                        ld      a,(TacticsVectorX)                        ;
- 378+ A117 5F          >                        ld      e,a                         ; use e as var Q = value of XX15 [n] lo
- 378+ A118 7E          >                        ld      a,(hl)                        ; A = XX16 element
- 378+ A119 57          >                        ld      d,a
- 378+ A11A ED 30       >                        mul
- 378+ A11C 7A          >                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low
- 378+ A11D 32 46 81    >                        ld      (varT),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
- 379+ A120 23                                   inc     hl                                  ; move to sign byte
- 380+ A121              .XX12CalcXSign:         AequN1xorN2 UBnkXScaledSign,(hl)             ;
- 380+ A121 3A 93 C0    >                        ld      a,(UBnkXScaledSign)
- 380+ A124 AE          >                        xor     (hl)
- 381+ A125 32 2A 81                             ld      (varS),a                            ; Set S to the sign of x_sign * sidev_x
- 382+ A128 23                                   inc     hl
- 383+ A129              .XX12CalcY:              N0equN1byN2div256 varQ, (hl),(TacticsVectorY)       ; Q = XX16 * XX15 /256 using varQ to hold regXX15fx
- 383+ A129 3A 02 A1    >                        ld      a,(TacticsVectorY)                        ;
- 383+ A12C 5F          >                        ld      e,a                         ; use e as var Q = value of XX15 [n] lo
- 383+ A12D 7E          >                        ld      a,(hl)                        ; A = XX16 element
- 383+ A12E 57          >                        ld      d,a
- 383+ A12F ED 30       >                        mul
- 383+ A131 7A          >                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low
- 383+ A132 32 28 81    >                        ld      (varQ),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
- 384+ A135                                      ldCopyByte varT,varR                        ; R = T =  |sidev_x| * x_lo / 256
- 384+ A135 3A 46 81    >                        ld       a,(varT)
- 384+ A138 32 29 81    >                        ld       (varR),a
- 385+ A13B 23                                   inc     hl
- 386+ A13C                                      AequN1xorN2 UBnkYScaledSign,(hl)             ; Set A to the sign of y_sign * sidev_y
- 386+ A13C 3A 95 C0    >                        ld      a,(UBnkYScaledSign)
- 386+ A13F AE          >                        xor     (hl)
- 387+ A140              ; (S)A = |sidev_x| * x_lo / 256  = |sidev_x| * x_lo + |sidev_y| * y_lo
- 388+ A140 E5           .STequSRplusAQ           push    hl
- 389+ A141 CD 52 9A                             call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA) \ 1byte add (subtract)
- 390+ A144 E1                                   pop     hl
- 391+ A145 32 46 81                             ld      (varT),a                            ; T = |sidev_x| * x_lo + |sidev_y| * y_lo
- 392+ A148 23                                   inc     hl
- 393+ A149              .XX12CalcZ:              N0equN1byN2div256 varQ,(hl),(TacticsVectorZ)       ; Q = |sidev_z| * z_lo / 256
- 393+ A149 3A 05 A1    >                        ld      a,(TacticsVectorZ)                        ;
- 393+ A14C 5F          >                        ld      e,a                         ; use e as var Q = value of XX15 [n] lo
- 393+ A14D 7E          >                        ld      a,(hl)                        ; A = XX16 element
- 393+ A14E 57          >                        ld      d,a
- 393+ A14F ED 30       >                        mul
- 393+ A151 7A          >                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low
- 393+ A152 32 28 81    >                        ld      (varQ),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
- 394+ A155                                      ldCopyByte varT,varR                        ; R = |sidev_x| * x_lo + |sidev_y| * y_lo
- 394+ A155 3A 46 81    >                        ld       a,(varT)
- 394+ A158 32 29 81    >                        ld       (varR),a
- 395+ A15B 23                                   inc     hl
- 396+ A15C                                      AequN1xorN2 UBnkZScaledSign,(hl)             ; A = sign of z_sign * sidev_z
- 396+ A15C 3A 97 C0    >                        ld      a,(UBnkZScaledSign)
- 396+ A15F AE          >                        xor     (hl)
- 397+ A160              ; (S)A= |sidev_x| * x_lo + |sidev_y| * y_lo + |sidev_z| * z_lo
- 398+ A160 CD 52 9A                             call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA)   \ 1byte add (subtract)
- 399+ A163              ; Now we exit with A = result S = Sign
- 400+ A163 C9                                   ret
- 401+ A164
- 402+ A164 21 53 C0     XX12EquTacticsDotRoofv: ld      hl,UBnkTransmatRoofvX
- 403+ A167 C3 14 A1                             jp      XX12EquTacticsDotHL
- 404+ A16A
- 405+ A16A 21 4D C0     XX12EquTacticsDotSidev: ld      hl,UBnkTransmatSidevX
- 406+ A16D C3 14 A1                             jp      XX12EquTacticsDotHL
- 407+ A170
- 408+ A170              ;-- Now its scaled we can normalise
- 409+ A170 2A FF A0     NormalizeTactics:       ld      hl, (TacticsVectorX)        ; pull XX15 into registers
- 410+ A173 ED 5B 02 A1                          ld      de, (TacticsVectorY)        ; .
- 411+ A177 ED 4B 05 A1                          ld      bc, (TacticsVectorZ)        ; .
- 412+ A17B 7C           .ScaleLoop:             ld      a,h
- 413+ A17C B2                                   or      d
- 414+ A17D B0                                   or      b
- 415+ A17E 28 0F                                jr      z,.DoneScaling
- 416+ A180                                      ShiftHLRight1
- 416+ A180 CB 3C       >			   srl h
- 416+ A182 CB 1D       >			   rr  l
- 417+ A184                                      ShiftDERight1
- 417+ A184 CB 3A       >			   srl d
- 417+ A186 CB 1B       >			   rr  e
- 418+ A188                                      ShiftBCRight1
- 418+ A188 CB 38       >			   srl b
- 418+ A18A CB 19       >			   rr  c
- 419+ A18C C3 7B A1                             jp      .ScaleLoop
- 420+ A18F              .DoneScaling:           ShiftHLRight1                       ; as the values now need to be sign magnitued
- 420+ A18F CB 3C       >			   srl h
- 420+ A191 CB 1D       >			   rr  l
- 421+ A193                                      ShiftDERight1                       ; e.g. S + 7 bit we need an extra shift
- 421+ A193 CB 3A       >			   srl d
- 421+ A195 CB 1B       >			   rr  e
- 422+ A197                                      ShiftBCRight1                       ; now values are in L E C
- 422+ A197 CB 38       >			   srl b
- 422+ A199 CB 19       >			   rr  c
- 423+ A19B E5 D5 C5                             push    hl,,de,,bc                  ; save vecrtor x y and z nwo they are scaled to 1 byte
- 424+ A19E 53                                   ld      d,e                         ; hl = y ^ 2
- 425+ A19F ED 30                                mul     de                          ; .
- 426+ A1A1 EB                                   ex      de,hl                       ; .
- 427+ A1A2 53                                   ld      d,e                         ; de = x ^ 2
- 428+ A1A3 ED 30                                mul     de                          ; .
- 429+ A1A5 19                                   add     hl,de                       ; hl = y^ 2 + x ^ 2
- 430+ A1A6 51                                   ld      d,c
- 431+ A1A7 59                                   ld      e,c
- 432+ A1A8 ED 30                                mul     de
- 433+ A1AA 19                                   add     hl,de                       ; hl =  y^ 2 + x ^ 2 + z ^ 2
- 434+ A1AB EB                                   ex      de,hl                       ; fix as hl was holding square
- 435+ A1AC CD D9 93                             call    asm_sqrt                    ; hl = sqrt (de) = sqrt (x ^ 2 + y ^ 2 + z ^ 2)
- 436+ A1AF                                      ; add in logic if h is low then use lower bytes for all
- 437+ A1AF 7D                                   ld      a,l
- 438+ A1B0 FD 67                                ld      iyh,a
- 439+ A1B2 57                                   ld      d,a
- 440+ A1B3 C1                                   pop     bc                          ; retrive tacticsvectorz scaled
- 441+ A1B4 79                                   ld      a,c                         ; a = scaled byte
- 442+ A1B5 CD 87 99                             call    AequAdivDmul96;AequAdivDmul96Unsg          ; This rountine I think is wrong and retuins bad values
- 443+ A1B8 32 05 A1                             ld      (TacticsVectorZ),a
- 444+ A1BB D1                                   pop     de
- 445+ A1BC 7B                                   ld      a,e
- 446+ A1BD FD 54                                ld      d,iyh
- 447+ A1BF CD 87 99                             call    AequAdivDmul96;AequAdivDmul96Unsg
- 448+ A1C2 32 02 A1                             ld      (TacticsVectorY),a
- 449+ A1C5 E1                                   pop     hl
- 450+ A1C6 7D                                   ld      a,l
- 451+ A1C7 FD 54                                ld      d,iyh
- 452+ A1C9 CD 87 99                             call    AequAdivDmul96;AequAdivDmul96Unsg
- 453+ A1CC 32 FF A0                             ld      (TacticsVectorX),a
- 454+ A1CF                                      SignBitOnlyMem TacticsVectorX+1     ; now upper byte is sign only
- 454+ A1CF 3A 00 A1    >                        ld      a, (TacticsVectorX+1)
- 454+ A1D2 E6 80       >                        and     SignOnly8Bit
- 454+ A1D4 32 00 A1    >                        ld      (TacticsVectorX+1),a
- 455+ A1D7                                      SignBitOnlyMem TacticsVectorY+1     ; (could move it to lower perhaps later if
- 455+ A1D7 3A 03 A1    >                        ld      a, (TacticsVectorY+1)
- 455+ A1DA E6 80       >                        and     SignOnly8Bit
- 455+ A1DC 32 03 A1    >                        ld      (TacticsVectorY+1),a
- 456+ A1DF                                      SignBitOnlyMem TacticsVectorZ+1     ;  its worth it)
- 456+ A1DF 3A 06 A1    >                        ld      a, (TacticsVectorZ+1)
- 456+ A1E2 E6 80       >                        and     SignOnly8Bit
- 456+ A1E4 32 06 A1    >                        ld      (TacticsVectorZ+1),a
- 457+ A1E7 C9                                   ret
- 458+ A1E8
- 459+ A1E8
- 460+ A1E8              ;TODOcall    TacticsPosMinusTarget              ; calculate vector to target
- 461+ A1E8              ;;TODO                        check range
- 462+ A1E8              ;;TODO                        if target has ecm then 7% chance it will active, reduce target energy (i.e. damage)
- 463+ A1E8              ;;TODO                        else
- 464+ A1E8              ;;TODO                            normalise teh vector for direction
- 465+ A1E8              ;;TODO                            dot product = missile nosev . normalised vector
- 466+ A1E8              ;;TODO                            cnt = high byte of dot product, cnf is +ve if facing similar direction
- 467+ A1E8              ;;TODO                            negate normalised vector so its opposite product
- 468+ A1E8              ;;TODO                            invert sign of cnt
- 469+ A1E8              ;;TODO                            AK = roovf . XX15
- 470+ A1E8              ;;TODO                            Ships pitch = call nroll to caulate teh valu eof ships pitch counter
- 471+ A1E8              ;;TODO                            if pitch * 2 < 32 then
- 472+ A1E8              ;;TODO                                ax = sidev . xx15
- 473+ A1E8              ;;TODO                                    a = x xort current pitch direction
- 474+ A1E8              ;;TODO                                    shipts roll = nroll
- 475+ A1E8              ;;TODO                            do accelleration at TA6 (    https://www.bbcelite.com/disc/flight/subroutine/tactics_part_7_of_7.html#ta20
- 476+ A1E8
- 477+ A1E8              ;;TODO
- 478+ A1E8              ;;TODO
- 479+ A1E8              ;;TODO
- 480+ A1E8              ;;TODOget the targetted ship inbto bank
- 481+ A1E8              ;;TODO                        check range as per player
- 482+ A1E8              ;;TODO                        handle explosion enc
- 483+ A1E8
- 484+ A1E8              ;                    else see how close it is to target
- 485+ A1E8              ;                         if close to target
- 486+ A1E8              ;                            then explodes destroy missile
- 487+ A1E8              ;                                 if ship is not station
- 488+ A1E8              ;                                    then set up signal target ship hit my missile flag
- 489+ A1E8              ;                                         set blastcheckcounter to slotlist length  (12)
- 490+ A1E8              ;                                 end if
- 491+ A1E8              ;                                 if we are in range of missle blast
- 492+ A1E8              ;                                    cause blast damage to our ship (this will signal death is needed)
- 493+ A1E8              ;                                 end if
- 494+ A1E8              ;                                 return
- 495+ A1E8              ;                         end if
- 496+ A1E8              ;                 end if
- 497+ A1E8              ;         end if
- 498+ A1E8
- 499+ A1E8
- 500+ A1E8                          ;            else if ship is angry at us
- 501+ A1E8              ;
- 502+ A1E8
- 503+ A1E8              ; Part 1 - if type is missile and enquing a missile blast and slot free
- 504+ A1E8              ;             then enqueue missile blast details
- 505+ A1E8              ;                  mark as exploded
- 506+ A1E8              ;                  remove missile from universe slot list
- 507+ A1E8
- 508+ A1E8              ; TODO, how to we deal with scared ships, e.g. if angry and no guns or missiles then should be considered scared or if hull mass < say 25% of our ship
- 509+ A1E8              ; also for future ship vs ship combat
- 510+ A1E8              ;... Tactics........................................................................
- 511+ A1E8              ;.PART 1
- 512+ A1E8              ; if shiphitbymissleflag <> false
- 513+ A1E8              ;    then dec blast check counter
- 514+ A1E8              ;         if blast check counter = 0
- 515+ A1E8              ;            then set shiphitbymissileflag to FF
- 516+ A1E8              ;    else if SetShipHitByMissileFlag = current ship number
- 517+ A1E8              ;            then cause damage to ship
- 518+ A1E8              ;         else if ship is in range and ship is not a station
- 519+ A1E8              ;                  then cause blast damage to ship
- 520+ A1E8              ;         if destroyed
- 521+ A1E8              ;            then explode ship
- 522+ A1E8              ;                 return
- 523+ A1E8              ; end if
- 524+ A1E8              ; if ship is a missle (I think we allow missile on missle action)
- 525+ A1E8              ;    then if ecm is active
- 526+ A1E8              ;            then destroy missile and return
- 527+ A1E8              ;            else if ship is angry at us
- 528+ A1E8              ;                    then if ship is close to us
- 529+ A1E8              ;                            then explodes causing damage to our ship
- 530+ A1E8              ;                                 enque missile blast
- 531+ A1E8              ;                                 destroy missile
- 532+ A1E8              ;                                 set blastcheckcounter to slotlist length
- 533+ A1E8              ;                                 set shiphitbymissileflag to FE (general blast)
- 534+ A1E8              ;                                 return
- 535+ A1E8              ;                            else jump to part 3 to do updates
- 536+ A1E8              ;                         end if
- 537+ A1E8              ;                    else see how close it is to target
- 538+ A1E8              ;                         if close to target
- 539+ A1E8              ;                            then
- 540+ A1E8              ;                                 enque missile blast
- 541+ A1E8              ;                                 destroy missile
- 542+ A1E8              ;                                 if ship is not station
- 543+ A1E8              ;                                    then set up signal target ship hit my missile flag
- 544+ A1E8              ;                                         set blastcheckcounter to slotlist length  (12)
- 545+ A1E8              ;                                 end if
- 546+ A1E8              ;                                 if we are in range of missle blast
- 547+ A1E8              ;                                    cause blast damage to our ship (this will signal death is needed)
- 548+ A1E8              ;                                 end if
- 549+ A1E8              ;                                 return
- 550+ A1E8              ;                         end if
- 551+ A1E8              ;                 end if
- 552+ A1E8              ;         end if
- 553+ A1E8              ;.PART 2A ** adding in a collision logic
- 554+ A1E8              ;    else if ship is close to another ship
- 555+ A1E8              ;            then if docking flag set and other ship is space station or we are space station and other ship has docking flag
- 556+ A1E8              ;                    then if aligned correctly
- 557+ A1E8              ;                         then remove ship as docked
- 558+ A1E8              ;                              return
- 559+ A1E8              ;         else
- 560+ A1E8              ;            call collision route and determine daamage based on sizes and bounce vectors
- 561+ A1E8              ;            return
- 562+ A1E8              ;.PART 2 ** Need to check if ship has AI flag
- 563+ A1E8              ;    else if not hostile
- 564+ A1E8              ;            then if not docking or station not present
- 565+ A1E8              ;                    then calculate vector to planet
- 566+ A1E8              ;                         jump to part 7
- 567+ A1E8              ;                    else calculate verctor to docking slot
- 568+ A1E8              ;                         call caluclate vector to docking slot (DOCKIT)
- 569+ A1E8              ;                         jump to part 7
- 570+ A1E8              ;                 end if
- 571+ A1E8              ;            else case ship type
- 572+ A1E8              ;                      >>escape pod>> point at planet and jump to step 7
- 573+ A1E8              ;                      >>space station>> if hostile
- 574+ A1E8              ;                                           then if cop counter < 7 and 6.2% chance
- 575+ A1E8              ;                                                   then spawm hostile cop
- 576+ A1E8              ;                                                end if
- 577+ A1E8              ;                                           else
- 578+ A1E8              ;                                                if 0.8% change and transporter count = 0
- 579+ A1E8              ;                                                   then if 50% chance
- 580+ A1E8              ;                                                           then spawn transporter
- 581+ A1E8              ;                                                           else spawn shuttle
- 582+ A1E8              ;                                                        end if
- 583+ A1E8              ;                                                end if
- 584+ A1E8              ;                                        end if
- 585+ A1E8              ;                                        return
- 586+ A1E8              ;                      >>targoid and no mother ship in slot list>> set random drift
- 587+ A1E8              ;                                                                  return
- 588+ A1E8              ;                      >>if bounty hunter flag>> if ship not hostile
- 589+ A1E8              ;                                                   then if trader flag clear or 20% chance
- 590+ A1E8              ;                                                        then if fugitive or offender
- 591+ A1E8              ;                                                                then set hosile
- 592+ A1E8              ;                                                end if
- 593+ A1E8              ;                      >>Carrier and hanger slots > 0 >> if 22% chance (code to be added later)
- 594+ A1E8              ;                                         then spawn agressive hosting one of types carried
- 595+ A1E8              ;                                              reduce ships in hanger by 1
- 596+ A1E8              ;                                              return
- 597+ A1E8              ;                      >>rock hermit>> if 22% chance
- 598+ A1E8              ;                                         then spawn agressive hosting one of Sidewinder, Mamba, Krait, Adder or Gecko
- 599+ A1E8              ;                                              return
- 600+ A1E8              ;                      >>pirate and in safe zone>> stop pirate being hostile by removing agressive and hostileflags
- 601+ A1E8              ;                 end case
- 602+ A1E8              ;         end if
- 603+ A1E8              ;         recharge ship energy by recharge factor (TODO as a config item on ship type but by default 1)
- 604+ A1E8              ; .PART 3
- 605+ A1E8              ;         calulcate dot product of ship nose to us
- 606+ A1E8              ; .PART 4
- 607+ A1E8              ;         2.5% change ship rill roll a noticable amount
- 608+ A1E8              ;         if ship has > 50% energy jump to part 6
- 609+ A1E8              ;         if ship > 1/8th energy jump to part 5
- 610+ A1E8              ;         if random 10% chance (i.e. ship < 1/8 energy and bails out)
- 611+ A1E8              ;            then launch escape pod
- 612+ A1E8              ;                 set AI to null
- 613+ A1E8              ;                 set random pitch and roll
- 614+ A1E8              ;                 set accelleation to 0
- 615+ A1E8              ;         end if
- 616+ A1E8              ; .PART 5
- 617+ A1E8              ;         if ship does not have any missilesor ECM is firing to part 6
- 618+ A1E8              ;            then if random > threshold for ship type (TODO as a config item on ship type)
- 619+ A1E8              ;                    then if tharoid ; note this means thargoids are sensitve to ECM
- 620+ A1E8              ;                            then launch thargon
- 621+ A1E8              ;                            else spawn angry missle under ship
- 622+ A1E8              ;                         end if
- 623+ A1E8              ;                 end if
- 624+ A1E8              ;            else return
- 625+ A1E8              ;         end if
- 626+ A1E8              ; .PART 6
- 627+ A1E8              ;         if ship is not pointing at us from dot product ( < 160 , also > -32)
- 628+ A1E8              ;            then jump to part 7
- 629+ A1E8              ;            else if ship is pointing directly at us ( < 163 i.e. > -35)
- 630+ A1E8              ;                    then fire laser at us (which reduces energy)
- 631+ A1E8              ;                         cause laser damage to our ship (this will signal death is needed)
- 632+ A1E8              ;                         decellerate by half as ship has lock on
- 633+ A1E8              ;                         return
- 634+ A1E8              ;                    else fire laser into space (which reduces energy)
- 635+ A1E8              ;                 end if
- 636+ A1E8              ;         end if
- 637+ A1E8              ; .PART 7#
- 638+ A1E8              ;        if ship is a msile targetting us
- 639+ A1E8              ;           then ship turns towards us some more
- 640+ A1E8              ;           else if z hi > =  3 or ( x hi or y hi > 1) , i.e. ship is far away
- 641+ A1E8              ;                    then do random wiht bit 7 set
- 642+ A1E8              ;                         if random < AI flag
- 643+ A1E8              ;                            then   ship turned towards us
- 644+ A1E8              ;                            else   ship turns away from us
- 645+ A1E8              ;                         end if
- 646+ A1E8              ;                end if
- 647+ A1E8              ;           end if
- 648+ A1E8              ;           calculate new roll, pitch and accelleration based on new targe vector
- 649+ A1E8
- 650+ A1E8
- 651+ A1E8              ;        determine ship direction based on agression and type
- 652+ A1E8              ;        set pitch and roll coutners
- 653+ A1E8              ;        adjust speed depleding on relationship to us
- 654+ A1E8              ; .PART 8 - new
- 655+ A1E8              ;        if ship has ECM, another ECM is not active and missile targeted at it
- 656+ A1E8              ;           if ship has enery of ECM energey cost + 1/8th total
- 657+ A1E8              ;              if chance 25%
- 658+ A1E8              ;                 then fire ECM
- 659+ A1E8              ;
- 660+ A1E8
- 661+ A1E8
- 662+ A1E8
- 663+ A1E8
- 664+ A1E8 2A FF A0     ReduceTacticVectors:ld      hl, (TacticsVectorX)        ; pull XX15 into registers
- 665+ A1EB ED 5B 02 A1                      ld      de, (TacticsVectorY)        ; .
- 666+ A1EF ED 4B 05 A1                      ld      bc, (TacticsVectorZ)        ; .
- 667+ A1F3 3A 01 A1                         ld      a,(TacticsVectorX+2)        ; .
- 668+ A1F6 FD 67                            ld      iyh,a                       ; iyh = X sign
- 669+ A1F8 3A 04 A1                         ld      a,(TacticsVectorY+2)        ; .
- 670+ A1FB FD 6F                            ld      iyl,a                       ; iyl = Y sign
- 671+ A1FD 3A 07 A1                         ld      a,(TacticsVectorZ+2)        ; .
- 672+ A200 DD 67                            ld      ixh,a                       ; ixh = z sign
- 673+ A202 FD B4        .ScaleLoop:         or      iyh                         ; now check if upper has value
- 674+ A204 FD B5                            or      iyl                         ; .
- 675+ A206                                  ClearSignBitA                       ;  exluding sign bit
- 675+ A206 E6 7F       >                        and     SignMask8Bit
- 676+ A208 28 21                            jr      z,.DoneScaling              ; and exit loop if upper byte is only sign component
- 677+ A20A FD 7C        .ScaledDownBy2:     ld      a,iyh
- 678+ A20C CB 2F                            sra     a
- 679+ A20E FD 67                            ld      iyh,a                       ; actually we can keep sign bit so just sr then rr
- 680+ A210 CB 1C                            rr      h                           ; Deal with X
- 681+ A212 CB 1D                            rr      l                           ;
- 682+ A214 FD 7D                            ld      a,iyl
- 683+ A216 CB 2F                            sra     a                           ; actually we can keep sign bit so just sr then rr
- 684+ A218 FD 6F                            ld      iyl,a
- 685+ A21A CB 1A                            rr      d                           ; Deal with Y
- 686+ A21C CB 1B                            rr      e                           ;
- 687+ A21E DD 7D                            ld      a, ixl                      ; actually we can keep sign bit so just sr then rr
- 688+ A220 CB 2F                            sra     a
- 689+ A222 DD 6F                            ld      ixl,a
- 690+ A224 CB 18                            rr      b                           ; Deal with Z
- 691+ A226 CB 19                            rr      c                           ;
- 692+ A228 C3 02 A2                         jp      .ScaleLoop
- 693+ A22B 7C           .DoneScaling:       ld      a,h
- 694+ A22C B2                               or      d
- 695+ A22D B0                               or      b
- 696+ A22E                                  SignBitOnlyA                        ; check if new sign bit has a value rotated in,
- 696+ A22E E6 80       >                        and     SignOnly8Bit
- 697+ A230 28 0C                            jr      z,.OKToNormalise
- 698+ A232              .ShiftTo15Bit:      ShiftHLRight1                       ; one last shift to 15 bit we don't need
- 698+ A232 CB 3C       >			   srl h
- 698+ A234 CB 1D       >			   rr  l
- 699+ A236                                  ShiftDERight1                       ; to do sign bytes
- 699+ A236 CB 3A       >			   srl d
- 699+ A238 CB 1B       >			   rr  e
- 700+ A23A                                  ShiftBCRight1                       ; as value must be 0
- 700+ A23A CB 38       >			   srl b
- 700+ A23C CB 19       >			   rr  c
- 701+ A23E 7C           .OKToNormalise:     ld      a,h                         ; iyh now can only hold sign
- 702+ A23F FD B4                            or      iyh                         ; so by the end of here
- 703+ A241 67                               ld      h,a                         ;   hl = x
- 704+ A242 7A                               ld      a,d                         ;   de = y
- 705+ A243 FD B5                            or      iyl                         ;   bc = z
- 706+ A245 57                               ld      d,a                         ; all scaled to 15 bit + sign
- 707+ A246 78                               ld      a,b                         ;
- 708+ A247 DD B4                            or      ixh                         ;
- 709+ A249 47                               ld      b,a                         ;
- 710+ A24A 22 08 A1                         ld      (TacticsNormX),hl
- 711+ A24D 22 0A A1                         ld      (TacticsNormY),hl
- 712+ A250 22 0C A1                         ld      (TacticsNormZ),hl
- 713+ A253 C9                               ret
- 714+ A254                                 ; ***SIgn bits*** need to be in byte 3
- 715+ A254
+ 215+ 9FBB DD 01          break
+ 216+ 9FBD ED 5B 10 C0                          ld      de,(UBnKxlo)                        ; get target ship X
+ 217+ 9FC1 3A 12 C0                             ld      a,(UBnKxsgn)                        ; and flip sign so we have missile - target
+ 218+ 9FC4                                      FlipSignBitA
+ 218+ 9FC4 EE 80       >                        xor     SignOnly8Bit
+ 219+ 9FC6 4F                                   ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+ 220+ 9FC7                                      SelectMissileBank
+ 220+ 9FC7 FD 7C       >                        ld      a,iyh
+ 220+ 9FC9             >                        MMUSelectUnivBankA
+ 220+ 9FC9 ED 92 56    >                     nextreg UniverseMMU,       a
+ 221+ 9FCC 2A 10 C0                             ld      hl,(UBnKxlo)                        ; get missile x
+ 222+ 9FCF 3A 12 C0                             ld      a,(UBnKxsgn)                        ; get missile x sign
+ 223+ 9FD2 47                                   ld      b,a
+ 224+ 9FD3 CD C9 8F                             call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
+ 225+ 9FD6 22 3D A1                             ld      (TacticsVectorX),hl
+ 226+ 9FD9 32 3F A1                             ld      (TacticsVectorX+2),a
+ 227+ 9FDC              .UpdateTargetingShipY:  SelectTargetBank
+ 227+ 9FDC FD 7D       >                        ld      a,iyl
+ 227+ 9FDE             >                        MMUSelectUnivBankA
+ 227+ 9FDE ED 92 56    >                     nextreg UniverseMMU,       a
+ 228+ 9FE1 ED 5B 13 C0                          ld      de,(UBnKylo)                        ; get target ship X
+ 229+ 9FE5 3A 15 C0                             ld      a,(UBnKysgn)
+ 230+ 9FE8                                      FlipSignBitA
+ 230+ 9FE8 EE 80       >                        xor     SignOnly8Bit
+ 231+ 9FEA 4F                                   ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+ 232+ 9FEB                                      SelectMissileBank
+ 232+ 9FEB FD 7C       >                        ld      a,iyh
+ 232+ 9FED             >                        MMUSelectUnivBankA
+ 232+ 9FED ED 92 56    >                     nextreg UniverseMMU,       a
+ 233+ 9FF0 2A 13 C0                             ld      hl,(UBnKylo)                        ; get missile x
+ 234+ 9FF3 3A 15 C0                             ld      a,(UBnKysgn)                        ; get missile x sign
+ 235+ 9FF6 47                                   ld      b,a
+ 236+ 9FF7 CD C9 8F                             call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
+ 237+ 9FFA 22 40 A1                             ld      (TacticsVectorY),hl
+ 238+ 9FFD 32 42 A1                             ld      (TacticsVectorY+2),a
+ 239+ A000              .UpdateTargetingShipZ:  SelectTargetBank
+ 239+ A000 FD 7D       >                        ld      a,iyl
+ 239+ A002             >                        MMUSelectUnivBankA
+ 239+ A002 ED 92 56    >                     nextreg UniverseMMU,       a
+ 240+ A005 ED 5B 16 C0                          ld      de,(UBnKzlo)                        ; get target ship X
+ 241+ A009 3A 18 C0                             ld      a,(UBnKzsgn)
+ 242+ A00C                                      FlipSignBitA
+ 242+ A00C EE 80       >                        xor     SignOnly8Bit
+ 243+ A00E 4F                                   ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+ 244+ A00F                                      SelectMissileBank
+ 244+ A00F FD 7C       >                        ld      a,iyh
+ 244+ A011             >                        MMUSelectUnivBankA
+ 244+ A011 ED 92 56    >                     nextreg UniverseMMU,       a
+ 245+ A014 2A 16 C0                             ld      hl,(UBnKzlo)                        ; get missile x
+ 246+ A017 3A 18 C0                             ld      a,(UBnKzsgn)                        ; get missile x sign
+ 247+ A01A 47                                   ld      b,a
+ 248+ A01B CD C9 8F                             call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
+ 249+ A01E 22 43 A1                             ld      (TacticsVectorZ),hl
+ 250+ A021 32 45 A1                             ld      (TacticsVectorZ+2),a
+ 251+ A024              ; by here missile in in memory and TacticsVector now holds distance
+ 252+ A024              ; if or ABS all high bytes is <> 0
+ 253+ A024 2A 3E A1     .CheckDistance:         ld      hl,(TacticsVectorX+1)              ; test if high bytes are set (value is assumed to be 24 bit, though calcs are only 16 so this is uneeded)
+ 254+ A027 7C                                   ld      a,h                                ; .
+ 255+ A028 ED 5B 41 A1                          ld      de,(TacticsVectorY+1)              ; .
+ 256+ A02C B2                                   or      d                                  ; .
+ 257+ A02D ED 4B 44 A1                          ld      bc,(TacticsVectorZ+1)              ; .
+ 258+ A031 B0                                   or      b                                  ; .
+ 259+ A032                                      ClearSignBitA                              ; .
+ 259+ A032 E6 7F       >                        and     SignMask8Bit
+ 260+ A034                                      JumpIfNotZero       .FarAway               ; .
+ 260+ A034 C2 43 A0    >                        jp	nz,.FarAway
+ 261+ A037 B5                                   or      l                                  ; test for low byte bit 7, i.e high of 16 bit values
+ 262+ A038 B3                                   or      e                                  ; .
+ 263+ A039 B1                                   or      c                                  ; .
+ 264+ A03A                                      JumpIfNotZero       .FarAway               ; .
+ 264+ A03A C2 43 A0    >                        jp	nz,.FarAway
+ 265+ A03D              ; If we get here its close enough to detonate
+ 266+ A03D 3A 35 C0     .CloseMissileExplode:   ld      a,(UBnKMissileTarget)
+ 267+ A040 C3 40 9E                             jp      MissileHitShipA
+ 268+ A043              ;   *far away ** TODO need to set memory read write on page 0
+ 269+ A043              .FarAway:               SelectTargetBank
+ 269+ A043 FD 7D       >                        ld      a,iyl
+ 269+ A045             >                        MMUSelectUnivBankA
+ 269+ A045 ED 92 56    >                     nextreg UniverseMMU,       a
+ 270+ A048                                      JumpIfMemFalse      UBnKECMFitted, .NoECM                   ; if target has ECM and enough energy to use it
+ 270+ A048 3A 49 C0    >                        ld      a,(UBnKECMFitted)
+ 270+ A04B A7          >                        and     a
+ 270+ A04C C2 69 A0    >                        jp      nz, .NoECM
+ 271+ A04F                                      JumpIfMemLTNusng    UBnKEnergy,    ECMCounterMax, .NoECM    ; .
+ 271+ A04F 3A 47 C0    >                        ld      a,(UBnKEnergy)
+ 271+ A052 FE 80       >                        cp      ECMCounterMax
+ 271+ A054 DA 69 A0    >                        jp	  c,.NoECM
+ 272+ A057                                      JumpIfMemIsNotZero   ECMCountDown, .NoECM                ; . ECM is already active
+ 272+ A057 3A 3A 80    >                        ld      a,(ECMCountDown)
+ 272+ A05A A7          >                        and     a
+ 272+ A05B C2 69 A0    >                        jp	    nz,.NoECM
+ 273+ A05E 3A 1D 80     .TestIfUsingECM:        ld      a,(RandomSeed2)                                             ; if random < 16
+ 274+ A061                                      JumpIfAGTENusng     16, .UpdateMissilePos                           ;   then fire ECM destroying missile
+ 274+ A061 FE 10       >                        cp     16
+ 274+ A063 D2 69 A0    >                        jp		nc,.UpdateMissilePos
+ 275+ A066              ;. If we get here then target is still paged in to fire ECM
+ 276+ A066 C3 66 C5     .ZeroPageFireECM:       jp      FireECM                                             ; with an implicit return
+ 277+ A069              ;                       implicit ret
+ 278+ A069              ;. If we get here then target is still paged in with no ECM
+ 279+ A069              .NoECM:
+ 280+ A069                                    ;;;         ** can do 16 bit maths as we can take teh view that once a object/space station is 24 bit value away then
+ 281+ A069                                    ;;;         ** targeting computer looses track and destructs missiles
+ 282+ A069              ;--- Now we can actually update the missile AI
+ 283+ A069              .UpdateMissilePos:      ;break
+ 284+ A069                                      SelectMissileBank
+ 284+ A069 FD 7C       >                        ld      a,iyh
+ 284+ A06B             >                        MMUSelectUnivBankA
+ 284+ A06B ED 92 56    >                     nextreg UniverseMMU,       a
+ 285+ A06E CD AE A1     .NormaliseDirection:    call    NormalizeTactics                    ; Normalise vector down to 7 bit + sign byte
+ 286+ A071 CD 4F A1     .NoseDotProduct:        call    XX12EquTacticsDotNosev              ; SA = nose . XX15
+ 287+ A074 32 5E 9F                             ld      (TacticsDotProduct1),a               ; CNT = A (high byte of dot product)
+ 288+ A077 3A 2A 81                             ld      a,(varS)                            ; get sign from dot product
+ 289+ A07A EE 80                                xor     SignOnly8Bit                        ; and flip the sign bit
+ 290+ A07C E6 80                                and     SignOnly8Bit                        ; and save the sign into Dot product
+ 291+ A07E 32 5F 9F                             ld      (TacticsDotProduct1+1),a             ; negate value of CNT so +ve if facing or -ve if facing same way
+ 292+ A081              .NegateDirection:       FlipSignMem TacticsVectorX+1                ; negate vector in XX15 so it points opposite direction
+ 292+ A081 3A 3E A1    >                        ld  a,(TacticsVectorX+1)
+ 292+ A084 EE 80       >                        xor SignOnly8Bit
+ 292+ A086 32 3E A1    >                        ld  (TacticsVectorX+1),a
+ 293+ A089                                      FlipSignMem TacticsVectorY+1                ; we have already negated the dot product above
+ 293+ A089 3A 41 A1    >                        ld  a,(TacticsVectorY+1)
+ 293+ A08C EE 80       >                        xor SignOnly8Bit
+ 293+ A08E 32 41 A1    >                        ld  (TacticsVectorY+1),a
+ 294+ A091                                      FlipSignMem TacticsVectorZ+1                ; .
+ 294+ A091 3A 44 A1    >                        ld  a,(TacticsVectorZ+1)
+ 294+ A094 EE 80       >                        xor SignOnly8Bit
+ 294+ A096 32 44 A1    >                        ld  (TacticsVectorZ+1),a
+ 295+ A099 CD A2 A1     .RoofDotProduct:        call    XX12EquTacticsDotRoofv              ; Now tran the roof for rotation
+ 296+ A09C 32 60 9F                             ld      (TacticsDotProduct2),a              ; so if its +ve then the roof is similar so pull up to head towards it
+ 297+ A09F 3A 2A 81                             ld      a,(varS)                            ; .
+ 298+ A0A2 32 61 9F                             ld      (TacticsDotProduct2+1),a            ; .
+ 299+ A0A5 CD FD A0                             call    calcNPitch                          ; work out pitch
+ 300+ A0A8 3A 39 C0                             ld      a,(UBnKRotZCounter)
+ 301+ A0AB CB 27                                sla     a                                   ; strip off sign (also doubling it)
+ 302+ A0AD                                      JumpIfAGTENusng 32, .AlreadyRolling
+ 302+ A0AD FE 20       >                        cp     32
+ 302+ A0AF D2 C8 A0    >                        jp		nc,.AlreadyRolling
+ 303+ A0B2 CD A8 A1     .SideDotProduct:        call    XX12EquTacticsDotSidev              ; get dot product of xx15. sidev
+ 304+ A0B5 32 62 9F                             ld      (TacticsDotProduct3),a              ; This will be positive if XX15 is pointing in the same direction
+ 305+ A0B8 3A 2A 81                             ld      a,(varS)                            ;
+ 306+ A0BB EE 80                                xor     SignOnly8Bit                        ; and flip the sign bit
+ 307+ A0BD E6 80                                and     SignOnly8Bit                        ; and save the sign into Dot product
+ 308+ A0BF 32 63 9F                             ld      (TacticsDotProduct3+1),a            ;
+ 309+ A0C2 CD 1D A1                             call    calcNRoll
+ 310+ A0C5 32 38 C0                             ld      (UBnKRotXCounter),a
+ 311+ A0C8 3A 5F 9F     .AlreadyRolling:        ld      a,(TacticsDotProduct1+1)             ; Fetch the dot product, and if it's negative jump to
+ 312+ A0CB                                      JumpIfAIsNotZero    .SlowDown               ; slow down routine
+ 312+ A0CB A7          >                        and     a
+ 312+ A0CC C2 DD A0    >                        jp	    nz,.SlowDown
+ 313+ A0CF 3A 5E 9F                             ld      a,(TacticsDotProduct1)
+ 314+ A0D2                                      JumpIfALTNusng  22, .SlowDown
+ 314+ A0D2 FE 16       >                        cp      22
+ 314+ A0D4 DA DD A0    >                        jp		c, .SlowDown
+ 315+ A0D7 3E 03        .Accellerate:           ld      a,3                                 ; full accelleration
+ 316+ A0D9 32 37 C0                             ld      (UBnKAccel),a
+ 317+ A0DC C9                                   ret
+ 318+ A0DD 3A 60 9F     .SlowDown:              ld      a,(TacticsDotProduct2)              ; this is already abs so no need to do abs
+ 319+ A0E0                                      ReturnIfALTNusng  18                        ; If A < 18 then the ship is way off the XX15 vector, so return without slowing down, as it still has quite a bit ofturning to do to get on course
+ 319+ A0E0 FE 12       >                        cp    18
+ 319+ A0E2 D8          >                        ret	 c
+ 320+ A0E3 3E FE                                ld      a,$FE                               ; A = -3 as missiles are more nimble and can brake more quickly
+ 321+ A0E5 32 37 C0                             ld      (UBnKAccel),a
+ 322+ A0E8 C9                                   ret
+ 323+ A0E9                                      ;
+ 324+ A0E9                                      ;           ships pitch counter = calculate teh shipt pitch counter (jsr nroll)
+ 325+ A0E9                                      ;           get roll counter from ship byte 29 (value = abs(byte 29 * 2) ,e. shift left
+ 326+ A0E9                                      ;           if roll counter < 32
+ 327+ A0E9                                      ;               AX = sidev . XX15
+ 328+ A0E9                                      ;               A = A xor pitch counter sigh
+ 329+ A0E9                                      ;               byte 29 = calcualte nroll to get ship pitch counter into
+ 330+ A0E9                                      ;           get back CNT
+ 331+ A0E9                                      ;           if CNT >= 0 AND CNT < CNT2 ** how is CNT2 set up?
+ 332+ A0E9                                      ;             then
+ 333+ A0E9                                      ;               Accelleration (byte 28) = 3
+ 334+ A0E9                                      ;               return
+ 335+ A0E9                                      ;           A = ABS(CNT)
+ 336+ A0E9                                      ;          if |CNT| >=  18
+ 337+ A0E9                                      ;            then
+ 338+ A0E9                                      ;              ship accelleration = -2
+ 339+ A0E9 C9                                   ret
+ 340+ A0EA
+ 341+ A0EA
+ 342+ A0EA
+ 343+ A0EA
+ 344+ A0EA                                      ;
+ 345+ A0EA                                      ; else
+ 346+ A0EA                                      ;   *close enough for a detoniation
+ 347+ A0EA                                      ;   if target is a space station, set space station to trigger ECM and destroy missile (note that compromised station will not trigger ECM)
+ 348+ A0EA                                      ;   process missile hit object
+ 349+ A0EA                                      ;   work out if blast hit anythign else including us
+ 350+ A0EA
+ 351+ A0EA 3A F9 81     .ProcessMissileHit:     ld      a,(CurrentMissileCheck)
+ 352+ A0ED                                      ReturnIfAGTENusng UniverseSlotListSize  ; need to wait another loop
+ 352+ A0ED FE 0C       >                        cp    UniverseSlotListSize
+ 352+ A0EF D0          >                        ret	 nc
+ 353+ A0F0 C3 59 9E     .ActivateNewExplosion:  jp  CheckMissileBlastInit               ; initialise
+ 354+ A0F3                                      ; DUMMY RET get a free return by using jp
+ 355+ A0F3 CD F5 C5     .ECMIsActive:           call    UnivExplodeShip                 ; ECM detonates missile
+ 356+ A0F6                                      SetMemTrue  UBnKMissleHitToProcess      ; Enque an explosion
+ 356+ A0F6 AF          >                        xor     a
+ 356+ A0F7 32 34 C0    >                        ld      (UBnKMissleHitToProcess),a
+ 357+ A0FA C3 EA A0                             jp      .ProcessMissileHit              ; lets see if we can enqueue now
+ 358+ A0FD                                      ; DUMMY RET get a free return as activenewexplosion does jp to init with a free ret
+ 359+ A0FD
+ 360+ A0FD              ; On Entry A = TacticsDotProduct2 sign (i.e. roof direction)
+ 361+ A0FD              ; on exit a == new roll
+ 362+ A0FD EE 80        calcNPitch:             xor     SignOnly8Bit                    ; flip sign of dot product
+ 363+ A0FF E6 80                                and     SignOnly8Bit
+ 364+ A101 4F                                   ld      c,a
+ 365+ A102 3A 39 C0                             ld      a,(UBnKRotZCounter)
+ 366+ A105 E6 7F                                and     SignMask8Bit                    ; get ABS value
+ 367+ A107 47                                   ld      b,a
+ 368+ A108 3A 60 9F                             ld      a,(TacticsDotProduct2)          ; now we have the dot product abs value
+ 369+ A10B                                      JumpIfALTNusng b, .calcNPitch2
+ 369+ A10B B8          >                        cp      b
+ 369+ A10C DA 17 A1    >                        jp		c, .calcNPitch2
+ 370+ A10F 3A 39 C0                             ld      a,(UBnKRotZCounter)
+ 371+ A112 B1                                   or      c
+ 372+ A113 32 39 C0                             ld      (UBnKRotZCounter),a
+ 373+ A116 C9                                   ret
+ 374+ A117 FD 7D        .calcNPitch2:           ld      a,iyl                           ; in effect 0 with the sign
+ 375+ A119 32 39 C0                             ld      (UBnKRotZCounter),a
+ 376+ A11C C9                                   ret
+ 377+ A11D
+ 378+ A11D EE 80        calcNRoll:              xor     SignOnly8Bit                    ; flip sign of dot product
+ 379+ A11F E6 80                                and     SignOnly8Bit
+ 380+ A121 4F                                   ld      c,a
+ 381+ A122 3A 38 C0                             ld      a,(UBnKRotXCounter)
+ 382+ A125 E6 7F                                and     SignMask8Bit                    ; get ABS value
+ 383+ A127 47                                   ld      b,a
+ 384+ A128 3A 60 9F                             ld      a,(TacticsDotProduct2)          ; now we have the dot product abs value
+ 385+ A12B                                      JumpIfALTNusng b, .calcNRoll2
+ 385+ A12B B8          >                        cp      b
+ 385+ A12C DA 37 A1    >                        jp		c, .calcNRoll2
+ 386+ A12F 3A 38 C0                             ld      a,(UBnKRotXCounter)
+ 387+ A132 B1                                   or      c
+ 388+ A133 32 38 C0                             ld      (UBnKRotXCounter),a
+ 389+ A136 C9                                   ret
+ 390+ A137 FD 7D        .calcNRoll2:            ld      a,iyl                           ; in effect 0 with the sign
+ 391+ A139 32 38 C0                             ld      (UBnKRotXCounter),a
+ 392+ A13C C9                                   ret
+ 393+ A13D
+ 394+ A13D
+ 395+ A13D
+ 396+ A13D
+ 397+ A13D 00 00 00     TacticsVectorX:         DS 3
+ 398+ A140 00 00 00     TacticsVectorY:         DS 3
+ 399+ A143 00 00 00     TacticsVectorZ:         DS 3
+ 400+ A146 00 00        TacticsNormX:           DS 2
+ 401+ A148 00 00        TacticsNormY:           DS 2
+ 402+ A14A 00 00        TacticsNormZ:           DS 2
+ 403+ A14C 01           TacticsNormalisedX      DB  1                                   ; normalised version, NormXYZ still hold sign bits
+ 404+ A14D 01           TacticsNormalisedY      DB  1                                   ;
+ 405+ A14E 01           TacticsNormalisedZ      DB  1                                   ;
+ 406+ A14F              ; Tested OK
+ 407+ A14F              ;LL21
+ 408+ A14F
+ 409+ A14F
+ 410+ A14F 21 59 C0     XX12EquTacticsDotNosev: ld      hl,UBnkTransmatNosevX
+ 411+ A152              XX12EquTacticsDotHL:    N0equN1byN2div256 varT, (hl), (TacticsVectorX)       ; T = (hl) * regXX15fx /256
+ 411+ A152 3A 3D A1    >                        ld      a,(TacticsVectorX)                        ;
+ 411+ A155 5F          >                        ld      e,a                         ; use e as var Q = value of XX15 [n] lo
+ 411+ A156 7E          >                        ld      a,(hl)                        ; A = XX16 element
+ 411+ A157 57          >                        ld      d,a
+ 411+ A158 ED 30       >                        mul
+ 411+ A15A 7A          >                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low
+ 411+ A15B 32 46 81    >                        ld      (varT),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
+ 412+ A15E 23                                   inc     hl                                  ; move to sign byte
+ 413+ A15F              .XX12CalcXSign:         AequN1xorN2 TacticsVectorX+2, (hl) ;UBnkXScaledSign,(hl)             ;
+ 413+ A15F 3A 3F A1    >                        ld      a,(TacticsVectorX+2)
+ 413+ A162 AE          >                        xor     (hl)
+ 414+ A163 32 2A 81                             ld      (varS),a                            ; Set S to the sign of x_sign * sidev_x
+ 415+ A166 23                                   inc     hl
+ 416+ A167              .XX12CalcY:              N0equN1byN2div256 varQ, (hl),(TacticsVectorY)       ; Q = XX16 * XX15 /256 using varQ to hold regXX15fx
+ 416+ A167 3A 40 A1    >                        ld      a,(TacticsVectorY)                        ;
+ 416+ A16A 5F          >                        ld      e,a                         ; use e as var Q = value of XX15 [n] lo
+ 416+ A16B 7E          >                        ld      a,(hl)                        ; A = XX16 element
+ 416+ A16C 57          >                        ld      d,a
+ 416+ A16D ED 30       >                        mul
+ 416+ A16F 7A          >                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low
+ 416+ A170 32 28 81    >                        ld      (varQ),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
+ 417+ A173                                      ldCopyByte varT,varR                        ; R = T =  |sidev_x| * x_lo / 256
+ 417+ A173 3A 46 81    >                        ld       a,(varT)
+ 417+ A176 32 29 81    >                        ld       (varR),a
+ 418+ A179 23                                   inc     hl
+ 419+ A17A                                      AequN1xorN2 TacticsVectorY+2,(hl)             ; Set A to the sign of y_sign * sidev_y
+ 419+ A17A 3A 42 A1    >                        ld      a,(TacticsVectorY+2)
+ 419+ A17D AE          >                        xor     (hl)
+ 420+ A17E              ; (S)A = |sidev_x| * x_lo / 256  = |sidev_x| * x_lo + |sidev_y| * y_lo
+ 421+ A17E E5           .STequSRplusAQ           push    hl
+ 422+ A17F CD 52 9A                             call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA) \ 1byte add (subtract)
+ 423+ A182 E1                                   pop     hl
+ 424+ A183 32 46 81                             ld      (varT),a                            ; T = |sidev_x| * x_lo + |sidev_y| * y_lo
+ 425+ A186 23                                   inc     hl
+ 426+ A187              .XX12CalcZ:              N0equN1byN2div256 varQ,(hl),(TacticsVectorZ)       ; Q = |sidev_z| * z_lo / 256
+ 426+ A187 3A 43 A1    >                        ld      a,(TacticsVectorZ)                        ;
+ 426+ A18A 5F          >                        ld      e,a                         ; use e as var Q = value of XX15 [n] lo
+ 426+ A18B 7E          >                        ld      a,(hl)                        ; A = XX16 element
+ 426+ A18C 57          >                        ld      d,a
+ 426+ A18D ED 30       >                        mul
+ 426+ A18F 7A          >                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low
+ 426+ A190 32 28 81    >                        ld      (varQ),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
+ 427+ A193                                      ldCopyByte varT,varR                        ; R = |sidev_x| * x_lo + |sidev_y| * y_lo
+ 427+ A193 3A 46 81    >                        ld       a,(varT)
+ 427+ A196 32 29 81    >                        ld       (varR),a
+ 428+ A199 23                                   inc     hl
+ 429+ A19A                                      AequN1xorN2 TacticsVectorY+2,(hl)             ; A = sign of z_sign * sidev_z
+ 429+ A19A 3A 42 A1    >                        ld      a,(TacticsVectorY+2)
+ 429+ A19D AE          >                        xor     (hl)
+ 430+ A19E              ; (S)A= |sidev_x| * x_lo + |sidev_y| * y_lo + |sidev_z| * z_lo
+ 431+ A19E CD 52 9A                             call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA)   \ 1byte add (subtract)
+ 432+ A1A1              ; Now we exit with A = result S = Sign
+ 433+ A1A1 C9                                   ret
+ 434+ A1A2
+ 435+ A1A2 21 53 C0     XX12EquTacticsDotRoofv: ld      hl,UBnkTransmatRoofvX
+ 436+ A1A5 C3 52 A1                             jp      XX12EquTacticsDotHL
+ 437+ A1A8
+ 438+ A1A8 21 4D C0     XX12EquTacticsDotSidev: ld      hl,UBnkTransmatSidevX
+ 439+ A1AB C3 52 A1                             jp      XX12EquTacticsDotHL
+ 440+ A1AE
+ 441+ A1AE              ;-- Now its scaled we can normalise
+ 442+ A1AE 2A 3D A1     NormalizeTactics:       ld      hl, (TacticsVectorX)        ; pull XX15 into registers
+ 443+ A1B1 ED 5B 40 A1                          ld      de, (TacticsVectorY)        ; .
+ 444+ A1B5 ED 4B 43 A1                          ld      bc, (TacticsVectorZ)        ; .
+ 445+ A1B9 7C           .ScaleLoop:             ld      a,h
+ 446+ A1BA B2                                   or      d
+ 447+ A1BB B0                                   or      b
+ 448+ A1BC 28 0F                                jr      z,.DoneScaling
+ 449+ A1BE                                      ShiftHLRight1
+ 449+ A1BE CB 3C       >			   srl h
+ 449+ A1C0 CB 1D       >			   rr  l
+ 450+ A1C2                                      ShiftDERight1
+ 450+ A1C2 CB 3A       >			   srl d
+ 450+ A1C4 CB 1B       >			   rr  e
+ 451+ A1C6                                      ShiftBCRight1
+ 451+ A1C6 CB 38       >			   srl b
+ 451+ A1C8 CB 19       >			   rr  c
+ 452+ A1CA C3 B9 A1                             jp      .ScaleLoop
+ 453+ A1CD              .DoneScaling:           ShiftHLRight1                       ; as the values now need to be sign magnitued
+ 453+ A1CD CB 3C       >			   srl h
+ 453+ A1CF CB 1D       >			   rr  l
+ 454+ A1D1                                      ShiftDERight1                       ; e.g. S + 7 bit we need an extra shift
+ 454+ A1D1 CB 3A       >			   srl d
+ 454+ A1D3 CB 1B       >			   rr  e
+ 455+ A1D5                                      ShiftBCRight1                       ; now values are in L E C
+ 455+ A1D5 CB 38       >			   srl b
+ 455+ A1D7 CB 19       >			   rr  c
+ 456+ A1D9 E5 D5 C5                             push    hl,,de,,bc                  ; save vecrtor x y and z nwo they are scaled to 1 byte
+ 457+ A1DC 53                                   ld      d,e                         ; hl = y ^ 2
+ 458+ A1DD ED 30                                mul     de                          ; .
+ 459+ A1DF EB                                   ex      de,hl                       ; .
+ 460+ A1E0 53                                   ld      d,e                         ; de = x ^ 2
+ 461+ A1E1 ED 30                                mul     de                          ; .
+ 462+ A1E3 19                                   add     hl,de                       ; hl = y^ 2 + x ^ 2
+ 463+ A1E4 51                                   ld      d,c
+ 464+ A1E5 59                                   ld      e,c
+ 465+ A1E6 ED 30                                mul     de
+ 466+ A1E8 19                                   add     hl,de                       ; hl =  y^ 2 + x ^ 2 + z ^ 2
+ 467+ A1E9 EB                                   ex      de,hl                       ; fix as hl was holding square
+ 468+ A1EA CD D9 93                             call    asm_sqrt                    ; hl = sqrt (de) = sqrt (x ^ 2 + y ^ 2 + z ^ 2)
+ 469+ A1ED                                      ; add in logic if h is low then use lower bytes for all
+ 470+ A1ED 7D                                   ld      a,l
+ 471+ A1EE FD 67                                ld      iyh,a
+ 472+ A1F0 57                                   ld      d,a
+ 473+ A1F1 C1                                   pop     bc                          ; retrive tacticsvectorz scaled
+ 474+ A1F2 79                                   ld      a,c                         ; a = scaled byte
+ 475+ A1F3 CD 87 99                             call    AequAdivDmul96;AequAdivDmul96Unsg          ; This rountine I think is wrong and retuins bad values
+ 476+ A1F6 32 43 A1                             ld      (TacticsVectorZ),a
+ 477+ A1F9 D1                                   pop     de
+ 478+ A1FA 7B                                   ld      a,e
+ 479+ A1FB FD 54                                ld      d,iyh
+ 480+ A1FD CD 87 99                             call    AequAdivDmul96;AequAdivDmul96Unsg
+ 481+ A200 32 40 A1                             ld      (TacticsVectorY),a
+ 482+ A203 E1                                   pop     hl
+ 483+ A204 7D                                   ld      a,l
+ 484+ A205 FD 54                                ld      d,iyh
+ 485+ A207 CD 87 99                             call    AequAdivDmul96;AequAdivDmul96Unsg
+ 486+ A20A 32 3D A1                             ld      (TacticsVectorX),a
+ 487+ A20D                                      ; BODGE FOR NOW
+ 488+ A20D                                      SignBitOnlyMem TacticsVectorX+2     ; now upper byte is sign only
+ 488+ A20D 3A 3F A1    >                        ld      a, (TacticsVectorX+2)
+ 488+ A210 E6 80       >                        and     SignOnly8Bit
+ 488+ A212 32 3F A1    >                        ld      (TacticsVectorX+2),a
+ 489+ A215                                      SignBitOnlyMem TacticsVectorY+2     ; (could move it to lower perhaps later if
+ 489+ A215 3A 42 A1    >                        ld      a, (TacticsVectorY+2)
+ 489+ A218 E6 80       >                        and     SignOnly8Bit
+ 489+ A21A 32 42 A1    >                        ld      (TacticsVectorY+2),a
+ 490+ A21D                                      SignBitOnlyMem TacticsVectorZ+2     ;  its worth it)
+ 490+ A21D 3A 45 A1    >                        ld      a, (TacticsVectorZ+2)
+ 490+ A220 E6 80       >                        and     SignOnly8Bit
+ 490+ A222 32 45 A1    >                        ld      (TacticsVectorZ+2),a
+ 491+ A225                                      ldCopyByte TacticsVectorX+2, TacticsVectorX+1
+ 491+ A225 3A 3F A1    >                        ld       a,(TacticsVectorX+2)
+ 491+ A228 32 3E A1    >                        ld       (TacticsVectorX+1),a
+ 492+ A22B                                      ldCopyByte TacticsVectorY+2, TacticsVectorY+1
+ 492+ A22B 3A 42 A1    >                        ld       a,(TacticsVectorY+2)
+ 492+ A22E 32 41 A1    >                        ld       (TacticsVectorY+1),a
+ 493+ A231                                      ldCopyByte TacticsVectorZ+2, TacticsVectorZ+1
+ 493+ A231 3A 45 A1    >                        ld       a,(TacticsVectorZ+2)
+ 493+ A234 32 44 A1    >                        ld       (TacticsVectorZ+1),a
+ 494+ A237                                      SignBitOnlyMem TacticsVectorX+1     ; now upper byte is sign only
+ 494+ A237 3A 3E A1    >                        ld      a, (TacticsVectorX+1)
+ 494+ A23A E6 80       >                        and     SignOnly8Bit
+ 494+ A23C 32 3E A1    >                        ld      (TacticsVectorX+1),a
+ 495+ A23F                                      SignBitOnlyMem TacticsVectorY+1     ; (could move it to lower perhaps later if
+ 495+ A23F 3A 41 A1    >                        ld      a, (TacticsVectorY+1)
+ 495+ A242 E6 80       >                        and     SignOnly8Bit
+ 495+ A244 32 41 A1    >                        ld      (TacticsVectorY+1),a
+ 496+ A247                                      SignBitOnlyMem TacticsVectorZ+1     ;  its worth it)
+ 496+ A247 3A 44 A1    >                        ld      a, (TacticsVectorZ+1)
+ 496+ A24A E6 80       >                        and     SignOnly8Bit
+ 496+ A24C 32 44 A1    >                        ld      (TacticsVectorZ+1),a
+ 497+ A24F C9                                   ret
+ 498+ A250
+ 499+ A250
+ 500+ A250              ;TODOcall    TacticsPosMinusTarget              ; calculate vector to target
+ 501+ A250              ;;TODO                        check range
+ 502+ A250              ;;TODO                        if target has ecm then 7% chance it will active, reduce target energy (i.e. damage)
+ 503+ A250              ;;TODO                        else
+ 504+ A250              ;;TODO                            normalise teh vector for direction
+ 505+ A250              ;;TODO                            dot product = missile nosev . normalised vector
+ 506+ A250              ;;TODO                            cnt = high byte of dot product, cnf is +ve if facing similar direction
+ 507+ A250              ;;TODO                            negate normalised vector so its opposite product
+ 508+ A250              ;;TODO                            invert sign of cnt
+ 509+ A250              ;;TODO                            AK = roovf . XX15
+ 510+ A250              ;;TODO                            Ships pitch = call nroll to caulate teh valu eof ships pitch counter
+ 511+ A250              ;;TODO                            if pitch * 2 < 32 then
+ 512+ A250              ;;TODO                                ax = sidev . xx15
+ 513+ A250              ;;TODO                                    a = x xort current pitch direction
+ 514+ A250              ;;TODO                                    shipts roll = nroll
+ 515+ A250              ;;TODO                            do accelleration at TA6 (    https://www.bbcelite.com/disc/flight/subroutine/tactics_part_7_of_7.html#ta20
+ 516+ A250
+ 517+ A250              ;;TODO
+ 518+ A250              ;;TODO
+ 519+ A250              ;;TODO
+ 520+ A250              ;;TODOget the targetted ship inbto bank
+ 521+ A250              ;;TODO                        check range as per player
+ 522+ A250              ;;TODO                        handle explosion enc
+ 523+ A250
+ 524+ A250              ;                    else see how close it is to target
+ 525+ A250              ;                         if close to target
+ 526+ A250              ;                            then explodes destroy missile
+ 527+ A250              ;                                 if ship is not station
+ 528+ A250              ;                                    then set up signal target ship hit my missile flag
+ 529+ A250              ;                                         set blastcheckcounter to slotlist length  (12)
+ 530+ A250              ;                                 end if
+ 531+ A250              ;                                 if we are in range of missle blast
+ 532+ A250              ;                                    cause blast damage to our ship (this will signal death is needed)
+ 533+ A250              ;                                 end if
+ 534+ A250              ;                                 return
+ 535+ A250              ;                         end if
+ 536+ A250              ;                 end if
+ 537+ A250              ;         end if
+ 538+ A250
+ 539+ A250
+ 540+ A250                          ;            else if ship is angry at us
+ 541+ A250              ;
+ 542+ A250
+ 543+ A250              ; Part 1 - if type is missile and enquing a missile blast and slot free
+ 544+ A250              ;             then enqueue missile blast details
+ 545+ A250              ;                  mark as exploded
+ 546+ A250              ;                  remove missile from universe slot list
+ 547+ A250
+ 548+ A250              ; TODO, how to we deal with scared ships, e.g. if angry and no guns or missiles then should be considered scared or if hull mass < say 25% of our ship
+ 549+ A250              ; also for future ship vs ship combat
+ 550+ A250              ;... Tactics........................................................................
+ 551+ A250              ;.PART 1
+ 552+ A250              ; if shiphitbymissleflag <> false
+ 553+ A250              ;    then dec blast check counter
+ 554+ A250              ;         if blast check counter = 0
+ 555+ A250              ;            then set shiphitbymissileflag to FF
+ 556+ A250              ;    else if SetShipHitByMissileFlag = current ship number
+ 557+ A250              ;            then cause damage to ship
+ 558+ A250              ;         else if ship is in range and ship is not a station
+ 559+ A250              ;                  then cause blast damage to ship
+ 560+ A250              ;         if destroyed
+ 561+ A250              ;            then explode ship
+ 562+ A250              ;                 return
+ 563+ A250              ; end if
+ 564+ A250              ; if ship is a missle (I think we allow missile on missle action)
+ 565+ A250              ;    then if ecm is active
+ 566+ A250              ;            then destroy missile and return
+ 567+ A250              ;            else if ship is angry at us
+ 568+ A250              ;                    then if ship is close to us
+ 569+ A250              ;                            then explodes causing damage to our ship
+ 570+ A250              ;                                 enque missile blast
+ 571+ A250              ;                                 destroy missile
+ 572+ A250              ;                                 set blastcheckcounter to slotlist length
+ 573+ A250              ;                                 set shiphitbymissileflag to FE (general blast)
+ 574+ A250              ;                                 return
+ 575+ A250              ;                            else jump to part 3 to do updates
+ 576+ A250              ;                         end if
+ 577+ A250              ;                    else see how close it is to target
+ 578+ A250              ;                         if close to target
+ 579+ A250              ;                            then
+ 580+ A250              ;                                 enque missile blast
+ 581+ A250              ;                                 destroy missile
+ 582+ A250              ;                                 if ship is not station
+ 583+ A250              ;                                    then set up signal target ship hit my missile flag
+ 584+ A250              ;                                         set blastcheckcounter to slotlist length  (12)
+ 585+ A250              ;                                 end if
+ 586+ A250              ;                                 if we are in range of missle blast
+ 587+ A250              ;                                    cause blast damage to our ship (this will signal death is needed)
+ 588+ A250              ;                                 end if
+ 589+ A250              ;                                 return
+ 590+ A250              ;                         end if
+ 591+ A250              ;                 end if
+ 592+ A250              ;         end if
+ 593+ A250              ;.PART 2A ** adding in a collision logic
+ 594+ A250              ;    else if ship is close to another ship
+ 595+ A250              ;            then if docking flag set and other ship is space station or we are space station and other ship has docking flag
+ 596+ A250              ;                    then if aligned correctly
+ 597+ A250              ;                         then remove ship as docked
+ 598+ A250              ;                              return
+ 599+ A250              ;         else
+ 600+ A250              ;            call collision route and determine daamage based on sizes and bounce vectors
+ 601+ A250              ;            return
+ 602+ A250              ;.PART 2 ** Need to check if ship has AI flag
+ 603+ A250              ;    else if not hostile
+ 604+ A250              ;            then if not docking or station not present
+ 605+ A250              ;                    then calculate vector to planet
+ 606+ A250              ;                         jump to part 7
+ 607+ A250              ;                    else calculate verctor to docking slot
+ 608+ A250              ;                         call caluclate vector to docking slot (DOCKIT)
+ 609+ A250              ;                         jump to part 7
+ 610+ A250              ;                 end if
+ 611+ A250              ;            else case ship type
+ 612+ A250              ;                      >>escape pod>> point at planet and jump to step 7
+ 613+ A250              ;                      >>space station>> if hostile
+ 614+ A250              ;                                           then if cop counter < 7 and 6.2% chance
+ 615+ A250              ;                                                   then spawm hostile cop
+ 616+ A250              ;                                                end if
+ 617+ A250              ;                                           else
+ 618+ A250              ;                                                if 0.8% change and transporter count = 0
+ 619+ A250              ;                                                   then if 50% chance
+ 620+ A250              ;                                                           then spawn transporter
+ 621+ A250              ;                                                           else spawn shuttle
+ 622+ A250              ;                                                        end if
+ 623+ A250              ;                                                end if
+ 624+ A250              ;                                        end if
+ 625+ A250              ;                                        return
+ 626+ A250              ;                      >>targoid and no mother ship in slot list>> set random drift
+ 627+ A250              ;                                                                  return
+ 628+ A250              ;                      >>if bounty hunter flag>> if ship not hostile
+ 629+ A250              ;                                                   then if trader flag clear or 20% chance
+ 630+ A250              ;                                                        then if fugitive or offender
+ 631+ A250              ;                                                                then set hosile
+ 632+ A250              ;                                                end if
+ 633+ A250              ;                      >>Carrier and hanger slots > 0 >> if 22% chance (code to be added later)
+ 634+ A250              ;                                         then spawn agressive hosting one of types carried
+ 635+ A250              ;                                              reduce ships in hanger by 1
+ 636+ A250              ;                                              return
+ 637+ A250              ;                      >>rock hermit>> if 22% chance
+ 638+ A250              ;                                         then spawn agressive hosting one of Sidewinder, Mamba, Krait, Adder or Gecko
+ 639+ A250              ;                                              return
+ 640+ A250              ;                      >>pirate and in safe zone>> stop pirate being hostile by removing agressive and hostileflags
+ 641+ A250              ;                 end case
+ 642+ A250              ;         end if
+ 643+ A250              ;         recharge ship energy by recharge factor (TODO as a config item on ship type but by default 1)
+ 644+ A250              ; .PART 3
+ 645+ A250              ;         calulcate dot product of ship nose to us
+ 646+ A250              ; .PART 4
+ 647+ A250              ;         2.5% change ship rill roll a noticable amount
+ 648+ A250              ;         if ship has > 50% energy jump to part 6
+ 649+ A250              ;         if ship > 1/8th energy jump to part 5
+ 650+ A250              ;         if random 10% chance (i.e. ship < 1/8 energy and bails out)
+ 651+ A250              ;            then launch escape pod
+ 652+ A250              ;                 set AI to null
+ 653+ A250              ;                 set random pitch and roll
+ 654+ A250              ;                 set accelleation to 0
+ 655+ A250              ;         end if
+ 656+ A250              ; .PART 5
+ 657+ A250              ;         if ship does not have any missilesor ECM is firing to part 6
+ 658+ A250              ;            then if random > threshold for ship type (TODO as a config item on ship type)
+ 659+ A250              ;                    then if tharoid ; note this means thargoids are sensitve to ECM
+ 660+ A250              ;                            then launch thargon
+ 661+ A250              ;                            else spawn angry missle under ship
+ 662+ A250              ;                         end if
+ 663+ A250              ;                 end if
+ 664+ A250              ;            else return
+ 665+ A250              ;         end if
+ 666+ A250              ; .PART 6
+ 667+ A250              ;         if ship is not pointing at us from dot product ( < 160 , also > -32)
+ 668+ A250              ;            then jump to part 7
+ 669+ A250              ;            else if ship is pointing directly at us ( < 163 i.e. > -35)
+ 670+ A250              ;                    then fire laser at us (which reduces energy)
+ 671+ A250              ;                         cause laser damage to our ship (this will signal death is needed)
+ 672+ A250              ;                         decellerate by half as ship has lock on
+ 673+ A250              ;                         return
+ 674+ A250              ;                    else fire laser into space (which reduces energy)
+ 675+ A250              ;                 end if
+ 676+ A250              ;         end if
+ 677+ A250              ; .PART 7#
+ 678+ A250              ;        if ship is a msile targetting us
+ 679+ A250              ;           then ship turns towards us some more
+ 680+ A250              ;           else if z hi > =  3 or ( x hi or y hi > 1) , i.e. ship is far away
+ 681+ A250              ;                    then do random wiht bit 7 set
+ 682+ A250              ;                         if random < AI flag
+ 683+ A250              ;                            then   ship turned towards us
+ 684+ A250              ;                            else   ship turns away from us
+ 685+ A250              ;                         end if
+ 686+ A250              ;                end if
+ 687+ A250              ;           end if
+ 688+ A250              ;           calculate new roll, pitch and accelleration based on new targe vector
+ 689+ A250
+ 690+ A250
+ 691+ A250              ;        determine ship direction based on agression and type
+ 692+ A250              ;        set pitch and roll coutners
+ 693+ A250              ;        adjust speed depleding on relationship to us
+ 694+ A250              ; .PART 8 - new
+ 695+ A250              ;        if ship has ECM, another ECM is not active and missile targeted at it
+ 696+ A250              ;           if ship has enery of ECM energey cost + 1/8th total
+ 697+ A250              ;              if chance 25%
+ 698+ A250              ;                 then fire ECM
+ 699+ A250              ;
+ 700+ A250
+ 701+ A250
+ 702+ A250
+ 703+ A250
+ 704+ A250 2A 3D A1     ReduceTacticVectors:ld      hl, (TacticsVectorX)        ; pull XX15 into registers
+ 705+ A253 ED 5B 40 A1                      ld      de, (TacticsVectorY)        ; .
+ 706+ A257 ED 4B 43 A1                      ld      bc, (TacticsVectorZ)        ; .
+ 707+ A25B 3A 3F A1                         ld      a,(TacticsVectorX+2)        ; .
+ 708+ A25E FD 67                            ld      iyh,a                       ; iyh = X sign
+ 709+ A260 3A 42 A1                         ld      a,(TacticsVectorY+2)        ; .
+ 710+ A263 FD 6F                            ld      iyl,a                       ; iyl = Y sign
+ 711+ A265 3A 45 A1                         ld      a,(TacticsVectorZ+2)        ; .
+ 712+ A268 DD 67                            ld      ixh,a                       ; ixh = z sign
+ 713+ A26A FD B4        .ScaleLoop:         or      iyh                         ; now check if upper has value
+ 714+ A26C FD B5                            or      iyl                         ; .
+ 715+ A26E                                  ClearSignBitA                       ;  exluding sign bit
+ 715+ A26E E6 7F       >                        and     SignMask8Bit
+ 716+ A270 28 21                            jr      z,.DoneScaling              ; and exit loop if upper byte is only sign component
+ 717+ A272 FD 7C        .ScaledDownBy2:     ld      a,iyh
+ 718+ A274 CB 2F                            sra     a
+ 719+ A276 FD 67                            ld      iyh,a                       ; actually we can keep sign bit so just sr then rr
+ 720+ A278 CB 1C                            rr      h                           ; Deal with X
+ 721+ A27A CB 1D                            rr      l                           ;
+ 722+ A27C FD 7D                            ld      a,iyl
+ 723+ A27E CB 2F                            sra     a                           ; actually we can keep sign bit so just sr then rr
+ 724+ A280 FD 6F                            ld      iyl,a
+ 725+ A282 CB 1A                            rr      d                           ; Deal with Y
+ 726+ A284 CB 1B                            rr      e                           ;
+ 727+ A286 DD 7D                            ld      a, ixl                      ; actually we can keep sign bit so just sr then rr
+ 728+ A288 CB 2F                            sra     a
+ 729+ A28A DD 6F                            ld      ixl,a
+ 730+ A28C CB 18                            rr      b                           ; Deal with Z
+ 731+ A28E CB 19                            rr      c                           ;
+ 732+ A290 C3 6A A2                         jp      .ScaleLoop
+ 733+ A293 7C           .DoneScaling:       ld      a,h
+ 734+ A294 B2                               or      d
+ 735+ A295 B0                               or      b
+ 736+ A296                                  SignBitOnlyA                        ; check if new sign bit has a value rotated in,
+ 736+ A296 E6 80       >                        and     SignOnly8Bit
+ 737+ A298 28 0C                            jr      z,.OKToNormalise
+ 738+ A29A              .ShiftTo15Bit:      ShiftHLRight1                       ; one last shift to 15 bit we don't need
+ 738+ A29A CB 3C       >			   srl h
+ 738+ A29C CB 1D       >			   rr  l
+ 739+ A29E                                  ShiftDERight1                       ; to do sign bytes
+ 739+ A29E CB 3A       >			   srl d
+ 739+ A2A0 CB 1B       >			   rr  e
+ 740+ A2A2                                  ShiftBCRight1                       ; as value must be 0
+ 740+ A2A2 CB 38       >			   srl b
+ 740+ A2A4 CB 19       >			   rr  c
+ 741+ A2A6 7C           .OKToNormalise:     ld      a,h                         ; iyh now can only hold sign
+ 742+ A2A7 FD B4                            or      iyh                         ; so by the end of here
+ 743+ A2A9 67                               ld      h,a                         ;   hl = x
+ 744+ A2AA 7A                               ld      a,d                         ;   de = y
+ 745+ A2AB FD B5                            or      iyl                         ;   bc = z
+ 746+ A2AD 57                               ld      d,a                         ; all scaled to 15 bit + sign
+ 747+ A2AE 78                               ld      a,b                         ;
+ 748+ A2AF DD B4                            or      ixh                         ;
+ 749+ A2B1 47                               ld      b,a                         ;
+ 750+ A2B2 22 46 A1                         ld      (TacticsNormX),hl
+ 751+ A2B5 22 48 A1                         ld      (TacticsNormY),hl
+ 752+ A2B8 22 4A A1                         ld      (TacticsNormZ),hl
+ 753+ A2BB C9                               ret
+ 754+ A2BC                                 ; ***SIgn bits*** need to be in byte 3
+ 755+ A2BC
 # file closed: ./GameEngine/Tactics.asm
- 610  A254                  INCLUDE "./Hardware/drive_access.asm"
+ 610  A2BC                  INCLUDE "./Hardware/drive_access.asm"
 # file opened: ./Hardware/drive_access.asm
-   1+ A254              M_GETSETDRV             equ $89
-   2+ A254              F_OPEN                  equ $9a
-   3+ A254              F_CLOSE                 equ $9b
-   4+ A254              F_READ                  equ $9d
-   5+ A254              F_WRITE                 equ $9e
-   6+ A254              F_SEEK                  equ $9f
-   7+ A254
-   8+ A254              FA_READ                 equ $01
-   9+ A254              FA_APPEND               equ $06
-  10+ A254              FA_OVERWRITE            equ $0C
-  11+ A254              DISK_FILEMAP            equ $85
-  12+ A254              DISK_STRMSTART          equ $86
-  13+ A254              DISK_STRMEND            equ $87
-  14+ A254
-  15+ A254              ESX_MODE_READ           equ $01
-  16+ A254              ESX_MODE_OPEN_EXIST     equ $00
-  17+ A254
-  18+ A254              FILEMAP_SIZE            equ $20
-  19+ A254              FILEMAP_BLOCK_SIZE      equ $06
-  20+ A254
-  21+ A254              ; Success 1 = default drive, carry reset
-  22+ A254              ; Failure HL = -1 , carry set, errno set
-  23+ A254 F5 C5 D5 E5  GetDefaultDrive:        push	af,,bc,,de,,hl,,ix
-  23+ A258 DD E5
-  24+ A25A AF                                   xor	    a	; a = 0 means get default drive into A
-  25+ A25B CF                                   rst	    $08
-  26+ A25C 89                                   db	    M_GETSETDRV
-  27+ A25D 32 F2 A2                             ld	    (DefaultDrive),a
-  28+ A260 DD E1 E1 D1                          pop		af,,bc,,de,,hl,,ix
-  28+ A264 C1 F1
-  29+ A266 C9                                   ret
-  30+ A267
-  31+ A267
-  32+ A267              ; Disable NMI Multi face - needed for streaming
-  33+ A267              ;disable_multiface:      ld      bc,REGISTER_NUMBER_PORT
-  34+ A267              ;                        ld      a,PERIPHERAL_2_REGISTER
-  35+ A267              ;                        out     (c),a
-  36+ A267              ;                        inc     b
-  37+ A267              ;                        in      a,(c)
-  38+ A267              ;                        and     %11110111
-  39+ A267              ;                        out     (c),a
-  40+ A267              ;                        ret
-  41+ A267              ;
-  42+ A267              ;enable_multiface:       ld      bc,REGISTER_NUMBER_PORT
-  43+ A267              ;                        ld      a,PERIPHERAL_2_REGISTER
-  44+ A267              ;                        out     (c),a
-  45+ A267              ;                        inc     b
-  46+ A267              ;                        in      a,(c)
-  47+ A267              ;                        or      %00001000
-  48+ A267              ;                        out     (c),a
-  49+ A267              ;                        ret
-  50+ A267              ;
-  51+ A267              ; *******************************************************************************************************
-  52+ A267              ;	Function:	Open a file read for reading/writing
-  53+ A267              ;	In:		ix = filename
-  54+ A267              ;			b  = Open filemode
-  55+ A267              ;	ret		a  = handle, 0 on error
-  56+ A267              ;   fOpen_read_exists takes defaults and sets up default drive
-  57+ A267              ; *******************************************************************************************************
-  58+ A267              ;fOpen_read_exists:      ld      b,ESX_MODE_READ | ESX_MODE_OPEN_EXIST
-  59+ A267              ;                        call    GetDefaultDrive
-  60+ A267              ;                        call    fOpen
-  61+ A267              ;                        call    fRefill_map
-  62+ A267              ;                        jp      c,.RefilMapError
-  63+ A267              ;                        jp      z,.RefilMapEmpty
-  64+ A267              ;                        ret
-  65+ A267              ;.RefilMapError:         jp      .RefilMapError
-  66+ A267              ;.RefilMapEmpty:         jp      .RefilMapEmpty
-  67+ A267              ;
-  68+ A267              ;
-  69+ A267
-  70+ A267 3A F2 A2     fOpen:	                ld	    a,(DefaultDrive); default drive must be called before we start
-  71+ A26A CF                                   rst	    $08
-  72+ A26B 9A                                   db	    F_OPEN
-  73+ A26C 32 F3 A2                             ld      (FileHandle),a  ; make a local copy of last file opened
-  74+ A26F 38 01                                jr      c,.FileOpenError
-  75+ A271 C9                                   ret
-  76+ A272 C3 72 A2     .FileOpenError:         jp      .FileOpenError
-  77+ A275
-  78+ A275              ; *******************************************************************************************************
-  79+ A275              ;	Function	refills the buffer map with card addresses for the file
-  80+ A275              ;	In:		a  = file handle (if calling fRefill_mapA)
-  81+ A275              ;           ix = address of filemap_buffer (if calling fRefill_mapA)
-  82+ A275              ;           de = filemap size (which should equal 4 in our case)
-  83+ A275              ;			bc  = amount to read
-  84+ A275              ;	ret:		carry set = error
-  85+ A275              ;               zero set  = no data loaded so still error
-  86+ A275              ;   you can use fRefill_map to pull default valuess
-  87+ A275              ; *******************************************************************************************************
-  88+ A275              ;fRefill_map:            ld      a,(FileHandle)
-  89+ A275              ;                        ld      ix,FilemapBuffer
-  90+ A275              ;                        ld      de,FILEMAP_SIZE
-  91+ A275              ;fRefill_mapA:           rst     $08
-  92+ A275              ;                        db      DISK_FILEMAP
-  93+ A275              ;.SetFlags:              ld      (CardFlags),a                   ; set up adressing mode flags  bit 0=card id (0 or 1) bit 1=0 for byte addressing, 1 for block addressing
-  94+ A275              ;.CheckForEntries:       ld      (FilemapBufferLast),hl          ; save last entry address +2
-  95+ A275              ;                        ld      de,FilemapBuffer
-  96+ A275              ;                        sbc     hl,de                           ; hl = number of entries found
-  97+ A275              ;                        ld      a,$ff
-  98+ A275              ;                        ret
-  99+ A275              ;
- 100+ A275              ;read_stream_block:      ld      hl,(FilemapBufferPointer)
- 101+ A275              ;                        ldBCDEatHL                              ; load the disk address
- 102+ A275              ;                        push    bc                              ; into IXDE
- 103+ A275              ;                        pop     ix                              ; now IXDE = card address
- 104+ A275              ;                        ldBCatHL                                ; bc = number of blocks to be read
- 105+ A275              ;                        ld      (FilemapBlockCount),bc
- 106+ A275              ;                        ret
- 107+ A275              ; Start up stream of data
- 108+ A275              ; If successful, the call returns with:
- 109+ A275              ; B=protocol: 0=SD/MMC, 1=IDE,  C=data port
- 110+ A275              ; NOTE: On the Next, these values will always be: B=0 C=$EB
- 111+ A275              ;fStream_start:          ld      hl,FilemapBuffer                ; set to head of filemap
- 112+ A275              ;                        ld      (FilemapBufferPointer),hl       ; .
- 113+ A275              ;                        ZeroA
- 114+ A275              ;                        ld      (FilereadsPerformed),a
- 115+ A275              ;                        call    read_stream_block
- 116+ A275              ;                        ld      a,(CardFlags)                   ; get card flags back
- 117+ A275              ;                        rst     $08
- 118+ A275              ;                        DB      DISK_STRMSTART                  ; start up stream
- 119+ A275              ;                        ld      (FileStreamPort),bc             ; save port information (even through it will not change on a next)
- 120+ A275              ;                        ret
- 121+ A275
- 122+ A275              ; *******************************************************************************************************
- 123+ A275              ;	Function	stream in a block of data to memory
- 124+ A275              ;	In:		ix  = address to read into
- 125+ A275              ;			bc  = amount to read
- 126+ A275              ;	ret:		carry set = error
- 127+ A275              ; *******************************************************************************************************
- 128+ A275              ;fStream_block:          ld      ix,FileBuffer
- 129+ A275              ;                        ld      a,(CardFlags)
- 130+ A275              ;                        ld      bc,(FileStreamPort)
- 131+ A275              ;                        ld      hl,FileBuffer
- 132+ A275              ;                        ld      (FilemapBufferPointer),hl
- 133+ A275              ;.StreamLoop:            ld      b,0
- 134+ A275              ;                        ld      a,(TargetSize+1)
- 135+ A275              ;                        cp      2
- 136+ A275              ;                        jr      c,.stream_partial_block
- 137+ A275              ;.StreamFullBlock:       inir                                ; read 256 bytes to hl
- 138+ A275              ;                        inir                                ; read 256 bytes to hl+256
- 139+ A275              ;                        dec     b                           ; update byte count
- 140+ A275              ;                        dec     b                           ; .
- 141+ A275              ;                        ld      hl,TargetSize               ; 512 bytes read
- 142+ A275              ;                        ld      de,512
- 143+ A275              ;                        ClearCarryFlag
- 144+ A275              ;                        sbc     hl,de
- 145+ A275              ;                        ld      (TargetSize),hl
- 146+ A275              ;                        ld      a,(FileStreamPort+1)        ; get the protocol
- 147+ A275              ;                        and     a
- 148+ A275              ;                        jr      nz,.protocol_ide            ; we arn't using but for compatibility
- 149+ A275              ;.protocol_sdmmc:        in      a,(c)                       ; for sd and mmc, read in the 2 byte CRC
- 150+ A275              ;                        nop                                 ; as the max performance of the interface is
- 151+ A275              ;                        nop                                 ; 16T per byte, no ops pad out operation
- 152+ A275              ;                        in      a,(c)
- 153+ A275              ;                        nop
- 154+ A275              ;                        nop
- 155+ A275              ;.wait_for_next_block:   in      a,(c)                       ; if wait token is not FF then we are read
- 156+ A275              ;                        cp      $FF
- 157+ A275              ;                        jr      z,.wait_for_next_block
- 158+ A275              ;                        cp      $FE                         ; if not and its not FE its a fault
- 159+ A275              ;                        jr      nz,.token_error
- 160+ A275              ;.protocol_ide:          ld      de,(TargetSize)             ; Any more bytes required
- 161+ A275              ;                        ld      a,d
- 162+ A275              ;                        or      e
- 163+ A275              ;                        jr      z,.streaming_complete
- 164+ A275              ;                        ret
- 165+ A275              ;.stream_partial_block:  and     a                           ; is block at least 256 bytes?
- 166+ A275              ;                        jr      z,.under256_bytes
- 167+ A275              ;                        inir                                ; get 256 bytes
- 168+ A275              ;.under256_bytes:        ld      b,e
- 169+ A275              ;                        inc     b
- 170+ A275              ;                        dec     b
- 171+ A275              ;                        jr      z,.streaming_complete
- 172+ A275              ;                        inir
- 173+ A275              ;.streaming_complete:    ld      a,(CardFlags)
- 174+ A275              ;                        rst     $08
- 175+ A275              ;                        DB      DISK_STRMEND
- 176+ A275              ;                        ld      a,(FileHandle)
- 177+ A275              ;                        call    fClose
- 178+ A275              ;                        ret
- 179+ A275              ;.token_error:           jp      .token_error
- 180+ A275              ;
- 181+ A275              ;
- 182+ A275              ;fOpenReadFile:          ld      (TargetSize),bc
- 183+ A275              ;                        call    disable_multiface
- 184+ A275              ;                        call    fOpen_read_exists
- 185+ A275              ;.SetupStream:           call    fStream_start
- 186+ A275              ;                        jr      c,.FileStreamError
- 187+ A275              ;                        ret
- 188+ A275              ;
- 189+ A275              ;.FileStreamError:       jp      .FileStreamError
- 190+ A275              ;
- 191+ A275              ; *******************************************************************************************************
- 192+ A275              ;	Function	Read bytes from the open file
- 193+ A275              ;	In:		ix  = address to read into
- 194+ A275              ;			bc  = amount to read
- 195+ A275              ;	ret:		carry set = error
- 196+ A275              ; *******************************************************************************************************
- 197+ A275 B7           fRead:                  or   	a             ; is it zero?
- 198+ A276 C8                                   ret  	z             ; if so return
- 199+ A277 E5                                   push    hl
- 200+ A278 DD E5 E1                             ld      hl,ix    	 ; load ix into hl and save hl for later
- 201+ A27B CF                                   rst	    $08
- 202+ A27C 9D                                   db	    F_READ
- 203+ A27D E1                                   pop	    hl
- 204+ A27E C9                                   ret
- 205+ A27F
- 206+ A27F              ; *******************************************************************************************************
- 207+ A27F              ;	Function	Write bytes to the open file
- 208+ A27F              ;	In:		ix  = address to read from
- 209+ A27F              ;			bc  = amount to write
- 210+ A27F              ;	ret:		carry set = error
- 211+ A27F              ; *******************************************************************************************************
- 212+ A27F B7           fWrite:                 or   	a             ; is it zero?
- 213+ A280 C8                                   ret  	z             ; if so return
- 214+ A281 E5                                   push	hl
- 215+ A282 DD E5 E1                             ld      hl,ix
- 216+ A285 CF                                   rst	    $08
- 217+ A286 9E                                   db	    F_WRITE
- 218+ A287 E1                                   pop	    hl
- 219+ A288 C9                                   ret
- 220+ A289
- 221+ A289              ; *******************************************************************************************************
- 222+ A289              ;	Function:	Close open file
- 223+ A289              ;	In:		a  = handle
- 224+ A289              ;	ret		a  = handle, 0 on error
- 225+ A289              ; *******************************************************************************************************
- 226+ A289 B7           fClose:		            or   	a             ; is it zero?
- 227+ A28A C8                                   ret  	z             ; if so return
- 228+ A28B CF                                   rst	    $08
- 229+ A28C 9B                                   db	    F_CLOSE
- 230+ A28D C9                                   ret
- 231+ A28E
- 232+ A28E              ;fSeekHome:              push    bc,,de,,hl,,ix
- 233+ A28E              ;                        ld      bc,0
- 234+ A28E              ;                        ld      de,0
- 235+ A28E              ;                        ld      l,0
- 236+ A28E              ;                        call    fSeek
- 237+ A28E              ;                        pop     bc,,de,,hl,,ix
- 238+ A28E              ;                        ret
- 239+ A28E              ;
- 240+ A28E              ;fSeekForward256:        push    bc,,de,,hl,,ix
- 241+ A28E              ;                        ld      bc,0
- 242+ A28E              ;                        ld      de,256
- 243+ A28E              ;                        ld      l,1
- 244+ A28E              ;                        call    fSeek
- 245+ A28E              ;                        pop     bc,,de,,hl,,ix
- 246+ A28E              ;                        ret
- 247+ A28E
- 248+ A28E              ; *******************************************************************************************************
- 249+ A28E              ;	Function	Read bytes from the open file
- 250+ A28E              ;	In:		a   = file handle
- 251+ A28E              ;			L   = Seek mode (0=start, 1=rel, 2=-rel)
- 252+ A28E              ;			BCDE = bytes to seek
- 253+ A28E              ;	ret:		BCDE = file pos from start
- 254+ A28E              ; *******************************************************************************************************
- 255+ A28E DD E5 E5     fSeek:                  push	ix,,hl
- 256+ A291 CF                                   rst	    $08
- 257+ A292 9F                                   db	    F_SEEK
- 258+ A293 E1 DD E1                             pop	    ix,,hl
- 259+ A296 C9                                   ret
- 260+ A297
- 261+ A297              ; *******************************************************************************************************
- 262+ A297              ; Init the file system
- 263+ A297              ; *******************************************************************************************************
- 264+ A297 CD 54 A2     InitFileSystem:         call    GetDefaultDrive
- 265+ A29A C9                                   ret
- 266+ A29B
- 267+ A29B              ; *******************************************************************************************************
- 268+ A29B              ; Function:	Load a whole file into memory	(confirmed working on real machine)
- 269+ A29B              ; In:		hl = file data pointer
- 270+ A29B              ;		    ix = address to load to
- 271+ A29B              ;           bc = filelength
- 272+ A29B              ; *******************************************************************************************************
- 273+ A29B CD 54 A2     FileLoad:	            call    GetDefaultDrive
- 274+ A29E C5 D5 F5                             push	bc,,de,,af
- 275+ A2A1                                      ; get file size
- 276+ A2A1 C5 DD E5                             push	bc,,ix			; store size, load address,
- 277+ A2A4 E5 DD E1                             ld      ix,hl
- 278+ A2A7 06 01                                ld      b,FA_READ		; mode open for reading
- 279+ A2A9 CD 67 A2                             call    fOpen
- 280+ A2AC 38 17                                jr	    c,.error_opening; carry set? so there was an error opening and A=error code
- 281+ A2AE FE 00                                cp	    0				; was file handle 0?
- 282+ A2B0 28 13                                jr	    z,.error_opening; of so there was an error opening.
- 283+ A2B2 DD E1 C1                             pop     bc,,ix          ; get load address back and size back
- 284+ A2B5 F5                                   push	af				; remember handle
- 285+ A2B6 CD 75 A2                             call	fRead			; read data from A to address IX of length BC
- 286+ A2B9 38 0C                                jr	    c,.error_reading
- 287+ A2BB F1                                   pop	    af			    ; get handle back
- 288+ A2BC CD 89 A2                             call	fClose			; close file
- 289+ A2BF 38 07                                jr	    c,.error_closing
- 290+ A2C1 F1 D1 C1                             pop     bc,,de,,af      ; normal exit
- 291+ A2C4 C9                                   ret
- 292+ A2C5              ;
- 293+ A2C5              ; On error, display error code an lock up so we can see it
- 294+ A2C5              ;
- 295+ A2C5 DD E1        .error_opening:         pop	ix
- 296+ A2C7 C1           .error_reading:		    pop	bc	; don't pop a, need error code
- 297+ A2C8
- 298+ A2C8              .error_closing:
- 299+ A2C8 C1           .NormalError:  	        pop	bc	; don't pop into A, return with error code
- 300+ A2C9 D1                                   pop	de
- 301+ A2CA C1                                   pop	bc
- 302+ A2CB C9                                   ret
- 303+ A2CC
- 304+ A2CC              ; *******************************************************************************************************
- 305+ A2CC              ; Function:	Save a whole file into memory	(confirmed working on real machine)
- 306+ A2CC              ; In:		hl = file name
- 307+ A2CC              ;		    ix = address to save from
- 308+ A2CC              ;		    bc = size
- 309+ A2CC              ; *******************************************************************************************************
- 310+ A2CC CD 54 A2     FileSave:	            call    GetDefaultDrive		; need to do this each time?!?!?
- 311+ A2CF C5 DD E5                             push	bc,,ix   			; store size& save address
- 312+ A2D2 E5 DD E1                             ld      ix,hl               ; get name into ix
- 313+ A2D5 06 0C                                ld      b,FA_OVERWRITE		; mode open for writing
- 314+ A2D7 CD 67 A2                             call    fOpen
- 315+ A2DA 38 12                                jr	    c,.error_opening	; carry set? so there was an error opening and A=error code
- 316+ A2DC FE 00                                cp	    0			        ; was file handle 0?
- 317+ A2DE 28 0E                                jr	    z,.error_opening	; of so there was an error opening.
- 318+ A2E0 DD E1 C1                             pop	    bc,,ix			    ; get lenght and save address back
- 319+ A2E3 F5                                   push	af			        ; remember handle
- 320+ A2E4 CD 7F A2                             call	fWrite			    ; read data from A to address IX of length BC
- 321+ A2E7 38 04                                jr	c,.error
- 322+ A2E9 F1                                   pop	af			            ; get handle back
- 323+ A2EA CD 89 A2                             call	fClose			    ; close file
- 324+ A2ED C9           .error:                 ret
- 325+ A2EE              ;
- 326+ A2EE              ; On error, display error code an lock up so we can see it
- 327+ A2EE              ;
- 328+ A2EE DD E1 C1     .error_opening:         pop	bc,,ix                  ; don't pop a, need error code
- 329+ A2F1 C9                                   ret
- 330+ A2F2
- 331+ A2F2 00           DefaultDrive:	        DB	0
- 332+ A2F3 00           FileHandle:             DB  0
- 333+ A2F4 00           CardFlags               DB  0
- 334+ A2F5 00 00        TargetSize              DW  0
- 335+ A2F7 00 00        FileStreamPort          DW  0
- 336+ A2F9 00 00 00...  FileBuffer              DS  512                     ; block of data
- 337+ A4F9 00           FilereadsPerformed      DB  0
- 338+ A4FA 00 00        FilemapBlockCount       DW  0
- 339+ A4FC 00 00        FilemapBufferPointer    DW  0
- 340+ A4FE 00 00        FilemapBufferLast       DW  0
- 341+ A500 00 00 00...  FilemapBuffer           DS  FILEMAP_BLOCK_SIZE * FILEMAP_SIZE        ; expecting 60 to be overkill as most should be 1
- 342+ A5C0
+   1+ A2BC              M_GETSETDRV             equ $89
+   2+ A2BC              F_OPEN                  equ $9a
+   3+ A2BC              F_CLOSE                 equ $9b
+   4+ A2BC              F_READ                  equ $9d
+   5+ A2BC              F_WRITE                 equ $9e
+   6+ A2BC              F_SEEK                  equ $9f
+   7+ A2BC
+   8+ A2BC              FA_READ                 equ $01
+   9+ A2BC              FA_APPEND               equ $06
+  10+ A2BC              FA_OVERWRITE            equ $0C
+  11+ A2BC              DISK_FILEMAP            equ $85
+  12+ A2BC              DISK_STRMSTART          equ $86
+  13+ A2BC              DISK_STRMEND            equ $87
+  14+ A2BC
+  15+ A2BC              ESX_MODE_READ           equ $01
+  16+ A2BC              ESX_MODE_OPEN_EXIST     equ $00
+  17+ A2BC
+  18+ A2BC              FILEMAP_SIZE            equ $20
+  19+ A2BC              FILEMAP_BLOCK_SIZE      equ $06
+  20+ A2BC
+  21+ A2BC              ; Success 1 = default drive, carry reset
+  22+ A2BC              ; Failure HL = -1 , carry set, errno set
+  23+ A2BC F5 C5 D5 E5  GetDefaultDrive:        push	af,,bc,,de,,hl,,ix
+  23+ A2C0 DD E5
+  24+ A2C2 AF                                   xor	    a	; a = 0 means get default drive into A
+  25+ A2C3 CF                                   rst	    $08
+  26+ A2C4 89                                   db	    M_GETSETDRV
+  27+ A2C5 32 5A A3                             ld	    (DefaultDrive),a
+  28+ A2C8 DD E1 E1 D1                          pop		af,,bc,,de,,hl,,ix
+  28+ A2CC C1 F1
+  29+ A2CE C9                                   ret
+  30+ A2CF
+  31+ A2CF
+  32+ A2CF              ; Disable NMI Multi face - needed for streaming
+  33+ A2CF              ;disable_multiface:      ld      bc,REGISTER_NUMBER_PORT
+  34+ A2CF              ;                        ld      a,PERIPHERAL_2_REGISTER
+  35+ A2CF              ;                        out     (c),a
+  36+ A2CF              ;                        inc     b
+  37+ A2CF              ;                        in      a,(c)
+  38+ A2CF              ;                        and     %11110111
+  39+ A2CF              ;                        out     (c),a
+  40+ A2CF              ;                        ret
+  41+ A2CF              ;
+  42+ A2CF              ;enable_multiface:       ld      bc,REGISTER_NUMBER_PORT
+  43+ A2CF              ;                        ld      a,PERIPHERAL_2_REGISTER
+  44+ A2CF              ;                        out     (c),a
+  45+ A2CF              ;                        inc     b
+  46+ A2CF              ;                        in      a,(c)
+  47+ A2CF              ;                        or      %00001000
+  48+ A2CF              ;                        out     (c),a
+  49+ A2CF              ;                        ret
+  50+ A2CF              ;
+  51+ A2CF              ; *******************************************************************************************************
+  52+ A2CF              ;	Function:	Open a file read for reading/writing
+  53+ A2CF              ;	In:		ix = filename
+  54+ A2CF              ;			b  = Open filemode
+  55+ A2CF              ;	ret		a  = handle, 0 on error
+  56+ A2CF              ;   fOpen_read_exists takes defaults and sets up default drive
+  57+ A2CF              ; *******************************************************************************************************
+  58+ A2CF              ;fOpen_read_exists:      ld      b,ESX_MODE_READ | ESX_MODE_OPEN_EXIST
+  59+ A2CF              ;                        call    GetDefaultDrive
+  60+ A2CF              ;                        call    fOpen
+  61+ A2CF              ;                        call    fRefill_map
+  62+ A2CF              ;                        jp      c,.RefilMapError
+  63+ A2CF              ;                        jp      z,.RefilMapEmpty
+  64+ A2CF              ;                        ret
+  65+ A2CF              ;.RefilMapError:         jp      .RefilMapError
+  66+ A2CF              ;.RefilMapEmpty:         jp      .RefilMapEmpty
+  67+ A2CF              ;
+  68+ A2CF              ;
+  69+ A2CF
+  70+ A2CF 3A 5A A3     fOpen:	                ld	    a,(DefaultDrive); default drive must be called before we start
+  71+ A2D2 CF                                   rst	    $08
+  72+ A2D3 9A                                   db	    F_OPEN
+  73+ A2D4 32 5B A3                             ld      (FileHandle),a  ; make a local copy of last file opened
+  74+ A2D7 38 01                                jr      c,.FileOpenError
+  75+ A2D9 C9                                   ret
+  76+ A2DA C3 DA A2     .FileOpenError:         jp      .FileOpenError
+  77+ A2DD
+  78+ A2DD              ; *******************************************************************************************************
+  79+ A2DD              ;	Function	refills the buffer map with card addresses for the file
+  80+ A2DD              ;	In:		a  = file handle (if calling fRefill_mapA)
+  81+ A2DD              ;           ix = address of filemap_buffer (if calling fRefill_mapA)
+  82+ A2DD              ;           de = filemap size (which should equal 4 in our case)
+  83+ A2DD              ;			bc  = amount to read
+  84+ A2DD              ;	ret:		carry set = error
+  85+ A2DD              ;               zero set  = no data loaded so still error
+  86+ A2DD              ;   you can use fRefill_map to pull default valuess
+  87+ A2DD              ; *******************************************************************************************************
+  88+ A2DD              ;fRefill_map:            ld      a,(FileHandle)
+  89+ A2DD              ;                        ld      ix,FilemapBuffer
+  90+ A2DD              ;                        ld      de,FILEMAP_SIZE
+  91+ A2DD              ;fRefill_mapA:           rst     $08
+  92+ A2DD              ;                        db      DISK_FILEMAP
+  93+ A2DD              ;.SetFlags:              ld      (CardFlags),a                   ; set up adressing mode flags  bit 0=card id (0 or 1) bit 1=0 for byte addressing, 1 for block addressing
+  94+ A2DD              ;.CheckForEntries:       ld      (FilemapBufferLast),hl          ; save last entry address +2
+  95+ A2DD              ;                        ld      de,FilemapBuffer
+  96+ A2DD              ;                        sbc     hl,de                           ; hl = number of entries found
+  97+ A2DD              ;                        ld      a,$ff
+  98+ A2DD              ;                        ret
+  99+ A2DD              ;
+ 100+ A2DD              ;read_stream_block:      ld      hl,(FilemapBufferPointer)
+ 101+ A2DD              ;                        ldBCDEatHL                              ; load the disk address
+ 102+ A2DD              ;                        push    bc                              ; into IXDE
+ 103+ A2DD              ;                        pop     ix                              ; now IXDE = card address
+ 104+ A2DD              ;                        ldBCatHL                                ; bc = number of blocks to be read
+ 105+ A2DD              ;                        ld      (FilemapBlockCount),bc
+ 106+ A2DD              ;                        ret
+ 107+ A2DD              ; Start up stream of data
+ 108+ A2DD              ; If successful, the call returns with:
+ 109+ A2DD              ; B=protocol: 0=SD/MMC, 1=IDE,  C=data port
+ 110+ A2DD              ; NOTE: On the Next, these values will always be: B=0 C=$EB
+ 111+ A2DD              ;fStream_start:          ld      hl,FilemapBuffer                ; set to head of filemap
+ 112+ A2DD              ;                        ld      (FilemapBufferPointer),hl       ; .
+ 113+ A2DD              ;                        ZeroA
+ 114+ A2DD              ;                        ld      (FilereadsPerformed),a
+ 115+ A2DD              ;                        call    read_stream_block
+ 116+ A2DD              ;                        ld      a,(CardFlags)                   ; get card flags back
+ 117+ A2DD              ;                        rst     $08
+ 118+ A2DD              ;                        DB      DISK_STRMSTART                  ; start up stream
+ 119+ A2DD              ;                        ld      (FileStreamPort),bc             ; save port information (even through it will not change on a next)
+ 120+ A2DD              ;                        ret
+ 121+ A2DD
+ 122+ A2DD              ; *******************************************************************************************************
+ 123+ A2DD              ;	Function	stream in a block of data to memory
+ 124+ A2DD              ;	In:		ix  = address to read into
+ 125+ A2DD              ;			bc  = amount to read
+ 126+ A2DD              ;	ret:		carry set = error
+ 127+ A2DD              ; *******************************************************************************************************
+ 128+ A2DD              ;fStream_block:          ld      ix,FileBuffer
+ 129+ A2DD              ;                        ld      a,(CardFlags)
+ 130+ A2DD              ;                        ld      bc,(FileStreamPort)
+ 131+ A2DD              ;                        ld      hl,FileBuffer
+ 132+ A2DD              ;                        ld      (FilemapBufferPointer),hl
+ 133+ A2DD              ;.StreamLoop:            ld      b,0
+ 134+ A2DD              ;                        ld      a,(TargetSize+1)
+ 135+ A2DD              ;                        cp      2
+ 136+ A2DD              ;                        jr      c,.stream_partial_block
+ 137+ A2DD              ;.StreamFullBlock:       inir                                ; read 256 bytes to hl
+ 138+ A2DD              ;                        inir                                ; read 256 bytes to hl+256
+ 139+ A2DD              ;                        dec     b                           ; update byte count
+ 140+ A2DD              ;                        dec     b                           ; .
+ 141+ A2DD              ;                        ld      hl,TargetSize               ; 512 bytes read
+ 142+ A2DD              ;                        ld      de,512
+ 143+ A2DD              ;                        ClearCarryFlag
+ 144+ A2DD              ;                        sbc     hl,de
+ 145+ A2DD              ;                        ld      (TargetSize),hl
+ 146+ A2DD              ;                        ld      a,(FileStreamPort+1)        ; get the protocol
+ 147+ A2DD              ;                        and     a
+ 148+ A2DD              ;                        jr      nz,.protocol_ide            ; we arn't using but for compatibility
+ 149+ A2DD              ;.protocol_sdmmc:        in      a,(c)                       ; for sd and mmc, read in the 2 byte CRC
+ 150+ A2DD              ;                        nop                                 ; as the max performance of the interface is
+ 151+ A2DD              ;                        nop                                 ; 16T per byte, no ops pad out operation
+ 152+ A2DD              ;                        in      a,(c)
+ 153+ A2DD              ;                        nop
+ 154+ A2DD              ;                        nop
+ 155+ A2DD              ;.wait_for_next_block:   in      a,(c)                       ; if wait token is not FF then we are read
+ 156+ A2DD              ;                        cp      $FF
+ 157+ A2DD              ;                        jr      z,.wait_for_next_block
+ 158+ A2DD              ;                        cp      $FE                         ; if not and its not FE its a fault
+ 159+ A2DD              ;                        jr      nz,.token_error
+ 160+ A2DD              ;.protocol_ide:          ld      de,(TargetSize)             ; Any more bytes required
+ 161+ A2DD              ;                        ld      a,d
+ 162+ A2DD              ;                        or      e
+ 163+ A2DD              ;                        jr      z,.streaming_complete
+ 164+ A2DD              ;                        ret
+ 165+ A2DD              ;.stream_partial_block:  and     a                           ; is block at least 256 bytes?
+ 166+ A2DD              ;                        jr      z,.under256_bytes
+ 167+ A2DD              ;                        inir                                ; get 256 bytes
+ 168+ A2DD              ;.under256_bytes:        ld      b,e
+ 169+ A2DD              ;                        inc     b
+ 170+ A2DD              ;                        dec     b
+ 171+ A2DD              ;                        jr      z,.streaming_complete
+ 172+ A2DD              ;                        inir
+ 173+ A2DD              ;.streaming_complete:    ld      a,(CardFlags)
+ 174+ A2DD              ;                        rst     $08
+ 175+ A2DD              ;                        DB      DISK_STRMEND
+ 176+ A2DD              ;                        ld      a,(FileHandle)
+ 177+ A2DD              ;                        call    fClose
+ 178+ A2DD              ;                        ret
+ 179+ A2DD              ;.token_error:           jp      .token_error
+ 180+ A2DD              ;
+ 181+ A2DD              ;
+ 182+ A2DD              ;fOpenReadFile:          ld      (TargetSize),bc
+ 183+ A2DD              ;                        call    disable_multiface
+ 184+ A2DD              ;                        call    fOpen_read_exists
+ 185+ A2DD              ;.SetupStream:           call    fStream_start
+ 186+ A2DD              ;                        jr      c,.FileStreamError
+ 187+ A2DD              ;                        ret
+ 188+ A2DD              ;
+ 189+ A2DD              ;.FileStreamError:       jp      .FileStreamError
+ 190+ A2DD              ;
+ 191+ A2DD              ; *******************************************************************************************************
+ 192+ A2DD              ;	Function	Read bytes from the open file
+ 193+ A2DD              ;	In:		ix  = address to read into
+ 194+ A2DD              ;			bc  = amount to read
+ 195+ A2DD              ;	ret:		carry set = error
+ 196+ A2DD              ; *******************************************************************************************************
+ 197+ A2DD B7           fRead:                  or   	a             ; is it zero?
+ 198+ A2DE C8                                   ret  	z             ; if so return
+ 199+ A2DF E5                                   push    hl
+ 200+ A2E0 DD E5 E1                             ld      hl,ix    	 ; load ix into hl and save hl for later
+ 201+ A2E3 CF                                   rst	    $08
+ 202+ A2E4 9D                                   db	    F_READ
+ 203+ A2E5 E1                                   pop	    hl
+ 204+ A2E6 C9                                   ret
+ 205+ A2E7
+ 206+ A2E7              ; *******************************************************************************************************
+ 207+ A2E7              ;	Function	Write bytes to the open file
+ 208+ A2E7              ;	In:		ix  = address to read from
+ 209+ A2E7              ;			bc  = amount to write
+ 210+ A2E7              ;	ret:		carry set = error
+ 211+ A2E7              ; *******************************************************************************************************
+ 212+ A2E7 B7           fWrite:                 or   	a             ; is it zero?
+ 213+ A2E8 C8                                   ret  	z             ; if so return
+ 214+ A2E9 E5                                   push	hl
+ 215+ A2EA DD E5 E1                             ld      hl,ix
+ 216+ A2ED CF                                   rst	    $08
+ 217+ A2EE 9E                                   db	    F_WRITE
+ 218+ A2EF E1                                   pop	    hl
+ 219+ A2F0 C9                                   ret
+ 220+ A2F1
+ 221+ A2F1              ; *******************************************************************************************************
+ 222+ A2F1              ;	Function:	Close open file
+ 223+ A2F1              ;	In:		a  = handle
+ 224+ A2F1              ;	ret		a  = handle, 0 on error
+ 225+ A2F1              ; *******************************************************************************************************
+ 226+ A2F1 B7           fClose:		            or   	a             ; is it zero?
+ 227+ A2F2 C8                                   ret  	z             ; if so return
+ 228+ A2F3 CF                                   rst	    $08
+ 229+ A2F4 9B                                   db	    F_CLOSE
+ 230+ A2F5 C9                                   ret
+ 231+ A2F6
+ 232+ A2F6              ;fSeekHome:              push    bc,,de,,hl,,ix
+ 233+ A2F6              ;                        ld      bc,0
+ 234+ A2F6              ;                        ld      de,0
+ 235+ A2F6              ;                        ld      l,0
+ 236+ A2F6              ;                        call    fSeek
+ 237+ A2F6              ;                        pop     bc,,de,,hl,,ix
+ 238+ A2F6              ;                        ret
+ 239+ A2F6              ;
+ 240+ A2F6              ;fSeekForward256:        push    bc,,de,,hl,,ix
+ 241+ A2F6              ;                        ld      bc,0
+ 242+ A2F6              ;                        ld      de,256
+ 243+ A2F6              ;                        ld      l,1
+ 244+ A2F6              ;                        call    fSeek
+ 245+ A2F6              ;                        pop     bc,,de,,hl,,ix
+ 246+ A2F6              ;                        ret
+ 247+ A2F6
+ 248+ A2F6              ; *******************************************************************************************************
+ 249+ A2F6              ;	Function	Read bytes from the open file
+ 250+ A2F6              ;	In:		a   = file handle
+ 251+ A2F6              ;			L   = Seek mode (0=start, 1=rel, 2=-rel)
+ 252+ A2F6              ;			BCDE = bytes to seek
+ 253+ A2F6              ;	ret:		BCDE = file pos from start
+ 254+ A2F6              ; *******************************************************************************************************
+ 255+ A2F6 DD E5 E5     fSeek:                  push	ix,,hl
+ 256+ A2F9 CF                                   rst	    $08
+ 257+ A2FA 9F                                   db	    F_SEEK
+ 258+ A2FB E1 DD E1                             pop	    ix,,hl
+ 259+ A2FE C9                                   ret
+ 260+ A2FF
+ 261+ A2FF              ; *******************************************************************************************************
+ 262+ A2FF              ; Init the file system
+ 263+ A2FF              ; *******************************************************************************************************
+ 264+ A2FF CD BC A2     InitFileSystem:         call    GetDefaultDrive
+ 265+ A302 C9                                   ret
+ 266+ A303
+ 267+ A303              ; *******************************************************************************************************
+ 268+ A303              ; Function:	Load a whole file into memory	(confirmed working on real machine)
+ 269+ A303              ; In:		hl = file data pointer
+ 270+ A303              ;		    ix = address to load to
+ 271+ A303              ;           bc = filelength
+ 272+ A303              ; *******************************************************************************************************
+ 273+ A303 CD BC A2     FileLoad:	            call    GetDefaultDrive
+ 274+ A306 C5 D5 F5                             push	bc,,de,,af
+ 275+ A309                                      ; get file size
+ 276+ A309 C5 DD E5                             push	bc,,ix			; store size, load address,
+ 277+ A30C E5 DD E1                             ld      ix,hl
+ 278+ A30F 06 01                                ld      b,FA_READ		; mode open for reading
+ 279+ A311 CD CF A2                             call    fOpen
+ 280+ A314 38 17                                jr	    c,.error_opening; carry set? so there was an error opening and A=error code
+ 281+ A316 FE 00                                cp	    0				; was file handle 0?
+ 282+ A318 28 13                                jr	    z,.error_opening; of so there was an error opening.
+ 283+ A31A DD E1 C1                             pop     bc,,ix          ; get load address back and size back
+ 284+ A31D F5                                   push	af				; remember handle
+ 285+ A31E CD DD A2                             call	fRead			; read data from A to address IX of length BC
+ 286+ A321 38 0C                                jr	    c,.error_reading
+ 287+ A323 F1                                   pop	    af			    ; get handle back
+ 288+ A324 CD F1 A2                             call	fClose			; close file
+ 289+ A327 38 07                                jr	    c,.error_closing
+ 290+ A329 F1 D1 C1                             pop     bc,,de,,af      ; normal exit
+ 291+ A32C C9                                   ret
+ 292+ A32D              ;
+ 293+ A32D              ; On error, display error code an lock up so we can see it
+ 294+ A32D              ;
+ 295+ A32D DD E1        .error_opening:         pop	ix
+ 296+ A32F C1           .error_reading:		    pop	bc	; don't pop a, need error code
+ 297+ A330
+ 298+ A330              .error_closing:
+ 299+ A330 C1           .NormalError:  	        pop	bc	; don't pop into A, return with error code
+ 300+ A331 D1                                   pop	de
+ 301+ A332 C1                                   pop	bc
+ 302+ A333 C9                                   ret
+ 303+ A334
+ 304+ A334              ; *******************************************************************************************************
+ 305+ A334              ; Function:	Save a whole file into memory	(confirmed working on real machine)
+ 306+ A334              ; In:		hl = file name
+ 307+ A334              ;		    ix = address to save from
+ 308+ A334              ;		    bc = size
+ 309+ A334              ; *******************************************************************************************************
+ 310+ A334 CD BC A2     FileSave:	            call    GetDefaultDrive		; need to do this each time?!?!?
+ 311+ A337 C5 DD E5                             push	bc,,ix   			; store size& save address
+ 312+ A33A E5 DD E1                             ld      ix,hl               ; get name into ix
+ 313+ A33D 06 0C                                ld      b,FA_OVERWRITE		; mode open for writing
+ 314+ A33F CD CF A2                             call    fOpen
+ 315+ A342 38 12                                jr	    c,.error_opening	; carry set? so there was an error opening and A=error code
+ 316+ A344 FE 00                                cp	    0			        ; was file handle 0?
+ 317+ A346 28 0E                                jr	    z,.error_opening	; of so there was an error opening.
+ 318+ A348 DD E1 C1                             pop	    bc,,ix			    ; get lenght and save address back
+ 319+ A34B F5                                   push	af			        ; remember handle
+ 320+ A34C CD E7 A2                             call	fWrite			    ; read data from A to address IX of length BC
+ 321+ A34F 38 04                                jr	c,.error
+ 322+ A351 F1                                   pop	af			            ; get handle back
+ 323+ A352 CD F1 A2                             call	fClose			    ; close file
+ 324+ A355 C9           .error:                 ret
+ 325+ A356              ;
+ 326+ A356              ; On error, display error code an lock up so we can see it
+ 327+ A356              ;
+ 328+ A356 DD E1 C1     .error_opening:         pop	bc,,ix                  ; don't pop a, need error code
+ 329+ A359 C9                                   ret
+ 330+ A35A
+ 331+ A35A 00           DefaultDrive:	        DB	0
+ 332+ A35B 00           FileHandle:             DB  0
+ 333+ A35C 00           CardFlags               DB  0
+ 334+ A35D 00 00        TargetSize              DW  0
+ 335+ A35F 00 00        FileStreamPort          DW  0
+ 336+ A361 00 00 00...  FileBuffer              DS  512                     ; block of data
+ 337+ A561 00           FilereadsPerformed      DB  0
+ 338+ A562 00 00        FilemapBlockCount       DW  0
+ 339+ A564 00 00        FilemapBufferPointer    DW  0
+ 340+ A566 00 00        FilemapBufferLast       DW  0
+ 341+ A568 00 00 00...  FilemapBuffer           DS  FILEMAP_BLOCK_SIZE * FILEMAP_SIZE        ; expecting 60 to be overkill as most should be 1
+ 342+ A628
 # file closed: ./Hardware/drive_access.asm
- 611  A5C0
- 612  A5C0                  INCLUDE "./Menus/common_menu.asm"
+ 611  A628
+ 612  A628                  INCLUDE "./Menus/common_menu.asm"
 # file opened: ./Menus/common_menu.asm
-   1+ A5C0 43 4F 4D 4D  txt_commander 			DB "COMMANDER",0
-   1+ A5C4 41 4E 44 45
-   1+ A5C8 52 00
-   2+ A5CA 49 4E 56 45  txt_inventory 			DB "INVENTORY",0
-   2+ A5CE 4E 54 4F 52
-   2+ A5D2 59 00
-   3+ A5D4 50 72 65 73  txt_present_system		DB "Present System   :",0
-   3+ A5D8 65 6E 74 20
-   3+ A5DC 53 79 73 74
-   3+ A5E0 65 6D 20 20
-   3+ A5E4 20 3A 00
-   4+ A5E7 48 79 70 65  txt_hyperspace_system	DB "Hyperspace System:",0
-   4+ A5EB 72 73 70 61
-   4+ A5EF 63 65 20 53
-   4+ A5F3 79 73 74 65
-   4+ A5F7 6D 3A 00
-   5+ A5FA 43 6F 6E 64  txt_condition			DB "Condition   :",0
-   5+ A5FE 69 74 69 6F
-   5+ A602 6E 20 20 20
-   5+ A606 3A 00
-   6+ A608 46 75 65 6C  txt_fuel				DB "Fuel        :",0
-   6+ A60C 20 20 20 20
-   6+ A610 20 20 20 20
-   6+ A614 3A 00
-   7+ A616 43 61 73 68  txt_cash				DB "Cash        :",0
-   7+ A61A 20 20 20 20
-   7+ A61E 20 20 20 20
-   7+ A622 3A 00
-   8+ A624 4C 65 67 61  txt_legal_status		DB "Legal Status:",0
-   8+ A628 6C 20 53 74
-   8+ A62C 61 74 75 73
-   8+ A630 3A 00
-   9+ A632 52 61 74 69  txt_rating				DB "Rating      :",0
-   9+ A636 6E 67 20 20
-   9+ A63A 20 20 20 20
-   9+ A63E 3A 00
-  10+ A640 45 51 55 49  txt_equipment			DB "EQUIPMENT:",0
-  10+ A644 50 4D 45 4E
-  10+ A648 54 3A 00
-  11+ A64B
-  12+ A64B 30 30 2E 30  txt_fuel_level			DB "00.0 Light Years",0
-  12+ A64F 20 4C 69 67
-  12+ A653 68 74 20 59
-  12+ A657 65 61 72 73
-  12+ A65B 00
-  13+ A65C 58 58 58 58  txt_cash_amount			DB "XXXXXXXXXX",0
-  13+ A660 58 58 58 58
-  13+ A664 58 58 00
-  14+ A667 2E           txt_cash_decimal        DB "."
-  15+ A668 58 20 43 72  txt_cash_fraction       DB "X Cr",0
-  15+ A66C 00
-  16+ A66D
-  17+ A66D              txt_status_colour		equ $FF
-  18+ A66D
-  19+ A66D              print_boiler_text_l2:
-  20+ A66D              ; ">print_boilder_text hl = text structure, b = message count"
-  21+ A66D              BoilerTextLoop:
-  22+ A66D C5           	push		bc			; Save Message Count loop value
-  23+ A66E 4E           	ld			c,(hl)		; Get Row into b
-  24+ A66F 23           	inc			hl
-  25+ A670 46           	ld			b,(hl)		; Get Col into b
-  26+ A671 23           	inc			hl
-  27+ A672 5E           	ld			e,(hl)		; Get text address Lo into E
-  28+ A673 23           	inc			hl
-  29+ A674 56           	ld			d,(hl)		; Get text address Hi into E
-  30+ A675 23           	inc			hl
-  31+ A676 E5           	push		hl			; Save present HL to stack as this is the address for the next message
-  32+ A677 EB           	ex			de,hl		; now hl = address of text data
-  33+ A678 1E FF        	ld			e,txt_status_colour
-  34+ A67A                  MMUSelectLayer2
-  34+ A67A ED 91 57 39 >					 nextreg L2memMMU,		    BankLAYER2
-  35+ A67E CD C8 E0     	call		l1_print_at
-  36+ A681 E1           	pop			hl
-  37+ A682 C1           	pop			bc
-  38+ A683 10 E8        	djnz		BoilerTextLoop
-  39+ A685 C9           	ret
-  40+ A686
-  41+ A686
-  42+ A686              print_boiler_text:
-  43+ A686              ; ">print_boilder_text hl = text structure, b = message count"
-  44+ A686              .BoilerTextLoop:
-  45+ A686 C5           	push		bc			; Save Message Count loop value
-  46+ A687 4E           	ld			c,(hl)		; Get Row into b
-  47+ A688 23           	inc			hl
-  48+ A689 46           	ld			b,(hl)		; Get Col into b
-  49+ A68A 23           	inc			hl
-  50+ A68B 5E           	ld			e,(hl)		; Get text address Lo into E
-  51+ A68C 23           	inc			hl
-  52+ A68D 56           	ld			d,(hl)		; Get text address Hi into E
-  53+ A68E 23           	inc			hl
-  54+ A68F E5           	push		hl			; Save present HL to stack as this is the address for the next message
-  55+ A690 EB           	ex			de,hl		; now hl = address of text data
-  56+ A691 1E FF        	ld			e,txt_status_colour
-  57+ A693 C5           	push		bc
-  58+ A694 D1           	pop			de
-  59+ A695 CD C8 E0     	call		l1_print_at
-  60+ A698 E1           	pop			hl
-  61+ A699 C1           	pop			bc
-  62+ A69A 10 EA        	djnz		.BoilerTextLoop
-  63+ A69C C9           	ret
-  64+ A69D
-  65+ A69D              GetFuelLevel:           INCLUDE "Menus/get_fuel_level_inlineinclude.asm"
+   1+ A628 43 4F 4D 4D  txt_commander 			DB "COMMANDER",0
+   1+ A62C 41 4E 44 45
+   1+ A630 52 00
+   2+ A632 49 4E 56 45  txt_inventory 			DB "INVENTORY",0
+   2+ A636 4E 54 4F 52
+   2+ A63A 59 00
+   3+ A63C 50 72 65 73  txt_present_system		DB "Present System   :",0
+   3+ A640 65 6E 74 20
+   3+ A644 53 79 73 74
+   3+ A648 65 6D 20 20
+   3+ A64C 20 3A 00
+   4+ A64F 48 79 70 65  txt_hyperspace_system	DB "Hyperspace System:",0
+   4+ A653 72 73 70 61
+   4+ A657 63 65 20 53
+   4+ A65B 79 73 74 65
+   4+ A65F 6D 3A 00
+   5+ A662 43 6F 6E 64  txt_condition			DB "Condition   :",0
+   5+ A666 69 74 69 6F
+   5+ A66A 6E 20 20 20
+   5+ A66E 3A 00
+   6+ A670 46 75 65 6C  txt_fuel				DB "Fuel        :",0
+   6+ A674 20 20 20 20
+   6+ A678 20 20 20 20
+   6+ A67C 3A 00
+   7+ A67E 43 61 73 68  txt_cash				DB "Cash        :",0
+   7+ A682 20 20 20 20
+   7+ A686 20 20 20 20
+   7+ A68A 3A 00
+   8+ A68C 4C 65 67 61  txt_legal_status		DB "Legal Status:",0
+   8+ A690 6C 20 53 74
+   8+ A694 61 74 75 73
+   8+ A698 3A 00
+   9+ A69A 52 61 74 69  txt_rating				DB "Rating      :",0
+   9+ A69E 6E 67 20 20
+   9+ A6A2 20 20 20 20
+   9+ A6A6 3A 00
+  10+ A6A8 45 51 55 49  txt_equipment			DB "EQUIPMENT:",0
+  10+ A6AC 50 4D 45 4E
+  10+ A6B0 54 3A 00
+  11+ A6B3
+  12+ A6B3 30 30 2E 30  txt_fuel_level			DB "00.0 Light Years",0
+  12+ A6B7 20 4C 69 67
+  12+ A6BB 68 74 20 59
+  12+ A6BF 65 61 72 73
+  12+ A6C3 00
+  13+ A6C4 58 58 58 58  txt_cash_amount			DB "XXXXXXXXXX",0
+  13+ A6C8 58 58 58 58
+  13+ A6CC 58 58 00
+  14+ A6CF 2E           txt_cash_decimal        DB "."
+  15+ A6D0 58 20 43 72  txt_cash_fraction       DB "X Cr",0
+  15+ A6D4 00
+  16+ A6D5
+  17+ A6D5              txt_status_colour		equ $FF
+  18+ A6D5
+  19+ A6D5              print_boiler_text_l2:
+  20+ A6D5              ; ">print_boilder_text hl = text structure, b = message count"
+  21+ A6D5              BoilerTextLoop:
+  22+ A6D5 C5           	push		bc			; Save Message Count loop value
+  23+ A6D6 4E           	ld			c,(hl)		; Get Row into b
+  24+ A6D7 23           	inc			hl
+  25+ A6D8 46           	ld			b,(hl)		; Get Col into b
+  26+ A6D9 23           	inc			hl
+  27+ A6DA 5E           	ld			e,(hl)		; Get text address Lo into E
+  28+ A6DB 23           	inc			hl
+  29+ A6DC 56           	ld			d,(hl)		; Get text address Hi into E
+  30+ A6DD 23           	inc			hl
+  31+ A6DE E5           	push		hl			; Save present HL to stack as this is the address for the next message
+  32+ A6DF EB           	ex			de,hl		; now hl = address of text data
+  33+ A6E0 1E FF        	ld			e,txt_status_colour
+  34+ A6E2                  MMUSelectLayer2
+  34+ A6E2 ED 91 57 39 >					 nextreg L2memMMU,		    BankLAYER2
+  35+ A6E6 CD C8 E0     	call		l1_print_at
+  36+ A6E9 E1           	pop			hl
+  37+ A6EA C1           	pop			bc
+  38+ A6EB 10 E8        	djnz		BoilerTextLoop
+  39+ A6ED C9           	ret
+  40+ A6EE
+  41+ A6EE
+  42+ A6EE              print_boiler_text:
+  43+ A6EE              ; ">print_boilder_text hl = text structure, b = message count"
+  44+ A6EE              .BoilerTextLoop:
+  45+ A6EE C5           	push		bc			; Save Message Count loop value
+  46+ A6EF 4E           	ld			c,(hl)		; Get Row into b
+  47+ A6F0 23           	inc			hl
+  48+ A6F1 46           	ld			b,(hl)		; Get Col into b
+  49+ A6F2 23           	inc			hl
+  50+ A6F3 5E           	ld			e,(hl)		; Get text address Lo into E
+  51+ A6F4 23           	inc			hl
+  52+ A6F5 56           	ld			d,(hl)		; Get text address Hi into E
+  53+ A6F6 23           	inc			hl
+  54+ A6F7 E5           	push		hl			; Save present HL to stack as this is the address for the next message
+  55+ A6F8 EB           	ex			de,hl		; now hl = address of text data
+  56+ A6F9 1E FF        	ld			e,txt_status_colour
+  57+ A6FB C5           	push		bc
+  58+ A6FC D1           	pop			de
+  59+ A6FD CD C8 E0     	call		l1_print_at
+  60+ A700 E1           	pop			hl
+  61+ A701 C1           	pop			bc
+  62+ A702 10 EA        	djnz		.BoilerTextLoop
+  63+ A704 C9           	ret
+  64+ A705
+  65+ A705              GetFuelLevel:           INCLUDE "Menus/get_fuel_level_inlineinclude.asm"
 # file opened: ./Menus/get_fuel_level_inlineinclude.asm
-   1++A69D
-   2++A69D
-   3++A69D 3A 93 86     	ld		a,(Fuel)
-   4++A6A0 11 4B A6     	ld		de,txt_fuel_level
-   5++A6A3 0E 9C        	ld	c, -100
-   6++A6A5 CD AF A6     	call	.Num1
-   7++A6A8 0E F6        	ld	c,-10
-   8++A6AA CD AF A6     	call	.Num1
-   9++A6AD 0E FF        	ld	c,-1
-  10++A6AF              .Num1:
-  11++A6AF 06 2F        	ld	b,'0'-1
-  12++A6B1              .Num2:
-  13++A6B1 04           	inc		b
-  14++A6B2 81           	add		a,c
-  15++A6B3 38 FC        	jr		c,.Num2
-  16++A6B5 91           	sub 	c
-  17++A6B6 C5           	push	bc
-  18++A6B7 F5           	push	af
-  19++A6B8 79           	ld		a,c
-  20++A6B9 FE FF        	cp		-1
-  21++A6BB CC C4 A6     	call	z,.InsertDot
-  22++A6BE 78           	ld		a,b
-  23++A6BF 12           	ld		(de),a
-  24++A6C0 13           	inc		de
-  25++A6C1 F1           	pop		af
-  26++A6C2 C1           	pop		bc
-  27++A6C3 C9           	ret
-  28++A6C4              .InsertDot:
-  29++A6C4 3E 2E        	ld		a,'.'
-  30++A6C6 12           	ld		(de),a
-  31++A6C7 13           	inc		de
-  32++A6C8 C9           	ret
-  33++A6C9
+   1++A705
+   2++A705
+   3++A705 3A 93 86     	ld		a,(Fuel)
+   4++A708 11 B3 A6     	ld		de,txt_fuel_level
+   5++A70B 0E 9C        	ld	c, -100
+   6++A70D CD 17 A7     	call	.Num1
+   7++A710 0E F6        	ld	c,-10
+   8++A712 CD 17 A7     	call	.Num1
+   9++A715 0E FF        	ld	c,-1
+  10++A717              .Num1:
+  11++A717 06 2F        	ld	b,'0'-1
+  12++A719              .Num2:
+  13++A719 04           	inc		b
+  14++A71A 81           	add		a,c
+  15++A71B 38 FC        	jr		c,.Num2
+  16++A71D 91           	sub 	c
+  17++A71E C5           	push	bc
+  18++A71F F5           	push	af
+  19++A720 79           	ld		a,c
+  20++A721 FE FF        	cp		-1
+  21++A723 CC 2C A7     	call	z,.InsertDot
+  22++A726 78           	ld		a,b
+  23++A727 12           	ld		(de),a
+  24++A728 13           	inc		de
+  25++A729 F1           	pop		af
+  26++A72A C1           	pop		bc
+  27++A72B C9           	ret
+  28++A72C              .InsertDot:
+  29++A72C 3E 2E        	ld		a,'.'
+  30++A72E 12           	ld		(de),a
+  31++A72F 13           	inc		de
+  32++A730 C9           	ret
+  33++A731
 # file closed: ./Menus/get_fuel_level_inlineinclude.asm
-  66+ A6C9
-  67+ A6C9 2A 8F 86     GetCash:                ld      hl,(Cash)
-  68+ A6CC EB                                   ex      de,hl
-  69+ A6CD DD 2A 91 86                          ld      ix,(Cash+2)
-  70+ A6D1 FD 21 5C A6                          ld		iy,txt_cash_amount
-  71+ A6D5 CD E5 98                             call 	DispDEIXtoIY	; This will write out with 0 termination after last digit
-  72+ A6D8 FD 7E 00     .ShiftDecimalDigit:     ld		a,(IY+0)				;Push last digit to post decimal
-  73+ A6DB 32 68 A6                             ld		(txt_cash_fraction),a
-  74+ A6DE 21 5D A6     .UpdateInteger:         ld		hl,txt_cash_amount+1	; Now was there only 1 digit
-  75+ A6E1 7E                                   ld		a,(hl)					; if so we leave it alone so its "0.0"
-  76+ A6E2 FE 00                                cp		0
-  77+ A6E4 C8                                   ret		z
-  78+ A6E5 FD 36 00 00                          ld		(IY),0					; Else we erase last digit as it went to fraction
-  79+ A6E9 C9                                   ret
-  80+ A6EA
+  66+ A731
+  67+ A731 2A 8F 86     GetCash:                ld      hl,(Cash)
+  68+ A734 EB                                   ex      de,hl
+  69+ A735 DD 2A 91 86                          ld      ix,(Cash+2)
+  70+ A739 FD 21 C4 A6                          ld		iy,txt_cash_amount
+  71+ A73D CD E5 98                             call 	DispDEIXtoIY	; This will write out with 0 termination after last digit
+  72+ A740 FD 7E 00     .ShiftDecimalDigit:     ld		a,(IY+0)				;Push last digit to post decimal
+  73+ A743 32 D0 A6                             ld		(txt_cash_fraction),a
+  74+ A746 21 C5 A6     .UpdateInteger:         ld		hl,txt_cash_amount+1	; Now was there only 1 digit
+  75+ A749 7E                                   ld		a,(hl)					; if so we leave it alone so its "0.0"
+  76+ A74A FE 00                                cp		0
+  77+ A74C C8                                   ret		z
+  78+ A74D FD 36 00 00                          ld		(IY),0					; Else we erase last digit as it went to fraction
+  79+ A751 C9                                   ret
+  80+ A752
 # file closed: ./Menus/common_menu.asm
- 613  A6EA
- 614  A6EA              EndOfNonBanked:
- 615  A6EA                  DISPLAY "Non Banked Code Ends At", EndOfNonBanked
- 616  A6EA
- 617  A6EA              ; ARCHIVED INCLUDE "Menus/draw_fuel_and_crosshair.asm"
- 618  A6EA              ;INCLUDE "./title_page.asm"
- 619  A6EA
- 620  A6EA              ; Blocks dependent on variables in Universe Banks
- 621  A6EA              ; Bank 49
- 622  A6EA              ;    SEG RESETUNIVSEG
- 623  A6EA              ;seg     CODE_SEG,       4:              $0000,       $8000                 ; flat address
- 624  A6EA              ;seg     RESETUNIVSEG,   BankResetUniv:  StartOfBank, ResetUniverseAddr
- 625  A6EA
- 626  A6EA
- 627  A6EA
- 628  A6EA              ;	ORG ResetUniverseAddr
- 629  A6EA              ;INCLUDE "./GameEngine/resetUniverse.asm"
- 630  A6EA              ; Bank 50  ------------------------------------------------------------------------------------------------------------------------
- 631  A6EA                  SLOT    MenuShrChtAddr
- 632  A6EA                  PAGE    BankMenuShrCht
- 633  A6EA              	ORG     MenuShrChtAddr,BankMenuShrCht
+ 613  A752
+ 614  A752              EndOfNonBanked:
+ 615  A752                  DISPLAY "Non Banked Code Ends At", EndOfNonBanked
+ 616  A752
+ 617  A752              ; ARCHIVED INCLUDE "Menus/draw_fuel_and_crosshair.asm"
+ 618  A752              ;INCLUDE "./title_page.asm"
+ 619  A752
+ 620  A752              ; Blocks dependent on variables in Universe Banks
+ 621  A752              ; Bank 49
+ 622  A752              ;    SEG RESETUNIVSEG
+ 623  A752              ;seg     CODE_SEG,       4:              $0000,       $8000                 ; flat address
+ 624  A752              ;seg     RESETUNIVSEG,   BankResetUniv:  StartOfBank, ResetUniverseAddr
+ 625  A752
+ 626  A752
+ 627  A752
+ 628  A752              ;	ORG ResetUniverseAddr
+ 629  A752              ;INCLUDE "./GameEngine/resetUniverse.asm"
+ 630  A752              ; Bank 50  ------------------------------------------------------------------------------------------------------------------------
+ 631  A752                  SLOT    MenuShrChtAddr
+ 632  A752                  PAGE    BankMenuShrCht
+ 633  A752              	ORG     MenuShrChtAddr,BankMenuShrCht
  634  C000                  INCLUDE "./Menus/short_range_chart_menu.asm"
 # file opened: ./Menus/short_range_chart_menu.asm
    1+ C000
@@ -16405,7 +16461,7 @@
    1++C133
    2++C133
    3++C133 3A 93 86     	ld		a,(Fuel)
-   4++C136 11 4B A6     	ld		de,txt_fuel_level
+   4++C136 11 B3 A6     	ld		de,txt_fuel_level
    5++C139 0E 9C        	ld	c, -100
    6++C13B CD 45 C1     	call	.Num1
    7++C13E 0E F6        	ld	c,-10
@@ -16541,7 +16597,7 @@
  184+ C238 21 10 C0                             ld		hl,inventory_boiler_text
  185+ C23B CD 70 C0                             call	INM_print_boiler_text
  186+ C23E CD 33 C1     .DisplayFuel:           call	INM_GetFuelLevel
- 187+ C241 21 4B A6                             ld		hl, txt_fuel_level
+ 187+ C241 21 B3 A6                             ld		hl, txt_fuel_level
  188+ C244 7E                                   ld		a,(hl)
  189+ C245 FE 30                                cp		'0'
  190+ C247 20 01                                jr		nz,.PrintFuel
@@ -18043,13 +18099,13 @@
   87+ E226 21 31 E0                             ld      hl, defaultSaveName             ; default debug name
   88+ E229 DD 21 40 E0                          ld      ix, SaveCommanderHeader
   89+ E22D 01 8A 00                             ld      bc, SaveSize
-  90+ E230 CD CC A2                             call    FileSave
+  90+ E230 CD 34 A3                             call    FileSave
   91+ E233 C9                                   ret
   92+ E234
   93+ E234 21 31 E0     loadCommander:          ld      hl, defaultSaveName             ; default debug name
   94+ E237 DD 21 40 E0                          ld      ix, SaveCommanderHeader
   95+ E23B 01 8A 00                             ld      bc, SaveSize
-  96+ E23E CD 9B A2                             call    FileLoad
+  96+ E23E CD 03 A3                             call    FileLoad
   97+ E241 CD 6B E1                             call    copyCommanderFromSave
   98+ E244                                      ClearMissileTargetting
   98+ E244 3E FF       >                        ld      a,StageMissileNotTargeting
@@ -27486,7 +27542,7 @@
   42+ E640 21 FD E5     load_a_pattern:         ld          hl,Filename
   43+ E643 DD 21 5D E6                          ld          ix,SpriteDatabuffer
   44+ E647 01 00 01                             ld          bc,256
-  45+ E64A CD 9B A2                             call        FileLoad
+  45+ E64A CD 03 A3                             call        FileLoad
   46+ E64D 1E FF                                ld          e,255
   47+ E64F 01 5B 00     .streamPattern:         ld          bc, SPRITE_PATTERN_UPLOAD_PORT
   48+ E652 21 5D E6                             ld          hl, SpriteDatabuffer
@@ -28670,16 +28726,16 @@
    1+ C008 20 20 20 20
    1+ C00C 50 47 36 33
    2+ C010
-   3+ C010 40 02 C0 A5  status_boiler_text		DW $0240,txt_commander
+   3+ C010 40 02 28 A6  status_boiler_text		DW $0240,txt_commander
    4+ C014 90 02 2B 84  						DW $0290,CommanderName
-   5+ C018 08 0B D4 A5  						DW $0B08,txt_present_system
-   6+ C01C 08 13 E7 A5  						DW $1308,txt_hyperspace_system
-   7+ C020 08 1B FA A5  						DW $1B08,txt_condition
-   8+ C024 08 23 08 A6  						DW $2308,txt_fuel
-   9+ C028 08 2B 16 A6  						DW $2B08,txt_cash
-  10+ C02C 08 33 24 A6  						DW $3308,txt_legal_status
-  11+ C030 08 3B 32 A6  						DW $3B08,txt_rating
-  12+ C034 08 4B 40 A6  						DW $4B08,txt_equipment
+   5+ C018 08 0B 3C A6  						DW $0B08,txt_present_system
+   6+ C01C 08 13 4F A6  						DW $1308,txt_hyperspace_system
+   7+ C020 08 1B 62 A6  						DW $1B08,txt_condition
+   8+ C024 08 23 70 A6  						DW $2308,txt_fuel
+   9+ C028 08 2B 7E A6  						DW $2B08,txt_cash
+  10+ C02C 08 33 8C A6  						DW $3308,txt_legal_status
+  11+ C030 08 3B 9A A6  						DW $3B08,txt_rating
+  12+ C034 08 4B A8 A6  						DW $4B08,txt_equipment
   13+ C038
   14+ C038 00 00        equipment_cursor		DW  $0000
   15+ C03A              present_position		equ	$0B98
@@ -28952,8 +29008,8 @@
  233+ CE60 ED 91 57 39 >					 nextreg L2memMMU,		    BankLAYER2
  234+ CE64 1E FF                                ld      e,txt_status_colour
  235+ CE66 CD C2 E1                             call    l2_print_at
- 236+ CE69 CD 9D A6     .DisplayFuel:           call	GetFuelLevel
- 237+ CE6C 21 4B A6                             ld		hl, txt_fuel_level
+ 236+ CE69 CD 05 A7     .DisplayFuel:           call	GetFuelLevel
+ 237+ CE6C 21 B3 A6                             ld		hl, txt_fuel_level
  238+ CE6F 7E                                   ld		a,(hl)
  239+ CE70 FE 30                                cp		'0'
  240+ CE72 20 01                                jr		nz,.PrintFuel
@@ -34648,16 +34704,16 @@
    4++D845 47                                   ld      b,a
    5++D846 E6 80                                and     SignOnly8Bit
    6++D848 4F                                   ld      c,a
-   7++D849 32 3F C0                             ld      (univRAT2),a                ; get sign of pitch
+   7++D849 32 3F C0                             ld      (univRAT2),a                    ; get sign of pitch
    8++D84C 78                                   ld      a,b
-   9++D84D E6 7F                                and     SignMask8Bit                ; and magnitude
+   9++D84D E6 7F                                and     SignMask8Bit                    ; and magnitude
   10++D84F 28 3A                                jr      z,.ProcessRoll
   11++D851 FE 7F        .CheckPitchDamping:     cp      SignMask8Bit
   12++D853 28 01                                jr      z,.NoPitchDamping
-  13++D855 3D           .ApplyPitchDamping:     dec     a                           ; pitch = pitch-1
+  13++D855 3D           .ApplyPitchDamping:     dec     a                               ; pitch = pitch-1
   14++D856 32 40 C0     .NoPitchDamping         ld      (univRAT2Val),a
   15++D859 47                                   ld      b,a
-  16++D85A B1                                   or      c                           ; bring sign back in
+  16++D85A B1                                   or      c                               ; bring sign back in
   17++D85B 32 39 C0                             ld      (UBnKRotZCounter),a             ; rotZCounter = updated value
   18++D85E 21 1F C0     .PitchSAxes:            ld	    hl,UBnkrotmatRoofvX; UBnkrotmatSidevY
   19++D861 22 0B 80                             ld	    (varAxis1),hl

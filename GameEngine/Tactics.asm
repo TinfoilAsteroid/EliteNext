@@ -179,7 +179,7 @@ TacticsTargetShip       DB 0
 TacticsUBnKx            DS 3
 TacticsUBnKy            DS 3 
 TacticsUBnKz            DS 3
-TacticsDotProduct       DS 2
+TacticsDotProduct1      DS 2
 TacticsDotProduct2      DS 2
 TacticsDotProduct3      DS 2
 
@@ -212,7 +212,8 @@ MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
 .ShipIsExploding:       SelectMissileBank                           ; get missile back into memory
                         jp      .ECMIsActive
 ;--- At this point we already have the target banked in ready for calculating vector
-.UpdateTargetingShipX  :ld      de,(UBnKxlo)                        ; get target ship X
+.UpdateTargetingShipX : break
+                        ld      de,(UBnKxlo)                        ; get target ship X
                         ld      a,(UBnKxsgn)                        ; and flip sign so we have missile - target
                         FlipSignBitA
                         ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
@@ -249,7 +250,7 @@ MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
                         ld      (TacticsVectorZ+2),a
 ; by here missile in in memory and TacticsVector now holds distance
 ; if or ABS all high bytes is <> 0
-.CheckDistance:         ld      hl,(TacticsVectorX+1)              ; test if high bytes are set
+.CheckDistance:         ld      hl,(TacticsVectorX+1)              ; test if high bytes are set (value is assumed to be 24 bit, though calcs are only 16 so this is uneeded)
                         ld      a,h                                ; .
                         ld      de,(TacticsVectorY+1)              ; .
                         or      d                                  ; .
@@ -257,7 +258,7 @@ MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
                         or      b                                  ; .
                         ClearSignBitA                              ; .
                         JumpIfNotZero       .FarAway               ; .
-                        or      l                                  ; test for low byte bit 7
+                        or      l                                  ; test for low byte bit 7, i.e high of 16 bit values
                         or      e                                  ; .
                         or      c                                  ; .
                         JumpIfNotZero       .FarAway               ; .
@@ -281,39 +282,35 @@ MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
 ;--- Now we can actually update the missile AI                      
 .UpdateMissilePos:      ;break
                         SelectMissileBank
-                        ;call    ReduceTacticVectors                 ; get vectors down to 5 bit + sign bit
-                        call    NormalizeTactics                    ; Normalise vector
-                        call    XX12EquTacticsDotNosev              ; SA = nose . XX15
-                        ld      (TacticsDotProduct),a               ; CNT = A (high byte of dot product)
-                        FlipSignMem TacticsVectorX+1                ; negate vector in XX15 so it points opposite direction
-                        FlipSignMem TacticsVectorY+1                ; .
+.NormaliseDirection:    call    NormalizeTactics                    ; Normalise vector down to 7 bit + sign byte
+.NoseDotProduct:        call    XX12EquTacticsDotNosev              ; SA = nose . XX15
+                        ld      (TacticsDotProduct1),a               ; CNT = A (high byte of dot product)
+                        ld      a,(varS)                            ; get sign from dot product
+                        xor     SignOnly8Bit                        ; and flip the sign bit
+                        and     SignOnly8Bit                        ; and save the sign into Dot product
+                        ld      (TacticsDotProduct1+1),a             ; negate value of CNT so +ve if facing or -ve if facing same way
+.NegateDirection:       FlipSignMem TacticsVectorX+1                ; negate vector in XX15 so it points opposite direction
+                        FlipSignMem TacticsVectorY+1                ; we have already negated the dot product above
                         FlipSignMem TacticsVectorZ+1                ; .  
-                        ld      a,(varS)
-                        xor SignOnly8Bit
-                        ld      (TacticsDotProduct+1),a             ;  negate value of CNT so +ve if facing or -ve if facing same way
-                        call    XX12EquTacticsDotRoofv              ;  AX = roofv.XX15
-                        ld      (TacticsDotProduct2),a              ;  SaveA
-                        ld      a,(varS)                            ;  .
-                        ld      (TacticsDotProduct2+1),a            ;  .
-                        FlipSignBitA                                ; use the flip version of dot product
-                        ld      b,3                                 ; and pitch to maxium 3
-                        or      b                                   ; .
-                        ld      (UBnKRotZCounter),a                 ; .
-                        ld      a,(UBnKRotXCounter)                 ; a = abs roll counter 
-                        ClearSignBitA                               ;
-                        JumpIfAGTENusng 16, .AlreadyRolling
-                        call    XX12EquTacticsDotSidev              ; get dot product of xx15. sidev
-                        ld      (TacticsDotProduct2),a              ; This will be positive if XX15 is pointing in the same direction
+.RoofDotProduct:        call    XX12EquTacticsDotRoofv              ; Now tran the roof for rotation        
+                        ld      (TacticsDotProduct2),a              ; so if its +ve then the roof is similar so pull up to head towards it
+                        ld      a,(varS)                            ; .                                       
+                        ld      (TacticsDotProduct2+1),a            ; .                                       
+                        call    calcNPitch                          ; work out pitch
+                        ld      a,(UBnKRotZCounter)
+                        sla     a                                   ; strip off sign (also doubling it)
+                        JumpIfAGTENusng 32, .AlreadyRolling
+.SideDotProduct:        call    XX12EquTacticsDotSidev              ; get dot product of xx15. sidev
+                        ld      (TacticsDotProduct3),a              ; This will be positive if XX15 is pointing in the same direction
                         ld      a,(varS)                            ;  
-                        ld      (TacticsDotProduct2+1),a            ;
-                        SetSignBitA                                   ; Set the ship's roll counter to 5, with the sign set to positive if the pitch counter and dot product have different signs
-                        ld      hl,UBnKRotZCounter
-                        xor     (hl)
-                        or      5
+                        xor     SignOnly8Bit                        ; and flip the sign bit
+                        and     SignOnly8Bit                        ; and save the sign into Dot product                        
+                        ld      (TacticsDotProduct3+1),a            ;
+                        call    calcNRoll
                         ld      (UBnKRotXCounter),a
-.AlreadyRolling:        ld      a,(TacticsDotProduct+1)             ; Fetch the dot product, and if it's negative jump to
+.AlreadyRolling:        ld      a,(TacticsDotProduct1+1)             ; Fetch the dot product, and if it's negative jump to
                         JumpIfAIsNotZero    .SlowDown               ; slow down routine
-                        ld      a,(TacticsDotProduct)
+                        ld      a,(TacticsDotProduct1)
                         JumpIfALTNusng  22, .SlowDown
 .Accellerate:           ld      a,3                                 ; full accelleration
                         ld      (UBnKAccel),a
@@ -360,7 +357,43 @@ MissileAI:              JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
                         jp      .ProcessMissileHit              ; lets see if we can enqueue now
                         ; DUMMY RET get a free return as activenewexplosion does jp to init with a free ret
 
+; On Entry A = TacticsDotProduct2 sign (i.e. roof direction)
+; on exit a == new roll
+calcNPitch:             xor     SignOnly8Bit                    ; flip sign of dot product
+                        and     SignOnly8Bit
+                        ld      c,a
+                        ld      a,(UBnKRotZCounter)
+                        and     SignMask8Bit                    ; get ABS value
+                        ld      b,a
+                        ld      a,(TacticsDotProduct2)          ; now we have the dot product abs value
+                        JumpIfALTNusng b, .calcNPitch2
+                        ld      a,(UBnKRotZCounter)
+                        or      c
+                        ld      (UBnKRotZCounter),a
+                        ret
+.calcNPitch2:           ld      a,iyl                           ; in effect 0 with the sign 
+                        ld      (UBnKRotZCounter),a
+                        ret
+                        
+calcNRoll:              xor     SignOnly8Bit                    ; flip sign of dot product
+                        and     SignOnly8Bit
+                        ld      c,a
+                        ld      a,(UBnKRotXCounter)
+                        and     SignMask8Bit                    ; get ABS value
+                        ld      b,a
+                        ld      a,(TacticsDotProduct2)          ; now we have the dot product abs value
+                        JumpIfALTNusng b, .calcNRoll2
+                        ld      a,(UBnKRotXCounter)
+                        or      c
+                        ld      (UBnKRotXCounter),a
+                        ret
+.calcNRoll2:            ld      a,iyl                           ; in effect 0 with the sign 
+                        ld      (UBnKRotXCounter),a
+                        ret
+                        
+                       
 
+        
 TacticsVectorX:         DS 3
 TacticsVectorY:         DS 3
 TacticsVectorZ:         DS 3
@@ -377,13 +410,13 @@ TacticsNormalisedZ      DB  1                                   ;
 XX12EquTacticsDotNosev: ld      hl,UBnkTransmatNosevX
 XX12EquTacticsDotHL:    N0equN1byN2div256 varT, (hl), (TacticsVectorX)       ; T = (hl) * regXX15fx /256 
                         inc     hl                                  ; move to sign byte
-.XX12CalcXSign:         AequN1xorN2 UBnkXScaledSign,(hl)             ;
+.XX12CalcXSign:         AequN1xorN2 TacticsVectorX+2, (hl) ;UBnkXScaledSign,(hl)             ;
                         ld      (varS),a                            ; Set S to the sign of x_sign * sidev_x
                         inc     hl
 .XX12CalcY:              N0equN1byN2div256 varQ, (hl),(TacticsVectorY)       ; Q = XX16 * XX15 /256 using varQ to hold regXX15fx
                         ldCopyByte varT,varR                        ; R = T =  |sidev_x| * x_lo / 256
                         inc     hl
-                        AequN1xorN2 UBnkYScaledSign,(hl)             ; Set A to the sign of y_sign * sidev_y
+                        AequN1xorN2 TacticsVectorY+2,(hl)             ; Set A to the sign of y_sign * sidev_y
 ; (S)A = |sidev_x| * x_lo / 256  = |sidev_x| * x_lo + |sidev_y| * y_lo
 .STequSRplusAQ           push    hl
                         call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA) \ 1byte add (subtract)
@@ -393,7 +426,7 @@ XX12EquTacticsDotHL:    N0equN1byN2div256 varT, (hl), (TacticsVectorX)       ; T
 .XX12CalcZ:              N0equN1byN2div256 varQ,(hl),(TacticsVectorZ)       ; Q = |sidev_z| * z_lo / 256
                         ldCopyByte varT,varR                        ; R = |sidev_x| * x_lo + |sidev_y| * y_lo
                         inc     hl
-                        AequN1xorN2 UBnkZScaledSign,(hl)             ; A = sign of z_sign * sidev_z
+                        AequN1xorN2 TacticsVectorY+2,(hl)             ; A = sign of z_sign * sidev_z
 ; (S)A= |sidev_x| * x_lo + |sidev_y| * y_lo + |sidev_z| * z_lo        
                         call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA)   \ 1byte add (subtract)
 ; Now we exit with A = result S = Sign        
@@ -451,12 +484,19 @@ NormalizeTactics:       ld      hl, (TacticsVectorX)        ; pull XX15 into reg
                         ld      d,iyh                        
                         call    AequAdivDmul96;AequAdivDmul96Unsg
                         ld      (TacticsVectorX),a
+                        ; BODGE FOR NOW
+                        SignBitOnlyMem TacticsVectorX+2     ; now upper byte is sign only
+                        SignBitOnlyMem TacticsVectorY+2     ; (could move it to lower perhaps later if 
+                        SignBitOnlyMem TacticsVectorZ+2     ;  its worth it)
+                        ldCopyByte TacticsVectorX+2, TacticsVectorX+1
+                        ldCopyByte TacticsVectorY+2, TacticsVectorY+1
+                        ldCopyByte TacticsVectorZ+2, TacticsVectorZ+1
                         SignBitOnlyMem TacticsVectorX+1     ; now upper byte is sign only
                         SignBitOnlyMem TacticsVectorY+1     ; (could move it to lower perhaps later if 
                         SignBitOnlyMem TacticsVectorZ+1     ;  its worth it)
                         ret
 
-        
+
 ;TODOcall    TacticsPosMinusTarget              ; calculate vector to target
 ;;TODO                        check range
 ;;TODO                        if target has ecm then 7% chance it will active, reduce target energy (i.e. damage)

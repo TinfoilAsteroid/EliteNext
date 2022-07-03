@@ -4,16 +4,16 @@ ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)             ; get roll magni
                         ld      b,a
                         and     SignOnly8Bit                
                         ld      c,a
-                        ld      (univRAT2),a                ; get sign of pitch
+                        ld      (univRAT2),a                    ; get sign of pitch
                         ld      a,b
-                        and     SignMask8Bit                ; and magnitude
+                        and     SignMask8Bit                    ; and magnitude
                         jr      z,.ProcessRoll
 .CheckPitchDamping:     cp      SignMask8Bit
                         jr      z,.NoPitchDamping
-.ApplyPitchDamping:     dec     a                           ; pitch = pitch-1
+.ApplyPitchDamping:     dec     a                               ; pitch = pitch-1
 .NoPitchDamping         ld      (univRAT2Val),a
                         ld      b,a
-                        or      c                           ; bring sign back in
+                        or      c                               ; bring sign back in
                         ld      (UBnKRotZCounter),a             ; rotZCounter = updated value
 .PitchSAxes:            ld	    hl,UBnkrotmatRoofvX; UBnkrotmatSidevY
                         ld	    (varAxis1),hl
