@@ -1,7 +1,7 @@
 ;.. SpawnShipTypeA
 ; IN
 ;  a = ship type to create (equates to the ship model)
-SpawnShipTypeA:         break
+SpawnShipTypeA:         ;break
                         ld      iyl,a                               ; save ship type in iyh
                         call    FindNextFreeSlotInC                 ; c = slot number to use
                         ret     c                                   ; if carry flag was set then no spare slots

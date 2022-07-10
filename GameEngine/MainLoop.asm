@@ -308,7 +308,7 @@ LoopEventTriggered:     call    FindNextFreeSlotInC                 ; c= slot nu
 .WitchSpaceEvent:       ret; TODO for now
 
 
-LaunchPlayerMissile:    break
+LaunchPlayerMissile:   ; break
                         call    FindNextFreeSlotInC                 ; Check if we have a slot free
                         jr      c,.MissileMissFire                  ; give a miss fire indicator as we have no slots
 .LaunchGood:            ld      a,0                                 ; TODO For now only 1 missile type

@@ -78,6 +78,7 @@ cpHLDE:                 MACRO
 ;If HL <  DE, then S and P/V are different.
 ;If HL >= DE, then S and P/V are the same.
 
+
 N0equN1byN2div256:      MACRO param1,param2,param3
                         ld      a,param3                        ; 
                         ld      e,a                         ; use e as var Q = value of XX15 [n] lo

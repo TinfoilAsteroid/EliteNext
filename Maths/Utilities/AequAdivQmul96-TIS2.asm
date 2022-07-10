@@ -35,6 +35,25 @@ TIS2:
 	ld			a,(varQ)
 	ld			d,a							; d = varQ
 	ld			a,c							; recover a
+AequAdivDmul967Bit:
+    ld          c,a
+    ld          a,d
+    sla         a
+    jr          nc, .OKToDivide
+.ScaleDown:
+    or          a
+    srl         d
+    
+    ld          a,c
+    and         SignMask8Bit
+    srl         a
+    ld          b,a
+    ld          a,c
+    and         $80
+    or          b
+    jp          AequAdivDmul96
+.OKToDivide:
+    ld          a,c
 AequAdivDmul96:
 	ld			c,a							; copy of Acc as we need the sign, alternate entry point assuming D preloaded, wastes an "ld c,a" but simplifies code
 	and			SignMask8Bit				; ignore sign
@@ -42,18 +61,18 @@ AequAdivDmul96:
 	ld			b,$FE						; division roll (replaced varT)
 .TIS2RollTLoop:									; .TIL2	; roll T
 	sla			a		
-	JumpIfALTNusng d,.TIS2SkipSub            ; a < d so don;t subtract
+	JumpIfALTNusng d,.TIS2SkipSub           ; a < d so don;t subtract
 	sbc			a,d							; do subtraction with carry
-	scf
+	scf                                     ; set carrry to roll into b
 	rl			b							; T rolled left to push bit out the end
-	jr			c,.TIS2RollTLoop				; if we still have not hit the empty marker continue
+	jr			c,.TIS2RollTLoop			; if we still have not hit the empty marker continue
 .TIS2SKIPCont:	
-	ld			a,b							; T
-	srl			a							; result / 2
-	srl			a							; result / 4
-	ld			b,a							; t = t /4
-	srl			a							; result / 8
-	add			a,b							; result /8 + result /4
+	ld			a,b							; A = T = 4 / 4
+	srl			a							; .
+	srl			a							; .
+	ld			b,a							; .
+	srl			a							; A = A / 2 (i.e. T /8)
+	add			a,b							; A = T/8 + T/4 (3T/8)
 	ld			b,a							; b = 3/8*Acc (max = 96)
 	ld			a,c							; copy of Acc to look at sign bit
 	and			$80							; recover sign only
@@ -66,8 +85,8 @@ AequAdivDmul96:
 	or			$60							; unity
 	ret
 .TIS2SkipSub:
-	or			a
+	ClearCarryFlag                          ; Clear carry as it needs to be empty to roll in 0
 	rl			b							; T rolled left to push bit out the end
-	jr			c,.TIS2RollTLoop				; if we still have not hit the empty marker continue
+	jr			c,.TIS2RollTLoop			; if we still have not hit the empty marker continue
 	jp			.TIS2SKIPCont
 	

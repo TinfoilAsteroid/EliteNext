@@ -53,7 +53,6 @@ ShiftBCLeft1:  MACRO
 			   sla c
 			   rl  b
 			   ENDM
-       
                     
 ShiftMem16Right1:   MACRO memaddr
                     ld    hl,(memaddr)

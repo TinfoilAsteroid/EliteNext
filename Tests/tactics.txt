@@ -1,0 +1,2248 @@
+# file opened: tactics.asm
+  1   0000              ;.. Missile Tactics test code
+  2   0000
+  3   0000                                      DEVICE ZXSPECTRUMNEXT
+  4   0000                                      DEFINE  DOUBLEBUFFER 1
+  5   0000                                      CSPECTMAP tactics.map
+  6   0000                                      OPT --zxnext=cspect --syntax=a --reversepop
+  7   0000                                      INCLUDE "../Macros/carryFlagMacros.asm"
+# file opened: ../Macros/carryFlagMacros.asm
+  1+  0000
+  2+  0000              SetCarryFlag:           MACRO
+  3+  0000 ~                                    scf
+  4+  0000                                      ENDM
+  5+  0000
+  6+  0000              ClearCarryFlag:	        MACRO
+  7+  0000 ~                                    or a
+  8+  0000                                      ENDM
+  9+  0000
+ 10+  0000              FlipCarryFlag:          MACRO
+ 11+  0000 ~                                    ccf
+ 12+  0000                                      ENDM
+ 13+  0000
+# file closed: ../Macros/carryFlagMacros.asm
+  8   0000                                      INCLUDE "../Macros/jumpMacros.asm"
+# file opened: ../Macros/jumpMacros.asm
+  1+  0000              JumpIfPositive:	        MACRO target
+  2+  0000 ~                                    jp		p, target
+  3+  0000                                      ENDM
+  4+  0000
+  5+  0000              JumpIfNegative:	        MACRO target
+  6+  0000 ~                                    jp		m, target
+  7+  0000                                      ENDM
+  8+  0000
+  9+  0000
+ 10+  0000              JumpIfUnderflow:	    MACRO target
+ 11+  0000 ~                                    jp		po, target
+ 12+  0000                                      ENDM
+ 13+  0000
+ 14+  0000              JumpIfOverflow:	        MACRO target
+ 15+  0000 ~                                    jp		po, target
+ 16+  0000                                      ENDM
+ 17+  0000
+ 18+  0000
+ 19+  0000              JumpIfNotZero:	        MACRO target
+ 20+  0000 ~                                    jp	nz,target
+ 21+  0000                                      ENDM
+ 22+  0000
+ 23+  0000              JumpIfZero:	            MACRO target
+ 24+  0000 ~                                    jp	z,target
+ 25+  0000                                      ENDM
+ 26+  0000
+ 27+  0000              ;.. Bit routines
+ 28+  0000              JumpOnLeadSignSet:      MACRO   reg, target
+ 29+  0000 ~                                    ld      a,reg
+ 30+  0000 ~                                    and     SignOnly8Bit
+ 31+  0000 ~                                    jp      nz,target
+ 32+  0000                                      ENDM
+ 33+  0000
+ 34+  0000              JumpOnLeadSignClear:    MACRO   reg, target
+ 35+  0000 ~                                    ld      a,reg
+ 36+  0000 ~                                    and     SignOnly8Bit
+ 37+  0000 ~                                    jp      z,target
+ 38+  0000                                      ENDM
+ 39+  0000
+ 40+  0000              JumpOnLeadSignSetA:     MACRO   target
+ 41+  0000 ~                                    and     SignOnly8Bit
+ 42+  0000 ~                                    jp      nz,target
+ 43+  0000                                      ENDM
+ 44+  0000
+ 45+  0000              JumpOnLeadSignClearA:   MACRO   target
+ 46+  0000 ~                                    and     SignOnly8Bit
+ 47+  0000 ~                                    jp      z,target
+ 48+  0000                                      ENDM
+ 49+  0000
+ 50+  0000              JumpOnMemBitSet:        MACRO mem, bitnbr, target
+ 51+  0000 ~                                    ld      a,(mem)
+ 52+  0000 ~                                    bit 	bitnbr,a
+ 53+  0000 ~                                    jp      nz,target
+ 54+  0000                                      ENDM
+ 55+  0000
+ 56+  0000              JumpOnMemBitClear:      MACRO mem, bitnbr, target
+ 57+  0000 ~                                    ld      a,(mem)
+ 58+  0000 ~                                    bit 	bitnbr,a
+ 59+  0000 ~                                    jp      z,target
+ 60+  0000                                      ENDM
+ 61+  0000
+ 62+  0000
+ 63+  0000              JumpOnABitSet:          MACRO   bitnbr, target
+ 64+  0000 ~                                    bit 	bitnbr, a
+ 65+  0000 ~                                    jp      nz,target
+ 66+  0000                                      ENDM
+ 67+  0000
+ 68+  0000              JumpOnABitClear:        MACRO   bitnbr, target
+ 69+  0000 ~                                    bit 	bitnbr, a
+ 70+  0000 ~                                    jp      z,target
+ 71+  0000                                      ENDM
+ 72+  0000
+ 73+  0000              JumpOnABit5Set:         MACRO   target
+ 74+  0000 ~                                    and     Bit5Only
+ 75+  0000 ~                                    jp      nz,target
+ 76+  0000                                      ENDM
+ 77+  0000
+ 78+  0000              JumpOnABit5Clear:       MACRO   target
+ 79+  0000 ~                                    and     Bit5Only
+ 80+  0000 ~                                    jp      z,target
+ 81+  0000                                      ENDM
+ 82+  0000
+ 83+  0000              JumpOnBitMaskSet:       MACRO   bitmask, target
+ 84+  0000 ~                                    and     bitmask
+ 85+  0000 ~                                    jp      nz,target
+ 86+  0000                                      ENDM
+ 87+  0000
+ 88+  0000              JumpOnBitMaskClear:     MACRO   bitmask, target
+ 89+  0000 ~                                    and     bitmask
+ 90+  0000 ~                                    jp      z,target
+ 91+  0000                                      ENDM
+ 92+  0000
+ 93+  0000              JumpOnMemBitMaskSet:    MACRO   mem, bitmask, target
+ 94+  0000 ~                                    ld      a,(mem)
+ 95+  0000 ~                                    and     bitmask
+ 96+  0000 ~                                    jp      nz,target
+ 97+  0000                                      ENDM
+ 98+  0000
+ 99+  0000              JumpOnMemBitMaskClear:  MACRO   mem, bitmask, target
+100+  0000 ~                                    ld      a,(mem)
+101+  0000 ~                                    and     bitmask
+102+  0000 ~                                    jp      z,target
+103+  0000                                      ENDM
+104+  0000
+105+  0000              JumpOnBitSet:           MACRO  reg, bitnbr, target
+106+  0000 ~                                    bit 	bitnbr,reg
+107+  0000 ~                                    jp      nz,target
+108+  0000                                      ENDM
+109+  0000
+110+  0000              JumpOnBitClear:         MACRO  reg, bitnbr, target
+111+  0000 ~                                    bit 	bitnbr,reg
+112+  0000 ~                                    jp      z,target
+113+  0000                                      ENDM
+114+  0000
+115+  0000              ; Comparison Routines
+116+  0000              JumpIfAGTEusng:         MACRO
+117+  0000 ~                                    jp		nc,target
+118+  0000                                      ENDM
+119+  0000
+120+  0000              JumpIfAGTENusng:        MACRO reg,target
+121+  0000 ~                                    cp     reg
+122+  0000 ~                                    jp		nc,target
+123+  0000                                      ENDM
+124+  0000
+125+  0000              JumpIfAGTEMemusng:      MACRO mem,target
+126+  0000 ~                                    ld      hl,mem
+127+  0000 ~                                    cp      (hl)
+128+  0000 ~                                    jp		nc,target
+129+  0000                                      ENDM
+130+  0000
+131+  0000              JumpIfALTMemusng:       MACRO mem,target
+132+  0000 ~                                    ld      hl,mem
+133+  0000 ~                                    cp      (hl)
+134+  0000 ~                                    jp		c,target
+135+  0000                                      ENDM
+136+  0000
+137+  0000              JumpIfMemGTENusng:      MACRO mem, value, target
+138+  0000 ~                                    ld     a,(mem)
+139+  0000 ~                                    cp     value
+140+  0000 ~                                    jp	  nc,target
+141+  0000                                      ENDM
+142+  0000
+143+  0000              JumpIfMemGTEMemusng:    MACRO mem, address, target
+144+  0000 ~                                    ld   a,(mem)
+145+  0000 ~                                    ld   hl,address
+146+  0000 ~                                    cp   (hl)
+147+  0000 ~                                    jp	  nc,target
+148+  0000                                      ENDM
+149+  0000
+150+  0000              JumpIfMemEqMemusng:     MACRO mem, address, target
+151+  0000 ~                                    ld   a,(mem)
+152+  0000 ~                                    ld   hl,address
+153+  0000 ~                                    cp   (hl)
+154+  0000 ~                                    jp	  z,target
+155+  0000                                      ENDM
+156+  0000
+157+  0000              JumpIfMemNeMemusng:     MACRO mem, address, target
+158+  0000 ~                                    ld   a,(mem)
+159+  0000 ~                                    ld   hl,address
+160+  0000 ~                                    cp   (hl)
+161+  0000 ~                                    jp	  nz,target
+162+  0000                                      ENDM
+163+  0000
+164+  0000              JumpIfMemTrue:          MACRO mem, target
+165+  0000 ~                                    ld      a,(mem)
+166+  0000 ~                                    and     a
+167+  0000 ~                                    jp      z, target
+168+  0000                                      ENDM
+169+  0000
+170+  0000              JumpIfMemFalse:         MACRO mem, target
+171+  0000 ~                                    ld      a,(mem)
+172+  0000 ~                                    and     a
+173+  0000 ~                                    jp      nz, target
+174+  0000                                      ENDM
+175+  0000
+176+  0000              JumpIfATrue:            MACRO target
+177+  0000 ~                                    and     a
+178+  0000 ~                                    jp      z, target
+179+  0000                                      ENDM
+180+  0000
+181+  0000              JumpIfAFalse:           MACRO target
+182+  0000 ~                                    and     a
+183+  0000 ~                                    jp      nz, target
+184+  0000                                      ENDM
+185+  0000
+186+  0000              JumpIfANotFalse:        MACRO target
+187+  0000 ~                                    cp      $FF
+188+  0000 ~                                    jp      nz, target
+189+  0000                                      ENDM
+190+  0000
+191+  0000              JumpIfALTusng:          MACRO target
+192+  0000 ~                                    jp		c,target
+193+  0000                                      ENDM
+194+  0000
+195+  0000              JumpIfALTNusng:         MACRO value, target
+196+  0000 ~                                    cp      value
+197+  0000 ~                                    jp		c, target
+198+  0000                                      ENDM
+199+  0000
+200+  0000              JumpIfMemLTNusng:       MACRO mem, value, target
+201+  0000 ~                                    ld      a,(mem)
+202+  0000 ~                                    cp      value
+203+  0000 ~                                    jp	  c,target
+204+  0000                                      ENDM
+205+  0000
+206+  0000              JumpIfMemLTMemusng:     MACRO mem, value, target
+207+  0000 ~                                    ld    a,(mem)
+208+  0000 ~                                    ld    hl,value
+209+  0000 ~                                    cp    (hl)
+210+  0000 ~                                    jp	  c,target
+211+  0000                                      ENDM
+212+  0000
+213+  0000              JumpIfMemEqNusng:       MACRO mem,value,target
+214+  0000 ~                                    ld  a,(mem)
+215+  0000 ~                                    cp  value
+216+  0000 ~                                    jp  z,target
+217+  0000                                      ENDM
+218+  0000
+219+  0000              JumpIfMemNeNusng:       MACRO mem,value,target
+220+  0000 ~                                    ld  a,(mem)
+221+  0000 ~                                    cp  value
+222+  0000 ~                                    jp  nz,target
+223+  0000                                      ENDM
+224+  0000
+225+  0000              JumpIfMemZero:          MACRO mem,target
+226+  0000 ~                                    ld  a,(mem)
+227+  0000 ~                                    and a
+228+  0000 ~                                    jp  z,target
+229+  0000                                      ENDM
+230+  0000
+231+  0000              JumpIfMemNotZero:       MACRO mem,target
+232+  0000 ~                                    ld  a,(mem)
+233+  0000 ~                                    and a
+234+  0000 ~                                    jp  nz,target
+235+  0000                                      ENDM
+236+  0000
+237+  0000              JumpIfALTMemHLusng:     MACRO target
+238+  0000 ~                                    cp    (hl)
+239+  0000 ~                                    jp	  c,target
+240+  0000                                      ENDM
+241+  0000
+242+  0000              JumpIfANENusng:         MACRO value, target
+243+  0000 ~                                    cp     value
+244+  0000 ~                                    jp      nz,target
+245+  0000                                      ENDM
+246+  0000
+247+  0000              JumpIfANEquNusng:       MACRO value, target
+248+  0000 ~                                    cp     value
+249+  0000 ~                                    jp     z,target
+250+  0000                                      ENDM
+251+  0000
+252+  0000              JumpIfANEMemusng:       MACRO  value, target
+253+  0000 ~                                    ld    hl,value
+254+  0000 ~                                    cp    (hl)
+255+  0000 ~                                    jp      nz,target
+256+  0000                                      ENDM
+257+  0000
+258+  0000              JumpIfAEqNusng:         MACRO value, target
+259+  0000 ~                                    cp     value
+260+  0000 ~                                    jp      z,target
+261+  0000                                      ENDM
+262+  0000
+263+  0000              JumpIfAIsZero:	        MACRO target
+264+  0000 ~                                    and     a   ; cp 0 - changed to and a for optimisation but affects other flags
+265+  0000 ~                                    jp	    z, target
+266+  0000                                      ENDM
+267+  0000
+268+  0000              JumpIfRegIsNotZero:     MACRO   reg, target
+269+  0000 ~                                    ld      a,reg
+270+  0000 ~                                    and     a
+271+  0000 ~                                    jp	    nz,target
+272+  0000                                      ENDM
+273+  0000
+274+  0000              JumpIfAIsNotZero:       MACRO target
+275+  0000 ~                                    and     a
+276+  0000 ~                                    jp	    nz,target
+277+  0000                                      ENDM
+278+  0000
+279+  0000              JumpIfMemIsNotZero:     MACRO value, target
+280+  0000 ~                                    ld      a,(value)
+281+  0000 ~                                    and     a
+282+  0000 ~                                    jp	    nz,target
+283+  0000                                      ENDM
+284+  0000              IfResultZeroGoto:	    MACRO target
+285+  0000 ~                                    jp	z,target
+286+  0000                                      ENDM
+287+  0000
+288+  0000              IfResultNotZeroGoto:    MACRO target
+289+  0000 ~                                    jp	nz,target
+290+  0000                                      ENDM
+291+  0000
+# file closed: ../Macros/jumpMacros.asm
+  9   0000                                      INCLUDE "../Macros/ldCopyMacros.asm"
+# file opened: ../Macros/ldCopyMacros.asm
+  1+  0000              ZeroA:		            MACRO
+  2+  0000 ~                                    xor a
+  3+  0000                                      ENDM
+  4+  0000
+  5+  0000              SetATrue:               MACRO
+  6+  0000 ~                                    xor     a
+  7+  0000                                      ENDM
+  8+  0000
+  9+  0000              SetAFalse:              MACRO
+ 10+  0000 ~                                    ld      a,$FF
+ 11+  0000                                      ENDM
+ 12+  0000
+ 13+  0000              SetMemFalse             MACRO   mem
+ 14+  0000 ~                                    ld      a,$FF
+ 15+  0000 ~                                    ld      (mem),a
+ 16+  0000                                      ENDM
+ 17+  0000
+ 18+  0000              SetMemTrue              MACRO   mem
+ 19+  0000 ~                                    xor     a
+ 20+  0000 ~                                    ld      (mem),a
+ 21+  0000                                      ENDM
+ 22+  0000
+ 23+  0000              SetMemToN:              MACRO   mem,value
+ 24+  0000 ~                                    ld      a,value
+ 25+  0000 ~                                    ld      (mem),a
+ 26+  0000                                      ENDM
+ 27+  0000
+ 28+  0000              ldCopyStringLen:        MACRO   source, target, strlen
+ 29+  0000 ~                                    ld      hl,source
+ 30+  0000 ~                                    ld      de, target
+ 31+  0000 ~                                    ld      bc, strlen
+ 32+  0000 ~                                    ldir
+ 33+  0000                                      ENDM
+ 34+  0000
+ 35+  0000              ldCopyTextAtHLtoDE:     MACRO
+ 36+  0000 ~            .CopyLoop:              ld      a,(hl)
+ 37+  0000 ~                                    ld      (de),a
+ 38+  0000 ~                                    cp      0
+ 39+  0000 ~                                    jp      z,.DoneCopy
+ 40+  0000 ~                                    inc     hl
+ 41+  0000 ~                                    inc     de
+ 42+  0000 ~                                    jr      .CopyLoop
+ 43+  0000 ~            .DoneCopy:
+ 44+  0000                                      ENDM
+ 45+  0000
+ 46+  0000              ldClearTextLoop:        MACRO   TextSize
+ 47+  0000 ~                                    ld      b,a
+ 48+  0000 ~                                    ld      a,TextSize
+ 49+  0000 ~            .ClearLoop:             ld      (hl),a
+ 50+  0000 ~                                    inc     hl
+ 51+  0000 ~                                    djnz    .ClearLoop
+ 52+  0000                                      ENDM
+ 53+  0000
+ 54+  0000              ldCopyByte:             MACRO memfrom, memto
+ 55+  0000 ~                                    ld       a,(memfrom)
+ 56+  0000 ~                                    ld       (memto),a
+ 57+  0000                                      ENDM
+ 58+  0000
+ 59+  0000
+ 60+  0000              ldCopyByteABS:          MACRO memfrom, memto
+ 61+  0000 ~                                    ld       a,(memfrom)
+ 62+  0000 ~                                    and		$7F
+ 63+  0000 ~                                    ld       (memto),a
+ 64+  0000                                      ENDM
+ 65+  0000
+ 66+  0000              ldAtHLtoMem:            MACRO   memto
+ 67+  0000 ~                                    ld      a,(hl)
+ 68+  0000 ~                                    ld      (memto),a
+ 69+  0000                                      ENDM
+ 70+  0000
+ 71+  0000              ldCopy2Byte             MACRO  memfrom, memto
+ 72+  0000 ~                                    ld       hl,(memfrom)
+ 73+  0000 ~                                    ld       (memto),hl
+ 74+  0000                                      ENDM
+ 75+  0000
+ 76+  0000              ldWriteConst            MACRO  memfrom, memto
+ 77+  0000 ~                                    ld       a,memfrom
+ 78+  0000 ~                                    ld       (memto),a
+ 79+  0000                                      ENDM
+ 80+  0000
+ 81+  0000              ldWriteZero             MACRO  memto
+ 82+  0000 ~                                    xor      a
+ 83+  0000 ~                                    ld       (memto),a
+ 84+  0000                                      ENDM
+ 85+  0000
+ 86+  0000              ldIXLaFromN:	        MACRO memfrom
+ 87+  0000 ~                                    ld		a,(memfrom)
+ 88+  0000 ~                                    ld		ixl,a
+ 89+  0000                                      ENDM
+ 90+  0000
+ 91+  0000              ldIXHaFromN:	        MACRO memfrom
+ 92+  0000 ~                                    ld		a,(memfrom)
+ 93+  0000 ~                                    ld		ixh,a
+ 94+  0000                                      ENDM
+ 95+  0000
+ 96+  0000              ldIYLaFromN:	        MACRO memfrom
+ 97+  0000 ~                                    ld		a,(memfrom)
+ 98+  0000 ~                                    ld		iyl,a
+ 99+  0000                                      ENDM
+100+  0000
+101+  0000              ldIYHaFromN:	        MACRO memfrom
+102+  0000 ~                                    ld		a,(memfrom)
+103+  0000 ~                                    ld		iyh,a
+104+  0000                                      ENDM
+105+  0000
+106+  0000              ; Read a 32 bit value from address HL into BCDE
+107+  0000              ldBCDEatHL:             MACRO
+108+  0000 ~                                    ld      e,(hl)
+109+  0000 ~                                    inc     hl
+110+  0000 ~                                    ld      d,(hl)
+111+  0000 ~                                    inc     hl
+112+  0000 ~                                    ld      c,(hl)
+113+  0000 ~                                    inc     hl
+114+  0000 ~                                    ld      b,(hl)
+115+  0000 ~                                    inc     hl
+116+  0000                                      ENDM
+117+  0000
+118+  0000              ldBCatHL:               MACRO
+119+  0000 ~                                    ld      c,(hl)
+120+  0000 ~                                    inc     hl
+121+  0000 ~                                    ld      b,(hl)
+122+  0000 ~                                    inc     hl
+123+  0000                                      ENDM
+124+  0000
+125+  0000              ldhlde:			        MACRO
+126+  0000 ~                                    ld		h,d
+127+  0000 ~                                    ld		l,e
+128+  0000                                      ENDM
+129+  0000
+130+  0000              ldhlbc:			        MACRO
+131+  0000 ~                                    ld		h,b
+132+  0000 ~                                    ld		l,c
+133+  0000                                      ENDM
+134+  0000
+135+  0000              ldbcde:			        MACRO
+136+  0000 ~                                    ld		b,d
+137+  0000 ~                                    ld		c,e
+138+  0000                                      ENDM
+139+  0000
+140+  0000              lddebc:			        MACRO
+141+  0000 ~                                    ld		d,b
+142+  0000 ~                                    ld		e,c
+143+  0000                                      ENDM
+144+  0000
+145+  0000              ldbchl:			        MACRO
+146+  0000 ~                                    ld		b,h
+147+  0000 ~                                    ld		c,l
+148+  0000                                      ENDM
+149+  0000
+150+  0000              lddeiy:			        MACRO
+151+  0000 ~                                    ld		d,iyh
+152+  0000 ~                                    ld		e,iyl
+153+  0000                                      ENDM
+154+  0000
+155+  0000              ldiyde:			        MACRO
+156+  0000 ~                                    ld		iyh,d
+157+  0000 ~                                    ld		iyl,e
+158+  0000                                      ENDM
+159+  0000
+160+  0000
+161+  0000              FourLDIInstrunctions:   MACRO
+162+  0000 ~                                    ldi
+163+  0000 ~                                    ldi
+164+  0000 ~                                    ldi
+165+  0000 ~                                    ldi
+166+  0000                                      ENDM
+167+  0000
+168+  0000              FiveLDIInstrunctions:   MACRO
+169+  0000 ~                                    ldi
+170+  0000 ~                                    ldi
+171+  0000 ~                                    ldi
+172+  0000 ~                                    ldi
+173+  0000 ~                                    ldi
+174+  0000                                      ENDM
+175+  0000
+176+  0000              SixLDIInstrunctions:    MACRO
+177+  0000 ~                                    ldi
+178+  0000 ~                                    ldi
+179+  0000 ~                                    ldi
+180+  0000 ~                                    ldi
+181+  0000 ~                                    ldi
+182+  0000 ~                                    ldi
+183+  0000                                      ENDM
+184+  0000
+185+  0000              EightLDIInstrunctions:  MACRO
+186+  0000 ~            		                ldi
+187+  0000 ~            		                ldi
+188+  0000 ~            		                ldi
+189+  0000 ~            		                ldi
+190+  0000 ~            		                ldi
+191+  0000 ~            		                ldi
+192+  0000 ~            		                ldi
+193+  0000 ~            		                ldi
+194+  0000                                      ENDM
+195+  0000
+196+  0000              NineLDIInstrunctions:  MACRO
+197+  0000 ~            		                ldi
+198+  0000 ~            		                ldi
+199+  0000 ~            		                ldi
+200+  0000 ~            		                ldi
+201+  0000 ~            		                ldi
+202+  0000 ~            		                ldi
+203+  0000 ~            		                ldi
+204+  0000 ~            		                ldi
+205+  0000 ~            		                ldi
+206+  0000                                      ENDM
+# file closed: ../Macros/ldCopyMacros.asm
+ 10   0000                                      INCLUDE "../Macros/ShiftMacros.asm"
+# file opened: ../Macros/ShiftMacros.asm
+  1+  0000              ShiftIYRight1: MACRO
+  2+  0000 ~            			   ld 	a,iyh
+  3+  0000 ~            			   srl 	a
+  4+  0000 ~            			   ld	iyh,a
+  5+  0000 ~            			   ld 	a,iyl
+  6+  0000 ~            			   rra
+  7+  0000 ~            			   ld	iyl,a
+  8+  0000              			   ENDM
+  9+  0000
+ 10+  0000              ShiftHLRight1: MACRO
+ 11+  0000 ~            			   srl h
+ 12+  0000 ~            			   rr  l
+ 13+  0000              			   ENDM
+ 14+  0000
+ 15+  0000              ShiftDERight1: MACRO
+ 16+  0000 ~            			   srl d
+ 17+  0000 ~            			   rr  e
+ 18+  0000              			   ENDM
+ 19+  0000
+ 20+  0000              ShiftBCRight1: MACRO
+ 21+  0000 ~            			   srl b
+ 22+  0000 ~            			   rr  c
+ 23+  0000              			   ENDM
+ 24+  0000
+ 25+  0000
+ 26+  0000
+ 27+  0000              ShiftHLDiv8:   MACRO
+ 28+  0000 ~            			   srl h
+ 29+  0000 ~            			   rr  l
+ 30+  0000 ~            			   srl h
+ 31+  0000 ~            			   rr  l
+ 32+  0000 ~            			   srl h
+ 33+  0000 ~            			   rr  l
+ 34+  0000              			   ENDM
+ 35+  0000
+ 36+  0000              ShiftHLLeft1:  MACRO
+ 37+  0000 ~            			   sla l
+ 38+  0000 ~            			   rl  h
+ 39+  0000              			   ENDM
+ 40+  0000
+ 41+  0000              ShiftDELeft1:  MACRO
+ 42+  0000 ~            			   sla e
+ 43+  0000 ~            			   rl  d
+ 44+  0000              			   ENDM
+ 45+  0000
+ 46+  0000
+ 47+  0000              RollDELeft1:   MACRO
+ 48+  0000 ~                           rl  e
+ 49+  0000 ~                           rl  d
+ 50+  0000                             ENDM
+ 51+  0000
+ 52+  0000              ShiftBCLeft1:  MACRO
+ 53+  0000 ~            			   sla c
+ 54+  0000 ~            			   rl  b
+ 55+  0000              			   ENDM
+ 56+  0000
+ 57+  0000              ShiftMem16Right1:   MACRO memaddr
+ 58+  0000 ~                                ld    hl,(memaddr)
+ 59+  0000 ~                                srl   h
+ 60+  0000 ~                                rr    l
+ 61+  0000 ~                                ld    (memaddr),hl
+ 62+  0000                                  ENDM
+ 63+  0000
+ 64+  0000              ShiftMem8Right1:    MACRO memaddr
+ 65+  0000 ~                                ld      a,(memaddr)
+ 66+  0000 ~                                srl     a
+ 67+  0000 ~                                ld      (memaddr),a
+ 68+  0000                                  ENDM
+ 69+  0000
+ 70+  0000
+ 71+  0000              ShiftMem8Left1A:    MACRO memaddr
+ 72+  0000 ~                                ld      a,(memaddr)
+ 73+  0000 ~                                sla     a
+ 74+  0000 ~                                ld      (memaddr),a
+ 75+  0000                                  ENDM
+ 76+  0000
+# file closed: ../Macros/ShiftMacros.asm
+ 11   0000                                      INCLUDE "../Macros/signBitMacros.asm"
+# file opened: ../Macros/signBitMacros.asm
+  1+  0000              SetMemBitN              MACRO mem,bitnbr
+  2+  0000 ~                                    ld      hl,mem
+  3+  0000 ~                                    set     bitnbr,(hl)
+  4+  0000                                      ENDM
+  5+  0000
+  6+  0000              ClearMemBitN            MACRO mem,bitnbr
+  7+  0000 ~                                    ld      hl,mem
+  8+  0000 ~                                    res     bitnbr,(hl)
+  9+  0000                                      ENDM
+ 10+  0000
+ 11+  0000
+ 12+  0000              ClearSignBitMem:        MACRO mem
+ 13+  0000 ~                                    ld      a,(mem)
+ 14+  0000 ~                                    and     SignMask8Bit
+ 15+  0000 ~                                    ld      (mem),a
+ 16+  0000                                      ENDM
+ 17+  0000
+ 18+  0000              SetSignBitMem:          MACRO   mem
+ 19+  0000 ~                                    ld      a,(mem)
+ 20+  0000 ~                                    or      SignOnly8Bit
+ 21+  0000 ~                                    ld      (mem),a
+ 22+  0000                                      ENDM
+ 23+  0000
+ 24+  0000              FlipSignMem:            MACRO mem
+ 25+  0000 ~                                    ld  a,(mem)
+ 26+  0000 ~                                    xor SignOnly8Bit
+ 27+  0000 ~                                    ld  (mem),a
+ 28+  0000                                      ENDM
+ 29+  0000
+ 30+  0000              SignBitOnlyMem:         MACRO mem
+ 31+  0000 ~                                    ld      a, (mem)
+ 32+  0000 ~                                    and     SignOnly8Bit
+ 33+  0000 ~                                    ld      (mem),a
+ 34+  0000                                      ENDM
+ 35+  0000
+ 36+  0000              ClearSignBit:           MACRO reg
+ 37+  0000 ~                                    ld      a,reg
+ 38+  0000 ~                                    and     SignMask8Bit
+ 39+  0000 ~                                    ld      reg,a
+ 40+  0000                                      ENDM
+ 41+  0000
+ 42+  0000              SetSignBit:             MACRO   reg
+ 43+  0000 ~                                    ld      a,reg
+ 44+  0000 ~                                    or      SignOnly8Bit
+ 45+  0000 ~                                    ld      reg,a
+ 46+  0000                                      ENDM
+ 47+  0000
+ 48+  0000              FlipSignBit:            MACRO   reg
+ 49+  0000 ~                                    ld      a, reg
+ 50+  0000 ~                                    xor     SignOnly8Bit
+ 51+  0000 ~                                    ld      reg,a
+ 52+  0000                                      ENDM
+ 53+  0000
+ 54+  0000              SignBitOnly:            MACRO   reg
+ 55+  0000 ~                                    ld      a, reg
+ 56+  0000 ~                                    and     SignOnly8Bit
+ 57+  0000 ~                                    ld      reg,a
+ 58+  0000                                      ENDM
+ 59+  0000
+ 60+  0000              ClearSignBitA:          MACRO
+ 61+  0000 ~                                    and     SignMask8Bit
+ 62+  0000                                      ENDM
+ 63+  0000
+ 64+  0000              SetSignBitA:            MACRO
+ 65+  0000 ~                                    or      SignOnly8Bit
+ 66+  0000                                      ENDM
+ 67+  0000
+ 68+  0000              FlipSignBitA:           MACRO
+ 69+  0000 ~                                    xor     SignOnly8Bit
+ 70+  0000                                      ENDM
+ 71+  0000
+ 72+  0000              SignBitOnlyA:           MACRO
+ 73+  0000 ~                                    and     SignOnly8Bit
+ 74+  0000                                      ENDM
+# file closed: ../Macros/signBitMacros.asm
+ 12   0000                                      INCLUDE "../Macros/NegateMacros.asm"
+# file opened: ../Macros/NegateMacros.asm
+  1+  0000
+  2+  0000              NegIY:			    MACRO
+  3+  0000 ~                                xor a
+  4+  0000 ~                                sub iyl
+  5+  0000 ~                                ld iyl,a
+  6+  0000 ~                                sbc a,a
+  7+  0000 ~                                sub iyh
+  8+  0000 ~                                ld iyh,a
+  9+  0000                                  ENDM
+ 10+  0000
+ 11+  0000              NegHL:			    MACRO
+ 12+  0000 ~                                xor a
+ 13+  0000 ~                                sub l
+ 14+  0000 ~                                ld l,a
+ 15+  0000 ~                                sbc a,a
+ 16+  0000 ~                                sub h
+ 17+  0000 ~                                ld h,a
+ 18+  0000                                  ENDM
+ 19+  0000
+ 20+  0000              NegDE:			    MACRO
+ 21+  0000 ~                                xor a
+ 22+  0000 ~                                sub e
+ 23+  0000 ~                                ld e,a
+ 24+  0000 ~                                sbc a,a
+ 25+  0000 ~                                sub d
+ 26+  0000 ~                                ld d,a
+ 27+  0000                                  ENDM
+ 28+  0000
+ 29+  0000              NegBC:			    MACRO
+ 30+  0000 ~                                xor a
+ 31+  0000 ~                                sub c
+ 32+  0000 ~                                ld c,a
+ 33+  0000 ~                                sbc a,a
+ 34+  0000 ~                                sub  b
+ 35+  0000 ~                                ld b,a
+ 36+  0000                                  ENDM
+ 37+  0000
+ 38+  0000              NegH                MACRO
+ 39+  0000 ~                                ld      a,h
+ 40+  0000 ~                                neg
+ 41+  0000 ~                                ld      h,a
+ 42+  0000                                  ENDM
+ 43+  0000
+ 44+  0000              NegD                MACRO
+ 45+  0000 ~                                ld      a,d
+ 46+  0000 ~                                neg
+ 47+  0000 ~                                ld      d,a
+ 48+  0000                                  ENDM
+ 49+  0000
+ 50+  0000              NegB                MACRO
+ 51+  0000 ~                                ld      a,b
+ 52+  0000 ~                                neg
+ 53+  0000 ~                                ld      b,a
+ 54+  0000                                  ENDM
+ 55+  0000
+# file closed: ../Macros/NegateMacros.asm
+ 13   0000                                      INCLUDE "../Macros/returnMacros.asm"
+# file opened: ../Macros/returnMacros.asm
+  1+  0000              ReturnOnBitSet:         MACRO  reg, bitnbr
+  2+  0000 ~                                    bit 	bitnbr,reg
+  3+  0000 ~                                    ret     nz
+  4+  0000                                      ENDM
+  5+  0000
+  6+  0000              ReturnOnMemBitSet:      MACRO mem, bitnbr
+  7+  0000 ~                                    ld   a,(mem)
+  8+  0000 ~                                    bit 	bitnbr,a
+  9+  0000 ~                                    ret     nz
+ 10+  0000                                      ENDM
+ 11+  0000
+ 12+  0000              ReturnOnBitClear:       MACRO reg, bitnbr
+ 13+  0000 ~                                    bit 	bitnbr,reg
+ 14+  0000 ~                                    ret		z
+ 15+  0000                                      ENDM
+ 16+  0000
+ 17+  0000              ReturnOnMemBitClear:    MACRO mem, bitnbr
+ 18+  0000 ~                                    ld     a,(mem)
+ 19+  0000 ~                                    bit 	bitnbr,a
+ 20+  0000 ~                                    ret		z
+ 21+  0000                                      ENDM
+ 22+  0000
+ 23+  0000              ReturnIfMemFalse:       MACRO   mem
+ 24+  0000 ~                                    ld      a,(mem)
+ 25+  0000 ~                                    and     a
+ 26+  0000 ~                                    ret     nz
+ 27+  0000                                      ENDM
+ 28+  0000
+ 29+  0000              ReturnIfMemTrue:        MACRO   mem
+ 30+  0000 ~                                    ld      a,(mem)
+ 31+  0000 ~                                    and     a
+ 32+  0000 ~                                    ret     z
+ 33+  0000                                      ENDM
+ 34+  0000
+ 35+  0000              ReturnIfAIsZero:        MACRO
+ 36+  0000 ~                                    and     a
+ 37+  0000 ~                                    ret     z
+ 38+  0000                                      ENDM
+ 39+  0000
+ 40+  0000              ReturnIfMemisZero:      MACRO mem
+ 41+  0000 ~                                    ld   a,(mem)
+ 42+  0000 ~                                    and a
+ 43+  0000 ~                                    ret    z
+ 44+  0000                                      ENDM
+ 45+  0000
+ 46+  0000              ReturnIfMemIsNegative:  MACRO mem
+ 47+  0000 ~                                    ld      a,(mem)
+ 48+  0000 ~                                    and     $80
+ 49+  0000 ~                                    ret     nz
+ 50+  0000                                      ENDM
+ 51+  0000
+ 52+  0000              ReturnIfBitMaskClear    MACRO   bitmask
+ 53+  0000 ~                                    and     bitmask
+ 54+  0000 ~                                    ret     z
+ 55+  0000                                      ENDM
+ 56+  0000
+ 57+  0000              ReturnIfBitMaskSet      MACRO   bitmask
+ 58+  0000 ~                                    and     bitmask
+ 59+  0000 ~                                    ret     nz
+ 60+  0000                                      ENDM
+ 61+  0000
+ 62+  0000              ReturnIfMemEquN:        MACRO mem, value
+ 63+  0000 ~                                    ld     a,(mem)
+ 64+  0000 ~                                    cp     value
+ 65+  0000 ~                                    ret    nz
+ 66+  0000                                      ENDM
+ 67+  0000
+ 68+  0000              ReturnIfMemNeNusng:     MACRO mem, value
+ 69+  0000 ~                                    ld   a,(mem)
+ 70+  0000 ~                                    cp     value
+ 71+  0000 ~                                    ret    z
+ 72+  0000                                      ENDM
+ 73+  0000
+ 74+  0000              ReturnIfRegNotZero:     MACRO reg
+ 75+  0000 ~                                    ld      a, reg
+ 76+  0000 ~                                    and     a
+ 77+  0000 ~                                    ret     nz
+ 78+  0000                                      ENDM
+ 79+  0000
+ 80+  0000              ReturnIfANotZero:       MACRO
+ 81+  0000 ~                                    and     a
+ 82+  0000 ~                                    ret     nz
+ 83+  0000                                      ENDM
+ 84+  0000
+ 85+  0000              ReturnIfNotZero:        MACRO
+ 86+  0000 ~                                    ret     nz
+ 87+  0000                                      ENDM
+ 88+  0000
+ 89+  0000
+ 90+  0000              ReturnIfNegative:       MACRO
+ 91+  0000 ~                                    ret     m
+ 92+  0000                                      ENDM
+ 93+  0000
+ 94+  0000
+ 95+  0000              ReturnIfMemNotZero:     MACRO mem
+ 96+  0000 ~                                    ld     a,(mem)
+ 97+  0000 ~                                    and     a
+ 98+  0000 ~                                    ret    nz
+ 99+  0000                                      ENDM
+100+  0000
+101+  0000              ReturnIfAGTEusng:       MACRO value
+102+  0000 ~                                    cp    value
+103+  0000 ~                                    ret	 nc
+104+  0000                                      ENDM
+105+  0000
+106+  0000              ReturnIfRegLTNusng:     MACRO reg, value
+107+  0000 ~                                    ld      a,reg
+108+  0000 ~                                    cp      value
+109+  0000 ~                                    ret	    c
+110+  0000                                      ENDM
+111+  0000
+112+  0000              ReturnIfALTNusng:       MACRO value
+113+  0000 ~                                    cp    value
+114+  0000 ~                                    ret	 c
+115+  0000                                      ENDM
+116+  0000
+117+  0000              ReturnIfAGTENusng:      MACRO value
+118+  0000 ~                                    cp    value
+119+  0000 ~                                    ret	 nc
+120+  0000                                      ENDM
+121+  0000
+122+  0000              ReturnIfAGTEMemusng:    MACRO value
+123+  0000 ~                                    ld      hl,value
+124+  0000 ~                                    cp      (hl)
+125+  0000 ~                                    ret	    nc
+126+  0000                                      ENDM
+127+  0000
+128+  0000              ReturnIfANENusng:       MACRO value
+129+  0000 ~                                    cp      value
+130+  0000 ~                                    ret     nz
+131+  0000                                      ENDM
+132+  0000
+133+  0000              ReturnIfAEqNusng:       MACRO value
+134+  0000 ~                                    cp      value
+135+  0000 ~                                    ret     z
+136+  0000                                      ENDM
+137+  0000
+# file closed: ../Macros/returnMacros.asm
+ 14   0000                                      INCLUDE "../Macros/MathsMacros.asm"
+# file opened: ../Macros/MathsMacros.asm
+  1+  0000
+  2+  0000              ABSa2c:                 MACRO
+  3+  0000 ~                                    bit     7,a
+  4+  0000 ~                                    jp      z,.DoneABSa
+  5+  0000 ~                                    neg
+  6+  0000 ~            .DoneABSa:
+  7+  0000                                      ENDM
+  8+  0000
+  9+  0000              DEEquSquareA:           MACRO
+ 10+  0000 ~                                    ld  d,a
+ 11+  0000 ~                                    ld  e,a
+ 12+  0000 ~                                    mul de
+ 13+  0000                                      ENDM
+ 14+  0000
+ 15+  0000              ApplyMyRollToVector:    MACRO angle, vectorX, vectorY
+ 16+  0000 ~                                    ldCopyByte angle,varQ               ; Set Q = a = alpha (the roll angle to rotate through)
+ 17+  0000 ~                                    ldCopy2Byte vectorY, varR           ; RS =  nosev_y
+ 18+  0000 ~                                    ldCopyByte  vectorX, varP           ; set P to nosevX lo (may be redundant)
+ 19+  0000 ~                                    ld a,(vectorX+1)                    ; Set A = -nosev_x_hi
+ 20+  0000 ~                                    xor $80                             ;
+ 21+  0000 ~                                    call  madXAequQmulAaddRS            ; Set (A X) = Q * A + (S R) = = alpha * -nosev_x_hi + nosev_y
+ 22+  0000 ~                                    ld  (vectorY),de                    ; nosev_y = nosev_y - alpha * nosev_x_hi
+ 23+  0000 ~                                    ldCopy2Byte vectorX, varR           ; Set (S R) = nosev_x
+ 24+  0000 ~                                    ld  a,(vectorY+1)                   ;  Set A = nosev_y_hi
+ 25+  0000 ~                                    call madXAequQmulAaddRS             ; Set (A X) = Q * A + (S R)
+ 26+  0000 ~                                    ld  (vectorX),de                    ; nosev_x = nosev_x + alpha * nosev_y_hi
+ 27+  0000                                      ENDM
+ 28+  0000
+ 29+  0000              SignedHLTo2C:           MACRO
+ 30+  0000 ~                                    bit     7,h
+ 31+  0000 ~                                    jr      z,.Done2c
+ 32+  0000 ~                                    ld      a,h
+ 33+  0000 ~                                    and     SignMask8Bit
+ 34+  0000 ~                                    ld      h,a
+ 35+  0000 ~                                    NegHL
+ 36+  0000 ~            .Done2c:
+ 37+  0000                                      ENDM
+ 38+  0000
+ 39+  0000              MemSignedTo2C:          MACRO   memfrom
+ 40+  0000 ~                                    ld      hl,(memfrom)
+ 41+  0000 ~                                    bit     7,h
+ 42+  0000 ~                                    jr      z,.Done2c
+ 43+  0000 ~                                    ld      a,h
+ 44+  0000 ~                                    and     SignMask8Bit
+ 45+  0000 ~                                    ld      h,a
+ 46+  0000 ~            .Done2c:                ld      (memfrom),hl
+ 47+  0000                                      ENDM
+ 48+  0000
+ 49+  0000
+ 50+  0000                  ;returns result in H
+ 51+  0000              EDiv10Inline:           MACRO
+ 52+  0000 ~                                    ld      d,0
+ 53+  0000 ~                                    ld      hl,de
+ 54+  0000 ~                                    add     hl,hl
+ 55+  0000 ~                                    add     hl,de
+ 56+  0000 ~                                    add     hl,hl
+ 57+  0000 ~                                    add     hl,hl
+ 58+  0000 ~                                    add     hl,de
+ 59+  0000 ~                                    add     hl,hl
+ 60+  0000                                      ENDM
+ 61+  0000
+ 62+  0000              cpHLDE:                 MACRO
+ 63+  0000 ~                                    push    hl
+ 64+  0000 ~                                    and     a
+ 65+  0000 ~                                    sbc     hl,de
+ 66+  0000 ~                                    pop     hl
+ 67+  0000                                      ENDM
+ 68+  0000
+ 69+  0000              ;Unsigned
+ 70+  0000              ;If HL == DE, then Z flag is set.
+ 71+  0000              ;If HL != DE, then Z flag is reset.
+ 72+  0000              ;If HL <  DE, then C flag is set.
+ 73+  0000              ;If HL >= DE, then C flag is reset.
+ 74+  0000              ;
+ 75+  0000              ;Signed
+ 76+  0000              ;If HL == DE, then Z flag is set.
+ 77+  0000              ;If HL != DE, then Z flag is reset.
+ 78+  0000              ;If HL <  DE, then S and P/V are different.
+ 79+  0000              ;If HL >= DE, then S and P/V are the same.
+ 80+  0000
+ 81+  0000              N0equN1byN2div256:      MACRO param1,param2,param3
+ 82+  0000 ~                                    ld      a,param3                        ;
+ 83+  0000 ~                                    ld      e,a                         ; use e as var Q = value of XX15 [n] lo
+ 84+  0000 ~                                    ld      a,param2                        ; A = XX16 element
+ 85+  0000 ~                                    ld      d,a
+ 86+  0000 ~                                    mul
+ 87+  0000 ~                                    ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low
+ 88+  0000 ~                                    ld      (param1),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
+ 89+  0000                                      ENDM
+ 90+  0000
+ 91+  0000              AequN1xorN2:            MACRO  param1,param2
+ 92+  0000 ~                                    ld      a,(param1)
+ 93+  0000 ~                                    xor     param2
+ 94+  0000                                      ENDM
+ 95+  0000
+# file closed: ../Macros/MathsMacros.asm
+ 15   0000                                      ;INCLUDE "../Variables/constant_equates.asm"
+ 16   0000              SignMask8Bit		equ %01111111
+ 17   0000              SignMask16Bit		equ %0111111111111111
+ 18   0000              SignOnly8Bit		equ $80
+ 19   0000              SignOnly16Bit		equ $8000
+ 20   0000
+ 21   0000              testStartup:            ORG         $8000
+ 22   8000 3E 80                                ld      a, $80
+ 23   8002 21 DC 05                             ld      hl,1500
+ 24   8005 22 07 84                             ld      (UBnKxlo),hl
+ 25   8008 21 D0 07                             ld      hl,2000
+ 26   800B 22 0A 84                             ld      (UBnKylo),hl
+ 27   800E 32 0C 84                             ld      (UBnKysgn),a
+ 28   8011 21 E8 03                             ld      hl,1000
+ 29   8014 22 0D 84                             ld      (UBnKzlo),hl
+ 30   8017 3E F9                                ld      a,$F9
+ 31   8019 32 17 84                             ld      (UBnkrotmatSidevX),a
+ 32   801C 32 29 84                             ld      (UBnkrotmatRoofvY),a
+ 33   801F 32 3B 84                             ld      (UBnkrotmatNosevZ),a
+ 34   8022
+ 35   8022 CD 28 80                             call    UpdateTargetingShipX
+ 36   8025 C3 25 80     .EndLoop:               jp      .EndLoop
+ 37   8028
+ 38   8028              UpdateTargetingShipX
+ 38   8028 DD 01          break
+ 39   802A ED 5B F7 83                          ld      de,(TargetKxlo)                        ; get target ship X
+ 40   802E 3A F9 83                             ld      a,(TargetKxsgn)                        ; and flip sign so we have missile - target
+ 41   8031                                      FlipSignBitA
+ 41   8031 EE 80       >                        xor     SignOnly8Bit
+ 42   8033 4F                                   ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+ 43   8034 2A 07 84                             ld      hl,(UBnKxlo)                        ; get missile x
+ 44   8037 3A 09 84                             ld      a,(UBnKxsgn)                        ; get missile x sign
+ 45   803A 47                                   ld      b,a
+ 46   803B CD 92 81                             call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
+ 47   803E 22 FF 80                             ld      (TacticsVectorX),hl
+ 48   8041 32 01 81                             ld      (TacticsVectorX+2),a
+ 49   8044 ED 5B FA 83  .UpdateTargetingShipY:  ld      de,(TargetKylo)                        ; get target ship X
+ 50   8048 3A FC 83                             ld      a,(TargetKysgn)
+ 51   804B                                      FlipSignBitA
+ 51   804B EE 80       >                        xor     SignOnly8Bit
+ 52   804D 4F                                   ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+ 53   804E 2A 0A 84                             ld      hl,(UBnKylo)                        ; get missile x
+ 54   8051 3A 0C 84                             ld      a,(UBnKysgn)                        ; get missile x sign
+ 55   8054 47                                   ld      b,a
+ 56   8055 CD 92 81                             call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
+ 57   8058 22 02 81                             ld      (TacticsVectorY),hl
+ 58   805B 32 04 81                             ld      (TacticsVectorY+2),a
+ 59   805E ED 5B FD 83  .UpdateTargetingShipZ:  ld      de,(TargetKzlo)                        ; get target ship X
+ 60   8062 3A FF 83                             ld      a,(TargetKzsgn)
+ 61   8065                                      FlipSignBitA
+ 61   8065 EE 80       >                        xor     SignOnly8Bit
+ 62   8067 4F                                   ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+ 63   8068 2A 0D 84                             ld      hl,(UBnKzlo)                        ; get missile x
+ 64   806B 3A 0F 84                             ld      a,(UBnKzsgn)                        ; get missile x sign
+ 65   806E 47                                   ld      b,a
+ 66   806F CD 92 81                             call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
+ 67   8072 22 05 81                             ld      (TacticsVectorZ),hl
+ 68   8075 32 07 81                             ld      (TacticsVectorZ+2),a
+ 69   8078              ;--- Now we can actually update the missile AI
+ 70   8078              .UpdateMissilePos:
+ 71   8078 CD F2 84     .NormaliseDirection:    call    NormalizeTactics                    ; Normalise vector down to 7 bit + sign byte
+ 72   807B CD 93 84     .NoseDotProduct:        call    XX12EquTacticsDotNosev              ; SA = nose . XX15
+ 73   807E 32 F9 80                             ld      (TacticsDotProduct1),a               ; CNT = A (high byte of dot product)
+ 74   8081 3A F5 83                             ld      a,(varS)                            ; get sign from dot product
+ 75   8084 EE 80        .FlipDirectionSign:     xor     SignOnly8Bit                        ; and flip the sign bit
+ 76   8086 E6 80                                and     SignOnly8Bit                        ; and save the sign into Dot product
+ 77   8088 32 FA 80                             ld      (TacticsDotProduct1+1),a             ; negate value of CNT so +ve if facing or -ve if facing same way
+ 78   808B              .NegateDirection:       FlipSignMem TacticsVectorX+2                ; negate vector in XX15 so it points opposite direction
+ 78   808B 3A 01 81    >                        ld  a,(TacticsVectorX+2)
+ 78   808E EE 80       >                        xor SignOnly8Bit
+ 78   8090 32 01 81    >                        ld  (TacticsVectorX+2),a
+ 79   8093                                      FlipSignMem TacticsVectorY+2                ; we have already negated the dot product above
+ 79   8093 3A 04 81    >                        ld  a,(TacticsVectorY+2)
+ 79   8096 EE 80       >                        xor SignOnly8Bit
+ 79   8098 32 04 81    >                        ld  (TacticsVectorY+2),a
+ 80   809B                                      FlipSignMem TacticsVectorZ+2                ; .
+ 80   809B 3A 07 81    >                        ld  a,(TacticsVectorZ+2)
+ 80   809E EE 80       >                        xor SignOnly8Bit
+ 80   80A0 32 07 81    >                        ld  (TacticsVectorZ+2),a
+ 81   80A3 DD 01        .RoofDotProduct:        break
+ 82   80A5 CD E6 84                             call    XX12EquTacticsDotRoofv              ; Now tran the roof for rotation
+ 83   80A8 32 FB 80                             ld      (TacticsDotProduct2),a              ; so if its +ve then the roof is similar so pull up to head towards it
+ 84   80AB 3A F5 83                             ld      a,(varS)                            ; .
+ 85   80AE 32 FC 80                             ld      (TacticsDotProduct2+1),a            ; .
+ 86   80B1 CD 55 84                             call    calcNPitch                          ; work out pitch return with a holding z counter
+ 87   80B4 CB 27                                sla     a                                   ; strip off sign (also doubling it)
+ 88   80B6                                      JumpIfAGTENusng 32, .AlreadyRolling
+ 88   80B6 FE 20       >                        cp     32
+ 88   80B8 D2 CE 80    >                        jp		nc,.AlreadyRolling
+ 89   80BB CD EC 84     .SideDotProduct:        call    XX12EquTacticsDotSidev              ; get dot product of xx15. sidev
+ 90   80BE 32 FD 80                             ld      (TacticsDotProduct3),a              ; This will be positive if XX15 is pointing in the same direction
+ 91   80C1 3A F5 83                             ld      a,(varS)                            ;
+ 92   80C4 EE 80                                xor     SignOnly8Bit                        ; and flip the sign bit
+ 93   80C6 E6 80                                and     SignOnly8Bit                        ; and save the sign into Dot product
+ 94   80C8 32 FE 80                             ld      (TacticsDotProduct3+1),a            ;
+ 95   80CB CD 74 84                             call    calcNRoll                           ; a = rotx signed
+ 96   80CE 3A FA 80     .AlreadyRolling:        ld      a,(TacticsDotProduct1+1)            ; Fetch the dot product of nosev back
+ 97   80D1                                      JumpIfAIsNotZero    .SlowDown               ; if it's negative jump to slow down routine
+ 97   80D1 A7          >                        and     a
+ 97   80D2 C2 E3 80    >                        jp	    nz,.SlowDown
+ 98   80D5 3A F9 80                             ld      a,(TacticsDotProduct1)
+ 99   80D8                                      JumpIfALTNusng  22, .SlowDown
+ 99   80D8 FE 16       >                        cp      22
+ 99   80DA DA E3 80    >                        jp		c, .SlowDown
+100   80DD 3E 03        .Accellerate:           ld      a,3                                 ; full accelleration
+101   80DF 32 48 84                             ld      (UBnKAccel),a
+102   80E2 C9                                   ret
+103   80E3 3A FB 80     .SlowDown:              ld      a,(TacticsDotProduct2)              ; this is already abs so no need to do abs
+104   80E6                                      ReturnIfALTNusng  18                        ; If A < 18 then the ship is way off the XX15 vector, so return without slowing down, as it still has quite a bit ofturning to do to get on course
+104   80E6 FE 12       >                        cp    18
+104   80E8 D8          >                        ret	 c
+105   80E9 3E FE                                ld      a,$FE                               ; A = -3 as missiles are more nimble and can brake more quickly
+106   80EB 32 48 84                             ld      (UBnKAccel),a
+107   80EE C9                                   ret
+108   80EF
+109   80EF                                      INCLUDE "../GameEngine/TacticsWorkingData.asm"
+# file opened: ../GameEngine/TacticsWorkingData.asm
+  1+  80EF 00           TacticsTargetShip       DB 0
+  2+  80F0 00 00 00     TacticsUBnKx            DS 3
+  3+  80F3 00 00 00     TacticsUBnKy            DS 3
+  4+  80F6 00 00 00     TacticsUBnKz            DS 3
+  5+  80F9 00 00        TacticsDotProduct1      DS 2
+  6+  80FB 00 00        TacticsDotProduct2      DS 2
+  7+  80FD 00 00        TacticsDotProduct3      DS 2
+  8+  80FF
+  9+  80FF
+ 10+  80FF
+ 11+  80FF 00 00 00     TacticsVectorX:         DS 3
+ 12+  8102 00 00 00     TacticsVectorY:         DS 3
+ 13+  8105 00 00 00     TacticsVectorZ:         DS 3
+ 14+  8108 00 00        TacticsNormX:           DS 2
+ 15+  810A 00 00        TacticsNormY:           DS 2
+ 16+  810C 00 00        TacticsNormZ:           DS 2
+ 17+  810E 01           TacticsNormalisedX      DB  1                                   ; normalised version, NormXYZ still hold sign bits
+ 18+  810F 01           TacticsNormalisedY      DB  1                                   ;
+ 19+  8110 01           TacticsNormalisedZ      DB  1                                   ;
+ 20+  8111
+# file closed: ../GameEngine/TacticsWorkingData.asm
+110   8111                                      INCLUDE "../Universe/Ships/XX12Vars.asm"
+# file opened: ../Universe/Ships/XX12Vars.asm
+  1+  8111              ;-- transmat0 --------------------------------------------------------------------------------------------------------------------------
+  2+  8111              ; Note XX12 comes after as some logic in normal processing uses XX15 and XX12 combines
+  3+  8111 00           UBnkXX12xLo                 DB  0               ; XX12+0
+  4+  8112 00           UBnkXX12xSign               DB  0               ; XX12+1
+  5+  8113 00           UBnkXX12yLo                 DB  0               ; XX12+2
+  6+  8114 00           UBnkXX12ySign               DB  0               ; XX12+3
+  7+  8115 00           UBnkXX12zLo                 DB  0               ; XX12+4
+  8+  8116 00           UBnkXX12zSign               DB  0               ; XX12+5
+  9+  8117 00 00 00...  XX12Save                    DS  6
+ 10+  811D 00 00 00...  XX12Save2                   DS  6
+ 11+  8123              XX12                        equ UBnkXX12xLo
+ 12+  8123              varXX12                     equ UBnkXX12xLo
+ 13+  8123              ; Repurposed XX12 when plotting lines
+ 14+  8123              UBnkY2                      equ XX12+0
+ 15+  8123              UbnKy2Lo                    equ XX12+0
+ 16+  8123              UBnkY2Hi                    equ XX12+1
+ 17+  8123              UBnkDeltaXLo                equ XX12+2
+ 18+  8123              UBnkDeltaXHi                equ XX12+3
+ 19+  8123              UBnkDeltaYLo                equ XX12+4
+ 20+  8123              UBnkDeltaYHi                equ XX12+5
+ 21+  8123              UbnkGradient                equ XX12+2
+ 22+  8123              UBnkTemp1                   equ XX12+2
+ 23+  8123              UBnkTemp1Lo                 equ XX12+2
+ 24+  8123              UBnkTemp1Hi                 equ XX12+3
+ 25+  8123              UBnkTemp2                   equ XX12+3
+ 26+  8123              UBnkTemp2Lo                 equ XX12+3
+ 27+  8123              UBnkTemp2Hi                 equ XX12+4
+ 28+  8123
+# file closed: ../Universe/Ships/XX12Vars.asm
+111   8123                                      INCLUDE "../Universe/Ships/XX15Vars.asm"
+# file opened: ../Universe/Ships/XX15Vars.asm
+  1+  8123              ;-- XX15 --------------------------------------------------------------------------------------------------------------------------
+  2+  8123 00           UBnkXScaled                 DB  0               ; XX15+0Xscaled
+  3+  8124 00           UBnkXScaledSign             DB  0               ; XX15+1xsign
+  4+  8125 00           UBnkYScaled                 DB  0               ; XX15+2yscaled
+  5+  8126 00           UBnkYScaledSign             DB  0               ; XX15+3ysign
+  6+  8127 00           UBnkZScaled                 DB  0               ; XX15+4zscaled
+  7+  8128 00           UBnkZScaledSign             DB  0               ; XX15+5zsign
+  8+  8129
+  9+  8129              XX15                        equ UBnkXScaled
+ 10+  8129              XX15VecX                    equ XX15
+ 11+  8129              XX15VecY                    equ XX15+1
+ 12+  8129              XX15VecZ                    equ XX15+2
+ 13+  8129              UbnkXPoint                  equ XX15
+ 14+  8129              UbnkXPointLo                equ XX15+0
+ 15+  8129              UbnkXPointHi                equ XX15+1
+ 16+  8129              UbnkXPointSign              equ XX15+2
+ 17+  8129              UbnkYPoint                  equ XX15+3
+ 18+  8129              UbnkYPointLo                equ XX15+3
+ 19+  8129              UbnkYPointHi                equ XX15+4
+ 20+  8129              UbnkYPointSign              equ XX15+5
+ 21+  8129              ; Repurposed XX15 pre clip plines
+ 22+  8129              UbnkPreClipX1               equ XX15+0
+ 23+  8129              UbnkPreClipY1               equ XX15+2
+ 24+  8129              UbnkPreClipX2               equ XX15+4
+ 25+  8129              UbnkPreClipY2               equ XX15+6
+ 26+  8129              ; Repurposed XX15 post clip lines
+ 27+  8129              UBnkNewX1                   equ XX15+0
+ 28+  8129              UBnkNewY1                   equ XX15+1
+ 29+  8129              UBnkNewX2                   equ XX15+2
+ 30+  8129              UBnkNewY2                   equ XX15+3
+ 31+  8129              ; Repurposed XX15
+ 32+  8129              regXX15fx                   equ UBnkXScaled
+ 33+  8129              regXX15fxSgn                equ UBnkXScaledSign
+ 34+  8129              regXX15fy                   equ UBnkYScaled
+ 35+  8129              regXX15fySgn                equ UBnkYScaledSign
+ 36+  8129              regXX15fz                   equ UBnkZScaled
+ 37+  8129              regXX15fzSgn                equ UBnkZScaledSign
+ 38+  8129              ; Repurposed XX15
+ 39+  8129              varX1                       equ UBnkXScaled       ; Reused, verify correct position
+ 40+  8129              varY1                       equ UBnkXScaledSign   ; Reused, verify correct position
+ 41+  8129              varZ1                       equ UBnkYScaled       ; Reused, verify correct position
+ 42+  8129              ; After clipping the coords are two 8 bit pairs
+ 43+  8129              UBnkPoint1Clipped           equ UBnkXScaled
+ 44+  8129              UBnkPoint2Clipped           equ UBnkYScaled
+ 45+  8129              ; Repurposed XX15 when plotting lines
+ 46+  8129              ; Repurposed XX15 before calling clip routine
+ 47+  8129              UBnkX1                      equ XX15
+ 48+  8129              UBnKx1Lo                    equ XX15
+ 49+  8129              UBnKx1Hi                    equ XX15+1
+ 50+  8129              UBnkY1                      equ XX15+2
+ 51+  8129              UbnKy1Lo                    equ XX15+2
+ 52+  8129              UBnkY1Hi                    equ XX15+3
+ 53+  8129              UBnkX2                      equ XX15+4
+ 54+  8129              UBnkX2Lo                    equ XX15+4
+ 55+  8129              UBnkX2Hi                    equ XX15+5
+ 56+  8129
+# file closed: ../Universe/Ships/XX15Vars.asm
+112   8129                                      INCLUDE "../Universe/Ships/XX16Vars.asm"
+# file opened: ../Universe/Ships/XX16Vars.asm
+  1+  8129              ;-- XX16 --------------------------------------------------------------------------------------------------------------------------
+  2+  8129 00 00        UBnkTransmatSidevX          DW  0               ; XX16+0
+  3+  812B              UBnkTransmatSidev           EQU UBnkTransmatSidevX
+  4+  812B 00 00        UBnkTransmatSidevY          DW 0                ; XX16+2
+  5+  812D 00 00        UBnkTransmatSidevZ          DW 0                ; XX16+2
+  6+  812F 00 00        UBnkTransmatRoofvX          DW 0
+  7+  8131              UBnkTransmatRoofv           EQU UBnkTransmatRoofvX
+  8+  8131 00 00        UBnkTransmatRoofvY          DW 0                ; XX16+2
+  9+  8133 00 00        UBnkTransmatRoofvZ          DW 0                ; XX16+2
+ 10+  8135 00 00        UBnkTransmatNosevX          DW 0
+ 11+  8137              UBnkTransmatNosev           EQU UBnkTransmatNosevX
+ 12+  8137 00 00        UBnkTransmatNosevY          DW 0                ; XX16+2
+ 13+  8139 00 00        UBnkTransmatNosevZ          DW 0                ; XX16+2
+ 14+  813B 00 00        UbnkTransmatTransX          DW 0
+ 15+  813D 00 00        UbnkTransmatTransY          DW 0
+ 16+  813F 00 00        UbnkTransmatTransZ          DW 0
+ 17+  8141              XX16                        equ UBnkTransmatSidev
+ 18+  8141              ;-- XX16Inv --------------------------------------------------------------------------------------------------------------------------
+ 19+  8141 00 00        UbnkTransInvRow0x0          DW 0
+ 20+  8143 00 00        UbnkTransInvRow0x1          DW 0
+ 21+  8145 00 00        UbnkTransInvRow0x2          DW 0
+ 22+  8147 00 00        UbnkTransInvRow0x3          DW 0
+ 23+  8149 00 00        UbnkTransInvRow1y0          DW 0
+ 24+  814B 00 00        UbnkTransInvRow1y1          DW 0
+ 25+  814D 00 00        UbnkTransInvRow1y2          DW 0
+ 26+  814F 00 00        UbnkTransInvRow1y3          DW 0
+ 27+  8151 00 00        UbnkTransInvRow2z0          DW 0
+ 28+  8153 00 00        UbnkTransInvRow2z1          DW 0
+ 29+  8155 00 00        UbnkTransInvRow2z2          DW 0
+ 30+  8157 00 00        UbnkTransInvRow2z3          DW 0
+ 31+  8159
+ 32+  8159              XX16Inv             equ UbnkTransInvRow0x0
+ 33+  8159
+# file closed: ../Universe/Ships/XX16Vars.asm
+113   8159                                      ;INCLUDE "../Universe/Ships/AIRuntimeData.asm"
+114   8159                                      INCLUDE "../Maths/asm_add.asm"
+# file opened: ../Maths/asm_add.asm
+  1+  8159              ;; calcs BHB + CDE where B and C are signs and may be 24 bit
+  2+  8159              ;; result HL with A as sign
+  3+  8159              ;; special handling if result is zero forcign sign bit to be zero
+  4+  8159 78           AHLEquBHLaddCDE:        ld      a,b
+  5+  815A A9                                   xor     c
+  6+  815B E6 80                                and     SignOnly8Bit
+  7+  815D                                      JumpIfNegative   .OppositeSigns
+  7+  815D FA 70 81    >                        jp		m, .OppositeSigns
+  8+  8160 DD 60        .SameSigns:             ld      ixh,b                      ; ixh = b
+  9+  8162                                      ClearSignBit b                      ; b = ABS b
+  9+  8162 78          >                        ld      a,b
+  9+  8163 E6 7F       >                        and     SignMask8Bit
+  9+  8165 47          >                        ld      b,a
+ 10+  8166 19                                   add     hl,de                      ; hl = hl + de
+ 11+  8167 78                                   ld      a,b                        ; a = b + c + carry
+ 12+  8168 89                                   adc     c                          ;
+ 13+  8169 47                                   ld      b,a                        ;
+ 14+  816A DD 7C                                ld      a,ixh                      ;
+ 15+  816C                                      SignBitOnlyA                        ;
+ 15+  816C E6 80       >                        and     SignOnly8Bit
+ 16+  816E B0                                   or      b                          ;
+ 17+  816F C9                                   ret                                ;
+ 18+  8170 DD 60        .OppositeSigns:         ld      ixh,b
+ 19+  8172 DD 69                                ld      ixl,c
+ 20+  8174                                      ClearSignBit c                      ; c = ABS C
+ 20+  8174 79          >                        ld      a,c
+ 20+  8175 E6 7F       >                        and     SignMask8Bit
+ 20+  8177 4F          >                        ld      c,a
+ 21+  8178 78                                   ld      a,b
+ 22+  8179                                      ClearSignBitA
+ 22+  8179 E6 7F       >                        and     SignMask8Bit
+ 23+  817B 99                                   sbc     c
+ 24+  817C                                      JumpIfNegative  .OppositeCDEgtBHL
+ 24+  817C FA 8B 81    >                        jp		m, .OppositeCDEgtBHL
+ 25+  817F ED 52                                sbc     hl,de
+ 26+  8181                                      JumpIfNegative  .OppositeCDEgtBHL
+ 26+  8181 FA 8B 81    >                        jp		m, .OppositeCDEgtBHL
+ 27+  8184 47                                   ld      b,a
+ 28+  8185 DD 7C                                ld      a,ixh
+ 29+  8187                                      SignBitOnlyA                        ;
+ 29+  8187 E6 80       >                        and     SignOnly8Bit
+ 30+  8189 B0                                   or      b                          ;
+ 31+  818A C9                                   ret                                ;
+ 32+  818B EB           .OppositeCDEgtBHL:      ex      de,hl
+ 33+  818C 78                                   ld      a,b
+ 34+  818D 41                                   ld      b,c
+ 35+  818E 4F                                   ld      c,a
+ 36+  818F C3 70 81                             jp      .OppositeSigns
+ 37+  8192
+ 38+  8192
+ 39+  8192 78           ADDHLDESignBC:          ld      a,b
+ 40+  8193 E6 80                                and     SignOnly8Bit
+ 41+  8195 A9                                   xor     c                           ;if b sign and c sign were different then bit 7 of a will be 1 which means
+ 42+  8196                                      JumpIfNegative ADDHLDEsBCOppSGN     ;Signs are opposite there fore we can subtract to get difference
+ 42+  8196 FA A4 81    >                        jp		m, ADDHLDEsBCOppSGN
+ 43+  8199 78           ADDHLDEsBCSameSigns:    ld      a,b
+ 44+  819A B1                                   or      c
+ 45+  819B                                      JumpIfNegative ADDHLDEsBCSameNeg    ; optimisation so we can just do simple add if both positive
+ 45+  819B FA A0 81    >                        jp		m, ADDHLDEsBCSameNeg
+ 46+  819E 19                                   add     hl,de                       ; both positive so a will already be zero
+ 47+  819F C9                                   ret
+ 48+  81A0 19           ADDHLDEsBCSameNeg:      add     hl,de
+ 49+  81A1 78                                   ld      a,b
+ 50+  81A2 B1                                   or      c                           ; now set bit for negative value, we won't bother with overflow for now TODO
+ 51+  81A3 C9                                   ret
+ 52+  81A4              ADDHLDEsBCOppSGN:       ClearCarryFlag
+ 52+  81A4 B7          >                        or a
+ 53+  81A5 ED 52                                sbc     hl,de
+ 54+  81A7 38 02                                jr      c,ADDHLDEsBCOppInvert
+ 55+  81A9 78           ADDHLDEsBCOppSGNNoCarry: ld      a,b                        ; we got here so hl > de therefore we can just take hl's previous sign bit
+ 56+  81AA C9                                   ret
+ 57+  81AB              ADDHLDEsBCOppInvert:    NegHL                               ; if result was zero then set sign to zero (which doing h or l will give us for free)
+ 57+  81AB AF          >                    xor a
+ 57+  81AC 95          >                    sub l
+ 57+  81AD 6F          >                    ld l,a
+ 57+  81AE 9F          >                    sbc a,a
+ 57+  81AF 94          >                    sub h
+ 57+  81B0 67          >                    ld h,a
+ 58+  81B1 78                                   ld      a,b
+ 59+  81B2 EE 80                                xor     SignOnly8Bit                ; flip sign bit
+ 60+  81B4 C9                                   ret
+ 61+  81B5
+ 62+  81B5 7C           ADDHLDESignedV4:        ld      a,h
+ 63+  81B6 E6 80                                and     SignOnly8Bit
+ 64+  81B8 47                                   ld      b,a                         ;save sign bit in b
+ 65+  81B9 AA                                   xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means
+ 66+  81BA                                      JumpIfNegative .ADDHLDEOppSGN       ;Signs are opposite there fore we can subtract to get difference
+ 66+  81BA FA D2 81    >                        jp		m, .ADDHLDEOppSGN
+ 67+  81BD 78           .ADDHLDESameSigns:      ld      a,b
+ 68+  81BE B2                                   or      d
+ 69+  81BF                                      JumpIfNegative .ADDHLDESameNeg      ; optimisation so we can just do simple add if both positive
+ 69+  81BF FA C4 81    >                        jp		m, .ADDHLDESameNeg
+ 70+  81C2 19                                   add     hl,de
+ 71+  81C3 C9                                   ret
+ 72+  81C4 7C           .ADDHLDESameNeg:        ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
+ 73+  81C5 E6 7F                                and     SignMask8Bit                ; we could check the value of b for optimisation
+ 74+  81C7 67                                   ld      h,a
+ 75+  81C8 7A                                   ld      a,d
+ 76+  81C9 E6 7F                                and     SignMask8Bit
+ 77+  81CB 57                                   ld      d,a
+ 78+  81CC 19                                   add     hl,de
+ 79+  81CD 3E 80                                ld      a,SignOnly8Bit
+ 80+  81CF B4                                   or      h                           ; now set bit for negative value, we won't bother with overflow for now TODO
+ 81+  81D0 67                                   ld      h,a
+ 82+  81D1 C9                                   ret
+ 83+  81D2 7C           .ADDHLDEOppSGN:         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit                     ; here HL and DE are opposite
+ 84+  81D3 E6 7F                                and     SignMask8Bit                ; we could check the value of b for optimisation
+ 85+  81D5 67                                   ld      h,a
+ 86+  81D6 7A                                   ld      a,d
+ 87+  81D7 E6 7F                                and     SignMask8Bit
+ 88+  81D9 57                                   ld      d,a
+ 89+  81DA                                      ClearCarryFlag
+ 89+  81DA B7          >                        or a
+ 90+  81DB ED 52                                sbc     hl,de
+ 91+  81DD 38 04                                jr      c,.ADDHLDEOppInvert
+ 92+  81DF 78           .ADDHLDEOppSGNNoCarry:  ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
+ 93+  81E0 B4                                   or      h
+ 94+  81E1 67                                   ld      h,a                         ; set the previou sign value
+ 95+  81E2 C9                                   ret
+ 96+  81E3              .ADDHLDEOppInvert:      NegHL                                                   ; we need to flip the sign and 2'c the Hl result
+ 96+  81E3 AF          >                    xor a
+ 96+  81E4 95          >                    sub l
+ 96+  81E5 6F          >                    ld l,a
+ 96+  81E6 9F          >                    sbc a,a
+ 96+  81E7 94          >                    sub h
+ 96+  81E8 67          >                    ld h,a
+ 97+  81E9 78                                   ld      a,b
+ 98+  81EA EE 80                                xor     SignOnly8Bit                ; flip sign bit
+ 99+  81EC B4                                   or      h
+100+  81ED 67                                   ld      h,a                         ; recover sign
+101+  81EE C9                                   ret
+102+  81EF
+103+  81EF              ;;;NOT USED addhldesigned:          bit     7,h
+104+  81EF              ;;;NOT USED                         jr      nz,.noneghl
+105+  81EF              ;;;NOT USED                         call    negate16hl
+106+  81EF              ;;;NOT USED .noneghl:               bit     7,d
+107+  81EF              ;;;NOT USED                         jr      nz,.nonegde
+108+  81EF              ;;;NOT USED                         call    negate16de
+109+  81EF              ;;;NOT USED .nonegde:               add     hl,de                       ; do 2'd c add
+110+  81EF              ;;;NOT USED                         xor     a                           ; assume positive
+111+  81EF              ;;;NOT USED                         bit     7,h
+112+  81EF              ;;;NOT USED                         ret     z                           ; if not set then can exit early
+113+  81EF              ;;;NOT USED                         call    negate16hl
+114+  81EF              ;;;NOT USED                         ld      a,$FF
+115+  81EF              ;;;NOT USED                         ret
+116+  81EF
+117+  81EF
+118+  81EF              ; HL(2sc) = HL (signed) + A (unsigned), uses HL, DE, A
+119+  81EF              ; 06 06 2022 not used
+120+  81EF 16 00        HL2cEquHLSgnPlusAusgn:  ld      d,0
+121+  81F1 5F                                   ld      e,a                         ; set up DE = A
+122+  81F2 7C                                   ld      a,h
+123+  81F3 E6 7F                                and     SignMask8Bit
+124+  81F5 28 07                                jr      z,.HLPositive               ; if HL is negative then do HL - A
+125+  81F7 67           .HLNegative:            ld      h,a                         ; hl = ABS (HL)
+126+  81F8                                      NegHL                               ; hl = - hl
+126+  81F8 AF          >                    xor a
+126+  81F9 95          >                    sub l
+126+  81FA 6F          >                    ld l,a
+126+  81FB 9F          >                    sbc a,a
+126+  81FC 94          >                    sub h
+126+  81FD 67          >                    ld h,a
+127+  81FE              .HLPositive:            ClearCarryFlag                      ; now do adc hl,de
+127+  81FE B7          >                        or a
+128+  81FF ED 5A                                adc     hl,de                       ; aftert his hl will be 2's c
+129+  8201 C9                                   ret
+130+  8202              ; 06 06 2022 not used
+131+  8202 5F           HLEquHLSgnPlusAusgn:    ld      e,a
+132+  8203 7C                                   ld      a,h
+133+  8204 E6 7F                                and     SignMask8Bit
+134+  8206 20 04                                jr      nz,.HLNegative              ; if HL is negative then do HL - A
+135+  8208 7B           .HLPositive:            ld      a,e                         ; else its HL + A
+136+  8209 ED 31                                add     hl,a
+137+  820B C9                                   ret
+138+  820C              .HLNegative:            ClearSignBit    h                   ; Clear sign of HL
+138+  820C 7C          >                        ld      a,h
+138+  820D E6 7F       >                        and     SignMask8Bit
+138+  820F 67          >                        ld      h,a
+139+  8210                                      NegHL                               ; and convert to 2's C
+139+  8210 AF          >                    xor a
+139+  8211 95          >                    sub l
+139+  8212 6F          >                    ld l,a
+139+  8213 9F          >                    sbc a,a
+139+  8214 94          >                    sub h
+139+  8215 67          >                    ld h,a
+140+  8216 16 00                                ld      d,0
+141+  8218                                      ClearCarryFlag
+141+  8218 B7          >                        or a
+142+  8219 ED 52                                sbc     hl,de                       ; now add a to -ve HL , add does not do 2's c
+143+  821B FA 23 82                             jp      m,.FlipResult               ; if it was negative then its really positive
+144+  821E                                      SetSignBit      h
+144+  821E 7C          >                        ld      a,h
+144+  821F F6 80       >                        or      SignOnly8Bit
+144+  8221 67          >                        ld      h,a
+145+  8222 C9                                   ret
+146+  8223              .FlipResult:            NegHL                               ; so if -hl + A => HL - A => HL - DE is negative then the actual result is +ve
+146+  8223 AF          >                    xor a
+146+  8224 95          >                    sub l
+146+  8225 6F          >                    ld l,a
+146+  8226 9F          >                    sbc a,a
+146+  8227 94          >                    sub h
+146+  8228 67          >                    ld h,a
+147+  8229 C9                                   ret
+148+  822A
+149+  822A
+150+  822A              ; 06 06 2022 not used
+151+  822A              ; HL = HL (signed) + A (unsigned), uses HL, DE, A
+152+  822A 57           AddAusngToHLsng:        ld      d,a
+153+  822B 5C                                   ld      e,h
+154+  822C 7C                                   ld      a,h
+155+  822D E6 7F                                and     SignMask8Bit
+156+  822F 67                                   ld      h,a
+157+  8230 7A                                   ld      a,d
+158+  8231 ED 31                                add     hl,a
+159+  8233 7B                                   ld      a,e
+160+  8234 E6 80                                and     SignOnly8Bit
+161+  8236 B4                                   or      h
+162+  8237 C9                                   ret
+163+  8238              ; 06 06 2022 not used
+164+  8238              ; HL = A (unsigned) - HL (signed), uses HL, DE, BC, A
+165+  8238 44           HLEequAusngMinusHLsng:  ld      b,h
+166+  8239 4F                                   ld      c,a
+167+  823A 78                                   ld      a,b
+168+  823B E6 80                                and     SignOnly8Bit
+169+  823D 20 08                                jr      nz,.DoAdd
+170+  823F EB           .DoSubtract:            ex      de,hl               ; move hl into de
+171+  8240 26 00                                ld      h,0                 ; hl = a
+172+  8242 69                                   ld      l,c
+173+  8243                                      ClearCarryFlag
+173+  8243 B7          >                        or a
+174+  8244 ED 52                                sbc     hl,de               ; hl = a - hl
+175+  8246 C9                                   ret
+176+  8247 79           .DoAdd:                 ld      a,c
+177+  8248 ED 31                                add hl,a
+178+  824A C9                                   ret
+179+  824B              ;tested mathstestsun2
+180+  824B              ; DEL = DEL + BCH signed, uses BC, DE, HL, IY, A
+181+  824B 78           AddBCHtoDELsigned:      ld      a,b                 ; Are the values both the same sign?
+182+  824C AA                                   xor     d                   ; .
+183+  824D E6 80                                and     SignOnly8Bit        ; .
+184+  824F 20 19                                jr      nz,.SignDifferent   ; .
+185+  8251 78           .SignSame:              ld      a,b                 ; if they are then we only need 1 signe
+186+  8252 E6 80                                and     SignOnly8Bit        ; so store it in iyh
+187+  8254 FD 67                                ld      iyh,a               ;
+188+  8256 78                                   ld      a,b                 ; bch = abs bch
+189+  8257 E6 7F                                and     SignMask8Bit        ; .
+190+  8259 47                                   ld      b,a                 ; .
+191+  825A 7A                                   ld      a,d                 ; del = abs del
+192+  825B E6 7F                                and     SignMask8Bit        ; .
+193+  825D 57                                   ld      d,a                 ; .
+194+  825E 7C                                   ld      a,h                 ; l = h + l
+195+  825F 85                                   add     l                   ; .
+196+  8260 6F                                   ld      l,a                 ; .
+197+  8261 79                                   ld      a,c                 ; e = e + c + carry
+198+  8262 8B                                   adc     e                   ; .
+199+  8263 5F                                   ld      e,a                 ; .
+200+  8264 78                                   ld      a,b                 ; d = b + d + carry (signed)
+201+  8265 8A                                   adc     d                   ;
+202+  8266 FD B4                                or      iyh                 ; d = or back in sign bit
+203+  8268 57                                   ld      d,a                 ;
+204+  8269 C9                                   ret                         ; done
+205+  826A 78           .SignDifferent:         ld      a,b                 ; bch = abs bch
+206+  826B FD 67                                ld      iyh,a               ; iyh = b sign
+207+  826D E6 7F                                and     SignMask8Bit        ; .
+208+  826F 47                                   ld      b,a                 ; .
+209+  8270 7A                                   ld      a,d                 ; del = abs del
+210+  8271 FD 6F                                ld      iyl,a               ; iyl = d sign
+211+  8273 E6 7F                                and     SignMask8Bit        ; .
+212+  8275 57                                   ld      d,a                 ; .
+213+  8276 E5                                   push    hl                  ; save hl
+214+  8277 60 69                                ld      hl,bc               ; hl = bc - de, if bc < de then there is a carry
+215+  8279 ED 52                                sbc     hl,de               ;
+216+  827B E1                                   pop     hl                  ;
+217+  827C 38 0E                                jr      c,.BCHltDEL
+218+  827E 20 1C                                jr      nz,.DELltBCH        ; if the result was not zero then DEL > BCH
+219+  8280 7C           .BCeqDE:                ld      a,h                 ; if the result was zero then check lowest bits
+220+  8281                                      JumpIfALTNusng l,.BCHltDEL
+220+  8281 BD          >                        cp      l
+220+  8282 DA 8C 82    >                        jp		c, .BCHltDEL
+221+  8285 20 15                                jr      nz,.DELltBCH
+222+  8287              ; The same so its just zero
+223+  8287 AF           .BCHeqDEL:              xor     a                  ; its just zero
+224+  8288 57                                   ld      d,a                ; .
+225+  8289 5F                                   ld      e,a                ; .
+226+  828A 6F                                   ld      l,a                ; .
+227+  828B C9                                   ret                        ; .
+228+  828C              ;BCH is less than DEL so its DEL - BCH the sort out sign
+229+  828C 7D           .BCHltDEL:              ld      a,l                ; l = l - h                      ; ex
+230+  828D 94                                   sub     h                  ; .                              ;   01D70F DEL
+231+  828E 6F                                   ld      l,a                ; .                              ;  -000028 BCH
+232+  828F 7B                                   ld      a,e                ; e = e - c - carry              ;1.
+233+  8290 99                                   sbc     c                  ; .                              ;
+234+  8291 5F                                   ld      e,a                ; .                              ;
+235+  8292 7A                                   ld      a,d                ; d = d - b - carry              ;
+236+  8293 98                                   sbc     b                  ; .                              ;
+237+  8294 57                                   ld      d,a                ; .                              ;
+238+  8295 FD 7D                                ld      a,iyl              ; as d was larger, take d sign
+239+  8297 E6 80                                and     SignOnly8Bit       ;
+240+  8299 B2                                   or      d                  ;
+241+  829A 57                                   ld      d,a                ;
+242+  829B C9                                   ret
+243+  829C 7C           .DELltBCH:              ld      a,h                ; l = h - l
+244+  829D 95                                   sub     l                  ;
+245+  829E 6F                                   ld      l,a                ;
+246+  829F 79                                   ld      a,c                ; e = c - e - carry
+247+  82A0 9B                                   sbc     e                  ;
+248+  82A1 5F                                   ld      e,a                ;
+249+  82A2 78                                   ld      a,b                ; d = b - d - carry
+250+  82A3 9A                                   sbc     d                  ;
+251+  82A4 57                                   ld      d,a                ;
+252+  82A5 FD 7C                                ld      a,iyh              ; as b was larger, take b sign into d
+253+  82A7 E6 80                                and     SignOnly8Bit       ;
+254+  82A9 B2                                   or      d                  ;
+255+  82AA 57                                   ld      d,a                ;
+256+  82AB C9                                   ret
+257+  82AC
+258+  82AC              ; 06 06 2022 not used
+259+  82AC              ;BHL = AHL + DE where AHL = 16 bit + A sign and DE = 15 bit signed
+260+  82AC 47           AddAHLtoDEsigned:       ld      b,a                     ; B = A , C = D (save sign bytes)
+261+  82AD 4A                                   ld      c,d                     ; .
+262+  82AE A9                                   xor     c                       ; A = A xor C
+263+  82AF CB BA                                res     7,d                     ; clear sign bit of D
+264+  82B1 20 02                                jr nz,  .OppositeSigns          ; if A xor C is opposite signs job to A0A1
+265+  82B3 19                                   add     hl,de                   ; HL = HL + DE
+266+  82B4 C9                                   ret                             ; return
+267+  82B5 ED 52        .OppositeSigns:         sbc     hl,de                   ; HL = HL -DE
+268+  82B7 D0                                   ret     nc                      ; if no carry return
+269+  82B8 19                                   add     hl,de                   ; else HL = HL + DE
+270+  82B9 EB                                   ex      de,hl                   ;      swap HL and DE
+271+  82BA A7                                   and     a                       ;      reset carry
+272+  82BB ED 52                                sbc     hl,de                   ;      HL = DE - HL (as they were swapped)
+273+  82BD 41                                   ld      b,c                     ;      B = sign of C
+274+  82BE C9                                   ret                             ;      ret
+275+  82BF
+276+  82BF
+277+  82BF              ; 06 06 2022 not used
+278+  82BF              ; a = value to add
+279+  82BF              ; b = offset (equivalent to regX)
+280+  82BF              ; returns INWK [x] set to new value
+281+  82BF              addINWKbasigned:
+282+  82BF 21 07 84     		ld 		hl,UBnKxlo                  ; hl = INWK 0
+283+  82C2 4F           		ld      c,a                         ; preserve a
+284+  82C3 78           		ld		a,b
+285+  82C4 ED 31        		add		hl,a                        ; hl = INWK[x]
+286+  82C6 79                   ld      a,c                         ; get back a value
+287+  82C7 E6 80                and     $80                         ; get sign bit from a
+288+  82C9 47                   ld      b,a                         ; now b = sign bit of a
+289+  82CA 79                   ld      a,c                         ; a = original value
+290+  82CB E6 7F                and     SignMask8Bit                ; a = unsigned version of original value
+291+  82CD              ; 06 06 2022 not used
+292+  82CD              ; hl = unsigned version of INWK0[b]
+293+  82CD              ; a = value to add, also in c which will optimise later code
+294+  82CD              ; b = sign bit of a ( in old code was varT)
+295+  82CD              addhlcsigned:
+296+  82CD 5E                   ld      e,(hl)                      ; de = INKK value
+297+  82CE 23                   inc     hl
+298+  82CF 56                   ld      d,(hl)
+299+  82D0 23                   inc     hl                          ; now pointing a sign
+300+  82D1 7E                   ld      a,(hl)                      ; a = sign bit
+301+  82D2 EB                   ex      de,hl                       ; hl = value now and de = pointer to sign
+302+  82D3 A8                   xor     b                           ; a = resultant sign
+303+  82D4 CB 7F                bit     7,a                         ; is it negative?
+304+  82D6 28 2B                jr      z,.postivecalc
+305+  82D8              .negativecalc:
+306+  82D8 7C                   ld      a,h
+307+  82D9 E6 7F                and     SignMask8Bit
+308+  82DB 67                   ld      h,a                         ; strip high bit
+309+  82DC DD 68                ld      ixl,b                       ; save sign bit from b into d
+310+  82DE 06 00                ld      b,0                         ; c = value to subtract so now bc = value to subtract
+311+  82E0 ED 42                sbc     hl,bc
+312+  82E2 DD 45                ld      b,ixl                       ; get sign back
+313+  82E4 EB                   ex      de,hl                       ; de = value hl = pointer to sign
+314+  82E5 7E                   ld      a,(hl)                      ;
+315+  82E6 E6 7F                and     SignMask8Bit
+316+  82E8 DE 00                sbc     a,0                         ; subtract carry which could flip sign bit
+317+  82EA F6 80                or      $80                         ; set bit 0
+318+  82EC A8                   xor     b                           ; flip bit on sign (var T)
+319+  82ED 77                   ld      (hl),a
+320+  82EE 2B                   dec     hl
+321+  82EF 72                   ld      (hl),d
+322+  82F0 2B                   dec     hl
+323+  82F1 73                   ld      (hl),e                      ; write out DE to INKW[x]0,1
+324+  82F2 EB                   ex      de,hl                       ; hl = value de = pointer to start if INKW[x]
+325+  82F3 D8                   ret     c                           ; if carry was set then we can exit now
+326+  82F4              .nocarry:
+327+  82F4                      NegHL                               ; get hl back to positive, a is still inkw+2
+327+  82F4 AF          >                    xor a
+327+  82F5 95          >                    sub l
+327+  82F6 6F          >                    ld l,a
+327+  82F7 9F          >                    sbc a,a
+327+  82F8 94          >                    sub h
+327+  82F9 67          >                    ld h,a
+328+  82FA B0                   or      b                           ; b is still varT
+329+  82FB EB                   ex      de,hl                       ; de = value hl = pointer to start if INKW[x]
+330+  82FC 73                   ld      (hl),e
+331+  82FD 23                   inc     hl
+332+  82FE 72                   ld      (hl),d
+333+  82FF 23                   inc     hl
+334+  8300 77                   ld      (hl),a                      ; set sign bit in INKK[x]+2
+335+  8301 EB                   ex      de,hl                       ; hl = value de = pointer to sign
+336+  8302 C9                   ret
+337+  8303              .postivecalc:
+338+  8303 DD 68                ld      ixl,b
+339+  8305 06 00                ld      b,0
+340+  8307 19                   add     hl,de
+341+  8308 EB                   ex      de,hl
+342+  8309 DD B5                or      ixl                         ; we don;t need to recover b here
+343+  830B 77                   ld      (hl),a                      ; push sign into INWK[x]
+344+  830C 2B                   dec     hl
+345+  830D 72                   ld      (hl),d
+346+  830E 2B                   dec     hl
+347+  830F 73                   ld      (hl),e
+348+  8310 C9                   ret
+349+  8311
+350+  8311              ;a = a AND 80 (i.e. bit 7) =>carry       so value is -
+351+  8311              ;MVT1
+352+  8311              ;    S = bits 6 to 0 of A
+353+  8311              ;    A = sign bit => T
+354+  8311              ;    xor sign bit with ink[x] Sign
+355+  8311              ;    if negative thn its not an add
+356+  8311              ;
+357+  8311              ;        and h, 7F
+358+  8311              ;        b = 0
+359+  8311              ;        c = varS
+360+  8311              ;        subtract INW[X]hilo, bc
+361+  8311              ;        retain carry
+362+  8311              ;        get INKW[x]Sign
+363+  8311              ;        and 7F
+364+  8311              ;        subtract carry (so will go negtive if negative)
+365+  8311              ;        xor bit 7 of h with T to flip bit
+366+  8311              ;        write to INKW[x]Sign
+367+  8311              ;
+368+  8311              ;    else
+369+  8311              ;MV10.
+370+  8311              ;        add INWK[x]hi,lo, varS
+371+  8311              ;        or      sign bit
+372+  8311
+373+  8311
+# file closed: ../Maths/asm_add.asm
+115   8311                                      INCLUDE "../Maths/Utilities/badd_ll38.asm"
+# file opened: ../Maths/Utilities/badd_ll38.asm
+  1+  8311              baddll38:				;.LL38	\ -> &4812 \ BADD(S)A=R+Q(SA) \ byte add (subtract)   (Sign S)A = R + Q*(Sign from A^S)
+  2+  8311              SAEquSRPlusAQ:
+  3+  8311              ; Calculate the following between sign-magnitude numbers:
+  4+  8311              ;   (S A) = (S R) + (A Q)
+  5+  8311              ; where the sign bytes only contain the sign bits, not magnitudes.
+  6+  8311              ; note goes wrong at <-127 >128 so need 16 bit version
+  7+  8311              ; so need to fix the issue with carry flag not returning a fault correctly
+  8+  8311              LL38:
+  9+  8311              ;	ld		d,a
+ 10+  8311              ;	ld		a,(varQ)
+ 11+  8311              ;	ld		e,a
+ 12+  8311              ;	ld		a,(varS)
+ 13+  8311              ;	ld		h,a
+ 14+  8311              ;	ld		a,(varR)
+ 15+  8311              ;	ld		l,a
+ 16+  8311              ;	call	ADDHLDESignedv3
+ 17+  8311              ;	ld		a,h
+ 18+  8311              ;	ld		(varS),a
+ 19+  8311              ;	ld		a,l
+ 20+  8311              ;	ret
+ 21+  8311              ; calculation table
+ 22+  8311              ;   R     Q    Op            Sign calc
+ 23+  8311              ;	10    5    Add           +    sign same add R sign
+ 24+  8311              ;   -10   5    ABS Sub       -    sign diff ABS R > S sub R sign
+ 25+  8311              ;   10   -5    ABS sub       +    sign diff ABS R > S sub R sign
+ 26+  8311              ;	-10  -5    ABS Add       -    sign same add R sign
+ 27+  8311              ;   5    10    Add           +    sign same add R sign
+ 28+  8311              ;   -5   10    Swap ABS SUB  +    sign diff ABS Q > R swap SUB Q sign
+ 29+  8311              ;   5    -10   swap ABS Sub  -    sign diff ABS Q > R swap SUB R sign
+ 30+  8311              ;   -5   -10   ABS  add      -    sign same add R sign
+ 31+  8311
+ 32+  8311              ;   -10   5    ABS Sub       -    sign diff ABS R > S sub R sign
+ 33+  8311              ;   10   -5    ABS sub       +    sign diff ABS R > S sub R sign
+ 34+  8311              ;   -5   10    Swap ABS SUB  +    sign diff ABS Q > R swap SUB Q sign
+ 35+  8311              ;   5    -10   swap ABS Sub  -    sign diff ABS Q > R swap SUB R sign
+ 36+  8311
+ 37+  8311
+ 38+  8311              ; Calculate sign for Q from A and varS
+ 39+  8311 21 F5 83     	ld		hl,varS							;
+ 40+  8314 AE           	xor		(hl)							;  EOR &83		\ S	\ sign of operator is A xor S
+ 41+  8315 FA 20 83     	jp		m,.LL39Subtraction  			; if signs are different then we have subtraction
+ 42+  8318 3A F3 83     	ld		a,(varQ)						; Q	\ else addition, S already correct
+ 43+  831B 21 F4 83     	ld		hl,varR
+ 44+  831E 86           	add		a,(hl)							; a = Q + R
+ 45+  831F C9           	ret										; Done carry set if overflow
+ 46+  8320              .LL39Subtraction:							; 1 byte subtraction (S)A = R-Q
+ 47+  8320 3A F4 83     	ld		a,(varR)						; a = R
+ 48+  8323 21 F3 83     	ld		hl,varQ                         ; Q
+ 49+  8326              ;--	JumpIfALTMemHLusng LL39SwapSubtraction	; if a < (hl) then do LL39SwapSubtraction
+ 50+  8326              	ClearCarryFlag                          ; we need to not use carry (6502 is different that it uses the compliement)
+ 50+  8326 B7          >                        or a
+ 51+  8327 9E           	sbc		a,(hl)							; A = R - Q which as R >= Q will always be a positive result
+ 52+  8328 38 01            jr      c,.LL39SignCorrection
+ 53+  832A              ;--    jr      a,.LL39ResultZero
+ 54+  832A              ;--   JumpIfNegative LL39SignCorrection		; if there was underflow we have to correct sign
+ 55+  832A              ;--	or		a								; Clear carry flag to say result is correct
+ 56+  832A C9           	ret
+ 57+  832B              .LL39SignCorrection:
+ 58+  832B FE 00            cp      0                               ; if its 0 then neg will affect flag so we just zero result to save compute
+ 59+  832D 28 0E            jr      z,.LL39ResultZero
+ 60+  832F ED 44            neg                                     ; flip A 2'c value to positive
+ 61+  8331 08           	ex		af,af'							; save A temporarily
+ 62+  8332 3A F5 83     	ld		a,(varS)						; Flip Sign bit in varS
+ 63+  8335 EE 80        	xor		$80							    ;
+ 64+  8337 32 F5 83     	ld		(varS),a                        ; flip sign bit of a
+ 65+  833A 08           	ex		af,af'                          ; get back a which is the result
+ 66+  833B                  ClearCarryFlag                          ; clear carry as NEG instrunction sets it for non zero
+ 66+  833B B7          >                        or a
+ 67+  833C C9           	ret
+ 68+  833D              .LL39ResultZero:
+ 69+  833D 32 F5 83         ld      (varS),a                        ; a is zero at this stage so set sign as well
+ 70+  8340                  ClearCarryFlag                          ; clear carry
+ 70+  8340 B7          >                        or a
+ 71+  8341 C9               ret
+ 72+  8342              ;--LL39SwapSubtraction:
+ 73+  8342              ;--	push	bc
+ 74+  8342              ;--	ld		b,a
+ 75+  8342              ;--	ld		a,(hl)
+ 76+  8342              ;--	sub		b
+ 77+  8342              ;--	pop		bc
+ 78+  8342              ;--	ex		af,af'							; do we flip here or negate. i think its flip as its overflowed unsigned
+ 79+  8342              ;--	ld		a,(varS)
+ 80+  8342              ;--	xor		$80
+ 81+  8342              ;--	ld		(varS),a
+ 82+  8342              ;--	ex		af,af'
+ 83+  8342              ;--	ret
+ 84+  8342
+ 85+  8342              ;;;;	baddll38:				;.LL38	\ -> &4812 \ BADD(S)A=R+Q(SA) \ byte add (subtract)   (Sign S)A = R + Q*(Sign from A^S)
+ 86+  8342              ;;;;; Calculate the following between sign-magnitude numbers:
+ 87+  8342              ;;;;;   (S A) = (S R) + (A Q)
+ 88+  8342              ;;;;; where the sign bytes only contain the sign bits, not magnitudes.
+ 89+  8342              ;;;;; note goes wrong at <-127 >128 so need 16 bit version
+ 90+  8342              ;;;;LL38:
+ 91+  8342              ;;;;; Calculate sign for Q from A and varS
+ 92+  8342              ;;;;	ld		hl,varS							;
+ 93+  8342              ;;;;	xor		(hl)							;  EOR &83		\ S	\ sign of operator is A xor S
+ 94+  8342              ;;;;	jp		m,.LL39Subtraction  			; if signs are different then we have subtraction
+ 95+  8342              ;;;;	ld		a,(varQ)						; Q	\ else addition, S already correct
+ 96+  8342              ;;;;	ld		hl,varR
+ 97+  8342              ;;;;	add		a,(hl)							; a = Q + R
+ 98+  8342              ;;;;	ret										; Done
+ 99+  8342              ;;;;.LL39Subtraction:							; 1 byte subtraction (S)A = R-Q
+100+  8342              ;;;;	ld		hl,varQ                         ;
+101+  8342              ;;;;	ld		a,(hl)
+102+  8342              ;;;;	JumpIfAGTENusng 128,LL39Sub16bit		; does this need to be 16 bit
+103+  8342              ;;;;	ld		a,(varR)						;
+104+  8342              ;;;;	ClearCarryFlag                          ; we need to not use carry (6502 is different that it uses the compliement)
+105+  8342              ;;;;	sbc		a,(hl)							; A = R - Q
+106+  8342              ;;;;	jr		c,.SignCorrection				; if there was underflow we have to correct sign
+107+  8342              ;;;;	or		a								; Clear carry flag to say result is correct
+108+  8342              ;;;;	ret
+109+  8342              ;;;;.SignCorrection:
+110+  8342              ;;;;    neg                                     ; flip A 2'c value to positive
+111+  8342              ;;;;	ex		af,af'							; save A temporarily
+112+  8342              ;;;;	ld		a,(varS)						; Flip Sign bit in varS
+113+  8342              ;;;;	xor		$80							    ;
+114+  8342              ;;;;	ld		(varS),a                        ; flip sign bit of a
+115+  8342              ;;;;	ex		af,af'                          ; get back a which is the result
+116+  8342              ;;;;	ret
+117+  8342              ;;;;LL39Sub16Bit:
+118+  8342              ;;;;	ld		e,a
+119+  8342              ;;;;	ld		d,0
+120+  8342              ;;;;	ld		a,(varR)
+121+  8342              ;;;;	ld		l,a
+122+  8342              ;;;;	ld		h,0
+123+  8342              ;;;;	ClearCarryFlag
+124+  8342              ;;;;	sbc		hl,de
+125+  8342              ;;;;	jr		c,.SignCorrection16bit
+126+  8342              ;;;;	bit		7,h
+127+  8342              ;;;;	jr		z,.GoodToReturn
+128+  8342              ;;;;.Needtonegate:
+129+  8342              ;;;;	macronegate16hl
+130+  8342              ;;;;.GoodToReturn
+131+  8342              ;;;;	ld		a,l
+132+  8342              ;;;;	or		a
+133+  8342              ;;;;	ret
+134+  8342              ;;;;.SignCorrection16bit:
+135+  8342              ;;;;	macronegate16hl
+136+  8342              ;;;;	ld		a,(varS)						; Flip Sign bit in varS
+137+  8342              ;;;;	xor		$80							    ;
+138+  8342              ;;;;	ld		(varS),a                        ; flip sign bit of a
+139+  8342              ;;;;	ld		a,l
+140+  8342              ;;;;	ret
+141+  8342
+142+  8342
+# file closed: ../Maths/Utilities/badd_ll38.asm
+116   8342                                      INCLUDE "../Maths/Utilities/AequAdivQmul96-TIS2.asm"
+# file opened: ../Maths/Utilities/AequAdivQmul96-TIS2.asm
+  1+  8342              AequAdivQmul96ABS:      JumpIfAGTENusng d, .TIS2AccGTEQ			; if A >= Q then return with a 1 (unity i.e. 96) with the correct sign
+  1+  8342 BA          >                        cp     d
+  1+  8343 D2 5E 83    >                        jp		nc,.TIS2AccGTEQ
+  2+  8346 06 FE                                ld			b,$FE						; division roll (replaced varT)
+  3+  8348 CB 27        .TIS2RollTLoop:			sla			a
+  4+  834A                                      JumpIfALTNusng d,.TIS2SkipSub           ; a < d so don;t subtract
+  4+  834A BA          >                        cp      d
+  4+  834B DA 61 83    >                        jp		c, .TIS2SkipSub
+  5+  834E 9A                                   sbc			a,d							; do subtraction with carry
+  6+  834F 37                                   scf
+  7+  8350 CB 10                                rl			b							; T rolled left to push bit out the end
+  8+  8352 38 F4                                jr			c,.TIS2RollTLoop				; if we still have not hit the empty marker continue
+  9+  8354 78           .TIS2SKIPCont:	        ld			a,b							; T
+ 10+  8355 CB 3F                                srl			a							; result / 2
+ 11+  8357 CB 3F                                srl			a							; result / 4
+ 12+  8359 47                                   ld			b,a							; t = t /4
+ 13+  835A CB 3F                                srl			a							; result / 8
+ 14+  835C 80                                   add			a,b							; result /8 + result /4
+ 15+  835D C9                                   ret
+ 16+  835E 3E 60        .TIS2AccGTEQ:           ld			a,$60							; unity
+ 17+  8360 C9                                   ret
+ 18+  8361 B7           .TIS2SkipSub:           or			a
+ 19+  8362 CB 10                                rl			b							; T rolled left to push bit out the end
+ 20+  8364 38 E2                                jr			c,.TIS2RollTLoop				; if we still have not hit the empty marker continue
+ 21+  8366 C3 54 83                             jp			.TIS2SKIPCont
+ 22+  8369
+ 23+  8369
+ 24+  8369              ; USES 			A DE BC
+ 25+  8369              ; DOES NOT USE 	HL
+ 26+  8369              TIS2962C:		; two's compliment entry point, exits not 2's compliment
+ 27+  8369 CB 7F        	bit			7,a
+ 28+  836B 28 04        	jr			z,AequAdivQmul96
+ 29+  836D ED 44        	neg										; revers 2s'c and just set neg bit
+ 30+  836F CB FF        	set			7,a
+ 31+  8371              ; Note negative numbers are bit 7 set not 2's compliment
+ 32+  8371              AequAdivQmul96:								; TIS296:			; .tis2 A = A /Q *96 (or A = A * 3/8 * Q) Reduce Acc in NORM routine i.e. *96/Q clamps at +- 96
+ 33+  8371              TIS2:
+ 34+  8371 4F           	ld			c,a							; copy of Acc
+ 35+  8372 3A F3 83     	ld			a,(varQ)
+ 36+  8375 57           	ld			d,a							; d = varQ
+ 37+  8376 79           	ld			a,c							; recover a
+ 38+  8377              AequAdivDmul967Bit:
+ 39+  8377 4F               ld          c,a
+ 40+  8378 7A               ld          a,d
+ 41+  8379 CB 27            sla         a
+ 42+  837B 30 10            jr          nc, .OKToDivide
+ 43+  837D              .ScaleDown:
+ 44+  837D B7               or          a
+ 45+  837E CB 3A            srl         d
+ 46+  8380
+ 47+  8380 79               ld          a,c
+ 48+  8381 E6 7F            and         SignMask8Bit
+ 49+  8383 CB 3F            srl         a
+ 50+  8385 47               ld          b,a
+ 51+  8386 79               ld          a,c
+ 52+  8387 E6 80            and         $80
+ 53+  8389 B0               or          b
+ 54+  838A C3 8E 83         jp          AequAdivDmul96
+ 55+  838D              .OKToDivide:
+ 56+  838D 79               ld          a,c
+ 57+  838E              AequAdivDmul96:
+ 58+  838E 4F           	ld			c,a							; copy of Acc as we need the sign, alternate entry point assuming D preloaded, wastes an "ld c,a" but simplifies code
+ 59+  838F E6 7F        	and			SignMask8Bit				; ignore sign
+ 60+  8391              	JumpIfAGTENusng d, .TIS2AccGTEQ			; if A >= Q then return with a 1 (unity i.e. 96) with the correct sign
+ 60+  8391 BA          >                        cp     d
+ 60+  8392 D2 B2 83    >                        jp		nc,.TIS2AccGTEQ
+ 61+  8395 06 FE        	ld			b,$FE						; division roll (replaced varT)
+ 62+  8397              .TIS2RollTLoop:									; .TIL2	; roll T
+ 63+  8397 CB 27        	sla			a
+ 64+  8399              	JumpIfALTNusng d,.TIS2SkipSub           ; a < d so don;t subtract
+ 64+  8399 BA          >                        cp      d
+ 64+  839A DA B8 83    >                        jp		c, .TIS2SkipSub
+ 65+  839D 9A           	sbc			a,d							; do subtraction with carry
+ 66+  839E 37           	scf                                     ; set carrry to roll into b
+ 67+  839F CB 10        	rl			b							; T rolled left to push bit out the end
+ 68+  83A1 38 F4        	jr			c,.TIS2RollTLoop			; if we still have not hit the empty marker continue
+ 69+  83A3              .TIS2SKIPCont:
+ 70+  83A3 78           	ld			a,b							; A = T = 4 / 4
+ 71+  83A4 CB 3F        	srl			a							; .
+ 72+  83A6 CB 3F        	srl			a							; .
+ 73+  83A8 47           	ld			b,a							; .
+ 74+  83A9 CB 3F        	srl			a							; A = A / 2 (i.e. T /8)
+ 75+  83AB 80           	add			a,b							; A = T/8 + T/4 (3T/8)
+ 76+  83AC 47           	ld			b,a							; b = 3/8*Acc (max = 96)
+ 77+  83AD 79           	ld			a,c							; copy of Acc to look at sign bit
+ 78+  83AE E6 80        	and			$80							; recover sign only
+ 79+  83B0 B0           	or			b							; now put b back in so we have a leading sign bit (note not 2's compliment)
+ 80+  83B1 C9           	ret
+ 81+  83B2              .TIS2AccGTEQ:
+ 82+  83B2              ;TI4:										;\ clean to +/- unity
+ 83+  83B2 79           	ld			a,c
+ 84+  83B3 E6 80        	and			$80							; copy of Acc
+ 85+  83B5 F6 60        	or			$60							; unity
+ 86+  83B7 C9           	ret
+ 87+  83B8              .TIS2SkipSub:
+ 88+  83B8              	ClearCarryFlag                          ; Clear carry as it needs to be empty to roll in 0
+ 88+  83B8 B7          >                        or a
+ 89+  83B9 CB 10        	rl			b							; T rolled left to push bit out the end
+ 90+  83BB 38 DA        	jr			c,.TIS2RollTLoop			; if we still have not hit the empty marker continue
+ 91+  83BD C3 A3 83     	jp			.TIS2SKIPCont
+ 92+  83C0
+# file closed: ../Maths/Utilities/AequAdivQmul96-TIS2.asm
+117   83C0                                      INCLUDE "../Maths/asm_sqrt.asm"
+# file opened: ../Maths/asm_sqrt.asm
+  1+  83C0              ; "ASM SQRT : TESTGOOD"
+  2+  83C0              ; "16-bit integer square root"
+  3+  83C0              ; "call with de = number to square root"
+  4+  83C0              ; "returns   hl = square root"
+  5+  83C0              ; "corrupts  bc, de"
+  6+  83C0              asm_sqrt:
+  7+  83C0 01 00 80     	ld bc,$8000
+  8+  83C3 61           	ld h,c
+  9+  83C4 69           	ld l,c
+ 10+  83C5              .sqrloop:
+ 11+  83C5 CB 38        	srl b
+ 12+  83C7 CB 19        	rr c
+ 13+  83C9 09           	add hl,bc
+ 14+  83CA EB           	ex de,hl
+ 15+  83CB ED 52        	sbc hl,de
+ 16+  83CD 38 04        	jr c,.sqrbit
+ 17+  83CF EB           	ex de,hl
+ 18+  83D0 09           	add hl,bc
+ 19+  83D1 18 05        	jr .sqrfi
+ 20+  83D3              .sqrbit:
+ 21+  83D3 19           	add hl,de
+ 22+  83D4 EB           	ex de,hl
+ 23+  83D5 B7           	or a
+ 24+  83D6 ED 42        	sbc hl,bc
+ 25+  83D8              .sqrfi:
+ 26+  83D8 CB 3C        	srl h
+ 27+  83DA CB 1D        	rr l
+ 28+  83DC CB 38        	srl b
+ 29+  83DE CB 19        	rr c
+ 30+  83E0 30 E3        	jr nc,.sqrloop
+ 31+  83E2 C9           	ret
+ 32+  83E3
+ 33+  83E3
+ 34+  83E3              sqrtQR:					; Q = SQR(Qlo.Rhi) Q <~127
+ 35+  83E3 3A F3 83     	ld		a,(varQ)
+ 36+  83E6 5F           	ld		e,a
+ 37+  83E7 3A F4 83     	ld		a,(varR)
+ 38+  83EA 57           	ld		d,a
+ 39+  83EB CD C0 83     	call	asm_sqrt
+ 40+  83EE 7D               ld      a,l
+ 41+  83EF 32 F3 83     	ld		(varQ),a
+ 42+  83F2 C9           	ret
+ 43+  83F3
+# file closed: ../Maths/asm_sqrt.asm
+118   83F3 00           varQ                           DB  0
+119   83F4 00           varR                           DB  0
+120   83F5 00           varS                           DB  0
+121   83F6 00           varT                           DB  0
+122   83F7 C6           TargetKxlo                     DB  198
+123   83F8 00           TargetKxhi                     DB  0
+124   83F9 00           TargetKxsgn                    DB  0
+125   83FA 3C           TargetKylo                     DB  60
+126   83FB 00           TargetKyhi                     DB  0
+127   83FC 80           TargetKysgn                    DB  $80
+128   83FD B8           TargetKzlo                     DB  $B8
+129   83FE 0B           TargetKzhi                     DB  $0B
+130   83FF 00           TargetKzsgn                    DB  0
+131   8400 00 00 00...  Padding1                       DS 7
+132   8407 00           UBnKxlo                     DB  0                       ; INWK+0
+133   8408 00           UBnKxhi                     DB  0                       ; there are hi medium low as some times these are 24 bit
+134   8409 00           UBnKxsgn                    DB  0                       ; INWK+2
+135   840A 00           UBnKylo                     DB  0                       ; INWK+3 \ ylo
+136   840B 00           UBnKyhi                     DB  0                       ; INWK+4 \ yHi
+137   840C 00           UBnKysgn                    DB  0                       ; INWK +5
+138   840D 00           UBnKzlo                     DB  0                       ; INWK +6
+139   840E 00           UBnKzhi                     DB  0                       ; INWK +7
+140   840F 00           UBnKzsgn                    DB  0                       ; INWK +8
+141   8410 00 00 00...  Padding1B                       DS 7
+142   8417              ;-Rotation Matrix of Ship----------------------------------------------------------------------------------------------------------
+143   8417              ; Rotation data is stored as lohi, but only 15 bits with 16th bit being  a sign bit. Note this is NOT 2'c compliment
+144   8417              ; Note they seem to have to be after camera position not quite found why yet, can only assume it does an iy or ix indexed copy? Bu oddly does not affect space station.
+145   8417 00 00        UBnkrotmatSidevX            DW  0                       ; INWK +21
+146   8419              UBnkrotmatSidev             equ UBnkrotmatSidevX
+147   8419 00 00        UBnkrotmatSidevY            DW  0                       ; INWK +23
+148   841B 00 00        UBnkrotmatSidevZ            DW  0                       ; INWK +25
+149   841D 00 00 00...  Padding2                    DS  10
+150   8427 00 00        UBnkrotmatRoofvX            DW  0                       ; INWK +15
+151   8429              UBnkrotmatRoofv             equ UBnkrotmatRoofvX
+152   8429 00 00        UBnkrotmatRoofvY            DW  0                       ; INWK +17
+153   842B 00 00        UBnkrotmatRoofvZ            DW  0                       ; INWK +19
+154   842D 00 00 00...  Padding3                    DS  10
+155   8437 00 00        UBnkrotmatNosevX            DW  0                       ; INWK +9
+156   8439              UBnkrotmatNosev             EQU UBnkrotmatNosevX
+157   8439 00 00        UBnkrotmatNosevY            DW  0                       ; INWK +11
+158   843B 00 00        UBnkrotmatNosevZ            DW  0                       ; INWK +13
+159   843D 00 00 00...  Padding4                    DS  10
+160   8447 00           UBnKSpeed                   DB  0                       ; INWK +27
+161   8448 00           UBnKAccel                   DB  0                       ; INWK +28
+162   8449 00           UBnKRotXCounter             DB  0                       ; INWK +29
+163   844A 00           UBnKRotZCounter             DB  0                       ; INWK +30
+164   844B 00 00 00...  Padding5                    DS  10
+165   8455
+166   8455              ;-Rotation Matrix of Ship----------------------------------------------------------------------------------------------------------
+167   8455              ; Rotation data is stored as lohi, but only 15 bits with 16th bit being  a sign bit. Note this is NOT 2'c compliment
+168   8455              ; Note they seem to have to be after camera position not quite found why yet, can only assume it does an iy or ix indexed copy? Bu oddly does not affect space station.
+169   8455
+170   8455              ; In A = sign of dot product
+171   8455 EE 80        calcNPitch:             xor     SignOnly8Bit                    ; c = sign flipped of dot product only
+172   8457 E6 80                                and     SignOnly8Bit                    ; .
+173   8459 4F                                   ld      c,a                             ; . (varT in effect)
+174   845A 3A 4A 84                             ld      a,(UBnKRotZCounter)             ; b = abs (currentz pitch)
+175   845D E6 7F                                and     SignMask8Bit                    ; . which will initially be 0
+176   845F 47                                   ld      b,a                             ; .
+177   8460 3A FB 80                             ld      a,(TacticsDotProduct2)          ; a = abs roof dot product
+178   8463                                      JumpIfALTNusng 4, .calcNPitch2          ; if a >= roll threshold
+178   8463 FE 04       >                        cp      4
+178   8465 DA 6F 84    >                        jp		c, .calcNPitch2
+179   8468 3E 03                                ld      a,3                             ;    z rot = z rot * dot product flipped sign
+180   846A B1                                   or      c                               ;    i.e. zrot = current magnitude but dot product sign flipped
+181   846B 32 4A 84                             ld      (UBnKRotZCounter),a             ;    .
+182   846E C9                                   ret                                     ; else (a LT current abs z)
+183   846F B1           .calcNPitch2:           or      c                               ;     rot z = dot product with sign flipped
+184   8470 32 4A 84                             ld      (UBnKRotZCounter),a             ;
+185   8473 C9                                   ret                                     ;
+186   8474
+187   8474 EE 80        calcNRoll:              xor     SignOnly8Bit                    ; flip sign of dot product
+188   8476 E6 80                                and     SignOnly8Bit
+189   8478 4F                                   ld      c,a
+190   8479 3A 49 84                             ld      a,(UBnKRotXCounter)
+191   847C E6 7F                                and     SignMask8Bit                    ; get ABS value
+192   847E 47                                   ld      b,a
+193   847F 3A FB 80                             ld      a,(TacticsDotProduct2)          ; now we have the dot product abs value
+194   8482                                      JumpIfALTNusng 4, .calcNRoll2
+194   8482 FE 04       >                        cp      4
+194   8484 DA 8E 84    >                        jp		c, .calcNRoll2
+195   8487 3E 03                                ld      a,3
+196   8489 B1                                   or      c
+197   848A 32 49 84                             ld      (UBnKRotXCounter),a
+198   848D C9                                   ret
+199   848E B1           .calcNRoll2:            or      c                               ;     rot z = dot product with sign flipped
+200   848F 32 49 84                             ld      (UBnKRotXCounter),a
+201   8492 C9                                   ret
+202   8493
+203   8493 21 37 84     XX12EquTacticsDotNosev: ld      hl,UBnkrotmatNosevX
+204   8496              XX12EquTacticsDotHL:    N0equN1byN2div256 varT, (hl), (TacticsVectorX)       ; T = (hl) * regXX15fx /256
+204   8496 3A FF 80    >                        ld      a,(TacticsVectorX)                        ;
+204   8499 5F          >                        ld      e,a                         ; use e as var Q = value of XX15 [n] lo
+204   849A 7E          >                        ld      a,(hl)                        ; A = XX16 element
+204   849B 57          >                        ld      d,a
+204   849C ED 30       >                        mul
+204   849E 7A          >                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low
+204   849F 32 F6 83    >                        ld      (varT),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
+205   84A2 23                                   inc     hl                                  ; move to sign byte
+206   84A3              .XX12CalcXSign:         AequN1xorN2 TacticsVectorX+2, (hl) ;UBnkXScaledSign,(hl)             ;
+206   84A3 3A 01 81    >                        ld      a,(TacticsVectorX+2)
+206   84A6 AE          >                        xor     (hl)
+207   84A7 32 F5 83                             ld      (varS),a                            ; Set S to the sign of x_sign * sidev_x
+208   84AA 23                                   inc     hl
+209   84AB              .XX12CalcY:              N0equN1byN2div256 varQ, (hl),(TacticsVectorY)       ; Q = XX16 * XX15 /256 using varQ to hold regXX15fx
+209   84AB 3A 02 81    >                        ld      a,(TacticsVectorY)                        ;
+209   84AE 5F          >                        ld      e,a                         ; use e as var Q = value of XX15 [n] lo
+209   84AF 7E          >                        ld      a,(hl)                        ; A = XX16 element
+209   84B0 57          >                        ld      d,a
+209   84B1 ED 30       >                        mul
+209   84B3 7A          >                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low
+209   84B4 32 F3 83    >                        ld      (varQ),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
+210   84B7                                      ldCopyByte varT,varR                        ; R = T =  |sidev_x| * x_lo / 256
+210   84B7 3A F6 83    >                        ld       a,(varT)
+210   84BA 32 F4 83    >                        ld       (varR),a
+211   84BD 23                                   inc     hl
+212   84BE                                      AequN1xorN2 TacticsVectorY+2,(hl)             ; Set A to the sign of y_sign * sidev_y
+212   84BE 3A 04 81    >                        ld      a,(TacticsVectorY+2)
+212   84C1 AE          >                        xor     (hl)
+213   84C2              ; (S)A = |sidev_x| * x_lo / 256  = |sidev_x| * x_lo + |sidev_y| * y_lo
+214   84C2 E5           .STequSRplusAQ           push    hl
+215   84C3 CD 11 83                             call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA) \ 1byte add (subtract)
+216   84C6 E1                                   pop     hl
+217   84C7 32 F6 83                             ld      (varT),a                            ; T = |sidev_x| * x_lo + |sidev_y| * y_lo
+218   84CA 23                                   inc     hl
+219   84CB              .XX12CalcZ:              N0equN1byN2div256 varQ,(hl),(TacticsVectorZ)       ; Q = |sidev_z| * z_lo / 256
+219   84CB 3A 05 81    >                        ld      a,(TacticsVectorZ)                        ;
+219   84CE 5F          >                        ld      e,a                         ; use e as var Q = value of XX15 [n] lo
+219   84CF 7E          >                        ld      a,(hl)                        ; A = XX16 element
+219   84D0 57          >                        ld      d,a
+219   84D1 ED 30       >                        mul
+219   84D3 7A          >                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low
+219   84D4 32 F3 83    >                        ld      (varQ),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
+220   84D7                                      ldCopyByte varT,varR                        ; R = |sidev_x| * x_lo + |sidev_y| * y_lo
+220   84D7 3A F6 83    >                        ld       a,(varT)
+220   84DA 32 F4 83    >                        ld       (varR),a
+221   84DD 23                                   inc     hl
+222   84DE                                      AequN1xorN2 TacticsVectorY+2,(hl)             ; A = sign of z_sign * sidev_z
+222   84DE 3A 04 81    >                        ld      a,(TacticsVectorY+2)
+222   84E1 AE          >                        xor     (hl)
+223   84E2              ; (S)A= |sidev_x| * x_lo + |sidev_y| * y_lo + |sidev_z| * z_lo
+224   84E2 CD 11 83                             call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA)   \ 1byte add (subtract)
+225   84E5              ; Now we exit with A = result S = Sign
+226   84E5 C9                                   ret
+227   84E6
+228   84E6 21 27 84     XX12EquTacticsDotRoofv: ld      hl,UBnkrotmatRoofvX
+229   84E9 C3 96 84                             jp      XX12EquTacticsDotHL
+230   84EC
+231   84EC 21 17 84     XX12EquTacticsDotSidev: ld      hl,UBnkrotmatSidevX
+232   84EF C3 96 84                             jp      XX12EquTacticsDotHL
+233   84F2
+234   84F2
+235   84F2              ;NormalizeTactics:       ld      hl, (TacticsVectorX)        ; pull XX15 into registers
+236   84F2              ;                        ld      de, (TacticsVectorY)        ; .
+237   84F2              ;                        ld      bc, (TacticsVectorZ)        ; .
+238   84F2              ;.SetMinZ1:              ld      a,c
+239   84F2              ;                        or      1
+240   84F2              ;                        ld      c,a
+241   84F2              ;.CalcShift:             ld      a,h                         ; Chceck if any high bytes overflowed
+242   84F2              ;                        or      d                           ;
+243   84F2              ;                        or      b                           ;
+244   84F2              ;                        rl      a                           ;
+245   84F2              ;                        jr      c.ShiftDone
+246   84F2              ;.Perform.PerformShift:  ShiftBCLeft1                        ; now shift vectors
+247   84F2              ;                        ShiftDELeft1                        ; by
+248   84F2              ;                        ShiftHLLeft1                        ; left 1 bit
+249   84F2              ;                        jp      .CalcShift
+250   84F2              ;.ShiftDone:             srl     h                           ; here x y z are made 7 bit values
+251   84F2              ;.SignY:                 srl     d
+252   84F2              ;                        ld      l,d                         ; set l to y
+253   84F2              ;.SignZ:                 srl     b
+254   84F2              ;                        ld      e,d                         ; d = y e = y
+255   84F2              ;                        mul     de                          '
+256   84F2              ;
+257   84F2
+258   84F2
+259   84F2              ;-- Now its scaled we can normalise
+260   84F2 2A FF 80     NormalizeTactics:       ld      hl, (TacticsVectorX)        ; pull XX15 into registers
+261   84F5 ED 5B 02 81                          ld      de, (TacticsVectorY)        ; .
+262   84F9 ED 4B 05 81                          ld      bc, (TacticsVectorZ)        ; .
+263   84FD 7C           .ScaleLoop:             ld      a,h
+264   84FE B2                                   or      d
+265   84FF B0                                   or      b
+266   8500 28 0F                                jr      z,.DoneScaling
+267   8502                                      ShiftHLRight1
+267   8502 CB 3C       >			   srl h
+267   8504 CB 1D       >			   rr  l
+268   8506                                      ShiftDERight1
+268   8506 CB 3A       >			   srl d
+268   8508 CB 1B       >			   rr  e
+269   850A                                      ShiftBCRight1
+269   850A CB 38       >			   srl b
+269   850C CB 19       >			   rr  c
+270   850E C3 FD 84                             jp      .ScaleLoop
+271   8511              .DoneScaling:           ShiftHLRight1                       ; as the values now need to be sign magnitued
+271   8511 CB 3C       >			   srl h
+271   8513 CB 1D       >			   rr  l
+272   8515                                      ShiftDERight1                       ; e.g. S + 7 bit we need an extra shift
+272   8515 CB 3A       >			   srl d
+272   8517 CB 1B       >			   rr  e
+273   8519                                      ShiftBCRight1                       ; now values are in L E C
+273   8519 CB 38       >			   srl b
+273   851B CB 19       >			   rr  c
+274   851D E5 D5 C5                             push    hl,,de,,bc                  ; save vecrtor x y and z nwo they are scaled to 1 byte
+275   8520 53                                   ld      d,e                         ; hl = y ^ 2
+276   8521 ED 30                                mul     de                          ; .
+277   8523 EB                                   ex      de,hl                       ; .
+278   8524 53                                   ld      d,e                         ; de = x ^ 2
+279   8525 ED 30                                mul     de                          ; .
+280   8527 19                                   add     hl,de                       ; hl = y^ 2 + x ^ 2
+281   8528 51                                   ld      d,c
+282   8529 59                                   ld      e,c
+283   852A ED 30                                mul     de
+284   852C 19                                   add     hl,de                       ; hl =  y^ 2 + x ^ 2 + z ^ 2
+285   852D EB                                   ex      de,hl                       ; fix as hl was holding square
+286   852E CD C0 83                             call    asm_sqrt                    ; hl = sqrt (de) = sqrt (x ^ 2 + y ^ 2 + z ^ 2)
+287   8531                                      ; add in logic if h is low then use lower bytes for all
+288   8531 7D                                   ld      a,l
+289   8532 FD 67                                ld      iyh,a
+290   8534 57                                   ld      d,a
+291   8535 C1                                   pop     bc                          ; retrive tacticsvectorz scaled
+292   8536 79                                   ld      a,c                         ; a = scaled byte
+293   8537 CD 77 83                             call    AequAdivDmul967Bit;AequAdivDmul96Unsg          ; This rountine I think is wrong and retuins bad values
+294   853A 32 05 81                             ld      (TacticsVectorZ),a
+295   853D D1                                   pop     de
+296   853E 7B                                   ld      a,e
+297   853F FD 54                                ld      d,iyh
+298   8541 CD 77 83                             call    AequAdivDmul967Bit;AequAdivDmul96Unsg
+299   8544 32 02 81                             ld      (TacticsVectorY),a
+300   8547 E1                                   pop     hl
+301   8548 7D                                   ld      a,l
+302   8549 FD 54                                ld      d,iyh
+303   854B CD 77 83                             call    AequAdivDmul967Bit;AequAdivDmul96Unsg
+304   854E 32 FF 80                             ld      (TacticsVectorX),a
+305   8551                                      ; BODGE FOR NOW
+306   8551                                      ZeroA                              ;; added to help debugging
+306   8551 AF          >                        xor a
+307   8552 32 00 81                             ld      (TacticsVectorX+1),a       ;; added to help debugging
+308   8555 32 03 81                             ld      (TacticsVectorY+1),a       ;; added to help debugging
+309   8558 32 06 81                             ld      (TacticsVectorZ+1),a       ;; added to help debugging
+310   855B                                      SignBitOnlyMem TacticsVectorX+2     ; now upper byte is sign only
+310   855B 3A 01 81    >                        ld      a, (TacticsVectorX+2)
+310   855E E6 80       >                        and     SignOnly8Bit
+310   8560 32 01 81    >                        ld      (TacticsVectorX+2),a
+311   8563                                      SignBitOnlyMem TacticsVectorY+2     ; (could move it to lower perhaps later if
+311   8563 3A 04 81    >                        ld      a, (TacticsVectorY+2)
+311   8566 E6 80       >                        and     SignOnly8Bit
+311   8568 32 04 81    >                        ld      (TacticsVectorY+2),a
+312   856B                                      SignBitOnlyMem TacticsVectorZ+2     ;  its worth it)
+312   856B 3A 07 81    >                        ld      a, (TacticsVectorZ+2)
+312   856E E6 80       >                        and     SignOnly8Bit
+312   8570 32 07 81    >                        ld      (TacticsVectorZ+2),a
+313   8573                                    ;; oly using byte 2 for sign  ldCopyByte TacticsVectorX+2, TacticsVectorX+1
+314   8573                                    ;; oly using byte 2 for sign  ldCopyByte TacticsVectorY+2, TacticsVectorY+1
+315   8573                                    ;; oly using byte 2 for sign  ldCopyByte TacticsVectorZ+2, TacticsVectorZ+1
+316   8573                                    ;; oly using byte 2 for sign  SignBitOnlyMem TacticsVectorX+1     ; now upper byte is sign only
+317   8573                                    ;; oly using byte 2 for sign  SignBitOnlyMem TacticsVectorY+1     ; (could move it to lower perhaps later if
+318   8573                                    ;; oly using byte 2 for sign  SignBitOnlyMem TacticsVectorZ+1     ;  its worth it)
+319   8573 C9                                   ret
+320   8574
+321   8574                  SAVENEX OPEN "tactics.nex", $8000 , $7F00
+322   8574                  SAVENEX CFG  0,0,0,1
+323   8574                  SAVENEX AUTO
+324   8574                  SAVENEX CLOSE
+325   8574
+# file closed: tactics.asm
