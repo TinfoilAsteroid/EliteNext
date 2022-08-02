@@ -1,42 +1,43 @@
 ;; calcs BHB + CDE where B and C are signs and may be 24 bit
 ;; result HL with A as sign
 ;; special handling if result is zero forcign sign bit to be zero
-AHLEquBHLaddCDE:        ld      a,b
-                        xor     c
-                        and     SignOnly8Bit
-                        JumpIfNegative   .OppositeSigns
-.SameSigns:             ld      ixh,b                      ; ixh = b
-                        ClearSignBit b                     ; b = ABS b
-                        add     hl,de                      ; hl = hl + de
-                        ld      a,b                        ; a = b + c + carry
-                        adc     c                          ; 
-                        ld      b,a                        ; 
-                        ld      a,ixh                      ; 
-                        SignBitOnlyA                       ; 
-                        or      b                          ; 
-                        ret                                ; 
-.OppositeSigns:         ld      ixh,b                      ; save signed into ixh and ixl
-                        ld      ixl,c                      ; .
-                        ClearSignBit c                     ; c = ABS C
-                        ld      a,b                        ; a = abs b
-                        ClearSignBitA                      ; .
-                        sbc     c                          ; a = a - c
-                        JumpIfNegative  .OppositeCDEgtBHL  ; if c is positive
-                        push    hl
-                        sbc     hl,de                      ; then subtract de from hl
-                        JumpIfNegative  .HLDEWasNegative   ; if sub was positive
-                        pop     de                         ; at this stage the stack is just junk
-                        ld      b,a                        ; then copy results to AHL
-                        ld      a,ixh                      ; by just handling sign 
-                        SignBitOnlyA                       ; .
-                        or      b                          ; .
-                        ret                                ; .
-.OppositeCDEgtBHL:      ex      de,hl                      ; save hl
-                        ld      c,ixh                      ; swap signs over
-                        ld      b,ixl                      ;
-                        jp      .OppositeSigns             ; and do calc again
-.HLDEWasNegative:       pop     hl                         ; get back hl swap values and try again
-                        jp      .OppositeCDEgtBHL
+
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLSAHLEquBHLaddCDE:        ld      a,b
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        xor     c
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        and     SignOnly8Bit
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        JumpIfNegative   .OppositeSigns
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS.SameSigns:             ld      ixh,b                      ; ixh = b
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ClearSignBit b                     ; b = ABS b
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        add     hl,de                      ; hl = hl + de
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ld      a,b                        ; a = b + c + carry
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        adc     c                          ; 
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ld      b,a                        ; 
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ld      a,ixh                      ; 
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        SignBitOnlyA                       ; 
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        or      b                          ; 
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ret                                ; 
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS.OppositeSigns:         ld      ixh,b                      ; save signed into ixh and ixl
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ld      ixl,c                      ; .
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ClearSignBit c                     ; c = ABS C
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ld      a,b                        ; a = abs b
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ClearSignBitA                      ; .
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        sbc     c                          ; a = a - c
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        JumpIfNegative  .OppositeCDEgtBHL  ; if c is positive
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        push    hl
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        sbc     hl,de                      ; then subtract de from hl
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        JumpIfNegative  .HLDEWasNegative   ; if sub was positive
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        pop     de                         ; at this stage the stack is just junk
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ld      b,a                        ; then copy results to AHL
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ld      a,ixh                      ; by just handling sign 
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        SignBitOnlyA                       ; .
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        or      b                          ; .
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ret                                ; .
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS.OppositeCDEgtBHL:      ex      de,hl                      ; save hl
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ld      c,ixh                      ; swap signs over
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        ld      b,ixl                      ;
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        jp      .OppositeSigns             ; and do calc again
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS.HLDEWasNegative:       pop     hl                         ; get back hl swap values and try again
+;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        jp      .OppositeCDEgtBHL
 ; example
 ; bhl - 00 00 06 CDE - 80 00 0B so equates to 000006 + (-00000B) or -000005 or 800005
                         
@@ -119,36 +120,36 @@ ADDHLDESignedV4:        ld      a,h
 ;;;NOT USED                         ret
 
 
-; HL(2sc) = HL (signed) + A (unsigned), uses HL, DE, A
-; 06 06 2022 not used
-HL2cEquHLSgnPlusAusgn:  ld      d,0
-                        ld      e,a                         ; set up DE = A
-                        ld      a,h
-                        and     SignMask8Bit
-                        jr      z,.HLPositive               ; if HL is negative then do HL - A
-.HLNegative:            ld      h,a                         ; hl = ABS (HL)
-                        NegHL                               ; hl = - hl
-.HLPositive:            ClearCarryFlag                      ; now do adc hl,de
-                        adc     hl,de                       ; aftert his hl will be 2's c
-                        ret
-; 06 06 2022 not used
-HLEquHLSgnPlusAusgn:    ld      e,a
-                        ld      a,h
-                        and     SignMask8Bit
-                        jr      nz,.HLNegative              ; if HL is negative then do HL - A
-.HLPositive:            ld      a,e                         ; else its HL + A
-                        add     hl,a
-                        ret
-.HLNegative:            ClearSignBit    h                   ; Clear sign of HL
-                        NegHL                               ; and convert to 2's C
-                        ld      d,0
-                        ClearCarryFlag
-                        sbc     hl,de                       ; now add a to -ve HL , add does not do 2's c
-                        jp      m,.FlipResult               ; if it was negative then its really positive
-                        SetSignBit      h
-                        ret
-.FlipResult:            NegHL                               ; so if -hl + A => HL - A => HL - DE is negative then the actual result is +ve
-                        ret
+;; NOT USED MAY WORK ? ; HL(2sc) = HL (signed) + A (unsigned), uses HL, DE, A
+;; NOT USED MAY WORK ? ; 06 06 2022 not used
+;; NOT USED MAY WORK ? HL2cEquHLSgnPlusAusgn:  ld      d,0
+;; NOT USED MAY WORK ?                         ld      e,a                         ; set up DE = A
+;; NOT USED MAY WORK ?                         ld      a,h
+;; NOT USED MAY WORK ?                         and     SignMask8Bit
+;; NOT USED MAY WORK ?                         jr      z,.HLPositive               ; if HL is negative then do HL - A
+;; NOT USED MAY WORK ? .HLNegative:            ld      h,a                         ; hl = ABS (HL)
+;; NOT USED MAY WORK ?                         NegHL                               ; hl = - hl
+;; NOT USED MAY WORK ? .HLPositive:            ClearCarryFlag                      ; now do adc hl,de
+;; NOT USED MAY WORK ?                         adc     hl,de                       ; aftert his hl will be 2's c
+;; NOT USED MAY WORK ?                         ret
+;; NOT USED MAY WORK ? ; 06 06 2022 not used
+;; NOT USED MAY WORK ? HLEquHLSgnPlusAusgn:    ld      e,a
+;; NOT USED MAY WORK ?                         ld      a,h
+;; NOT USED MAY WORK ?                         and     SignMask8Bit
+;; NOT USED MAY WORK ?                         jr      nz,.HLNegative              ; if HL is negative then do HL - A
+;; NOT USED MAY WORK ? .HLPositive:            ld      a,e                         ; else its HL + A
+;; NOT USED MAY WORK ?                         add     hl,a
+;; NOT USED MAY WORK ?                         ret
+;; NOT USED MAY WORK ? .HLNegative:            ClearSignBit    h                   ; Clear sign of HL
+;; NOT USED MAY WORK ?                         NegHL                               ; and convert to 2's C
+;; NOT USED MAY WORK ?                         ld      d,0
+;; NOT USED MAY WORK ?                         ClearCarryFlag
+;; NOT USED MAY WORK ?                         sbc     hl,de                       ; now add a to -ve HL , add does not do 2's c
+;; NOT USED MAY WORK ?                         jp      m,.FlipResult               ; if it was negative then its really positive
+;; NOT USED MAY WORK ?                         SetSignBit      h
+;; NOT USED MAY WORK ?                         ret
+;; NOT USED MAY WORK ? .FlipResult:            NegHL                               ; so if -hl + A => HL - A => HL - DE is negative then the actual result is +ve
+;; NOT USED MAY WORK ?                         ret
                         
                         
 ; 06 06 2022 not used
@@ -282,74 +283,74 @@ AddAHLtoDEsigned:       ld      b,a                     ; B = A , C = D (save si
 ; a = value to add
 ; b = offset (equivalent to regX)
 ; returns INWK [x] set to new value
-addINWKbasigned:
-		ld 		hl,UBnKxlo                  ; hl = INWK 0
-		ld      c,a                         ; preserve a
-		ld		a,b
-		add		hl,a                        ; hl = INWK[x]
-        ld      a,c                         ; get back a value
-        and     $80                         ; get sign bit from a
-        ld      b,a                         ; now b = sign bit of a
-        ld      a,c                         ; a = original value
-        and     SignMask8Bit                ; a = unsigned version of original value
+; NOT USED addINWKbasigned:
+; NOT USED 		ld 		hl,UBnKxlo                  ; hl = INWK 0
+; NOT USED 		ld      c,a                         ; preserve a
+; NOT USED 		ld		a,b
+; NOT USED 		add		hl,a                        ; hl = INWK[x]
+; NOT USED         ld      a,c                         ; get back a value
+; NOT USED         and     $80                         ; get sign bit from a
+; NOT USED         ld      b,a                         ; now b = sign bit of a
+; NOT USED         ld      a,c                         ; a = original value
+; NOT USED         and     SignMask8Bit                ; a = unsigned version of original value
 ; 06 06 2022 not used
 ; hl = unsigned version of INWK0[b]
 ; a = value to add, also in c which will optimise later code
 ; b = sign bit of a ( in old code was varT)
-addhlcsigned:                              
-        ld      e,(hl)                      ; de = INKK value
-        inc     hl
-        ld      d,(hl)
-        inc     hl                          ; now pointing a sign
-        ld      a,(hl)                      ; a = sign bit
-        ex      de,hl                       ; hl = value now and de = pointer to sign
-        xor     b                           ; a = resultant sign
-        bit     7,a                         ; is it negative?
-        jr      z,.postivecalc              
-.negativecalc:        
-        ld      a,h
-        and     SignMask8Bit
-        ld      h,a                         ; strip high bit
-        ld      ixl,b                       ; save sign bit from b into d
-        ld      b,0                         ; c = value to subtract so now bc = value to subtract
-        sbc     hl,bc     
-        ld      b,ixl                       ; get sign back
-        ex      de,hl                       ; de = value hl = pointer to sign
-        ld      a,(hl)                      ;
-        and     SignMask8Bit
-        sbc     a,0                         ; subtract carry which could flip sign bit
-        or      $80                         ; set bit 0
-        xor     b                           ; flip bit on sign (var T)
-        ld      (hl),a
-        dec     hl
-        ld      (hl),d
-        dec     hl
-        ld      (hl),e                      ; write out DE to INKW[x]0,1
-        ex      de,hl                       ; hl = value de = pointer to start if INKW[x]
-        ret     c                           ; if carry was set then we can exit now
-.nocarry:        
-        NegHL                               ; get hl back to positive, a is still inkw+2
-        or      b                           ; b is still varT
-        ex      de,hl                       ; de = value hl = pointer to start if INKW[x]
-        ld      (hl),e
-        inc     hl
-        ld      (hl),d
-        inc     hl
-        ld      (hl),a                      ; set sign bit in INKK[x]+2
-        ex      de,hl                       ; hl = value de = pointer to sign
-        ret
-.postivecalc:
-        ld      ixl,b
-        ld      b,0
-        add     hl,de
-        ex      de,hl
-        or      ixl                         ; we don;t need to recover b here
-        ld      (hl),a                      ; push sign into INWK[x]
-        dec     hl
-        ld      (hl),d
-        dec     hl
-        ld      (hl),e
-        ret
+; NOTUSEDaddhlcsigned:                              
+; NOTUSED        ld      e,(hl)                      ; de = INKK value
+; NOTUSED        inc     hl
+; NOTUSED        ld      d,(hl)
+; NOTUSED        inc     hl                          ; now pointing a sign
+; NOTUSED        ld      a,(hl)                      ; a = sign bit
+; NOTUSED        ex      de,hl                       ; hl = value now and de = pointer to sign
+; NOTUSED        xor     b                           ; a = resultant sign
+; NOTUSED        bit     7,a                         ; is it negative?
+; NOTUSED        jr      z,.postivecalc              
+; NOTUSED.negativecalc:        
+; NOTUSED        ld      a,h
+; NOTUSED        and     SignMask8Bit
+; NOTUSED        ld      h,a                         ; strip high bit
+; NOTUSED        ld      ixl,b                       ; save sign bit from b into d
+; NOTUSED        ld      b,0                         ; c = value to subtract so now bc = value to subtract
+; NOTUSED        sbc     hl,bc     
+; NOTUSED        ld      b,ixl                       ; get sign back
+; NOTUSED        ex      de,hl                       ; de = value hl = pointer to sign
+; NOTUSED        ld      a,(hl)                      ;
+; NOTUSED        and     SignMask8Bit
+; NOTUSED        sbc     a,0                         ; subtract carry which could flip sign bit
+; NOTUSED        or      $80                         ; set bit 0
+; NOTUSED        xor     b                           ; flip bit on sign (var T)
+; NOTUSED        ld      (hl),a
+; NOTUSED        dec     hl
+; NOTUSED        ld      (hl),d
+; NOTUSED        dec     hl
+; NOTUSED        ld      (hl),e                      ; write out DE to INKW[x]0,1
+; NOTUSED        ex      de,hl                       ; hl = value de = pointer to start if INKW[x]
+; NOTUSED        ret     c                           ; if carry was set then we can exit now
+; NOTUSED.nocarry:        
+; NOTUSED        NegHL                               ; get hl back to positive, a is still inkw+2
+; NOTUSED        or      b                           ; b is still varT
+; NOTUSED        ex      de,hl                       ; de = value hl = pointer to start if INKW[x]
+; NOTUSED        ld      (hl),e
+; NOTUSED        inc     hl
+; NOTUSED        ld      (hl),d
+; NOTUSED        inc     hl
+; NOTUSED        ld      (hl),a                      ; set sign bit in INKK[x]+2
+; NOTUSED        ex      de,hl                       ; hl = value de = pointer to sign
+; NOTUSED        ret
+; NOTUSED.postivecalc:
+; NOTUSED        ld      ixl,b
+; NOTUSED        ld      b,0
+; NOTUSED        add     hl,de
+; NOTUSED        ex      de,hl
+; NOTUSED        or      ixl                         ; we don;t need to recover b here
+; NOTUSED        ld      (hl),a                      ; push sign into INWK[x]
+; NOTUSED        dec     hl
+; NOTUSED        ld      (hl),d
+; NOTUSED        dec     hl
+; NOTUSED        ld      (hl),e
+; NOTUSED        ret
         
 ;a = a AND 80 (i.e. bit 7) =>carry       so value is -
 ;MVT1
