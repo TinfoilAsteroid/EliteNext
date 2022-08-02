@@ -1,4 +1,5 @@
 ; bc = start position, d = length, e = colour
+;                        DEFINE MISSILEDIAGNOSTICS 1
 Draw3LineBar:           ld      e,16
                         push    bc,,de
                         MMUSelectLayer2
@@ -185,7 +186,9 @@ MissileDiagnotics:      MMUSelectLayer2
                         call    MissileHexToChar                        
                         ret
 
-UpdateConsole:          call    MissileDiagnotics
+UpdateConsole:          IFDEF   MISSILEDIAGNOSTICS
+                                call    MissileDiagnotics
+                        ENDIF
                         ld      a,(DELTA)
                         cp      0                           ; don't draw if there is nothing to draw
                         jr      z,.UpdateRoll   

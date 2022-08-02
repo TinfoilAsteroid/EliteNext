@@ -268,6 +268,8 @@ UnivSetPlayerMissile:   call    InitialisePlayerMissileOrientation  ; Copy in Pl
                         ld      (UBnKCNT2),a
                         MaxUnivSpeed                            ; and immediatley full speed (for now at least) TODO
                         SetMemFalse UBnKMissleHitToProcess
+                        ld      a,ShipAIEnabled
+                        ld      (UBnkaiatkecm),a
                         ;break
                         call    ClearShipHostile                ; its a player missile
                         

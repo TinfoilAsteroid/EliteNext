@@ -327,9 +327,7 @@ LaunchPlayerMissile:   ; break
 .MissileMissFire:       ClearMissileTargetting
                         ret ; TODO bing bong noise misfire message
 
-
                         include "./SpawnShipTypeA.asm"
-
 
                         ; reset main loop counters
                         ; from BBC TT18 jump code
@@ -340,7 +338,6 @@ LaunchPlayerMissile:   ; break
                         ;   put planet into data blokc 1 of FRIN
                         ;   put sun inot data block (NWWSHIP)
                         ; need to look at in system warp code (WARP) - note we need to -reorg all to code for teh station as that will never be in slot 0
-             
 
 WeAreInTransition:                        
 DoubleBufferCheck:      ld      a,00

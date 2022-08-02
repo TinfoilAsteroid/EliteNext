@@ -1,4 +1,5 @@
 ;..................................................................................................................................                        
+;                           DEFINE ROTATIONDEBUG 1
 CurrentShipUniv:        DB      0
 ;..................................................................................................................................                        
 ; if ship is destroyed or exploding then z flag is clear, else z flag is set
@@ -205,10 +206,14 @@ DrawForwardShips:       xor     a
                         ; Add in a fast check for ship behind to process nodes and if behind jump to processed Draw ship
 .SelectShipToDraw:       ld      a,(CurrentShipUniv)
                         MMUSelectUniverseA
-                        call    SavePosition
+                        IFDEF ROTATIONDEBUG
+                            call    SavePosition
+                        ENDIF
 .ProcessUnivShip:       call    ProcessShip          ; The whole explosion logic is now encapsulated in process ship ;TODO TUNE THIS   ;; call    ProcessUnivShip
 ; Debris still appears on radar                        
-                        call    RestorePosition
+                        IFDEF ROTATIONDEBUG
+                            call    RestorePosition
+                        ENDIF
 .UpdateRadar: 
 ;;;Does nothing                       ld      a,BankFrontView
 ;;;Does nothing                       MMUSelectScreenA

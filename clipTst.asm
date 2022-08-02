@@ -260,10 +260,11 @@ UBnkYScaledSign             DB  0               ; XX15+3ysign
 UBnkZScaled                 DB  0               ; XX15+4zscaled
 UBnkZScaledSign             DB  0               ; XX15+5zsign
 
+
 XX15                        equ UBnkXScaled
+;-- XX15Vec - S7 format
 XX15VecX                    equ XX15
 XX15VecY                    equ XX15+1
-
 XX15VecZ                    equ XX15+2
 UbnkXPoint                  equ XX15
 UbnkXPointLo                equ XX15+0
