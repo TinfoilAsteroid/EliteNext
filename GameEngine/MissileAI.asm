@@ -6,8 +6,8 @@ MISSILEMAXDECEL         equ -3
                         ;DEFINE MISSILEBREAK
 ;.. Thsi version uses new kind logic
 ;... Now the tactics if current ship is the missile, when we enter this SelectedUniverseSlot holds slot of missile
-MissileAIV3:            ld      a,(UBnkaiatkecm)
-                        ReturnOnBitClear a, ShipAIEnabledBitNbr 
+MissileAIV3:            ;ld      a,(ShipAIEnabled)
+                        ;ReturnOnBitClear a, ShipAIEnabledBitNbr 
 
                         IFDEF MISSILEDOHIT
                             JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
@@ -254,7 +254,35 @@ SimplifiedShipRollv3:  ; ld      a,(UBnKRotXCounter)               ; get current
                         ENDIF
                         ret
 
-SimplifiedShipSpeedv3:  call    GetDistance                         ;
+SimplifiedShipSpeedv3:  ld      hl,(TacticsDotProduct1)
+                        ld      a,h
+                        and     a
+                        jr      nz,.SlowDown
+                        ld      de,(TacticsDotProduct2)             ; dot product is +ve so heading at each other
+                        ld      a,l 
+                        JumpIfALTNusng  22,.SlowDown                                  ; nose dot product < 
+.Accelerate:            ld      a,3                                 ; else
+                        ld      (UBnKAccel),a                       ;  accelleration = 3
+                        IFDEF MISSILEDEBUG
+                            ld  (TacticsSpeed),a
+                        ENDIF                        
+                        ret                                         ;  .
+.SlowDown:              JumpIfALTNusng 18, .NoSpeedChange
+.Deccelerate:           ld      a,-2
+                        ld      (UBnKAccel),a
+                        IFDEF MISSILEDEBUG
+                            ld  (TacticsSpeed),a
+                        ENDIF
+                        ret
+.NoSpeedChange:         ZeroA                                       ; else no change
+                        ld      (UBnKAccel),a
+                        IFDEF MISSILEDEBUG
+                            ld  (TacticsSpeed),a
+                        ENDIF
+                        ret
+
+                        
+SimplifiedShipSpeedv3b:  call    GetDistance                         ;
                         ld      a,h
                         and     a
                         ld      b,22
@@ -267,8 +295,8 @@ SimplifiedShipSpeedv3:  call    GetDistance                         ;
                         and     $80                                 ; do decelleration test
                         jp      nz,.DecelTest                       ; .
                         ld      a,l                                 ; .
-                        JumpIfALTNusng b, .DecelTest               ; .
-.Accelerate:            ld      a,1;3                                 ; else
+                        JumpIfALTNusng b, .DecelTest                ; .
+.Accelerate:            ld      a,3                                 ; else
                         ld      (UBnKAccel),a                       ;  accelleration = 3
                         IFDEF MISSILEDEBUG
                             ld  (TacticsSpeed),a

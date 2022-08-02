@@ -1,4 +1,4 @@
-;    DEFINE DEBUGMODEL 1
+    DEFINE DEBUGMODEL 1
 Missile:	            DB $00
                         DW $0640
                         DW MissileEdges

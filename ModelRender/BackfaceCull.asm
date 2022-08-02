@@ -1,5 +1,5 @@
     DEFINE DEBUGDRAWDISTANCE 1
-    ;DEFINE DEBUGFORCEFACEDRAW 1
+    DEFINE DEBUGFORCEFACEDRAW 1
 CurrentNormIdx  DB 0
 ; SomeFacesVisible:   
 ; EE29:             
