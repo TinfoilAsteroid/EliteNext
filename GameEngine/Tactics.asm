@@ -1,6 +1,11 @@
+
                         DEFINE TACTICSDEBUG
+MISSILEMAXPITCH         equ 3
+MISSILEMINPITCH         equ -3
+MISSILEMAXROLL          equ 3
+MISSILEMINROLL          equ -3
 ;Ship Tactics
-ShipAIJumpTable:      DW    NormalAI,   MissileAI,  StationAI,  JunkAI,     ScoopableAI
+ShipAIJumpTable:      DW    NormalAI,   MissileAIV3,  StationAI,  JunkAI,     ScoopableAI
                       DW    ThargoidAI, NoAI,       NoAI,       NoAI,       NoAI
 ShipAiJumpTableMax:   EQU ($ - ShipAIJumpTable)/2
 
@@ -11,10 +16,11 @@ ShipAiJumpTableMax:   EQU ($ - ShipAIJumpTable)/2
 UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
                        ld      hl,TidyCounter
                        dec     (hl)
-                       ret     nz
+                       ;call     z,TidyUbnK  ;TODO SEE IF THIS IS AN ISSUE
+                       ; This shoudl be a call nz to tidy *****ret     nz
                        ld      a,16
                        ld      (TidyCounter),a
-                        ; call    TIDY TIDY IS BROKEN
+                       ;call    TidyUbnK
                        ; add AI in here too
                        ld       a,(ShipTypeAddr)
                        ReturnIfAGTEusng ShipAiJumpTableMax              ; TODO capture duff jumps whilst debugging in case a new shjip type code is added
@@ -63,7 +69,11 @@ MissileDidHitUs:        ret ; TODO
 ;----------------------------------------------------------------------------------------------------------------------------------
 PlayerHitByMissile:     ret; TODO , do hit set up blast radius etc
 ;----------------------------------------------------------------------------------------------------------------------------------
-MissileHitShipA:        ret; TODO hit ship do explosion, check for near by and if player is near and missile type logic, e.g. AP or HE
+MissileHitShipA:        MMUSelectLayer1
+                        ld      a,L1ColourInkRed
+                        call    l1_set_border
+                        call    UnivExplodeShip
+                        ret; TODO hit ship do explosion, check for near by and if player is near and missile type logic, e.g. AP or HE
 ;----------------------------------------------------------------------------------------------------------------------------------
 SetStationAngry:        call    IsSpaceStationPresent                   ; only if present
                         ret     c
@@ -184,12 +194,19 @@ SelectTargetBank:       MACRO
 calcNPitch:             xor     SignOnly8Bit                    ; c = sign flipped of dot product only
                         and     SignOnly8Bit                    ; .
                         ld      c,a                             ; . (varT in effect)
+                        or      MISSILEMAXPITCH                 ; a = flipped sign max pitch
                         ld      a,(UBnKRotZCounter)             ; b = abs (currentz pitch)
+                        ret
+                        
                         and     SignMask8Bit                    ; . which will initially be 0
                         ld      b,a                             ; .
                         ld      a,(TacticsDotProduct2)          ; a = abs roof dot product
-                        JumpIfALTNusng 4, .calcNPitch2          ; if a >= roll threshold
-                        ld      a,3                             ;    z rot = z rot * dot product flipped sign
+                        JumpIfALTNusng MISSILEMAXPITCH+1, .calcNPitch2    ; if a >= roll threshold
+                        ld      a,b
+                        and     SignOnly8Bit
+                        ;jr      z,.NPitchPositive
+                       ; ld      a,
+                        ld      a,MISSILEMAXPITCH                         ;    z rot = z rot * dot product flipped sign
                         or      c                               ;    i.e. zrot = current magnitude but dot product sign flipped
                         ld      (UBnKRotZCounter),a             ;    .
                         ret                                     ; else (a LT current abs z)
@@ -197,15 +214,25 @@ calcNPitch:             xor     SignOnly8Bit                    ; c = sign flipp
                         ld      (UBnKRotZCounter),a             ;
                         ret                                     ;
                         
-calcNRoll:              xor     SignOnly8Bit                    ; flip sign of dot product
+calcNRoll:              ld      a,(UBnKRotZCounter)
                         and     SignOnly8Bit
+                        xor     SignOnly8Bit                    ; flip sign of dot product
+                        or      5
+                        ld      (UBnKRotXCounter),a
+                        ret
+                        
                         ld      c,a
+                        or      MISSILEMAXPITCH   
                         ld      a,(UBnKRotXCounter)
+                        ret
+                        
+                        
+                        
                         and     SignMask8Bit                    ; get ABS value
                         ld      b,a
                         ld      a,(TacticsDotProduct2)          ; now we have the dot product abs value
-                        JumpIfALTNusng 4, .calcNRoll2
-                        ld      a,3
+                        JumpIfALTNusng MISSILEMAXROLL+1, .calcNRoll2
+                        ld      a,MISSILEMAXROLL
                         or      c
                         ld      (UBnKRotXCounter),a
                         ret
@@ -213,8 +240,16 @@ calcNRoll:              xor     SignOnly8Bit                    ; flip sign of d
                         ld      (UBnKRotXCounter),a
                         ret
 
-CopyRotmatToTacticsMat: ld      hl,UBnkrotmatSidevX+1
-                        ld      de,TacticsRotMatX
+
+CopyRotSideToTacticsMat:ld      hl,UBnkrotmatSidevX+1
+                        jp      CopyRotmatToTacticsMat
+                        
+CopyRotNoseToTacticsMat:ld      hl,UBnkrotmatNosevX+1
+                        jp      CopyRotmatToTacticsMat
+                        
+CopyRotRoofToTacticsMat:ld      hl,UBnkrotmatRoofvX+1
+; Coy rotation matrix high byte to trans rot mat, strip off sign and separate to rotmat byte 2
+CopyRotmatToTacticsMat: ld      de,TacticsRotMatX
                         ld      a,(hl)              ; matrix high byte of x
                         ld      b,a
                         and     SignMask8Bit
@@ -246,57 +281,89 @@ CopyRotmatToTacticsMat: ld      hl,UBnkrotmatSidevX+1
                         and     SignOnly8Bit
                         ld      (de),a              ; set rot mat sign
                         ret
-                        
 
-XX12EquTacticsDotNosev: ld      hl,TacticsRotMatX; UBnkTransmatNosevX    ; ROTMATX HI
-XX12EquTacticsDotHL:    push    hl
-                        call    CopyRotmatToTacticsMat
-                        pop     hl
-.CalcXValue:            ld      a,(hl)
-                        ld      e,a
-                        ld      a,(TacticsVectorX)
-                        ld      d,a
-                        mul
-                        ld      a,d
-                        ld      (varT),a
+                        IFDEF TACTICSDEBUG                        
+DebugTacticsCopy:   
+                        ld      hl,(UBnkrotmatSidevX)
+                        ld      de,(UBnkrotmatSidevY)
+                        ld      bc,(UBnkrotmatSidevZ)
+                        ld      (TacticsSideX),hl
+                        ld      (TacticsSideY),de
+                        ld      (TacticsSideZ),bc
+
+                        ld      hl,(UBnkrotmatRoofvX)
+                        ld      de,(UBnkrotmatRoofvY)
+                        ld      bc,(UBnkrotmatRoofvZ)
+                        ld      (TacticsRoofX),hl
+                        ld      (TacticsRoofY),de
+                        ld      (TacticsRoofZ),bc
+
+                        ld      hl,(UBnkrotmatNosevX)
+                        ld      de,(UBnkrotmatNosevY)
+                        ld      bc,(UBnkrotmatNosevZ)
+                        ld      (TacticsNoseX),hl
+                        ld      (TacticsNoseY),de
+                        ld      (TacticsNoseZ),bc
+
+                        ret
+                        ENDIF
+
+TacticsVarResult        DW 0                        
+XX12EquTacticsDotNosev: call    CopyRotNoseToTacticsMat
+XX12EquTacticsDotHL:    ld      hl,TacticsRotMatX; UBnkTransmatNosevX    ; ROTMATX HI
+.CalcXValue:            ld      a,(hl)                              ; DE = RotMatX & Vect X
+                        ld      e,a                                 ; .
+                        ld      a,(TacticsVectorX)                  ; .
+                        ld      d,a                                 ; .
+                        mul                                         ; .
+                        ld      a,d                                 ; S = A = Hi (RotMatX & Vect X)
+                        ld      (varS),a                            ; .
                         inc     hl                                  ; move to sign byte
-.CalcXSign:             ld      a,(TacticsVectorX+2)
-                        xor     (hl)
+.CalcXSign:             ld      a,(TacticsVectorX+2)                ; B  = A = Sign VecX xor sign RotMatX
+                        xor     (hl)                                ; .
+                        ld      b,a                                 ; .
 .MoveToY:               inc     hl                                  ; Move on to Y component
-.CalcYValue:            ld      a,(hl)
-                        ld      e,a
-                        ld      a,(TacticsVectorY)
-                        ld      d,a
-                        mul
-                        ld      a,d
-                        ld      (varT),a
+.CalcYValue:            ld      a,(hl)                              ; D = 0, E = Hi (RotMatY & Vect Y)
+                        ld      e,a                                 ; .
+                        ld      a,(TacticsVectorY)                  ; .
+                        ld      d,a                                 ; .
+                        mul     de                                  ; .
+                        ld      e,d                                 ; .
+                        ld      d,0                                 ; .
                         inc     hl                                  ; move to sign byte
-.CalcYSign:             ld      a,(TacticsVectorY+2)
-                        xor     (hl)
-                        ld      (varS),a                            ; Set S to the sign of x_sign * sidev_x
-.MoveToZ:               inc     hl                                  ; Move on to Y component
-.AddXandY:              push    hl
-                        call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA) \ 1byte add (subtract)
-                        pop     hl
-                        ld      (varT),a                            ; T = |sidev_x| * x_lo + |sidev_y| * y_lo
-.CalcZValue:            ld      a,(hl)
-                        ld      e,a
-                        ld      a,(TacticsVectorZ)
-                        ld      d,a
-                        mul
-                        ld      a, d
-                        ld      (varT),a
+.CalcYSign:             ld      a,(TacticsVectorY+2)                ; c = sign of y_sign * sidev_y
+                        xor     (hl)                                ; 
+                        ld      c,a                                 ; 
+.MoveToZ:               inc     hl                                  ; Move on to Z component
+.AddXandY:              push    hl                                  ; but save HL as we need that
+                        ld      a,(varS)                            ; hl = Hi (RotMatX & Vect X) b= sign
+                        ld      h,0                                 ; de = Hi (RotMatY & Vect Y) c= sign
+                        ld      l,a                                 ;
+                        call    ADDHLDESignBC                       ; a(sign) hl = sum
+                        ld      b,a                                 ; b = sign of result
+                        ld      (TacticsVarResult),hl               ; save sub in TacticsVarResult
+.CalcZValue:            pop     hl                                  ; get back to the rotation mat z
+                        ld      a,(hl)                              ; D = 0, E = Hi (RotMatZ & Vect Z)
+                        ld      e,a                                 ; .
+                        ld      a,(TacticsVectorZ)                  ; .
+                        ld      d,a                                 ; .
+                        mul     de                                  ; .
+                        ld      e,d                                 ; .
+                        ld      d,0                                 ; .
                         inc     hl                                  ; move to sign byte
 .CalcZSign:             ld      a,(TacticsVectorZ+2)
                         xor     (hl)
-                        ld      (varS),a                            ; Set S to the sign of x_sign * sidev_x
-                        call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA)   \ 1byte add (subtract)
+                        ld      c,a                                 ; Set C to the sign of z_sign * sidev_z
+                        ld      hl, (TacticsVarResult)              ; CHL = x + y, BDE = z products
+                        call    ADDHLDESignBC                       ; so AHL = X y z products
+                        ld      (varS),a                            ; for backwards compatibility
+                        ld      a,l                                  ; .
                         ret
 
-XX12EquTacticsDotRoofv: ld      hl,UBnkrotmatRoofvX; UBnkTransmatRoofvX
+XX12EquTacticsDotRoofv: call    CopyRotRoofToTacticsMat
                         jp      XX12EquTacticsDotHL
                         
-XX12EquTacticsDotSidev: ld      hl,UBnkrotmatSidevX; UBnkTransmatSidevX
+XX12EquTacticsDotSidev: call    CopyRotSideToTacticsMat
                         jp      XX12EquTacticsDotHL
                         
 ;-- Now its scaled we can normalise

@@ -14,8 +14,6 @@ void            set_text_verbose_mode(void);
 void            set_binary_mode(void);
 void            clear_input_buffer(void);
 EnumCommands    read_command(void);
-
-EnumCommands    read_command(void);
 double          read_double(void);
 void            read_vector(Vector *vector);
 void            read_matrix(Matrix *matrix);

@@ -26,9 +26,232 @@
 ;
 ;inwkarray			equ		INWK+10
 
-    include "./Universe/Ships/CopyRotMattoXX15.asm"
-    
-    include "./Universe/Ships/CopyXX15toRotMat.asm"
+
+
+
+; Divide that sets value to FFFF if divide by 0 unless main value is 0, then 0
+
+; (P+1 A) = (A P) / Q 
+;  B A    = (A P) / Q 
+; TESTED OK
+
+                        
+NormalizeXX15:          ld      hl, (XX15VecX)              ; h= VecX, l = VecY
+                        ld      a,  (XX15VecZ)              ; a = VecZ, d we don't care
+.ABSZ:                  and     SignMask8Bit
+                        ld      iyh,a                       ; iyh = abs z
+.ZSquared:              ld      d,a
+                        ld      e,a
+                        mul     de
+                        ld      bc,de                       ; bc = z squared
+.ABSX:                  ld      a,l
+.XSquared:              and     SignMask8Bit
+                        ld      ixh,a                       ; ixh = abs x
+                        ld      d,a
+                        ld      e,a
+                        mul     de
+                        ex      de,hl                       ; hl = x squared
+.ABSY:                  ld      a,d                         ; as h was swapped into d 
+                        and     SignMask8Bit
+                        ld      ixl,a                       ; ixl = abs y
+.YSquared:              ld      e,a
+                        ld      d,a
+                        mul     de                          ; de = y squared
+                        add     hl,de                       ; hl = hl + de + bc
+                        add     hl,bc                       ;
+                        ex      de,hl
+                        call    asm_sqrt                    ; d = iyl =hl = sqrt (de) = sqrt (x ^ 2 + y ^ 2 + z ^ 2)
+                        ld      d,l
+                        ld      iyl,d
+.NormaliseX:            ld      a,ixh                       ; normalise x
+                        call    AequAdivDmul967Bit
+                        ld      d,a
+                        ld      a,(XX15VecX)
+                        and     SignOnly8Bit
+                        or      d
+                        ld      (XX15VecX),a
+.NormaliseY:            ld      a,ixl                       ; normalise y
+                        ld      d,l
+                        call    AequAdivDmul967Bit
+                        ld      d,a
+                        ld      a,(XX15VecY)
+                        and     SignOnly8Bit
+                        or      d
+                        ld      (XX15VecY),a
+.NormaliseZ:            ld      a,iyh                       ; normalise z
+                        ld      d,l
+                        call    AequAdivDmul967Bit
+                        ld      d,a
+                        ld      a,(XX15VecZ)
+                        and     SignOnly8Bit
+                        or      d
+                        ld      (XX15VecZ),a
+                        ret
+
+TidyNormaliseNoseV:     MACRO
+                        call	CopyRotMatNoseVtoXX15	    ; copy over matrix row 3 (Nosev)	
+                        call	NormalizeXX15			    ; normalise z hi, its really TIS3 and write back to matrix
+                        call	CopyXX15toRotMatNoseV       ; .
+                        ENDM
+TidyNormaliseRoofV:     MACRO
+                        call	CopyRotMatRoofVtoXX15		
+                        call	NormalizeXX15			; normalise z hi, its really TIS3
+                        call	CopyXX15toRotMatRoofV
+                        ENDM
+
+
+TidyUbnK:               break
+                        TidyNormaliseNoseV
+                        ld      a,(UBnkrotmatNosevX+1)      ; Now check and see which vector elemetn we are going to 
+                        and     %01100000                   ; if X is not small then we go straigth to roofx
+                        jp      nz,.ProcessRoofX            ; .
+.TidyXIsSmall:          ld      a,(UBnkrotmatNosevY+1)      ; Else we test Y on to using 
+                        and     %01100000                   ; if Y is not small we process roofz
+                        jr      nz,.ProcessRoofZ            ; .
+;...roofv_y´ = -(nosev_x´ * roofv_x + nosev_z´ * roofv_z) / nosev_y´      
+.ProcessRoofY:          ld		a,(UBnkrotmatNosevX+1)
+                        ld		(varQ),a					; q = nosev_y
+                        ld		a,(UBnkrotmatRoofvX+1)	    ;roov z
+                        call	RSequQmulA
+                        ld		a,(UBnkrotmatNosevZ+1)		; nosev z
+                        ld		(varQ),a					; b = regX for now
+                        ld		a,(UBnkrotmatRoofvZ+1)	    ; roofv y
+                        call	madDEequQmulAaddRS
+                        ld      a,d                         ; flip sign bit
+                        xor     SignOnly8Bit
+                        ld      d,a                         
+                        ld      a,(UBnkrotmatNosevY+1)
+                        ld      (varQ),a
+.YTest0Div:             ld      a,d
+                        and     $7F
+                        or      e
+                        cp      0
+                        jr      nz,.SkipYZeroTest
+                        ZeroA
+                        jp      .SetRoofZ
+.YTestDiv0:             cp      0
+                        jr      nz,.SkipYZeroTest
+.YDivideByZero:         ld      a,96
+                        or      d
+                        jp      .SetRoofZ
+.SkipYZeroTest:         ld      a,e
+                        ld      (varP),a
+                        ld      a,d
+                        call    DVIDT
+                        ld      a,b
+.SetRoofY:              ld      (UBnkrotmatRoofvY+1),a
+                        jp      .DoneRoof
+;...roofv_z´ = -(nosev_x´ * roofv_x + nosev_y´ * roofv_y) / nosev_z´
+.ProcessRoofZ:          ld		a,(UBnkrotmatNosevX+1)      ; Failing that we default to Z
+                        ld		(varQ),a				    ; q = nosev_y
+                        ld		a,(UBnkrotmatRoofvX+1)	    ;roov z
+                        call	RSequQmulA  
+                        ld		a,(UBnkrotmatNosevY+1)	    ; nosev z
+                        ld		(varQ),a				    ; b = regX for now
+                        ld		a,(UBnkrotmatRoofvY+1)	    ; roofv y
+                        call	madDEequQmulAaddRS          
+                        ld      a,d                         ; flip sign bit
+                        xor     SignOnly8Bit
+                        ld      d,a                         
+                        ld      a,(UBnkrotmatNosevZ+1)
+                        ld      (varQ),a
+.ZTest0Div:             ld      a,d
+                        and     $7F
+                        or      e
+                        cp      0
+                        jr      nz,.SkipZZeroTest
+                        ZeroA
+                        jp      .SetRoofZ
+.ZTestDiv0:             cp      0
+                        jr      nz,.SkipZZeroTest
+.ZDivideByZero:         ld      a,96
+                        or      d
+                        jp      .SetRoofZ
+.SkipZZeroTest:         ld      a,e
+                        ld      (varP),a
+                        ld      a,d
+                        call    DVIDT
+                        ld      a,b
+.SetRoofZ:              ld      (UBnkrotmatRoofvZ+1),a
+                        jp      .DoneRoof
+;...roofv_x´ = -(nosev_y´ * roofv_y + nosev_z´ * roofv_z) / nosev_x´
+.ProcessRoofX:          ld		a,(UBnkrotmatNosevY+1)      ; so we set Q to Nose Y
+                        ld		(varQ),a					; q = nosev_y
+                        ld		a,(UBnkrotmatRoofvY+1)	    ; A = roofv Y
+                        call	RSequQmulA                  ; RS = NoseY & RoofY
+                        ld		a,(UBnkrotmatNosevZ+1)		; nosev z
+                        ld		(varQ),a					; b = regX for now
+                        ld		a,(UBnkrotmatRoofvZ+1)	    ; roofv y
+                        call	madDEequQmulAaddRS
+                        ld      a,d                         ; flip sign bit
+                        xor     SignOnly8Bit
+                        ld      d,a                         
+                        ld      a,(UBnkrotmatNosevX+1)
+                        ld      (varQ),a
+.XTest0Div:             ld      a,d
+                        and     $7F
+                        or      e
+                        cp      0
+                        jr      nz,.SkipXZeroTest
+                        ZeroA
+                        jp      .SetRoofZ
+.XTestDiv0:             cp      0
+                        jr      nz,.SkipXZeroTest
+.XDivideByZero:         ld      a,96
+                        or      d
+                        jp      .SetRoofX
+.SkipXZeroTest:         ld      a,e
+                        ld      (varP),a
+                        ld      a,d
+                        call    DVIDT
+                        ld      a,b
+.SetRoofX:              ld      (UBnkrotmatRoofvX+1),a
+.DoneRoof:              TidyNormaliseRoofV
+;...sidex = ((nosez * roofy) - nosey * roofz) / 96
+.DoSidevX:              ld		a,(UBnkrotmatNosevZ+1)      ;  -(-nosev_z * roofv_y + nosev_y * roofv_z) / 96
+                        xor     SignOnly8Bit
+                        ld		(varQ),a					; q = nosev_y
+                        ld		a,(UBnkrotmatRoofvY+1)	     ;roov z
+                        call	RSequQmulA
+                        ld		a,(UBnkrotmatNosevY+1)		; nosev z
+                        ld		(varQ),a							; b = regX for now
+                        ld		a,(UBnkrotmatRoofvZ+1)	    ; roofv y
+                        call	madDEequQmulAaddRS
+                        call    BAequDEdiv96
+                        ld      a,b
+                        ld      (UBnkrotmatSidevX+1),a    
+;...sidey = ((nosex * roofz) - nosez * roofx) / 96
+.DoSidevY:              ld		a,(UBnkrotmatNosevX+1)      ; -(-nosev_x * roofv_z - nosev_z * roofv_x) / 96
+                        xor     SignOnly8Bit
+                        ld		(varQ),a					; q = nosev_y
+                        ld		a,(UBnkrotmatRoofvZ+1)	    ; roov z
+                        call	RSequQmulA                  ; rs = nosex * roofz
+                        ld		a,(UBnkrotmatNosevZ+1)		; nosev z
+                        ld		(varQ),a					; b = regX for now
+                        ld		a,(UBnkrotmatRoofvZ+1)	    ; roofv y
+                        call	madDEequQmulAaddRS          ; DE = noseyz* roofz + 
+                        call    BAequDEdiv96
+                        ld      a,b
+                        ld      (UBnkrotmatSidevY+1),a         ;-(-nosev_y * roofv_x + nosev_x * roofv_y) / 96
+;...sidez = ((nosey * roofx) - nosex * roofy) / 96
+.DoSidevZ:              ld		a,(UBnkrotmatNosevY+1)      ; 
+                        xor     SignOnly8Bit
+                        ld		(varQ),a					; q = nosev_y
+                        ld		a,(UBnkrotmatRoofvZ+1)	     ;roov z
+                        call	RSequQmulA
+                        ld		a,(UBnkrotmatNosevX+1)		; nosev z
+                        ld		(varQ),a							; b = regX for now
+                        ld		a,(UBnkrotmatRoofvY+1)	    ; roofv y
+                        call	madDEequQmulAaddRS
+                        call    BAequDEdiv96
+                        ld      a,b
+                        ld      (UBnkrotmatSidevZ+1),a
+                        ZeroA
+                        ld      (UBnkrotmatSidevX),a
+                        ld      (UBnkrotmatSidevY),a
+                        ld      (UBnkrotmatSidevZ),a
+                        ret
+
 
 TidySub1:									;.TIS1	\ -> &293B  \ Tidy subroutine 1  X.A =  (-X*A  + (R.S))/96
 		; b = regX on entry
@@ -89,12 +312,14 @@ TidyRotXSmall:
 		ld		(UBnkrotmatRoofvY+1),a			; set roofvy hi
 		jp		NormaliseRoofV
 ; TIDY is broken
+
+
 TIDY:
 
 ORTHOGALISE:
 ;-- NormaliseNosev
 		call	CopyRotMatNoseVtoXX15		
-		call	normaliseXX1596fast			; normalise z hi, its really TIS3
+		call	normaliseXX1596S7			; normalise z hi, its really TIS3
 		call	CopyXX15toRotMatNoseV
 .CheckNXSmall:
 		ld		a,(UBnkrotmatNosevX+1)
@@ -105,7 +330,7 @@ ORTHOGALISE:
 		ld		(UBnkrotmatRoofvX+1),a    	; set roofvx hi
 NormaliseRoofV:		
 		call	CopyRotMatRoofVtoXX15		; xx15 = roofv
-		call	normaliseXX1596fast			; normalise roof
+		call	normaliseXX1596S7			; normalise roof
 ;calc sidev x
 		call	CopyXX15toRotMatRoofV		; get back normalised version
 		ld		a,(UBnkrotmatNosevX+1)
@@ -156,87 +381,13 @@ NormSideZNoNeg:
 		inc		hl
 		djnz	.ClearLoLoop  
 		call	CopyRotMatSideVtoXX15		; xx15 = roofv
-		call	normaliseXX1596fast			; normalise roof
+		call	normaliseXX1596S7			; normalise roof
 ;calc sidev x
 		call	CopyXX15toRotMatSideV		; get back normalised version
         
 		ret	
 		
-		
-		
-;;;;;;;;.CheckNYSmall:
-;;;;;;;;		ld		a,(XX15+2)					; first check z zero, if so we have to do Y
-;;;;;;;;		and		$7F
-;;;;;;;;		cp		0
-;;;;;;;;		jp		z,Tidy1RZ
-;;;;;;;;		ld		a,(XX15+1)					; now we can do a realistic check of RY
-;;;;;;;;		cp 		0							; we can't end up with divide by 0 for RY
-;;;;;;;;		jp		z,Tidy1RZ					; We can't have all values of vector 0 so we must do RZ
-;;;;;;;;		and		%01100000					; check top two magnitude bits
-;;;;;;;;		jp		z,Tidy1RY					; and tidy based on roofy
-;;;;;;;;.DoNZ:
-;;;;;;;;		jp		Tidy1RZ						; else we tidy based on roofz
-;;;;;;;;;---RE ENTRY POINT -------------------------------------		
-;;;;;;;;NormaliseRoofv:
-;;;;;;;;		call	CopyRotMatRoofVtoXX15		; xx15 = roofv
-;;;;;;;;		push	bc
-;;;;;;;;		call	normaliseXX1596fast			; normalise 
-;;;;;;;;		pop		bc
-;;;;;;;;		call	CopyXX15toRotMatRoofV		; get back normalised version
-;;;;;;;;ProcessSidev:
-;;;;;;;;; -- SIDEV X
-;;;;;;;;		ldCopyByte	nosev_z+1, varQ         ; use ixh as Q later
-;;;;;;;;		ld		a,(UBnkrotmatRoofvY+1)				; a = roofv_hi
-;;;;;;;;		push	bc
-;;;;;;;;		call	RSequQmulA					; RS = Q * A MULT12
-;;;;;;;;		pop		bc
-;;;;;;;;		ld		a,(UBnkrotmatNosevY+1)
-;;;;;;;;		ld		b,a							; set x (b) to value of nosev_z
-;;;;;;;;		ld		a,(UBnkrotmatRoofvZ+1)				; a = roofv_y hi
-;;;;;;;;		push	bc
-;;;;;;;;		call	TidySub1					; set A (-nosev_z * roofv_y + nosev_y * roofv_z) / 96, This also sets Q = nosev_z TIS1
-;;;;;;;;		pop		bc
-;;;;;;;;		ld		(UBnkrotmatSidevX+1),a				; sidev_x = = (nosev_z * roofv_y - nosev_y * roofv_z) / 96
-;;;;;;;;; -- SIDEV Y
-;;;;;;;;		ldCopyByte	UBnkrotmatNosevX+1, varQ         ; use ixh as Q later		
-;;;;;;;;		ld		a,(UBnkrotmatRoofvZ+1)				;
-;;;;;;;;		push	bc
-;;;;;;;;		call	RSequQmulA					; RS = Q * A MULT12 MULT12
-;;;;;;;;		pop		bc
-;;;;;;;;		ld		a,(UBnkrotmatNosevZ+1)
-;;;;;;;;		ld		b,a
-;;;;;;;;		ld		a,(UBnkrotmatRoofvX+1)
-;;;;;;;;		push	bc
-;;;;;;;;		call	TidySub1						; set A (-nosev_z * roofv_y + nosev_y * roofv_z) / 96, This also sets Q = nosev_z
-;;;;;;;;		pop		bc
-;;;;;;;;		ld		(sidev_y+1),a				; sidev_y  = (nosev_x * roofv_z - nosev_z * roofv_x) / 96
-;;;;;;;;		ld		a,(UBnkrotmatRoofvY+1)
-;;;;;;;;		push	bc
-;;;;;;;;; -- SIDEV Z
-;;;;;;;;		ldCopyByte	UBnkrotmatNosevY+1, varQ         ; use ixh as Q later		
-;;;;;;;;		ld		a,(UBnkrotmatRoofvX+1)				;
-;;;;;;;;		call	RSequQmulA					; RS = Q * A MULT12
-;;;;;;;;		pop		bc
-;;;;;;;;		ld		a,(UBnkrotmatNosevX+1)
-;;;;;;;;		ld		b,a
-;;;;;;;;		ld		a,(UBnkrotmatRoofvY+1)
-;;;;;;;;		push	bc
-;;;;;;;;		call	TidySub1						; set A (-nosev_z * roofv_y + nosev_y * roofv_z) / 96, This also sets Q = nosev_z
-;;;;;;;;		pop		bc
-;;;;;;;;		ld		(sidev_z+1),a
-;;;;;;;;		xor		a							; set a = 0 so we can clear orientation low bytes
-;;;;;;;;		ld		hl,sidev_z
-;;;;;;;;		ld		b,9							; only on 6 cells (3 x row 0 and row 1)
-;;;;;;;;		ld		hl,UBnkrotmatNosevX
-;;;;;;;;NormaliseSideV:
-;;;;;;;;		call	CopyRotMatSideVtoXX15		; xx15 = roofv
-;;;;;;;;		push	bc
-;;;;;;;;		call	normaliseXX1596fast			; normalise 
-;;;;;;;;		pop		bc
-;;;;;;;;		call	CopyXX15toRotMatSideV		; get back normalised version
-;;;;;;;;		
-
-
+	
 CalcRoofvX:
 Tidy1RX:										; roofv_x´ = -(nosev_y´ * roofv_y + nosev_z´ * roofv_z) / nosev_x´
 		ldCopyByte UBnkrotmatNosevZ+1,varQ
@@ -325,70 +476,3 @@ Tidy1RZ:										; roofv_z´ = -(nosev_x´ * roofv_x + nosev_y´ * roofv_y) / n
 		and		$80
 		or		b
 		ret
-		
-
-
-;;ProcessSidev:
-;;		ldCopyByte	UBnkrotmatNosevZ+1, varQ         ; use ixh as Q later
-;;		ld		a,(UBnkrotmatRoofvY+1)				; a = roofv_hi
-;;		push	bc
-;;		call	RSequQmulA					; RS = Q * A MULT12
-;;		pop		bc
-;;		ld		a,(UBnkrotmatNosevY+1)
-;;		ld		b,a							; set x (b) to value of nosev_z
-;;		ld		a,(UBnkrotmatRoofvZ+1)				; a = roofv_y hi
-;;		push	bc
-;;		call	TidySub1					; set A (-nosev_z * roofv_y + nosev_y * roofv_z) / 96, This also sets Q = nosev_z TIS1
-;;		pop		bc
-;;		xor		$80							; sidev_x = -a by flipping sign bit
-;;		ld		(UBnkrotmatSidevX+1),a				; sidev_x = = (nosev_z * roofv_y - nosev_y * roofv_z) / 96
-;;		ldCopyByte	UBnkrotmatNosevX+1, varQ         ; use ixh as Q later		
-;;		ld		a,(UBnkrotmatRoofvZ+1)				;
-;;		push	bc
-;;		call	RSequQmulA					; RS = Q * A MULT12 MULT12
-;;		pop		bc
-;;		ld		a,(UBnkrotmatNosevZ+1)
-;;		ld		b,a
-;;		ld		a,(UBnkrotmatNosevY+1)
-;;		push	bc
-;;		call	TidySub1						; set A (-nosev_z * roofv_y + nosev_y * roofv_z) / 96, This also sets Q = nosev_z
-;;		pop		bc
-;;		xor		$80							; a *= -1
-;;		ld		(UBnkrotmatSidevY+1),a				; sidev_y  = (nosev_x * roofv_z - nosev_z * roofv_x) / 96
-;;		ld		a,(UBnkrotmatRoofvY+1)
-;;		push	bc
-;;		ldCopyByte	UBnkrotmatNosevY+1, varQ         ; use ixh as Q later		
-;;		ld		a,(UBnkrotmatRoofvX+1)				;
-;;		call	RSequQmulA					; RS = Q * A MULT12
-;;		pop		bc
-;;		ld		a,(UBnkrotmatNosevX+1)
-;;		ld		b,a
-;;		ld		a,(UBnkrotmatRoofvY+1)
-;;		push	bc
-;;		call	TidySub1						; set A (-nosev_z * roofv_y + nosev_y * roofv_z) / 96, This also sets Q = nosev_z
-;;		pop		bc
-;;		xor		$80
-;;		ld		(UBnkrotmatSidevZ+1),a
-;;		xor		a							; set a = 0 so we can clear orientation low bytes
-;;		ld		hl,UBnkrotmatSidevZ
-;;		ld		b,9							; only on 6 cells (3 x row 0 and row 1)
-;;		ld		hl,UBnkrotmatNosevX
-
-
-
-
-
-		
-;;;;;;;;;-- Check to see if the top two magnitude bits are clear in nosev_x, if so jump to TI1
-;;;;;;;;.ProcessRoofv:
-;;;;;;;;		call	CopyRotMatRoofVtoXX15		; xx15 = roofv
-;;;;;;;;		push	bc
-;;;;;;;;		call	normaliseXX1596fast			; normalise roof
-;;;;;;;;		pop		bc
-;;;;;;;;		call	CopyXX15toRotMatRoofV		; get back normalised version
-;;;;;;;;.ProcessSidev:
-;;;;;;;;		call	CopyRotMatSideVtoXX15		; xx15 = roofv
-;;;;;;;;		push	bc
-;;;;;;;;		call	normaliseXX1596fast			; normalise roof
-;;;;;;;;		pop		bc
-;;;;;;;;		call	CopyXX15toRotMatSideV		; get back normalised version

@@ -1,6 +1,7 @@
 #include <math.h>
 #include "CommandProcessor.h"
 #include "consoleIO.h"
+#include "ShipModels.h"
 #include "ShipData.h"
 #include "maths3d.h"
 #define   debug 1

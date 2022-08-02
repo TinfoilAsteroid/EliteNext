@@ -4,11 +4,13 @@
 #include <unistd.h>
 #include <string.h>
 #include "Typedefs.h"
+#include "CommandProcessor.h"
 #include "ConsoleIO.h"
 #include "Maths3d.h"
 #include "Vector.h"
-#include "ShipData.h"
 #include "ShipModels.h"
+#include "ShipData.h"
+
 
 #define debug   1
 

@@ -188,6 +188,7 @@ varK2p3                 DB  0               ; 9E K2 plus 3
 Point                   DB  0               ; 9F      POINT
 
 varT					DB	0				; D1
+varTSign                DB  0               ; for teh odd need for a 16 bit varT
 
 varVector9ByteWork      DS  9
 

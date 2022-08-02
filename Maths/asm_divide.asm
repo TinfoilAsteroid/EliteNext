@@ -19,6 +19,84 @@
 ;INPUTS: hl = dividend dbc = divisor
 ;OUTPUTS: hl/de -> AHL = quotient CDE = remainder, Carryflag set if divide by 0
 
+DVIDT:                  ld      d,a                     ; D = var P+1
+                        ld      a,(varQ)            
+                        ld      c,a                     ; C = var Q
+                        ld      a,(varP)            
+                        ld      e,a                     ; E = var P
+                        ; Need fast exists on ABS values 
+BAequDEdivC:            ld      a,d                     ; Fast exit is value is 0
+                        or      e                       ; .
+                        jr      z,.ResultIsZero         ; .
+                        ld      a,c                     ; Fast exit is divide by 0 
+                        and     a                       ;
+                        jr      z,.ResultIsFFFF         ;
+.SavSign:               ld      a,d                     ; preserve sign of result in var T
+                        xor     c                       ;                        
+                        and     $80
+                        ld      l,a                     ; l = var T
+                        ld      a,0
+                        ld      b,16
+                        ShiftDELeft1
+                        sla     c                       ; c = abs c
+                        srl     c
+.DivideLoop:            rl      a
+                        JumpIfALTNusng c, .SkipSubtract
+                        ClearCarryFlag
+                        sbc     c
+                        ClearCarryFlag
+.SkipSubtract:          ccf
+                        rl      e
+                        rl      d
+                        dec     b
+                        jr      nz,.DivideLoop
+                        ld      a,e
+                        or      l
+                        ld      b,d
+                        ret
+.ResultIsZero:          ZeroA
+                        ld      b,a
+                        ret
+.ResultIsFFFF:          ld      a,$FF
+                        ld      b,a
+                        ret
+
+DIV96:                  ld      d,a                     ; D = var P+1
+                        ld      a,(varQ)            
+                        ld      c,96                    ; C = var Q
+                        ld      a,(varP)            
+                        ld      e,a                     ; E = var P
+                        ; Need fast exists on ABS values 
+BAequDEdiv96            ld      a,d                     ; Fast exit is value is 0
+                        or      e                       ; .
+                        jr      z,.ResultIsZero         ; .
+.SavSign:               ld      a,d                     ; preserve sign of result in var T
+                        xor     c                       ;                        
+                        and     $80
+                        ld      l,a                     ; l = var T
+                        ld      a,0
+                        ld      b,16
+                        ShiftDELeft1
+                        sla     c                       ; c = abs c
+                        srl     c
+.DivideLoop:            rl      a
+                        JumpIfALTNusng c, .SkipSubtract
+                        ClearCarryFlag
+                        sbc     c
+                        ClearCarryFlag
+.SkipSubtract:          ccf
+                        rl      e
+                        rl      d
+                        dec     b
+                        jr      nz,.DivideLoop
+                        ld      a,e
+                        or      l
+                        ld      b,d
+                        ret
+.ResultIsZero:          ZeroA
+                        ld      b,a
+                        ret
+                        
 Div16by24usgn:          inc     d                           ; can we fast retu
                         dec     d
                         jr      nz,.ResultZero
@@ -243,46 +321,15 @@ div16_skip:		        djnz div16_loop
 ; In: Divide BC by divider DE
 ; Out: BC = result, HL = rest
 ;
-HLDivC_Iteration: 	MACRO
-					add	hl,hl		; unroll 16 times
-					rla				; ...
-					cp	c			; ...
-					jr	1F
-					sub	c			; ...
+HLDivC_Iteration: 	    MACRO
+                        add	hl,hl		; unroll 16 times
+                        rla				; ...
+                        cp	c			; ...
+                        jr	1F
+                        sub	c			; ...
 1:					
-					inc	l			; ...
-					ENDM
-
-
-; 06 06 2022 Not used
-; ">div1616: BC = BC / DE. HL = remainder"
-Div1616:            ld hl,0
-                    ld a,b
-                    ld b,8
-.Div16_Loop1:       rla
-                    adc hl,hl
-                    sbc hl,de
-                    jr nc,.Div16_NoAdd1
-                    add hl,de
-.Div16_NoAdd1:      djnz .Div16_Loop1
-                    rla
-                    cpl
-                    ld b,a
-                    ld a,c
-                    ld c,b
-                    ld b,8
-.Div16_Loop2:       rla
-                    adc hl,hl
-                    sbc hl,de
-                    jr nc,.Div16_NoAdd2
-                    add hl,de
-.Div16_NoAdd2:      djnz .Div16_Loop2
-                    rla
-                    cpl
-                    ld b,c
-                    ld c,a
-                    ret
-
+                        inc	l			; ...
+                        ENDM
 
 EDivC_Iteration:        MACRO
                         rl  e
@@ -347,7 +394,6 @@ BC_Div_DE:              xor a
                         BCDIVDE_Iteration 
                         rla
                         ld b,a
-
                         ld a,c
                         BCDIVDE_Iteration 
                         BCDIVDE_Iteration 
@@ -360,82 +406,3 @@ BC_Div_DE:              xor a
                         rla
                         ld c,a
                         ret	
-
-; 06 06 2022 not used   
-;Inputs:
-;     DE,BC are 8.8 Fixed Point numbers
-;Outputs:
-;     DE is the 8.8 Fixed Point result (rounded to the least significant bit)
-;if DE is 0 : 122cc or 136cc if BC is negative
-;if |BC|>=128*|DE| : 152cc or 166cc if BC is negative
-;Otherwise:
-;min: 1107cc
-;max: 1319cc
-;avg: 1201cc
-BC_Div_DE_88:           ld a,b  ; First, find out if the output is positive or negative
-                        xor d
-                        push af   ;sign bit is the result sign bit
-; Now make sure the inputs are positive
-                        xor b     ;A now has the value of B, since I XORed it with D twice (cancelling)
-                        jp p,BC_Div_DE_88_lbl1   ;if Positive, don't negate
-                        xor a
-                        sub c
-                        ld c,a
-                        sbc a,a
-                        sub b
-                        ld b,a
-BC_Div_DE_88_lbl1:      ld a,d  ;now make DE negative to optimize the remainder comparison
-                        or d
-                        jp m,BC_Div_DE_88_lbl2
-                        xor a
-                        sub e
-                        ld e,a
-                        sbc a,a
-                        sub d
-                        ld d,a
-BC_Div_DE_88_lbl2:      or e      ;if DE is 0, we can call it an overflow ;A is the current value of D
-                        jr z,div_fixed88_overflow
-                        ld h,0          ;The accumulator gets set to B if no overflow.;We can use H=0 to save a few cc in the meantime
-                        ld a,b;if B+DE>=0, then we'll have overflow
-                        add a,e
-                        ld a,d
-                        adc a,h
-                        jr c,div_fixed88_overflow
-                        ld l,b  ;Now we can load the accumulator/remainder with B;H is already 0
-                        ld a,c
-                        call div_fixed88_sub
-                        ld c,a
-                        ld a,b      ;A is now 0
-                        call div_fixed88_sub
-                        ld d,c
-                        ld e,a
-                        pop af
-                        ret p
-                        xor a
-                        sub e
-                        ld e,a
-                        sbc a,a
-                        sub d
-                        ld d,a
-                        ret
-
-div_fixed88_overflow:   ld de,$7FFF
-                        pop af
-                        ret p
-                        inc de
-                        inc e
-                        ret
-
-;min: 456cc
-;max: 536cc
-;avg: 496cc
-div_fixed88_sub:        ld b,8
-BC_Div_DE_88_lbl3:      rla
-                        adc hl,hl
-                        add hl,de
-                        jr c,$+4
-                        sbc hl,de
-                        djnz BC_Div_DE_88_lbl3
-                        adc a,a
-                        ret
-  

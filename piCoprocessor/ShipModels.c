@@ -1,6 +1,6 @@
 #include "ShipModels.h"
 
-static const ShipNode shipID_CobraMK3_nodes[] = {{ 32.0,   0.0,   76.0,   31.0, 15,15,15,15},
+static  ShipNode shipID_CobraMK3_nodes[] = {{ 32.0,   0.0,   76.0,   31.0, 15,15,15,15},
                                     { -32.0,   0.0,   76.0,   31.0, 15,15,15,15},
                                     {   0.0,  26.0,   24.0,   31.0, 15,15,15,15},
                                     {-120.0,  -3.0,   -8.0,   31.0,  7, 3,10,10},
@@ -29,7 +29,7 @@ static const ShipNode shipID_CobraMK3_nodes[] = {{ 32.0,   0.0,   76.0,   31.0, 
                                     {  88.0,   0.0,  -40.0,    6.0,  9, 9, 9, 9},
                                     {  80.0,  -6.0,  -40.0,    8.0,  9, 9, 9, 9}};
                                     
-static const ShipNode shipId_Rattler_nodes[] = {{0.0,0.0,60.0,31.0,8,9,2,3},
+static  ShipNode shipId_Rattler_nodes[] = {{0.0,0.0,60.0,31.0,8,9,2,3},
                                                 {40.0,0.0,40.0,31.0,9,10,3,4},
                                                 {-40.0,0.0,40.0,31.0,7,8,1,2},
                                                 {60.0,0.0,0.0,31.0,10,11,4,5},
@@ -45,7 +45,7 @@ static const ShipNode shipId_Rattler_nodes[] = {{0.0,0.0,60.0,31.0,8,9,2,3},
                                                 {10.0,-6.0,-40.0,10.0,12,12,12,12},
                                                 {20.0,0.0,-40.0,10.0,12,12,12,12}};
 
-static const ShipLine shipID_CobraMK3_lines[] ={{31.0,11,0,0,1},
+static  ShipLine shipID_CobraMK3_lines[] ={{31.0,11,0,0,1},
                                                 {31.0,12,4,0,4},
                                                 {31.0,10,3,1,3},
                                                 {31.0,10,7,3,8},
@@ -84,7 +84,7 @@ static const ShipLine shipID_CobraMK3_lines[] ={{31.0,11,0,0,1},
                                                 {6.0,9,9,26,27},
 {8.0,9,9,25,27}};
 
-static const ShipLine shipID_Rattler_lines[] ={{31.0,0,6,4,6},
+static  ShipLine shipID_Rattler_lines[] ={{31.0,0,6,4,6},
                                                {31.0,1,7,2,4},
                                                {31.0,2,8,0,2},
                                                {31.0,3,9,0,1},
@@ -111,7 +111,7 @@ static const ShipLine shipID_Rattler_lines[] ={{31.0,0,6,4,6},
                                                {10.0,12,12,13,14},
                                                {10.0,12,12,14,12}};
 
-static const ShipFaceNormal shipID_CobraMK3_faces[] = {{31.0,0.0,62.0,31.0},
+static  ShipFaceNormal shipID_CobraMK3_faces[] = {{31.0,0.0,62.0,31.0},
                                                        {31.0,-18.0,55.0,16.0},
                                                        {31.0,18.0,55.0,16.0},
                                                        {31.0,-16.0,52.0,14.0},
@@ -125,7 +125,7 @@ static const ShipFaceNormal shipID_CobraMK3_faces[] = {{31.0,0.0,62.0,31.0},
                                                        {31.0,0.0,-30.0,6.0},
                                                        {31.0,7.0,-42.0,9.0}};
 
-static const ShipFaceNormal shipID_Rattler_faces[] = {{31.0,-26.0,92.0,6.0},
+static ShipFaceNormal shipID_Rattler_faces[] = {{31.0,-26.0,92.0,6.0},
                                                       {31.0,-23.0,92.0,11.0},
                                                       {31.0,-9.0,93.0,18.0},
                                                       {31.0,9.0,93.0,18.0},
@@ -139,7 +139,7 @@ static const ShipFaceNormal shipID_Rattler_faces[] = {{31.0,-26.0,92.0,6.0},
                                                       {31.0,26.0,-92.0,6.0},
                                                       {31.0,0.0,0.0,-96.0}};
 
-static const ShipModel shipModels[] = {{ShipID_CobraMk3, 31.0,   31.0,
+ShipModel shipModels[] = {{ShipID_CobraMk3, 31.0,   31.0,
                                         64.0,64.0,64.0,
                                         sizeof(shipID_CobraMK3_nodes) / sizeof(shipID_CobraMK3_nodes[0]),
                                         sizeof(shipID_CobraMK3_lines) / sizeof(shipID_CobraMK3_lines[0]),

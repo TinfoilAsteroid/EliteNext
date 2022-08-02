@@ -1,6 +1,9 @@
 ;.. SpawnShipTypeA
 ; IN
 ;  a = ship type to create (equates to the ship model)
+; OUT
+;  b = ship class
+;  a = iyh = slot number
 SpawnShipTypeA:         ;break
                         ld      iyl,a                               ; save ship type in iyh
                         call    FindNextFreeSlotInC                 ; c = slot number to use

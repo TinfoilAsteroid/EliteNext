@@ -34,7 +34,7 @@ void         setPlayerPitch(double pitch);
 void         setPlayerSpeed(double speed);
 void         updateAll(void);
 void         updateShipPosition(ShipData *shipData);
-void         threadedUpdate();
+void         threadedUpdate(void);
 bool         shipInViewPort(ShipData *shipData);
 void         projectShip(Vector *camera, Matrix *transformation, ShipData *shipData);
 void         generateShipLines(ShipData *shipData);

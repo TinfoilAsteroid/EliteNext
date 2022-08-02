@@ -1,137 +1,60 @@
-AequAdivDmul96Unsg:     JumpIfAGTENusng d, .Unity    			; if A >= Q then return with a 1 (unity i.e. 96)
-                        ld          b,%11111111                 ; Loop through 8 bits
-.DivLoop:               sla         a                           ; shift a left
-                        JumpIfALTNusng d, .skipSubtract         ; if a < q skip the following
-                        sub         d
-.skipSubtract:          FlipCarryFlag
-                        rl          b
-                        jr          c,.DivLoop
-                        ld          a,b
-                        srl         a                  			; t = t /4
-                        srl			a							; result / 8
-                        ld          b,a
-                        srl         a
-                        add			a,b							; result /8 + result /4
-                        ret
-.Unity:                 ld			a,$60	    				; unity
-                        ret
-	
+; a equal a / d * 96
+
 	
 
-
-normaliseXX1596fast:
-    ; .NORM	\ -> &3BD6 \ Normalize 3-vector length of XX15
-	ld		a,(XX15)		    ; XX15+0
-	ld		ixh,a               ; ixh = signed x component
-	and		SignMask8Bit                 ; a = unsigned version
-N96SQX:	
-	inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2
-	ld		h,d					; h == varR d = varO e= varA
-	ld		l,e					; l == varQ  															:: so HL = XX15[x]^2
-N96SQY:
-	ld		a,(XX15+1)			
-	ld		ixl,a               ; ixl = signed y componet
-	and		SignMask8Bit                 ; = abs 
-	inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2		:: so DE = XX15[y]^2
-	add		hl,de				; hl = XX15[x]^2 + XX15[y]^2
-N96SQZ:
-	ld		a,(XX15+2)			; Note comments say \ ZZ15+2  should be \ XX15+2 as per code
-	ld		iyh,a               ; iyh = signed
-	and		SignMask8Bit                 ; unsigned
-	inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2		:: so DE = XX15[z]^2
-N96SQADD:
-	add		hl,de				; hl = XX15[x]^2 + XX15[y]^2 + XX15[z]^2
-	ex		de,hl				; hl => de ready for square root
-N96SQRT:
-	call	asm_sqrt			; hl = sqrt(XX15[x]^2 + XX15[y]^2 + XX15[z]^2), we just are interested in l which is the new Q
-N96NORMX:
-	ld		a,(XX15+0)
-	and		SignMask8Bit
-	ld		c,a
-	ld		d,l					; Q(i.e. l) => D, later we can just pop into de
-	call	AequAdivDmul96	; does not use HL so we can retain it
-	ld		b,a				;++SGN
-	ld		a,ixh			;++SGN
-	and		$80				;++SGN
-	or		b				;++SGN
-	ld		(XX15+0),a
-N96NORMY:
-	ld		a,(XX15+1)
-	and		SignMask8Bit
-	ld		c,a
-	ld		d,l					; Q(i.e. l) => D, later we can just pop into de
-	call	AequAdivDmul96     	; does not use HL so we can retain it
-	ld		b,a				;++SGN
-	ld		a,ixl			;++SGN
-	and		$80				;++SGN
-	or		b				;++SGN
-	ld		(XX15+1),a
-N96NORMZ:
-	ld		a,(XX15+2)
-	and		SignMask8Bit
-	ld		c,a
-	ld		d,l					; Q(i.e. l) => D, later we can just pop into de
-	call	AequAdivDmul96	; does not use HL so we can retain it
-	ld		b,a				;++SGN
-	ld		a,iyh			;++SGN
-	and		$80				;++SGN
-	or		b				;++SGN
-	ld		(XX15+2),a
-	ret
+; .NORM	\ -> &3BD6 \ Normalize 3-vector length of XX15
+normaliseXX1596S7:      ld		a,(XX15VecX)	    ; XX15+0
+                        ld		ixh,a               ; ixh = signed x component
+                        and		SignMask8Bit        ; a = unsigned version
+.n96SQX:	            inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2
+                        ld		h,d					; h == varR d = varO e= varA
+                        ld		l,e					; l == varQ  															:: so HL = XX15[x]^2
+.n96SQY:                ld		a,(XX15VecY)			
+                        ld		ixl,a               ; ixl = signed y componet
+                        and		SignMask8Bit                 ; = abs 
+                        inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2		:: so DE = XX15[y]^2
+                        add		hl,de				; hl = XX15[x]^2 + XX15[y]^2
+.n96SQZ:                ld		a,(XX15VecZ)			; Note comments say \ ZZ15+2  should be \ XX15+2 as per code
+                        ld		iyh,a               ; iyh = signed
+                        and		SignMask8Bit                 ; unsigned
+                        inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2		:: so DE = XX15[z]^2
+.n96SQADD:              add		hl,de				; hl = XX15[x]^2 + XX15[y]^2 + XX15[z]^2
+                        ex		de,hl				; hl => de ready for square root
+.n96SQRT:               call	asm_sqrt			; hl = de = sqrt(XX15[x]^2 + XX15[y]^2 + XX15[z]^2), we just are interested in l which is the new Q
+.n96NORMX:              ld		a,(XX15VecX)
+                        and		SignMask8Bit
+                        ld		c,a
+                        ld		d,l					; Q(i.e. l) => D, later we can just pop into de
+                        call	AequAdivDmul967Bit	; does not use HL so we can retain it
+                        ld		b,a				    ;++SGN
+                        ld		a,ixh			    ;++SGN
+                        and		$80				    ;++SGN
+                        or		b				    ;++SGN
+                        ld		(XX15VecX),a
+.n96NORMY:              ld		a,(XX15VecY)
+                        and		SignMask8Bit
+                        ld		c,a
+                        ld		d,l					; Q(i.e. l) => D, later we can just pop into de
+                        call	AequAdivDmul967Bit     	; does not use HL so we can retain it
+                        ld		b,a				    ;++SGN
+                        ld		a,ixl			    ;++SGN
+                        and		$80				    ;++SGN
+                        or		b				    ;++SGN
+                        ld		(XX15VecY),a
+.n96NORMZ:              ld		a,(XX15VecZ)
+                        and		SignMask8Bit
+                        ld		c,a
+                        ld		d,l				; Q(i.e. l) => D, later we can just pop into de
+                        call	AequAdivDmul967Bit;AequAdivDmul96	; does not use HL so we can retain it
+                        ld		b,a				    ;++SGN
+                        ld		a,iyh			    ;++SGN
+                        and		$80				    ;++SGN
+                        or		b				    ;++SGN
+                        ld		(XX15VecZ),a
+                        ret
 
 ; Normalise vector
 ; scale Q = Sqrt (X^2 + Y^2 + Z^2)
 ; X = X / Q with 96 = 1 , i.e X = X / Q * 3/8
 ; Y = Y / Q with 96 = 1 , i.e Y = Y / Q * 3/8
 ; Z = Z / Q with 96 = 1 , i.e Z = Z / Q * 3/8
-;
-;
-;
-
-; .NORM	\ -> &3BD6 \ Normalize 3-vector length of XX15
-normaliseXX1596:        ld		a,(XX15)		    ; XX15+0
-                        inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2
-                        ld		a,d					
-                        ld		(varR),a			; R	 \ hi sum later use b
-                        ld		a,e
-                        ld		(varQ),a			; Q	 \ lo sum later use c
-                        ld		(varP),a			; P	 \ lo sum later just drop
-                        ld		a,(XX15+1)
-                        inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2
-                        ld		a,d					
-                        ld		(varT),a			; T	 \ hi sum
-                        ld		a,e
-                        ld		(varP),a			; P	 \ lo sum
-                        ld		hl,varQ
-                        adc		a,(hl)				; +Q
-                        ld		(varQ),a			; =>Q
-                        ld		a,(varT)			;
-                        ld		hl,varR
-                        adc		a,(hl)				;  R
-                        ld		(varR),a			; R
-                        ld		a,(XX15+2)			; Note comments say \ ZZ15+2  should be \ XX15+2 as per code
-                        inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2
-                        ld		a,d					
-                        ld		(varT),a			; T	 \ hi sum
-                        ld		a,e
-                        ld		(varP),a			; P	 \ lo sum
-                        ld		hl,varQ
-                        adc		a,(hl)				; +Q
-                        ld		(varQ),a			; =>Q  xlo2 + ylo2 + zlo2
-                        ld		a,(varT)			; T temp Hi
-                        ld		hl,varR
-                        adc		a,(hl)				; +R
-                        ld		(varR),a			; R 
-                        call	sqrtQR				; Q = SQR(Qlo.Rhi) Q <~127
-                        ld		a,(XX15+0)
-                        call	AequAdivQmul96		;  TIS2 \ *96/Q
-                        ld		(XX15+0),a
-                        ld		a,(XX15+1)
-                        call	AequAdivQmul96		;  TIS2 \ *96/Q
-                        ld		(XX15+1),a
-                        ld		a,(XX15+1)
-                        call	AequAdivQmul96		;  TIS2 \ *96/Q
-                        ld		(XX15+1),a
-                        ret
-
-

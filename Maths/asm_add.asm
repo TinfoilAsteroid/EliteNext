@@ -6,35 +6,39 @@ AHLEquBHLaddCDE:        ld      a,b
                         and     SignOnly8Bit
                         JumpIfNegative   .OppositeSigns
 .SameSigns:             ld      ixh,b                      ; ixh = b
-                        ClearSignBit b                      ; b = ABS b
+                        ClearSignBit b                     ; b = ABS b
                         add     hl,de                      ; hl = hl + de
                         ld      a,b                        ; a = b + c + carry
                         adc     c                          ; 
                         ld      b,a                        ; 
                         ld      a,ixh                      ; 
-                        SignBitOnlyA                        ; 
+                        SignBitOnlyA                       ; 
                         or      b                          ; 
                         ret                                ; 
-.OppositeSigns:         ld      ixh,b
-                        ld      ixl,c
-                        ClearSignBit c                      ; c = ABS C
-                        ld      a,b
-                        ClearSignBitA
-                        sbc     c
-                        JumpIfNegative  .OppositeCDEgtBHL
-                        sbc     hl,de
-                        JumpIfNegative  .OppositeCDEgtBHL
-                        ld      b,a
-                        ld      a,ixh
-                        SignBitOnlyA                        ; 
-                        or      b                          ; 
-                        ret                                ; 
-.OppositeCDEgtBHL:      ex      de,hl
-                        ld      a,b
-                        ld      b,c
-                        ld      c,a
-                        jp      .OppositeSigns
-
+.OppositeSigns:         ld      ixh,b                      ; save signed into ixh and ixl
+                        ld      ixl,c                      ; .
+                        ClearSignBit c                     ; c = ABS C
+                        ld      a,b                        ; a = abs b
+                        ClearSignBitA                      ; .
+                        sbc     c                          ; a = a - c
+                        JumpIfNegative  .OppositeCDEgtBHL  ; if c is positive
+                        push    hl
+                        sbc     hl,de                      ; then subtract de from hl
+                        JumpIfNegative  .HLDEWasNegative   ; if sub was positive
+                        pop     de                         ; at this stage the stack is just junk
+                        ld      b,a                        ; then copy results to AHL
+                        ld      a,ixh                      ; by just handling sign 
+                        SignBitOnlyA                       ; .
+                        or      b                          ; .
+                        ret                                ; .
+.OppositeCDEgtBHL:      ex      de,hl                      ; save hl
+                        ld      c,ixh                      ; swap signs over
+                        ld      b,ixl                      ;
+                        jp      .OppositeSigns             ; and do calc again
+.HLDEWasNegative:       pop     hl                         ; get back hl swap values and try again
+                        jp      .OppositeCDEgtBHL
+; example
+; bhl - 00 00 06 CDE - 80 00 0B so equates to 000006 + (-00000B) or -000005 or 800005
                         
 ADDHLDESignBC:          ld      a,b
                         and     SignOnly8Bit

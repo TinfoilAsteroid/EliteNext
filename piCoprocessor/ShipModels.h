@@ -2,7 +2,6 @@
 #define  SHIPMODELS_H_
 
 #include "Typedefs.h"
-#include "ConsoleIO.h"
 #include "Vector.h"
 
 #define NodeMax 60
@@ -96,9 +95,9 @@ typedef struct ShipModel
     int              nodeCount;
     int              lineCount;
     int              normalCount;
-    const ShipNode         *nodes;
-    const ShipLine         *lines;
-    const ShipFaceNormal   *normals;
+    /*const*/ ShipNode         *nodes;
+    /*const*/ ShipLine         *lines;
+    /*const*/ ShipFaceNormal   *normals;
 } ShipModel;
 
 int dummyFn(void);

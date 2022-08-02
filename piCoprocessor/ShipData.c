@@ -1,5 +1,6 @@
 /* ShipData.c */
 #include "ShipData.h"
+#include <stdio.h>
 static int    currentShip = 0;
 #define debug 1
 

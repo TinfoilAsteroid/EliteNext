@@ -576,14 +576,7 @@ SunAHLequAHLDivCDE:     ld      b,a                         ; save a reg
                         ex      hl,de                         ; ahl is result
                         ld      a,c                           ; ahl is result
                         ClearCarryFlag
-;.divideAHLbyCDE:        ld      b,a                         ; we need to set BC to AH
-;                        ld      e,d                         ; and DE to CD
-;                        ld      d,c                         ; but make sure we do it in the right
-;                        ld      c,h                         ; order so we don't trash values
-;                        call    BC_Div_DE                   ; bc = result
-;                        ld      a,b
-;                        ld      h,c
-;                        ld      l,0
+
                         ret 
 ; AHL = 0hl/0de as A is zero
 .divideHLbyDE:          ld      a,c                         ;'if c = 0 then result must be zero

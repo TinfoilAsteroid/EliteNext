@@ -98,91 +98,6 @@ InitHyperStarAtHL:      ex      de,hl
                         inc     hl
                         ret                        
 
-; we could cheat, flip the sign of DE and just add but its not very optimised
-;;; MOVED TO SUBHLDESigned in asm_subtractStarsSUBHLDESigned:     ld      a,h
-;;; MOVED TO SUBHLDESigned in asm_subtract                        and     SignOnly8Bit
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      b,a                         ;save sign bit in b
-;;; MOVED TO SUBHLDESigned in asm_subtract                        xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means 
-;;; MOVED TO SUBHLDESigned in asm_subtract                        JumpIfNegative .SUBHLDEOppSGN        ;Signs are opposite therefore we can add
-;;; MOVED TO SUBHLDESigned in asm_subtract.SUBHLDESameSigns:      ld      a,b
-;;; MOVED TO SUBHLDESigned in asm_subtract                        or      d
-;;; MOVED TO SUBHLDESigned in asm_subtract                        JumpIfNegative .SUBHLDESameNeg       ; optimisation so we can just do simple add if both positive
-;;; MOVED TO SUBHLDESigned in asm_subtract                        or      a
-;;; MOVED TO SUBHLDESigned in asm_subtract                        sbc     hl,de
-;;; MOVED TO SUBHLDESigned in asm_subtract                        JumpIfNegative .SUBHLDESameOvrFlw            
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ret
-;;; MOVED TO SUBHLDESigned in asm_subtract.SUBHLDESameNeg:        ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
-;;; MOVED TO SUBHLDESigned in asm_subtract                        and     SignMask8Bit                ; we could check the value of b for optimisation
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      h,a
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      a,d
-;;; MOVED TO SUBHLDESigned in asm_subtract                        and     SignMask8Bit
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      d,a
-;;; MOVED TO SUBHLDESigned in asm_subtract                        or      a
-;;; MOVED TO SUBHLDESigned in asm_subtract                        sbc     hl,de
-;;; MOVED TO SUBHLDESigned in asm_subtract                        JumpIfNegative .SUBHLDESameOvrFlw            
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      a,h                         ; now set bit for negative value, we won't bother with overflow for now TODO
-;;; MOVED TO SUBHLDESigned in asm_subtract                        or      SignOnly8Bit
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      h,a
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ret
-;;; MOVED TO SUBHLDESigned in asm_subtract.SUBHLDESameOvrFlw:     NegHL
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      a,b
-;;; MOVED TO SUBHLDESigned in asm_subtract                        xor     SignOnly8Bit                ; flip sign bit
-;;; MOVED TO SUBHLDESigned in asm_subtract                        or      h
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      h,a                         ; recover sign
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ret         
-;;; MOVED TO SUBHLDESigned in asm_subtract.SUBHLDEOppSGN:         or      a
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
-;;; MOVED TO SUBHLDESigned in asm_subtract                        and     SignMask8Bit                ; we could check the value of b for optimisation
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      h,a
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      a,d
-;;; MOVED TO SUBHLDESigned in asm_subtract                        and     SignMask8Bit
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      d,a     
-;;; MOVED TO SUBHLDESigned in asm_subtract                        add     hl,de
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
-;;; MOVED TO SUBHLDESigned in asm_subtract                        or      h
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ld      h,a                         ; set the previou sign value
-;;; MOVED TO SUBHLDESigned in asm_subtract                        ret
-        
-;;; MOVED TO ADDHLDESigned in asm_add StarsADDHLDESigned:     ld      a,h
-;;; MOVED TO ADDHLDESigned in asm_add                         and     SignOnly8Bit
-;;; MOVED TO ADDHLDESigned in asm_add                         ld      b,a                         ;save sign bit in b
-;;; MOVED TO ADDHLDESigned in asm_add                         xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means 
-;;; MOVED TO ADDHLDESigned in asm_add                         JumpIfNegative .ADDHLDEOppSGN        ;Signs are opposite there fore we can subtract to get difference
-;;; MOVED TO ADDHLDESigned in asm_add .ADDHLDESameSigns:      ld      a,b
-;;; MOVED TO ADDHLDESigned in asm_add                         or      d
-;;; MOVED TO ADDHLDESigned in asm_add                         JumpIfNegative .ADDHLDESameNeg       ; optimisation so we can just do simple add if both positive
-;;; MOVED TO ADDHLDESigned in asm_add                         add     hl,de
-;;; MOVED TO ADDHLDESigned in asm_add                         ret
-;;; MOVED TO ADDHLDESigned in asm_add .ADDHLDESameNeg:        ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
-;;; MOVED TO ADDHLDESigned in asm_add                         and     SignMask8Bit                ; we could check the value of b for optimisation
-;;; MOVED TO ADDHLDESigned in asm_add                         ld      h,a
-;;; MOVED TO ADDHLDESigned in asm_add                         ld      a,d
-;;; MOVED TO ADDHLDESigned in asm_add                         and     SignMask8Bit
-;;; MOVED TO ADDHLDESigned in asm_add                         ld      d,a
-;;; MOVED TO ADDHLDESigned in asm_add                         add     hl,de
-;;; MOVED TO ADDHLDESigned in asm_add                         ld      a,SignOnly8Bit
-;;; MOVED TO ADDHLDESigned in asm_add                         or      h                           ; now set bit for negative value, we won't bother with overflow for now TODO
-;;; MOVED TO ADDHLDESigned in asm_add                         ld      h,a
-;;; MOVED TO ADDHLDESigned in asm_add                         ret
-;;; MOVED TO ADDHLDESigned in asm_add .ADDHLDEOppSGN:         ld      a,h                         ; here HL and DE are opposite  so if we enter here then signs are the same so we clear the 16th bit
-;;; MOVED TO ADDHLDESigned in asm_add                         and     SignMask8Bit                ; we could check the value of b for optimisation
-;;; MOVED TO ADDHLDESigned in asm_add                         ld      h,a
-;;; MOVED TO ADDHLDESigned in asm_add                         ld      a,d
-;;; MOVED TO ADDHLDESigned in asm_add                         and     SignMask8Bit
-;;; MOVED TO ADDHLDESigned in asm_add                         ld      d,a
-;;; MOVED TO ADDHLDESigned in asm_add                         or      a
-;;; MOVED TO ADDHLDESigned in asm_add                         sbc     hl,de
-;;; MOVED TO ADDHLDESigned in asm_add                         jr      c,.ADDHLDEOppInvert
-;;; MOVED TO ADDHLDESigned in asm_add .ADDHLDEOppSGNNoCarry:  ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
-;;; MOVED TO ADDHLDESigned in asm_add                         or      h
-;;; MOVED TO ADDHLDESigned in asm_add                         ld      h,a                         ; set the previou sign value
-;;; MOVED TO ADDHLDESigned in asm_add                         ret
-;;; MOVED TO ADDHLDESigned in asm_add .ADDHLDEOppInvert:      NegHL
-;;; MOVED TO ADDHLDESigned in asm_add                         ld      a,b
-;;; MOVED TO ADDHLDESigned in asm_add                         xor     SignOnly8Bit                ; flip sign bit
-;;; MOVED TO ADDHLDESigned in asm_add                         or      h
-;;; MOVED TO ADDHLDESigned in asm_add                         ld      h,a                         ; recover sign
-;;; MOVED TO ADDHLDESigned in asm_add                         ret 
 ;----------------------------------------------------------------------------------------------------------------------------------        
 InitialiseStars:        ld      b,MaxNumberOfStars
                         ld      hl,varDust
@@ -215,7 +130,7 @@ StarProcessLoop:        push    bc                                  ; save count
                         ld      ixl,a                               ; preserve A which is also VarQ = 64 * speed / zhi
 .ZequZMinusSpeedX64:    ld      hl,(iy+4)                           ; hl = z
                         ld      de, (DELTA4)                         ; de = delta4 i.e. speed * 64 pre computed
-                        call    SUBHLDESigned
+                        call    subHLDES15
                         JumpOnBitSet h,7,ResetStar                  ; if z ended up negative then reset the star
                         ld      (iy+4),hl                           ; save new z pos
 .XEquXPlusXhiMulQ       ld      hl,(iy+0)                           ; hl  = x
@@ -279,7 +194,7 @@ StarProcessLoop:        push    bc                                  ; save count
                         or      d
                         ld      d,a                                 ; de = signed alpha & y high / 256
                         ld      hl,(iy+0)                           ; h = iy+1, l = iy+0
-                        call    SUBHLDESigned                       ; we are usign add, so may need to fip sign?
+                        call    subHLDES15                       ; we are usign add, so may need to fip sign?
                         ld      (iy+0),hl
 ;  5. y = y + alpha * x / 256
 .YRoll:                 ;break

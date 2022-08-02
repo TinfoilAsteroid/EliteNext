@@ -58,4 +58,5 @@ void        explodeShip(int shipNbr);
 void        destroyShip(int shipNbr);
 void        setShipPosition(Vector *position);
 void        setShipMatrix(Matrix *mat);
+extern      ShipData    shipData[ShipMax];
 #endif

@@ -8,6 +8,25 @@ Attract_boiler_text		DW $083D
 
 ATTR_LoadCommander      DB "Load Commander (Y/N)",0
 
+LocalXCounter           DB $FF
+LocalZCounter           DB $FF
+
+RandomXCounter:         call    doRandom
+                        ret     nz
+                        ld      a,(LocalXCounter)
+                        xor     $80
+                        ld      (LocalXCounter),a
+                        ret
+
+RandomYCounter:         call    doRandom
+                        ret     nz
+                        ;ReturnIfALTNusng 254
+                        ld      a,(LocalZCounter)
+                        xor     $80
+                        ld      (LocalZCounter),a
+                        ret
+                        
+
 AttractMode:            MMUSelectLayer1
                         call	l1_cls 
                         ld		a,7
@@ -39,10 +58,14 @@ AttractMode:            MMUSelectLayer1
                         call    is_key_up_state
                         jr      nz,.NPressed
                         MMUSelectUniverseN  1
+                        ;call    TidyUbnK
                         call    ApplyShipRollAndPitch
-                     ;   xor     a
-                     ;  ld      (UBnKRotXCounter),a
-                     ;  ld      (UBnKRotZCounter),a
+                        call    RandomXCounter
+                        call    RandomYCounter
+                        ld      a,(LocalXCounter)
+                        ld      (UBnKRotXCounter),a
+                        ld      a,(LocalZCounter)
+                        ld      (UBnKRotZCounter),a
 .ProcessUnivShip:       MMUSelectLayer2
                         call   l2_cls_upper_two_thirds
                         call    ProcessShip

@@ -46,8 +46,147 @@ DrawColourEBar:         push    bc,,de
                     
                         ; no ret needed as jp handles it
 
+MissileDiagPositive:    ld      d,"P"
+                        call    l2_print_chr_at
+                        ret
 
-UpdateConsole:          ld      a,(DELTA)
+MissileDiagNegative:    ld      d,"N"
+                        call    l2_print_chr_at
+                        ret
+
+MissileDiagZero:        ld      d,"Z"
+                        call    l2_print_chr_at
+                        ret
+
+MissileValue:           ld      e,$FF
+                        cp      0
+                        push    af
+                        call    z,MissileDiagZero
+                        pop     af
+                        ret     z
+                        bit     7,a
+                        push    af
+                        call    z,MissileDiagNegative
+                        pop     af
+                        ret     z
+                        call    nz,MissileDiagPositive
+                        ret
+
+Hex2Char:       DB "0123456789ABCDEF"
+
+MissileHexDigit:        push    af,,hl,,bc,,de
+                        and     $0F
+                        ld      hl, Hex2Char
+                        add     hl,a
+                        ld      d,(hl)
+                        call    l2_print_chr_at
+                        pop     af,,hl,,bc,,de
+                        ret
+
+MissileHexToChar:       swapnib
+                        and     $0F
+                        ld      e,$FF
+                        JumpIfALTNusng 8,.SkipNeg
+                        ld      e,$68
+                        sub     8
+.SkipNeg:               call    MissileHexDigit
+                        swapnib
+                        push    af
+                        ld      a,c
+                        add     8
+                        ld      c,a
+                        pop     af
+                        and     $0F
+                        call    MissileHexDigit
+                        ret
+
+MissileValue2Byte:      ld      e,$FF
+                        ld      a,(hl)
+                        inc     hl
+                        or      (hl)
+                        cp      0
+                        push    af
+                        call    z,MissileDiagZero
+                        pop     af
+                        ret     z
+                        ld      a,(hl)
+                        bit     7,a
+                        push    af
+                        call    z,MissileDiagNegative
+                        pop     af
+                        ret     z
+                        call    nz,MissileDiagPositive
+                        ret
+
+MissileDiagPrintBoiler: ld      d,"x"
+                        ld      e, $30
+                        ld      bc,$8088
+                        call    l2_print_chr_at
+                        ld      bc,$8888
+                        ld      d,"z"
+                        ld      e, $30
+                        call    l2_print_chr_at
+                        ld      bc,$9088
+                        ld      d,"s"
+                        ld      e, $30
+                        call    l2_print_chr_at
+                        ld      bc,$9048
+                        ld      d,"n"
+                        ld      e, $30
+                        call    l2_print_chr_at
+                        ld      bc,$8048
+                        ld      d,"s"
+                        ld      e, $30
+                        call    l2_print_chr_at
+                        ld      bc,$8848
+                        ld      d,"r"
+                        ld      e, $30
+                        call    l2_print_chr_at
+                        ret
+
+MissileDiagnotics:      MMUSelectLayer2
+                        call    MissileDiagPrintBoiler
+                        ld      e,$FF
+                        ld      bc,$8090
+                        ld      a,(TacticsRotX)
+                        call    MissileHexToChar; MissileValue
+                        ld      bc,$8890
+                        ld      a,(TacticsRotZ)
+                        call    MissileHexToChar; MissileValue
+                        ld      bc,$9090
+                        ld      a,(TacticsSpeed)
+                        call    MissileHexToChar; MissileValue
+.VectorSideX:           ld      bc,$8050
+                        ld      a,(TacticsSideX+1)
+                        call    MissileHexToChar;issileValue2Byte
+                        ld      bc,$8062
+                        ld      a,(TacticsSideY+1)
+                        call    MissileHexToChar
+                        ld      bc,$8074
+                        ld      a,(TacticsSideZ+1)
+                        call    MissileHexToChar                        
+.VectorRoofX:           ld      bc,$8850
+                        ld      a,(TacticsRoofX+1)
+                        call    MissileHexToChar
+                        ld      bc,$8862
+                        ld      a,(TacticsRoofY+1)
+                        call    MissileHexToChar
+                        ld      bc,$8874
+                        ld      a,(TacticsRoofZ+1)
+                        call    MissileHexToChar                        
+.VectorNoseX:           ld      bc,$9050
+                        ld      a,(TacticsNoseX+1)
+                        call    MissileHexToChar
+                        ld      bc,$9062
+                        ld      a,(TacticsNoseY+1)
+                        call    MissileHexToChar
+                        ld      bc,$9074
+                        ld      a,(TacticsRoofZ+1)
+                        call    MissileHexToChar                        
+                        ret
+
+UpdateConsole:          call    MissileDiagnotics
+                        ld      a,(DELTA)
                         cp      0                           ; don't draw if there is nothing to draw
                         jr      z,.UpdateRoll   
                         ld      bc,SpeedoStart

@@ -42,7 +42,7 @@ MacroDEEquQmulASigned:  MACRO
 
                    ; .MAD	\ -> &22AD  \ Multiply and Add  (DE also) X.A(Lo.Hi) = Q*A + R.S (Lo.Hi)
 madXAequQmulAaddRS:     MacroDEEquQmulASigned
-madDEaddRS:             ld		hl,(varR)
+                        ld		hl,(varR)
                         call	madXAAddHLDESigned
                         ex      de,hl                       ; de = R.S + DE
                         ClearCarryFlag
@@ -50,6 +50,12 @@ madDEaddRS:             ld		hl,(varR)
                         ld      a,d
                         ret
 
+madDEequQmulAaddRS:     MacroDEEquQmulASigned
+                        ld		hl,(varR)
+                        call	madXAAddHLDESigned
+                        ex      de,hl                       ; de = R.S + DE
+                        ClearCarryFlag
+                        ret
 
 madXAAddHLDESigned:     ld      a,h
                         and     SignOnly8Bit

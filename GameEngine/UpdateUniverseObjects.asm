@@ -46,9 +46,9 @@ UpdateUniverseObjects:  xor     a
 .UpdateUniverseLoop:    ld      d,a                                             ; d is unaffected by GetTypeInSlotA
 ;.. If the slot is empty (FF) then skip this slot..................................................................................
                         call    GetTypeAtSlotA
+                        cp      $FF                                             ; we don't process empty slots
+                        jp      z,.UniverseSlotIsEmpty                          ; .
                         ld      iyl,a                                           ; save type into iyl for later
-                        cp      $FF
-                        jp      z,.UniverseSlotIsEmpty            
 .UniverseObjectFound:   ld      a,d                                             ; Get back Universe slot as we want it
                         MMUSelectUniverseA                                      ; and we apply roll and pitch
                         call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
@@ -57,7 +57,7 @@ UpdateUniverseObjects:  xor     a
                         call    UpdateSpeedAndPitch                             ; update based on rates of speed roll and pitch accelleration/decelleration
 ;.. apply ships movement                        
 ;.. If its a space station then see if we are ready to dock........................................................................
-.CheckExploding:        IsShipDestroyedOrExploding
+.CheckExploding:        IsShipDestroyedOrExploding                              ; fi its destroyed or exploding z flag will be clear
                         jp      nz,.ProcessedUniverseSlot                       ; then no action
 ;.. we can't collide with missiles, they collide with us as part of tactics
 .CheckIfMissile:        JumpIfMemEqNusng ShipTypeAddr, ShipTypeMissile, .CollisionDone ; Missiles don't have ECM and do collision checks on their tactics phase
@@ -126,7 +126,7 @@ UpdateUniverseObjects:  xor     a
                         call    DamageShip
                         ld      a,(UBnKexplDsp)                                 ; is it destroyed
                         and     %10100000      
-                        jp      nz,.ProcessedUniverseSlot                        ; can't lock on debris
+                        jp      nz,.ProcessedUniverseSlot                       ; can't lock on debris
 .NoLaser:   
 ; Now check missile lock
 .PlayerMissileLock:     JumpIfMemNeNusng MissileTargettingFlag, StageMissileTargeting, .ProcessedUniverseSlot
@@ -134,7 +134,7 @@ UpdateUniverseObjects:  xor     a
                         LockMissileToA                                          ; .                        
 .ProcessedUniverseSlot: 
 ;...Tactics Section................................................................................................................
-.AreWeReadyForAI:       ld      a,(SelectedUniverseSlot)
+.AreWeReadyForAI:       ld      a,(SelectedUniverseSlot)                        ; get back current slot number
                         IsSlotMissile                                           ; Missiles update every iteration
                         jp      z,.UpdateMissile                                ; so we bypass the logic check
 .CheckIfSlotAITurn:     CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, UpdateShip
@@ -156,16 +156,59 @@ UpdateUniverseObjects:  xor     a
                         jp      .DoneAICheck                                    ; ai if the ai slot to process = missile type
 ;..................................................................................................................................
 
+SaveUBNK:               DS 3*3
+
+SavePosition:           push    hl,,de,,bc,,af
+                        ld      a,(CurrentShipUniv)
+                        cp      2
+                        jr      nz,.DoneSave
+                        ;break
+                        ld      hl, UBnKxlo
+                        ld      de, SaveUBNK
+                        ld      bc, 3*3
+                        ldir
+                        ld      a,0
+                        ld      (UBnKyhi)  ,a
+                        ld      (UBnKxhi)  ,a
+                        ld      (UBnKzhi)  ,a                        
+                        ld      (UBnKxsgn) ,a
+                        ld      (UBnKysgn) ,a
+                        ld      (UBnKzhi)  ,a
+                        ld      (UBnKzsgn) ,a
+                        ld      a, $5
+                        ld      (UBnKylo)  ,a
+                        ld      a, $5
+                        ld      (UBnKxlo)  ,a
+                        ld      a, $6E
+                        ld      (UBnKzlo)  ,a
+.DoneSave:              pop     hl,,de,,bc,,af
+                        ret
+                        
+RestorePosition:        push    hl,,de,,bc,,af
+                        ld      a,(CurrentShipUniv)
+                        cp      2
+                        jr      nz,.DoneSave
+                        ;break
+                        ld      hl, SaveUBNK
+                        ld      de, UBnKxlo
+                        ld      bc, 3*3
+                        ldir
+.DoneSave:              pop     hl,,de,,bc,,af
+                        ret
+                         
+
 DrawForwardShips:       xor     a
 .DrawShipLoop:          ld      (CurrentShipUniv),a
                         call    GetTypeAtSlotA
                         cp      $FF
                         jr      z,.ProcessedDrawShip
-; Add in a fast check for ship behind to process nodes and if behind jump to processed Draw ship
+                        ; Add in a fast check for ship behind to process nodes and if behind jump to processed Draw ship
 .SelectShipToDraw:       ld      a,(CurrentShipUniv)
                         MMUSelectUniverseA
+                        call    SavePosition
 .ProcessUnivShip:       call    ProcessShip          ; The whole explosion logic is now encapsulated in process ship ;TODO TUNE THIS   ;; call    ProcessUnivShip
 ; Debris still appears on radar                        
+                        call    RestorePosition
 .UpdateRadar: 
 ;;;Does nothing                       ld      a,BankFrontView
 ;;;Does nothing                       MMUSelectScreenA

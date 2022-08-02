@@ -2,6 +2,8 @@
  DEFINE  DOUBLEBUFFER 1
  ;DEFINE  LOGMATHS     1
  ;DEFINE  DIAGSPRITES 1
+ ;DEFINE   SKIPATTRACT 1
+ DEFINE DEBUGMISSILETEST 1
  CSPECTMAP eliteN.map
  OPT --zxnext=cspect --syntax=a --reversepop
 
@@ -199,12 +201,15 @@ InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
                         MMUSelectLayer1
                         call		l1_cls
                         SetBorder   $00
+                        IFDEF SKIPATTRACT
+                            jp DefaultCommander
+                        ENDIF                        
 StartAttractMode:       call        AttractMode
-                        JumpIfAIsZero  .SkipDefault
-                        MMUSelectCommander
+                        JumpIfAIsZero  SkipDefaultCommander
+DefaultCommander:       MMUSelectCommander
                         call		defaultCommander
                         jp          InitialiseMainLoop:
-.SkipDefault                        
+SkipDefaultCommander:                        
 ;                        call    FindNextFreeSlotInA
 ;                        ld      b,a
 ;                        ld      a,13 ;Coriolis station
@@ -385,7 +390,7 @@ GetStationVectorToWork: ld      hl,UBnKxlo
                         srl     b
                         or      b
                         ld      (XX15VecZ),a         ; note this is now a signed highbyte                        
-                        call    normaliseXX1596fast 
+                        call    normaliseXX1596S7 
                         ret                          ; will return with a holding Vector Z
 
 TidyCounter             DB  0
@@ -424,10 +429,47 @@ LaunchedFromStation:    MMUSelectSun
                         ld      a,b                                 ; Select the correct ship
                         call    CopyShipToUniverse
 .BuiltStation:          call    ResetStationLaunch
+                        IFDEF DEBUGMISSILETEST
+                            ld      a,0
+                            ld      (UBnKRotXCounter),a             ; kill station roll
+
+.TestMissileTarget:         ld      a,ShipID_Viper
+                            call    SpawnShipTypeA                      ; call rather than jump, returns with a = slot number
+                            ZeroA
+                            ld      (UBnKSpeed),a
+                            ld      a,$80
+                            ld      (UBnKxsgn),a 
+                            ;ld      a,$80
+                            ZeroA
+                            ld      (UBnKysgn),a 
+                            ld      a,$80
+                           ZeroA
+                            ld      (UBnKzsgn),a 
+                            ld      a,$60
+                            ZeroA
+                            ld      (UBnKxlo),a 
+                            ld      a,$10
+                            ;ZeroA
+                            ld      (UBnKxhi),a 
+                            ld      a,$60
+                            ;ZeroA
+                            ld      (UBnKylo),a    
+                            ld      a,$1B
+                            ;ZeroA
+                            ld      (UBnKyhi),a    
+                            ZeroA                            
+                            ld      (UBnKzlo),a    
+                            ld      a,$2B
+                            ld      (UBnKzhi),a    
+                        ENDIF                    
 .NowInFlight:           ld      a,StateNormal
                         ld      (DockedFlag),a
                         ForceTransition ScreenFront
                         call    ResetPlayerShip
+                        IFDEF DEBUGMISSILETEST
+                            ld  a,1
+                            LockMissileToA  
+                        ENDIF
                         ret
     
 InitialiseCommander:    ld      a,(ScreenCmdr+1)
@@ -596,6 +638,8 @@ XX12PVarSign3		DB 0
 ;    INCLUDE "./Maths/Utilities/RSequABSrs-LL129.asm"
     INCLUDE "./Maths/Utilities/RSequQmulA-MULT12.asm"
 ;INCLUDE "SwapRotmapXY-PUS1.asm"
+    include "./Universe/Ships/CopyRotMattoXX15.asm"
+    include "./Universe/Ships/CopyXX15toRotMat.asm"
     INCLUDE "./Maths/Utilities/tidy.asm"
     INCLUDE "./Maths/Utilities/LL28AequAmul256DivD.asm"    
     INCLUDE "./Maths/Utilities/XAequMinusXAPplusRSdiv96-TIS1.asm"

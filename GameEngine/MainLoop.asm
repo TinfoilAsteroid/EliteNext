@@ -54,6 +54,8 @@ TestAreWeDocked:        JumpIfMemNeNusng DockedFlag, StateNormal, UpdateLoop    
                     IFDEF MAINLOOP_EVENTHANDLER
 .UpdateEventCounter:    ld      hl,EventCounter                                         ; evnery 256 cycles we do a trigger test
                         dec     (hl)    
+                    ENDIF
+                    IFNDEF DEBUGMISSILETEST
 .ProcessEvent:          call    z,LoopEventTriggered    
                     ENDIF
                     IFDEF MAINLOOP_RECHARGE

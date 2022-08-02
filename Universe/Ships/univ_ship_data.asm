@@ -1,3 +1,4 @@
+    DEFINE DEBUGMISSILELAUNCH 1
 ; In  flight ship data tables
 ; In  flight ship data tables
 ; There can be upto &12 objects in flight.
@@ -248,6 +249,10 @@ UnivSetPlayerMissile:   call    InitialisePlayerMissileOrientation  ; Copy in Pl
                         call    ResetUbnkPosition               ; home position
                         ld      a,MissileDropHeight             ; the missile launches from underneath
                         ld      (UBnKylo),a                     ; so its -ve drop height
+                        IFDEF DEBUGMISSILELAUNCH
+                            ld      a,$20       ; DEBUG
+                            ld      (UBnKzlo),a
+                        ENDIF
                         ld      a,$80                           ;
                         ld      (UBnKysgn),a                    ;
                         ld      a,3                             ; set accelleration
@@ -255,7 +260,7 @@ UnivSetPlayerMissile:   call    InitialisePlayerMissileOrientation  ; Copy in Pl
                         ZeroA
                         ld      (UBnKRotXCounter),a
                         ld      (UBnKRotZCounter),a
-                        ld      a,3
+                        ld      a,3                             ; these are max roll and pitch rates for later
                         ld      (UBnKRAT),a
                         inc     a
                         ld      (UBnKRAT2),a
@@ -427,374 +432,27 @@ UnivInitRuntime:        ld      (UbnKShipUnivBankNbr),a     ; actual bank nmber 
 .ECMFitted:             SetMemTrue  UBnKECMFitted
 .DoneECM:               ; TODO set up laser power
                         ret
-
-
-;;; moved to v4 in asm_add ADDHLDESignedv3:        ld      a,h
-;;; moved to v4 in asm_add                         and     SignOnly8Bit
-;;; moved to v4 in asm_add                         ld      b,a                         ;save sign bit in b
-;;; moved to v4 in asm_add                         xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means 
-;;; moved to v4 in asm_add                         JumpIfNegative ADDHLDEOppSGN        ;Signs are opposite there fore we can subtract to get difference
-;;; moved to v4 in asm_add ADDHLDESameSigns:       ld      a,b
-;;; moved to v4 in asm_add                         or      d
-;;; moved to v4 in asm_add                         JumpIfNegative ADDHLDESameNeg       ; optimisation so we can just do simple add if both positive
-;;; moved to v4 in asm_add                         add     hl,de
-;;; moved to v4 in asm_add                         ret
-;;; moved to v4 in asm_add ADDHLDESameNeg:         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
-;;; moved to v4 in asm_add                         and     SignMask8Bit                ; we could check the value of b for optimisation
-;;; moved to v4 in asm_add                         ld      h,a
-;;; moved to v4 in asm_add                         ld      a,d
-;;; moved to v4 in asm_add                         and     SignMask8Bit
-;;; moved to v4 in asm_add                         ld      d,a
-;;; moved to v4 in asm_add                         add     hl,de
-;;; moved to v4 in asm_add                         ld      a,SignOnly8Bit
-;;; moved to v4 in asm_add                         or      h                           ; now set bit for negative value, we won't bother with overflow for now TODO
-;;; moved to v4 in asm_add                         ld      h,a
-;;; moved to v4 in asm_add                         ret
-;;; moved to v4 in asm_add ADDHLDEOppSGN:          ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit                     ; here HL and DE are opposite 
-;;; moved to v4 in asm_add                         and     SignMask8Bit                ; we could check the value of b for optimisation
-;;; moved to v4 in asm_add                         ld      h,a
-;;; moved to v4 in asm_add                         ld      a,d
-;;; moved to v4 in asm_add                         and     SignMask8Bit
-;;; moved to v4 in asm_add                         ld      d,a
-;;; moved to v4 in asm_add                         or      a
-;;; moved to v4 in asm_add                         sbc     hl,de
-;;; moved to v4 in asm_add                         jr      c,ADDHLDEOppInvert
-;;; moved to v4 in asm_add ADDHLDEOppSGNNoCarry:   ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
-;;; moved to v4 in asm_add                         or      h
-;;; moved to v4 in asm_add                         ld      h,a                         ; set the previou sign value
-;;; moved to v4 in asm_add                         ret
-;;; moved to v4 in asm_add ADDHLDEOppInvert:       NegHL                                                   ; we need to flip the sign and 2'c the Hl result
-;;; moved to v4 in asm_add                         ld      a,b
-;;; moved to v4 in asm_add                         xor     SignOnly8Bit                ; flip sign bit
-;;; moved to v4 in asm_add                         or      h
-;;; moved to v4 in asm_add                         ld      h,a                         ; recover sign
-;;; moved to v4 in asm_add                         ret 
-;;; moved to v4 in asm_add                 
-; we could cheat, flip the sign of DE and just add but its not very optimised
-;;;moved into asm_subtract SUBHLDESignedv3:        ld      a,h
-;;;moved into asm_subtract                         and     SignOnly8Bit
-;;;moved into asm_subtract                         ld      b,a                         ;save sign bit in b
-;;;moved into asm_subtract                         xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means 
-;;;moved into asm_subtract                         JumpIfNegative SUBHLDEOppSGN        ;Signs are opposite therefore we can add
-;;;moved into asm_subtract SUBHLDESameSigns:       ld      a,b
-;;;moved into asm_subtract                         or      d
-;;;moved into asm_subtract                         JumpIfNegative SUBHLDESameNeg       ; optimisation so we can just do simple add if both positive
-;;;moved into asm_subtract                         or      a
-;;;moved into asm_subtract                         sbc     hl,de
-;;;moved into asm_subtract                         JumpIfNegative SUBHLDESameOvrFlw            
-;;;moved into asm_subtract                         ret
-;;;moved into asm_subtract SUBHLDESameNeg:         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
-;;;moved into asm_subtract                         and     SignMask8Bit                ; we could check the value of b for optimisation
-;;;moved into asm_subtract                         ld      h,a
-;;;moved into asm_subtract                         ld      a,d
-;;;moved into asm_subtract                         and     SignMask8Bit
-;;;moved into asm_subtract                         ld      d,a
-;;;moved into asm_subtract                         or      a
-;;;moved into asm_subtract                         sbc     hl,de
-;;;moved into asm_subtract                         JumpIfNegative SUBHLDESameOvrFlw            
-;;;moved into asm_subtract                         ld      a,h                         ; now set bit for negative value, we won't bother with overflow for now TODO
-;;;moved into asm_subtract                         or      SignOnly8Bit
-;;;moved into asm_subtract                         ld      h,a
-;;;moved into asm_subtract                         ret
-;;;moved into asm_subtract SUBHLDESameOvrFlw:      NegHL                                                        ; we need to flip the sign and 2'c the Hl result
-;;;moved into asm_subtract                         ld      a,b
-;;;moved into asm_subtract                         xor     SignOnly8Bit                ; flip sign bit
-;;;moved into asm_subtract                         or      h
-;;;moved into asm_subtract                         ld      h,a                         ; recover sign
-;;;moved into asm_subtract                         ret         
-;;;moved into asm_subtract SUBHLDEOppSGN:          or      a                                               ; here HL and DE are opposite so we can add the values
-;;;moved into asm_subtract                         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
-;;;moved into asm_subtract                         and     SignMask8Bit                ; we could check the value of b for optimisation
-;;;moved into asm_subtract                         ld      h,a
-;;;moved into asm_subtract                         ld      a,d
-;;;moved into asm_subtract                         and     SignMask8Bit
-;;;moved into asm_subtract                         ld      d,a     
-;;;moved into asm_subtract                         add     hl,de
-;;;moved into asm_subtract                         ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
-;;;moved into asm_subtract                         or      h
-;;;moved into asm_subtract                         ld      h,a                         ; set the previou sign value
-;;;moved into asm_subtract                         ret
-
     
-SBCHLDESigned:          JumpOnBitSet h,7,SBCHLDEhlNeg
-SBCHLDEhlPos:           JumpOnBitSet h,7,SBCHLDEhlNeg
-SBCHLDEhlPosDePos:      sbc     hl,de                           ; ignore overflow for now will sort later TODO
-                        ret
-SBCHLDEhlPosDeNeg:      res     7,d
-                        add     hl,de                           ; ignore overflow for now will sort later TODO
-                        set     7,d
-                        ret
-SBCHLDEhlNeg:           res     7,h
-                        JumpOnBitSet d,7,SBCHLDEhlNegdeNeg
-SBCHLDEhlNegdePos:      sbc     hl,de                       ; ignore overflow for now will sort later TODO
-                        set     7,h     
-                        ret
-SBCHLDEhlNegdeNeg:      res     7,d
-                        add     hl,de                   ; ignore overflow for now will sort later TODO
-                        set     7,d
-                        set     7,h
-                        ret
-    
-; Roate around axis
-; varAxis1 and varAxis2 point to the address of the axis to rotate
-; so the axis x1 points to roofv  x , y or z
-;             x2           nosev or sidev  x, y or z
-;   Axis1 = Axis1 * (1 - 1/512)  + Axis2 / 16
-;   Axis2 = Axis2 * (1 - 1/512)  - Axis1 / 16
-; var RAT2 gives direction  
-; for pitch x we come in with Axis1 = roofv_x and Axis2 = nosev_x
-;-Set up S R -----------------------------------------
-; optimised we don't deal with sign here just the value of roof axis / 512
-MVS5RotateAxis:         ld      hl,(varAxis1)   ; work on roofv axis to get (1- 1/152) * roofv axis
-                        ld      e,(hl)
-                        inc     hl
-                        ld      d,(hl)          ; de = Axis1 (roofv x for pitch x)
-                        ex      de,hl           ; hl = Axis1 (roofv x for pitch x)
-                        ld      a,h
-                        and     SignOnly8Bit                
-                        ld      iyh,a           ; iyh = sign Axis1
-                        ld      a,h
-                        and     SignMask8Bit    ; a = Axis1 (roof hi axis  unsigned)
-                        srl     a               ; a = Axis1/2
-                        ld      e,a             ; 
-                        ld      a,iyh           ; A = Axis 1 sign
-                        ld      d,a             ; de = signed Axis1 / 512
-                        or      a               ; clear carry
-                        call    SUBHLDESigned ; hl = roof axis - (roof axis /512) which in effect is roof * (1-1/512)
-;-Push to stack roof axis - (roofaxis/152)  ----------------------------------------------------------------------------------
-                        push    hl              ; save hl on stack PUSH ID 1 (roof axis - roofv aixs /512)
-                        ld      a,l
-                        ld      (varR),a
-                        ld      a,h
-                        ld      (varS),a        ;  RS now equals (1- 1/152) * roofv axis or (roof axis - roofv aixs /512)
-;-calculate roofv latter half of calc   
-                        ld      hl,(varAxis2)   ; now work on nosev axis to get nosev axis / 16
-                        ld      e,(hl)
-                        inc     hl
-                        ld      d,(hl)          ; de = value of roof axis
-                        ld      a,d
-                        and     SignOnly8Bit
-                        ld      iyh,a           ; save sign 
-                        ld      a,d 
-                        and     SignMask8Bit    ; a = nosev hi axis  unsigned
-                        ld      d,a             ; de = abs (nosev)
-                        ShiftDERight1
-                        ShiftDERight1
-                        ShiftDERight1
-                        ShiftDERight1           ; de = nosev /16 unsigned
-                        ld      a,(univRAT2)     ; need to consider direction, so by defautl we use rat2, but flip via sign bit
-                        xor     iyh             ; get the sign back we saveded from DE in so de = nosev axis / 16 signed
-                        and     SignOnly8Bit
-                        or      d
-                        ld      d,a             ; de = nosev /16 signed and ready as if we were doing a + or - based on RAT2            
-;;; ld      a,e
-;;;     or      iyh
-;;; ld      (varP),a        ; PA now equals nosev axis / 16 signed
-;-now AP = nosev /16  --------------------------------------------------------------------------------------------------------
-                        pop     hl              ; get back RS POP ID 1
-    ;ex     de,hl           ; swapping around so hl = AP and de = SR , shoud not matter though as its an add
-;-now DE = (roofaxis/512) hl - abs(nosevaxis) --------------------------------------------------------------------------------
-                        call    ADDHLDESignedV4 ; do add using hl and de
-                        push    hl              ; we use stack to represent var K here now varK = Nosev axis /16 + (1 - 1/512) * roofv axis PUSH ID 2
-;-push to stack nosev axis + roofvaxis /512  which is what roofv axis will be ------------------------------------------------  
-;-- Set up SR = 1 - 1/512 * nosev-----------------------
-                    ld      hl,(varAxis2)   ; work on nosev again to get nosev - novesv / 512
-                    ld      e,(hl)
-                    inc     hl
-                    ld      d,(hl)
-                    ex      de,hl
-                    ld      a,h
-                    and     $80
-                    ld      iyh,a
-                    ld      a,h
-                    and     SignMask8Bit    ; a = roof hi axis  unsigned
-                    srl     a               ; now A = unsigned 15 bit nosev axis hi / 2 (or in effect nosev / 512
-                    ld      e,a
-                    ld      a,iyh
-                    ld      d,a
-                    or      a               ; clear carry
-                    call    SUBHLDESigned
-;   sbc     hl,de           ; hl = nosev - novesv / 512
-                    push    hl              ; save hl on stack  PUSH ID 3
-                    ld      a,l
-                    ld      (varP),a        ; p = low of resuilt
-                    ld      a,h
-                    and     SignMask8Bit    ; a = roof hi axis  unsigned
-                    ld      (varT),a        ; t = high of result
-;-- Set up TQ
-                    ld      hl,(varAxis1)   ; now work on roofv axis / 16
-;   ld      hl,(varAxis2)   ; work on nosev again 
-                    ld      e,(hl)
-                    inc     hl
-                    ld      d,(hl)
-                    ld      a,d
-                    and     $80
-                    ld      iyh,a           ; save sign 
-                    ld      a,d
-                    and     SignMask8Bit    ; a = nosev hi axis  unsigned
-                    ld      d,a             ; de = abs (nosev)
-                    ShiftDERight1
-                    ShiftDERight1
-                    ShiftDERight1
-                    ShiftDERight1           ; de = nosev /16 unsigned
-                    ld      a,(univRAT2)
-                    xor     iyh             ; get the sign back in so de = nosev axis / 16 signed
-                    and     $80
-                    or      d
-                    ld      d,a
-;;; ld      a,e
-;;;     or      iyh
-;;; ld      (varP),a        ; PA now equals nosev axis / 16 signed
-                    pop     hl              ; get back RS   POP ID 3
-;   ex      de,hl           ; swapping around so hl = AP and de = SR , shoud not matter though as its an add
-                    call    SUBHLDESigned ; do add using hl and de
-;-- Update nosev ---------------------------------------
-                    ex      de,hl           ; save hl to de
-                    ld      hl,(varAxis2)
-                    ld      (hl),e
-                    inc     hl
-                    ld      (hl),d          ; copy result into nosev
-;-- Update roofv ---------------------------------------
-                    pop     de              ; get calc saved on stack POP ID 2
-                    ld      hl,(varAxis1)
-                    ld      (hl),e
-                    inc     hl
-                    ld      (hl),d          ; copy result into nosev
-                    ret
-    
-                    include "Universe/Ships/InitialiseOrientation.asm"
+                        include "Universe/Ships/InitialiseOrientation.asm"
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-OrientateVertex:
-
+;OrientateVertex:
 ;                      [ sidev_x sidev_y sidev_z ]   [ x ]
 ;  projected [x y z] = [ roofv_x roofv_y roofv_z ] . [ y ]
 ;                      [ nosev_x nosev_y nosev_z ]   [ z ]
 ;
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-TransposeVertex:
+;TransposeVertex:
 ;                      [ sidev_x roofv_x nosev_x ]   [ x ]
 ;  projected [x y z] = [ sidev_y roofv_y nosev_y ] . [ y ]
 ;                      [ sidev_z roofv_z nosev_z ]   [ z ]
-VectorToVertex:
+; VectorToVertex:
 ;                     [ sidev_x roofv_x nosev_x ]   [ x ]   [ x ]
 ;  vector to vertex = [ sidev_y roofv_y nosev_y ] . [ y ] + [ y ]
 ;                     [ sidev_z roofv_z nosev_z ]   [ z ]   [ z ]
 ;INPUTS:    bhl = dividend  cde = divisor where b and c are sign bytes
 ;OUTPUTS:   cahl = quotient cde = divisor
-DVID3B2:                ld      (varPhi2),a                     ;DVID3B2 \ Divide 3 bytes by 2, K = [P(HiLo).A]/[INWK_z HiLo], for planet radius, Xreg protected. ; P+2    \ num sg
-                        ldCopy2Byte UBnKzlo, varQ               ; [QR} = Ubnk zlohi  (i.e. Inwk_z HiLo)
-                        ld      a,(UBnKzsgn)                    ; 
-                        ld      (varS),a                        ; S = inkw z sign 
-DVID3B:                 ld      de,(varP)                       ; K (3bytes)=P(Lo Hi Hi2)/S.R.Q approx  Acc equiv K(0).; get P and P+1 into de
-                        ld      a,e                             ; num lo
-                        or      1                               ; must be at least 1
-                        ld      (varP),a                        ; store
-                        ld      e,a                             ; update DE too
-                        ld      a,(varPhi2)                     ; varP Sign     E.D.A = P Lo Hi Hi2
-                        ld      hl,varS                         ; hl = address of VarS
-                        xor     (hl)                            ; A = PHi2 Xor S Signs
-                        and     $80                             ; 
-                        ld      (varT),a                        ; T = Sign bit of A
-                        ld      iyl,0                           ; iyl = yReg = counter
-                        ld      a,(varPhi2)                     ; 
-                        and     $7F                             ; A = Ph2 again but minus sign bit 
-DVL9:                   JumpIfAGTENusng $40,DV14                ; counter Y up; if object is over $40 away then scaled and exit Y count
-                        ShiftDELeft1                            ; de (or P,P1) > 1
-                        rl      a                               ; and accumulator as 3rd byte
-                        inc     iyl
-                        jp      nz,DVL9                         ; loop again with a max of 256 iterations
-DV14:                   ld      (varPhi2),a                     ; scaled, exited Ycount
-                        ld      (varP),de                       ; store off the value so far
-                        ld      a,(varS)                        ; zsign
-                        and     $7F                             ; denom sg7
-                        ; jp mi,DV9                             ; this can never happen as bit 7 is and'ed out
-                        ld      hl,(varQ)                       ; demon lo
-DVL6:                   dec     iyl                             ; counter Y back down, dddd S. ;  scale Y back
-                        ShiftHLLeft1
-                        rl      a                               ; mulitply QRS by 2
-                        jp      p,DVL6                          ; loop roll S until Abit7 set.
-DV9:                    ld      (varQ),hl                       ; bmi cant enter here from above ; save off so far
-                        ld      (varQ),a                        ; Q \ mostly empty so now reuse as hi denom
-                        ld      a,$FE                           ;  Xreg protected so can't LL28+4
-                        ld      (varR),a                        ;  R
-                        ld      a,(varPhi2)                     ; P+2 \ big numerator
-                        call    PROJ256mulAdivQ                 ; TODO LL31\ R now =A*256/Q
-                        ld      a,0
-                        ld      (varKp1),a
-                        ld      (varKp2),a
-                        ld      (varKp3),a                      ; clear out K+1 to K+3
-                        ld      a,iyl                           ; Y counter for scale
-                        JumpOnBitClear a,7,DV12                 ; Ycount +ve
-                        ld      a,(varR)                        ; R     \ else Y count is -ve, Acc = remainder.
-                        ld      de,(varK)                       ; d= k1
-                        ld      hl,(varK2)                      ; h = k3, l = k2
-                        ld      e,a                             ; use e to hold K0 pulled from a
-DVL8:                   sla     a                               ; boost up a                     ;  counter Y up
-                        rl      d                               ; k1
-                        rl      l                               ; k2
-                        rl      h                               ; k3
-                        inc     iyl
-                        jr      nz,DVL8                         ;
-DVL8Save:               ld      (varK),de
-                        ld      (varK2),hl                      ; save back K0 to k3
-                        ld      a,(varT)
-                        ld      c,a                             ; get varT into c reg 
-                        ld      a,h                             ; a= k3 (sign)
-                        or      c                               ; merge in varT (sign)that was saved much earlier up)
-                        ld      (varK3),a                       ; load sign bit back into K3
-                        ret
-DV12:                   JumpIfAIsZero   DV13                    ; Y Count zerp, go to DV13
-                        ld      a,(varR)                        ; Reduce Remainder
-DVL10:                  srl     a                               ; divide by 2                     ; counter Y reduce
-                        dec     iyl
-                        jp      nz,DVL10                        ; loop y reduce until y is zero
-                        ld      (varK),a                        ; k Lo
-                        ldCopyByte  varT,varKp3                 ; Copy sign to K+3
-                        ret
-DV13:                   ldCopyByte  varR,varK                   ; R \ already correct so copy to K lo;DV13   \ Ycount zero \ K(1to2) already = 0
-                        ldCopyByte  varT,varKp3                 ; Copy sign to K+3
-                        ret
- 
-PLS6:                   call    DVID3B2                         ; Returns AHL K ( 2 1 0 )
-                        ld      a,(varKp3)
-                        and     $7F
-                        ld      hl,varKp2
-                        or      (hl)
-                        jp      nz,PL44TooBig
-                        ld      a,(varKp1)
-                        cp      4                               ; if high byte > 4 then total > 1024 so too big
-                        jr      nc,PL44TooBig
-                        ClearCarryFlag                          ; we have a good result regardless
-                        ld      hl,(varK)                       ; get K (0 1)
-                        ld      a,(varKp3)                      ; if sign bit high?
-                        bit     7,a
-                        ret     z                               ; no so we can just return
-PL44:                   ret 
-PL44TooBig:             scf
-                        ret
-Project:
-PROJ:                   ld      hl,(UBnKxlo)                    ; Project K+INWK(x,y)/z to K3,K4 for center to screen
-                        ld      (varP),hl
-                        ld      a,(UBnKxsgn)
-                        call    PLS6                            ; returns result in K (0 1) (unsigned) and K (3) = sign note to no longer does 2's C
-                        ret     c                               ; carry means don't print
-                        ld      hl,(varK)                       ; hl = k (0 1)
-                        ; Now the question is as hl is the fractional part, should this be multiplied by 127 to get the actual range
-                        ld      a,ViewCenterX
-                        add     hl,a                            ; add unsigned a to the 2's C HL to get pixel position
-                        ld      (varK3),hl                      ; K3 = X position on screen
-ProjectY:               ld      hl,(UBnKylo)
-                        ld      (varP),hl
-                        ld      a,(UBnKysgn)
-                        call    PLS6
-                        ret     c
-                        ld      hl,(varK)                       ; hl = k (0 1)
-                        ld      a,ViewCenterY
-                        add     hl,a                            ; add unsigned a to the 2's C HL to get pixel position
-                        ld      (varK4),hl                      ; K3 = X position on screen
-                        ret
 ;--------------------------------------------------------------------------------------------------------
                         include "./ModelRender/EraseOldLines-EE51.asm"
                         include "./ModelRender/TrimToScreenGrad-LL118.asm"
@@ -877,38 +535,7 @@ SetAllFacesHiddenLoop:  ld      (hl),a
 ;
 ;   XX12(5 4)            The dot product of [x y z] vector with the nosev (or _z)
 ;                        vector, with the sign in XX12+5 and magnitude in XX12+4
-XXCURRENTN0equN1byN2div256: MACRO param1, param2, param3
-                        ld      c,0
-                        ld      a,param3                      ; 
-                        bit     7,a
-                        jr      z,.val2Pos
-;HandleSignebits
-                        neg
-                        ld      c,$80
-.val2Pos:               ld      e,a                         ; use e as var Q = value of XX15 [n] lo
-                        ld      a,param2                        ; A = XX16 element
-                        bit     7,a
-                        jr      z,.val1Pos
-;HandleSignebits
-                        neg
-                        ld      b,a
-                        ld      a,c
-                        xor     $80
-                        ld      c,a
-                        ld      a,b
-.val1Pos:               ld      d,a
-;AequAmulQdiv256:
-                        mul
-                        ld      a,c
-                        bit     7,a
-                        ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low                
-                        jr      z,.resultPos
-                        neg
-.resultPos:             ld      (param1),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
-                        ENDM
-                
-
- ; TESTEDOK
+; TESTEDOK
 XX12DotOneRow:
 XX12CalcX:              N0equN1byN2div256 varT, (hl), (UBnkXScaled)       ; T = (hl) * regXX15fx /256 
                         inc     hl                                  ; move to sign byte
@@ -938,8 +565,8 @@ XX12CalcZ:              N0equN1byN2div256 varQ,(hl),(UBnkZScaled)       ; Q = |s
 
 ;-- LL51---------------------------------------------------------------------------------------------------------------------------
 ;TESTED OK
+;XX12EquScaleDotOrientation:                         ; .LL51 \ -> &4832 \ XX12=XX15.XX16  each vector is 16-bit x,y,z
 XX12EquXX15DotProductXX16:
-XX12EquScaleDotOrientation:                         ; .LL51 \ -> &4832 \ XX12=XX15.XX16  each vector is 16-bit x,y,z
                         ld      bc,0                                ; LDX, LDY 0
                         ld      hl,UBnkTransmatSidevX     
                         call    XX12DotOneRow
@@ -1048,29 +675,6 @@ XX12EquScaleDotOrientation:                         ; .LL51 \ -> &4832 \ XX12=XX
 ;     end if
 ; Next Face     
 
-ScaleDownXX15byIXH:     dec     ixh
-                        ret     m
-                        ld      hl,UBnkXScaled
-                        srl     (hl)                        ; XX15  \ xnormal lo/2 \ LL93+3 \ counter X
-                        inc     hl                          ; looking at XX15 x sign now
-                        inc     hl                          ; looking at XX15 y Lo now
-                        srl     (hl)                        ; XX15+2    \ ynormal lo/2
-                        inc     hl                          ; looking at XX15 y sign now
-                        inc     hl                          ; looking at XX15 z Lo now
-                        srl     (hl)
-                        jp      ScaleDownXX15byIXH
-                        ret
-
-DivideXX18By2:          ld      hl,UBnkDrawCam0xLo
-                        srl     (hl)                        ; XX18  \ xnormal lo/2 \ LL93+3 \ counter X
-                        inc     hl                          ; looking at XX18 x sign now
-                        inc     hl                          ; looking at XX18 y Lo now
-                        srl     (hl)                        ; XX18+2    \ ynormal lo/2
-                        inc     hl                          ; looking at XX18 y sign now
-                        inc     hl                          ; looking at XX18 z Lo now
-                        srl     (hl)
-                        ret
-
 ;line of sight vector = [x y z] + face normal vector
 
 ;               [ [x y z] . sidev + normal_x ]   [ normal_x ]
@@ -1083,73 +687,8 @@ DivideXX18By2:          ld      hl,UBnkDrawCam0xLo
 ; now if we add teh veector for teh normal(times magnitude)) to teh ship position we have the true center of the face
 ; now we can calcualt teh dot product of this caulated vector and teh normal which if < 0 is goot. this means we use rot mat not inverted rotmat.
 
-RotateXX15ByTransMatXX16:
-                        ld      hl,UBnkTransmatSidevX               ; process orientation matrix row 0
-                        call    XX12ProcessOneRow
-                        ld      b,a                                 ; get 
-                        ld      a,l
-                        or      b
-                        ld      (UBnkXX12xSign),a                   ; a = result with sign in bit 7
-                        ld      a,l
-                        ld      (UBnkXX12xLo),a                     ; that is result done for
-
-                        ld      hl,UBnkTransmatRoofvX               ; process orientation matrix row 0
-                        call    XX12ProcessOneRow
-                        ld      b,a                                 ; get 
-                        ld      a,l
-                        or      b
-                        ld      (UBnkXX12ySign),a                   ; a = result with sign in bit 7
-                        ld      a,l
-                        ld      (UBnkXX12yLo),a                     ; that is result done for
-                 
-                        ld      hl,UBnkTransmatNosevX               ; process orientation matrix row 0
-                        call    XX12ProcessOneRow
-                        ld      b,a                                 ; get 
-                        ld      a,l
-                        or      b
-                        ld      (UBnkXX12zSign),a                   ; a = result with sign in bit 7
-                        ld      a,l
-                        ld      (UBnkXX12zLo),a                     ; that is result done for
-                        ret
-
     include "./ModelRender/BackfaceCull.asm"
-;--------------------------------------------------------------------------------------------------------
-; Process edges
-; .....................................................
-TransposeNodeVal:   MACRO arg0?
-        ldCopyByte  UBnK\0sgn,Ubnk\1PointSign           ; UBnkXSgn => XX15+2 x sign
-        ld          bc,(UBnkXX12\0Lo)                   ; c = lo, b = sign   XX12XLoSign
-        xor         b                                   ; a = UBnkKxsgn (or XX15+2) here and b = XX12xsign,  XX12+1 \ rotated xnode h                                                                             ;;;           a = a XOR XX12+1                              XCALC
-        jp          m,NodeNegative\1                                                                                                                                                            ;;;           if sign is +ve                        ::LL52   XCALC
-; XX15 [0,1] = INWK[0]+ XX12[0] + 256*INWK[1]                                                                                       ;;;          while any of x,y & z hi <> 0 
-NodeXPositive\1:
-        ld          a,c                                 ; We picked up XX12+0 above in bc Xlo
-        ld          b,0                                 ; but only want to work on xlo                                                           ;;;              XX15xHiLo = XX12HiLo + xpos lo             XCALC
-        ld          hl,(UBnK\0lo)                       ; hl = XX1 UBNKxLo
-        ld          h,0                                 ; but we don;t want the sign
-        add         hl,bc                               ; its a 16 bit add
-        ld          (Ubnk\1Point),hl                    ; And written to XX15 0,1 
-        xor         a                                   ; we want to write 0 as sign bit (not in original code)
-        ld          (UbnkXPointSign),a
-        jp          FinishedThisNode\1
-; If we get here then _sign and vertv_ have different signs so do subtract
-NodeNegative\1:        
-LL52\1:                                                 ;
-        ld          hl,(UBnK\0lo)                       ; Coord
-        ld          bc,(UBnkXX12\0Lo)                   ; XX12
-        ld          b,0                                 ; XX12 lo byte only
-        sbc         hl,bc                               ; hl = UBnKx - UBnkXX12xLo
-        jp          p,SetAndMop\1                       ; if result is positive skip to write back
-NodeXNegSignChange\1:        
-; If we get here the result is 2'c compliment so we reverse it and flip sign
-        call        negate16hl                          ; Convert back to positive and flip sign
-        ld          a,(Ubnk\1PointSign)                 ; XX15+2
-        xor         $80                                 ; Flip bit 7
-        ld          (Ubnk\1PointSign),a                 ; XX15+2
-SetAndMop\1:                             
-        ld          (UBnK\0lo),hl                       ; XX15+0
-FinishedThisNode\1
-                    ENDM
+
 
 ;--LL52 to LL55-----------------------------------------------------------------------------------------------------------------                    
 

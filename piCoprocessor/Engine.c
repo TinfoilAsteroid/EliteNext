@@ -12,7 +12,7 @@
 EngineStatus    engineStatus = Initialised;
 pthread_t       update_thread_id;
 ViewPort        viewPort;
-extern ShipModel shipModels[];
+extern  ShipModel shipModels[];
 
 void engineInitialise(void)
 {
@@ -30,7 +30,7 @@ void updateAll(void)
 {
     if (engineStatus != Processing)
     {   
-        if (pthread_create (&update_thread_id, NULL, (void*)threadedUpdate, (void*)&update_thread_id) == 0)
+        if (pthread_create (&update_thread_id, NULL, (void*)threadedUpdate, NULL))
         {
             #ifdef debug
             printf ("updateAll thread creation failed setting to processed so last data set avaliable\n");
@@ -50,6 +50,34 @@ void updateAll(void)
         printf ("updateAll already processing, ignoring\n");
     }
     #endif
+}
+
+void threadedUpdate(void)
+{
+    engineStatus = Processing;
+    for (int i = 0; i < ShipMax; i++)
+    {
+        if (shipData[i].status == Exploding && shipData[i].explosionCountDown == 0)
+        {  
+           #ifdef debug
+           printf("Erasing\n");
+           #endif
+           destroyShip(i);
+        }
+        else
+        {
+            updateShipPosition(&(shipData[i])); // We do empty ships as that sets distance to max
+            if ((shipData[i].distance > MAXDISTANCE) || (shipData[i].status = Exploding && shipData[i].explosionCountDown>EXPLOSIONDURATION))
+            {
+                destroyShip(i); // too far away
+            }
+            else
+            {
+                generateShipLines(&(shipData[i]));
+            }
+        }
+    }
+    engineStatus = ReadyToSend;
 }
 
 void  setPlayerRoll(double rotation)
@@ -75,7 +103,7 @@ void updateShipPosition(ShipData *shipData)
      double k2;
      double alpha; // calculated roll
      double beta;  // calculated pitch
-     double delta; // calculated speed
+     double delta = 0; // calculated speed
      double distance;
      
      if (shipData->status == Empty)
@@ -136,7 +164,16 @@ void updateShipPosition(ShipData *shipData)
      rotateVectorRollPitch(&(shipData->orientation.row[1]),alpha, beta);
      rotateVectorRollPitch(&(shipData->orientation.row[0]),alpha, beta);
      // If is exploding we don't apply rotation and we are done
-     if (shipData->Status == Exploding)
+     // For now we jsut do a fake distance check just to stop compiler errors
+     if (distance > 0) // For now we jsut do a fake
+     {                 // For now we jsut do a fake
+         distance *= 1;// For now we jsut do a fake 
+     }                 // For now we jsut do a fake
+     if (delta > 0) // For now we jsut do a fake
+     {                 // For now we jsut do a fake
+         delta = 1;    // For now we jsut do a fake
+     }                 // For now we jsut do a fake
+     if (shipData->status == Exploding)
      {
          return;
      }
@@ -170,41 +207,13 @@ void updateShipPosition(ShipData *shipData)
      }
 } 
 
-void threadedUpdate()
-{
-    engineStatus = Processing;
-    for (int i = 0; i < ShipMax; i++)
-    {
-        if (shipData[i].status == Exploding && shipData[i].explosionCountDown == 0)
-        {  
-           #ifdef debug
-           printf("Erasing\n");
-           #endif
-           destroyShip(i);
-        }
-        else
-        {
-            updateShipPosition(&(shipData[i])); // We do empty ships as that sets distance to max
-            if (shipData[i].distance > MAXDISTANCE) || (shipData[i].status = Exploding && shipData[i].explosionCountDown>EXPLOSIONDURATION)
-            {
-                destroyShip(i); // too far away
-            }
-            else
-            {
-                generateShipLines(&(shipData[i]));
-            }
-        }
-    }
-    engineStatus = ReadyToSend;
-}
-
 bool shipInViewPort(ShipData *shipData)
 {
     Vector *position;
     position = &(shipData->position);
-    switch (viewPort):
+    switch (viewPort)
     {
-        Front:
+        case Front:
         {
             if (position->z >= 0 && fabs(position->x) >= position->z && fabs(position->y) >= position->z)
             {
@@ -216,7 +225,7 @@ bool shipInViewPort(ShipData *shipData)
             }
             break;
         }
-        Rear:
+        case Rear:
         {
             if (position->z <= 0 && fabs(position->x) >= position->z && fabs(position->y) >= position->z)
             {
@@ -228,7 +237,7 @@ bool shipInViewPort(ShipData *shipData)
             }
             break;
         }
-        Left:
+        case Left:
         {
             if (position->x <= 0 && fabs(position->z) >= position->x && fabs(position->y) >= position->x)
             {
@@ -240,9 +249,9 @@ bool shipInViewPort(ShipData *shipData)
             }
             break;
         }
-        Right:
+        case Right:
         {
-            if (position->x >= 0 && fabs(position->z) >= position->x && fabs(position)->y >= position->x)
+            if (position->x >= 0 && fabs(position->z) >= position->x && fabs(position->y) >= position->x)
             {
                 return true;
             }
@@ -299,7 +308,7 @@ void calculateShipExplosion(ShipData *shipData)
 	int z;
 	int q;
 	int cnt;
-    int nbr_points;
+    //TBA for compiler unsed variable warning  int nbr_points;
 	Matrix transformation;
 	double rz, sx,sy;
 	Vector vec;
@@ -317,7 +326,7 @@ void calculateShipExplosion(ShipData *shipData)
     
     ShipModel *shipModel = &(shipModels[shipData->ship_id]);
     int faceCount = shipModel->normalCount;
-    int faceNormals = shipModel->normals;
+    ShipFaceNormal *faceNormals = shipModel->normals;
     for (int i = 0; i< faceCount; i++)
     {
         vec.x = faceNormals[i].x;
@@ -337,49 +346,46 @@ void calculateShipExplosion(ShipData *shipData)
     }
     
     rotate_matrix(&transformation);
-    three.c up to  draw_wireframe_ship  about to do points
+    //three.c up to  draw_wireframe_ship  about to do points
     // Process the nodes
-    nodeCount = shipModel->nodeCount;
-    shipNodes = shipModel->nodes;
-    ProjectedPoint *points = shipData->projectedPoints;  
+    int nodeCount = shipModel->nodeCount;
+    //TBA for compiler unsed variable warning ShipNode *shipNodes = shipModel->nodes;
+    //TBA for compiler unsed variable warning ProjectedPoint *points = shipData->projectedPoints;  
     
-	sp = ship->points;
+	//TBA for compiler unsed variable warning sp = ship->points;
 	shipData->renderLineCount = 0;
 	
 	for (i = 0; i < shipModel->nodeCount; i++)
 	{
-        ShipNodes *localNode = &shipModel->nodes[i];
+        ShipNode *localNode = &shipModel->nodes[i];
 		if (shipData->visible[localNode->face1] == true ||
-            shipData->visible[localNode->nodes[i]->face2] == true ||
-            shipData->visible[localNode->nodes[i]->face3] == true ||
-            shipData->visible[localNode->nodes[i]->face4] == true)
+            shipData->visible[localNode->face2] == true ||
+            shipData->visible[localNode->face3] == true ||
+            shipData->visible[localNode->face4] == true)
 		{
 			vec.x = localNode->x;
 			vec.y = localNode->y;
 			vec.z = localNode->z;
 
-			mult_vector (&vec, &transformation);
+			multiply_vector_by_matrix (&vec, &transformation);
 
-			rz = (vec.z   + shipData->position.z;
-			sx = ((vec.x  + shipData->position.x)* 256) /rz) + screen_center_x;
-			sy = (((vec.y + shipData->position.y)* 256) /rz) *-1.0) + screen_center_y;
+			rz = (vec.z   + shipData->position.z);
+			sx = (((vec.x  + shipData->position.x)* 256) /rz) + screen_center_x;
+			sy = ((((vec.y + shipData->position.y)* 256) /rz) *-1.0) + screen_center_y;
             
-            Line *renderLine;
-            ProjectedPoint = 
-            
-            renderLine = &(shipData->projectedPoints[shipData->renderLineCount]);
-            
-            renderLine->x = (double)sx;
-            renderLine->y = (double)sy;
+            ProjectedPoint *projectedPoints = &(shipData->projectedPoints[shipData->renderLineCount]);
+            // Thsi may be better as just render line and a status of point or line?
+            projectedPoints->x = (double)sx;
+            projectedPoints->y = (double)sy;
 
-            (shipData->renderLineCount)++
+            (shipData->renderLineCount)++;
 
 		}
 	}
 
     z = (int)shipData->position.z;
 	
-	q = z >= 8912 ? 254 ? (z / 32) | 1;
+	q = z >= 8912 ? 254 : (z / 32) | 1;
 	q = ((shipData->explosionCountDown * 256) / q)/32;
 		
     for (cnt = 0; cnt < nodeCount; cnt++)
@@ -389,13 +395,13 @@ void calculateShipExplosion(ShipData *shipData)
 	
 		for (i = 0; i < 16; i++)
 		{
-            Line *processedLine = shipData->renderLines[i];
+            Line *processedLine = &(shipData->renderLines[i]);
             
 			processedLine->xPos1 = ((((rand()%256 - 128) * q) / 256) * 2) + sx;
 			processedLine->yPos1 = ((((rand()%256 - 128) * q) / 256) * 2) + sy;
             processedLine->xPos2 = processedLine->xPos1;
             processedLine->yPos2 = processedLine->yPos1;
-            clipLine(&processedLine);
+            clipLine(processedLine);
 		}
 	}
 }
@@ -407,7 +413,7 @@ void calculateLines(ShipData *shipData)
     Vector camera;
     Vector vec;
     int faceCount; 
-    ShipModel shipModel;
+    ShipModel      *shipModel;
     ShipNode       *shipNodes;
     ShipLine       *shipLines;
     ShipFaceNormal *faceNormals;
@@ -419,7 +425,7 @@ void calculateLines(ShipData *shipData)
     
     projectShip(&camera, &transformation, shipData);
 
-    shipModel = &(shipModels[shipData->shipId]);
+    shipModel = &(shipModels[shipData->ship_id]);
     faceCount = shipModel->normalCount;
     faceNormals = shipModel->normals;
     for (int i = 0; i< faceCount; i++)
@@ -462,19 +468,19 @@ void calculateLines(ShipData *shipData)
     // Now we have all the tranformed points and visible faces we need a sorted list of ships by distance
     // we load all lines to renderLines, clip them, then post processing do z plane cull that 
     // may break the lines into additional lines
-    lineCount = shipNodes.lineCount;
-    shipData.renderLineCount = 0;
-    shipLines = shipModel.lines;
+    lineCount = shipModel->lineCount;
+    shipData->renderLineCount = 0;
+    shipLines = shipModel->lines;
     
     for (int i = 0; i < lineCount; i++)
     {
-        if (shipData.visible[shipModel.lines[i].face1] == true || shipData.visible[shipModel.lines[i].face2] == true)
+        if (shipData->visible[shipLines[i].face1] == true || shipData->visible[shipLines[i].face2] == true)
         {
-            line = &(shipData.renderLines[shipData.renderLineCount]);
-            line->xPos1 = points[shipModel.lines[i].start_node].x;
-            line->yPos1 = points[shipModel.lines[i].start_node].y;           
-            line->xPos2 = points[shipModel.lines[i].end_node].x;
-            line->yPos2 = points[shipModel.lines[i].end_node].y;            
+            line = &(shipData->renderLines[shipData->renderLineCount]);
+            line->xPos1 = points[shipLines[i].start_node].x;
+            line->yPos1 = points[shipLines[i].start_node].y;           
+            line->xPos2 = points[shipLines[i].end_node].x;
+            line->yPos2 = points[shipLines[i].end_node].y;            
             line->drawable = clipLine(line);
             line->point    = isPoint(line);
         }
