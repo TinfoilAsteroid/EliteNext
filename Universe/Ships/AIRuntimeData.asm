@@ -1,4 +1,5 @@
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
+;--NOTE POSTITION AND MATRIX are loaded by a single LDIR in cases so must be contiguous
 StartOfShipRuntimeData      EQU $
 UBnKxlo                     DB  0                       ; INWK+0
 UBnKxhi                     DB  0                       ; there are hi medium low as some times these are 24 bit
@@ -60,7 +61,10 @@ UBnkCam0yHi                 DB  0                       ; INWK +34?????
 UBnKEnergy                  DB  0                       ; INWK +35
 UBnKECMCountDown            DB  0                       ; counts down ECM usage if activated reducing energy too in update loop
 UBnKECMFitted               DB  0                       ; Does ship have ECM, true false
+UBnKLaserPower              DB  0                       ; Type of laser fitted
 UBnKMissilesLeft            DB  0
+UBnKFighterShipId           DB  0                       ; computed ship Id for any carriers
+UBnKFightersLeft            DB  0                       ; the number of ships left in hanger, 255 = infinite
 UBnKCloudCounter            DB  0                       ; cloud pixels
 UBnKCloudRadius             DB  0                       ; cloud pixels
 UBnKRuntimeSize             EQU $-UBnKStartOfRuntimeData

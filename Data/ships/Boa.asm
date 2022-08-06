@@ -1,20 +1,25 @@
-Boa:	                DB $05
-                        DW $1324
-                        DW BoaEdges
-                        DB BoaEdgesSize
-                        DB $00, $26
-                        DB BoaVertSize /6 
-                        DB BoaVertSize
-                        DB BoaEdgesCnt
-                        DB $00, $00
-                        DB BoaNormalsSize
-                        DB $28, $FA, $18
-                        DW BoaNormals
-                        DB $00, $1C
-                        DW BoaVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $A0                      ; chance of ECM module
+Boa:	                DB $05                          ; Number of cargo canisters released when destroyed
+                        DW 70 * 70                      ; Ship's targetable area LoHi
+                        DW BoaEdges                     ; Edge Data 
+                        DB BoaEdgesSize                 ; Size of Edge Data
+                        DB $00                          ; Gun Vertex Byte offset
+                        DB $26                          ; Explosion Count 
+                        DB BoaVertSize /6               ; Vertex Count /6
+                        DB BoaVertSize                  ; Vertex Count
+                        DB BoaEdgesCnt                  ; Edges Count
+                        DW $0000                        ; Bounty LoHi
+                        DB BoaNormalsSize               ; Face (Normal) Count
+                        DB $28                          ; Range when it turns to a dot
+                        DB $FA                          ; Energy Max
+                        DB $18                          ; Speed Max
+                        DW BoaNormals                   ; Normals
+                        DB $00                          ; Q scaling
+                        DB $1C                          ; Laser power and Nbr Missiles
+                        DW BoaVertices                  ; Verticles Address
+                        DB ShipTypeNormal               ; Ship Type
+                        DB 0                            ; NewB Tactics                        
+                        DB ShipCanAnger                 ; AI Flags
+                        DB $A0                          ; chance of ECM module
 BoaVertices:	        DB $00, $00, $5D, $1F, $FF, $FF ; 01
                         DB $00, $28, $57, $38, $02, $33 ; 02
                         DB $26, $19, $63, $78, $01, $44 ; 03

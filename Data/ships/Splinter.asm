@@ -1,19 +1,24 @@
-Splinter:	            DB $B0
-                        DW $0100
-                        DW SplinterEdges
-                        DB SplinterEdgesSize
-                        DB $00, $16
-                        DB SplinterVertSize /6 
-                        DB SplinterVertSize
-                        DB SplinterEdgesCnt
-                        DB $00, $00
-                        DB SplinterNormalsSize
-                        DB $08, $14, $0A
-                        DW SplinterNormals
-                        DB $05, $00
-                        DW SplinterVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB 0
+Splinter:	            DB $B0                      ; Number of cargo canisters released when destroyed
+                        DW $0100                    ; Ship's targetable area LoHi
+                        DW SplinterEdges            ; Edge Data 
+                        DB SplinterEdgesSize        ; Size of Edge Data
+                        DB $00                      ; Gun Vertex Byte offset
+                        DB $16                      ; Explosion Count 
+                        DB SplinterVertSize /6      ; Vertex Count /6
+                        DB SplinterVertSize         ; Vertex Count
+                        DB SplinterEdgesCnt         ; Edges Count
+                        DW $0000                    ; Bounty LoHi
+                        DB SplinterNormalsSize      ; Face (Normal) Count
+                        DB $08                      ; Range when it turns to a dot
+                        DB $14                      ; Energy Max
+                        DB $0A                      ; Speed Max
+                        DW SplinterNormals          ; Normals
+                        DB $05                      ; Q scaling
+                        DB $00                      ; Laser power and Nbr Missiles
+                        DW SplinterVertices         ; Verticles Address
+                        DB ShipTypeNormal           ; Ship Type
+                        DB 0                        ; NewB Tactics 
+                        DB 0                        ; AI Flags            
                         DB $00                      ; chance of ECM module
 
 SplinterVertices:	    DB $18, $19, $10, $DF, $12, $33

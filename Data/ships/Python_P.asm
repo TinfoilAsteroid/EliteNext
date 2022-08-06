@@ -1,21 +1,26 @@
-Python_P:	            DB $02
-                        DW $1900
-                        DW Python_PEdges
-                        DB Python_PEdgesSize
-                        DB $00, $2A
-                        DB Python_PVertSize /6 
-                        DB Python_PVertSize
-                        DB Python_PEdgesCnt
-                        DB $00, $C8
-                        DB Python_PNormalsSize
-                        DB $28, $FA, $14
-                        DW Python_PNormals
-                        DB $00, $1B
-                        DW Python_PVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $F0                      ; chance of ECM module
-
+Python_P:	            DB $02                           ; Number of cargo canisters released when destroyed   
+                        DW $1900                         ; Ship's targetable area LoHi   
+                        DW Python_PEdges                 ; Edge Data    
+                        DB Python_PEdgesSize             ; Size of Edge Data   
+                        DB $00                           ; Gun Vertex Byte offset   
+                        DB $2A                           ; Explosion Count    
+                        DB Python_PVertSize /6           ; Vertex Count /6   
+                        DB Python_PVertSize              ; Vertex Count   
+                        DB Python_PEdgesCnt              ; Edges Count   
+                        DW $00C8                         ; Bounty LoHi   
+                        DB Python_PNormalsSize           ; Face (Normal) Count   
+                        DB $28                           ; Range when it turns to a dot   
+                        DB $FA                           ; Energy Max   
+                        DB $14                           ; Speed Max   
+                        DW Python_PNormals               ; Normals   
+                        DB $00                           ; Q scaling   
+                        DB $60 | ShipMissiles6           ; Laser power and Nbr Missiles   
+                        DW Python_PVertices              ; Verticles Address   
+                        DB ShipTypeNormal                ; Ship Type
+                        DB 0                             ; NewB Tactics    
+                        DB ShipCanAnger                  ; AI Flags               
+                        DB $F0                           ; chance of ECM module   
+                                                         
 Python_PVertices:	    DB $00, $00, $E0, $1F, $10, $32
                         DB $00, $30, $30, $1F, $10, $54
                         DB $60, $00, $10, $3F, $FF, $FF

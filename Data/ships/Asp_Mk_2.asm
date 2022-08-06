@@ -1,20 +1,25 @@
-Asp_Mk_2:	            DB $00
-                        DW $0E10
-                        DW Asp_Mk_2Edges
-                        DB Asp_Mk_2EdgesSize
-                        DB $20, $1A
-                        DB Asp_Mk_2VertSize /6 
-                        DB Asp_Mk_2VertSize
-                        DB Asp_Mk_2EdgesCnt
-                        DB $00, $C8
-                        DB Asp_Mk_2NormalsSize
-                        DB $28, $96, $28
-                        DW Asp_Mk_2Normals
-                        DB $01, $29
-                        DW Asp_Mk_2Vertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $80                      ; chance of ECM module
+Asp_Mk_2:	            DB $00                          ; Number of cargo canisters released when destroyed
+                        DW 60 * 60                      ; Ship's targetable area LoHi
+                        DW Asp_Mk_2Edges                ; Edge Data 
+                        DB Asp_Mk_2EdgesSize            ; Size of Edge Data
+                        DB $20                          ; Gun Vertex Byte offset
+                        DB $1A                          ; Explosion Count 
+                        DB Asp_Mk_2VertSize /6          ; Vertex Count /6
+                        DB Asp_Mk_2VertSize             ; Vertex Count
+                        DB Asp_Mk_2EdgesCnt             ; Edges Count
+                        DW $00C8                        ; Bounty LoHi
+                        DB Asp_Mk_2NormalsSize          ; Face (Normal) Count
+                        DB $28                          ; Range when it turns to a dot
+                        DB $96                          ; Energy Max
+                        DB $28                          ; Speed Max
+                        DW Asp_Mk_2Normals              ; Normals
+                        DB $01                          ; Q scaling
+                        DB $29                          ; Laser power and Nbr Missiles
+                        DW Asp_Mk_2Vertices             ; Verticles Address
+                        DB ShipTypeNormal               ; Ship Type
+                        DB 0                            ; NewB Tactics                        
+                        DB ShipCanAnger                 ; AI Flags
+                        DB $80                          ; chance of ECM module
 Asp_Mk_2Vertices:	    DB $00, $12, $00, $56, $01, $22 ;01
                         DB $00, $09, $2D, $7F, $12, $BB ;02
                         DB $2B, $00, $2D, $3F, $16, $BB ;03

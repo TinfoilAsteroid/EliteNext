@@ -1,20 +1,25 @@
-Cobra_Mk_1:	            DB $03
-                        DW $2649
-                        DW Cobra_Mk_1Edges
-                        DB Cobra_Mk_1EdgesSize
-                        DB $28, $1A
-                        DB Cobra_Mk_1VertSize /6 
-                        DB Cobra_Mk_1VertSize
-                        DB Cobra_Mk_1EdgesCnt
-                        DB $00, $4B
-                        DB Cobra_Mk_1NormalsSize
-                        DB $13, $51, $1A
-                        DW Cobra_Mk_1Normals
-                        DB $02, $22
-                        DW Cobra_Mk_1Vertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $30                      ; chance of ECM module
+Cobra_Mk_1:	            DB $03                              ; Number of cargo canisters released when destroyed
+                        DW $2649                            ; Ship's targetable area LoHi
+                        DW Cobra_Mk_1Edges                  ; Edge Data 
+                        DB Cobra_Mk_1EdgesSize              ; Size of Edge Data
+                        DB $28                              ; Gun Vertex Byte offset
+                        DB $1A                              ; Explosion Count 
+                        DB Cobra_Mk_1VertSize /6            ; Vertex Count /6
+                        DB Cobra_Mk_1VertSize               ; Vertex Count
+                        DB Cobra_Mk_1EdgesCnt               ; Edges Count
+                        DW $4B00                            ; Bounty LoHi
+                        DB Cobra_Mk_1NormalsSize            ; Face (Normal) Count
+                        DB $13                              ; Range when it turns to a dot
+                        DB $51                              ; Energy Max
+                        DB $1A                              ; Speed Max
+                        DW Cobra_Mk_1Normals                ; Normals
+                        DB $02                              ; Q scaling
+                        DB $20 | ShipMissiles3              ; Laser power and Nbr Missiles
+                        DW Cobra_Mk_1Vertices               ; Verticles Address
+                        DB ShipTypeNormal                   ; Ship Type
+                        DB 0                                ; NewB Tactics                        
+                        DB ShipCanAnger                     ; AI Flags
+                        DB $30                              ; chance of ECM module
 Cobra_Mk_1Vertices:	    DB $12, $01, $32, $DF, $01, $23
                         DB $12, $01, $32, $5F, $01, $45
                         DB $42, $00, $07, $9F, $23, $88

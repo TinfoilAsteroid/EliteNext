@@ -1,20 +1,25 @@
-Cougar:	                DB $03
-                        DW $1324
-                        DW CougarEdges
-                        DB CougarEdgesSize
-                        DB $00, $2A
-                        DB CougarVertSize /6 
-                        DB CougarVertSize
-                        DB CougarEdgesCnt
-                        DB $00, $00
-                        DB CougarNormalsSize
-                        DB $22, $FC, $28
-                        DW CougarNormals
-                        DB $02, $34
-                        DW CougarVertices
-                        DB 0,0                      ; Type and Tactics                        
-                        DB ShipCanAnger
-                        DB $B0                      ; chance of ECM module
+Cougar:	                DB $03                         ; Number of cargo canisters released when destroyed
+                        DW $1324                       ; Ship's targetable area LoHi
+                        DW CougarEdges                 ; Edge Data 
+                        DB CougarEdgesSize             ; Size of Edge Data
+                        DB $00                         ; Gun Vertex Byte offset
+                        DB $2A                         ; Explosion Count 
+                        DB CougarVertSize /6           ; Vertex Count /6
+                        DB CougarVertSize              ; Vertex Count
+                        DB CougarEdgesCnt              ; Edges Count
+                        DW $0000                       ; Bounty LoHi
+                        DB CougarNormalsSize           ; Face (Normal) Count
+                        DB $22                         ; Range when it turns to a dot
+                        DB $FC                         ; Energy Max
+                        DB $28                         ; Speed Max
+                        DW CougarNormals               ; Normals
+                        DB $02                         ; Q scaling
+                        DB $30 | ShipMissiles4         ; Laser power and Nbr Missiles
+                        DW CougarVertices              ; Verticles Address
+                        DB ShipTypeNormal              ; Ship Type
+                        DB 0                           ; NewB Tactics 
+                        DB ShipCanAnger                ; AI Flags            
+                        DB $B0                         ; chance of ECM module
 CougarVertices:	        DB $00, $05, $43, $1F, $02, $44
                         DB $14, $00, $28, $9F, $01, $22
                         DB $28, $00, $28, $BF, $01, $55

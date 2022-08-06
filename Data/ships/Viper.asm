@@ -1,40 +1,25 @@
-; Mapping Orginal to new
-; 0    => 0
-; 1-2  => 1-2
-; 3    => EQU Edges
-; 4    => EQU Normals
-; 5    => EQU EdgesCnt
-; 6    => 6
-; 7    => 7
-; 8    => EQU VertSize
-; 9    => EQU EdgesCnt
-; 10-11=> 10-11
-; 12   => EQU  NormalsSize
-; 13   => 13
-; 14   => 14
-; 15   => 15
-; 16   => EQU Edges
-; 17   => EQU Normals
-; 18   => 18
-; 19   => 19
-;\ -> &5C93  \ Viper = Type 16
-Viper:                  DB $00
-                        DW $15F9
-                        DW ViperEdges
-                        DB ViperEdgesSize
-                        DB $00,$2A
-                        DB ViperVertSize /6 
-                        DB ViperVertSize
-                        DB ViperEdgesCnt
-                        DB $00,$00
-                        DB ViperNormalsSize
-                        DB $17, $64, $20 
-                        DW ViperNormals
-                        DB $01, $11 
-                        DW ViperVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $FF                      ; chance of ECM module
+Viper:                  DB $00                         ; Number of cargo canisters released when destroyed
+                        DW $15F9                       ; Ship's targetable area LoHi
+                        DW ViperEdges                  ; Edge Data 
+                        DB ViperEdgesSize              ; Size of Edge Data
+                        DB $00                         ; Gun Vertex Byte offset
+                        DB $2A                         ; Explosion Count 
+                        DB ViperVertSize /6            ; Vertex Count /6
+                        DB ViperVertSize               ; Vertex Count
+                        DB ViperEdgesCnt               ; Edges Count
+                        DW $0000                       ; Bounty LoHi
+                        DB ViperNormalsSize            ; Face (Normal) Count
+                        DB $17                         ; Range when it turns to a dot
+                        DB $64                         ; Energy Max
+                        DB $20                         ; Speed Max
+                        DW ViperNormals                ; Normals
+                        DB $01                         ; Q scaling
+                        DB $11                         ; Laser power and Nbr Missiles
+                        DW ViperVertices               ; Verticles Address
+                        DB ShipTypeNormal              ; Ship Type
+                        DB 0                           ; NewB Tactics 
+                        DB ShipCanAnger                ; AI Flags            
+                        DB $FF                         ; chance of ECM module
                         
 ViperVertices:          DB $00, $00, $48, $1F, $21, $43 
                         DB $00, $10, $18, $1E, $10, $22 

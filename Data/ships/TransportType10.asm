@@ -1,20 +1,25 @@
-TransportType10:	    DB $00
-                        DW $09C4
-                        DW TransportType10Edges
-                        DB TransportType10EdgesSize
-                        DB $30, $1A
-                        DB TransportType10VertSize /6 
-                        DB TransportType10VertSize
-                        DB TransportType10EdgesCnt
-                        DB $00, $00
-                        DB TransportType10NormalsSize
-                        DB $10, $20, $0A
-                        DW TransportType10Normals
-                        DB $02, $00
-                        DW TransportType10Vertices
-                        DB 0,0                      ; Type and Tactics
-                        DB 0
-                        DB $FF                      ; chance of ECM module
+TransportType10:	    DB $00                             ; Number of cargo canisters released when destroyed
+                        DW $09C4                           ; Ship's targetable area LoHi
+                        DW TransportType10Edges            ; Edge Data 
+                        DB TransportType10EdgesSize        ; Size of Edge Data
+                        DB $30                             ; Gun Vertex Byte offset
+                        DB $1A                             ; Explosion Count 
+                        DB TransportType10VertSize /6      ; Vertex Count /6
+                        DB TransportType10VertSize         ; Vertex Count
+                        DB TransportType10EdgesCnt         ; Edges Count
+                        DW $0000                           ; Bounty LoHi
+                        DB TransportType10NormalsSize      ; Face (Normal) Count
+                        DB $10                             ; Range when it turns to a dot
+                        DB $20                             ; Energy Max
+                        DB $0A                             ; Speed Max
+                        DW TransportType10Normals          ; Normals
+                        DB $02                             ; Q scaling
+                        DB $00                             ; Laser power and Nbr Missiles
+                        DW TransportType10Vertices         ; Verticles Address
+                        DB ShipTypeNormal                  ; Ship Type
+                        DB 0                               ; NewB Tactics 
+                        DB 0                               ; AI Flags            
+                        DB $FF                             ; chance of ECM module
 
 TransportType10Vertices:DB $00, $0A, $1A, $3F, $06, $77     ;01
                         DB $19, $04, $1A, $BF, $01, $77     ;02

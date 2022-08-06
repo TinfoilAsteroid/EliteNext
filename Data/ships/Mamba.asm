@@ -1,20 +1,25 @@
-Mamba:	                DB $01
-                        DW $1324
-                        DW MambaEdges
-                        DB MambaEdgesSize
-                        DB $00, $22
-                        DB MambaVertSize /6 
-                        DB MambaVertSize
-                        DB MambaEdgesCnt
-                        DB $00, $96
-                        DB MambaNormalsSize
-                        DB $19, $5A, $1E
-                        DW MambaNormals
-                        DB $02, $12
-                        DW MambaVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $E0                      ; chance of ECM module
+Mamba:	                DB $01                     ; Number of cargo canisters released when destroyed
+                        DW $1324                   ; Ship's targetable area LoHi
+                        DW MambaEdges              ; Edge Data 
+                        DB MambaEdgesSize          ; Size of Edge Data
+                        DB $00                     ; Gun Vertex Byte offset
+                        DB $22                     ; Explosion Count 
+                        DB MambaVertSize /6        ; Vertex Count /6
+                        DB MambaVertSize           ; Vertex Count
+                        DB MambaEdgesCnt           ; Edges Count
+                        DW $0096                   ; Bounty LoHi
+                        DB MambaNormalsSize        ; Face (Normal) Count
+                        DB $19                     ; Range when it turns to a dot
+                        DB $5A                     ; Energy Max
+                        DB $1E                     ; Speed Max
+                        DW MambaNormals            ; Normals
+                        DB $02                     ; Q scaling
+                        DB $12 | ShipMissiles2     ; Laser power and Nbr Missiles
+                        DW MambaVertices           ; Verticles Address
+                        DB ShipTypeNormal          ; Ship Type
+                        DB 0                       ; NewB Tactics 
+                        DB ShipCanAnger            ; AI Flags            
+                        DB $E0                     ; chance of ECM module
 
 MambaVertices:	DB $00, $00, $40, $1F, $10, $32
                 DB $40, $08, $20, $FF, $20, $44

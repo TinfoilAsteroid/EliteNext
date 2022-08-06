@@ -89,7 +89,24 @@ MCopyShipToUniverse:    MACRO       banklabel
                         call        CopyVertsToUniv
                         call        CopyEdgesToUniv
                         call        CopyNormsToUniv
-                        ret
+                        ld          hl,StartOfUnivName
+                        ld          a," "
+                        ld          b,16
+.fillLoop:              ld          (hl),a
+                        inc         hl
+                        djnz        .fillLoop
+                        ld          a,(UBnKShipModelNbr)
+                        call        ShipIndexToAddress
+                        ld          de,StartOfUnivName
+                        ld          b,16
+.CopyLoop:              ld          a,(hl)
+                        cp          0
+                        jr          z,.CopyDone
+                        ld          (de),a
+                        inc         hl
+                        inc         de
+                        djnz        .CopyLoop
+.CopyDone:              ret
                         ENDM
                         
 MCopyBodyToUniverse:    MACRO       copyRoutine

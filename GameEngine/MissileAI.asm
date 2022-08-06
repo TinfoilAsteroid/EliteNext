@@ -151,27 +151,13 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                             break
                         ENDIF
                         call    NormalizeTactics                    ; Normalise vector down to 7 bit + sign byte (.TA19->TAS2)
-                        IFDEF MISSILEDEBUG
+                        IFDEF TACTICSDEBUG
                             call DebugTacticsCopy
                         ENDIF
 .NegateDirection:       FlipSignMem TacticsVectorX+2                ; negate vector in XX15 so it points opposite direction
                         FlipSignMem TacticsVectorY+2                ; we have already negated the dot product above
                         FlipSignMem TacticsVectorZ+2                ; .                         
-.NoseDotProduct:        call    XX12EquTacticsDotNosev              ; SA = nose . XX15                           (     ->TAS3)
-                        ld      (TacticsDotProduct1),a              ; CNT = A (high byte of dot product)
-                        ld      a,(varS)                            ; get sign from dot product
-                        ld      (TacticsDotProduct2+1),a            ; Note here its direction not dir
-.RoofDotProduct:        call    XX12EquTacticsDotRoofv              ; Now tran the roof for rotation        
-                        ld      (TacticsDotProduct2),a              ; so if its +ve then the roof is similar so pull up to head towards it
-                        ld      a,(varS)                            ; .                                       
-                        ld      (TacticsDotProduct2+1),a            ; Note here its direction not dir
-                        ;break
-                        call    SimplifiedShipPitchv3
-                        call    SimplifiedShipRollv3
-                        ;ZeroA
-                        ;ld      (UBnKAccel),a
-                        ;ld      (UBnKSpeed),a
-                        call    SimplifiedShipSpeedv3
+                        call    SeekingLogic
                         ret
 .ProcessMissileHit:     ld      a,(CurrentMissileCheck)
                         ReturnIfAGTENusng UniverseSlotListSize  ; need to wait another loop
@@ -182,7 +168,19 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         jp      .ProcessMissileHit              ; lets see if we can enqueue now
                         ; DUMMY RET get a free return as activenewexplosion does jp to init with a free ret
 
-                        
+SeekingLogic:           call    XX12EquTacticsDotNosev              ; SA = nose . XX15                           (     ->TAS3)
+                        ld      (TacticsDotProduct1),a              ; CNT = A (high byte of dot product)
+                        ld      a,(varS)                            ; get sign from dot product
+                        ld      (TacticsDotProduct2+1),a            ; Note here its direction not dir
+.RoofDotProduct:        call    XX12EquTacticsDotRoofv              ; Now tran the roof for rotation        
+                        ld      (TacticsDotProduct2),a              ; so if its +ve then the roof is similar so pull up to head towards it
+                        ld      a,(varS)                            ; .                                       
+                        ld      (TacticsDotProduct2+1),a            ; Note here its direction not dir
+                        call    SimplifiedShipPitchv3
+                        call    SimplifiedShipRollv3
+                        call    SimplifiedShipSpeedv3
+                        ret
+                       
 SimplifiedShipPitchv3:  ;break
                         ld      hl,(TacticsDotProduct2)            ; pitch counter sign = opposite sign to roofdir sign
                         ld      a,h                                ; .

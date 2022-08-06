@@ -1,20 +1,25 @@
-Rattler:	            DB $02
-                        DW $1770
-                        DW RattlerEdges
-                        DB RattlerEdgesSize
-                        DB $00, $2A
-                        DB RattlerVertSize /6 
-                        DB RattlerVertSize
-                        DB RattlerEdgesCnt
-                        DB $00, $96
-                        DB RattlerNormalsSize
-                        DB $0A, $71, $1F
-                        DW RattlerNormals
-                        DB $01, $22
-                        DW RattlerVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $90                      ; chance of ECM module
+Rattler:	            DB $02                       ; Number of cargo canisters released when destroyed
+                        DW $1770                     ; Ship's targetable area LoHi
+                        DW RattlerEdges              ; Edge Data 
+                        DB RattlerEdgesSize          ; Size of Edge Data
+                        DB $00                       ; Gun Vertex Byte offset
+                        DB $2A                       ; Explosion Count 
+                        DB RattlerVertSize /6        ; Vertex Count /6
+                        DB RattlerVertSize           ; Vertex Count
+                        DB RattlerEdgesCnt           ; Edges Count
+                        DW $0096                     ; Bounty LoHi
+                        DB RattlerNormalsSize        ; Face (Normal) Count
+                        DB $0A                       ; Range when it turns to a dot
+                        DB $71                       ; Energy Max
+                        DB $1F                       ; Speed Max
+                        DW RattlerNormals            ; Normals
+                        DB $01                       ; Q scaling
+                        DB $20 | ShipMissiles2       ; Laser power and Nbr Missiles
+                        DW RattlerVertices           ; Verticles Address
+                        DB ShipTypeNormal            ; Ship Type
+                        DB 0                         ; NewB Tactics 
+                        DB ShipCanAnger              ; AI Flags            
+                        DB $90                       ; chance of ECM module
 
 
 RattlerVertices:	    DB $00, $00, $3C, $1F, $89, $23

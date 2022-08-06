@@ -1,20 +1,25 @@
-Monitor:	            DB $04
-                        DW $3600
-                        DW MonitorEdges
-                        DB MonitorEdgesSize
-                        DB $00, $2A
-                        DB MonitorVertSize /6 
-                        DB MonitorVertSize
-                        DB MonitorEdgesCnt
-                        DB $01, $90
-                        DB MonitorNormalsSize
-                        DB $28, $84, $10
-                        DW MonitorNormals
-                        DB $00, $37
-                        DW MonitorVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $40                      ; chance of ECM module
+Monitor:	            DB $04                     ; Number of cargo canisters released when destroyed
+                        DW $3600                   ; Ship's targetable area LoHi
+                        DW MonitorEdges            ; Edge Data 
+                        DB MonitorEdgesSize        ; Size of Edge Data
+                        DB $00                     ; Gun Vertex Byte offset
+                        DB $2A                     ; Explosion Count 
+                        DB MonitorVertSize /6      ; Vertex Count /6
+                        DB MonitorVertSize         ; Vertex Count
+                        DB MonitorEdgesCnt         ; Edges Count
+                        DW $0190                   ; Bounty LoHi
+                        DB MonitorNormalsSize      ; Face (Normal) Count
+                        DB $28                     ; Range when it turns to a dot
+                        DB $84                     ; Energy Max
+                        DB $10                     ; Speed Max
+                        DW MonitorNormals          ; Normals
+                        DB $00                     ; Q scaling
+                        DB $37                     ; Laser power and Nbr Missiles
+                        DW MonitorVertices         ; Verticles Address
+                        DB ShipTypeNormal          ; Ship Type
+                        DB 0                       ; NewB Tactics 
+                        DB ShipCanAnger            ; AI Flags            
+                        DB $40                     ; chance of ECM module
 
 MonitorVertices:	    DB $00, $0A, $8C, $1F, $FF, $FF
                         DB $14, $28, $14, $3F, $23, $01

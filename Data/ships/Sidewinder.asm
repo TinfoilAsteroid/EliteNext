@@ -1,19 +1,24 @@
-Sidewinder:	            DB $00
-                        DW $1081
-                        DW SidewinderEdges
-                        DB SidewinderEdgesSize
-                        DB $00, $1E
-                        DB SidewinderVertSize /6 
-                        DB SidewinderVertSize
-                        DB SidewinderEdgesCnt
-                        DB $00, $32
-                        DB SidewinderNormalsSize
-                        DB $14, $46, $25
-                        DW SidewinderNormals
-                        DB $02, $10
-                        DW SidewinderVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
+Sidewinder:	            DB $00                      ; Number of cargo canisters released when destroyed
+                        DW $1081                    ; Ship's targetable area LoHi
+                        DW SidewinderEdges          ; Edge Data 
+                        DB SidewinderEdgesSize      ; Size of Edge Data
+                        DB $00                      ; Gun Vertex Byte offset
+                        DB $1E                      ; Explosion Count 
+                        DB SidewinderVertSize /6    ; Vertex Count /6
+                        DB SidewinderVertSize       ; Vertex Count
+                        DB SidewinderEdgesCnt       ; Edges Count
+                        DW $0032                    ; Bounty LoHi
+                        DB SidewinderNormalsSize    ; Face (Normal) Count
+                        DB $14                      ; Range when it turns to a dot
+                        DB $46                      ; Energy Max
+                        DB $25                      ; Speed Max
+                        DW SidewinderNormals        ; Normals
+                        DB $02                      ; Q scaling
+                        DB $10 | ShipMissiles1      ; Laser power and Nbr Missiles
+                        DW SidewinderVertices       ; Verticles Address
+                        DB ShipTypeNormal           ; Ship Type
+                        DB 0                        ; NewB Tactics 
+                        DB ShipCanAnger             ; AI Flags            
                         DB $30                      ; chance of ECM module
 
 SidewinderVertices:	DB $20, $00, $24, $9F, $10, $54

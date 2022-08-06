@@ -1,20 +1,25 @@
-Dodo:	                DB $00
-                        DW $7E90
-                        DW DodoEdges
-                        DB DodoEdgesSize
-                        DB $00, $36
-                        DB DodoVertSize /6 
-                        DB DodoVertSize
-                        DB DodoEdgesCnt
-                        DB $00, $00
-                        DB DodoNormalsSize
-                        DB $7D, $F0, $00
-                        DW DodoNormals
-                        DB $00, $00
-                        DW DodoVertices
-                        DB ShipTypeStation,0                      ; Type and Tactics
-                        DB 0
-                        DB $FF                                      ; will always have ECM                        
+Dodo:	                DB $00                        ; Number of cargo canisters released when destroyed
+                        DW $7E90                      ; Ship's targetable area LoHi
+                        DW DodoEdges                  ; Edge Data 
+                        DB DodoEdgesSize              ; Size of Edge Data
+                        DB $00                        ; Gun Vertex Byte offset
+                        DB $36                        ; Explosion Count 
+                        DB DodoVertSize /6            ; Vertex Count /6
+                        DB DodoVertSize               ; Vertex Count
+                        DB DodoEdgesCnt               ; Edges Count
+                        DW $0000                      ; Bounty LoHi
+                        DB DodoNormalsSize            ; Face (Normal) Count
+                        DB $7D                        ; Range when it turns to a dot
+                        DB $F0                        ; Energy Max
+                        DB $00                        ; Speed Max
+                        DW DodoNormals                ; Normals
+                        DB $00                        ; Q scaling
+                        DB $00                        ; Laser power and Nbr Missiles
+                        DW DodoVertices               ; Verticles Address
+                        DB ShipTypeStation            ; Ship Type
+                        DB 0                          ; NewB Tactics 
+                        DB 0                          ; AI Flags            
+                        DB $FF                        ; chance of ECM module                                  
 DodoVertices:	        DB $00, $96, $C4, $1F, $01, $55
                         DB $8F, $2E, $C4, $1F, $01, $22
                         DB $58, $79, $C4, $5F, $02, $33

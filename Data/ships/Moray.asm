@@ -1,20 +1,25 @@
-Moray:	                DB $01
-                        DW $0384
-                        DW MorayEdges
-                        DB MorayEdgesSize
-                        DB $00, $1A
-                        DB MorayVertSize /6 
-                        DB MorayVertSize
-                        DB MorayEdgesCnt
-                        DB $00, $32
-                        DB MorayNormalsSize
-                        DB $28, $59, $19
-                        DW MorayNormals
-                        DB $02, $2A
-                        DW MorayVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $C0                      ; chance of ECM module
+Moray:	                DB $01                    ; Number of cargo canisters released when destroyed
+                        DW $0384                  ; Ship's targetable area LoHi
+                        DW MorayEdges             ; Edge Data 
+                        DB MorayEdgesSize         ; Size of Edge Data
+                        DB $00                    ; Gun Vertex Byte offset
+                        DB $1A                    ; Explosion Count 
+                        DB MorayVertSize /6       ; Vertex Count /6
+                        DB MorayVertSize          ; Vertex Count
+                        DB MorayEdgesCnt          ; Edges Count
+                        DW $0032                  ; Bounty LoHi
+                        DB MorayNormalsSize       ; Face (Normal) Count
+                        DB $28                    ; Range when it turns to a dot
+                        DB $59                    ; Energy Max
+                        DB $19                    ; Speed Max
+                        DW MorayNormals           ; Normals
+                        DB $02                    ; Q scaling
+                        DB $2A                    ; Laser power and Nbr Missiles
+                        DW MorayVertices          ; Verticles Address
+                        DB ShipTypeNormal         ; Ship Type
+                        DB 0                      ; NewB Tactics 
+                        DB ShipCanAnger           ; AI Flags            
+                        DB $C0                    ; chance of ECM module
                         
 MorayVertices:	        DB $0F, $00, $41, $1F, $02, $78
                         DB $0F, $00, $41, $9F, $01, $67

@@ -1,20 +1,25 @@
-Plate:	                DB $80
-                        DW $0064
-                        DW PlateEdges
-                        DB PlateEdgesSize
-                        DB $00, $0A
-                        DB PlateVertSize /6 
-                        DB PlateVertSize
-                        DB PlateEdgesCnt
-                        DB $00, $00
-                        DB PlateNormalsSize
-                        DB $05, $10, $10
-                        DW PlateNormals
-                        DB $03, $00
-                        DW PlateVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $00                      ; chance of ECM module
+Plate:	                DB $80                    ; Number of cargo canisters released when destroyed
+                        DW $0064                  ; Ship's targetable area LoHi
+                        DW PlateEdges             ; Edge Data 
+                        DB PlateEdgesSize         ; Size of Edge Data
+                        DB $00                    ; Gun Vertex Byte offset
+                        DB $0A                    ; Explosion Count 
+                        DB PlateVertSize /6       ; Vertex Count /6
+                        DB PlateVertSize          ; Vertex Count
+                        DB PlateEdgesCnt          ; Edges Count
+                        DW $0000                  ; Bounty LoHi
+                        DB PlateNormalsSize       ; Face (Normal) Count
+                        DB $05                    ; Range when it turns to a dot
+                        DB $10                    ; Energy Max
+                        DB $10                    ; Speed Max
+                        DW PlateNormals           ; Normals
+                        DB $03                    ; Q scaling
+                        DB $00                    ; Laser power and Nbr Missiles
+                        DW PlateVertices          ; Verticles Address
+                        DB ShipTypeScoopable      ; Ship Type
+                        DB 0                      ; NewB Tactics 
+                        DB ShipCanAnger           ; AI Flags            
+                        DB $00                    ; chance of ECM module
 
 	
 PlateVertices:	        DB $0F, $16, $09, $FF, $FF, $FF

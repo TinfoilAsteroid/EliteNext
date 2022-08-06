@@ -1,19 +1,24 @@
-Iguana:	                DB $01
-                        DW $0DAC
-                        DW IguanaEdges
-                        DB IguanaEdgesSize
-                        DB $00, $1A
-                        DB IguanaVertSize /6 
-                        DB IguanaVertSize
-                        DB IguanaEdgesCnt
-                        DB $00, $96
-                        DB IguanaNormalsSize
-                        DB $0A, $5A, $21
-                        DW IguanaNormals
-                        DB $01, $23
-                        DW IguanaVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
+Iguana:	                DB $01                      ; Number of cargo canisters released when destroyed
+                        DW $0DAC                    ; Ship's targetable area LoHi
+                        DW IguanaEdges              ; Edge Data 
+                        DB IguanaEdgesSize          ; Size of Edge Data
+                        DB $00                      ; Gun Vertex Byte offset
+                        DB $1A                      ; Explosion Count 
+                        DB IguanaVertSize /6        ; Vertex Count /6
+                        DB IguanaVertSize           ; Vertex Count
+                        DB IguanaEdgesCnt           ; Edges Count
+                        DW $0096                    ; Bounty LoHi
+                        DB IguanaNormalsSize        ; Face (Normal) Count
+                        DB $0A                      ; Range when it turns to a dot
+                        DB $5A                      ; Energy Max
+                        DB $21                      ; Speed Max
+                        DW IguanaNormals            ; Normals
+                        DB $01                      ; Q scaling
+                        DB $20 | ShipMissiles3      ; Laser power and Nbr Missiles
+                        DW IguanaVertices           ; Verticles Address
+                        DB ShipTypeNormal           ; Ship Type
+                        DB 0                        ; NewB Tactics 
+                        DB ShipCanAnger             ; AI Flags            
                         DB $80                      ; chance of ECM module
 
 	

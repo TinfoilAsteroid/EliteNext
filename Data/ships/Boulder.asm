@@ -1,20 +1,25 @@
-Boulder:	            DB $00
-                        DW $0384
-                        DW BoulderEdges
-                        DB BoulderEdgesSize
-                        DB $00, $0E
-                        DB BoulderVertSize /6 
-                        DB BoulderVertSize
-                        DB BoulderEdgesCnt
-                        DB $00, $01
-                        DB BoulderNormalsSize
-                        DB $14, $14, $1E
-                        DW BoulderNormals
-                        DB $02, $00
-                        DW BoulderVertices
-                        DB ShipTypeJunk,0                      ; Type and Tactics  its only junk for spawing logic                     
-                        DB 0
-                        DB $A0                      ; chance of ECM module
+Boulder:	            DB $00                               ; Number of cargo canisters released when destroyed
+                        DW 30 * 30                           ; Ship's targetable area LoHi
+                        DW BoulderEdges                      ; Edge Data 
+                        DB BoulderEdgesSize                  ; Size of Edge Data
+                        DB $00                               ; Gun Vertex Byte offset
+                        DB $0E                               ; Explosion Count 
+                        DB BoulderVertSize /6                ; Vertex Count /6
+                        DB BoulderVertSize                   ; Vertex Count
+                        DB BoulderEdgesCnt                   ; Edges Count
+                        DW $0001                             ; Bounty LoHi
+                        DB BoulderNormalsSize                ; Face (Normal) Count
+                        DB $14                               ; Range when it turns to a dot
+                        DB $14                               ; Energy Max
+                        DB $1E                               ; Speed Max
+                        DW BoulderNormals                    ; Normals
+                        DB $02                               ; Q scaling
+                        DB $00                               ; Laser power and Nbr Missiles
+                        DW BoulderVertices                   ; Verticles Address
+                        DB ShipTypeJunk                      ; Ship Type
+                        DB 0                                 ; NewB Tactics                        
+                        DB 0                                 ; AI Flags
+                        DB $A0                               ; chance of ECM module
 BoulderVertices:	    DB $12, $25, $0B, $BF, $01, $59
                         DB $1E, $07, $0C, $1F, $12, $56
                         DB $1C, $07, $0C, $7F, $23, $67

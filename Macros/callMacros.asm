@@ -21,18 +21,25 @@ CallIfALTNusng:         MACRO   reg,target
                         ENDM
                         
 CallIfMemEqMemusng:     MACRO mem, address, target
-                        ld   a,(mem)
-                        ld   hl,address
-                        cp   (hl)
+                        ld      a,(mem)
+                        ld      hl,address
+                        cp      (hl)
                         call    z,target
                         ENDM
 
 CallIfMemEqNusng:       MACRO mem, value, target
-                        ld   a,(mem)
-                        cp   value
+                        ld      a,(mem)
+                        cp      value
                         call    z,target
                         ENDM
 
+
+CallIfMemGTENusng:      MACRO mem, value, target
+                        ld      a,(mem)
+                        cp      value
+                        call    nc,target
+                        ENDM
+                        
 CallIfMemTrue:          MACRO mem, target
                         ld      a,(mem)
                         and     a

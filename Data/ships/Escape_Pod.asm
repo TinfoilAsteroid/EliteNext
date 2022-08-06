@@ -1,20 +1,25 @@
-Escape_Pod:             DB $20
-                        DW $0100
-                        DW Escape_PodEdges
-                        DB Escape_PodEdgesSize
-                        DB $00, $16
-                        DB Escape_PodVertSize /6 
-                        DB Escape_PodVertSize
-                        DB Escape_PodEdgesCnt
-                        DB $00, $00
-                        DB Escape_PodNormalsSize
-                        DB $08, $11, $08
-                        DW Escape_PodNormals
-                        DB $04, $00
-                        DW Escape_PodVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB 0
-                        DB $FF                      ; chance of ECM module
+Escape_Pod:             DB $20                          ; Number of cargo canisters released when destroyed
+                        DW $0100                        ; Ship's targetable area LoHi
+                        DW Escape_PodEdges              ; Edge Data 
+                        DB Escape_PodEdgesSize          ; Size of Edge Data
+                        DB $00                          ; Gun Vertex Byte offset
+                        DB $16                          ; Explosion Count 
+                        DB Escape_PodVertSize /6        ; Vertex Count /6
+                        DB Escape_PodVertSize           ; Vertex Count
+                        DB Escape_PodEdgesCnt           ; Edges Count
+                        DW $0000                        ; Bounty LoHi
+                        DB Escape_PodNormalsSize        ; Face (Normal) Count
+                        DB $08                          ; Range when it turns to a dot
+                        DB $11                          ; Energy Max
+                        DB $08                          ; Speed Max
+                        DW Escape_PodNormals            ; Normals
+                        DB $04                          ; Q scaling
+                        DB $00                          ; Laser power and Nbr Missiles
+                        DW Escape_PodVertices           ; Verticles Address
+                        DB 0                            ; Ship Type
+                        DB 0                            ; NewB Tactics 
+                        DB 0                            ; AI Flags            
+                        DB $FF                          ; chance of ECM module
 Escape_PodVertices:	    DB $07, $00, $24, $9F, $12, $33
                         DB $07, $0E, $0C, $FF, $02, $33
                         DB $07, $0E, $0C, $BF, $01, $33

@@ -1,21 +1,26 @@
     DEFINE DEBUGMODEL 1
-Missile:	            DB $00
-                        DW $0640
-                        DW MissileEdges
-                        DB MissileEdgesSize
-                        DB $00, $0A
-                        DB MissileVertSize /6 
-                        DB MissileVertSize
-                        DB MissileEdgesCnt
-                        DB $00, $00
-                        DB MissileNormalsSize
-                        DB $0E, $02, $2C
-                        DW MissileNormals
-                        DB $02, $00
-                        DW MissileVertices
-                        DB ShipTypeMissile,0                      ; Type and Tactics
-                        DB 0
-                        DB $00                      ; chance of ECM module
+Missile:	            DB $00                     ; Number of cargo canisters released when destroyed
+                        DW $0640                   ; Ship's targetable area LoHi
+                        DW MissileEdges            ; Edge Data 
+                        DB MissileEdgesSize        ; Size of Edge Data
+                        DB $00                     ; Gun Vertex Byte offset
+                        DB $0A                     ; Explosion Count 
+                        DB MissileVertSize /6      ; Vertex Count /6
+                        DB MissileVertSize         ; Vertex Count
+                        DB MissileEdgesCnt         ; Edges Count
+                        DW $0000                   ; Bounty LoHi
+                        DB MissileNormalsSize      ; Face (Normal) Count
+                        DB $0E                     ; Range when it turns to a dot
+                        DB $02                     ; Energy Max
+                        DB $2C                     ; Speed Max
+                        DW MissileNormals          ; Normals
+                        DB $02                     ; Q scaling
+                        DB $00                     ; Laser power and Nbr Missiles
+                        DW MissileVertices         ; Verticles Address
+                        DB ShipTypeMissile         ; Ship Type
+                        DB 0                       ; NewB Tactics 
+                        DB 0                       ; AI Flags            
+                        DB $00                     ; chance of ECM module
 
 ;;;     Byte 0 = X magnitide with origin at middle of ship
 ;;;		Byte 1 = Y magnitide with origin at middle of ship		

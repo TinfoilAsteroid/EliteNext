@@ -1,23 +1,25 @@
-Bushmaster:	            DB $00                          ; 00 scoop debris
-                        DW $109A                        ; 01 missile lock radius
-                        DW BushmasterEdges              ; 03 edge address
-                        DB BushmasterEdgesSize          ; 05 edge data length
-                        DB $00                          ; 06 gun vertex
-                        DB $1E                          ; 07 explosion count
-                        DB BushmasterVertSize /6        ; 08 vertex count
-                        DB BushmasterVertSize           ; 09 vertex data length
-                        DB BushmasterEdgesCnt           ; 10 edge count
-                        DB $00, $96                     ; 11 bounty hi lo
-                        DB BushmasterNormalsSize        ; 13 normal data length
-                        DB $14                          ; 14 dot range
-                        DB $4A                          ; 15 energy
-                        DB $23                          ; 16 speed
-                        DW BushmasterNormals            ; 17 normal data address
-                        DB $02, $21                     ; 19 scaling factor, laser type 
-                        DW BushmasterVertices           ; 21 Verticies adddress
-                        DB 0,0                          ; 23 type, new bits
-                        DB ShipCanAnger                 ; 25 ai flags
-                        DB $70                          ; chance of ECM module
+Bushmaster:	            DB $00                           ; Number of cargo canisters released when destroyed
+                        DW $109A                         ; Ship's targetable area LoHi
+                        DW BushmasterEdges               ; Edge Data 
+                        DB BushmasterEdgesSize           ; Size of Edge Data
+                        DB $00                           ; Gun Vertex Byte offset
+                        DB $1E                           ; Explosion Count 
+                        DB BushmasterVertSize /6         ; Vertex Count /6
+                        DB BushmasterVertSize            ; Vertex Count
+                        DB BushmasterEdgesCnt            ; Edges Count
+                        DW $0096                         ; Bounty LoHi
+                        DB BushmasterNormalsSize         ; Face (Normal) Count
+                        DB $14                           ; Range when it turns to a dot
+                        DB $4A                           ; Energy Max
+                        DB $23                           ; Speed Max
+                        DW BushmasterNormals             ; Normals
+                        DB $02                           ; Q scaling
+                        DB $20 | ShipMissiles1           ; Laser power and Nbr Missiles
+                        DW BushmasterVertices            ; Verticles Address
+                        DB ShipTypeNormal                ; Ship Type
+                        DB 0                             ; NewB Tactics                        
+                        DB ShipCanAnger                  ; AI Flags
+                        DB $70                           ; chance of ECM module
 BushmasterVertices:	    DB $00, $00, $3C, $1F, $23, $01  ; 01
                         DB $32, $00, $14, $1F, $57, $13  ; 02
                         DB $32, $00, $14, $9F, $46, $02  ; 03

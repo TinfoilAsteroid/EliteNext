@@ -1,20 +1,25 @@
-Ophidian:	            DB $02
-                        DW $0E88
-                        DW OphidianEdges
-                        DB OphidianEdgesSize
-                        DB $00, $3C
-                        DB OphidianVertSize /6 
-                        DB OphidianVertSize
-                        DB OphidianEdgesCnt
-                        DB $00, $32
-                        DB OphidianNormalsSize
-                        DB $14, $40, $22
-                        DW OphidianNormals
-                        DB $01, $1A
-                        DW OphidianVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $C0                      ; chance of ECM module
+Ophidian:	            DB $02                     ; Number of cargo canisters released when destroyed
+                        DW $0E88                   ; Ship's targetable area LoHi
+                        DW OphidianEdges           ; Edge Data 
+                        DB OphidianEdgesSize       ; Size of Edge Data
+                        DB $00                     ; Gun Vertex Byte offset
+                        DB $3C                     ; Explosion Count 
+                        DB OphidianVertSize /6     ; Vertex Count /6
+                        DB OphidianVertSize        ; Vertex Count
+                        DB OphidianEdgesCnt        ; Edges Count
+                        DW $0032                   ; Bounty LoHi
+                        DB OphidianNormalsSize     ; Face (Normal) Count
+                        DB $14                     ; Range when it turns to a dot
+                        DB $40                     ; Energy Max
+                        DB $22                     ; Speed Max
+                        DW OphidianNormals         ; Normals
+                        DB $01                     ; Q scaling
+                        DB $1A                     ; Laser power and Nbr Missiles
+                        DW OphidianVertices        ; Verticles Address
+                        DB ShipTypeNormal          ; Ship Type
+                        DB 0                       ; NewB Tactics 
+                        DB ShipCanAnger            ; AI Flags            
+                        DB $C0                     ; chance of ECM module
                         
 OphidianVertices:	    DB $14, $00, $46, $9F, $68, $02 ; 01
                         DB $14, $00, $46, $1F, $67, $01 ; 02

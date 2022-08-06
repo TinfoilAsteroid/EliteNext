@@ -1,20 +1,25 @@
-Anaconda:	            DB $07
-                        DW $2710
-                        DW AnacondaEdges
-                        DB AnacondaEdgesSize
-                        DB $30, $2E
-                        DB AnacondaVertSize / 6
-                        DB AnacondaVertSize
-                        DB AnacondaEdgesCnt
-                        DB $00, $00
-                        DB AnacondaNormalsSize
-                        DB $24, $FC, $0E
-                        DW AnacondaNormals
-                        DB $01, $3F
-                        DW AnacondaVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $D0                      ; chance of ECM module
+Anaconda:	            DB $07                                                        ; Number of cargo canisters released when destroyed
+                        DW 100 * 100                                                  ; Ship's targetable area LoHi
+                        DW AnacondaEdges                                              ; Edge Data 
+                        DB AnacondaEdgesSize                                          ; Size of Edge Data
+                        DB $30                                                        ; Gun Vertex Byte offset
+                        DB $2E                                                        ; Explosion Count 
+                        DB AnacondaVertSize / 6                                       ; Vertex Count /6
+                        DB AnacondaVertSize                                           ; Vertex Count
+                        DB AnacondaEdgesCnt                                           ; Edges Count
+                        DW $0000                                                      ; Bounty LoHi
+                        DB AnacondaNormalsSize                                        ; Face (Normal) Count
+                        DB $24                                                        ; Range when it turns to a dot
+                        DB $FC                                                        ; Energy Max
+                        DB $0E                                                        ; Speed Max
+                        DW AnacondaNormals                                            ; Normals
+                        DB $11                                                        ; Q scaling
+                        DB $3F                                                        ; Laser power and Nbr Missiles
+                        DW AnacondaVertices                                           ; Verticles Address
+                        DB ShipTypeNormal                                             ; Ship Type     
+                        DB 0                                                          ; NewB Tactics                       
+                        DB ShipCanAnger | ShipFighterBaySize2 | ShipFighterSidewinder ; AI Flags
+                        DB $D0                                                        ; chance of ECM module
 AnacondaVertices:	    DB $00, $07, $3A, $3E, $01, $55 ;01
                         DB $2B, $0D, $25, $FE, $01, $22 ;02
                         DB $1A, $2F, $03, $FE, $02, $33 ;03

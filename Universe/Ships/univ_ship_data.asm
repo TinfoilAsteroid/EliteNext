@@ -16,6 +16,7 @@ StartOfUnivN:       DB "X"
 StartOfUnivPad:     DS 2
 StartOfUnivM:       DB 0
 StartOfUnivT        DB 0
+StartOfUnivName     DS 16
 ; NOTE we can cheat and pre allocate segs just using a DS for now
 
 ;   \ -> & 565D \ See ship data files chosen and loaded after flight code starts running.
@@ -208,6 +209,11 @@ FireECM:                ld      a,ECMCounterMax                 ; set ECM time
                         ld      (ECMCountDown),a
                         ret
 
+RechargeEnergy:         ld      a,(UBnKEnergy)
+                        ReturnIfAGTEMemusng EnergyAddr
+                        inc     a
+                        ld      (UBnKEnergy),a
+                        ret
 ; A ship normally needs enough energy to fire ECM but if its shot then
 ; it may be too low, in which case the ECM does a saftey shutdown and returns 1 energy
 ; plus a 50% chance it will blow the ECM up
@@ -242,6 +248,29 @@ UpdateSpeedAndPitch:    ld      a,(UBnKAccel)                   ; only apply non
                         ld      (UBnKAccel),a                   ; for next AI update
 .SkipAccelleration:     ; handle roll and pitch rates                     
                         ret
+
+UnivSetEnemyMissile:    ld      hl,NewLaunchUBnKX               ; Copy launch ship matrix
+                        ld      de,UBnKxlo                      ; 
+                        ld      bc,(3*3) + (3*3*3 )             ; positon + 3 rows of 3 bytes
+                        ldir                                    ; 
+.SetUpSpeed:            ld      a,3                             ; set accelleration
+                        ld      (UBnKAccel),a                   ;
+                        ZeroA
+                        ld      (UBnKRotXCounter),a
+                        ld      (UBnKRotZCounter),a
+                        ld      a,3                             ; these are max roll and pitch rates for later
+                        ld      (UBnKRAT),a
+                        inc     a
+                        ld      (UBnKRAT2),a
+                        ld      a,22
+                        ld      (UBnKCNT2),a
+                        MaxUnivSpeed                            ; and immediatley full speed (for now at least) TODO
+                        SetMemFalse UBnKMissleHitToProcess
+                        ld      a,ShipAIEnabled
+                        ld      (UBnkaiatkecm),a
+                        call    SetShipHostile
+                        ret
+                        
 
 ; --------------------------------------------------------------                        
 ; This sets the position of the current ship if its a player launched missile
@@ -402,6 +431,10 @@ ResetStationLaunch:     ld  a,%10000001                         ; Has AI and 1 M
     ;Input: BC = Dividend, DE = Divisor, HL = 0
 ;Output: BC = Quotient, HL = Remainder
 
+
+
+FighterTypeMapping:     DB ShipID_Worm, ShipID_Sidewinder, ShipID_Viper, ShipID_Thargon
+
 ; Initialiase data, iyh must equal slot number
 ;                   iyl must be ship type
 ;                   a  = current bank number
@@ -422,10 +455,32 @@ UnivInitRuntime:        ld      (UbnKShipUnivBankNbr),a     ; actual bank nmber 
                         ld      (UBnkShipModelBank),a        ; this will mostly be debugging info
                         ld      a,b                          ; this will mostly be debugging info
                         ld      (UBnKShipModelNbr),a         ; this will mostly be debugging info
-                        ld      a,(ShipAIFlagsAddr)          ; get laser and missile details
-                        and     %00000111                    ; mask for missiles
+.SetUpMissileCount:     ld      a,(LaserAddr)                ; get laser and missile details
+                        and     ShipMissileCount
+                        ld      c,a
+                        ld      a,(RandomSeed1)              ; missile flag limit
+                        and     c                            ; .
                         ld      (UBnKMissilesLeft),a
-                        ld      a,(ShipECMFittedChanceAddr)
+.SetupLaserType         ld      a,(LaserAddr)
+                        and     ShipLaserPower
+                        swapnib
+                        ld      (UBnKLaserPower),a
+.SetUpFighterBays:      ld      a,(ShipAIFlagsAddr)
+                        ld      c,a
+                        and     ShipFighterBaySize
+                        JumpIfANENusng ShipFighterBaySizeInf, .LimitedBay
+                        ld      a,$FF                       ; force unlimited ships
+.LimitedBay:            swapnib                             ; as its bits 6 to 4 and we have removed bit 7 we can cheat with a swapnib
+                        ld      (UBnKFightersLeft),a
+.SetUpFighterType:      ld      a,c                         ; get back AI flags
+                        and     ShipFighterType             ; fighter type is bits 2 and 3
+                        rr      a                           ; so get them down to 0 and 1
+                        rr      a                           ;
+                        ld      hl,FighterTypeMapping       ; then use the lookup table
+                        add     hl,a                        ; for the respective ship id
+                        ld      a,(hl)                      ; we work on this for optimisation
+                        ld      (UBnKFighterShipId),a       ; ship data holds index to this table
+.SetUpECM:              ld      a,(ShipECMFittedChanceAddr) ; Now handle ECM
                         ld      b,a
 .FetchLatestRandom:     ld      a,(RandomSeed3)              
                         JumpIfALTNusng b, .ECMFitted

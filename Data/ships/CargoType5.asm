@@ -1,46 +1,25 @@
-;	\ Transporter hull data header info 37 vertices  6*37  = &DE
-; Corrected pointers
-;                      0    1    2  3  4  5   6   7   8   9   10  11  12   13  14  15   16 17 18 19    20    21               
-;					   Scp  Missile Edge  Lin Gun Exp Vtx Edg Bounty  Face              Face           Vertices
-;                      Deb  Lock    Lo Hi x4  Vtx Cnt x6  X1  lo  hi  x4   Dot Erg Spd  Lo Hi Q  Laser Lo    hi
-;;;				 Example of cargo	
-;;;					
-;;;		Points (nodes, vetices)		6 bytes per vertex	
-;;;     Byte 0 = X magnitide with origin at middle of ship
-;;;		Byte 1 = Y magnitide with origin at middle of ship		
-;;;		Byte 2 = Z magnitide with origin at middle of ship			
-;;;		Byte 3 = Sign Bits of Vertex 7=X 6=Y 5 = Z 4 - 0 = visibility beyond which vertix is not shown
-;;;		Byte 4 = High 4 bits Face 2 Index Low 4 bits = Face 1 Index
-;;;		Byte 5 = High 4 bits Face 4 Index Low 4 bits = Face 3 Index
-;;;		Edges			
-;;;		Byte 0 = Edge visbility Distance if > XX4 distance then won't show	
-;;;		Byte 1 = High 4 bits Face 2 Index Low 4 bits = Face 1 Index			
-;;;		Byte 2 = Byte offset to Point 1 (divide by 4 for index)			
-;;;		Byte 3 = Byte offset to Point 2 (divide by 4 for index)	
-;;;	  	Normals (Faces)
-;;;		Byte 0 = Sign Bits of Vertex 7=X 6=Y 5 = Z, bits 4 to 0 are distance for always visible 			
-;;;		Byte 1 = X Lo			
-;;;		Byte 2 = Y Lo			
-;;;		Byte 3 = Z Lo			
-
-CargoType5              DB $00
-                        DW $0190
-                        DW CargoType5Edges
-                        DB CargoType5EdgesSize
-                        DB $00,$12
-                        DB CargoType5VertSize /6 
-                        DB CargoType5VertSize
-                        DB CargoType5EdgesCnt
-                        DB $00,$00
-                        DB CargoType5NormalsSize
-                        DB $0C,$11,$0F
-                        DW CargoType5Normals
-                        DB $02,$00
-                        DW CargoType5Vertices
-                        DB ShipTypeScoopable        ; Type
-                        DB 0                        ; Tactics
-                        DB 0
-                        DB $0                      ; chance of ECM module
+CargoType5              DB $00                         ; Number of cargo canisters released when destroyed
+                        DW 20 * 20                     ; Ship's targetable area LoHi
+                        DW CargoType5Edges             ; Edge Data 
+                        DB CargoType5EdgesSize         ; Size of Edge Data
+                        DB $00                         ; Gun Vertex Byte offset
+                        DB $12                         ; Explosion Count 
+                        DB CargoType5VertSize /6       ; Vertex Count /6
+                        DB CargoType5VertSize          ; Vertex Count
+                        DB CargoType5EdgesCnt          ; Edges Count
+                        DW $0000                       ; Bounty LoHi
+                        DB CargoType5NormalsSize       ; Face (Normal) Count
+                        DB $0C                         ; Range when it turns to a dot
+                        DB $11                         ; Energy Max
+                        DB $0F                         ; Speed Max
+                        DW CargoType5Normals           ; Normals
+                        DB $02                         ; Q scaling
+                        DB $00                         ; Laser power and Nbr Missiles
+                        DW CargoType5Vertices          ; Verticles Address
+                        DB ShipTypeScoopable           ; Ship Type
+                        DB 0                           ; NewB Tactics                        
+                        DB 0                           ; AI Flags
+                        DB $0                          ; chance of ECM module
 ; So cargo is               Edge offset $0050  Face Offset $008C, Verices will alwys be +20, LineMax 31 -> 4  EdgeCnt 15  VertexCnt 60 -> 10     FaceCn 28 -> 7
 CargoType5Vertices		DB $18,$10,$00,$1F,$10,$55 	; 60 bytes in total for data
                         DB $18,$05,$0F,$1F,$10,$22 

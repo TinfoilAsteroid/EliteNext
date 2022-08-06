@@ -1,20 +1,25 @@
-Dragon:	                DB $00
-                        DW $5066
-                        DW DragonEdges
-                        DB DragonEdgesSize
-                        DB $00, $3C
-                        DB DragonVertSize /6 
-                        DB DragonVertSize
-                        DB DragonEdgesCnt
-                        DB $00, $00
-                        DB DragonNormalsSize
-                        DB $20, $F7, $14
-                        DW DragonNormals
-                        DB $00, $47
-                        DW DragonVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $B0                      ; chance of ECM module
+Dragon:	                DB $00                                                    ; Number of cargo canisters released when destroyed
+                        DW $5066                                                  ; Ship's targetable area LoHi
+                        DW DragonEdges                                            ; Edge Data 
+                        DB DragonEdgesSize                                        ; Size of Edge Data
+                        DB $00                                                    ; Gun Vertex Byte offset
+                        db $3C                                                    ; Explosion Count 
+                        DB DragonVertSize /6                                      ; Vertex Count /6
+                        DB DragonVertSize                                         ; Vertex Count
+                        DB DragonEdgesCnt                                         ; Edges Count
+                        DW $0000                                                  ; Bounty LoHi
+                        DB DragonNormalsSize                                      ; Face (Normal) Count
+                        DB $20                                                    ; Range when it turns to a dot
+                        DB $F7                                                    ; Energy Max
+                        DB $14                                                    ; Speed Max
+                        DW DragonNormals                                          ; Normals
+                        DB $00                                                    ; Q scaling
+                        DB $40 | ShipMissiles7                                    ; Laser power and Nbr Missiles
+                        DW DragonVertices                                         ; Verticles Address
+                        DB ShipTypeNormal                                         ; Ship Type
+                        DB 0                                                      ; NewB Tactics 
+                        DB ShipCanAnger | ShipFighterBaySize2 | ShipFighterWorm   ; AI Flags            
+                        DB $B0                                                    ; chance of ECM module
 DragonVertices:	        DB $00, $00, $FA, $1F, $6B, $05
                         DB $D8, $00, $7C, $1F, $67, $01
                         DB $D8, $00, $7C, $3F, $78, $12

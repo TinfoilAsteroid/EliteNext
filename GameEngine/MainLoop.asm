@@ -310,6 +310,32 @@ LoopEventTriggered:     call    FindNextFreeSlotInC                 ; c= slot nu
 .WitchSpaceEvent:       ret; TODO for now
 
 
+EnemyShipBank:          DS 1
+EnemyMissileLaunchPos:  DS 3 * 3
+EnemyMissileLaunchMat:  DS 2 * 3
+
+
+LaunchEnemyMissile:     break
+                        call    FindNextFreeSlotInC                 ; Check if we have a slot free
+                        ret     c                                   ; no slots no fire
+.SaveShipDetails:       ; save current ship bank to EnemyShipBank
+                        ; copy position and matrix
+                        ; calculate offset of y - 5 to launch missile
+.LaunchGood:            ld      a,5
+                        call    CalcLaunchOffset
+                        ld      a,0                                 ; TODO For now only 1 missile type
+                        GetByteAInTable ShipMissileTable            ; swap in missile data
+                        call    SpawnShipTypeA                      ; spawn the ship
+                        call    UnivSetEnemyMissile                 ; as per player but sets as angry
+                        ld      hl, UBnKMissilesLeft                ; reduce enemy missile count
+                        dec     (hl)
+                        ret
+
+LaunchEnemyFighter:     ld      a,10
+                        break;call    CopyUBnKtoLaunchParameters
+                        ;copymatrix,rot and speed
+                        ret
+
 LaunchPlayerMissile:   ; break
                         call    FindNextFreeSlotInC                 ; Check if we have a slot free
                         jr      c,.MissileMissFire                  ; give a miss fire indicator as we have no slots

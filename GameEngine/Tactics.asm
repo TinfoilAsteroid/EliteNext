@@ -1,10 +1,31 @@
 
-                        DEFINE TACTICSDEBUG
+                        DEFINE TACTICSDEBUG 1
+;                        DEFINE TARGETDEBUG 1
 MISSILEMAXPITCH         equ 3
 MISSILEMINPITCH         equ -3
 MISSILEMAXROLL          equ 3
 MISSILEMINROLL          equ -3
 ;Ship Tactics
+;ShipTypeNormal          equ 0
+;ShipTypeMissile         equ 1
+;ShipTypeStation         equ 2
+;ShipTypeJunk            equ 3
+;ShipTypeScoopable       equ 4         ; a sub set of junk
+; To be added
+;ShipTypeTargoid
+;ShipTypeHermit
+; Maybe add the followign with ai flags changing in memory shiptype
+;ShipTypePirate
+;ShipTypeBountyHunter
+;ShipTypeTrader
+;ShipType.....
+;ShipTypeMissionTypeA
+;ShipTypeMissionTypeB
+;ShipTypeMissionTypeETC
+;ShipTypeNoAI
+
+
+
 ShipAIJumpTable:      DW    NormalAI,   MissileAIV3,  StationAI,  JunkAI,     ScoopableAI
                       DW    ThargoidAI, NoAI,       NoAI,       NoAI,       NoAI
 ShipAiJumpTableMax:   EQU ($ - ShipAIJumpTable)/2
@@ -38,7 +59,7 @@ UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
 
 ; used  when no pre-checks are requrired, e.g. if forcing a space station from main loop
 
-NormalAI:               ret
+
 StationAI:              ret
 JunkAI:                 ret
 ScoopableAI:            ret
@@ -188,6 +209,7 @@ SelectTargetBank:       MACRO
 ; ... Copy of target data for missile calcs etc
                         INCLUDE "./TacticsWorkingData.asm"
                         INCLUDE "../GameEngine/MissileAI.asm"
+                        INCLUDE "../GameEngine/NormalAI.asm"
 
 ; On Entry A = TacticsDotProduct2 sign (i.e. roof direction)
 ; on exit a == new roll
@@ -365,6 +387,50 @@ XX12EquTacticsDotRoofv: call    CopyRotRoofToTacticsMat
                         
 XX12EquTacticsDotSidev: call    CopyRotSideToTacticsMat
                         jp      XX12EquTacticsDotHL
+
+CopyToTargetVector:     ld      hl,UBnKxlo
+                        ld      de,TacticsTargetX
+                        ld      bc,9
+                        ldir    
+                        ret
+
+CalcVectorToMyShip:     call    CopyToTargetVector
+                        FlipSignMem     TacticsTargetX+2
+                        FlipSignMem     TacticsTargetY+2
+                        FlipSignMem     TacticsTargetZ+2
+                        ret
+                                              
+CalcTargetVector:       ld      de,(TacticsTargetX)                        ; get target ship X
+                        ld      a,(TacticsTargetX+2)                       ; and flip sign so we have missile - target
+                        FlipSignBitA
+                        ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+                        ld      hl,(UBnKxlo)                        ; get missile x
+                        ld      a,(UBnKxsgn)                        ; get missile x sign
+                        ld      b,a
+                        call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
+                        ld      (TacticsVectorX),hl
+                        ld      (TacticsVectorX+2),a
+.UpdateTargetingShipY:  ld      de,(TacticsTargetY)
+                        ld      a,(TacticsTargetY+2)
+                        FlipSignBitA
+                        ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+                        ld      hl,(UBnKylo)                        ; get missile x
+                        ld      a,(UBnKysgn)                        ; get missile x sign
+                        ld      b,a
+                        call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
+                        ld      (TacticsVectorY),hl
+                        ld      (TacticsVectorY+2),a
+.UpdateTargetingShipZ:  ld      de,(TacticsTargetZ)
+                        ld      a,(TacticsTargetZ+2)
+                        FlipSignBitA
+                        ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+                        ld      hl,(UBnKzlo)                        ; get missile x
+                        ld      a,(UBnKzsgn)                        ; get missile x sign
+                        ld      b,a
+                        call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
+                        ld      (TacticsVectorZ),hl
+                        ld      (TacticsVectorZ+2),a
+                        ret
                         
 ;-- Now its scaled we can normalise
 ;-- Scale down so that h d &b are zero, then do once again so l e and c are 7 bit

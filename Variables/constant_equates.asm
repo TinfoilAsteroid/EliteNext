@@ -55,29 +55,69 @@ ShipTypeNormal          equ 0
 ShipTypeText            equ 253
 ShipTypeDebug           equ 254
 ShipTypeEmpty           equ 255
-; TacticsControl
-ShipAngryNewBitNbr      equ 4
-ShipExplosionDuration   equ 75         ; amount of frames an explosion lasts for
+
+; Laser and Missile Settings
+; Laser and Missile
+ShipLaserPower          equ %11110000
+ShipMissileCount        equ %00001111
+ShipMissiles1           equ %00000001
+ShipMissiles2           equ %00000010
+ShipMissiles3           equ %00000011
+ShipMissiles4           equ %00000100
+ShipMissiles5           equ %00000101
+ShipMissiles6           equ %00000110
+ShipMissiles7           equ %00000111
+ShipMissiles8           equ %00001000
+ShipMissiles9           equ %00001001
+ShipMissiles10          equ %00001010
+ShipMissiles11          equ %00001011
+ShipMissiles12          equ %00001100
+ShipMissiles13          equ %00001101
+ShipMissiles14          equ %00001110
+ShipMissiles15          equ %00001111
+; AI Flags  UniverseAIControl     
+ShipCanAnger            equ %10000000   ; Yes or no
+ShipFighterBaySize      equ %01110000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
+ShipFighterBaySize1     equ %00010000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
+ShipFighterBaySize2     equ %00100000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
+ShipFighterBaySize3     equ %00110000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
+ShipFighterBaySize4     equ %01000000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
+ShipFighterBaySize5     equ %01010000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
+ShipFighterBaySizeInf   equ %01110000   ; Infinite fighters (well 255 as thats enough)
+ShipFighterType         equ %00001100   ; 4 types 0 = Worm, 1 = Sidewinder, 2 = Viper, 3 = Thargon
+ShipFighterWorm         equ %00000000
+ShipFighterSidewinder   equ %00000100
+ShipFighterViper        equ %00001000
+ShipFighterThargon      equ %00001100
+ShipFree                equ $00000011   ; Unused bits at present for later
+; NewBTactics
 ShipIsTrader            equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
 ShipIsBountyHunter      equ Bit1Only   ; 
 ShipIsHostile           equ Bit2Only   ;
-ShipNotHostile          equ Bit2Clear   ;
 ShipIsPirate            equ Bit3Only   ; 
+ShipIsDocking           equ Bit4Only   ; 
+ShipIsBystander         equ Bit5Only   ; 
+ShipIsCop               equ Bit6Only   ; 
+ShipHasEscapePod        equ Bit7Only   ;
+
+; UBnkaiatkecm
+ShipKilled              equ Bit4Only    ; Ship has just been marked as killed so initiate cloud of debris
+ShipExploding           equ Bit5Only
+ShipAIEnabled           equ Bit7Only   ; 
+; UBnkaiakecm 2
+
+ShipAngryNewBitNbr      equ 4
+ShipExplosionDuration   equ 75         ; amount of frames an explosion lasts for
+ShipNotHostile          equ Bit2Clear   ;
 ShipIsDot               equ Bit3Only
 ShipIsNotDot            equ Bit3Clear
 ShipIsDotBitNbr         equ 3
-ShipKilled              equ Bit4Only    ; Ship has just been marked as killed so initiate cloud of debris
 ShipKilledBitNbr        equ 4
-ShipIsDocking           equ Bit4Only   ; 
-ShipIsBystander         equ Bit5Only   ; 
 ShipIsVisible           equ Bit6Only
 ShipIsVisibleBitNbr     equ 6
-ShipIsCop               equ Bit6Only   ; 
 ShipIsScoopDockEsc      equ Bit7Only   ; 
-ShipAIEnabled           equ Bit7Only   ; 
 ShipAIDisabled          equ Bit7Clear
 ShipAIEnabledBitNbr     equ 7
-ShipExploding           equ Bit5Only
 ShipExplodingBitNbr     equ 5
 ; Equipment Defaults
 ECMCounterMax           equ $80
@@ -92,8 +132,6 @@ StateNormal             equ 0
 ; Missile Stage flags , $8x = locked to ship id x, $0x = fire at ship id x requested
 StageMissileNotTargeting equ $FF
 StageMissileTargeting   equ $FE
-; UniverseAIControl     
-ShipCanAnger        equ %00000001
 
 
 ShipMaxDistance     equ 192

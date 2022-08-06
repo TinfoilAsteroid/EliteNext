@@ -24,12 +24,11 @@ TacticsToyMatYSign      DB 0
 TacticsRotMatZ          DB 0
 TacticsToyMatZSign      DB 0
 TacticsPad2D            DB " "
-TacticsPad3A            DB "TargX"
+TacticsPad3A            DB "Targ="
 TacticsTargetX          DS 3
-TacticsPad3B            DB "Y"
 TacticsTargetY          DS 3 
-TacticsPad3C            DB "Z"
 TacticsTargetZ          DS 3
+TacticsPad3B            DB "=  "
 TacticsPad4A            DB "VectX"
 TacticsVectorX:         DS 3
 TacticsPad4B            DB "Y"

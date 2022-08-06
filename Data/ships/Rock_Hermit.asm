@@ -1,20 +1,25 @@
-Rock_Hermit:	        DB $07
-                        DW $1900
-                        DW Rock_HermitEdges
-                        DB Rock_HermitEdgesSize
-                        DB $00, $32
-                        DB Rock_HermitVertSize /6 
-                        DB Rock_HermitVertSize
-                        DB Rock_HermitEdgesCnt
-                        DB $00, $00
-                        DB Rock_HermitNormalsSize
-                        DB $32, $B4, $1E
-                        DW Rock_HermitNormals
-                        DB $01, $02
-                        DW Rock_HermitVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $30                      ; chance of ECM module
+Rock_Hermit:	        DB $07                            ; Number of cargo canisters released when destroyed
+                        DW $1900                          ; Ship's targetable area LoHi
+                        DW Rock_HermitEdges               ; Edge Data 
+                        DB Rock_HermitEdgesSize           ; Size of Edge Data
+                        DB $00                            ; Gun Vertex Byte offset
+                        DB $32                            ; Explosion Count 
+                        DB Rock_HermitVertSize /6         ; Vertex Count /6
+                        DB Rock_HermitVertSize            ; Vertex Count
+                        DB Rock_HermitEdgesCnt            ; Edges Count
+                        DW $0000                          ; Bounty LoHi
+                        DB Rock_HermitNormalsSize         ; Face (Normal) Count
+                        DB $32                            ; Range when it turns to a dot
+                        DB $B4                            ; Energy Max
+                        DB $1E                            ; Speed Max
+                        DW Rock_HermitNormals             ; Normals
+                        DB $01                            ; Q scaling
+                        DB $02                            ; Laser power and Nbr Missiles
+                        DW Rock_HermitVertices            ; Verticles Address
+                        DB ShipTypeNormal                 ; Ship Type
+                        DB 0                              ; NewB Tactics 
+                        DB ShipCanAnger                   ; AI Flags            
+                        DB $30                            ; chance of ECM module
 
 	
 Rock_HermitVertices:	DB $00, $50, $00, $1F, $FF, $FF

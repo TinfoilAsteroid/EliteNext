@@ -1,20 +1,25 @@
-Gecko:	                DB $00
-                        DW $2649
-                        DW GeckoEdges
-                        DB GeckoEdgesSize
-                        DB $00, $1A
-                        DB GeckoVertSize /6 
-                        DB GeckoVertSize
-                        DB GeckoEdgesCnt
-                        DB $00, $37
-                        DB GeckoNormalsSize
-                        DB $12, $46, $1E
-                        DW GeckoNormals
-                        DB $03, $10
-                        DW GeckoVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $60                      ; chance of ECM module
+Gecko:	                DB $00                         ; Number of cargo canisters released when destroyed
+                        DW $2649                       ; Ship's targetable area LoHi
+                        DW GeckoEdges                  ; Edge Data 
+                        DB GeckoEdgesSize              ; Size of Edge Data
+                        DB $00                         ; Gun Vertex Byte offset
+                        DB $1A                         ; Explosion Count 
+                        DB GeckoVertSize /6            ; Vertex Count /6
+                        DB GeckoVertSize               ; Vertex Count
+                        DB GeckoEdgesCnt               ; Edges Count
+                        DW $0037                       ; Bounty LoHi
+                        DB GeckoNormalsSize            ; Face (Normal) Count
+                        DB $12                         ; Range when it turns to a dot
+                        DB $46                         ; Energy Max
+                        DB $1E                         ; Speed Max
+                        DW GeckoNormals                ; Normals
+                        DB $03                         ; Q scaling
+                        DB $10                         ; Laser power and Nbr Missiles
+                        DW GeckoVertices               ; Verticles Address
+                        DB ShipTypeNormal              ; Ship Type
+                        DB 0                           ; NewB Tactics 
+                        DB ShipCanAnger                ; AI Flags            
+                        DB $60                         ; chance of ECM module
 GeckoVertices:	        DB $0A, $04, $2F, $DF, $03, $45
                         DB $0A, $04, $2F, $5F, $01, $23
                         DB $10, $08, $17, $BF, $05, $67

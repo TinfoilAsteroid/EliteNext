@@ -1,20 +1,25 @@
-Thargoid:	            DB $00
-                        DW $2649
-                        DW ThargoidEdges
-                        DB ThargoidEdgesSize
-                        DB $3C, $26
-                        DB ThargoidVertSize /6 
-                        DB ThargoidVertSize
-                        DB ThargoidEdgesCnt
-                        DB $01, $F4
-                        DB ThargoidNormalsSize
-                        DB $37, $F0, $27
-                        DW ThargoidNormals
-                        DB $02, $16
-                        DW ThargoidVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $FF                      ; chance of ECM module
+Thargoid:	            DB $00                                                      ; Number of cargo canisters released when destroyed
+                        DW $2649                                                    ; Ship's targetable area LoHi
+                        DW ThargoidEdges                                            ; Edge Data 
+                        DB ThargoidEdgesSize                                        ; Size of Edge Data
+                        DB $3C                                                      ; Gun Vertex Byte offset
+                        DB $26                                                      ; Explosion Count 
+                        DB ThargoidVertSize /6                                      ; Vertex Count /6
+                        DB ThargoidVertSize                                         ; Vertex Count
+                        DB ThargoidEdgesCnt                                         ; Edges Count
+                        DW $01F4                                                    ; Bounty LoHi
+                        DB ThargoidNormalsSize                                      ; Face (Normal) Count
+                        DB $37                                                      ; Range when it turns to a dot
+                        DB $F0                                                      ; Energy Max
+                        DB $27                                                      ; Speed Max
+                        DW ThargoidNormals                                          ; Normals
+                        DB $02                                                      ; Q scaling
+                        DB $16                                                      ; Laser power and Nbr Missiles
+                        DW ThargoidVertices                                         ; Verticles Address
+                        DB 0                                                        ; Ship Type
+                        DB 0                                                        ; NewB Tactics 
+                        DB ShipCanAnger | ShipFighterBaySize  | ShipFighterThargon  ; AI Flags            
+                        DB $FF                                                      ; chance of ECM module
 
 ThargoidVertices:	    DB $20, $30, $30, $5F, $40, $88 ; 01
                         DB $20, $44, $00, $5F, $10, $44 ; 02

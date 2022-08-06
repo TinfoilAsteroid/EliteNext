@@ -1,21 +1,26 @@
 
-Krait:                  DB $01
-                        DW $100E
-                        DW KraitEdges
-                        DB KraitEdgesSize
-                        DB $00, $12
-                        DB KraitVertSize /6 
-                        DB KraitVertSize
-                        DB KraitEdgesCnt
-                        DB $64,$00
-                        DB KraitNormalsSize
-                        DB $14, $50, $1E
-                        DW KraitNormals
-                        DB $02, $10 
-                        DW KraitVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $D0                      ; chance of ECM module
+Krait:                  DB $01                         ; Number of cargo canisters released when destroyed
+                        DW $100E                       ; Ship's targetable area LoHi
+                        DW KraitEdges                  ; Edge Data 
+                        DB KraitEdgesSize              ; Size of Edge Data
+                        DB $00                         ; Gun Vertex Byte offset
+                        DB $12                         ; Explosion Count 
+                        DB KraitVertSize /6            ; Vertex Count /6
+                        DB KraitVertSize               ; Vertex Count
+                        DB KraitEdgesCnt               ; Edges Count
+                        DW $0064                       ; Bounty LoHi
+                        DB KraitNormalsSize            ; Face (Normal) Count
+                        DB $14                         ; Range when it turns to a dot
+                        DB $50                         ; Energy Max
+                        DB $1E                         ; Speed Max
+                        DW KraitNormals                ; Normals
+                        DB $02                         ; Q scaling
+                        DB $10 | ShipMissiles4         ; Laser power and Nbr Missiles
+                        DW KraitVertices               ; Verticles Address
+                        DB ShipTypeNormal              ; Ship Type
+                        DB 0                           ; NewB Tactics 
+                        DB ShipCanAnger                ; AI Flags            
+                        DB $D0                         ; chance of ECM module
 KraitVertices:          DB $00, $00, $60, $1F, $01, $23 
                         DB $00, $12, $30, $3F, $03, $45 
                         DB $00, $12, $30, $7F, $12, $45 

@@ -1,3 +1,4 @@
+; Could move this into rom area for access as it will be read only
 WordDummy					DB  "X",0
 WordFront					DB	"Front",0              ;1
 WordRight					DB	"Right",0              ;2
@@ -100,9 +101,53 @@ WordInv                     DB  "Inv",0                ;98
 WordStock                   DB  "Stock",0              ;99
 WordEquip                   DB  "Equip",0              ;100
 WordShip                    DB  "Ship",0               ;101
-WordMissile                 DB  "Missile",0            ;102
+;WordMissile                 DB  "Missile",0            ;102
 WordHyperdrive              DB  "Hyperdrive",0
 WordMilitary                DB  "Military",0
+WordAdder                   DB  "Adder",0
+WordAnaconda                DB  "Anaconda",0
+WordAsp_Mk_2                DB  "Asp_Mk_2",0
+WordBoa                     DB  "Boa",0
+WordCargoType5              DB  "CargoType5",0
+WordBoulder                 DB  "Boulder",0
+WordAsteroid                DB  "Asteroid",0
+WordBushmaster              DB  "Bushmaster",0
+WordChameleon               DB  "Chameleon",0
+WordCobraMk3                DB  "CobraMk3",0
+WordCobra_Mk_1              DB  "Cobra_Mk_1",0
+WordCobra_Mk_3_P            DB  "Cobra_Mk_3_P",0
+WordConstrictor             DB  "Constrictor",0
+WordCoriolis                DB  "Coriolis",0
+WordCougar                  DB  "Cougar",0
+WordDodo                    DB  "Dodo",0
+WordDragon                  DB  "Dragon",0
+WordEscape_Pod              DB  "Escape_Pod",0
+WordFer_De_Lance            DB  "Fer_De_Lance",0
+WordGecko                   DB  "Gecko",0
+WordGhavial                 DB  "Ghavial",0
+WordIguana                  DB  "Iguana",0
+WordKrait                   DB  "Krait",0
+WordLogo                    DB  "Logo",0
+WordMamba                   DB  "Mamba",0
+WordMissile                 DB  "Missile",0
+WordMonitor                 DB  "Monitor",0
+WordMoray                   DB  "Moray",0
+WordOphidian                DB  "Ophidian",0
+WordPlate                   DB  "Plate",0
+WordPython                  DB  "Python",0
+WordPython_P                DB  "Python_P",0
+WordRock_Hermit             DB  "Rock_Hermit",0
+WordShuttleType9            DB  "ShuttleType9",0
+WordShuttle_Mk_2            DB  "Shuttle_Mk_2",0
+WordSidewinder              DB  "Sidewinder",0
+WordSplinter                DB  "Splinter",0
+WordTestVector              DB  "TestVector",0
+WordThargoid                DB  "Thargoid",0
+WordThargon                 DB  "Thargon",0
+WordTransportType10         DB  "TransportType10",0
+WordViper                   DB  "Viper",0
+WordWorm                    DB  "Worm",0
+WordRattler                 DB  "Rattler",0
 
 WordIdx				DW  WordDummy,          WordFront,        WordRight,        WordLeft		;0-3
 					DW  WordRear,           WordLarge,        WordEscape,       WordPod      	;4-7
@@ -132,7 +177,17 @@ WordIdxMarketmenu	DW  WordMarket,         WordPrices,       WordProduct,        
 WordIdxUomAbbrev	DW	Wordt,				Wordkg,           Wordg                 		    ;94	
 					DW  WordQuantity,       WordInv,          WordStock,           WordEquip	;97
                     DW  WordShip,           WordMissile       ; 101
-
+WordIdxShipNames:   DW  WordAdder,          WordAnaconda,     WordAsp_Mk_2,        WordBoa
+                    DW  WordCargoType5,     WordBoulder,      WordAsteroid,        WordBushmaster
+                    DW  WordChameleon,      WordCobraMk3,     WordCobra_Mk_1,      WordCobra_Mk_3_P
+                    DW  WordConstrictor,    WordCoriolis,     WordCougar,          WordDodo
+                    DW  WordDragon,         WordEscape_Pod,   WordFer_De_Lance,    WordGecko
+                    DW  WordGhavial,        WordIguana,       WordKrait,           WordLogo
+                    DW  WordMamba,          WordMissile,      WordMonitor,         WordMoray
+                    DW  WordOphidian,       WordPlate,        WordPython,          WordPython_P
+                    DW  WordRock_Hermit,    WordShuttleType9, WordShuttle_Mk_2,    WordSidewinder
+                    DW  WordSplinter,       WordTestVector,   WordThargoid,        WordThargon
+                    DW  WordTransportType10,WordViper,        WordWorm,            WordRattler 
 ; Phrases
 TextLargeCargoBay			DB 	5,8,9,0          ;0
 TextEscapePod				DB	6,7,0            ;1
@@ -194,17 +249,19 @@ CapitaliseString:
 	ld		(hl),a
 	jr		.CapLoop
 
-WordIndexToAddress:
-	ld		hl,WordIdx
-	add		hl,a
-	add		hl,a
-	push	de
-	ld		e,(hl)
-	inc		hl
-	ld		d,(hl)
-	ex		de,hl
-	pop		de
-	ret
+ShipIndexToAddress      ld      hl,WordIdxShipNames
+                        jp      WordLookup
+
+WordIndexToAddress:     ld		hl,WordIdx
+WordLookup:             add		hl,a
+                        add		hl,a
+                        push	de
+                        ld		e,(hl)
+                        inc		hl
+                        ld		d,(hl)
+                        ex		de,hl
+                        pop		de
+                        ret
 	
 	
 expandTokenToString:

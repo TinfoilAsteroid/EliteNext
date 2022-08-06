@@ -1,20 +1,25 @@
-Asteroid:	            DB $00
-                        DW $1900
-                        DW AsteroidEdges
-                        DB AsteroidEdgesSize
-                        DB $00, $22
-                        DB AsteroidVertSize /6 
-                        DB AsteroidVertSize
-                        DB AsteroidEdgesCnt
-                        DB $00, $05
-                        DB AsteroidNormalsSize
-                        DB $32, $3C, $1E
-                        DW AsteroidNormals
-                        DB $01, $00
-                        DW AsteroidVertices
-                        DB ShipTypeJunk,0                      ; Type and Tactics
-                        DB 0
-                        DB $00                      ; chance of ECM module
+Asteroid:	            DB $00                          ; Number of cargo canisters released when destroyed
+                        DW 80 * 80                      ; Ship's targetable area LoHi
+                        DW AsteroidEdges                ; Edge Data 
+                        DB AsteroidEdgesSize            ; Size of Edge Data
+                        DB $00                          ; Gun Vertex Byte offset
+                        DB $22                          ; Explosion Count 
+                        DB AsteroidVertSize /6          ; Vertex Count /6
+                        DB AsteroidVertSize             ; Vertex Count
+                        DB AsteroidEdgesCnt             ; Edges Count
+                        DW $0005                        ; Bounty LoHi
+                        DB AsteroidNormalsSize          ; Face (Normal) Count
+                        DB $32                          ; Range when it turns to a dot
+                        DB $3C                          ; Energy Max
+                        DB $1E                          ; Speed Max
+                        DW AsteroidNormals              ; Normals
+                        DB $01                          ; Q scaling
+                        DB $00                          ; Laser power and Nbr Missiles
+                        DW AsteroidVertices             ; Verticles Address
+                        DB ShipTypeJunk                 ; Ship Type
+                        DB 0                            ; NewB Tactics                        
+                        DB 0                            ; AI Flags
+                        DB $00                          ; chance of ECM module
 AsteroidVertices:	    DB $00, $50, $00, $1F, $FF, $FF ;01
                         DB $50, $0A, $00, $DF, $FF, $FF ;02
                         DB $00, $50, $00, $5F, $FF, $FF ;03

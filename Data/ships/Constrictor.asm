@@ -1,24 +1,25 @@
-;                      0    1    2    3   4   5   6   7   8   9   10  11  12  13  14  15   16                    17                  18  19     20                     21 
-;					   Scp  Missile   Edg Edg Lin Gun Exp Vtx Edg Bounty  Face             Edg                   Face                           Vertices
-;                      Deb  Lock      Lo  Hi  x4  Vtx Cnt x6  X1  lo  hi  x4  Dot Erg Spd  hi                    Hi                  Q   Laser  Lo                     hi                
-Constrictor:    	    DB $F3
-                        DW $2649
-                        DW ConstrictorEdges
-                        DB ConstrictorEdgesSize
-                        DB $00,$2E
-                        DB ConstrictorVertSize /6 
-                        DB ConstrictorVertSize
-                        DB ConstrictorEdgesCnt
-                        DB $18,$00
-                        DB ConstrictorNormalsSize
-                        DB $2D,$C8,$37
-                        DW ConstrictorNormals
-                        DB $02,$2F
-                        DW ConstrictorVertices
-                        DB 0,0                      ; Type and Tactics                        
-                    ; missiles = 3             
-                        DB ShipCanAnger
-                        DB $FF                      ; chance of ECM module
+Constrictor:    	    DB $F3                         ; Number of cargo canisters released when destroyed
+                        DW $2649                       ; Ship's targetable area LoHi
+                        DW ConstrictorEdges            ; Edge Data 
+                        DB ConstrictorEdgesSize        ; Size of Edge Data
+                        DB $00                         ; Gun Vertex Byte offset
+                        DB $2E                         ; Explosion Count 
+                        DB ConstrictorVertSize /6      ; Vertex Count /6
+                        DB ConstrictorVertSize         ; Vertex Count
+                        DB ConstrictorEdgesCnt         ; Edges Count
+                        DW $0018                       ; Bounty LoHi
+                        DB ConstrictorNormalsSize      ; Face (Normal) Count
+                        DB $2D                         ; Range when it turns to a dot
+                        DB $C8                         ; Energy Max
+                        DB $37                         ; Speed Max
+                        DW ConstrictorNormals          ; Normals
+                        DB $02                         ; Q scaling
+                        DB $20 | ShipMissiles15        ; Laser power and Nbr Missiles
+                        DW ConstrictorVertices         ; Verticles Address
+                        DB ShipTypeNormal              ; Ship Type
+                        DB 0                           ; NewB Tactics 
+                        DB ShipCanAnger                ; AI Flags            
+                        DB $FF                         ; chance of ECM module
 ConstrictorVertices     DB $14, $07, $50, $5F, $02, $99 
                         DB $14, $07, $50, $DF, $01, $99 
                         DB $36, $07, $28, $DF, $14, $99 

@@ -1,20 +1,25 @@
-Logo:	                DB $00
-                        DW $2649
-                        DW LogoEdges
-                        DB LogoEdgesSize
-                        DB $00, $36
-                        DB LogoVertSize /6 
-                        DB LogoVertSize
-                        DB LogoEdgesCnt
-                        DB $00, $00
-                        DB LogoNormalsSize
-                        DB $63, $FC, $24
-                        DW LogoNormals
-                        DB $01, $00
-                        DW LogoVertices
-                        DB ShipTypeText,0                      ; Type and Tactics
-                        DB 0
-                        DB $FF                      ; chance of ECM module
+Logo:	                DB $00                    ; Number of cargo canisters released when destroyed
+                        DW $2649                  ; Ship's targetable area LoHi
+                        DW LogoEdges              ; Edge Data 
+                        DB LogoEdgesSize          ; Size of Edge Data
+                        DB $00                    ; Gun Vertex Byte offset
+                        DB $36                    ; Explosion Count 
+                        DB LogoVertSize /6        ; Vertex Count /6
+                        DB LogoVertSize           ; Vertex Count
+                        DB LogoEdgesCnt           ; Edges Count
+                        DW $0000                  ; Bounty LoHi
+                        DB LogoNormalsSize        ; Face (Normal) Count
+                        DB $63                    ; Range when it turns to a dot
+                        DB $FC                    ; Energy Max
+                        DB $24                    ; Speed Max
+                        DW LogoNormals            ; Normals
+                        DB $01                    ; Q scaling
+                        DB $00                    ; Laser power and Nbr Missiles
+                        DW LogoVertices           ; Verticles Address
+                        DB ShipTypeText           ; Ship Type
+                        DB 0                      ; NewB Tactics 
+                        DB 0                      ; AI Flags            
+                        DB $FF                    ; chance of ECM module
 
 LogoVertices:	DB $00, $09, $37, $5F, $00, $00
 	DB $0A, $09, $1E, $DF, $00, $00

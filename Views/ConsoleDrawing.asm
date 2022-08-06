@@ -1,5 +1,5 @@
 ; bc = start position, d = length, e = colour
-                        DEFINE MISSILEDIAGNOSTICS 1
+;                        DEFINE MISSILEDIAGNOSTICS 1
 Draw3LineBar:           ld      e,16
                         push    bc,,de
                         MMUSelectLayer2
@@ -381,9 +381,9 @@ SunXScaled              DB  0
 SunYScaled              DB  0
 SunZScaled              DB  0
 
-
-ScannerColourTable:     DB  L2ColourGREEN_2, L2ColourGREEN_1, L2ColourYELLOW_4,L2ColourYELLOW_1,L2ColourCYAN_2,L2ColourCYAN_1,L2ColourRED_4,L2ColourPINK_4
-ScannerColourTableAngry:DB  L2ColourRED_2, L2ColourRED_1 ; just a place holder for now
+                        ;   ShipTypeNormal
+ScannerColourTable:     DB  L2ColourGREEN_2,    L2ColourGREEN_1, L2ColourYELLOW_4,  L2ColourYELLOW_1,   L2ColourCYAN_2, L2ColourCYAN_1, L2ColourRED_4,  L2ColourPINK_4
+ScannerColourTableAngry:DB  L2ColourRED_2,      L2ColourRED_1 ; just a place holder for now
 
 GetShipColor:           MACRO                   
                         ld      a,(ShipTypeAddr)

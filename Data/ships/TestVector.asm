@@ -1,19 +1,24 @@
-TestVector:             DB $03
-                        DW $4123
-                        DW TestVectorEdges
-                        DB TestVectorEdgesSize
-                        DB $54,$2A
-                        DB TestVectorVertSize /6 
-                        DB TestVectorVertSize
-                        DB TestVectorEdgesCnt
-                        DB $00,$00
-                        DB TestVectorNormalsSize
-                        DB $32,$96,$1C
-                        DW TestVectorNormals
-                        DB $04,$01
-                        DW TestVectorVertices
-                        DB ShipTypeDebug,0                      ; Type and Tactics
-                        DB 0
+TestVector:             DB $03                      ; Number of cargo canisters released when destroyed
+                        DW $4123                    ; Ship's targetable area LoHi
+                        DW TestVectorEdges          ; Edge Data 
+                        DB TestVectorEdgesSize      ; Size of Edge Data
+                        DB $54                      ; Gun Vertex Byte offset
+                        DB $2A                      ; Explosion Count 
+                        DB TestVectorVertSize /6    ; Vertex Count /6
+                        DB TestVectorVertSize       ; Vertex Count
+                        DB TestVectorEdgesCnt       ; Edges Count
+                        DW $0000                    ; Bounty LoHi
+                        DB TestVectorNormalsSize    ; Face (Normal) Count
+                        DB $32                      ; Range when it turns to a dot
+                        DB $96                      ; Energy Max
+                        DB $1C                      ; Speed Max
+                        DW TestVectorNormals        ; Normals
+                        DB $04                      ; Q scaling
+                        DB $01                      ; Laser power and Nbr Missiles
+                        DW TestVectorVertices       ; Verticles Address
+                        DB ShipTypeDebug            ; Ship Type
+                        DB 0                        ; NewB Tactics 
+                        DB 0                        ; AI Flags            
                         DB $00                      ; chance of ECM module
 
 TestVectorVertices	    DB $00,$40,$00,$1F,$00,$00 

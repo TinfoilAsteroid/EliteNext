@@ -1,20 +1,25 @@
-Thargon:	            DB $F0
-                        DW $0640
-                        DW ThargonEdges
-                        DB ThargonEdgesSize
-                        DB $00, $12
-                        DB ThargonVertSize /6 
-                        DB ThargonVertSize
-                        DB ThargonEdgesCnt
-                        DB $00, $32
-                        DB ThargonNormalsSize
-                        DB $14, $14, $1E
-                        DW ThargonNormals
-                        DB $02, $10
-                        DW ThargonVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $00                      ; chance of ECM module
+Thargon:	            DB $F0                          ; Number of cargo canisters released when destroyed
+                        DW $0640                        ; Ship's targetable area LoHi
+                        DW ThargonEdges                 ; Edge Data 
+                        DB ThargonEdgesSize             ; Size of Edge Data
+                        DB $00                          ; Gun Vertex Byte offset
+                        DB $12                          ; Explosion Count 
+                        DB ThargonVertSize /6           ; Vertex Count /6
+                        DB ThargonVertSize              ; Vertex Count
+                        DB ThargonEdgesCnt              ; Edges Count
+                        DW $0032                        ; Bounty LoHi
+                        DB ThargonNormalsSize           ; Face (Normal) Count
+                        DB $14                          ; Range when it turns to a dot
+                        DB $14                          ; Energy Max
+                        DB $1E                          ; Speed Max
+                        DW ThargonNormals               ; Normals
+                        DB $02                          ; Q scaling
+                        DB $10                          ; Laser power and Nbr Missiles
+                        DW ThargonVertices              ; Verticles Address
+                        DB 0                            ; Ship Type
+                        DB 0                            ; NewB Tactics 
+                        DB ShipCanAnger                 ; AI Flags            
+                        DB $00                          ; chance of ECM module
 
 	
 ThargonVertices:	    DB $09, $00, $28, $9F, $01, $55

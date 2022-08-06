@@ -1,20 +1,26 @@
-Adder:	                DB $00
-                        DW $09C4
-                        DW AdderEdges
-                        DB AdderEdgesSize
-                        DB $00, $16
-                        DB AdderVertSize / 6
-                        DB AdderVertSize
-                        DB AdderEdgesCnt
-                        DB $00, $28
-                        DB AdderNormalsSize
-                        DB $17, $48, $18
-                        DW AdderNormals
-                        DB $02, $21
-                        DW AdderVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $80                      ; chance of ECM module
+Adder:	                DB $00                              ; Number of cargo canisters released when destroyed
+                        DW 50 * 50                          ; Ship's targetable area LoHi
+                        DW AdderEdges                       ; Edge Data 
+                        DB AdderEdgesSize                   ; Size of Edge Data
+                        DB $00                              ; Gun Vertex Byte offset
+                        DB $16                              ; Explosion Count 
+                        DB AdderVertSize / 6                ; Vertex Count /6
+                        DB AdderVertSize                    ; Vertex Count
+                        DB AdderEdgesCnt                    ; Edges Count
+                        DW $0028                            ; Bounty LoHi
+                        DB AdderNormalsSize                 ; Face (Normal) Count
+                        DB $17                              ; Range when it turns to a dot
+                        DB $48                              ; Energy Max
+                        DB $18                              ; Speed Max
+                        DW AdderNormals                     ; Normals
+                        DB $12                              ; Q scaling
+                        DB $21                              ; Laser power and Nbr Missiles
+                        DW AdderVertices                    ; Verticles Address
+                        DB ShipTypeNormal                   ; Ship Type
+                        DB 0                                ; NewB Tactics 
+                        DB ShipCanAnger                     ; AI Flags            
+                        DB $80                              ; chance of ECM module
+                                       ; chance of ECM module
 AdderVertices:	        DB $12, $00, $28, $9F, $01, $BC     ;01
                         DB $12, $00, $28, $1F, $01, $23     ;02
                         DB $1E, $00, $18, $3F, $23, $45     ;03

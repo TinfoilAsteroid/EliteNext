@@ -1,20 +1,25 @@
-Coriolis:	            DB $00
-                        DW $6400
-                        DW CoriolisEdges
-                        DB CoriolisEdgesSize
-                        DB $00, $36
-                        DB CoriolisVertSize /6 
-                        DB CoriolisVertSize
-                        DB CoriolisEdgesCnt
-                        DB $00, $00
-                        DB CoriolisNormalsSize
-                        DB $78, $F0, $00
-                        DW CoriolisNormals
-                        DB $00, $06
-                        DW CoriolisVertices
-                        DB ShipTypeStation,0                        ; Type and Tactics                        
-                        DB 0                                        ; can't anger arbitrarily needs to see innocent bystander shot
-                        DB $FF                                      ; will always have ECM
+Coriolis:	            DB $00                                      ; Number of cargo canisters released when destroyed
+                        DW $6400                                    ; Ship's targetable area LoHi
+                        DW CoriolisEdges                            ; Edge Data 
+                        DB CoriolisEdgesSize                        ; Size of Edge Data
+                        DB $00                                      ; Gun Vertex Byte offset
+                        DB $36                                      ; Explosion Count 
+                        DB CoriolisVertSize /6                      ; Vertex Count /6
+                        DB CoriolisVertSize                         ; Vertex Count
+                        DB CoriolisEdgesCnt                         ; Edges Count
+                        DW $0000                                    ; Bounty LoHi
+                        DB CoriolisNormalsSize                      ; Face (Normal) Count
+                        DB $78                                      ; Range when it turns to a dot
+                        DB $F0                                      ; Energy Max
+                        DB $00                                      ; Speed Max
+                        DW CoriolisNormals                          ; Normals
+                        DB $00                                      ; Q scaling
+                        DB $06                                      ; Laser power and Nbr Missiles
+                        DW CoriolisVertices                         ; Verticles Address
+                        DB ShipTypeStation                          ; Ship Type
+                        DB 0                                        ; NewB Tactics     
+                        DB ShipFighterBaySize | ShipFighterViper    ; AI Flags            
+                        DB $FF                                      ; chance of ECM module
 CoriolisVertices:	    DB $A0, $00, $A0, $1F, $10, $62
                         DB $00, $A0, $A0, $1F, $20, $83
                         DB $A0, $00, $A0, $9F, $30, $74

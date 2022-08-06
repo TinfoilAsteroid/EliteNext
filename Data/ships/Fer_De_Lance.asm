@@ -1,20 +1,25 @@
-Fer_De_Lance:	        DB $00
-                        DW $0640
-                        DW Fer_De_LanceEdges
-                        DB Fer_De_LanceEdgesSize
-                        DB $00, $1A
-                        DB Fer_De_LanceVertSize /6 
-                        DB Fer_De_LanceVertSize
-                        DB Fer_De_LanceEdgesCnt
-                        DB $00, $00
-                        DB Fer_De_LanceNormalsSize
-                        DB $28, $A0, $1E
-                        DW Fer_De_LanceNormals
-                        DB $01, $12
-                        DW Fer_De_LanceVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $FF                      ; chance of ECM module
+Fer_De_Lance:	        DB $00                          ; Number of cargo canisters released when destroyed
+                        DW $0640                        ; Ship's targetable area LoHi
+                        DW Fer_De_LanceEdges            ; Edge Data 
+                        DB Fer_De_LanceEdgesSize        ; Size of Edge Data
+                        DB $00                          ; Gun Vertex Byte offset
+                        DB $1A                          ; Explosion Count 
+                        DB Fer_De_LanceVertSize /6      ; Vertex Count /6
+                        DB Fer_De_LanceVertSize         ; Vertex Count
+                        DB Fer_De_LanceEdgesCnt         ; Edges Count
+                        DW $0000                        ; Bounty LoHi
+                        DB Fer_De_LanceNormalsSize      ; Face (Normal) Count
+                        DB $28                          ; Range when it turns to a dot
+                        DB $A0                          ; Energy Max
+                        DB $1E                          ; Speed Max
+                        DW Fer_De_LanceNormals          ; Normals
+                        DB $01                          ; Q scaling
+                        DB $10 | ShipMissiles7          ; Laser power and Nbr Missiles
+                        DW Fer_De_LanceVertices         ; Verticles Address
+                        DB ShipTypeNormal               ; Ship Type
+                        DB 0                            ; NewB Tactics 
+                        DB ShipCanAnger                 ; AI Flags            
+                        DB $FF                          ; chance of ECM module
 Fer_De_LanceVertices:	DB $00, $0E, $6C, $5F, $01, $59
                         DB $28, $0E, $04, $FF, $12, $99
                         DB $0C, $0E, $34, $FF, $23, $99

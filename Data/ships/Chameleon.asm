@@ -1,20 +1,25 @@
-Chameleon:	            DB $03
-                        DW $0FA0
-                        DW ChameleonEdges
-                        DB ChameleonEdgesSize
-                        DB $00, $1A
-                        DB ChameleonVertSize /6 
-                        DB ChameleonVertSize
-                        DB ChameleonEdgesCnt
-                        DB $00, $C8
-                        DB ChameleonNormalsSize
-                        DB $0A, $64, $1D
-                        DW ChameleonNormals
-                        DB $01, $23
-                        DW ChameleonVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
-                        DB $40                      ; chance of ECM module
+Chameleon:	            DB $03                          ; Number of cargo canisters released when destroyed
+                        DW $0FA0                        ; Ship's targetable area LoHi
+                        DW ChameleonEdges               ; Edge Data 
+                        DB ChameleonEdgesSize           ; Size of Edge Data
+                        DB $00                          ; Gun Vertex Byte offset
+                        DB $1A                          ; Explosion Count 
+                        DB ChameleonVertSize /6         ; Vertex Count /6
+                        DB ChameleonVertSize            ; Vertex Count
+                        DB ChameleonEdgesCnt            ; Edges Count
+                        DB $00C8                        ; Bounty LoHi
+                        DB ChameleonNormalsSize         ; Face (Normal) Count
+                        DB $0A                          ; Range when it turns to a dot
+                        DB $64                          ; Energy Max
+                        DB $1D                          ; Speed Max
+                        DW ChameleonNormals             ; Normals
+                        DB $01                          ; Q scaling
+                        DB $23                          ; Laser power and Nbr Missiles
+                        DW ChameleonVertices            ; Verticles Address
+                        DB ShipTypeNormal               ; Ship Type     
+                        DB 0                            ; NewB Tactics                   
+                        DB ShipCanAnger                 ; AI Flags
+                        DB $40                          ; chance of ECM module
 ChameleonVertices:	    DB $12, $00, $6E, $9F, $25, $01
                         DB $12, $00, $6E, $1F, $34, $01
                         DB $28, $00, $00, $9F, $8B, $25

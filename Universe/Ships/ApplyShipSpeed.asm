@@ -1,27 +1,4 @@
-SpeedMulAxis:           MACRO   speedreg, axis
-                        ld      e,speedreg
-                        ld      hl,(axis)
-                        ld      a,h
-                        ClearSignBitA
-                        ld      d,a
-                        mul     de
-                        ld      a,h
-                        SignBitOnlyA
-                        ld      b,a;ld      c,a
-                        ld      h,d;ld      e,d
-                        ld      c,0;ld      d,0
-                        ENDM
 
-
-AddSpeedToVert:         MACRO   vertex
-                        ld      de,(vertex+1)
-                        ld      a,(vertex)
-                        ld      l,a                       
-                        call    AddBCHtoDELsigned               ; DEL = DEL + BCH
-                        ld      a,l
-                        ld      (vertex),a
-                        ld      (vertex+1),de
-                        ENDM
 
 ;AddSpeedToVert:         MACRO   vertex
 ;                        ld      hl,(vertex)

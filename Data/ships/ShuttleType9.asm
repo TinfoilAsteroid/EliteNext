@@ -1,20 +1,25 @@
-ShuttleType9:	            DB $0F
-                            DW $09C4
-                            DW ShuttleType9Edges
-                            DB ShuttleType9EdgesSize
-                            DB $00, $26
-                            DB ShuttleType9VertSize /6 
-                            DB ShuttleType9VertSize
-                            DB ShuttleType9EdgesCnt
-                            DB $00, $00
-                            DB ShuttleType9NormalsSize
-                            DB $16, $20, $08
-                            DW ShuttleType9Normals
-                            DB $02, $00
-                            DW ShuttleType9Vertices
-	                        DB 0,0                      ; Type and Tactics
-                            DB 0
-                            DB $80                      ; chance of ECM module
+ShuttleType9:	            DB $0F                       ; Number of cargo canisters released when destroyed
+                            DW $09C4                     ; Ship's targetable area LoHi
+                            DW ShuttleType9Edges         ; Edge Data 
+                            DB ShuttleType9EdgesSize     ; Size of Edge Data
+                            DB $00                       ; Gun Vertex Byte offset
+                            DB $26                       ; Explosion Count 
+                            DB ShuttleType9VertSize /6   ; Vertex Count /6
+                            DB ShuttleType9VertSize      ; Vertex Count
+                            DB ShuttleType9EdgesCnt      ; Edges Count
+                            DW $0000                     ; Bounty LoHi
+                            DB ShuttleType9NormalsSize   ; Face (Normal) Count
+                            DB $16                       ; Range when it turns to a dot
+                            DB $20                       ; Energy Max
+                            DB $08                       ; Speed Max
+                            DW ShuttleType9Normals       ; Normals
+                            DB $02                       ; Q scaling
+                            DB $00                       ; Laser power and Nbr Missiles
+                            DW ShuttleType9Vertices      ; Verticles Address
+	                        DB ShipTypeNormal            ; Ship Type
+                            DB 0                         ; NewB Tactics 
+                            DB 0                         ; AI Flags            
+                            DB $80                       ; chance of ECM module
 
 
 ShuttleType9Vertices:	DB $00, $11, $17, $5F, $FF, $FF ; 01

@@ -1,19 +1,24 @@
-Worm:	                DB $00
-                        DW $2649
-                        DW WormEdges
-                        DB WormEdgesSize
-                        DB $00, $12
-                        DB WormVertSize /6 
-                        DB WormVertSize
-                        DB WormEdgesCnt
-                        DB $00, $00
-                        DB WormNormalsSize
-                        DB $13, $1E, $17
-                        DW WormNormals
-                        DB $03, $08
-                        DW WormVertices
-                        DB 0,0                      ; Type and Tactics
-                        DB ShipCanAnger
+Worm:	                DB $00                      ; Number of cargo canisters released when destroyed
+                        DW $2649                    ; Ship's targetable area LoHi
+                        DW WormEdges                ; Edge Data 
+                        DB WormEdgesSize            ; Size of Edge Data
+                        DB $00                      ; Gun Vertex Byte offset
+                        DB $12                      ; Explosion Count 
+                        DB WormVertSize /6          ; Vertex Count /6
+                        DB WormVertSize             ; Vertex Count
+                        DB WormEdgesCnt             ; Edges Count
+                        DW $0000                    ; Bounty LoHi
+                        DB WormNormalsSize          ; Face (Normal) Count
+                        DB $13                      ; Range when it turns to a dot
+                        DB $1E                      ; Energy Max
+                        DB $17                      ; Speed Max
+                        DW WormNormals              ; Normals
+                        DB $03                      ; Q scaling
+                        DB $30                      ; Laser power and Nbr Missiles
+                        DW WormVertices             ; Verticles Address
+                        DB ShipTypeNormal           ; Ship Type
+                        DB 0                        ; NewB Tactics 
+                        DB ShipCanAnger             ; AI Flags            
                         DB $B0                      ; chance of ECM module
 WormVertices:	        DB $0A, $0A, $23, $5F, $02, $77
                         DB $0A, $0A, $23, $DF, $03, $77
