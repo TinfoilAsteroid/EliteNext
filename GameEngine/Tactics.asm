@@ -65,14 +65,29 @@ JunkAI:                 ret
 ScoopableAI:            ret
 ThargoidAI:             ret
 NoAI:                   ret
-
+;----------------------------------------------------------------------------------------------------------------------------------
+CalculateAgression:     ld      a,(ShipAIFlagsAddr)
+                        ld      b,a
+                        and     %00000010
+                        jr      nz,.UltraHostile
+                        ld      a,b
+                        and     %11110000                               ; if it can can anger a fighter bay then generally more hostile as implies its a large ship
+                        ld      b,a
+                        ld      a,(ShipNewBitsAddr)
+                        and     %01001110                               ; We look at if its a bounty hunter, hostile already, pirate and cop
+                        or      b
+                        ld      (UBnKShipAggression),a
+                        ret
+.UltraHostile:          ld      a,$FF
+                        ld      (UBnKShipAggression),a
+                        ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; set angry if possible, if its an innocent then flag the space station to get angry
-MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check bit 5 of newb flags
+MakeHostile:            ld      a,(ShipNewBitsAddr)                     ; Check bit 5 of newb flags
                         ;break
-                        JumpIfMemEqNusng ShipTypeAddr, ShipTypeStation, .SetNewbAngry
+                        JumpIfMemEqNusng ShipTypeAddr, ShipTypeStation, .SetNewbHostile
 .ItsNotAStation:        and     ShipIsBystander                         ; check if space station present if its a bystander
-                        call    nz, SetStationAngry                     ; Set Space Station if present, Angry
+                        call    nz, SetStationHostile                   ; Set Space Station if present, Angry
                         ld      a,(UBnkaiatkecm)                        ; get AI data
                         ReturnOnBitClear a, ShipAIEnabledBitNbr         ; if 0 then no AI attached so it can't get angry
                         ld      c,a                                     ; Copy to c in case we need it later
@@ -81,7 +96,7 @@ MakeAngry:              ld      a,(ShipNewBitsAddr)                     ; Check 
                         ld      (UBnKRotZCounter),a                     ; .
                         ld      a,(ShipAIFlagsAddr)
                         ReturnIfBitMaskClear ShipCanAnger
-.SetNewbAngry:          call    SetShipHostile
+.SetNewbHostile:        call    SetShipHostile
                         ret
 
 ;----------------------------------------------------------------------------------------------------------------------------------
@@ -96,7 +111,7 @@ MissileHitShipA:        MMUSelectLayer1
                         call    UnivExplodeShip
                         ret; TODO hit ship do explosion, check for near by and if player is near and missile type logic, e.g. AP or HE
 ;----------------------------------------------------------------------------------------------------------------------------------
-SetStationAngry:        call    IsSpaceStationPresent                   ; only if present
+SetStationHostile:      call    IsSpaceStationPresent                   ; only if present
                         ret     c
                         ld      a,(UbnKShipUnivBankNbr)                     ; save current bank
                         ld      iyh,a
@@ -192,7 +207,7 @@ MissileHitUsCheckPos:   ld      hl, (UBnKxlo)
                         ReturnIfNotZero                             ; will return with carry clear if way far away
                         ld      a,l
                         ReturnIfAGTENusng    c                      ; return no carry if z far
-.ItsAHit:               SetCarryFlag:                               ; So must have hit
+.ItsAHit:               SetCarryFlag                                ; So must have hit
                         ret
 
 SelectMissileBank:      MACRO
@@ -394,10 +409,42 @@ CopyToTargetVector:     ld      hl,UBnKxlo
                         ldir    
                         ret
 
-CalcVectorToMyShip:     call    CopyToTargetVector
-                        FlipSignMem     TacticsTargetX+2
-                        FlipSignMem     TacticsTargetY+2
-                        FlipSignMem     TacticsTargetZ+2
+CopyPosToVector:        ld      hl,(UBnKxlo)
+                        ld      a,(UBnKxsgn)
+                        ld      (TacticsVectorX),hl
+                        ;xor     $80
+                        ld      (TacticsVectorX),hl
+                        ld      (TacticsVectorX+2),a
+
+                        ld      hl,(UBnKylo)
+                        ld      a,(UBnKysgn)
+                        ld      (TacticsVectorY),hl
+                        ;xor     $80
+                        ld      (TacticsVectorY),hl
+                        ld      (TacticsVectorY+2),a
+
+                        ld      hl,(UBnKzlo)
+                        ld      a,(UBnKzsgn)
+                        ld      (TacticsVectorZ),hl
+                        ;xor     $80
+                        ld      (TacticsVectorZ),hl
+                        ld      (TacticsVectorZ+2),a
+                        ret
+
+SetPlayerAsTarget:      ZeroA
+                        ld      hl,TacticsTargetX
+                        ld      b, 3*3
+.ZeroLoop:              ld      (hl),a                              ; player is always at 0,0,0
+                        inc     hl
+                        djnz    .ZeroLoop
+                        ret
+
+CalcVectorToMyShip:     call    SetPlayerAsTarget
+                        call    CopyPosToVector
+                        ;call    CopyToTargetVector
+                        ;FlipSignMem     TacticsTargetX+2
+                        ;FlipSignMem     TacticsTargetY+2
+                        ;FlipSignMem     TacticsTargetZ+2
                         ret
                                               
 CalcTargetVector:       ld      de,(TacticsTargetX)                        ; get target ship X

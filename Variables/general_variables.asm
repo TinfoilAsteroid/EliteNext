@@ -276,7 +276,7 @@ CurrentMissileDetonateDamage:  DB  0                       ; TODO Initi for runt
 ; --- Main Loop Data -----------------------;
 CurrentUniverseAI       DB  0               ; current ship unviverse slot due an AI update
 SelectedUniverseSlot    DB  0
-SetStationAngryFlag     DB  0               ; used to semaphore angry space station
+SetStationHostileFlag   DB  0               ; used to semaphore angry space station
 ShipBlastCheckCounter   DB  0
 InnerHyperCount			DB 	0				; 2F QQ22+1
 OuterHyperCount			DB 	0				; 2E QQ22

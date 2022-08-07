@@ -8,21 +8,46 @@ MISSILEMAXDECEL         equ -3
 ;... Now the tactics if current ship is the missile, when we enter this SelectedUniverseSlot holds slot of missile
 MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         ;ReturnOnBitClear a, ShipAIEnabledBitNbr 
-
                         IFDEF MISSILEDOHIT
                             JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
                         ENDIF
 .CheckForECM:           JumpIfMemNotZero ECMCountDown,.ECMIsActive  ; If ECM is running then kill the missile
-.IsMissileHostile:      IsShipFriendly                              ; is missle attacking us?
+.IsMissileHostile:      IsShipHostile                               ; is missle attacking us?
                         JumpIfZero .MissileTargetingShip            ; Missile is friendly then z is set else targetting us
 .MissileTargetingPlayer:ld      hl, (UBnKxlo)                       ; check if missile in range of us
                         ld      a,(UBnKMissileDetonateRange)
                         ld      c,a                                 ; c holds detonation range
                         call    MissileHitUsCheckPos
 .MissileNotHitUsYet:    jp      nc, .UpdateTargetingUsPos
-.MissleHitUs:           call    PlayerHitByMissile
+.MissleHitUs:           break
+                        call    PlayerHitByMissile
                         jp      .ECMIsActive                        ; we use ECM logic to destroy missile which eqneues is
-.UpdateTargetingUsPos:  ret                        ;;;;;;***********TODO
+.UpdateTargetingUsPos:  call    SetPlayerAsTarget
+                        call    CopyPosToVector
+                        ld      hl,(UBnKxlo)
+                        ld      a,(UBnKxsgn)
+                        ld      (TacticsVectorX),hl
+                        ;xor     $80
+                        ld      (TacticsVectorX),hl
+                        ld      (TacticsVectorX+2),a
+
+                        ld      hl,(UBnKylo)
+                        ld      a,(UBnKysgn)
+                        ld      (TacticsVectorY),hl
+                        ;xor     $80
+                        ld      (TacticsVectorY),hl
+                        ld      (TacticsVectorY+2),a
+
+                        ld      hl,(UBnKzlo)
+                        ld      a,(UBnKzsgn)
+                        ld      (TacticsVectorZ),hl
+                        ;xor     $80
+                        ld      (TacticsVectorZ),hl
+                        ld      (TacticsVectorZ+2),a
+                        ld      a,(SelectedUniverseSlot)            ; we will use this quite a lot with next bank switching
+                        add     a,BankUNIVDATA0                     ; pre calculate add to optimise
+                        ld      iyh,a
+                        jp      .NormaliseDirection
 ;--- Missile is targeting other ship
 .MissileTargetingShip:  ld      a,(SelectedUniverseSlot)            ; we will use this quite a lot with next bank switching
 .SaveMissileBank:       add     a,BankUNIVDATA0                     ; pre calculate add to optimise
@@ -46,7 +71,7 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         jp      .ECMIsActive
 ;--- At this point we already have the target banked in ready for calculating vector
 ; Tactics vector = missile - target
-.UpdateTargetingShipX:;break
+.UpdateTargetingShipX:  break
                         ld      de,(UBnKxlo)                        ; get target ship X
                         ld      a,(UBnKxsgn)                        ; and flip sign so we have missile - target
                         IFDEF MISSILEDEBUG

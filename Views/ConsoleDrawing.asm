@@ -382,21 +382,35 @@ SunYScaled              DB  0
 SunZScaled              DB  0
 
                         ;   ShipTypeNormal
-ScannerColourTable:     DB  L2ColourGREEN_2,    L2ColourGREEN_1, L2ColourYELLOW_4,  L2ColourYELLOW_1,   L2ColourCYAN_2, L2ColourCYAN_1, L2ColourRED_4,  L2ColourPINK_4
-ScannerColourTableAngry:DB  L2ColourRED_2,      L2ColourRED_1 ; just a place holder for now
+ScannerColourTable:       DB  L2ColourGREEN_2,    L2ColourGREEN_1, L2ColourYELLOW_4,  L2ColourYELLOW_1,   L2ColourCYAN_2, L2ColourCYAN_1, L2ColourRED_4,  L2ColourPINK_4
+ScannerColourTableHostile:DB  L2ColourRED_2,      L2ColourRED_1,   L2ColourRED_2,     L2ColourRED_1,      L2ColourRED_2,  L2ColourRED_1,  L2ColourRED_2,  L2ColourRED_1; just a place holder for now
 
-GetShipColor:           MACRO                   
-                        ld      a,(ShipTypeAddr)
-                        sla     a                            ; as its byte pairs * 2
+GetShipColor:           MACRO     
                         ld      hl,ScannerColourTable
+                        ld      a,(ShipTypeAddr)         ; for now to bypass hostile missile
+                        cp      1                        ; for now to bypass hostile missile
+                        jr      z,.UsingColourTable    ; for now to bypass hostile missile
+                        ld      a,(ShipNewBitsAddr)
+                        and     ShipIsHostile
+                        jr      z,.UsingColourTable
+.UsingHostileColour:    ld      hl,ScannerColourTableHostile
+.UsingColourTable:      ld      a,(ShipTypeAddr)
+                        sla     a                            ; as its byte pairs * 2
                         add     hl,a
                         ld      a,(hl)
                         ENDM
 GetShipColorBright:     MACRO                   
-                        ld      a,(ShipTypeAddr)
+                        ld      hl,ScannerColourTable
+                        ld      a,(ShipTypeAddr)         ; for now to bypass hostile missile
+                        cp      1                        ; for now to bypass hostile missile
+                        jr      z,.UsingColourTable    ; for now to bypass hostile missile
+                        ld      a,(ShipNewBitsAddr)
+                        and     ShipIsHostile
+                        jr      z,.UsingColourTable
+.UsingHostileColour:    ld      hl,ScannerColourTableHostile
+.UsingColourTable:      ld      a,(ShipTypeAddr)
                         sla     a                            ; as its byte pairs * 2
                         inc     a
-                        ld      hl,ScannerColourTable
                         add     hl,a
                         ld      a,(hl)
                         ENDM

@@ -42,6 +42,8 @@ SplitAndDampenX:        MACRO
 ; based on MVEIT part 4 of 9
 ; x and z counters are proper 2's c values
 ApplyShipRollAndPitch:  SplitAndDampenZ
+                        ;break
+                        ld      a,(UBnKRotZCounter)
 .PitchSAxes:            ld	    hl,UBnkrotmatRoofvX; UBnkrotmatSidevY
                         ld	    (varAxis1),hl
                         ld	    hl,UBnkrotmatNosevX; UBnkrotmatSidevZ	
@@ -58,6 +60,7 @@ ApplyShipRollAndPitch:  SplitAndDampenZ
                         ld	    (varAxis2),hl
                         call    MVS5RotateAxis
 .ProcessRoll:           SplitAndDampenX
+                        ;break
 .RollSAxis:           	ld	    hl,UBnkrotmatRoofvX; UBnkrotmatSidevX	
                         ld	    (varAxis1),hl
                         ld	    hl,UBnkrotmatSidevX; UBnkrotmatSidevY

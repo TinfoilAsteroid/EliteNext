@@ -249,9 +249,10 @@ UpdateSpeedAndPitch:    ld      a,(UBnKAccel)                   ; only apply non
 .SkipAccelleration:     ; handle roll and pitch rates                     
                         ret
 
-UnivSetEnemyMissile:    ld      hl,NewLaunchUBnKX               ; Copy launch ship matrix
+UnivSetEnemyMissile:    break
+                        ld      hl,NewLaunchUBnKX               ; Copy launch ship matrix
                         ld      de,UBnKxlo                      ; 
-                        ld      bc,(3*3) + (3*3*3 )             ; positon + 3 rows of 3 bytes
+                        ld      bc,NewLaunchDataBlockSize       ; positon + 3 rows of 3 bytes
                         ldir                                    ; 
 .SetUpSpeed:            ld      a,3                             ; set accelleration
                         ld      (UBnKAccel),a                   ;
@@ -315,7 +316,7 @@ ShipMissileBlast:       ld      a,(CurrentMissileBlastDamage)
                         ret
 ; --------------------------------------------------------------                        
 ; This sets the ship as a shower of explosiondwd
-UnivExplodeShip:        ;break   
+UnivExplodeShip:        break   
                         ld      a,(UBnkaiatkecm)
                         or      ShipExploding | ShipKilled      ; Set Exlpoding flag and mark as just been killed
                         and     Bit7Clear                       ; Remove AI
@@ -438,8 +439,7 @@ FighterTypeMapping:     DB ShipID_Worm, ShipID_Sidewinder, ShipID_Viper, ShipID_
 ; Initialiase data, iyh must equal slot number
 ;                   iyl must be ship type
 ;                   a  = current bank number
-UnivInitRuntime:        ld      (UbnKShipUnivBankNbr),a     ; actual bank nmber related to the slot
-                        ld      bc,UBnKRuntimeSize
+UnivInitRuntime:        ld      bc,UBnKRuntimeSize
                         ld      hl,UBnKStartOfRuntimeData
                         ZeroA
                         ld      (UBnKECMCountDown),a
@@ -449,8 +449,10 @@ UnivInitRuntime:        ld      (UbnKShipUnivBankNbr),a     ; actual bank nmber 
 .SetEnergy:             ldCopyByte EnergyAddr, UBnKEnergy
 .SetBankData:           ld      a,iyh
                         ld      (UBnKSlotNumber),a
+                        add     a,BankUNIVDATA0
+                        ld      (UbnKShipUnivBankNbr),a
                         ld      a,iyl
-                        ld      (UBnKShipModeID),a
+                        ld      (UBnKShipModelId),a
                         call    GetShipBankId                ; this will mostly be debugging info
                         ld      (UBnkShipModelBank),a        ; this will mostly be debugging info
                         ld      a,b                          ; this will mostly be debugging info

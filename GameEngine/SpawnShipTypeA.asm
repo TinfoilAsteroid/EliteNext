@@ -30,4 +30,5 @@ SpawnShipTypeA:         ;break
                         ld      b,a                                 ; and set the type into slot table
                         ld      a,iyh                               ;
                         call    SetSlotAToClassB                    ;
+                        ClearCarryFlag                              ; no carry on success
                         ret

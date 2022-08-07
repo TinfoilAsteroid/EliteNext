@@ -69,6 +69,10 @@ McopyNormsToUniverse:   MACRO
 MCopyShipToUniverse:    MACRO       banklabel
                         ld          hl,UBnkShipModelBank
                         ld          (hl),banklabel
+                        push        af
+                        ld          a,iyl
+                        ld          (UBnKShipModelId),a
+                        pop         af
                         ld          (UBnKShipModelNbr),a
 .GetHullDataLength:     ld          hl,ShipModelSizeTable
                         add         hl,a
@@ -89,13 +93,13 @@ MCopyShipToUniverse:    MACRO       banklabel
                         call        CopyVertsToUniv
                         call        CopyEdgesToUniv
                         call        CopyNormsToUniv
-                        ld          hl,StartOfUnivName
+.ClearName:             ld          hl,StartOfUnivName
                         ld          a," "
                         ld          b,16
 .fillLoop:              ld          (hl),a
                         inc         hl
                         djnz        .fillLoop
-                        ld          a,(UBnKShipModelNbr)
+.SetName:               ld          a,(UBnKShipModelId)
                         call        ShipIndexToAddress
                         ld          de,StartOfUnivName
                         ld          b,16

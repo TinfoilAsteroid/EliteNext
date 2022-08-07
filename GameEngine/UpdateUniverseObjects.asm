@@ -32,7 +32,7 @@ VeryCloseCheck:             MACRO
 JumpIfNotDockingCheck:      MACRO   NotDocking
 .CheckIfDockable:           ld      a,(ShipTypeAddr)                                ; Now we have the correct bank
                             JumpIfANENusng  ShipTypeStation, NotDocking             ; if its not a station so we don't test docking
-.IsDockableAngryCheck:      JumpOnMemBitSet ShipNewBitsAddr, ShipAngryNewBitNbr, NotDocking ; if it is angry then we dont test docking
+.IsDockableHostoleCheck:    JumpOnMemBitSet ShipNewBitsAddr, ShipHostileNewBitNbr, NotDocking ; if it is angry then we dont test docking
 .CheckHighNoseZ:            JumpIfMemLTNusng  UBnkrotmatNosevZ+1 , 214, NotDocking  ; get get high byte of rotmat this is the magic angle to be within 26 degrees +/-
 .GetStationVector:          call    GetStationVectorToWork                          ; Normalise position into XX15 as in effect its a vector from out ship to it given we are always 0,0,0, returns with A holding vector z
                             JumpIfALTNusng  89, NotDocking                          ; if the z axis <89 the we are not in the 22 degree angle,m if its negative then unsigned comparison will cater for this
@@ -146,11 +146,11 @@ UpdateUniverseObjects:  xor     a
                         ld      (SelectedUniverseSlot),a                        ; else update loop pointer
                         jp      .UpdateUniverseLoop                             ; if there are more to go we continue
 .UpdateAICounter:       IncMemMaxNCycle CurrentUniverseAI , UniverseSlotListSize
-.CheckIfStationAngry:   ReturnIfMemFalse  SetStationAngryFlag                   ; we coudl move this to pre loop so its only done once
-.SetStationAngryIfPoss: ReturnIfMemNeNusng UniverseSlotList, ShipTypeStation
+.CheckIfStationHostile: ReturnIfMemFalse  SetStationHostileFlag                ; we coudl move this to pre loop so its only done once
+.CheckSetStationHostile:ReturnIfMemNeNusng UniverseSlotList, ShipTypeStation
                         MMUSelectUniverseN 0
                         call    SetShipHostile
-                        SetMemFalse    SetStationAngryFlag
+                        SetMemFalse    SetStationHostileFlag
                         ret
 .UpdateMissile:         ;break
                         call    UpdateShip                                      ; we do it this way top avoid double calling

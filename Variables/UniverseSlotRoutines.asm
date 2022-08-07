@@ -64,7 +64,8 @@ ClearFreeSlotListSaveA: ld      d,a
                         djnz    .fillLoop
                         ret
 
-ClearSlotA:             ld      hl,UniverseSlotList
+ClearSlotA:             break
+                        ld      hl,UniverseSlotList
                         add     hl,a
                         ld      (hl),$FF
                         ld      a,UniverseSlotListSize  ; move to types

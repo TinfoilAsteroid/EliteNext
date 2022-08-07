@@ -95,7 +95,7 @@ MMUSelectUniverseN:  MACRO value
                      ENDM
                      
 MMUSelectGalaxyA:    MACRO
-                     nextreg GalaxyDataMMU,       a
+                     nextreg GalaxyDataMMU,     a
                      ENDM
 
 MMUSelectGalaxyN:    MACRO value

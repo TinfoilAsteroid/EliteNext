@@ -89,31 +89,37 @@ ShipFighterWorm         equ %00000000
 ShipFighterSidewinder   equ %00000100
 ShipFighterViper        equ %00001000
 ShipFighterThargon      equ %00001100
+ShipUltraHostile        equ %00000010   ; If ultra hostile, will never back down so behaves like a missile
 ShipFree                equ $00000011   ; Unused bits at present for later
 ; NewBTactics
 ShipIsTrader            equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
 ShipIsBountyHunter      equ Bit1Only   ; 
-ShipIsHostile           equ Bit2Only   ;
+ShipIsHostile           equ Bit2Only   ; Also used as Angry flag now
 ShipIsPirate            equ Bit3Only   ; 
 ShipIsDocking           equ Bit4Only   ; 
 ShipIsBystander         equ Bit5Only   ; 
 ShipIsCop               equ Bit6Only   ; 
 ShipHasEscapePod        equ Bit7Only   ;
+ShipHostileNewBitNbr    equ 2
 
 ; UBnkaiatkecm
+;Unused                 equ Bit0Only
+;Unused                 equ Bit1Only
+;Unused                 equ Bit2Only
+ShipIsDot               equ Bit3Only
 ShipKilled              equ Bit4Only    ; Ship has just been marked as killed so initiate cloud of debris
 ShipExploding           equ Bit5Only
+ShipIsVisible           equ Bit6Only
 ShipAIEnabled           equ Bit7Only   ; 
-; UBnkaiakecm 2
 
-ShipAngryNewBitNbr      equ 4
+
+; UBnkaiakecm 2
+;ShipAngryNewBitNbr      equ 4
 ShipExplosionDuration   equ 75         ; amount of frames an explosion lasts for
 ShipNotHostile          equ Bit2Clear   ;
-ShipIsDot               equ Bit3Only
 ShipIsNotDot            equ Bit3Clear
 ShipIsDotBitNbr         equ 3
 ShipKilledBitNbr        equ 4
-ShipIsVisible           equ Bit6Only
 ShipIsVisibleBitNbr     equ 6
 ShipIsScoopDockEsc      equ Bit7Only   ; 
 ShipAIDisabled          equ Bit7Clear

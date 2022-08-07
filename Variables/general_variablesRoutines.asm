@@ -65,7 +65,7 @@ InitMainLoop:           call    ClearUnivSlotList
                         ld      (CurrentUniverseAI),a
                         ld      a,3
                         ld      (MenuIdMax),a
-                        SetMemFalse SetStationAngryFlag
+                        SetMemFalse SetStationHostileFlag
                         SetMemFalse DockedFlag
 ;                        call    InitialiseFrontView
                         call    InitialiseCommander

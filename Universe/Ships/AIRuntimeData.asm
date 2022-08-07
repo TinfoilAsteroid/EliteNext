@@ -37,7 +37,7 @@ UBnKSlotNumber              DB  0
 UbnKShipUnivBankNbr         DB  0                       ; Present ship universe bank number
 UBnkShipModelBank           DB  0                       ; Bank nbr ship was from
 UBnKShipModelNbr            DB  0                       ; Ship Id with in the bank
-UBnKShipModeID              DB  0                       ; Absolute ship id
+UBnKShipModelId             DB  0                       ; Absolute ship id
 ; -- Ship AI data
 UBnKMissleHitToProcess      DB  0                       ; This is used for enquing missle blasts as we can only do one missile at a time, could make it multi but neeed to smooth CPU usage
 UBnKMissileTarget           DB  0                       ; This is the ship slot number for the target from 0 to n if the missile is not hostile to us, if the target is $FF then its us
@@ -54,6 +54,7 @@ univRAT2                    DB  0               ; 9A
 univRAT2Val                 DB  0               ; 9A
 UBnKexplDsp                 DB  0                       ; INWK +31 clear exploding/display state|missiles
 UBnkDrawAllFaces            DB  0
+UBnKShipAggression          DB  0                       ; calculated agression factor
 UBnkaiatkecm                DB  0                       ; INWK +32 ai_attack_univ_ecm i.e. AI type
 UBnKSpawnObject             DB  0
 UBnkCam0yLo                 DB  0                       ; INWK +33 ????
