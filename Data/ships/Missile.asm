@@ -1,4 +1,4 @@
-    DEFINE DEBUGMODEL 1
+;    DEFINE DEBUGMODEL 1
 Missile:	            DB $00                     ; Number of cargo canisters released when destroyed
                         DW $0640                   ; Ship's targetable area LoHi
                         DW MissileEdges            ; Edge Data 

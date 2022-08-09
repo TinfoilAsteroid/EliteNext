@@ -19,31 +19,10 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         ld      c,a                                 ; c holds detonation range
                         call    MissileHitUsCheckPos
 .MissileNotHitUsYet:    jp      nc, .UpdateTargetingUsPos
-.MissleHitUs:           break
-                        call    PlayerHitByMissile
+.MissleHitUs:           call    PlayerHitByMissile
                         jp      .ECMIsActive                        ; we use ECM logic to destroy missile which eqneues is
 .UpdateTargetingUsPos:  call    SetPlayerAsTarget
                         call    CopyPosToVector
-                        ld      hl,(UBnKxlo)
-                        ld      a,(UBnKxsgn)
-                        ld      (TacticsVectorX),hl
-                        ;xor     $80
-                        ld      (TacticsVectorX),hl
-                        ld      (TacticsVectorX+2),a
-
-                        ld      hl,(UBnKylo)
-                        ld      a,(UBnKysgn)
-                        ld      (TacticsVectorY),hl
-                        ;xor     $80
-                        ld      (TacticsVectorY),hl
-                        ld      (TacticsVectorY+2),a
-
-                        ld      hl,(UBnKzlo)
-                        ld      a,(UBnKzsgn)
-                        ld      (TacticsVectorZ),hl
-                        ;xor     $80
-                        ld      (TacticsVectorZ),hl
-                        ld      (TacticsVectorZ+2),a
                         ld      a,(SelectedUniverseSlot)            ; we will use this quite a lot with next bank switching
                         add     a,BankUNIVDATA0                     ; pre calculate add to optimise
                         ld      iyh,a

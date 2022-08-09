@@ -4,7 +4,6 @@
 ApplyDamage:            ClearCarryFlag
                         sbc     b
                         ret     nc                  ; no carry so was not negative
-                        
 .KilledShield:          neg                         ; over hit shield
                         ld      c,a                 ; save overhit in c
                         ld      a,(PlayerEnergy)    ; and apply it to player energy

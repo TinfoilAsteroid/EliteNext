@@ -86,7 +86,10 @@ ReturnIfNotZero:        MACRO
                         ret     nz
                         ENDM
                         
-
+ReturnIfZero:           MACRO
+                        ret     z
+                        ENDM
+    
 ReturnIfNegative:       MACRO
                         ret     m
                         ENDM

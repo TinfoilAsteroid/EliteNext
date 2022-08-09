@@ -1,4 +1,4 @@
-    DEFINE DEBUGMISSILELAUNCH 1
+;    DEFINE DEBUGMISSILELAUNCH 1
 ; In  flight ship data tables
 ; In  flight ship data tables
 ; There can be upto &12 objects in flight.
@@ -249,8 +249,7 @@ UpdateSpeedAndPitch:    ld      a,(UBnKAccel)                   ; only apply non
 .SkipAccelleration:     ; handle roll and pitch rates                     
                         ret
 
-UnivSetEnemyMissile:    break
-                        ld      hl,NewLaunchUBnKX               ; Copy launch ship matrix
+UnivSetEnemyMissile:    ld      hl,NewLaunchUBnKX               ; Copy launch ship matrix
                         ld      de,UBnKxlo                      ; 
                         ld      bc,NewLaunchDataBlockSize       ; positon + 3 rows of 3 bytes
                         ldir                                    ; 
@@ -270,8 +269,13 @@ UnivSetEnemyMissile:    break
                         ld      a,ShipAIEnabled
                         ld      (UBnkaiatkecm),a
                         call    SetShipHostile
+.SetupPayload:          ld      a,150
+                        ld      (UBnKMissileBlastDamage),a
+                        ld      (UBnKMissileDetonateDamage),a
+                        ld      a,5
+                        ld      (UBnKMissileBlastRange),a
+                        ld      (UBnKMissileDetonateRange),a
                         ret
-                        
 
 ; --------------------------------------------------------------                        
 ; This sets the position of the current ship if its a player launched missile

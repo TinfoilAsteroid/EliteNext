@@ -28,7 +28,7 @@ TacticsPad3A            DB "Targ="
 TacticsTargetX          DS 3
 TacticsTargetY          DS 3 
 TacticsTargetZ          DS 3
-TacticsPad3B            DB "=  "
+TacticsPad3B            DB "= "
 TacticsPad4A            DB "VectX"
 TacticsVectorX:         DS 3
 TacticsPad4B            DB "Y"

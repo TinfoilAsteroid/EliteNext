@@ -1,5 +1,6 @@
     DEFINE DEBUGDRAWDISTANCE 1
-    DEFINE DEBUGFORCEFACEDRAW 1
+    DEFINE CHECKDOTSHIPDATA
+;    DEFINE DEBUGFORCEFACEDRAW 1
 CurrentNormIdx  DB 0
 ; SomeFacesVisible:   
 ; EE29:             
@@ -66,26 +67,38 @@ CheckVisible:           ld      a,(UBnKzsgn)                 ; Is the ship behin
 .CheckYAxis:            ld      de,(UBnKylo)                ; if abs y > abx z then its out side of view port
                         call    compare16HLDE
                         jr      c,.ShipNoDraw               ; ship is too far out on the X Axis
-.CalculateXX4:          ShiftHLRight1                       ; hl = z pos / 8        
-                        ShiftHLRight1                       ; .
-                        ShiftHLRight1                       ; .
-                        ld      a,h
-                        srl     a                           ; if a / 16 <> 0 then ship is a dot
-.DrawAsDotCheck:        JumpIfNotZero   .ShipIsADot
-                        ; Check visbility distance
-.SetXX4Dist:            ;break
-                        ld      a,l
-                        rra                                 ; l may have had bit 0 of h carried in
-                        srl     a                           ; so move it to bit 4 giving A as distance $000xxxxx
-                        srl     a
-                        srl     a
-                        ld      (UBnkDrawAllFaces),a        ; XX4 = "all faces" distance
-                        ld      a,(UBnkaiatkecm)            ; its visible but a dot
-                        or      ShipIsVisible               ; Visible and not a dot
-                        and     ShipIsNotDot                ;
-                        ld      (UBnkaiatkecm),a            ;
-                        ClearCarryFlag
-                        ret
+                        IFDEF   CHECKDOTSHIPDATA
+.CheckDotV2:                ld      a,(DotAddr)
+                            JumpIfAGTENusng h, .DrawFull
+                            jp      .ShipIsADot
+.DrawFull:                  ld      a,(UBnkaiatkecm)            ; its visible but a dot
+                            or      ShipIsVisible               ; Visible and not a dot
+                            and     ShipIsNotDot                ;
+                            ld      (UBnkaiatkecm),a            ;
+                            ClearCarryFlag
+                            ret
+                        ELSE
+.CalculateXX4:              ShiftHLRight1                       ; hl = z pos / 8        
+                            ShiftHLRight1                       ; .
+                            ShiftHLRight1                       ; .
+                            ld      a,h
+                            srl     a                           ; if a / 16 <> 0 then ship is a dot
+.DrawAsDotCheck:            JumpIfNotZero   .ShipIsADot
+                            ; Check visbility distance
+.SetXX4Dist:                ;break
+                            ld      a,l
+                            rra                                 ; l may have had bit 0 of h carried in
+                            srl     a                           ; so move it to bit 4 giving A as distance $000xxxxx
+                            srl     a
+                            srl     a
+                            ld      (UBnkDrawAllFaces),a        ; XX4 = "all faces" distance
+                            ld      a,(UBnkaiatkecm)            ; its visible but a dot
+                            or      ShipIsVisible               ; Visible and not a dot
+                            and     ShipIsNotDot                ;
+                            ld      (UBnkaiatkecm),a            ;
+                            ClearCarryFlag
+                            ret
+                        ENDIF
 .ShipNoDraw:            ClearMemBitN  UBnkaiatkecm  , ShipIsVisibleBitNbr ; Assume its hidden
                         ret
 .ShipIsADot:            ld      a,(UBnkaiatkecm)            ; its visible but a dot

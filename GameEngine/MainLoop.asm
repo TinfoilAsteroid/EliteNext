@@ -3,6 +3,7 @@
     DEFINE  MAINLOOP_ECM
     DEFINE  MAINLOOP_KEYBOARDSCAN
 ;    DEFINE  MAINLOOP_DEMOSHIPS
+;   DEFINE  MAINLOOP_DEBUGMISSILE 1
     DEFINE  MAINLOOP_INPUTHANDLER
     DEFINE  MAINLOOP_EVENTHANDLER
     DEFINE  MAINLOOP_RECHARGE
@@ -55,7 +56,7 @@ TestAreWeDocked:        JumpIfMemNeNusng DockedFlag, StateNormal, UpdateLoop    
 .UpdateEventCounter:    ld      hl,EventCounter                                         ; evnery 256 cycles we do a trigger test
                         dec     (hl)    
                     ENDIF
-                    IFNDEF DEBUGMISSILETEST
+                    IFNDEF MAINLOOP_DEBUGMISSILE
 .ProcessEvent:          call    z,LoopEventTriggered    
                     ENDIF
                     IFDEF MAINLOOP_RECHARGE
@@ -315,7 +316,7 @@ EnemyMissileLaunchPos:  DS 3 * 3
 EnemyMissileLaunchMat:  DS 2 * 3
 
 
-LaunchEnemyMissile:     break
+LaunchEnemyMissile:     ; break
                         ld      a,(UbnKShipUnivBankNbr)             ; save current bank number
                         ld      (EnemyShipBank),a                   ;
                         ld      a,5

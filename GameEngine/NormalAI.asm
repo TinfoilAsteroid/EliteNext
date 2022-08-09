@@ -1,4 +1,4 @@
-                        DEFINE DEBUGFORCEHOSTILE 1
+ ;                       DEFINE DEBUGFORCEHOSTILE 1
 
 NewLaunchUBnKX          DS 3
 NewLaunchUBnKY          DS 3
@@ -178,14 +178,12 @@ ShipSeekingLogic:       call    XX12EquTacticsDotNosev              ; SA = nose 
                         ld      (TacticsDotProduct2),a              ; so if its +ve then the roof is similar so pull up to head towards it
                         ld      a,(varS)                            ; .                                       
                         ld      (TacticsDotProduct2+1),a            ; Note here its direction not dir
-                        call    ShipPitchv2
-                        call    ShipRollv2
-                        call    ShipSpeedv2
+                        call    ShipPitchv3
+                        call    ShipRollv3
+                        call    ShipSpeedv3
                         ret
 
-
-ShipPitchv2:  ;break
-                        ld      hl,(TacticsDotProduct2)            ; pitch counter sign = opposite sign to roofdir sign
+ShipPitchv3:            ld      hl,(TacticsDotProduct2)            ; pitch counter sign = opposite sign to roofdir sign
                         ld      a,h                                ; .
                         xor     $80                                ; .
                         and     $80                                ; .
@@ -200,7 +198,7 @@ ShipPitchv2:  ;break
                             ld  (TacticsRotZ),a
                         ENDIF
                         ret
-.skipPitchZero:         ld      a,3
+.skipPitchZero:         ld      a,2
                         or      h
                         ld      (UBnKRotZCounter),a
                         IFDEF MISSILEDEBUG
@@ -208,7 +206,7 @@ ShipPitchv2:  ;break
                         ENDIF
                         ret
                         
-ShipRollv2:             call    XX12EquTacticsDotSidev             ; calculate side dot protuct
+ShipRollv3:             call    XX12EquTacticsDotSidev             ; calculate side dot protuct
                         ld      (TacticsDotProduct3),a             ; .
                         ld      l,a                                ; .
                         ld      a,(varS)                           ; .
@@ -226,7 +224,7 @@ ShipRollv2:             call    XX12EquTacticsDotSidev             ; calculate s
                             ld  (TacticsRotX),a
                         ENDIF
                         ret
-.skipRollZero:          ld      a,3
+.skipRollZero:          ld      a,2
                         or      h
                         xor     b
                         ld      (UBnKRotXCounter),a
@@ -235,93 +233,7 @@ ShipRollv2:             call    XX12EquTacticsDotSidev             ; calculate s
                         ENDIF
                         ret
 
-ShipSpeedv2:            ld      hl,(TacticsDotProduct1)
-                        ld      a,h
-                        and     a
-                        jr      nz,.SlowDown
-                        ld      de,(TacticsDotProduct2)             ; dot product is +ve so heading at each other
-                        ld      a,l 
-                        JumpIfALTNusng  22,.SlowDown                                  ; nose dot product < 
-.Accelerate:            ld      a,2                                 ; else
-                        ld      (UBnKAccel),a                       ;  accelleration = 3
-                        IFDEF MISSILEDEBUG
-                            ld  (TacticsSpeed),a
-                        ENDIF                        
-                        ret                                         ;  .
-.SlowDown:              JumpIfALTNusng 18, .NoSpeedChange
-.Deccelerate:           ld      a,-1
-                        ld      (UBnKAccel),a
-                        IFDEF MISSILEDEBUG
-                            ld  (TacticsSpeed),a
-                        ENDIF
-                        ret
-.NoSpeedChange:         ZeroA                                       ; else no change
-                        ld      (UBnKAccel),a
-                        IFDEF MISSILEDEBUG
-                            ld  (TacticsSpeed),a
-                        ENDIF
-                        ret
-
-
-
-RAT2 equ    4           ; roll pitch threshold
-RAT  equ    3           ; magnitude of counter
-CNT2 equ    22          ; angle for ship slowdown
-                        
-                        
-ShipPitch:              ld      hl,(TacticsDotProduct2)            ; pitch counter sign = opposite sign to roofdir sign
-                        ld      a,h                                ; .
-                        xor     $80                                ; .
-                        and     $80                                ; .
-                        ld      h,a                                ; h  = flipped sign
-                        ld      a,l                                ; a = value * 2
-                        sla     a                                  ; 
-                        JumpIfAGTENusng RAT2, .skipPitchZero         ; if its > 16 then update pitch
-                        ZeroA                                      ; else we zero pitch but
-                        or      h                                  ; we need to retain the sign
-                        ld      (UBnKRotZCounter),a                ; .
-                        IFDEF MISSILEDEBUG
-                            ld  (TacticsRotZ),a
-                        ENDIF
-                        ret
-.skipPitchZero:         ld      a,l
-                        or      h
-                        ld      (UBnKRotZCounter),a
-                        IFDEF MISSILEDEBUG
-                            ld  (TacticsRotZ),a
-                        ENDIF
-                        ret
-                        
-
-                        ;
-ShipRoll:               call    XX12EquTacticsDotSidev             ; calculate side dot protuct
-                        ld      (TacticsDotProduct3),a             ; .
-                        ld      l,a                                ; .
-                        ld      a,(varS)                           ; .
-                        ld      (TacticsDotProduct3+1),a           ; .
-                        ld      h,a                                ; h = sign sidev
-                        ld      a,(TacticsDotProduct2+1)           ; get flipped pitch counter sign
-                        ld      b,a                                ; b = roof product
-                        ld      a,l                                ; a = abs sidev  * 2
-                        sla     a                                  ;
-                        JumpIfAGTENusng RAT2,.skipRollZero           ;
-                        ZeroA                                      ; if its zoer then set rotx to zero
-                        or      b
-                        ld      (UBnKRotXCounter),a
-                        IFDEF MISSILEDEBUG
-                            ld  (TacticsRotX),a
-                        ENDIF
-                        ret
-.skipRollZero:          ld      a,1
-                        or      h
-                        xor     b
-                        ld      (UBnKRotXCounter),a
-                        IFDEF MISSILEDEBUG
-                            ld  (TacticsRotX),a
-                        ENDIF
-                        ret
-
-ShipSpeed:              ld      hl,(TacticsDotProduct1)
+ShipSpeedv3:            ld      hl,(TacticsDotProduct1)
                         ld      a,h
                         and     a
                         jr      nz,.SlowDown
@@ -347,3 +259,171 @@ ShipSpeed:              ld      hl,(TacticsDotProduct1)
                             ld  (TacticsSpeed),a
                         ENDIF
                         ret
+;;;ShipPitchv2:  ;break
+;;;                        ld      hl,(TacticsDotProduct2)            ; pitch counter sign = opposite sign to roofdir sign
+;;;                        ld      a,h                                ; .
+;;;                        xor     $80                                ; .
+;;;                        and     $80                                ; .
+;;;                        ld      h,a                                ; h  = flipped sign
+;;;                        ld      a,l                                ; a = value * 2
+;;;                        sla     a                                  ; 
+;;;                        JumpIfAGTENusng 16, .skipPitchZero         ; if its > 16 then update pitch
+;;;                        ZeroA                                      ; else we zero pitch but
+;;;                        or      h                                  ; we need to retain the sign
+;;;                        ld      (UBnKRotZCounter),a                ; .
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsRotZ),a
+;;;                        ENDIF
+;;;                        ret
+;;;.skipPitchZero:         ld      a,3
+;;;                        or      h
+;;;                        ld      (UBnKRotZCounter),a
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsRotZ),a
+;;;                        ENDIF
+;;;                        ret
+                        
+                        
+;;;ShipRollv2:             ld      a,(UBnKRotXCounter)
+;;;                        and     $7F
+;;;                        cp      16
+;;;                        ret     z
+;;;                        call    XX12EquTacticsDotSidev             ; calculate side dot protuct
+;;;                        ld      (TacticsDotProduct3),a             ; .
+;;;                        ld      l,a                                ; .
+;;;                        ld      a,(varS)                           ; .
+;;;                        ld      (TacticsDotProduct3+1),a           ; .
+;;;                        ld      h,a                                ; h = sign sidev
+;;;                        ld      a,(TacticsDotProduct2+1)           ; get flipped pitch counter sign
+;;;                        ld      b,a                                ; b = roof product
+;;;                        ld      a,l                                ; a = abs sidev  * 2
+;;;                        sla     a                                  ;
+;;;                        JumpIfAGTENusng 16,.skipRollZero           ;
+;;;                        ZeroA                                      ; if its zoer then set rotx to zero
+;;;                        or      b
+;;;                        ld      (UBnKRotXCounter),a
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsRotX),a
+;;;                        ENDIF
+;;;                        ret
+;;;.skipRollZero:          ld      a,3
+;;;                        or      h
+;;;                        xor     b
+;;;                        ld      (UBnKRotXCounter),a
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsRotX),a
+;;;                        ENDIF
+;;;                        ret
+;;;
+;;;ShipSpeedv2:            ld      hl,(TacticsDotProduct1)
+;;;                        ld      a,h
+;;;                        and     a
+;;;                        jr      nz,.SlowDown
+;;;                        ld      de,(TacticsDotProduct2)             ; dot product is +ve so heading at each other
+;;;                        ld      a,l 
+;;;                        JumpIfALTNusng  22,.SlowDown                                  ; nose dot product < 
+;;;.Accelerate:            ld      a,2                                 ; else
+;;;                        ld      (UBnKAccel),a                       ;  accelleration = 3
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsSpeed),a
+;;;                        ENDIF                        
+;;;                        ret                                         ;  .
+;;;.SlowDown:              JumpIfALTNusng 18, .NoSpeedChange
+;;;.Deccelerate:           ld      a,-1
+;;;                        ld      (UBnKAccel),a
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsSpeed),a
+;;;                        ENDIF
+;;;                        ret
+;;;.NoSpeedChange:         ZeroA                                       ; else no change
+;;;                        ld      (UBnKAccel),a
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsSpeed),a
+;;;                        ENDIF
+;;;                        ret
+;;;
+;;;
+;;;
+;;;RAT2 equ    4           ; roll pitch threshold
+;;;RAT  equ    3           ; magnitude of counter
+;;;CNT2 equ    22          ; angle for ship slowdown
+;;;                        
+;;;                        
+;;;ShipPitch:              ld      hl,(TacticsDotProduct2)            ; pitch counter sign = opposite sign to roofdir sign
+;;;                        ld      a,h                                ; .
+;;;                        xor     $80                                ; .
+;;;                        and     $80                                ; .
+;;;                        ld      h,a                                ; h  = flipped sign
+;;;                        ld      a,l                                ; a = value * 2
+;;;                        sla     a                                  ; 
+;;;                        JumpIfAGTENusng RAT2, .skipPitchZero         ; if its > 16 then update pitch
+;;;                        ZeroA                                      ; else we zero pitch but
+;;;                        or      h                                  ; we need to retain the sign
+;;;                        ld      (UBnKRotZCounter),a                ; .
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsRotZ),a
+;;;                        ENDIF
+;;;                        ret
+;;;.skipPitchZero:         ld      a,l
+;;;                        or      h
+;;;                        ld      (UBnKRotZCounter),a
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsRotZ),a
+;;;                        ENDIF
+;;;                        ret
+;;;                        
+;;;
+;;;                        ;
+;;;ShipRoll:               call    XX12EquTacticsDotSidev             ; calculate side dot protuct
+;;;                        ld      (TacticsDotProduct3),a             ; .
+;;;                        ld      l,a                                ; .
+;;;                        ld      a,(varS)                           ; .
+;;;                        ld      (TacticsDotProduct3+1),a           ; .
+;;;                        ld      h,a                                ; h = sign sidev
+;;;                        ld      a,(TacticsDotProduct2+1)           ; get flipped pitch counter sign
+;;;                        ld      b,a                                ; b = roof product
+;;;                        ld      a,l                                ; a = abs sidev  * 2
+;;;                        sla     a                                  ;
+;;;                        JumpIfAGTENusng RAT2,.skipRollZero           ;
+;;;                        ZeroA                                      ; if its zoer then set rotx to zero
+;;;                        or      b
+;;;                        ld      (UBnKRotXCounter),a
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsRotX),a
+;;;                        ENDIF
+;;;                        ret
+;;;.skipRollZero:          ld      a,1
+;;;                        or      h
+;;;                        xor     b
+;;;                        ld      (UBnKRotXCounter),a
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsRotX),a
+;;;                        ENDIF
+;;;                        ret
+;;;
+;;;ShipSpeed:              ld      hl,(TacticsDotProduct1)
+;;;                        ld      a,h
+;;;                        and     a
+;;;                        jr      nz,.SlowDown
+;;;                        ld      de,(TacticsDotProduct2)             ; dot product is +ve so heading at each other
+;;;                        ld      a,l 
+;;;                        JumpIfALTNusng  22,.SlowDown                                  ; nose dot product < 
+;;;.Accelerate:            ld      a,3                                 ; else
+;;;                        ld      (UBnKAccel),a                       ;  accelleration = 3
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsSpeed),a
+;;;                        ENDIF                        
+;;;                        ret                                         ;  .
+;;;.SlowDown:              JumpIfALTNusng 18, .NoSpeedChange
+;;;.Deccelerate:           ld      a,-1
+;;;                        ld      (UBnKAccel),a
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsSpeed),a
+;;;                        ENDIF
+;;;                        ret
+;;;.NoSpeedChange:         ZeroA                                       ; else no change
+;;;                        ld      (UBnKAccel),a
+;;;                        IFDEF MISSILEDEBUG
+;;;                            ld  (TacticsSpeed),a
+;;;                        ENDIF
+;;;                        ret

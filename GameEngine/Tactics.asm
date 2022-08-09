@@ -1,5 +1,6 @@
 
                         DEFINE TACTICSDEBUG 1
+;                       DEFINE ALWAYSANGRY 1
 ;                        DEFINE TARGETDEBUG 1
 MISSILEMAXPITCH         equ 3
 MISSILEMINPITCH         equ -3
@@ -66,16 +67,28 @@ ScoopableAI:            ret
 ThargoidAI:             ret
 NoAI:                   ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-CalculateAgression:     ld      a,(ShipAIFlagsAddr)
+CalculateAgression:     IFDEF   ALWAYSANGRY
+                            jp  UltraHostile
+                        ENDIF
+                        ld      a,(ShipAIFlagsAddr)
                         ld      b,a
                         and     %00000010
                         jr      nz,.UltraHostile
                         ld      a,b
                         and     %11110000                               ; if it can can anger a fighter bay then generally more hostile as implies its a large ship
-                        ld      b,a
+                        ld      hl,UBnKMissilesLeft                     ; more missiles more agression
+                        or      (hl)
+                        ld      b,a                       
                         ld      a,(ShipNewBitsAddr)
                         and     %01001110                               ; We look at if its a bounty hunter, hostile already, pirate and cop
                         or      b
+                        ld      b,a
+                        ld      a,(UBnKShipAggression)
+                        JumpIfALTNusng 64,.NotAlreadyAgressive
+                        ld      a,b
+                        or      %10000000                               ; if its already at least 64 agressive then likley to stay so
+                        ld      b,a
+.NotAlreadyAgressive:   ld      a,b
                         ld      (UBnKShipAggression),a
                         ret
 .UltraHostile:          ld      a,$FF
@@ -103,7 +116,22 @@ MakeHostile:            ld      a,(ShipNewBitsAddr)                     ; Check 
 MissileDidHitUs:        ret ; TODO
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-PlayerHitByMissile:     ret; TODO , do hit set up blast radius etc
+PlayerHitByMissile:     MMUSelectLayer1
+                        ld      a,L1ColourInkCyan
+                        call    l1_set_border
+                        ld      a,(UBnKMissileBlastDamage)
+                        ld      b,a                                     ; b = damage
+                        ld      a,(UBnKzsgn)
+                        and     $80
+                        jr      nz,.HitRear
+.HitFront:              ld      a,(ForeShield)
+                        call    ApplyDamage
+                        ld      (ForeShield),a
+                        ret
+.HitRear:               ld      a,(AftShield)
+                        call    ApplyDamage
+                        ld      (AftShield),a  
+                        ret; TODO , do hit set up blast radius etc
 ;----------------------------------------------------------------------------------------------------------------------------------
 MissileHitShipA:        MMUSelectLayer1
                         ld      a,L1ColourInkRed
@@ -187,6 +215,16 @@ CheckIfMissileHitUs:    ld      a,(UBnKMissileDetonateRange)
                         ld      c,a
 ;...................................................................
 MissileHitUsCheckPos:   ld      hl, (UBnKxlo)
+                        ld      de, (UBnKylo)
+                        ld      bc, (UBnKzlo)
+                        ld      a,h
+                        or      d
+                        or      b
+                        ClearCarryFlag
+                        ReturnIfNotZero
+                        SetCarryFlag
+                        ret
+                        
                         ZeroA
                         or      h
                         ClearCarryFlag
@@ -411,21 +449,18 @@ CopyToTargetVector:     ld      hl,UBnKxlo
 
 CopyPosToVector:        ld      hl,(UBnKxlo)
                         ld      a,(UBnKxsgn)
-                        ld      (TacticsVectorX),hl
                         ;xor     $80
                         ld      (TacticsVectorX),hl
                         ld      (TacticsVectorX+2),a
 
                         ld      hl,(UBnKylo)
                         ld      a,(UBnKysgn)
-                        ld      (TacticsVectorY),hl
                         ;xor     $80
                         ld      (TacticsVectorY),hl
                         ld      (TacticsVectorY+2),a
 
                         ld      hl,(UBnKzlo)
                         ld      a,(UBnKzsgn)
-                        ld      (TacticsVectorZ),hl
                         ;xor     $80
                         ld      (TacticsVectorZ),hl
                         ld      (TacticsVectorZ+2),a
