@@ -31,23 +31,22 @@ l2_set_color_upper2:    ld      a,0
                         ret
 
 
-l2_cls_upper_two_thirds:ld a,0								; pretend we are plotting pixel on row 0 to force top selection
-                        call asm_l2_row_bank_select
+l2_cls_upper_two_thirds:;ld a,0								; pretend we are plotting pixel on row 0 to force top selection
+                        asm_l2_bank_0_macro ; call asm_l2_row_bank_select
                         ld 	a,COLOUR_TRANSPARENT
                         call l2_cls_dma_bank
-                        ld a,64								; pretend we are plotting pixel on row 64 to force mid selection
-                        call asm_l2_row_bank_select
+                        ;ld a,64								; pretend we are plotting pixel on row 64 to force mid selection
+                        asm_l2_bank_1_macro ;call asm_l2_row_bank_select
                         ld 	a,COLOUR_TRANSPARENT
                         call l2_cls_dma_bank
                         ret
 
-l2_cls_lower_third:     ld a,128							; pretend we are plotting pixel on row 64 to force mid selection
-                        call asm_l2_row_bank_select
+l2_cls_lower_third:     ;ld a,128							; pretend we are plotting pixel on row 64 to force mid selection
+                        asm_l2_bank_2_macro; call asm_l2_row_bank_select
                         ld 	a,COLOUR_TRANSPARENT
                         call l2_cls_dma_bank
                         ret
 	 
 l2_cls:                 call l2_cls_upper_two_thirds
-                        call l2_cls_lower_third
-                        ret
+                        jp   l2_cls_lower_third
 	

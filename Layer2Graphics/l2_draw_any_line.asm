@@ -21,5 +21,6 @@ l2_draw_any_line:       ex		af,af'              ; save colour into a'
                         ld		e,a				    ; e holds colour on this call
                         jp		l2_draw_vert_line_to
 .SinglePixel:           ex		af,af'              ; get colour back into a
-                        jp      l2_plot_pixel
+                        l2_plot_macro; jp      l2_plot_pixel
+                        ret
 ;......................................................                        

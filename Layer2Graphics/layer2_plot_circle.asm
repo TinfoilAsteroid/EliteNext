@@ -110,11 +110,11 @@ l2_draw_circle:     ld		a,e
                     jp      .CircleLoop
 .PlotPixel:         ld		a,0                  ; This was originally indirect, where as it neeed to be value
                     push	de,,bc,,hl
-                    call 	l2_plot_pixel_y_test
+                    l2_plot_macro; call 	l2_plot_pixel_y_test
                     pop		de,,bc,,hl
                     ret
 CircleSinglepixel:  ld		a,e
-                    call	l2_plot_pixel_y_test
+                    l2_plot_macro; call	l2_plot_pixel_y_test
                     ret
 
 ; ">l2_draw_clipped_circle HL = Center X 2's c, DE = Center Y 2's c = center , c = radius, b = colour"
@@ -305,9 +305,9 @@ l2_draw_clipped_circle:     ld		b,e                     ; save Colour
                     push	de,,bc,,hl
                     ld      b,l                     ; At this point de = x and hl = y
                     ld      c,e
-                    call 	l2_plot_pixel_y_test
+                    l2_plot_macro; call 	l2_plot_pixel_y_test
                     pop		de,,bc,,hl
                     ret
 .circleSinglepixel:  ld		a,e
-                    call	l2_plot_pixel_y_test
+                    l2_plot_macro; call	l2_plot_pixel_y_test
                     ret

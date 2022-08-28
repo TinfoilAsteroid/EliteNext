@@ -9,6 +9,7 @@ Cobra_Mk_3_P:	        DB $01                              ; Number of cargo cani
                         DB Cobra_Mk_3_PEdgesCnt             ; Edges Count
                         DW $AF00                            ; Bounty LoHi
                         DB Cobra_Mk_3_PNormalsSize          ; Face (Normal) Count
+                        ; Add in a new byte for range for LoD, if this is zero then no LoD Data
                         DB $32                              ; Range when it turns to a dot
                         DB $96                              ; Energy Max
                         DB $1C                              ; Speed Max

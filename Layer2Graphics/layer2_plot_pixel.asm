@@ -1,3 +1,15 @@
+l2_plot_macro:          MACRO
+                        ld      a,b
+                        JumpIfAGTENusng 192 ,.NoPlot
+                        ld      l,c
+                        call    asm_l2_row_bank_select
+                        ld      h,a
+                        ld      a,(line_gfx_colour)
+                        ld      (hl),a
+.NoPlot:                        
+                        ENDM
+                        
+                        
 ; ">l2_plot_pixel b= row number, c = column number, a = pixel col"
 l2_plot_pixel:          push    af
                         ld      a,b

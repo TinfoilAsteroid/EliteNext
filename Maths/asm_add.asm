@@ -57,7 +57,7 @@ ADDHLDEsBCSameNeg:      add     hl,de
 ADDHLDEsBCOppSGN:       ClearCarryFlag
                         sbc     hl,de
                         jr      c,ADDHLDEsBCOppInvert
-ADDHLDEsBCOppSGNNoCarry: ld      a,b                        ; we got here so hl > de therefore we can just take hl's previous sign bit
+ADDHLDEsBCOppSGNNoCarry:ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
                         ret
 ADDHLDEsBCOppInvert:    NegHL                               ; if result was zero then set sign to zero (which doing h or l will give us for free)
                         ld      a,b

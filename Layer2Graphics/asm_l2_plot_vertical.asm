@@ -28,7 +28,7 @@ l2_draw_vert_line:      ld 		a,b
                         ret		z
                         cp		1
                         jr		nz,.multiplepixels
-.itsonepixel:           call	l2_plot_pixel
+.itsonepixel:           l2_plot_macro; call	l2_plot_pixel
                         ret
 .multiplepixels:						; so now we have at least 2 pixels to plot
 .clipto192:             ld		a,d							; get length

@@ -1,25 +1,36 @@
-LoadCraftToCamera:      ld      hl,UBnKxlo
-                        ld      de,UBnkDrawCam0xLo
-                        NineLDIInstrunctions                ; transfer 9 bytes
+LoadCraftToCamera:      ld      hl,(UBnKxlo)            ; UBnKxlo, UBnKxhi
+                        ld      de,(UBnKxsgn)           ; UBnKxsgn, UBnKylo
+                        ld      bc,(UBnKyhi)            ; UBnKyhi, UBnKysgn
+                        ld      (UBnkDrawCam0xLo),hl    ; UBnkDrawCam0xLo, UBnkDrawCam0xHi
+                        ld      (UBnkDrawCam0xSgn),de   ; UBnkDrawCam0xSgn,UBnkDrawCam0yLo
+                        ld      (UBnkDrawCam0yHi),bc    ; UBnkDrawCam0yHi, UBnkDrawCam0ySgn
+                        
+                        ld      hl,(UBnKzlo)            ; UBnKzlo, UBnKzhi
+                        ld      a,(UBnKzsgn)             ; UBnKzlo
+                        ld      (UBnkDrawCam0zLo),hl    ; UBnkDrawCam0zLo, UBnkDrawCam0zHi
+                        ld      (UBnkDrawCam0zSgn),a    ; UBnkDrawCam0zSgn
+                        ret
+;                       ld      hl,UBnKxlo
+;                       ld      de,UBnkDrawCam0xLo
+;                       NineLDIInstrunctions                ; transfer 9 bytes
                         ret
                         
-CopyCameraToXX15Signed:
-        ld  hl,(UBnkDrawCam0xLo)
-        ld  a,(UBnkDrawCam0xSgn)
-        or  h
-        ld  h,a
-        ld  (UBnkXScaled),hl
-        ld  hl,(UBnkDrawCam0yLo)
-        ld  a,(UBnkDrawCam0ySgn)
-        or  h
-        ld  h,a
-        ld  (UBnkYScaled),hl
-        ld  hl,(UBnkDrawCam0zLo)
-        ld  a,(UBnkDrawCam0zSgn)
-        or  h
-        ld  h,a
-        ld  (UBnkZScaled),hl
-        ret
+CopyCameraToXX15Signed: ld  hl,(UBnkDrawCam0xLo)
+                        ld  a,(UBnkDrawCam0xSgn)
+                        or  h
+                        ld  h,a
+                        ld  (UBnkXScaled),hl
+                        ld  hl,(UBnkDrawCam0yLo)
+                        ld  a,(UBnkDrawCam0ySgn)
+                        or  h
+                        ld  h,a
+                        ld  (UBnkYScaled),hl
+                        ld  hl,(UBnkDrawCam0zLo)
+                        ld  a,(UBnkDrawCam0zSgn)
+                        or  h
+                        ld  h,a
+                        ld  (UBnkZScaled),hl
+                        ret
                         
 CopyXX18ScaledToXX15:
 CopyDrawCamToScaledMatrix:

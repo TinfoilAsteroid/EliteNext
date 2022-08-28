@@ -194,7 +194,7 @@ plot_point:             dec	a
                         ld		c,l
                         ld		a,(line_gfx_colour)
                         ld      (line_gfx_coords),bc
-                        call	l2_plot_pixel:
+                        l2_plot_macro; call	l2_plot_pixel:
                         pop		af
                         pop		bc
 plot_RET:		        pop	hl					;	restore H,L distances...

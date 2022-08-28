@@ -6,21 +6,6 @@
 ; 4. x = x + alpha * y
 
 
-ApplyMyRollToNosev:     ApplyMyRollToVector ALPHA, UBnkrotmatNosevX, UBnkrotmatNosevY
-                        ret
-ApplyMyRollToSidev:     ApplyMyRollToVector ALPHA, UBnkrotmatSidevX, UBnkrotmatSidevY
-                        ret    
-ApplyMyRollToRoofv:     ApplyMyRollToVector ALPHA, UBnkrotmatRoofvX, UBnkrotmatRoofvY
-                        ret
-
-ApplyMyPitchToNosev:    ApplyMyRollToVector BETA, UBnkrotmatNosevZ, UBnkrotmatNosevY
-                        ret
-ApplyMyPitchToSidev:    ApplyMyRollToVector BETA, UBnkrotmatSidevZ, UBnkrotmatSidevY
-                        ret    
-ApplyMyPitchToRoofv:    ApplyMyRollToVector BETA, UBnkrotmatRoofvZ, UBnkrotmatRoofvY
-                        ret
-
-
 APPequPosPlusAPP:       MACRO    Position, PositionSign
                         push    bc
                         ld      c,a                         ; save original value of a into c
@@ -152,13 +137,12 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         ld      (UBnKxlo),hl                
                         ;break
                         ; if its not a sun then apply to local orientation
-                       
-                        call    ApplyMyRollToNosev
-                        call    ApplyMyRollToSidev
-                        call    ApplyMyRollToRoofv
-                        call    ApplyMyPitchToNosev
-                        call    ApplyMyPitchToSidev
-                        call    ApplyMyPitchToRoofv
+                        ApplyMyRollToVector ALPHA, UBnkrotmatNosevX, UBnkrotmatNosevY   ; ApplyMyRollToNosev:
+                        ApplyMyRollToVector ALPHA, UBnkrotmatSidevX, UBnkrotmatSidevY   ; ApplyMyRollToSidev:
+                        ApplyMyRollToVector ALPHA, UBnkrotmatRoofvX, UBnkrotmatRoofvY   ; ApplyMyRollToRoofv:
+                        ApplyMyRollToVector BETA, UBnkrotmatNosevZ, UBnkrotmatNosevY    ; ApplyMyPitchToNosev:
+                        ApplyMyRollToVector BETA, UBnkrotmatSidevZ, UBnkrotmatSidevY    ; ApplyMyPitchToSidev:    
+                        ApplyMyRollToVector BETA, UBnkrotmatRoofvZ, UBnkrotmatRoofvY    ; ApplyMyPitchToRoofv:    
 .NoRotation:            ld      a,(DELTA)                   ; get speed
                         ld      d,0
                         ld      e,a                         ; de = speed in low byte

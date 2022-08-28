@@ -133,7 +133,6 @@ EliteNextStartup:       di
                         SetBorder   $FF
 .InitialiseL2:          MMUSelectLayer2
                         call 		l2_initialise
-                        call		l2_cls
 .InitialisingMessage:   MessageAt   0,0,InitialiseMessage
                         SetBorder   $01
                         MessageAt   0,8,LoadingSpritesMessage
@@ -172,7 +171,7 @@ EliteNextStartup:       di
 ;                        MMUSelectSpriteBank
 ;                        call        stream_close_spr_file_a
                         call        init_keyboard
-.PostDiag:                          ClearForceTransition
+.PostDiag:              ClearForceTransition
                         SetBorder   $04
                         MMUSelectSpriteBank
                         call        sprite_diagnostic
@@ -187,9 +186,8 @@ TestText:               xor			a
 DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks su n
                         SetBorder   $06
 
-
-.ClearLayer2Buffers:    DoubleBufferIfPossible
-                        DoubleBufferIfPossible
+;.ClearLayer2Buffers:    DoubleBufferIfPossible
+;                        DoubleBufferIfPossible
 ; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files                        
                         SetBorder   $07
 InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
