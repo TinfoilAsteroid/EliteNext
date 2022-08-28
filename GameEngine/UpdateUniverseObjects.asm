@@ -52,7 +52,16 @@ UpdateUniverseObjects:  xor     a
                         ld      iyl,a                                           ; save type into iyl for later
 .UniverseObjectFound:   ld      a,d                                             ; Get back Universe slot as we want it
                         MMUSelectUniverseA                                      ; and we apply roll and pitch
+                        
+.DEBUG:                 ld      a,(SelectedUniverseSlot)
+                        cp      0
+                        jr      nz,.ProperUpdate
+.DebugUpdate:           call    FixStationPos                        
+                        jp      .CheckExploding
+.ProperUpdate:          
                         call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
+                        ld      a,(UBnKRotZCounter)
+                        cp      0
                         call    ApplyShipRollAndPitch
                         call    ApplyShipSpeed
                         call    UpdateSpeedAndPitch                             ; update based on rates of speed roll and pitch accelleration/decelleration

@@ -9,7 +9,7 @@ Viper:                  DB $00                         ; Number of cargo caniste
                         DB ViperEdgesCnt               ; Edges Count
                         DW $0000                       ; Bounty LoHi
                         DB ViperNormalsSize            ; Face (Normal) Count
-                        DB $07 ;$17 before                        ; Range when it turns to a dot
+                        DB $17 ;$17 before                        ; Range when it turns to a dot
                         DB $64                         ; Energy Max
                         DB $20                         ; Speed Max
                         DW ViperNormals                ; Normals

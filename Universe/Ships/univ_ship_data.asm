@@ -411,6 +411,22 @@ ShipCargoType:          ld      a,(ShipTypeAddr)
 .EscapePod:             ld      a,SlavesIndex
                         ret
 
+FixStationPos:          ld      hl, DebugPos
+                        ld      de, UBnKxlo
+                        ld      bc,9
+                        ldir
+                        ld      hl,DebugRotMat
+                        ld      de, UBnkrotmatSidevX
+                        ld      bc,6*3
+                        ldir
+                        ret
+                        
+DebugPos:               DB $00,$00,$00,$04,$00,$00,$23,$04,$00                        
+DebugRotMat:            DB $60,$8d,$57,$df,$82,$84
+DebugRotMat1:           DB $67,$df,$22,$0d,$c8,$81
+DebugRotMat2:           DB $b6,$00,$8d,$05,$d8,$df                     
+                        
+
 ; --------------------------------------------------------------                        
 ; This sets current univrse object to space station
 ResetStationLaunch:     ld  a,%10000001                         ; Has AI and 1 Missile

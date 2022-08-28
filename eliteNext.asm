@@ -414,18 +414,21 @@ LaunchedFromStation:    MMUSelectSun
                         call    CreateSunLaunched                   ; create the local sun and set position based on seed
                         MMUSelectPlanet
                         call    CreatePlanetLaunched
-                        call    ClearUnivSlotList
-                        call    SetSlot0ToSpaceStation              ; set slot 1 to space station
-                        MMUSelectUniverseN 0                        ; Prep Target universe
-                        MMUSelectShipBank1                          ; Bank in the ship model code
-                        ld      iyh,0                               ; Zero ship runtime data
-                        ld      iyl,ShipTypeStation                 ; and mark as spece station
-                        call    UnivInitRuntime                     ; its always slot 0
+                        call    ClearUnivSlotList                   ; slot list is clear to 0 is gauranteed next slot
                         ld      a,CoriloisStation
-                        call    GetShipBankId             
-                        MMUSelectShipBankA                          ; Select the correct bank found
-                        ld      a,b                                 ; Select the correct ship
-                        call    CopyShipToUniverse
+                        call    SpawnShipTypeA
+                        
+;;.SpawnSpaceStation:     call    SetSlot0ToSpaceStation              ; set slot 1 to space station
+;;                        MMUSelectUniverseN 0                        ; Prep Target universe
+;;                        MMUSelectShipBank1                          ; Bank in the ship model code
+;;                        ld      iyh,0                               ; Zero ship runtime data
+;;                        ld      iyl,ShipTypeStation                 ; and mark as spece station
+;;                        call    UnivInitRuntime                     ; its always slot 0
+;;                        ld      a,CoriloisStation
+;;                        call    GetShipBankId             
+;;                        MMUSelectShipBankA                          ; Select the correct bank found
+;;                        ld      a,b                                 ; Select the correct ship
+;;                        call    CopyShipToUniverse
 .BuiltStation:          call    ResetStationLaunch
                         IFDEF DEBUGMISSILETEST
                             ld      a,0
