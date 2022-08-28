@@ -6,7 +6,7 @@ del     eliteN.txt
 del     eliteN.nex
 
 del     /Q .\Build\*.*
-rmdir   /Q/F .\Build
+rmdir   /Q .\Build
 
 sjasmplus --msg=all --color=auto --lst=eliteN.txt eliteNext.asm
 
