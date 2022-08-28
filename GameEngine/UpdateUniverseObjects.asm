@@ -53,11 +53,11 @@ UpdateUniverseObjects:  xor     a
 .UniverseObjectFound:   ld      a,d                                             ; Get back Universe slot as we want it
                         MMUSelectUniverseA                                      ; and we apply roll and pitch
                         
-.DEBUG:                 ld      a,(SelectedUniverseSlot)
-                        cp      0
-                        jr      nz,.ProperUpdate
-.DebugUpdate:           call    FixStationPos                        
-                        jp      .CheckExploding
+;.DEBUG:                 ld      a,(SelectedUniverseSlot)
+;                        cp      0
+;                        jr      nz,.ProperUpdate
+;.DebugUpdate:           call    FixStationPos                        
+;                        jp      .CheckExploding
 .ProperUpdate:          
                         call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
                         ld      a,(UBnKRotZCounter)
