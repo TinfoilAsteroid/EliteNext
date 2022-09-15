@@ -421,10 +421,10 @@ FixStationPos:          ld      hl, DebugPos
                         ldir
                         ret
                         
-DebugPos:               DB $00,$00,$00,$04,$00,$00,$23,$04,$00                        
-DebugRotMat:            DB $60,$8d,$57,$df,$82,$84
-DebugRotMat1:           DB $67,$df,$22,$0d,$c8,$81
-DebugRotMat2:           DB $b6,$00,$8d,$05,$d8,$df                     
+DebugPos:               DB $00,$00,$00,$92,$01,$00,$7E,$04,$00                        
+DebugRotMat:            DB $37,$88,$9A,$DC,$1B,$F7
+DebugRotMat1:           DB $DF,$6D,$2A,$07,$C1,$83
+DebugRotMat2:           DB $00,$80,$4A,$9B,$AA,$D8                     
                         
 
 ; --------------------------------------------------------------                        
@@ -1263,6 +1263,7 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
 ;............................................................  
 .CarryOnWithDraw:       call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
                         call    CullV2
+                       ; break
                         call    PrepLines
                         call    DrawLines
                         ret 
@@ -1481,8 +1482,11 @@ LL74DecX2:
         ld          a,$FF
         ld          (UBnkX2Lo),a                        ; rather than dec (hl) just load with 255 as it will always be that at this code point
 LL74SkipDec:        
-        call        ClipLine                            ; LL145 \ clip test on XX15 XX12 vector, returns carry 
-        jr          c,CalculateNewLines                 ; LL170 clip returned carry set so not visibile if carry set skip the rest (laser not firing)
+        call        ClipLineV3                            ; LL145 \ clip test on XX15 XX12 vector, returns carry 
+        ld          a,(ClipSuccess)
+        and         a
+        jr          z,CalculateNewLines
+;        jr          c,CalculateNewLines                 ; LL170 clip returned carry set so not visibile if carry set skip the rest (laser not firing)
 ; Here we are usign hl to replace VarU as index        
         ld          hl,(varU16)
         ld          a,(UBnKx1Lo)

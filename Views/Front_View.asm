@@ -215,7 +215,7 @@ loop_hyperspace
 dampenRate:             equ     $04
 dampenRcounter:         DB      dampenRate
 dampenPcounter:         DB      dampenRate
-input_front_view:       xor         a
+input_front_view:       ClearEngineSoundChanged
                         ld      hl,(addr_Pressed_Accellerate)
                         ld      a,(hl)
                         JumpIfAIsZero     .TestDecellerate
@@ -228,6 +228,7 @@ input_front_view:       xor         a
                         ld      hl,(DELT4Lo)
                         add     hl,4
                         ld      (DELT4Lo),hl
+                        SetEngineSoundChanged                   
 .TestDecellerate:       ld      hl,(addr_Pressed_Decellerate)
                         ld      a,(hl)
                         JumpIfAIsZero   .TestLeftPressed
@@ -240,7 +241,8 @@ input_front_view:       xor         a
                         dec     hl
                         dec     hl
                         dec     hl
-                        ld      (DELT4Lo),hl    
+                        ld      (DELT4Lo),hl   
+                        SetEngineSoundChanged                        
 .TestLeftPressed:       ld      hl,(addr_Pressed_RollLeft)
                         ld      a,(hl)
                         JumpIfAIsZero   .TestRightPressed

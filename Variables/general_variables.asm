@@ -127,6 +127,8 @@ DELT4Lo					DB 	0				; 7E
 DELT4Hi					DB 	0				; 7F
 DELTA4                  equ                 DELT4Lo
 
+; SoundFX Variables
+EngineSoundChanged:     DB  0
 				
 ; Not thise must be in this order else 16 bit fetches will fail
 varU                    DB  0               ;   80

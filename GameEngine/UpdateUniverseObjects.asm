@@ -1,5 +1,6 @@
 ;..................................................................................................................................                        
 ;                           DEFINE ROTATIONDEBUG 1
+;                           DEFINE CLIPDEBUG 1
 CurrentShipUniv:        DB      0
 ;..................................................................................................................................                        
 ; if ship is destroyed or exploding then z flag is clear, else z flag is set
@@ -52,12 +53,13 @@ UpdateUniverseObjects:  xor     a
                         ld      iyl,a                                           ; save type into iyl for later
 .UniverseObjectFound:   ld      a,d                                             ; Get back Universe slot as we want it
                         MMUSelectUniverseA                                      ; and we apply roll and pitch
-                        
-;.DEBUG:                 ld      a,(SelectedUniverseSlot)
-;                        cp      0
-;                        jr      nz,.ProperUpdate
-;.DebugUpdate:           call    FixStationPos                        
-;                        jp      .CheckExploding
+                        IFDEF   CLIPDEBUG
+.DEBUG:                     ld      a,(SelectedUniverseSlot)
+                            cp      0
+                            jr      nz,.ProperUpdate
+.DebugUpdate:               call    FixStationPos                        
+                            jp      .CheckExploding
+                        ENDIF
 .ProperUpdate:          
                         call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
                         ld      a,(UBnKRotZCounter)

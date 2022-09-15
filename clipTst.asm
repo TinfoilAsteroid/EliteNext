@@ -37,7 +37,13 @@ ScreenRight     EQU ScreenLeft+3
     INCLUDE "./Macros/MMUMacros.asm"
     INCLUDE "./Macros/ShiftMacros.asm"
     INCLUDE "./Macros/CopyByteMacros.asm"
-    INCLUDE "./Macros/generalMacros.asm"
+    INCLUDE "./Macros/jumpMacros.asm"
+    INCLUDE "./Macros/returnMacros.asm"
+    INCLUDE "./Macros/carryFlagMacros.asm"
+    INCLUDE "./Macros/graphicsMacros.asm"
+   
+    INCLUDE "./Macros/NegateMacros.asm"    
+    INCLUDE "./Macros/callMacros.asm"    
     INCLUDE "./Macros/ldCopyMacros.asm"
     INCLUDE "./Macros/ldIndexedMacros.asm"
     INCLUDE "./Variables/general_variables_macros.asm"
@@ -66,6 +72,27 @@ setToLineHead:          xor         a
                         ld          (currentLine),a                   
 ;..................................................................................................................................
                         MMUSelectLayer2
+                        ld      bc,0
+                        ld      d,126
+                        ld      e,255
+                        ld      a,$D0
+                         ld      (line_gfx_colour),a
+                        call    l2_draw_box
+                        ld      b,0
+                        ld      c,90
+                        ld      d,127
+                        ld      e,$D0
+                        call    l2_draw_vert_line
+                        ld      b,0
+                        ld      c,100
+                        ld      d,127
+                        ld      e,$D0
+                        call    l2_draw_vert_line
+                        
+                        ld      a,$FF
+                        ld      (line_gfx_colour),a
+
+  
                         call    PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
 MainLoop:               call    DrawLines                   ; Need to plot all lines
                         ld      hl,currentLine
@@ -77,119 +104,121 @@ MainLoop:               call    DrawLines                   ; Need to plot all l
     
 LineList:             ;dw 145,49,109,-31
 ; clip Y1 or Y2 only testing shallow
-                      dw 109,-31,206,13     ; pass
-                      dw 109,0,206,44
-                      dw 109,13,206,-31     ; pass
-                      dw 109,44,206,0
-                      dw 109,97,206,160      ; pass
-                      dw 109,65,206,127      ; pass
-                      dw 109,160,206,87      ; pass
-                      dw 109,127,206,65      ; pass
+;                      dw 109,-31,206,13     ; pass
+;                      dw 109,0,206,44
+;                      dw 109,13,206,-31     ; pass
+;                      dw 109,44,206,0
+;                      dw 109,97,206,160      ; pass
+;                      dw 109,65,206,127      ; pass
+;                      dw 109,160,206,87      ; pass
+;                      dw 109,127,206,65      ; pass
 ; clip Y1 or Y2 only testing steep
-                      dw 109,-31,125,13     ; pass near poss rounding
-                      dw 109,0,125,44        ; pass near poss rounding
-                      dw 109,13,125,-31     ; pass near poss rounding
-                      dw 109,44,125,0        ; pass near poss rounding
-                      dw 109,97,125,160      ; pass
-                      dw 109,65,125,127      ; pass
-                      dw 109,97,125,160     ; pass 
-                      dw 109,65,125,127        ; pass 
+;                      dw 109,-31,125,13     ; pass near poss rounding
+;                      dw 109,0,125,44        ; pass near poss rounding
+;                      dw 109,13,125,-31     ; pass near poss rounding
+;                      dw 109,44,125,0        ; pass near poss rounding
+;                      dw 109,97,125,160      ; pass
+;                      dw 109,65,125,127      ; pass
+;                      dw 109,97,125,160     ; pass 
+;                      dw 109,65,125,127        ; pass 
 ; clip X1 or X1 testig shallow
-                      dw -50,10,115,40      ; pass 
-                      dw 00,10,165,40       ; pass 
-                      dw 115,10,-50,40      ; pass near poss rounding
-                      dw 165,10,1,40       ; pass near poss rounding
-                      dw 300,10,115,40      ; pass            
-                      dw 255,10,70,40       ; pass 
-                      dw 115,10,300,40      ; pass 
-                      dw 70,10,255,40       ; pass                    
+;                      dw -50,10,115,40      ; pass 
+;                      dw 00,10,165,40       ; pass 
+;                      dw 115,10,-50,40      ; pass near poss rounding
+;                      dw 165,10,1,40       ; pass near poss rounding
+;                      dw 300,10,115,40      ; pass            
+;                      dw 255,10,70,40       ; pass 
+;                      dw 115,10,300,40      ; pass 
+;                      dw 70,10,255,40       ; pass                    
 ; clip X1 or X1 testig steep
-                      dw -20,10,35,80      ; pass 
-                      dw 00,10,55,80       ; pass 
-                      dw -20,80,35,10     
-                      dw 00,80,55,10       
-                      dw 270,10,235,80      ; pass            
-                      dw 255,10,220,80       ; pass 
+;                      dw -20,10,35,80      ; pass 
+;                      dw 00,10,55,80       ; pass 
+;                      dw -20,80,35,10     
+;                      dw 00,80,55,10       
+;                      dw 270,10,235,80      ; pass            
+;                      dw 255,10,220,80       ; pass 
 ; span screen shallow                   
-                      dw -20,10,270,80      ; pass 
-                      dw 00,14,255,77       ; pass 
-                    
-                      dw 270,10,-20,80      ; pass 
-                      dw 255,14,0,77       ; pass 
-                      dw 10,-20,80,270      ; pass 
-                      dw 10,270,80,-20      ; pass 
-                      dw 80,-20,10,270      ; pass 
-                      dw 80,270,10,-20      ; pass 
-                      dw 00,14,255,77       ; pass 
-                   
-                   
-                      dw 123,0,206,13
-                      dw 125,-12,172,10
-                      dw 145,49,125,-12
-                      dw 145,10,145,100
-                      dw 135,10,135,100
-                      dw 125,10,125,100
-                      dw 115,10,115,100
-                      dw 105,10,105,100
-                      ; dw       10,10,20,20
-                      ; dw       50,50,20,20
-                      ; dw       10,50,20,20
-                      ; dw       50,10,20,20
-                      ; dw       50,10,20,20
-                      ; dw       15,10,20,20
-                      ; dw       15,15,20,20
-                      ; dw       10,15,20,20
-                      ; dw       50,20,20,20
-                      ; dw       20,10,20,20                        
-                      ; dw       50,20,20,20
-                      ; dw       10,20,20,20                        
-                      ; dw       20,10,20,20
-                      ; dw       20,50,20,20  
-                      ; dw       000,100,100,100            ; Horizonal left to right on screen         - Loosed first pixel top
-                      ; dw       100,000,100,100            ; Veritcal  down on screen                  - Loosed first pixel left
-                       ;dw      0,100,255,100
-                       ;dw      0,110,255,110
-                       ;dw      0,127,255,127
-                       ;dw      0,90,255,90
-                       ;dw      90,0,90,127
-                       ;dw      100,0,100,127           
-                       ;dw      110,0,110,127
-                       ;dw      90,-10,100,100              ; look better
-                       ;dw      110,-10,100,100             ; look better
-                       ;dw      90,300,100,100              ; fail upside down?
-                       ;dw      110,300,100,100             ; fail
-                       ;dw      90,200,100,100              ; loooks beeter
-                       ;dw      110,200,100,100             ; loooks beeter
-                       ;dw       500,110,100,100            ; Horzontal right to left clip right         - nwo good clips to 255,110      horizontal
-                       ;dw       -10,110,100,100            ; Horzontal left to right clip left          - now good clips 0, 110          horizontal
-                       ;dw       -10,90,100,100            ; Horzontal left to right clip left          -  now good clips  0, 90          horizontal
-                      ; dw       260,110,100,100            ; Horzontal left to right clip left          - now good clips to 255,110      horizontal
-                      ; dw       260,90,100,100            ; Horzontal left to right clip left          - now good clips to 255,90        horizontal
-                      ; dw       100,100,550,100            ;  looks OK
-                      ; dw       100,100,-10,100            ;     looks OK                                         - Total loss of line
-                      ; dw        100,500,100,100           ;  now ood ends up vertical
-                      ; dw        105,500,100,100           ;                                           - loss of part line, go steep optmisation
-                      ; dw        -5,105,100,100            ; loooks beeter                                           - Loosed first pixel left
-                      ; dw         10,-5,100,100            ;  loooks beeter                                          - Loosed first pixel top
-                      ; dw        300,105,100,100            ;  loooks beeter                                            - large x looses the plot
-                      ; dw        300,-105,100,100            ;loooks beeter                                              - Loosed first pixel left
-                      ; dw         10,180,100,100            ;  loooks beeter                                            - Loosed first pixel top
-                      ; dw       100,105,100,100          
-                ;        dw       500,200,100,100 ; looks OK
-                ;  dw       200,100,100,100                        
-                ;  dw       500,200,100,100
-                ;  dw       100,200,100,100                        
-                ;  dw       200,100,100,100
-                ;  dw       200,500,100,100  
-                ;
-                ; dw       20,20,10,10
-                ; dw       -10,10,20,20
-                ; dw       10,-10,20,20
-                ; dw       10,10,-20,20
-                ; dw       10,10,20,-20
-                ; dw       -10,10,-20,20
-                ; dw       10,-10,20,-20
-                ; dw       -10,-10,-20,-20
+;                      dw -20,10,270,80      ; pass 
+;                      dw 00,14,255,77       ; pass 
+;                    
+;                      dw 270,10,-20,80      ; pass 
+;                      dw 255,14,0,77       ; pass 
+;                      dw 10,-20,80,270      ; pass 
+;                      dw 10,270,80,-20      ; pass 
+;                      dw 80,-20,10,270      ; pass 
+;                      dw 80,270,10,-20      ; pass 
+;                      dw 00,14,255,77       ; pass 
+;                   
+;                   
+;                      dw 123,0,206,13
+;                      dw 125,-12,172,10
+;                      dw 145,49,125,-12
+;                      dw 145,10,145,100
+;                      dw 135,10,135,100
+;                      dw 125,10,125,100
+;                      dw 115,10,115,100
+;                      dw 105,10,105,100
+.NoClippingRequired:
+
+;;v3pass5                     dw       10,10,20,20   ; pass
+;;v3pass5                     dw       50,50,20,20   ; pass
+;;v3pass5                     dw       10,50,20,20   ; pass
+;;v3pass5                     dw       50,10,20,20   ; pass
+;;v3pass5                     dw       50,10,20,20   ; pass
+;;v3pass5                     dw       15,10,20,20   ; pass
+;;v3pass5                     dw       15,15,20,20   ; pass
+;;v3pass5                     dw       10,15,20,20   ; pass
+;;v3pass5                     dw       50,20,20,20   ; pass
+;;v3pass5                     dw       20,10,20,20   ; pass                   
+;;v3pass5                     dw       50,20,20,20   ; pass
+;;v3pass5                     dw       10,20,20,20   ; pass                   
+;;v3pass5                     dw       20,10,20,20   ; pass
+;;v3pass5                     dw       20,50,20,20   ; pass
+;;v3pass5                     dw       000,100,100,100            ; Horizonal left to right on screen         - Loosed first pixel top
+;;v3pass5                     dw       100,000,100,100            ; Veritcal  down on screen                  - Loosed first pixel left
+;;v3pass5                     dw      0,100,255,100
+;;v3pass5                     dw      0,110,255,110
+;;v3pass5                     dw      0,127,255,127
+;;v3pass5                     dw      0,90,255,90
+;;v3pass5                     dw      90,0,90,127
+;;v3pass5                     dw      100,0,100,127           
+;;v3pass5                     dw      110,0,110,127
+;;v3pass5                     dw      90,-10,100,100              ; look better
+;;v3pass5                     dw      90,300,100,100              ; fail upside down?
+;;v3pass5                     dw      90,200,100,100              ; loooks beeter
+;;v3pass5                     dw      110,-10,100,100             ; look better
+;;v3pass5                     dw      110,300,100,100             ; fail
+;;v3pass5                     dw      110,200,100,100             ; loooks beeter
+;;v3pass5                     dw       -10,110,100,100            ; Horzontal left to right clip left          - now good clips 0, 110          horizontal
+;;v3pass5                     dw       -10,90,100,100            ; Horzontal left to right clip left          -  now good clips  0, 90          horizontal
+;;v3pass5                     dw       100,100,550,100            ;  looks OK
+;;v3pass5                       dw        100,500,100,100           ;  now ood ends up vertical
+;;v3pass5                       dw        105,500,100,100           ;                                           - loss of part line, go steep optmisation
+;;v3pass4                       dw       500,110,100,100            ; Horzontal right to left clip right         - nwo good clips to 255,110      horizontal
+;;v3pass4                       dw       260,110,100,100            ; Horzontal left to right clip left          - now good clips to 255,110      horizontal
+;;v3pass4                         dw       290,50,100,70
+;;v3pass4                        dw       260,90,100,100            ; Horzontal left to right clip left          - now good clips to 255,90        horizontal
+;;v3pass4                      dw       100,100,-10,100            ;     looks OK                                         - Total loss of line
+;;v3pass4                       dw        -5,105,100,100            ; loooks beeter                                           - Loosed first pixel left
+;;v3pass4                       dw         10,-5,100,100            ;  loooks beeter                                          - Loosed first pixel top
+;;v3pass4                         dw    300,105,100,100            ;  loooks beeter                                            - large x looses the plot
+;;v3pass4                       dw        300,-105,100,100            ;loooks beeter                                              - Loosed first pixel left
+;;v3pass4                       dw         10,180,100,100            ;  loooks beeter                                            - Loosed first pixel top
+;;v3pass4                      dw       100,105,100,100          
+;;v3pass4                         dw       500,200,100,100 ; looks OK
+;;v3pass5                   dw       200,100,100,100                        
+;;v3pass5                   dw       500,200,100,100
+;;v3pass5                   dw       100,200,100,100                        
+;;v3pass5                   dw       200,500,100,100  
+;;v3pass5                   dw       20,20,10,10
+;;v3pass5                   dw       -10,10,20,20
+;;v3pass5                   dw       10,-10,20,20
+;;v3pass5                   dw       -20,20,10,10
+;;v3pass5                   dw       10,10,-20,20
+                dw       10,10,20,-20
+;;v3pass4                dw       -10,10,-20,20
+;;v3pass4                dw       10,-10,20,-20
+;;v3pass4                dw       -10,-10,-20,-20
 LineListLen             equ $ - LineList
                      db "XXXXXXXX"
 
@@ -455,8 +484,10 @@ PrepLines:              ldWriteZero UbnkLineArrayLen                    ; curren
                         sla         a
                         sla         a
                         call        getVertexNodeAtAToX2Y2              ; get the points X2Y2 from node
-                        call        ClipLine
-                        jr          c,.LL78EdgeNotVisible                ; LL78 edge not visible
+                        call        ClipLineV3
+                        ld          a,(ClipSuccess)
+                        and         a
+                        jr          z,.LL78EdgeNotVisible                ; LL78 edge not visible
                         ld          de,(varU16)                         ; clipped edges heap address
                         ld          hl,UBnkNewX1
                         FourLDIInstrunctions

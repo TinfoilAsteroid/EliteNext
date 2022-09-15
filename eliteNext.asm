@@ -2,7 +2,7 @@
  DEFINE  DOUBLEBUFFER 1
  ;DEFINE  LOGMATHS     1
  ;DEFINE  DIAGSPRITES 1
- ; DEFINE   SKIPATTRACT 1
+  DEFINE   SKIPATTRACT 1
  ; DEFINE DEBUGMISSILETEST 1
  CSPECTMAP eliteN.map
  OPT --zxnext=cspect --syntax=a --reversepop
@@ -114,6 +114,7 @@ TopOfStack              equ $6100
                         ORG         $6200
 EliteNextStartup:       di
 .InitiliseFileIO:       call        GetDefaultDrive
+.InitialiseClockSpeed:  Nextreg     TURBO_MODE_REGISTER,Speed_28MHZ
 .InitialiseLayerOrder:  
                         DISPLAY "Starting Assembly At ", EliteNextStartup
                         ; "STARTUP"
@@ -123,6 +124,9 @@ EliteNextStartup:       di
                         MMUSelectLayer2
                         call        asm_disable_l2_readwrite
                         MMUSelectROMS
+.InitialisePeripherals: nextreg     PERIPHERAL_2_REGISTER, AUDIO_CHIPMODE_AY ; Enable Turbo Sound
+                        nextreg     PERIPHERAL_3_REGISTER, DISABLE_RAM_IO_CONTENTION | ENABLE_TURBO_SOUND
+                        call        EngineOn
 .GenerateDefaultCmdr:   MMUSelectCommander
                         call		defaultCommander
                         call        saveCommander
@@ -431,8 +435,8 @@ LaunchedFromStation:    MMUSelectSun
 ;;                        call    CopyShipToUniverse
 .BuiltStation:          call    ResetStationLaunch
                         IFDEF DEBUGMISSILETEST
-                            ld      a,0
-                            ld      (UBnKRotXCounter),a             ; kill station roll
+;                            ld      a,0
+;                            ld      (UBnKRotXCounter),a             ; kill station roll
 
 .TestMissileTarget:         ld      a,ShipID_Viper
                             call    SpawnShipTypeA                      ; call rather than jump, returns with a = slot number

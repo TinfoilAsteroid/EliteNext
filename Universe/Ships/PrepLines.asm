@@ -1,3 +1,4 @@
+    ;DEFINE  CLIPVersion3 1
 ;--------------------------------------------------------------------------------------------------------
     INCLUDE "./ModelRender/getVertexNodeAtAToX1Y1.asm"
     INCLUDE "./ModelRender/getVertexNodeAtAToX2Y2.asm"
@@ -84,8 +85,15 @@ VisibileEdge:                                           ; Now we need to node id
         call        getVertexNodeAtAToX1Y1              ; get the points X1Y1 from node
         ld          a,(IY+3)
         call        getVertexNodeAtAToX2Y2              ; get the points X2Y2 from node
-        call        ClipLine
-        jr          c,LL78EdgeNotVisible                ; LL78 edge not visible
+        IFDEF       CLIPVersion3
+            call        ClipLineV3
+            ld          a,(ClipSuccess)
+            and         a
+            jr          z,LL78EdgeNotVisible
+        ELSE
+            call        ClipLine
+            jr          c,LL78EdgeNotVisible                ; LL78 edge not visible
+        ENDIF
 LL80:                                                   ; ll80 \ Shove visible edge onto XX19 ship lines heap counter U
         ld          de,(varU16)                         ; clipped edges heap address
         ld          hl,UBnkNewX1

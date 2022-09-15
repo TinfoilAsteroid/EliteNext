@@ -8,7 +8,7 @@
     DEFINE  MAINLOOP_EVENTHANDLER
     DEFINE  MAINLOOP_RECHARGE
     DEFINE  MAINLOOP_LAUNCHMISSILE
-    DEFINE  MAINLOOP_UPDATEUNIVERSE
+;    DEFINE  MAINLOOP_UPDATEUNIVERSE
 MainLoop:	            call    doRandom                                                ; redo the seeds every frame
                     IFDEF MAINLOOP_UPDATE_LASERS
                         UpdateLaserOnCounter
@@ -49,6 +49,8 @@ HandleBankSelect:       ld      a,$00
 CallCursorRoutine:      call    $0000
 ;.. Check to see if we are docked as if we are (or are docking.launching then no AI/Ship updates occur.............................
 ;.. Also end up here if we have the screen input blocker set
+EngineSounds:       HasEngineSoundChanged
+                    call    nz,UpdateEngineSound
 SkipInputHandlers:      
 ;.. For Docked flag its - 0 = in free space, FF = Docked, FE transition, FD = Setup open space and transition to not docked
 TestAreWeDocked:        JumpIfMemNeNusng DockedFlag, StateNormal, UpdateLoop            ; if if we are in free space do universe updateelse we skip it. As we are also in dock/transition then no models should be updated so we dont; need to draw
@@ -383,3 +385,12 @@ TestTransition:         ld      a,(ScreenTransitionForced)          ; was there 
                         jp      z,MainLoop
 BruteForceChange:       call    SetScreenA
                         jp MainLoop
+
+                    
+;......................................................................
+; Sound Code
+
+              
+
+;As speed goes up so does pitch
+

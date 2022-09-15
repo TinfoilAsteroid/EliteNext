@@ -306,3 +306,18 @@ BoostSystem:            MACRO   SystemMem, BoostMem
 .ExitPoint              
                         ENDM
                         
+HasEngineSoundChanged:  MACRO
+                        ld      a,(EngineSoundChanged)
+                        and     a
+                        ENDM
+                        
+ClearEngineSoundChanged:MACRO
+                        xor      a
+                        ld      (EngineSoundChanged),a
+                        ENDM
+
+SetEngineSoundChanged:  MACRO
+                        ld      a,$FF
+                        ld      (EngineSoundChanged),a
+                        ENDM
+                        
