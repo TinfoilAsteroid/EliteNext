@@ -133,7 +133,7 @@ EliteNextStartup:       di
                         nextreg     LINE_INTERRUPT_CONTROL_REGISTER,%00000110       ; Video interrup on 
                         nextreg     LINE_INTERRUPT_VALUE_LSB_REGISTER,0   ; lasta line..                        
                         im	2 
-                        ;ei  - dont enable yet neet to go through code and work out all di sections
+                        ei ; - dont enable yet neet to go through code and work out all di sections
                         
 .GenerateDefaultCmdr:   MMUSelectCommander
                         call		defaultCommander
@@ -617,6 +617,7 @@ XX12PVarSign3		DB 0
 
     INCLUDE "./Menus/common_menu.asm"
 
+    org $B000
 VectorTable:            
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
@@ -629,16 +630,19 @@ VectorTable:
                 dw      IM2Routine                    
 IR_COUNT        dw  $0060
 
-LAST_DELTA      db  0                
+LAST_DELTA      db  0     
+SavedMMU7       db  0           
 StartOfInterruptHandler:
     DISPLAY "Non Banked Code Ends At", StartOfInterruptHandler
 
-    org $B800
 IM2Routine:     ; initially do nothing
                 push    af,,bc,,de,,hl,,ix,,iy
                 ex      af,af'
                 exx
                 push    af,,bc,,de,,hl
+                GetNextReg  MMU_SLOT_7_REGISTER
+                ld      (SavedMMU7),a
+                MMUSelectSound                
                 ld      a,(DELTA)
                 ld      hl,LAST_DELTA
                 cp      (hl)
@@ -646,14 +650,8 @@ IM2Routine:     ; initially do nothing
 .SpeedChange:   ;call    UpdateEngineSound
                 ld      a,(DELTA)
                 ld      (LAST_DELTA),a
-.NoSpeedChange: ld      hl,(IR_COUNT)
-                ld      a,h
-                or      l
-                jr      z,.NoDec
-                dec     hl
-                ld      (IR_COUNT),hl
                 ; NOTE play then equeue simplifies ligic, more chance slot free
-.NoDec:         ld      a,(SoundFxToEnqueue)        ; Check for new sound 
+.NoSpeedChange: ld      a,(SoundFxToEnqueue)        ; Check for new sound 
                 cp      $FF
                 call    nz,EnqueSound
 .NoNewSound:    IFDEF   USETIMER
@@ -692,11 +690,13 @@ IM2Routine:     ; initially do nothing
                 ENDIF
                 inc     de
                 djnz    .ResetLoop
-.DoneInterrupt: pop    af,,bc,,de,,hl
+.DoneInterrupt: ld      a,(SavedMMU7)
+                nextreg MMU_SLOT_7_REGISTER,a       ; Restore MMU7
+                pop    af,,bc,,de,,hl
                 ex      af,af'
                 exx
                 pop     af,,bc,,de,,hl,,ix,,iy
-                ei
+.IMFinishup:    ei
                 reti
 
 EndOfNonBanked:

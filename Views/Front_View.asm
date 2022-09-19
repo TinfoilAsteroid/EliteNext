@@ -387,6 +387,8 @@ input_front_view:       ClearEngineSoundChanged
                         call    is_key_up_state                     ;                   .
                         jr      z,.CheckTargetting                  ;                   .
                         SetMemTrue FireLaserPressed                 ;                   set pulse on to 1
+                        ld      a,0
+                        ld      (SoundFxToEnqueue),a
                         jp      .CheckTargetting
 .PulseLimitReached:     ;ZeroA                                       ;
                         ;ld      (CurrLaserPulseRateCount),a         ;
