@@ -69,13 +69,21 @@ TONE_CHANNEL_C                          EQU %00000100
 NOISE_CHANNEL_A                         EQU %00001000
 NOISE_CHANNEL_B                         EQU %00010000
 NOISE_CHANNEL_C                         EQU %00100000
+; Version for AND to enabled (its inverted)
+TONE_CHANNEL_A_ON                       EQU %11111110
+TONE_CHANNEL_B_ON                       EQU %11111101
+TONE_CHANNEL_C_ON                       EQU %11111011
+NOISE_CHANNEL_A_ON                      EQU %11110111
+NOISE_CHANNEL_B_ON                      EQU %11101111
+NOISE_CHANNEL_C_ON                      EQU %11011111
+
 ; Turbo Sound Control
 TURBO_MANDATORY                         EQU %10011100
 TURBO_LEFT                              EQU %01000000
 TURBO_RIGHT                             EQU %00100000
-TURBO_CHIP_AY3                          EQU %00000001
+TURBO_CHIP_AY3                          EQU %00000011
 TURBO_CHIP_AY2                          EQU %00000010
-TURBO_CHIP_AY1                          EQU %00000011
+TURBO_CHIP_AY1                          EQU %00000001
 
 IO_LAYER2_PORT                          EQU $123B
 IO_EXT_BANK_PORT 			            EQU $DFFD ; 57341
@@ -197,6 +205,31 @@ SPRITE_PORT_MIRROR_ATTRIBUTE_3          EQU 116
 SPRITE_PORT_MIRROR_ATTRIBUTE_4          EQU 117
 USER_STORAGE_0_REGISTER                 EQU 118 ; general purpose variable, e.g. for copper
 EXPANSION_BUS_ENABLE_REGISTER
+
+INTERUPT_CONTROL                        EQU $0C ; Interrupt control
+NMI_RETURN_LSB				            EQU	$0C2	; NMI Return Address LSB
+NMI_RETURN_MSB				            EQU	$0C3	; NMI Return Address MSB
+INTERRUPT_EN0				            EQU	$0C4	; INT EN 0
+INTERRUPT_EN1				            EQU	$0C5	; INT EN 1
+INTERRUPT_EN2				            EQU	$0C6	; INT EN 2
+INTERRUPT_ST0				            EQU	$0C8	; INT status 0
+INTERRUPT_ST1				            EQU	$0C9	; INT status 1
+INTERRUPT_ST2				            EQU	$0CA	; INT status 2
+INTERRUPT_DM0				            EQU	$0CC	; INT DMA EN 0
+INTERRUPT_DM1				            EQU	$0CD	; INT DMA EN 1
+INTERRUPT_DM2				            EQU	$0CE	; INT DMA EN 2
+CTC_CHANNEL_0				            EQU	$183B	; CTC channel 0 port
+CTC_CHANNEL_1				            EQU	$193B	; CTC channel 1 port
+CTC_CHANNEL_2				            EQU	$1A3B	; CTC channel 2 port
+CTC_CHANNEL_3				            EQU	$1B3B	; CTC channel 3 port
+CTC_CHANNEL_4				            EQU	$1C3B	; CTC channel 4 port
+CTC_CHANNEL_5				            EQU	$1D3B	; CTC channel 5 port
+CTC_CHANNEL_6				            EQU	$1E3B	; CTC channel 6 port
+CTC_CHANNEL_7				            EQU	$1F3B	; CTC channel 7 port
+CTCBASE                                 EQU $c0		; MSB Base address of buffer 
+CTCSIZE                                 EQU $04 	; MSB buffer length 
+CTCEND                                  EQU CTCBASE+(CTCSIZE*2)	
+
 
 DEBUG_LEDS_REGISTER						EQU 255
 

@@ -1,0 +1,85 @@
+                        
+SetupChannelA:          MACRO
+                        ld      hl,ix
+.SetToneA:              ld      a,(hl)
+                        WriteAToTurboRegister CHANNEL_A_FINE
+                        inc     hl
+                        ld      a,(hl)
+                        WriteAToTurboRegister CHANNEL_A_COARSE
+                        inc     hl
+                        ld      a,(hl)
+                        ld      e,a                                 ; save noise
+                        cp      $FF
+                        jr      nz,.ChannelANoise
+.ChannelANoiseOff:      ld      a,(ChipChannelSettings)
+                        or      NOISE_CHANNEL_A
+                        ld      (ChipChannelSettings),a
+                        WriteAToTurboRegister TONE_ENABLE
+                        jp      .SetVolumeA
+.ChannelANoise:         ld      a,(ChipChannelSettings)
+                        and     TONE_CHANNEL_A_ON
+                        ld      (ChipChannelSettings),a
+                        WriteAToTurboRegister TONE_ENABLE
+                        ld      a,e                                 ; get noise
+                        WriteAToTurboRegister NOISE_PERIOD
+.SetVolumeA:            inc     hl
+                        ld      a,(hl)
+                        WriteAToTurboRegister CHANNEL_A_AMPLITUDE   
+                        ENDM
+                        
+SetupChannelB:          MACRO
+                        ld      hl,ix
+.SetToneB:              ld      a,(hl)
+                        WriteAToTurboRegister CHANNEL_B_FINE
+                        inc     hl
+                        ld      a,(hl)
+                        WriteAToTurboRegister CHANNEL_B_COARSE
+                        inc     hl
+                        ld      a,(hl)
+                        ld      e,a                                 ; save noise
+                        cp      $FF
+                        jr      nz,.ChannelBNoise
+.ChannelBNoiseOff:      ld      a,(ChipChannelSettings)
+                        or      NOISE_CHANNEL_B
+                        ld      (ChipChannelSettings),a
+                        WriteAToTurboRegister TONE_ENABLE
+                        jp      .SetVolumeB
+.ChannelBNoise:         ld      a,(ChipChannelSettings)
+                        and     TONE_CHANNEL_B_ON
+                        ld      (ChipChannelSettings),a
+                        WriteAToTurboRegister TONE_ENABLE
+                        ld      a,e                                 ; get noise
+                        WriteAToTurboRegister NOISE_PERIOD
+.SetVolumeB:            inc     hl
+                        ld      a,(hl)
+                        WriteAToTurboRegister CHANNEL_B_AMPLITUDE   
+                        ENDM
+
+SetupChannelC:          MACRO
+                        ld      hl,ix
+.SetToneC:              ld      a,(hl)
+                        WriteAToTurboRegister CHANNEL_C_FINE
+                        inc     hl
+                        ld      a,(hl)
+                        WriteAToTurboRegister CHANNEL_C_COARSE
+                        inc     hl
+                        ld      a,(hl)
+                        ld      e,a                                 ; save noise
+                        cp      $FF
+                        jr      nz,.ChannelCNoise
+.ChannelCNoiseOff:      ld      a,(ChipChannelSettings)
+                        or      NOISE_CHANNEL_C
+                        ld      (ChipChannelSettings),a
+                        WriteAToTurboRegister TONE_ENABLE
+                        jp      .SetVolumeC
+.ChannelCNoise:         ld      a,(ChipChannelSettings)
+                        and     TONE_CHANNEL_C_ON
+                        ld      (ChipChannelSettings),a
+                        WriteAToTurboRegister TONE_ENABLE
+                        ld      a,e                                 ; get noise
+                        WriteAToTurboRegister NOISE_PERIOD
+.SetVolumeC:            inc     hl
+                        ld      a,(hl)
+                        WriteAToTurboRegister CHANNEL_C_AMPLITUDE   
+                        ENDM
+                        

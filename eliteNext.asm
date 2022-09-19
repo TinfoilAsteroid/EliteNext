@@ -109,12 +109,12 @@ SetBorder:              MACRO   value
 charactersetaddr		equ 15360
 STEPDEBUG               equ 1
 
-TopOfStack              equ $6100
+TopOfStack              equ $5CCB ;$6100
 
-                        ORG         $6200
+                        ORG $5DCB;      $6200
 EliteNextStartup:       di
 .InitiliseFileIO:       call        GetDefaultDrive
-.InitialiseClockSpeed:  Nextreg     TURBO_MODE_REGISTER,Speed_28MHZ
+.InitialiseClockSpeed:  nextreg     TURBO_MODE_REGISTER,Speed_28MHZ
 .InitialiseLayerOrder:  
                         DISPLAY "Starting Assembly At ", EliteNextStartup
                         ; "STARTUP"
@@ -126,7 +126,14 @@ EliteNextStartup:       di
                         MMUSelectROMS
 .InitialisePeripherals: nextreg     PERIPHERAL_2_REGISTER, AUDIO_CHIPMODE_AY ; Enable Turbo Sound
                         nextreg     PERIPHERAL_3_REGISTER, DISABLE_RAM_IO_CONTENTION | ENABLE_TURBO_SOUND
-                        call        EngineOn
+                        call        InitAudio
+.InitialiseInterrupts:  ld	        a,VectorTable>>8
+                        ld	        i,a						                        ; im2 table will be at address 0xa000
+                        nextreg     LINE_INTERRUPT_CONTROL_REGISTER,%00000110       ; Video interrup on 
+                        nextreg     LINE_INTERRUPT_VALUE_LSB_REGISTER,0   ; lasta line..                        
+                        im	2 
+                        ;ei  - dont enable yet neet to go through code and work out all di sections
+                        
 .GenerateDefaultCmdr:   MMUSelectCommander
                         call		defaultCommander
                         call        saveCommander
@@ -593,21 +600,15 @@ XX12PVarSign3		DB 0
     INCLUDE "./Variables/constant_equates.asm"
     INCLUDE "./Variables/general_variables.asm"
     INCLUDE "./Variables/general_variablesRoutines.asm"
-
     INCLUDE "./Variables/UniverseSlotRoutines.asm"
-
     INCLUDE "./Variables/EquipmentVariables.asm"
-    
     INCLUDE "./Variables/random_number.asm"
     INCLUDE "./Variables/galaxy_seed.asm"
     INCLUDE "./Tables/text_tables.asm"
     INCLUDE "./Tables/dictionary.asm"
     INCLUDE "./Tables/name_digrams.asm"
 ;INCLUDE "Tables/inwk_table.asm" This is no longer needed as we will write to univer object bank
-
-; Include all maths libraries to test assembly
-    
-;;    INCLUDE "./Maths/addhldesigned.asm"
+; Include all maths libraries to test assembly   
     INCLUDE "./Maths/asm_add.asm"
     INCLUDE "./Maths/asm_subtract.asm"
     INCLUDE "./Maths/Utilities/AddDEToCash.asm"
@@ -621,47 +622,109 @@ XX12PVarSign3		DB 0
     INCLUDE "./Maths/negate16.asm"
     INCLUDE "./Maths/normalise96.asm"
     INCLUDE "./Maths/binary_to_decimal.asm"
-;;    include "./Maths/ADDHLDESignBC.asm"    
-;INCLUDE "badd_ll38.asm"
-;;INCLUDE "XX12equXX15byXX16.asm"
     INCLUDE "./Maths/Utilities/AequAdivQmul96-TIS2.asm"
     INCLUDE "./Maths/Utilities/AequAmulQdiv256-FMLTU.asm"
     INCLUDE "./Maths/Utilities/PRequSpeedDivZZdiv8-DV42-DV42IYH.asm"
     INCLUDE "./Maths/Utilities/AequDmulEdiv256usgn-DEFMUTL.asm"
-;INCLUDE "AP2equAPmulQunsgEorP-MLTU2.asm"
-;INCLUDE "APequPmulQUnsg-MULTU.asm"
-;INCLUDE "APequPmulX-MU11.asm"
+
     INCLUDE "./Maths/Utilities/APequQmulA-MULT1.asm"
     INCLUDE "./Maths/Utilities/badd_ll38.asm"
     INCLUDE "./Maths/Utilities/moveship4-MVS4.asm"
-;INCLUDE "MoveShip5-MVS5.asm"
-;INCLUDE "PAequAmulQusgn-MLU2.asm"
-;INCLUDE "PAequDustYIdxYmulQ-MLU1.asm"
-;INCLUDE "PlanetP12addInwkX-MVT6.asm"
+
     INCLUDE "./Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
     INCLUDE "./Maths/Utilities/RequAdivQ-LL61.asm"
-;    INCLUDE "./Maths/Utilities/RSequABSrs-LL129.asm"
     INCLUDE "./Maths/Utilities/RSequQmulA-MULT12.asm"
-;INCLUDE "SwapRotmapXY-PUS1.asm"
+
     include "./Universe/Ships/CopyRotMattoXX15.asm"
     include "./Universe/Ships/CopyXX15toRotMat.asm"
     INCLUDE "./Maths/Utilities/tidy.asm"
     INCLUDE "./Maths/Utilities/LL28AequAmul256DivD.asm"    
     INCLUDE "./Maths/Utilities/XAequMinusXAPplusRSdiv96-TIS1.asm"
-;INCLUDE "XAequQmuilAaddRS-MAD-ADD.asm"
-;INCLUDE "XHiYLoequPA-gc3.asm"
-;INCLUDE "XHiYLoequPmulAmul4-gc2.asm"
-;INCLUDE "XLoYHiequPmulQmul4-gcash.asm"
-;INCLUDE "XX12equXX15byXX16-LL51.asm"
-  ;  INCLUDE "./Maths/Utilities/XYeqyx1loSmulMdiv256-Ll120-LL123.asm"
 
     INCLUDE "./GameEngine/Tactics.asm"
     INCLUDE "./Hardware/drive_access.asm"
 
     INCLUDE "./Menus/common_menu.asm"
+    INCLUDE "./Hardware/sound.asm"
+
+VectorTable:            
+                dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+                dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+                dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+                dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+                dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+                dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+                dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+                dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
+                dw      IM2Routine                    
+IR_COUNT        dw  $0060
+
+LAST_DELTA      db  0                
+StartOfInterruptHandler:
+    DISPLAY "Non Banked Code Ends At", StartOfInterruptHandler
+
+    org $B800
+IM2Routine:     ; initially do nothing
+                push    af,,bc,,de,,hl,,ix,,iy
+                ld      a,(DELTA)
+                ld      hl,LAST_DELTA
+                cp      (hl)
+                jr      z,.NoSpeedChange
+.SpeedChange:   ;call    UpdateEngineSound
+                ld      a,(DELTA)
+                ld      (LAST_DELTA),a
+.NoSpeedChange: ld      hl,(IR_COUNT)
+                ld      a,h
+                or      l
+                jr      z,.NoDec
+                dec     hl
+                ld      (IR_COUNT),hl
+                ; NOTE play then equeue simplifies ligic, more chance slot free
+.NoDec:         ld      a,(SoundFxToEnqueue)        ; Check for new sound 
+                cp      $FF
+                call    nz,EnqueSound
+.NoNewSound:    IFDEF   USETIMER
+                   ld      hl,SoundChannelTimer
+                ENDIF
+                ld      de,SoundChannelSeq
+                ld      b,8
+.ResetLoop:     ld      a,(de)                  ; we only update active channels
+                cp      $FF
+                jr      z,.NextCounter
+                IFDEF   USETIMER
+                    
+                    dec     (hl)                    ; so update channel timer
+                    jr      nz,.NextCounter         ; if its not zero then continue
+                ENDIF
+                ld      a,8                     ; a now = channel to play
+                sub     a,b
+                IFDEF   USETIMER
+                    push    bc,,de,,hl              ; save state
+                ELSE
+                    push    bc,,de
+                ENDIF
+                call    PlaySound               ; play sound
+                IFDEF   USETIMER
+                    pop     bc,,de,,hl              ; restore state so de = correct timer & hl = correct channel, b = coutner
+                ELSE
+                    pop     bc,,de              ; restore state so de = correct timer & hl = correct channel, b = coutner
+                ENDIF                
+; If it went negative new sound update
+                IFDEF   USETIMER
+.ResetTimer:        ld      a,SOUNDSTEPLENGTH       ; as we fallin to this it will auto update counter 
+                    ld      (hl),a                  ; so may take it out of playsound routine
+                ENDIF
+.NextCounter    IFDEF   USETIMER
+                    inc     hl
+                ENDIF
+                inc     de
+                djnz    .ResetLoop
+.DoneInterrupt: pop     af,,bc,,de,,hl,,ix,,iy
+                ei
+                reti
 
 EndOfNonBanked:
-    DISPLAY "Non Banked Code Ends At", EndOfNonBanked
+    DISPLAY "Non Banked Code + Interrupt Handler Ends At", EndOfNonBanked
 
 ; ARCHIVED INCLUDE "Menus/draw_fuel_and_crosshair.asm"
 ;INCLUDE "./title_page.asm"

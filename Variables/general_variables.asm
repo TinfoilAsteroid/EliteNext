@@ -127,8 +127,10 @@ DELT4Lo					DB 	0				; 7E
 DELT4Hi					DB 	0				; 7F
 DELTA4                  equ                 DELT4Lo
 
-; SoundFX Variables
+; SoundFX Variables -------------------------------------------------------------------------------------------
 EngineSoundChanged:     DB  0
+SoundFxToEnqueue        DB  $FF             ; $FF No sound to enque,if it is $FF then next sound will not get enqued
+
 				
 ; Not thise must be in this order else 16 bit fetches will fail
 varU                    DB  0               ;   80
