@@ -60,16 +60,18 @@ TXTCR           EQU 0x0C
     INCLUDE "./Macros/ldIndexedMacros.asm"
     INCLUDE "./Variables/general_variables_macros.asm"
     
-
+TopOfStack              equ $7F00 ;$6100
 
                         ORG         $8000
-start:                  MMUSelectROMS
+Start:                  MMUSelectROMS
                         di
                         nextreg     TURBO_MODE_REGISTER,0;Speed_28MHZ
                         ; For testing we will assume all is mono for now
 .InitialisePeripherals: nextreg     PERIPHERAL_2_REGISTER, AUDIO_CHIPMODE_AY ; Enable Turbo Sound A left B center C right
                         nextreg     PERIPHERAL_3_REGISTER, DISABLE_RAM_IO_CONTENTION | ENABLE_TURBO_SOUND
+                        MMUSelectSound
                         call        InitAudio
+                        MMUSelectLayer2
                         ld	        a,VectorTable>>8
                         ld	        i,a						                        ; im2 table will be at address 0xa000
                         nextreg     LINE_INTERRUPT_CONTROL_REGISTER,%00000110       ; Video interrup on 
@@ -118,6 +120,9 @@ DelayLoop:                        nop
                         jr      nz,       DelayLoop
                        ; call    ShutdownSound
                         ret
+
+SavedMMU7       db      0
+
 ;Vector table must be bank aligned
                 org     $d000
                 ;crashes
@@ -135,6 +140,10 @@ VectorTable:
                         
 IM2Routine:     ; initially do nothing
                 push    af,,bc,,de,,hl,,ix,,iy
+                ; get current MMU and save it
+                GetNextReg  MMU_SLOT_7_REGISTER
+                ld      (SavedMMU7),a
+                MMUSelectSound
                 ld      a,(DELTA)
                 ld      hl,LAST_DELTA
                 cp      (hl)
@@ -188,22 +197,29 @@ IM2Routine:     ; initially do nothing
                 ENDIF
                 inc     de
                 djnz    .ResetLoop
-.DoneInterrupt: pop     af,,bc,,de,,hl,,ix,,iy
+.DoneInterrupt: ld      a,(SavedMMU7)
+                nextreg MMU_SLOT_7_REGISTER,a       ; Restore MMU7
+                pop     af,,bc,,de,,hl,,ix,,iy
+                
                 ei
                 reti
-                
-    INCLUDE "./Hardware/sound.asm"
 
-; SoundFX Variables -------------------------------------------------------------------------------------------
 EngineSoundChanged:     DB  0
 SoundFxToEnqueue        DB  $FF             ; $FF No sound to enque,if it is $FF then next sound will not get enqued
-
 	
 IR_COUNT        dw  $0060
 DELTA           db  20
 LAST_DELTA      db  0
+
+                
+                        SLOT    SoundAddr
+                        PAGE    BankSound
+                        ORG SoundAddr, BankSound             
+    INCLUDE "./Hardware/sound.asm"
+
+; SoundFX Variables -------------------------------------------------------------------------------------------
     
-    SAVENEX OPEN "soundTst.nex", $8000 , $7F00
+    SAVENEX OPEN "soundTst.nex", Start , TopOfStack
     SAVENEX CFG  0,0,0,1
     SAVENEX AUTO
     SAVENEX CLOSE

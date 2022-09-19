@@ -75,7 +75,8 @@ l2_draw_horz_line:      ld		a,d
 	
 ; "l2_draw_horz_line_to"
 ; "bc = left side row,col, d right pixel, e = color"
-l2_draw_horz_line_to:   ld 		a,d
+l2_draw_horz_line_to:   di
+                        ld 		a,d
                         cp 		c
                         jr		nc, .noswap
                         jr      z, .singlepixel

@@ -2,7 +2,7 @@
  DEFINE  DOUBLEBUFFER 1
  ;DEFINE  LOGMATHS     1
  ;DEFINE  DIAGSPRITES 1
-  DEFINE   SKIPATTRACT 1
+ ; DEFINE   SKIPATTRACT 1
  ; DEFINE DEBUGMISSILETEST 1
  CSPECTMAP eliteN.map
  OPT --zxnext=cspect --syntax=a --reversepop
@@ -126,6 +126,7 @@ EliteNextStartup:       di
                         MMUSelectROMS
 .InitialisePeripherals: nextreg     PERIPHERAL_2_REGISTER, AUDIO_CHIPMODE_AY ; Enable Turbo Sound
                         nextreg     PERIPHERAL_3_REGISTER, DISABLE_RAM_IO_CONTENTION | ENABLE_TURBO_SOUND
+                        MMUSelectSound
                         call        InitAudio
 .InitialiseInterrupts:  ld	        a,VectorTable>>8
                         ld	        i,a						                        ; im2 table will be at address 0xa000
@@ -150,37 +151,7 @@ EliteNextStartup:       di
                         ZeroA
                         ld          (LoadCounter),a
 .StreamSpriteData:      MMUSelectSpriteBank
-                        call        load_pattern_files; load_sprite_patterns
-;                        call        stream_open_sprite_file
-;                        ld          e,0
-;                        ld          d,29
-;.LoadLoop:              push        de
-;                        push        af
-;                        SetBorder   $02
-;                        ld          a,e
-;                        MMUSelectSpriteBank
-;                        call        stream_select_sprite_a
-;                        pop         af
-;                        MMUSelectSpriteBank
-;                        call        stream_load_sprite
-;                        pop         de
-;                        inc         e
-;                        dec         d
-;                        push        af,,de,,hl,,ix,,iy
-;                        ld          a,(LoadCounter)
-;                        ld          d,16
-;                        ld          e,a
-;                        add         8
-;                        ld          (LoadCounter),a
-;                        ld          hl,SpriteProgress
-;                        MMUSelectLayer1
-;                        call        l1_print_at_wrap
-;                        SetBorder   $03
-;                        pop         af,,de,,hl,,ix,,iy
-;                        jr          nz,.LoadLoop
-;                        SetBorder   $04
-;                        MMUSelectSpriteBank
-;                        call        stream_close_spr_file_a
+                        call        load_pattern_files
                         call        init_keyboard
 .PostDiag:              ClearForceTransition
                         SetBorder   $04
@@ -645,7 +616,6 @@ XX12PVarSign3		DB 0
     INCLUDE "./Hardware/drive_access.asm"
 
     INCLUDE "./Menus/common_menu.asm"
-    INCLUDE "./Hardware/sound.asm"
 
 VectorTable:            
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
@@ -666,6 +636,9 @@ StartOfInterruptHandler:
     org $B800
 IM2Routine:     ; initially do nothing
                 push    af,,bc,,de,,hl,,ix,,iy
+                ex      af,af'
+                exx
+                push    af,,bc,,de,,hl
                 ld      a,(DELTA)
                 ld      hl,LAST_DELTA
                 cp      (hl)
@@ -719,7 +692,10 @@ IM2Routine:     ; initially do nothing
                 ENDIF
                 inc     de
                 djnz    .ResetLoop
-.DoneInterrupt: pop     af,,bc,,de,,hl,,ix,,iy
+.DoneInterrupt: pop    af,,bc,,de,,hl
+                ex      af,af'
+                exx
+                pop     af,,bc,,de,,hl,,ix,,iy
                 ei
                 reti
 
@@ -1097,6 +1073,14 @@ GALAXYDATABlock7        DB $FF
                         INCLUDE "./Tables/antilogtable.asm"
                         INCLUDE "./Tables/logtable.asm"
                         DISPLAY "Bank ",BankMathsTables," - Bytes free ",/D, $2000 - ($-MathsTablesAddr), " - BankMathsTables"
+
+; Bank 100  -----------------------------------------------------------------------------------------------------------------------
+               
+                        SLOT    SoundAddr
+                        PAGE    BankSound
+                        ORG SoundAddr, BankSound             
+                        INCLUDE "./Hardware/sound.asm"
+                        DISPLAY "Sound ",BankSound," - Bytes free ",/D, $2000 - ($-SoundAddr), " - BankSound"
     
     SAVENEX OPEN "EliteN.nex", EliteNextStartup , TopOfStack
     SAVENEX CFG  0,0,0,1

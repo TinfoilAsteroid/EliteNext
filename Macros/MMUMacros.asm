@@ -140,3 +140,7 @@ MMUSelectViewFront:  MACRO
 MMUSelectScreenA:    MACRO
                      nextreg ScreenBankMMU,		a
 					 ENDM
+
+MMUSelectSound:      MACRO
+                     nextreg SoundMMU,		    BankSound
+					 ENDM

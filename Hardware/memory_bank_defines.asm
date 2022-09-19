@@ -39,7 +39,7 @@ LAYER1Addr              equ $e000
 SPRITEAddr              equ $e000
 ConsoleImageAddr        equ $e000
 GalaxyDataAddr          equ $e000
-SoundHandler            equ $e000
+SoundAddr               equ $e000
 
 EXSDOSMMU0              equ MMU_SLOT_0_REGISTER
 MathsTablesMMU          equ MMU_SLOT_0_REGISTER
@@ -68,7 +68,7 @@ CommanderMMU	        equ MMU_SLOT_7_REGISTER
 StockTableMMU		    equ MMU_SLOT_7_REGISTER
 ConsoleImageDataMMU	    equ MMU_SLOT_7_REGISTER
 GalaxyDataMMU	        equ MMU_SLOT_7_REGISTER
-SoundHandler            equ MMU_SLOT_7_REGISTER
+SoundMMU                equ MMU_SLOT_7_REGISTER
  
 BankResetUniv           equ 49
 BankMenuShrCht          equ 50
@@ -118,6 +118,6 @@ BankGalaxyData6         equ 97
 BankGalaxyData7         equ 98
 
 BankMathsTables         equ 99
-BankSoundHandler        equ 100
+BankSound               equ 100
 
 BankROM                 equ 255
