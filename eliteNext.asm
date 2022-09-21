@@ -125,7 +125,9 @@ EliteNextStartup:       di
                         call        asm_disable_l2_readwrite
                         MMUSelectROMS
 .InitialisePeripherals: nextreg     PERIPHERAL_2_REGISTER, AUDIO_CHIPMODE_AY ; Enable Turbo Sound
-                        nextreg     PERIPHERAL_3_REGISTER, DISABLE_RAM_IO_CONTENTION | ENABLE_TURBO_SOUND
+                        nextreg     PERIPHERAL_3_REGISTER, DISABLE_RAM_IO_CONTENTION | ENABLE_TURBO_SOUND | INTERNAL_SPEAKER_ENABLE
+                        nextreg     PERIPHERAL_4_REGISTER, %00000000
+                        
                         MMUSelectSound
                         call        InitAudio
 .InitialiseInterrupts:  ld	        a,VectorTable>>8
@@ -618,6 +620,7 @@ XX12PVarSign3		DB 0
     INCLUDE "./Menus/common_menu.asm"
 
     org $B000
+    DISPLAY "Vector Table Starts at ",$
 VectorTable:            
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
@@ -635,6 +638,9 @@ SavedMMU7       db  0
 StartOfInterruptHandler:
     DISPLAY "Non Banked Code Ends At", StartOfInterruptHandler
 
+                ; NOTE play then equeue simplifies ligic, more chance slot free
+    org $B1B1
+    DISPLAY "Interrupt Handler Starts at",$
 IM2Routine:     ; initially do nothing
                 push    af,,bc,,de,,hl,,ix,,iy
                 ex      af,af'
@@ -646,11 +652,7 @@ IM2Routine:     ; initially do nothing
                 ld      a,(DELTA)
                 ld      hl,LAST_DELTA
                 cp      (hl)
-                jr      z,.NoSpeedChange
-.SpeedChange:   ;call    UpdateEngineSound
-                ld      a,(DELTA)
-                ld      (LAST_DELTA),a
-                ; NOTE play then equeue simplifies ligic, more chance slot free
+.SpeedChange:   call    nz, UpdateEngineSound
 .NoSpeedChange: ld      a,(SoundFxToEnqueue)        ; Check for new sound 
                 cp      $FF
                 call    nz,EnqueSound
@@ -663,7 +665,6 @@ IM2Routine:     ; initially do nothing
                 cp      $FF
                 jr      z,.NextCounter
                 IFDEF   USETIMER
-                    
                     dec     (hl)                    ; so update channel timer
                     jr      nz,.NextCounter         ; if its not zero then continue
                 ENDIF
@@ -685,7 +686,8 @@ IM2Routine:     ; initially do nothing
 .ResetTimer:        ld      a,SOUNDSTEPLENGTH       ; as we fallin to this it will auto update counter 
                     ld      (hl),a                  ; so may take it out of playsound routine
                 ENDIF
-.NextCounter    IFDEF   USETIMER
+.NextCounter:
+                IFDEF   USETIMER
                     inc     hl
                 ENDIF
                 inc     de
@@ -698,7 +700,7 @@ IM2Routine:     ; initially do nothing
                 pop     af,,bc,,de,,hl,,ix,,iy
 .IMFinishup:    ei
                 reti
-
+    DISPLAY "Interrupt Handler Ends at",$
 EndOfNonBanked:
     DISPLAY "Non Banked Code + Interrupt Handler Ends At", EndOfNonBanked
 

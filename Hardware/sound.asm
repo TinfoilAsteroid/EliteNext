@@ -5,7 +5,6 @@
                         IFDEF   USETIMER
 SOUNDSTEPLENGTH             EQU     25
                         ENDIF
-ChipChannelSettings     DS      3
   
 
 WriteTurboControlA:     MACRO   
@@ -14,32 +13,25 @@ WriteTurboControlA:     MACRO
                         ENDM
                         
 WriteTurboRegisterA:    MACRO   value
-                        ld      bc,TURBO_SOUND_NEXT_CONTROL
-                        out     (c),a
-                        ;ld      b,$BF
-                        ld      bc,SOUND_CHIP_REGISTER_WRITE
+                        WriteTurboControlA
+                        ld      b,$BF
                         ld      a,value
                         out     (c),a
                         ENDM
                         
 WriteTurboRegister:     MACRO   register,value
-                        ld      bc,TURBO_SOUND_NEXT_CONTROL
                         ld      a,register
-                        out     (c),a
-                        ;ld      b,$BF
-                        ld      bc,SOUND_CHIP_REGISTER_WRITE
+                        WriteTurboControlA
+                        ld      b,$BF
                         ld      a,value
                         out     (c),a
                         ENDM
 
-
 WriteAToTurboRegister:  MACRO   register
                         ex      af,af'
-                        ld      bc,TURBO_SOUND_NEXT_CONTROL
                         ld      a,register
-                        out     (c),a
-                        ;ld      b, $BF;
-                        ld      bc,SOUND_CHIP_REGISTER_WRITE
+                        WriteTurboControlA
+                        ld      b, $BF
                         ex      af,af'
                         out     (c),a
                         ENDM
@@ -49,38 +41,45 @@ SelectAY:               MACRO   chipNbr
                         WriteTurboControlA
                         ENDM
 
-DefaultAYChip:          WriteTurboRegister CHANNEL_A_AMPLITUDE, $00
-                        WriteTurboRegister CHANNEL_B_AMPLITUDE, $00
-                        WriteTurboRegister CHANNEL_C_AMPLITUDE, $00
-                        WriteTurboRegister NOISE_PERIOD,0
-                        WriteTurboRegister ENVELOPE_PERIOD_FINE,0
-                        WriteTurboRegister ENVELOPE_PERIOD_COARSE,0
-                        WriteTurboRegister ENVELOPE_SHAPE,ENVELOPE_SHAPE_SINGLE_ATTACK_HOLD
+; On entering here a = AY chip to select
+DefaultAYChip:          ld      hl,$FFBF            ; h = turbo control, l = turbo register
+                        ld      c,$FD               ; bc = h$FD or l$FD
+                        ld      de,$000E            ; d = value 0, e = counter
+                        or      TURBO_MANDATORY | TURBO_LEFT | TURBO_RIGHT
+                        ld      b,h                 ; now select chip and set to stereo
+                        out     (c),a               ; .
+.DefaultLoop:           dec     e                   ; loop down we set E 1 higher
+                        jp      z,.Complete         ; On zero we complete, we
+                        ld      b,h                 ; Set register to 0
+                        out     (c),e               ; .
+                        ld      b,l                 ; .
+                        out     (c),d               ; .
+.DefaultDone:           jp      .DefaultLoop        ; and loop
+.Complete:              ld      b,h                 ; we set fine tone to 0
+                        out     (c),e               ; though as volume is 0
+                        ld      b,l                 ; it doesn't really 
+                        out     (c),d               ; matter 
                         ret
+                        
 ;-- Initialise Audio channels to AY1 noise, AY2 and 3 tone, all channels to volume 0
 
-InitAudio:              ;break
-                        SelectAY TURBO_CHIP_AY1
+; For each AY channel, set everything to zero, then set up envelope and tone channels.
+; for now we are blocking noise channels whilst debugging
+InitAudio:              ld      a, TURBO_CHIP_AY1
                         call    DefaultAYChip
-                        ; still have chip mapping issue
+                        WriteTurboRegister ENVELOPE_SHAPE,ENVELOPE_SHAPE_SINGLE_ATTACK_HOLD
                         WriteTurboRegister TONE_ENABLE,   NOISE_CHANNEL_A | NOISE_CHANNEL_B | NOISE_CHANNEL_C
-                        SelectAY TURBO_CHIP_AY2
-                        WriteTurboRegister TONE_ENABLE,   NOISE_CHANNEL_A | NOISE_CHANNEL_B | NOISE_CHANNEL_C
+                        ld      a, TURBO_CHIP_AY2
                         call    DefaultAYChip
-                        SelectAY TURBO_CHIP_AY3
+                        WriteTurboRegister ENVELOPE_SHAPE,ENVELOPE_SHAPE_SINGLE_ATTACK_HOLD
                         WriteTurboRegister TONE_ENABLE,   NOISE_CHANNEL_A | NOISE_CHANNEL_B | NOISE_CHANNEL_C
+                        ld      a, TURBO_CHIP_AY3
                         call    DefaultAYChip
-                        
-                        ld      hl,ChipChannelSettings          ; set local copy of tone
-                        ld      (hl),0                          ; to all enabled
-                        inc     hl                              ;
-                        ld      (hl),0                          ;
-                        inc     hl                              ;
-                        ld      (hl),0                          ;
-                        
-                        ld      hl,SoundChannelSeq
-                        ld      a,$FF
-                        ld      b,8
+                        WriteTurboRegister ENVELOPE_SHAPE,ENVELOPE_SHAPE_SINGLE_ATTACK_HOLD
+                        WriteTurboRegister TONE_ENABLE,   NOISE_CHANNEL_A | NOISE_CHANNEL_B | NOISE_CHANNEL_C                      
+                        ld      hl,SoundChannelSeq      ; now set up all the channel data to $FF
+                        ld      a,$FF                   ; which means that it
+                        ld      b,8                     ; has no data to play
 .InitLoop:              ld      (hl),a
                         inc     hl
                         djnz    .InitLoop
@@ -110,11 +109,12 @@ SelectChannelMapping:   MACRO
 
 ; This version ignores nooise and envelope setup so its always 0 atack hold and 
 ; noise is pre-configured in channel                        
+; The channel always holds a pointer to the next block of data to play
 PlayChannelD:           ld      a,(ix+SoundDataPointerOffset)    ; set hl to current data block
                         ld      l,a                              ; for SFX step
                         ld      a,(ix+SoundDataPointerOffset1)   ;
-                        ld      h,a   
-                        ld      a,(hl)
+                        ld      h,a                              ;
+                        ld      a,(hl)                           ; get fine
                         WriteAToTurboRegister d
                         inc     d                                ; Move to channel coarse
                         inc     hl      
@@ -129,24 +129,23 @@ PlayChannelD:           ld      a,(ix+SoundDataPointerOffset)    ; set hl to cur
                         ret
                         
 ;--- Take the current sound to play, Put it in a noise or tone channel (if bit 1 is clear is a tone only)
-EnqueSound:            ; break
-                        ld      a,(SoundFxToEnqueue)                ; Get Sound FX to Enque
+EnqueSound:             ld      a,(SoundFxToEnqueue)                ; Get Sound FX to Enque
                         JumpIfAGTENusng SFXEndOfList, .InvalidSound ; Invalid sounds get discarded quickly
 .GetSoundData:          ld      e,a                                 ; save SoundFxToEnqeue
                         and     $01                                 ; even numbers are tone only (Including 0)
                         jr      nz,.FindFreeNoiseChannel         
-.FindFreeToneChannel:   ld      hl,SoundChannelSeq + 2
+.FindFreeToneChannel:   ld      hl,SoundChannelSeq + 2              ; so we start at the first tone channel
                         ld      d,$FF                               ; d = marker for free slot cp d will be faster in the loop
                         ld      c,2                                 ; c= current slot
                         ld      b,7                                 ; b = nbr of slots
-.ToneScanLoop:          ld      a,(hl)
+.ToneScanLoop:          ld      a,(hl)                              ; is channel occupied
                         cp      d
-                        jr      z,.SaveSoundId
+                        jr      z,.SaveSoundId                      ; if its free then move forward
                         inc     c                                   ; c is hunting for a free channel
                         inc     hl                                  ; move tonext address in channel list
                         djnz    .ToneScanLoop
-.NoFreeSlot:            ret
-.FindFreeNoiseChannel:  ld      hl,SoundChannelSeq                  ; We onyl have 2 noise channels so no need to
+.NoFreeSlot:            ret                                         ; no free slot, leave sound enqued
+.FindFreeNoiseChannel:  ld      hl,SoundChannelSeq                  ; We only have 2 noise channels so no need to
                         ld      c,0                                 ; do a complex loop
                         ld      a,(hl)
                         ld      d,$FF                               ; d = marker for free slot
@@ -155,8 +154,8 @@ EnqueSound:            ; break
                         inc     hl
                         ld      a,(hl)
                         cp      d
-.NoNoiseSlot:           ret     nz
-.NoiseChannel2:         ld      c,1                        
+.NoNoiseSlot:           ret     nz                                  ; no free slot, leave sound enqued
+.NoiseChannel2:         ld      c,1                                 ; So we have channel 1 free                       
 .SaveSoundId:           ld      a,e                                 ; get back sound id
                         GetSoundAAddressToHL                        ; hl = pointer to sfx data
                         ex      de,hl                               ; save pointer to data also makes loading to (ix) easier
@@ -168,11 +167,10 @@ EnqueSound:            ; break
 .LoadSeqCount           ZeroA
                         ld      (ix+0),a                            ; set SoundChannelSeq[channel] to 0 as its starting
                         ld      a,(hl)                              ; get the nbr of steps
-                        ld      (ix+SoundLastSeqOffset),a                            ; load SoundChannelLastSeq[channel]
+                        ld      (ix+SoundLastSeqOffset),a           ; load SoundChannelLastSeq[channel]
                         IFDEF   USETIMER
-                            
-                            ld      a,1                                 ; for now we have separate timers, we enque with 1 so the loops starts immediatly
-                            ld      (ix+SoundTimerOffset),a             ; load SoundChannelTimer[channel] with duration
+                            ld      a,1                             ; for now we have separate timers, we enque with 1 so the loops starts immediatly
+                            ld      (ix+SoundTimerOffset),a         a; load SoundChannelTimer[channel] with duration
                         ENDIF
                         inc     hl                                  ; move hl to first byte of data block
                         ld      (ix+SoundDataPointerOffset),l       ; load SoundDataPointer[channel] with current data set
@@ -181,28 +179,27 @@ EnqueSound:            ; break
                         ld      (SoundFxToEnqueue),a                ; ClearFXEnqeue
                         ret
 
-PlaySound:              ;break
-                        ld      e,a                                 ; save channel number
+PlaySound:              ld      e,a                                 ; save channel number
                         SetIXToChannelA                             ; We trap for debugging
 .GetCurrentSeq:         ld      a,(ix+0)                            ; for optimisation we 
                         cp      $FF                                 ; will never call this if its $FF
-                        ret     z
+                        ret     z                                   ; its just a belt n braces
 ;--- Play Next Step, we select chip, select channel, set up tone then step, timer & pointer
 .SelectChip             ld      a,(ix+SoundChipMapOffset)           ; get the mapping. bits 1 and 0 hold
                         ld      d,a                                 ; .
                         or      %11111100                           ; .
                         WriteTurboControlA                          ; .
 .CheckLastSeq:          ld      a,(ix+SoundLastSeqOffset)           ; get last in sequence
-                        JumpIfALTNusng  (ix+0),.CompletedSFX             ; if we have gone beyond last then done                        
+                        JumpIfALTNusng  (ix+0),.CompletedSFX        ; if we have gone beyond last then done                        
 .PlayStep:              ld      a,d                                 ; Get the channel number
                         and     %00110000 
                         swapnib                                     ; get channel to lower bits
                         ld      d,a
                         call    PlayChannelD                        ; play channel D step ix is pointer to correct soundchannelseq
-.UpdateStep:            inc     (ix+0)
+.UpdateStep:            inc     (ix+0)                              ; next stepssss
                         IFDEF   USETIMER
-.UpdateTimer:           ld      a,SOUNDSTEPLENGTH
-                        ld      (ix+SoundTimerOffset),a
+.UpdateTimer:               ld      a,SOUNDSTEPLENGTH
+                            ld      (ix+SoundTimerOffset),a
                         ENDIF
 .UpdateStepPointer:     ld      e,(ix+SoundDataPointerOffset)       ; move pointer on by 7 bytes
                         ld      d,(ix+SoundDataPointerOffset+1)     ;
@@ -213,69 +210,67 @@ PlaySound:              ;break
                         ld      (ix+SoundDataPointerOffset),e       ;
                         ld      (ix+SoundDataPointerOffset+1),d     ;
                         ret
-.CompletedSFX:          ;break
-                       ; SelectAY TURBO_CHIP_AY2
-                        ld      a,(ix+SoundChipMapOffset)           ; channel number is in upper bits
+.CompletedSFX:          ld      a,(ix+SoundChipMapOffset)           ; channel number is in upper bits
                         swapnib                                     ; so we need it in 
                         and     %00000011                           ; lower for selecting volume register
-                        add     a,CHANNEL_A_AMPLITUDE             ; select the register
+                        add     a,CHANNEL_A_AMPLITUDE               ; select the register
                         WriteTurboRegisterA 0                       ; set volume to 0
-                        ld      a,$FF
-                        ld      (ix+0),a                            ; close off that channel
+                        WriteTurboRegister ENVELOPE_PERIOD_FINE,0
+                        WriteTurboRegister ENVELOPE_PERIOD_COARSE,0                        
+                        WriteTurboRegister ENVELOPE_SHAPE,ENVELOPE_SHAPE_SINGLE_ATTACK_HOLD
+                        WriteTurboRegister TONE_ENABLE,   NOISE_CHANNEL_A | NOISE_CHANNEL_B | NOISE_CHANNEL_C
+                        ld      a,$FF                               ; set sequence to FF to denote
+                        ld      (ix+0),a                            ; channel is now free
                         ret
 
-;SetTone:                ;break
-;                       ld      hl,TonesPitch
-;                       add     a,a
-;                       add     hl,a
-;                       ld      a,(hl)
-;                       
-;                       WriteAToTurboRegister CHANNEL_A_COARSE
-;                       inc     hl
-;                       ld      a,(hl)
-;                       WriteAToTurboRegister CHANNEL_A_FINE
-;                       ret
-                        
-
-SetEngineTone:          ld      a,(DELTA)
-                        ld      hl,$08EB
-                        ld      d,a
-                        ld      e,15
-                        mul
+; Engine Sound is always a priority so gets a dedicated channel
+; this is only called if delta has changed
+UpdateEngineSound:      SelectAY TURBO_CHIP_AY1
+.SetUpTone:             ld      a,(DELTA)   
+                        and     a
+                        jp      z,.EngineOff    ; if speed is 0 the engine off as a = 0
+                        ld      hl,$08F3        ; base tone - delta * 15
+                        ld      d,a             ; we subtract as the tone is the 
+                        ld      e,15            ; time between pulses
                         sub     hl,de
-                        ld      a,h
-                        WriteAToTurboRegister CHANNEL_A_COARSE                      
-                        ld      a,l
-                        WriteAToTurboRegister CHANNEL_A_FINE
-                        ret
+                        ld      a,CHANNEL_A_FINE
+                        ld      bc,$FFFD
+                        out     (c),a
+                        ld      b,$BF
+                        out     (c),h
+                        inc     a
+                        ld      b,$FF
+                        out     (c),a
+                        ld      b,$BF
+                        out     (c),l
+.SetUpNoise:            ld      a,(DELTA)       ; l = DELTA / 4
+                        srl     a
+                        ld      d,a             ; 
+                        srl     a
+                        srl     a               ; a = DELTA / 8
+                        add     a, $1F          ; more noise higher the speed
+                        ld      b,$FF
+                        ld      e,NOISE_PERIOD
+                        out     (c),e
+                        ld      b,$BF
+                        out     (c),a
+                        ld      a,d             ; get back delta / 4
+                        add     a,5
+                        srl     a               ; calculate a scaled from 2 to 7
+.EngineOff:             ld      e,CHANNEL_A_AMPLITUDE
+                        ld      b,$FF
+                        out     (c),e
+                        ld      b,$BF
+                        out     (c),a
+                        WriteTurboRegister ENVELOPE_PERIOD_FINE,0
+                        WriteTurboRegister ENVELOPE_PERIOD_COARSE,0
+                        WriteTurboRegister ENVELOPE_SHAPE,ENVELOPE_SHAPE_SINGLE_ATTACK_HOLD
+                        WriteTurboRegister TONE_ENABLE,   NOISE_CHANNEL_A | NOISE_CHANNEL_B | NOISE_CHANNEL_C
 
-
-
-
-; Engine Sound is always a priority
-UpdateEngineSound:      call    SetEngineTone
-.NoisePitch:            ld      a,(DELTA)
-                        ld      hl,EngineNoise
-                        add     hl,a
-                        ld      a,(hl)
-                        WriteAToTurboRegister   NOISE_PERIOD
-                        WriteTurboRegister      ENVELOPE_PERIOD_COARSE,0
-                        WriteTurboRegister      ENVELOPE_PERIOD_FINE,0
-                        WriteTurboRegister      ENVELOPE_SHAPE, ENVELOPE_SHAPE_SINGLE_ATTACK_HOLD
                         ld      a,(DELTA)
-                        sra     a
-                        ld      hl,EngineVolume
-                        add     hl,a
-                        ld      a,(hl)
-                        WriteAToTurboRegister CHANNEL_A_AMPLITUDE
-                        WriteTurboRegister TONE_ENABLE, TONE_CHANNEL_B | TONE_CHANNEL_C |NOISE_CHANNEL_B| NOISE_CHANNEL_C
+                        ld      (LAST_DELTA),a
                         ret
-;                    00   01   02   03   04   05   06   07   08   09   10
-EngineNoise:     db $1F, $1F, $1F, $1F, $1E, $1E, $1E, $1E, $1D, $1D, $1D
-                 db $1D, $1C, $1C, $1C, $1C, $1D, $1D, $1D, $1D, $1D, $1D 
 
-EngineVolume:    db 0, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6
-                               ; 0123456789ABCDEF
 SoundLabel              DB      "Sound Channels  "
 SoundChannelSeq         DS      8   ; The current step in the SFX or $FX for empty
 SoundChannelLastSeq     DS      8   ; A copy of SFX length to save an extra lookup, $FF means 1 step always on, $00 means off
@@ -325,8 +320,7 @@ SFXVolOffset    EQU     2
 SoundLaser      DB      "Laser  "    
 SFXLaser        db      11
 ;                       Tone 
-;                      Fine Crs  Nois Vol 
-
+;                      Fine Crs  Vol 
                db      $5F, $00, $0E
                db      $39, $00, $0E
                db      $47, $00, $0D
