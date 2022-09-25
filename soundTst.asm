@@ -6,6 +6,7 @@
 
 DEBUGSEGSIZE   equ 1
 DEBUGLOGSUMMARY equ 1
+DEFINE     SOUNDPACE 9
 ;DEBUGLOGDETAIL equ 1
    ; DEFINE          USETIMER 25
 ;----------------------------------------------------------------------------------------------------------------------------------

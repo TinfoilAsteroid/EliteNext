@@ -60,6 +60,7 @@ DMA_WR2_P2FIXED_MEMORY       equ $20
 DMA_WR2_P2DEC_MEMORY         equ $00
 DMA_WR2_P2INC_MEMORY         equ $10
 DMA_WR4_CONT_MODE            equ $AD
+DMA_WR4_BURST_MODE           equ $CD
 DMA_RESET                    equ $c3
 DMA_RESET_PORT_A_TIMING      equ $c7
 DMA_RESET_PORT_B_TIMING      equ $cb

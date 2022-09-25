@@ -6,7 +6,7 @@
  ; DEFINE DEBUGMISSILETEST 1
  CSPECTMAP eliteN.map
  OPT --zxnext=cspect --syntax=a --reversepop
-
+ DEFINE     SOUNDPACE 3
 DEBUGSEGSIZE   equ 1
 DEBUGLOGSUMMARY equ 1
 ;DEBUGLOGDETAIL equ 1
@@ -196,6 +196,7 @@ StartAttractMode:       di                                          ; we are cha
                         di                                          ; set up for main 
                         ld          hl,SoundInterrupt               ; sound handler
                         ld          (IM2SoundHandler+1),hl
+                        MMUSelectSound
                         call        InitAudio                       ; jsut re-init all audio for now rather than sound off
                         ei 
                         JumpIfAIsZero  SkipDefaultCommander
@@ -665,6 +666,8 @@ IM2Routine:     push    af,,bc,,de,,hl,,ix,,iy
                 ex      af,af'
                 exx
                 push    af,,bc,,de,,hl
+                ld      hl,InterruptCounter
+                inc     (hl)                        ; cycles each interrupt
                 GetNextReg  MMU_SLOT_7_REGISTER
                 ld      (SavedMMU7),a
                 MMUSelectSound

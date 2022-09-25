@@ -10,6 +10,7 @@ ATTR_LoadCommander      DB "Load Commander (Y/N)",0
 
 LocalXCounter           DB $FF
 LocalZCounter           DB $FF
+LastInterrupt           DB 0
 
 RandomXCounter:         call    doRandom
                         ret     nz
@@ -27,7 +28,8 @@ RandomYCounter:         call    doRandom
                         ret
                         
 
-AttractMode:            MMUSelectLayer1
+AttractMode:            di                                  ; no music yet
+                        MMUSelectLayer1
                         call	l1_cls 
                         ld		a,7
                         call	l1_attr_cls_to_a                        
@@ -37,9 +39,13 @@ AttractMode:            MMUSelectLayer1
                         call    l1_print_at
                         MMUSelectSpriteBank    
                         call        sprite_cls_cursors  
-                        call    l2_cls_lower_third 
+.ClearLayer2:           MMUSelectLayer2 
+                        call    asm_l2_double_buffer_on
+                        call    l2_cls     
+                        call    l2_flip_buffers
+                        call    l2_cls     
                         MMUSelectConsoleBank
-                        ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
+.LoadConsole:           ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
                         ld          de,ConsoleImageData
                         ld          bc, ScreenL1BottomLen
                         call        memcopy_dma
@@ -47,9 +53,15 @@ AttractMode:            MMUSelectLayer1
                         ld          de,ConsoleAttributes
                         ld          bc, ScreenL1AttrBtmLen
                         call        memcopy_dma
-                        MMUSelectLayer2 
-                        call    asm_l2_double_buffer_on
-.StartShip:             call    SelectARandomShip
+                        ld          a,(InterruptCounter)
+                        ld          (LastInterrupt),a
+                        ei                                  ; now we are ready for music
+.StartShip:             ld          a,(InterruptCounter)
+                        ld          hl,LastInterrupt
+                        cp          (hl)
+                        jp          z,.StartShip            ; we only refresh once per interupt
+                        ld          (hl),a
+                        call    SelectARandomShip
 .DrawLoop:              call    scan_keyboard
                         ld      a,c_Pressed_Yes
                         call    is_key_up_state

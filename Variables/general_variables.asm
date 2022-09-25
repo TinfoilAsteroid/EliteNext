@@ -130,6 +130,7 @@ DELTA4                  equ                 DELT4Lo
 ; SoundFX Variables -------------------------------------------------------------------------------------------
 EngineSoundChanged:     DB  0
 SoundFxToEnqueue        DB  $FF             ; $FF No sound to enque,if it is $FF then next sound will not get enqued
+InterruptCounter        DB 0                ; simple marker updated once per IM2 event
 
 				
 ; Not thise must be in this order else 16 bit fetches will fail
