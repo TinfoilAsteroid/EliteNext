@@ -42,9 +42,11 @@ l2_cls_upper_two_thirds:;ld a,0								; pretend we are plotting pixel on row 0 
                         ret
 
 l2_cls_lower_third:     ;ld a,128							; pretend we are plotting pixel on row 64 to force mid selection
+                        di
                         asm_l2_bank_2_macro; call asm_l2_row_bank_select
                         ld 	a,COLOUR_TRANSPARENT
                         call l2_cls_dma_bank
+                        ei
                         ret
 	 
 l2_cls:                 call l2_cls_upper_two_thirds

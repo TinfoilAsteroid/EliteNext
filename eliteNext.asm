@@ -186,7 +186,18 @@ InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
                         IFDEF SKIPATTRACT
                             jp DefaultCommander
                         ENDIF                        
-StartAttractMode:       call        AttractMode
+StartAttractMode:       di                                          ; we are changing interrupts
+                        MMUSelectSound
+                        call        InitAudioMusic
+                        ld          hl,DanubeInterrupt
+                        ld          (IM2SoundHandler+1),hl
+                        ei                                          ; we have now targetted to music
+                        call        AttractMode
+                        di                                          ; set up for main 
+                        ld          hl,SoundInterrupt               ; sound handler
+                        ld          (IM2SoundHandler+1),hl
+                        call        InitAudio                       ; jsut re-init all audio for now rather than sound off
+                        ei 
                         JumpIfAIsZero  SkipDefaultCommander
 DefaultCommander:       MMUSelectCommander
                         call		defaultCommander
@@ -630,69 +641,38 @@ VectorTable:
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
-                dw      IM2Routine                    
+                dw      IM2Routine,IM2Routine
+                ;(The last DW could just be a DB as it needs to b 257 bytes but its cleaner for source code)
+
 IR_COUNT        dw  $0060
 
 LAST_DELTA      db  0     
-SavedMMU7       db  0           
+SavedMMU7       db  0
+SoundInterrupt  EQU  SoundInterruptHandler
+DanubeInterrupt EQU  PlayDanube
+
+
+
 StartOfInterruptHandler:
     DISPLAY "Non Banked Code Ends At", StartOfInterruptHandler
 
                 ; NOTE play then equeue simplifies ligic, more chance slot free
-    org $B1B1
+                org $B1B1
     DISPLAY "Interrupt Handler Starts at",$
-IM2Routine:     ; initially do nothing
-                push    af,,bc,,de,,hl,,ix,,iy
+; keeping the handler to a minimal size in order to make best use of
+; non pageable memory    
+IM2Routine:     push    af,,bc,,de,,hl,,ix,,iy
                 ex      af,af'
                 exx
                 push    af,,bc,,de,,hl
                 GetNextReg  MMU_SLOT_7_REGISTER
                 ld      (SavedMMU7),a
-                MMUSelectSound                
-                ld      a,(DELTA)
-                ld      hl,LAST_DELTA
-                cp      (hl)
-.SpeedChange:   call    nz, UpdateEngineSound
-.NoSpeedChange: ld      a,(SoundFxToEnqueue)        ; Check for new sound 
-                cp      $FF
-                call    nz,EnqueSound
-.NoNewSound:    IFDEF   USETIMER
-                   ld      hl,SoundChannelTimer
-                ENDIF
-                ld      de,SoundChannelSeq
-                ld      b,8
-.ResetLoop:     ld      a,(de)                  ; we only update active channels
-                cp      $FF
-                jr      z,.NextCounter
-                IFDEF   USETIMER
-                    dec     (hl)                    ; so update channel timer
-                    jr      nz,.NextCounter         ; if its not zero then continue
-                ENDIF
-                ld      a,8                     ; a now = channel to play
-                sub     a,b
-                IFDEF   USETIMER
-                    push    bc,,de,,hl              ; save state
-                ELSE
-                    push    bc,,de
-                ENDIF
-                call    PlaySound               ; play sound
-                IFDEF   USETIMER
-                    pop     bc,,de,,hl              ; restore state so de = correct timer & hl = correct channel, b = coutner
-                ELSE
-                    pop     bc,,de              ; restore state so de = correct timer & hl = correct channel, b = coutner
-                ENDIF                
-; If it went negative new sound update
-                IFDEF   USETIMER
-.ResetTimer:        ld      a,SOUNDSTEPLENGTH       ; as we fallin to this it will auto update counter 
-                    ld      (hl),a                  ; so may take it out of playsound routine
-                ENDIF
-.NextCounter:
-                IFDEF   USETIMER
-                    inc     hl
-                ENDIF
-                inc     de
-                djnz    .ResetLoop
-.DoneInterrupt: ld      a,(SavedMMU7)
+                MMUSelectSound
+                ; This is a self modifying code address to change the
+                ; actual sound vector if we are doing special music
+                ; e.g. intro or docking
+IM2SoundHandler:call    SoundInterruptHandler       ; this does the work
+.DoneInterrupt: ld      a,(SavedMMU7)               ; now restore up post interrupt
                 nextreg MMU_SLOT_7_REGISTER,a       ; Restore MMU7
                 pop    af,,bc,,de,,hl
                 ex      af,af'

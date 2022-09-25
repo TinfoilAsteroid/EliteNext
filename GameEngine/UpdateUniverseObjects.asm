@@ -60,8 +60,7 @@ UpdateUniverseObjects:  xor     a
 .DebugUpdate:               call    FixStationPos                        
                             jp      .CheckExploding
                         ENDIF
-.ProperUpdate:          
-                        call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
+.ProperUpdate:          call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
                         ld      a,(UBnKRotZCounter)
                         cp      0
                         call    ApplyShipRollAndPitch

@@ -73,7 +73,7 @@ Start:                  MMUSelectROMS
                         nextreg     PERIPHERAL_3_REGISTER, DISABLE_RAM_IO_CONTENTION | ENABLE_TURBO_SOUND | INTERNAL_SPEAKER_ENABLE
                         nextreg     PERIPHERAL_4_REGISTER, %00000000
                         MMUSelectSound
-                        call        InitAudio
+                        call        InitAudioMusic
 ;.DefaultAYChip1:        ld      hl,$FFBF            ; h = turbo control, l = turbo register
 ;                        ld      c,$FD               ; bc = h$FD or l$FD
 ;                        ld      de,$000E            ; d = value 0, e = counter
@@ -174,11 +174,34 @@ VectorTable:
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
-                dw      IM2Routine
+                dw      IM2Routine,IM2Routine
+                ;(The last DW could just be a DB as it needs to b 257 bytes but its cleaner for source code)
                 display "Vector End at ",$
                 org     $d1d1
                 display "IR at ",$
-IM2Routine:     push    af,,bc,,de,,hl,,ix,,iy          ; we arn't using alternate registers in this test code
+                
+IM2Routine:     push    af,,bc,,de,,hl,,ix,,iy
+                ex      af,af'
+                exx
+                push    af,,bc,,de,,hl
+                GetNextReg  MMU_SLOT_7_REGISTER
+                ld      (SavedMMU7),a
+                MMUSelectSound
+                ; This is a self modifying code address to change the
+                ; actual sound vector if we are doing special music
+                ; e.g. intro or docking
+IM2SoundHandler:call    PlayDanube       ; this does the work
+.DoneInterrupt: ld      a,(SavedMMU7)               ; now restore up post interrupt
+                nextreg MMU_SLOT_7_REGISTER,a       ; Restore MMU7
+                pop    af,,bc,,de,,hl
+                ex      af,af'
+                exx
+                pop     af,,bc,,de,,hl,,ix,,iy
+.IMFinishup:    ei
+                reti
+
+                
+IM2RoutineSFX:     push    af,,bc,,de,,hl,,ix,,iy          ; we arn't using alternate registers in this test code
                 GetNextReg  MMU_SLOT_7_REGISTER         ; get current MMU and save it
                 ld      (SavedMMU7),a                   ; set MMU7 to sound bank
                 MMUSelectSound

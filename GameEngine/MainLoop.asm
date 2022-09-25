@@ -8,7 +8,7 @@
     DEFINE  MAINLOOP_EVENTHANDLER
     DEFINE  MAINLOOP_RECHARGE
     DEFINE  MAINLOOP_LAUNCHMISSILE
-;    DEFINE  MAINLOOP_UPDATEUNIVERSE
+    DEFINE  MAINLOOP_UPDATEUNIVERSE
 MainLoop:	            call    doRandom                                                ; redo the seeds every frame
                     IFDEF MAINLOOP_UPDATE_LASERS
                         UpdateLaserOnCounter
