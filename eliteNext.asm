@@ -134,9 +134,7 @@ EliteNextStartup:       di
                         ld	        i,a						                        ; im2 table will be at address 0xa000
                         nextreg     LINE_INTERRUPT_CONTROL_REGISTER,%00000110       ; Video interrup on 
                         nextreg     LINE_INTERRUPT_VALUE_LSB_REGISTER,0   ; lasta line..                        
-                        im	2 
-                        ei ; - dont enable yet neet to go through code and work out all di sections
-                        
+                        im	2                        
 .GenerateDefaultCmdr:   MMUSelectCommander
                         call		defaultCommander
                         call        saveCommander
@@ -189,10 +187,11 @@ InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
 StartAttractMode:       di                                          ; we are changing interrupts
                         MMUSelectSound
                         call        InitAudioMusic
-                        ld          hl,DanubeInterrupt
+                        ld          hl,AttractInterrrupt
                         ld          (IM2SoundHandler+1),hl
-                        ei                                          ; we have now targetted to music
-                        call        AttractMode
+                        call        AttractModeInit
+                        ei
+                        call        AttractModeMain                 ; now drive attact mode keyboard scan
                         di                                          ; set up for main 
                         ld          hl,SoundInterrupt               ; sound handler
                         ld          (IM2SoundHandler+1),hl
@@ -647,11 +646,12 @@ VectorTable:
 
 IR_COUNT        dw  $0060
 
-LAST_DELTA      db  0     
+LAST_DELTA      db  0    
+SavedMMU6       db  0 
 SavedMMU7       db  0
-SoundInterrupt  EQU  SoundInterruptHandler
-DanubeInterrupt EQU  PlayDanube
-
+SoundInterrupt      EQU IM2Sound
+DanubeInterrupt     EQU IM2PlayDanube
+AttractInterrrupt   EQU IM2AttractMode
 
 
 StartOfInterruptHandler:
@@ -662,30 +662,69 @@ StartOfInterruptHandler:
     DISPLAY "Interrupt Handler Starts at",$
 ; keeping the handler to a minimal size in order to make best use of
 ; non pageable memory    
-IM2Routine:     push    af,,bc,,de,,hl,,ix,,iy
-                ex      af,af'
-                exx
-                push    af,,bc,,de,,hl
-                ld      hl,InterruptCounter
-                inc     (hl)                        ; cycles each interrupt
-                GetNextReg  MMU_SLOT_7_REGISTER
-                ld      (SavedMMU7),a
-                MMUSelectSound
-                ; This is a self modifying code address to change the
-                ; actual sound vector if we are doing special music
-                ; e.g. intro or docking
-IM2SoundHandler:call    SoundInterruptHandler       ; this does the work
-.DoneInterrupt: ld      a,(SavedMMU7)               ; now restore up post interrupt
-                nextreg MMU_SLOT_7_REGISTER,a       ; Restore MMU7
-                pop    af,,bc,,de,,hl
-                ex      af,af'
-                exx
-                pop     af,,bc,,de,,hl,,ix,,iy
-.IMFinishup:    ei
-                reti
+IM2Routine:             push    af,,bc,,de,,hl,,ix,,iy
+                        ex      af,af'
+                        exx
+                        push    af,,bc,,de,,hl
+                        ld      hl,InterruptCounter
+                        inc     (hl)                        ; cycles each interrupt
+                        ;break                         
+IM2SoundHandler:        call    IM2Sound                    ; This is a self modifying code address to change the actual sound vector if we are doing special music e.g. intro or docking
+                        pop    af,,bc,,de,,hl
+                        ex      af,af'
+                        exx
+                        pop     af,,bc,,de,,hl,,ix,,iy
+.IMFinishup:            ei
+                        reti
     DISPLAY "Interrupt Handler Ends at",$
 EndOfNonBanked:
     DISPLAY "Non Banked Code + Interrupt Handler Ends At", EndOfNonBanked
+
+
+SaveMMU6:               MACRO
+                        GetNextReg  MMU_SLOT_6_REGISTER
+                        ld      (SavedMMU6),a
+                        ENDM
+
+RestoreMMU6:            MACRO     
+                        ld      a,(SavedMMU6)               ; now restore up post interrupt
+                        nextreg MMU_SLOT_6_REGISTER,a       ; Restore MMU7                   
+                        ENDM
+
+SaveMMU7:               MACRO
+                        GetNextReg  MMU_SLOT_7_REGISTER
+                        ld      (SavedMMU7),a
+                        ENDM
+
+RestoreMMU7:            MACRO     
+                        ld      a,(SavedMMU7)               ; now restore up post interrupt
+                        nextreg MMU_SLOT_7_REGISTER,a       ; Restore MMU7                   
+                        ENDM
+
+IM2Sound:               SaveMMU7
+                        MMUSelectSound
+                        ; This is a self modifying code address to change the
+                        ; actual sound vector if we are doing special music
+                        ; e.g. intro or docking
+.IM2SoundHandler:       call    SoundInterruptHandler       ; this does the work
+.DoneInterrupt:         RestoreMMU7
+                        ret
+   
+
+IM2PlayDanube:          SaveMMU7
+                        MMUSelectSound
+                        ; This is a self modifying code address to change the
+                        ; actual sound vector if we are doing special music
+                        ; e.g. intro or docking
+.IM2SoundHandler:       call    PlayDanube                  ; this does the work
+.DoneInterrupt:         RestoreMMU7
+                        ret
+                        
+IM2AttractMode:         call    IM2PlayDanube
+                        SaveMMU6
+                        call    AttractModeUpdate
+                        RestoreMMU6
+                        ret
 
 ; ARCHIVED INCLUDE "Menus/draw_fuel_and_crosshair.asm"
 ;INCLUDE "./title_page.asm"

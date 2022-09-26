@@ -30,9 +30,13 @@ LAYER2_DISABLE_MEM_ACCESS   equ %11111010
 LAYER2_SCREEN_BANK1          equ 8
 LAYER2_SCREEN_BANK2          equ 9
 LAYER2_SCREEN_BANK3          equ 10
-LAYER2_SHADOW_BANK1          equ 11
-LAYER2_SHADOW_BANK2          equ 12
-LAYER2_SHADOW_BANK3          equ 13
+LAYER2_SCREEN_BANK4          equ 10     ; used by 320 and 640 mode
+LAYER2_SCREEN_BANK5          equ 11     ; used by 320 and 640 mode
+LAYER2_SHADOW_BANK1          equ 12
+LAYER2_SHADOW_BANK2          equ 13
+LAYER2_SHADOW_BANK3          equ 14
+LAYER2_SHADOW_BANK4          equ 15     ; used by 320 and 640 mode
+LAYER2_SHADOW_BANK5          equ 16     ; used by 320 and 640 mode
 
 SCREEN_HEIGHT 				 equ 192
 SCREEN_RAM_BASE				 equ $0000

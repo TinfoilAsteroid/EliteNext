@@ -91,6 +91,7 @@ asm_l2_bank_2_macro:        MACRO
                             ld      a,2						; set a to 0
                             ld		(varL2_BANK_SELECTED),a	; save selected bank number 0
                             ENDM
+                        
 ; "asm_l2_row_bank_select"
 ; "A (unsinged) = y row of pixel line from top, sets the bank to top middle or bottom and adjusts a reg to row memory address"  
 ; "Could optimise by holding the previous bank but given its only an out statement it may not save T states at all"

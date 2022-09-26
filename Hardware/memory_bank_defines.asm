@@ -69,7 +69,8 @@ StockTableMMU		    equ MMU_SLOT_7_REGISTER
 ConsoleImageDataMMU	    equ MMU_SLOT_7_REGISTER
 GalaxyDataMMU	        equ MMU_SLOT_7_REGISTER
 SoundMMU                equ MMU_SLOT_7_REGISTER
- 
+
+; banks 8 to 16 are reserved for layer 2 memory
 BankResetUniv           equ 49
 BankMenuShrCht          equ 50
 BankMenuGalCht          equ 51

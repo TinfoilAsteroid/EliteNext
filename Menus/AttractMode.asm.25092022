@@ -28,7 +28,8 @@ RandomYCounter:         call    doRandom
                         ret
                         
 
-AttractModeInit:        MMUSelectLayer1
+AttractModeInit:        di                                  ; no music yet
+                        MMUSelectLayer1
                         call	l1_cls 
                         ld		a,7
                         call	l1_attr_cls_to_a                        
@@ -54,7 +55,7 @@ AttractModeInit:        MMUSelectLayer1
                         call        memcopy_dma
                         ld          a,(InterruptCounter)
                         ld          (LastInterrupt),a
-                        call        SelectARandomShip
+                        ei                                  ; now we are ready for music
                         ret
 
 
@@ -64,80 +65,58 @@ AttractModeInit:        MMUSelectLayer1
 ;                        jp          z,.StartShip            ; we only refresh once per interupt
 ;                        ld          (hl),a
                         
-AttractModeMain:        call    scan_keyboard
+AttractModeMain:        
+
+
+AttractModeUpdate:      call    SelectARandomShip
+.DrawLoop:              call    scan_keyboard
                         ld      a,c_Pressed_Yes
                         call    is_key_up_state
                         jr      nz,.YPressed
                         ld      a,c_Pressed_No
                         call    is_key_up_state
                         jr      nz,.NPressed
-                        jp      AttractModeMain
-.YPressed:              ld      a,0
-                        ret
-.NPressed:              ld      a,$FF
-                        ret
-
-; alternate interrupts, one clears back buffer, one processes ship, one draws ship
-AttractStep             DB      0
-
-AttractModeUpdate:      ld      hl,(AttractTimer)
-                        dec     hl
-                        ld      (AttractTimer),hl
-                        ld      a,h
-                        or      l
-                        jp      nz,.DrawShip
-                        call    SelectARandomShip
-                        ret
-.DrawShip:              ;BREAK
-.SelectShipData:        call    doRandom
                         MMUSelectUniverseN  1
-                        ld      a,(AttractStep)
-                        and     a       ; 0
-                        jp      z,.ApplyShipRollAndPitch
-                        dec     a       ; 1
-                        jp      z,.ProcessNodes
-                        jp      .PrepLines ; 2
- 
-.ApplyShipRollAndPitch: call    ApplyShipRollAndPitch
+                        ;call    TidyUbnK
+                        call    ApplyShipRollAndPitch
                         call    RandomXCounter
                         call    RandomYCounter
                         ld      a,(LocalXCounter)
                         ld      (UBnKRotXCounter),a
                         ld      a,(LocalZCounter)
                         ld      (UBnKRotZCounter),a
-.ClearScreen:           MMUSelectLayer2
-                        call    l2_cls_upper_two_thirds
-                        jp      .DoneIM2
-.ProcessNodes:          call    ProcessNodes
-.CullV2:                call    CullV2
-                        jp      .DoneIM2
-.PrepLines:             call    PrepLines
-.DrawLines:             call    DrawLines
+.ProcessUnivShip:       MMUSelectLayer2
+                        call   l2_cls_upper_two_thirds
+                        call    ProcessShip
 .Drawbox:               ld		bc,$0101
                         ld		de,$7FFD
                         ld		a,$C0
                         MMUSelectLayer2
                         call	l2_draw_box
 .DoubleBuffer:          call    l2_flip_buffers
-.UpdateZPosIfReady:     ld      a,(AttractCounter)
-                        and     a
-                        jp      z,.DoneIM2
+                        ld      a,(AttractCounter)
+                        JumpIfAIsZero .SameShipPosition
                         dec     a
                         ld      (AttractCounter),a
                         ld      hl, (UBnKzlo)
 .UpdatePos:             ld      de, $0008
                         sbc     hl,de
-                        ld      (UBnKzlo),hl                        
-.DoneIM2:               ld      a,(AttractStep)
-                        inc     a
-                        cp      3
-                        ld      (AttractStep),a
-                        ret     nz
-                        ZeroA
-                        ld      (AttractStep),a
+                        ld      (UBnKzlo),hl
+                        call    doRandom
+.SameShipPosition:      ld      hl,(AttractTimer)
+                        dec     hl
+                        ld      (AttractTimer),hl
+                        ld      a,h
+                        or      l
+                        jr      nz,.DrawLoop
+.NewShip:               ld      hl,AttractDuration
+                        ld      (AttractTimer),hl
+                        jp      .StartShip
+.YPressed:              ld      a,0
                         ret
-
-
+.NPressed:              ld      a,$FF
+                        ret
+.ExitAttractMode:       break
 
 SelectARandomShip:      ld      b,1                             ; Demo screen uses slot 1
                         MMUSelectUniverseN  1
@@ -156,12 +135,10 @@ SelectARandomShip:      ld      b,1                             ; Demo screen us
                         ld      a,1                                 ; slot 1, iyh and iyl already set
                         call    UnivInitRuntime                       
                         call    UnivSetDemoPostion
-                        ld      hl,AttractDuration*2
+                        ld      hl,AttractDuration
                         ld      (AttractTimer),hl
                         ld      a, AttractCounterStart
                         ld      (AttractCounter),a
-                        ZeroA
-                        ld      (AttractStep),a
                         ret
                         
                         

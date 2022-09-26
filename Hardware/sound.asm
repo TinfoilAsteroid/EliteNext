@@ -428,9 +428,9 @@ PointerChipOffset:      EQU 13
 DanubeCounter:          DW 0
 DanubeMax:              EQU BlueDanube2 - BlueDanube1 +1
 DanubeMaxMem:           DW  DanubeMax
-DanubeVolume:           DB $08
-DanubePace:             DB 5
-DanubeTimer:            DB 5
+DanubeVolume:           DB $0F
+DanubePace:             DB 8
+DanubeTimer:            DB 8
 DanubeAttackEnvelope    DW $0000
 
 SelectDanubeAYa:        or TURBO_MANDATORY | TURBO_LEFT | TURBO_RIGHT

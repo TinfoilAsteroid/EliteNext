@@ -1233,7 +1233,6 @@ ReadyForNextPoint:      push	iy                                  ; copy screen p
 ; ......................................................   
                         ClearCarryFlag
                         ret                                         
-
 ; ...........................................................
 ProcessShip:            call    CheckVisible                ; checks for z -ve and outside view frustrum, sets up flags for next bit
 .IsItADot:              ld      a,(UBnkaiatkecm)
