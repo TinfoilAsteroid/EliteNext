@@ -330,7 +330,6 @@ UpdateEngineSound:      SelectAY TURBO_CHIP_AY1
                         WriteTurboRegister ENVELOPE_PERIOD_COARSE,0
                         WriteTurboRegister ENVELOPE_SHAPE,ENVELOPE_SHAPE_SINGLE_ATTACK_HOLD
                         WriteTurboRegister TONE_ENABLE,   NOISE_CHANNEL_A | NOISE_CHANNEL_B | NOISE_CHANNEL_C
-
                         ld      a,(DELTA)
                         ld      (LAST_DELTA),a
                         ret

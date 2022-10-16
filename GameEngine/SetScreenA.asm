@@ -21,6 +21,7 @@ SetScreenA:             JumpIfAGTENusng ScreenCount, InvalidScreenBlock
 .NotViewPort:           ld      a,(ix+4)                        ; Screen Map Byte 4   - Bank with Display code
                         ld      (ScreenLoopBank+1),a            ; setup loop            
                         ld      (HandleBankSelect+1),a          ; setup cursor keys
+                        ld      (WarpMMUBank+1),a               ; WarpSFXHandler
                         MMUSelectScreenA
                         ld      a,(ix+5)                        ; Screen Map Byte 5 & 6 - Function for display initialisation
                         ld      (ScreenUpdateAddr+1),a          ; .
@@ -40,4 +41,8 @@ SetScreenA:             JumpIfAGTENusng ScreenCount, InvalidScreenBlock
                         ld      (CallCursorRoutine+2),a
                         ld      a,(ix+16)
                         ld      (UpdateShipsControl+1),a       ; determin if we call update universe objects in this screen                      
+                        ld      a,(ix+17)
+                        ld      (WarpRoutineAddr+1),a
+                        ld      a,(ix+18)
+                        ld      (WarpRoutineAddr+2),a
 ScreenUpdateAddr:       jp      $0000                          ; We can just drop out now and also get a free ret from caller

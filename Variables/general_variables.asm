@@ -84,7 +84,7 @@ ALP1MAXR                DB  31               ;   Maximum roll, added becuase we 
 ALP1MAXL                DB  -31             ;   Maximum roll, added becuase we may allow different ship types
 
 
-
+;-- Message handler -----------------------------------------------------------------------------------------------------------------
 MAXMESSAGES             EQU 5
 MESSAGETIMELIMIT        EQU 20
 MESSAGESIZE             EQU 33
@@ -104,12 +104,6 @@ XX21					DB  0				; this may be part of XX20/xx21 accordign to spawn new shipXX2
 ;XX21 is the pointer table to the pages for ship types. this will be repalaced by paging so just need an equate for first page
 
 
-SystemSeed				DS  5				;	6C		QQ15	Current Galaxy Seed
-											;	6D		QQ15+1 
-											;	6E		QQ15+2
-											;	6F		QQ15+3
-											;	70		QQ15+4
-											;	71		QQ15+5
 QQ17					DB	0				;   72
 XX18xlo                 DB  0               ;	72		XX18   xlo
 XX18xhi                 DB  0               ;	73		XX18+1 xhi
@@ -128,7 +122,7 @@ DELT4Hi					DB 	0				; 7F
 DELTA4                  equ                 DELT4Lo
 
 ; SoundFX Variables -------------------------------------------------------------------------------------------
-EngineSoundChanged:     DB  0
+;DEFUNCT, uses DELTA/ LAST_DELTAEngineSoundChanged:     DB  0
 SoundFxToEnqueue        DB  $FF             ; $FF No sound to enque,if it is $FF then next sound will not get enqued
 InterruptCounter        DB 0                ; simple marker updated once per IM2 event
 
@@ -175,8 +169,6 @@ TYPE					DB	0				; 8C used for ship type in drawing
 ;              FD = Setup open space and transition to not docked
 ;              FC = Hyperspace manimation
 ;              FB = Hyperspace complete
-DockedFlag				DB	0				; 8E - 
-GamePaused              DB  0
 varSWAP                 DB  0               ; 90 , general purpose swap variable
 varCNT                  DB  0               ; 93
 
@@ -220,16 +212,36 @@ DampingKeys				DS  7				; 0387 - 038D
 ;  #&3 Does F toggle flashing information			03CA
 ;  #&1 Does A toggle keyboard auto-recentering ?
 ;  #&0 Caps-lock toggles keyboard flight damping
-NbrMissiles				DB	0				; 038B	Does this clash with Dampingkeys?
-PlayerECMActiveCount    DB  0               ; Countdown for player ECM
-FugitiveInnocentStatus	DB	0				; 038C	FIST
+
+;-- Galaxy and Universe Variables ----------------------------------------------------------------------------------------------------
+SystemSeed				DS  5				;	6C		QQ15	Current Galaxy Seed
 StockAvaliabiliy		DS 	16				; 038D - 039C Stock inventory in station
 AlienItemsAvaliability  DB	0				; 039D
 RandomMarketSeed		DB	0				; 039E   \ QQ26	\ random byte for each system vist (for market)
+Galaxy      			DB	0				; 0367 Galaxy (incremented with galactiv drive
+WorkingSeeds			DS	6
+PresentSystemSeeds		DS	6				; 03B2 - 03B7
+GalaxySeeds				DS	6				; 035B - 0360 QQ21
+PresentSystemX			DB	0				; System we are currently in
+PresentSystemY			DB  0				; System we are currently in
+TargetSystemX			DB	0				; System we are targeting for jump
+TargetSystemY			DB	0				; System we are targeting for jump
+; --- Current System Data ------------------------------------------------------------------------------------------------------------
+GovPresentSystem		DB	0				; 03AE Govenment 
+TekPresentSystem		DB	0				; 03AF Technology
+SpaceStationSafeZone    DB  0               ; Flag to determine if we are in safe zone
+ExtraVesselsCounter     DB  0
+JunkCount				DB  0				; $033E
+AsteroidCount           DB  0               ; Not used as yet
+TransporterCount        DB  0
+CopCount                DB  0 
+PirateCount             DB  0
+;- commander and ship state variables ------------------------------------------------------------------------------------------------
+NbrMissiles				DB	0				; 038B	Does this clash with Dampingkeys?
+PlayerECMActiveCount    DB  0               ; Countdown for player ECM
+FugitiveInnocentStatus	DB	0				; 038C	FIST
 KillTally  				DW	0				; 039F - 03A0 \ TALLY   \ kills lo hi
-COMP     				DB	0				; 03A1 2nd competion byte used for save integrity checks?
-											;
-MCH						DB	0				; 03A4  \ MCH  \ old message to erase
+CurrentRank             DB  0   			;
 MarketPrice				DB	0				; 03AA QQ24
 MaxStockAvaliable		DB  0				; 03AB   \ QQ25     \ max available
 SystemEconomy			DB  0				; 03AC \ QQ28   \ the economy byte of present system (0 is Rich Ind.)
@@ -237,7 +249,12 @@ CargoItem				DB	0				; 03AD (I think its item type just scooped) QQ29
 ShipLineStackPointer	DW	0				; 03B0 & 03B1 ship Lines pointer reset to top LS% = &0CFF (make DW for z80 and direct hl pointer)
 											; this is ship lines stack pointer so may be redundant with paging
 											; LS = line stack so we will have one for now to remove later
+; - no longer used, holding here intil its safe to delte
+MCH						DB	0				; 03A4  \ MCH  \ old message to erase
+COMP     				DB	0				; 03A1 2nd competion byte used for save integrity checks?
 ; not needed as we don't do security on file COK						DB	0				; 0366 Competition Byte what ? Does some file check and accelleration check
+; - no longer used, holding here intil its safe to delte
+
 DisplayEcononmy			DB	0				; 03B8
 DisplayGovernment		DB  0				; 03B9 Is it target? 03B9 \ QQ4	 \ Government, 0 is Anarchy.
 DisplayTekLevel			DB	0				; 03BA   \ QQ5	\ Tech
@@ -245,7 +262,7 @@ DisplayPopulation		DW	0				; 03BB \ QQ6  \ population*10
 DisplayProductivity		DW	0				; 03BD \ QQ7   \ productivity*10
 Distance          		DW	0				; 03BE \ QQ8 distince in 0.1LY units
 DisplayRadius			DW	0
-; --- Used in creation of sun and planet----;
+; --- Used in creation of sun and planet ------------------------------------------------------------------------------------------------
 PlanetXPos              DS  1
 PlanetYPos              DS  1
 PlanetZPos              DS  1
@@ -253,7 +270,7 @@ PlanetType              DS  1
 SunXPos                 DS  1
 SunYPos                 DS  1
 SunZPos                 DS  1
-; -- Current Missile Runbtime data
+; -- Current Missile Runbtime data ------------------------------------------------------------------------------------------------
 CurrentMissileBank:     DB      0                                   ; used by missile logic as local copy of missile bank number
 MissileXPos             DW      0
 MissileXSgn             DB      0
@@ -277,14 +294,29 @@ CurrentMissileBlastRange:      DB  0                       ; TODO Initi for runt
 CurrentMissileBlastDamage:     DB  0                       ; TODO Initi for runtime copied in when setting up a missile
 CurrentMissileDetonateRange:   DB  0                       ; TODO Initi for runtime copied in when setting up a missile, allows for proximity missiles
 CurrentMissileDetonateDamage:  DB  0                       ; TODO Initi for runtime copied in when setting up a missile
-
-; --- Main Loop Data -----------------------;
+; --- Spawn Probability Table ---------------------------------------------------------------------------------------------------
+SpawnLowVssalue         DS 6                                ; Maxium of 6 entries in table
+SpawnHighvalue          DS 6                                ; Maxium of 6 entries in table
+ShipClassId             DS 6
+; --- Space dust ----------------------------------------------------------------------------------------------------------------
+varDustWarpRender       DS MaxNumberOfStars * 2 ; Copy of base positions for warp
+varDust                 DS MaxNumberOfStars * 6
+varDustSceen            DS MaxNumberOfStars * 2 ; To optimise star list to wipe from screen
+varStarX                DB 0
+varStarY                DB 0
+varDustX                DS MaxNumberOfStars *2
+varDustY                DS MaxNumberOfStars *2
+varDustZ                DS MaxNumberOfStars *2
+; --- Main Loop Data -------------------------------------------------------------------------------------------------------------
+DockedFlag				DB	0				; 8E - 
+GamePaused              DB  0
 CurrentUniverseAI       DB  0               ; current ship unviverse slot due an AI update
 SelectedUniverseSlot    DB  0
 SetStationHostileFlag   DB  0               ; used to semaphore angry space station
 ShipBlastCheckCounter   DB  0
-InnerHyperCount			DB 	0				; 2F QQ22+1
+InnerHyperCount			DB 	0				; 2F QQ22+1 (will move to a CTC timer later)
 OuterHyperCount			DB 	0				; 2E QQ22
+WarpCooldown            DB  0
 EventCounter            DB  0
 HyperCircle             DB  0
 MissJumpFlag            DB  0
@@ -305,26 +337,7 @@ CursorKeysPressed       DB  0               ; mapping of the current key presses
                                             ; 7    6    5    4     3    2        1    0
                                             ; Up   Down Left Right Home Recentre 
 FireLaserPressed        DB  0
-; --- Current System Data ------------------;
-SpaceStationSafeZone    DB  0               ; Flag to determine if we are in safe zone
-ExtraVesselsCounter     DB  0
-JunkCount				DB  0				; $033E
-AsteroidCount           DB  0               ; Not used as yet
-TransporterCount        DB  0
-CopCount                DB  0 
-PirateCount             DB  0
-; --- Galaxy Data --------------------------;
-Galaxy      			DB	0				; 0367 Galaxy (incremented with galactiv drive
-WorkingSeeds			DS	6
-PresentSystemSeeds		DS	6				; 03B2 - 03B7
-GalaxySeeds				DS	6				; 035B - 0360 QQ21
-PresentSystemX			DB	0				; System we are currently in
-PresentSystemY			DB  0				; System we are currently in
-TargetSystemX			DB	0				; System we are targeting for jump
-TargetSystemY			DB	0				; System we are targeting for jump
-GovPresentSystem		DB	0				; 03AE Govenment 
-TekPresentSystem		DB	0				; 03AF Technology
-
+WarpPressed             DB  0
 CompassColor			DB	0				; 03C5
 SoundToggle				DB	0				; 03C6
 KeyboardRecenterToggle	DB	0				; 03C8
@@ -377,14 +390,6 @@ LSO						DS 	$C0				;0E00 Line Buffer Solar of 192 lines (may be 191 in reality)
 LSX2					DB	0				; &0EC0	    \ LSX2 bline buffer size?
 LSY2					DB	0           	; &0F0E	    \ LSY2
 
-; Star Positions are 16 bit 3d coordinates
-varDust                 DS  MaxNumberOfStars * 6
-varDustSceen            DS  MaxNumberOfStars * 2 ; To optimise star list to wipe from screen
-varStarX                DB  0
-varStarY                DB  0
-varDustX                DS MaxNumberOfStars *2
-varDustY                DS MaxNumberOfStars *2
-varDustZ                DS MaxNumberOfStars *2
 ; -- Player Runtime Data
 GunTemperature          DB  0
 CabinTemperature        DB  0

@@ -6,7 +6,10 @@
  ; DEFINE DEBUGMISSILETEST 1
  CSPECTMAP eliteN.map
  OPT --zxnext=cspect --syntax=a --reversepop
- DEFINE     SOUNDPACE 3
+                DEFINE  SOUNDPACE 3
+                DEFINE  ENABLE_SOUND 1
+; DEFINE     MAIN_INTERRUPTENABLE 1
+ ;               DEFINE INTERRUPT_BLOCKER 1
 DEBUGSEGSIZE   equ 1
 DEBUGLOGSUMMARY equ 1
 ;DEBUGLOGDETAIL equ 1
@@ -197,7 +200,9 @@ StartAttractMode:       di                                          ; we are cha
                         ld          (IM2SoundHandler+1),hl
                         MMUSelectSound
                         call        InitAudio                       ; jsut re-init all audio for now rather than sound off
-                        ei 
+                        IFDEF MAIN_INTERRUPTENABLE
+                            ei 
+                        ENDIF
                         JumpIfAIsZero  SkipDefaultCommander
 DefaultCommander:       MMUSelectCommander
                         call		defaultCommander
@@ -251,6 +256,7 @@ InitialiseMainLoop:     call    InitMainLoop
 
 ;..................................................................................................................................
                         INCLUDE "./GameEngine/MainLoop.asm"
+                        INCLUDE "./GameEngine/SpawnObject.asm"
 ;..................................................................................................................................
 ;..Process A ship..................................................................................................................
 ; Apply Damage b to ship based on shield value of a
@@ -461,6 +467,8 @@ LaunchedFromStation:    MMUSelectSun
 .NowInFlight:           ld      a,StateNormal
                         ld      (DockedFlag),a
                         ForceTransition ScreenFront
+                        ld      a,$FF
+                        ld      (LAST_DELTA),a              ; force sound update in interrupt
                         call    ResetPlayerShip
                         IFDEF DEBUGMISSILETEST
                             ld  a,1
@@ -662,7 +670,11 @@ StartOfInterruptHandler:
     DISPLAY "Interrupt Handler Starts at",$
 ; keeping the handler to a minimal size in order to make best use of
 ; non pageable memory    
-IM2Routine:             push    af,,bc,,de,,hl,,ix,,iy
+IM2Routine:             IFDEF INTERRUPT_BLOCKER
+                                ei
+                                reti
+                        ENDIF
+                        push    af,,bc,,de,,hl,,ix,,iy
                         ex      af,af'
                         exx
                         push    af,,bc,,de,,hl

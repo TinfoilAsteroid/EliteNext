@@ -263,8 +263,9 @@ draw_STAT_maintext:    	ld		bc,$0101
                         MMUSelectLayer2
                         ld      e,txt_status_colour
                         call    l2_print_at
-.DisplayRating:         ld		de,(KillTally)
-                        call	getRankIndex
+.DisplayRating:         ld      a,(CurrentRank)
+                        ; now cached ld		de,(KillTally)
+                        ; now cached call	getRankIndex
                         ld		hl, RankingNameIdx
                         call	getTableText
                         ld		bc,rank_position

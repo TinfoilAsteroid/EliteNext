@@ -96,6 +96,7 @@ loadCommander:          ld      hl, defaultSaveName             ; default debug 
                         call    FileLoad
                         call    copyCommanderFromSave
                         ClearMissileTargetting
+                        call    SetPlayerRank
                         ret
                         
  ; For now hard laod, later correctlt sequence gneeral vars and dma fill with 0 for a start
@@ -158,6 +159,7 @@ defaultCommander:       ldCopyStringLen defaultName, CommanderName, 8
 .SetLasers:             ld      a,0                             ; we start on Front view
                         call    LoadLaserToCurrent
                         ClearMissileTargetting
+                        call    SetPlayerRank
                         ret     
 
 
@@ -200,13 +202,13 @@ LoadLaserToCurrent:     ld      hl,LaserType                    ; .
 
 ; Set a = 2 * (slaves + narcotics) + firearms
 calculateBadness:       ld      a,(SlaveCargoTonnes)            ; Badness = 2(slaves + narcotics)
-                        ld      b,a                             ; .
+                        ld      b,a                             ; b= slaves 
                         ld      a,(NarcoticsCargoTonnes)        ; .
-                        add     b                               ; .
-                        sla     a                               ; .
-                        ld      b,a                             ;
-                        ld      a,(FirearmsCargoTonnes)         ; Badness += firearms tonns    
-                        add     b
+                        add     a,b                             ; a = b + narcotics
+                        sla     a                               ; a *= 2
+                        ld      b,a                             ; b = a
+                        ld      a,(FirearmsCargoTonnes)         ; a = firearms tonns    
+                        add     a,b                             ; a += b so firearms + 2(slaves + narcotics)
                         ret
                         
 PlayerDeath:            call    copyCommanderFromSave           ; load last loaded/saved commander

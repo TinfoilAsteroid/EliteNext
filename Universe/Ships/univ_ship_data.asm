@@ -227,6 +227,25 @@ UpdateECM:              ld      a,(UBnKECMCountDown)
 .ExhaustedEnergy:       call    UnivExplodeShip                 ; if it ran out of energy it was as it was also shot or collided as it checks in advance. Main ECM loop will continue as a compromise as multiple ships can fire ECM simultaneously
                         ret
                         
+;-- This takes an Axis and subtracts 1, handles leading sign and boundary of 0 going negative
+JumpOffSet:             MACRO   Axis
+                        ld      hl,(Axis)
+                        ld      a,h
+                        and     SignOnly8Bit
+                        jr      nz,.NegativeAxis
+.PositiveAxis:          dec     l
+                        jp      m,.MovingNegative
+                        jp      .Done
+.NegativeAxis:          inc     l                               ; negative means increment the z
+                        jp      .Done
+.MovingNegative:        ld      hl,$8001                        ; -1
+.Done                   ld      (Axis),hl
+                        ENDM
+                        
+                        
+WarpOffset:             JumpOffSet  UBnKzhi                     ; we will simplify on just moving Z
+                        ret
+                        
                         
 ; --------------------------------------------------------------                        
 ; update ship speed and pitch based on adjustments from AI Tactics

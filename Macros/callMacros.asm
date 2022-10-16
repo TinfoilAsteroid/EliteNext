@@ -15,6 +15,12 @@ CallIfAGTEMemusng:      MACRO   reg,target
                         call	nc,target
                         ENDM
                         
+CallIfALTMemusng:       MACRO   reg,target
+                        ld      hl,reg
+                        cp      (hl)
+                        call	c,target
+                        ENDM
+                        
 CallIfALTNusng:         MACRO   reg,target
                         cp      reg
                         call	c,target

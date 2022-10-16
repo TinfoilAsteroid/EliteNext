@@ -8,6 +8,11 @@ SubJunkCount:           MACRO
                         ld      hl,JunkCount
                         dec     (hl)
                         ENDM
+
+ClearJunkCount:         MACRO
+                        ZeroA
+                        ld      (JunkCount),a
+                        ENDM
                         
 AddCop:                 MACRO
                         ld      hl,CopCount
@@ -45,7 +50,9 @@ SetSlotAToUnivClass:    MACRO
 
 TestRoomForJunk:        MACRO   Target
                         ld      a,3
-                        JumpIfALTMemusng    JunkCount, Target
+                        JumpIfMemTrue  SpaceStationSafeZone, .DoTest
+                        add     a,2
+.DoTest                 JumpIfALTMemusng    JunkCount, Target
                         ENDM
 
 JumpIfSpaceStation:     MACRO   Target

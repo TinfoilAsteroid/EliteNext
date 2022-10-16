@@ -90,6 +90,20 @@ ResetSBnKPosition:      ld      hl,SBnKxlo
                         inc     hl
                         djnz    .zeroLoop
                         ret
+                                                
+; Z Must be at least 2 and positve to warp                        
+WarpSunCloser:          ld      hl,SBnKzsgn
+                        ld      a,(hl)
+                        ReturnIfALTNusng 2                      ; hard liit along z axis
+                        dec     (hl)
+                        ret
+
+; It should normally be behind but someone could fly past a planet, turn aroudn and jump
+WarpSunFurther:         ld      hl,SBnKzsgn
+                        ld      a,(hl)
+                        ReturnIfAGTENusng $7F                   ; this is the hard limit else it woudl turn negative and flip to -0
+                        inc     (hl)                           ; if its negative it will still increase as we will block insane values
+                        ret
 ; This uses UBNKNodeArray as the list
 ; the array is 256 * 2 bytes
 ; counter is current row y pos

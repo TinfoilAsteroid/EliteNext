@@ -12,40 +12,28 @@
     DEFINE  MAINLOOP_SUN_RENDER 1
     DEFINE  MAINLOOP_PLANET_RENDER 1
     DEFINE  MAINLOOP_MODEL_RENDER    1
-    DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
-    DEFINE  MAINLOOP_WARP_ENABLED 1
-    
-;.................................................................................................................................    
 MainLoop:	            call    doRandom                                                ; redo the seeds every frame
-    IFDEF MAINLOOP_UPDATE_LASERS
+                    IFDEF MAINLOOP_UPDATE_LASERS
                         UpdateLaserOnCounter
                         UpdateLaserOffCounter
                         UpdateLaserRestCounter
-    ENDIF
-    IFDEF MAINLOOP_COOL_LASERS
+                    ENDIF
+                    IFDEF MAINLOOP_COOL_LASERS
                         CoolLasers
-    ENDIF
-    IFDEF MAINLOOP_ECM
+                    ENDIF
+                    IFDEF MAINLOOP_ECM
                         INCLUDE "./GameEngine/MainLoop_ECM.asm"
-    ENDIF
-    IFDEF MAINLOOP_WARP_ENABLED
-                        ld      a,(WarpCooldown)
-                        and     a
-                        jp      z,.AlreadyCool
-                        dec     a
-                        ld      (WarpCooldown),a
-.AlreadyCool
-    ENDIF
-    IFDEF MAINLOOP_KEYBOARDSCAN
+                    ENDIF
+                    IFDEF MAINLOOP_KEYBOARDSCAN
                         call    scan_keyboard                                           ; perform the physical input scan
-    ENDIF
+                    ENDIF
 ;.. This bit allows cycling of ships on universe 0 in demo.........................................................................
-    IFDEF MAINLOOP_DEMOSHIPS
+                    IFDEF MAINLOOP_DEMOSHIPS
 DemoOfShipsDEBUG:       call    TestForNextShip
-    ENDIF
+                    ENDIF
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
 InputBlockerCheck:      ld      a,$0
-    IFDEF MAINLOOP_INPUTHANDLER
+                    IFDEF MAINLOOP_INPUTHANDLER
                         JumpIfAEqNusng $01, SkipInputHandlers                           ; as we are in a transition the whole update AI is skipped
                         JumpIfMemTrue TextInputMode, SkipInputHandlers                  ; in input mode all keys are processed by input
                         call    ViewKeyTest
@@ -55,7 +43,7 @@ InputBlockerCheck:      ld      a,$0
                         jp      nz,MainLoop
                         call    MovementKeyTest
 ;.. Process cursor keys for respective screen if the address is 0 then we skill just skip movement.................................
-    ENDIF
+                    ENDIF
 HandleMovement:         ld      a,(CallCursorRoutine+2)
                         JumpIfAIsZero     TestAreWeDocked
 ;.. Handle displaying correct screen ..............................................................................................
@@ -64,91 +52,36 @@ HandleBankSelect:       ld      a,$00
 CallCursorRoutine:      call    $0000
 ;.. Check to see if we are docked as if we are (or are docking.launching then no AI/Ship updates occur.............................
 ;.. Also end up here if we have the screen input blocker set
-;DEFUNCT?EngineSounds:       ;HasEngineSoundChanged
-;DEFUNCT?                    ;call    nz,UpdateEngineSound
+EngineSounds:       HasEngineSoundChanged
+                    call    nz,UpdateEngineSound
 SkipInputHandlers:      
 ;.. For Docked flag its - 0 = in free space, FF = Docked, FE transition, FD = Setup open space and transition to not docked
 TestAreWeDocked:        JumpIfMemNeNusng DockedFlag, StateNormal, UpdateLoop            ; if if we are in free space do universe updateelse we skip it. As we are also in dock/transition then no models should be updated so we dont; need to draw
-    IFDEF MAINLOOP_EVENTHANDLER
+                    IFDEF MAINLOOP_EVENTHANDLER
 .UpdateEventCounter:    ld      hl,EventCounter                                         ; evnery 256 cycles we do a trigger test
                         dec     (hl)    
 .ProcessEvent:          call    z,LoopEventTriggered    
-    ENDIF
-    IFDEF MAINLOOP_RECHARGE
+                    ENDIF
+                    IFDEF MAINLOOP_RECHARGE
 .ProcessRecharge:       ld      a,(EventCounter)    
                         and     7   
                         call    z, RechargeShip 
-    ENDIF
-    IFDEF MAINLOOP_LAUNCHMISSILE
+                    ENDIF
+                    IFDEF MAINLOOP_LAUNCHMISSILE
 .PlayerMissileLaunch:   AnyMissilesLeft
                         jr      z,.NoMissiles                                           ; just in case last one gets destroyed
                         IsMissileLaunchFlagged
                         call    z,  LaunchPlayerMissile
 .NoMissiles
-    ENDIF
+                    ENDIF
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
 ;.. First update Sun...............................................................................................................
-    IFDEF MAINLOOP_WARP_ENABLED
-ProcessWarp:            JumpIfMemFalse  WarpPressed, .NoWarp
-.WarpIsPressed:         SetMemFalse     WarpPressed                               ; clear and acknowlege
-                        JumpIfMemZero   WarpCooldown, .WarpDriveCool
-;Need logic for jump drive malfunction
-.JumpDriveHot:          ; call bong jump drive hot
-                        ; flash jump drive status icon
-                        jp      .NoWarp
-.WarpDriveCool:         JumpIfMemFalse    SpaceStationSafeZone, .NotInSpaceStationRange
-.MassLocked:            ; call bong
-                        ; message mass locked
-                        jp      .NoWarp
-.NotInSpaceStationRange:call    AreShipsPresent
-                        jr      nc,     .MassLocked
-.NoShipsInSystem:      ;MMUSelectPlanet
-                       ;ld      a,(PBnKzsgn)
-                       ;and     $80
-                       ;jp      z,.JumpToPlanetCheck
-                        MMUSelectSun
-                        ld      a,(SBnKzsgn)
-                        and     $80
-                        jp      z,.JumpToSunCheck
-.NotCorrectFacing:      ;       call bong, align with body
-                        jp      .NoWarp
-.JumpToPlanetCheck:     ld      a,(PBnKzhi)
-                        JumpIfAGTENusng  2, .PlanetRangeOK 
-                        ld      a,(PBnKyhi)
-                        JumpIfAGTENusng  2, .PlanetRangeOK
-                        ld      a,(PBnKxhi)
-                        JumpIfAGTENusng  2, .PlanetRangeOK
-                        jp      .MassLocked
-.PlanetRangeOK:         call    WarpPlanetCloser
-                        MMUSelectSun
-                        call    WarpSunFurther
-                        jp      .MoveJunk
-.JumpToSunCheck:        ld      a,(SBnKzsgn)
-                        ld      hl,SBnKxsgn
-                        or      (hl)
-                        ld      hl,SBnKysgn
-                        or      (hl)
-                        and     SignMask8Bit
-                        JumpIfAGTENusng  2, .SunRangeOK
-                        jp      .MassLocked
-.SunRangeOK:            call    WarpSunCloser
-                        MMUSelectPlanet
-                        call    WarpPlanetFurther
-.MoveJunk:              call    ClearJunk;  call    WarpJunk - as it will move sign bit hi then all junk will be lost
-                        ld      a,WarpCoolDownPeriod
-                        ld      (WarpCooldown),a
-                        MMUSelectLayer1
-                        call    WarpSFX             ; Do the visual SFX based on facing
-                        jp      .DoneWarp
-.NoWarp:                MMUSelectLayer1
-.DoneWarp:
-    ENDIF
 UpdateShipsControl:     ld      a,0
                         and     a
-    IFDEF MAINLOOP_UPDATEUNIVERSE
+                    IFDEF MAINLOOP_UPDATEUNIVERSE
 .UpdateShips:           call    z, UpdateUniverseObjects
-    ENDIF
+                    ENDIF
                         JumpIfMemNeNusng ScreenTransitionForced, $FF, BruteForceChange  ; if we docked then a transition would have been forced
 CheckIfViewUpdate:      ld      a,$00                                                   ; if this is set to a view number then we process a view
                         JumpIfAIsZero  UpdateLoop                                       ; This will change as more screens are added TODO
@@ -187,13 +120,13 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
                         ;ld          (SBnKysgn),a
                        ; ZeroA
                       ;  ld          (SBnKzsgn),a
-    IFDEF   MAINLOOP_SUN_RENDER
+                        IFDEF   MAINLOOP_SUN_RENDER
                             call    SunUpdateAndRender
-    ENDIF
+                        ENDIF
 .UpdatePlanet:          MMUSelectPlanet
-    IFDEF   MAINLOOP_PLANET_RENDER
+                        IFDEF   MAINLOOP_PLANET_RENDER
                             call    PlanetUpdateAndRender
-    ENDIF
+                        ENDIF
 ;..Later this will be done via self modifying code to load correct stars routine for view..........................................
 DrawDustForwards:       ld     a,$DF
                         ld     (line_gfx_colour),a                         
@@ -212,9 +145,9 @@ ProcessLaser:           ld      a,(CurrLaserPulseRate)
 .NoLaser:               MMUSelectSpriteBank
                         call    sprite_laser_hide
 ProcessPlanet:
-    IFDEF   MAINLOOP_MODEL_RENDER
-ProcessShipModels:      call   DrawForwardShips                                     ; Draw all ships (this may need to be self modifying)
-    ENDIF
+ProcessShipModels:      IFDEF   MAINLOOP_MODEL_RENDER
+                            call   DrawForwardShips                                     ; Draw all ships (this may need to be self modifying)
+                        ENDIF
                         ; add in loop so we only update every 4 frames, need to change CLS logic too, 
                         ; every 4 frames needs to do 2 updates so updates both copies of buffer
                         ; now will CLS bottom thrid
@@ -257,7 +190,7 @@ WeAreHEntering:         ld      a,StateCompletedHJump
 ;
 ;                                   
 ; --- At the end of a hyperspace jump we have to reset compass, market universe sun and planets etc
-WeHaveCompletedHJump:   ld      a,(Galaxy)                      ; DEBUG as galaxy n is not working
+WeHaveCompletedHJump:   ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      hl,(TargetSystemX)
                         ld      (PresentSystemX),hl
@@ -291,72 +224,60 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)                      ; DEBUG as galax
 ;;TODO                        call    CreateSun
 ;;TODOCreatePlanet:          call    SetPlanetSlot
 ;;TODO                       MMUSelectShipBank1
-;;TODO                    eliteb       call    GetShipBankId
+;;TODO                       call    GetShipBankId
 ;;TODO                       MMUSelectUniverseBankN 1
 ;;TODO                       call    CopyBodyToUniverse
                         SetMemFalse DockedFlag
-.TriggerEngineSound:    ld      a,$FF
-                        ld      (LAST_DELTA),a              ; force sound update in interrupt
                         jp  DoubleBufferCheck
                         
-
-WarpSFX:                ld      a,(WarpRoutineAddr+1)
-                        and     a
-                        ret     z
-WarpMMUBank:            ld      a,$00
-                        MMUSelectScreenA
-WarpRoutineAddr:        call    0000
-                        ret
-
-;--- From here is the new simplified logic. This uses the current spawn table
-;--- Events such as jumping to a system, ending up in which space, 
-;--- special mission events
-;--- We will need actually two tables, 1 for in station range 1 for not else flipping tables on the Z boundary
-;--- Would be difficult
-;--- load the table to work from. This then leaves all teh logic configurable
-LoopEventTriggered:     ; for now just do spawn
-                        jp      SpawnEvent
-                        ; implicit ret from jp
-
-    DEFINE  SPAWN_TABLE_SELECT   1
-    DEFINE  SPAWN_GENERATE_COUNT 1
-    DEFINE  SPAWN_LOOP           1
-    DEFINE  SPAWN_IGNORE         1
-    
-
-SpawnEvent:             IFDEF   SPAWN_IGNORE
-                            ret
-                        ENDIF
-                        call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
+LoopEventTriggered:     call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
                         ret     c                                   ; then may as well just skip routine
-                        IFDEF   MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE
-                            SetMemFalse SpaceStationSafeZone                        
-                        ENDIF
+.DEBUGTEST:             SetMemFalse SpaceStationSafeZone                        
 .SpawnIsPossible:       ld      iyh,c                               ; save slot free in iyh
-                        break
-                        call    SelectSpawnTable
-.GetSpawnDetails:       call    SelectSpawnTableData                ; get table data
-.CheckIfInvalid:        ld      a,b                                 ; if b was 0
-                        or      a                                   ; then its an invalid
-                        ret     z                                   ; ship or just not to spawn
-.SetNbrToSpawn:         push    hl,,bc                              ; b will be set to the
-                        call    doRandom                            ; actual number to spawn
-                        pop     bc                                  ; a is not really needed now as de and hl hold
-                        and     b                                   ; addresses for table and handler code
-                        or      1                                   ; at least 1 
-                        ld      b,a                                 ; so b = the number to spawn
-                        pop     hl                                  ; get back address of spawn handler
-; b = nbr to spawn, hl = handler for spawn, de = lookup table of ship type to spawn                        
-.SpawnLoop:             push    bc,,de,,hl                          ; save loop counter lookup table and handler
-                        ex      de,hl                               ; hl = lookup spawn type table, de = handler for spawn
-                        call    SelectSpawnType                     ; a = shipId to Spawn
-                        call    .SpawnAShipTypeA                    ; if we get a carry then stop spawning
-                        pop     bc,,de,,hl                          ; get back values
-                        djnz    .SpawnLoop                          ; repeat until B = 0
-                        ret                                         ; we are done
-.SpawnAShipTypeA        ex      de,hl                               ; hl= handler to spawn, a = ship to spawn
-                        jp      hl                                  ; we call this so we can do a dynamic jp
-                        ; implicit ret from jp                      ; SpawnShipTypeA handles free slot tests etc
+.AreWeInWhichSpace:     JumpIfMemTrue MissJumpFlag, .WitchSpaceEvent
+;--                        
+
+.JunkOrNot:             call    doRandom                            ; if random > 35 then its not junk
+                        JumpIfAGTENusng 35, .NotJunk                ; .
+.JunkLimitHitTest:      TestRoomForJunk .NotJunk                    ; can we fit in any junk
+.CouldBeTraderInstead:  call    doRandom                            ; so its now a 50/50 change of being a trader
+                        and     1
+                        jp      z,.SpawnTrader
+;... Handle spawning of junk if possible
+                        call    SpawnJunk
+                        ret
+;... Handle spawing of non junk type object
+.NotJunk:               JumpIfMemTrue SpaceStationSafeZone, .SpawnTrader ; changed so that it can spawn friendly ships around a space station
+.PossibleCop:           break
+                        MMUSelectCommander                          ; get cargo rating
+.AreWeABadPerson:       call    calculateBadness                    ; a = badness
+                        sla     a                                   ; double badness for scans
+                        JumpIfMemZero CopCount,.NoCopsInSystem      ; are there any cops already
+.CopsAlreadyPresent:    ld      hl,FugitiveInnocentStatus           ; or a with FIST status
+                        or      (hl)
+.NoCopsInSystem:        ld      (BadnessStatus),a                   ; if badness level triggers a cop     
+                        call    doRandom                            ; then its hostile
+                        ;CallIfAGTEMemusng BadnessStatus, .SpawnHostileCop  ; 
+                        CallIfALTMemusng BadnessStatus, .SpawnHostileCop  ; Swapped logic around
+.SpawnGeneralCop:       ReturnIfMemNotZero CopCount                 ; if here are police then we are done
+                        ld      hl, ExtraVesselsCounter             ; count down extra vessels counter
+                        dec     (hl)                                ; to prevent mass spawing
+                        ret     p                                   ;
+.ExtraVesselHit0:       inc     (hl)                                ; set counter to 0
+          ;TODO              JumpIfMemNotZero MissionData,.DoMissionPlans; call special mission spawn logic routine
+           ;TODO             ret     c                                   ; return if carry was set (i.e. it did something)
+                        ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
+                        MMUSelectGalaxyA
+                        ld      a,(GalaxyDisplayGovernment)
+                        JumpIfAIsNotZero .NotAnarchySystem
+                        ld      b,a
+                        call    doRandom                            ; if random > 120 then don't spawn
+                        ReturnIfAGTENusng 120                       ;
+                        and     7                                   ; if random 0 ..7 < gov rating
+                        ReturnIfALTNusng b                          ; then return
+
+.NotAnarchySystem:      ret                        
+.WitchSpaceEvent:       ret; TODO for now
 
 
 

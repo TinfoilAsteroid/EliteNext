@@ -27,6 +27,25 @@ l2_pp_row_valid:        JumpIfAGTENusng ScreenHeight,l2_pp_dont_plot
 l2_pp_dont_plot:        pop     af
                         ret
 
+; ">l2_plot_pixel d= row number, hl = column number, e = pixel col"
+l2_plot_pixel_320:      ld      a,h
+                        cp      1                               ; if < 256, definite OK
+                        jr      nz,.DoneCheck
+                        ld      a,l
+                        and     %11000000                       ; if its 7 or 6 set then > 319
+                        jr      nz,.DontPlot
+.DoneCheck:             call    asm_l2_320_col_bank_select      ; adjust hl for column > h 
+                        ld      l,d                             ; as they are horizontal now
+                        ld      a,e
+                        ld      (hl),a
+.DontPlot:              ret
+
+l2_plot_pixel_320_no_check:   call    asm_l2_320_col_bank_select      ; adjust hl for column > h 
+                        ld      l,d                             ; as they are horizontal now
+                        ld      a,e
+                        ld      (hl),a
+                        ret
+                        
 ; y aixs bounds check must have been done before calling this                        
 l2_plot_pixel_no_check: push    af
                         push    bc								; bank select destroys bc so need to save it
@@ -47,6 +66,15 @@ l2_plot_pixel_no_bank:  push 	hl
                         ld 		(hl),a
                         pop		hl
                         ret
+                        
+; ">l2_plot_pixel_no_bank d= row number, h = column number, a = pixel col"
+; This version assues pixel is in the same bank as previously plotted ones. optimised for horizontal lines
+l2_plot_pixel_320_no_bank:  
+                        ld 		l,d
+                        ld 		(hl),a
+                        ret
+; The more simpler h col l row is just ld (hl),a so no need for a function
+                        
 
 ShipPixel:              push    af
                         ld      a,b

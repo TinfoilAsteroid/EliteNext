@@ -64,15 +64,50 @@ ClearFreeSlotListSaveA: ld      d,a
                         djnz    .fillLoop
                         ret
 
-ClearSlotA:             break
-                        ld      hl,UniverseSlotList
+ClearSlotA:             ld      hl,UniverseSlotList
                         add     hl,a
                         ld      (hl),$FF
                         ld      a,UniverseSlotListSize  ; move to types
                         add     hl,a
                         ld      (hl),$FF
                         ret
+
 ; Space Station will always be slot 0
+ClearJunk:              ld      hl,UniverseSlotType+1
+                        ld      c,1
+                        ld      b,UniverseSlotListSize -1      ; ignore space station
+.NextShip:              ld      a,(hl)
+                        cp      ShipTypeJunk
+                        jp      z,.ProcessJunk
+                        cp      ShipTypeScoopable
+                        jp      z,.ProcessJunk
+.DoneIteration:         inc     hl
+                        inc     c
+                        djnz    .NextShip
+                        ClearJunkCount
+                        ret
+.ProcessJunk:           ld      a,c
+                        call    ClearSlotA
+                        jp      .DoneIteration
+                        
+
+WarpJunk:               ld      hl,UniverseSlotType+1
+                        ld      c,1
+                        ld      b,UniverseSlotListSize -1      ; ignore space station
+.NextShip:              ld      a,(hl)
+                        cp      ShipTypeJunk
+                        jp      z,.ProcessJunk
+                        cp      ShipTypeScoopable
+                        jp      z,.ProcessJunk
+.DoneIteration:         inc     hl
+                        inc     c
+                        djnz    .NextShip
+                        ret
+.ProcessJunk:           ld      a,c
+                        MMUSelectUniverseA
+                        call    WarpOffset
+                        jp      .DoneIteration
+                        
 
 AreShipsPresent:        ld      hl,UniverseSlotType+1
                         ld      b,UniverseSlotListSize -1      ; ignore space station

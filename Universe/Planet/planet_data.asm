@@ -68,7 +68,18 @@ ResetPBnKPosition:      ld      hl,PBnKxlo
 ; its always horizontal, yellow
 
 ; PLANET
-                        
+WarpPlanetCloser:       ld      hl,PBnKzsgn
+.PositiveAxis:          ld      a,(hl)
+                        ReturnIfALTNusng 2                      ; hard liit along z axis
+                        dec     (hl)
+                        ret
+
+; It should normally be behind but someone could fly past a planet, turn aroudn and jump
+WarpPlanetFurther:      ld      hl,PBnKzsgn
+                        ld      a,(hl)
+                        ReturnIfAGTENusng $7F                   ; this is the hard limit else it woudl turn negative and flip to -0
+                        inc     (hl)                           ; if its negative it will still increase as we will block insane values
+                        ret       
 ; --------------------------------------------------------------                        
 ; This sets current universe object to a planet,they use sign + 23 bit positions
 CreatePlanet:           call    ResetPBnKData
@@ -297,7 +308,8 @@ PlanetUpdateCompass:    ld      a,(PBnKxsgn)
                         ret
                         
                    ; could probabyl set a variable say "varGood", default as 1 then set to 0 if we end up with a good calulation?? may not need it as we draw here     
-PlanetUpdateAndRender:     call    PlanetApplyMyRollAndPitch
+PlanetUpdateAndRender:  ret; This is the source of the rogue single pixel
+                        call    PlanetApplyMyRollAndPitch
 .CheckDrawable:         ld      a,(PBnKzsgn)
                         JumpIfAGTENusng 48,  PlanetUpdateCompass ; at a distance over 48 its too far away
                         ld      hl,PBnKzhi                  ; if the two high bytes are zero then its too close

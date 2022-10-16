@@ -38,7 +38,7 @@
 ;   30         31          32            33             34          Right       36          37          EnergyBomb  39       
 ;   VK_ENTER   VK_L,       VK_K,         VK_J,          VK_H,       VK_SPACE    VK_SYM,     VK_M,       VK_N,       VK_B
 ;              Launch                    Distance       Hyperspace  Laser                               DockComp    BuyCargo
-;              ResumeGame
+;              ResumeGame                WarpJump
 
 ; You can read address to check keystate by address KeyboardMap + c_Pressed corresponding key. There is also an addr_ helper too
 
@@ -84,7 +84,7 @@ c_Pressed_CursorDown    equ 38 * 2
 c_Pressed_Find          equ 39 * 2
 c_Pressed_Yes           equ 40 * 2
 c_Pressed_No            equ 41 * 2
-
+c_Pressed_Warp          equ 42 * 2
 
 ; half row 1
 VK_CAPS  				equ 0
@@ -178,6 +178,7 @@ KeyCode_CursorUp        equ VK_Q
 KeyCode_CursorDown      equ VK_A
 KeyCode_PressedYes      equ VK_Y
 KeyCode_PressedNo       equ VK_N
+KeyCode_Warp            equ VK_J
 
 Keys					DS	40          ; This is the list of key states for all the VK keys presssed i.e. VK_CAPS through to VK_B
 c_KeyBoardLen 			equ $ - Keys
@@ -194,7 +195,7 @@ KeyboardMap             DW  Keys+KeyCode_Front        ,Keys+KeyCode_Aft         
                         DW  Keys+KeyCode_GalacticChrt ,Keys+KeyCode_LocalChart   ,Keys+KeyCode_MarketPrices ,Keys+KeyCode_Status       ,Keys+KeyCode_Inventory    
                         DW  Keys+KeyCode_GameSkip     ,Keys+KeyCode_Save         ,Keys+KeyCode_Freeze       ,Keys+KeyCode_Resume       ,Keys+KeyCode_Recentre     
                         DW  Keys+KeyCode_Quit         ,Keys+KeyCode_PlanetData   ,Keys+KeyCode_CursorUp     ,Keys+KeyCode_CursorDown   ,Keys+KeyCode_Find
-                        DW  Keys+KeyCode_PressedYes   ,Keys+KeyCode_PressedNo
+                        DW  Keys+KeyCode_PressedYes   ,Keys+KeyCode_PressedNo    ,Keys+KeyCode_Warp
 
 ASCII_Map:              DB "#","Z","X","C","V"
                         DB "A","S","D","F","G"
@@ -247,6 +248,7 @@ addr_Pressed_PlanetData    equ KeyboardMap+c_Pressed_PlanetData
 addr_Pressed_CursorUp      equ KeyboardMap+c_Pressed_CursorUp
 addr_Pressed_CursorDown    equ KeyboardMap+c_Pressed_CursorDown
 addr_Pressed_Find          equ KeyboardMap+c_Pressed_Find
+addr_Pressed_Warp          equ KeyboardMap+c_Pressed_Warp
 
 
 MIsKeyPressed:          MACRO   keyaddress, misstarget
@@ -408,6 +410,7 @@ get_key_a_state:        GetKeyStateAddressHL                    ; reads a mapped
                         ret
 
 ; sets they keystate of c pressed key in a register to 1 (pressed)
+; This will be used by auto dock
 force_key_press:        GetKeyStateAddressHL                    ; read key locations
                         ld      a,1
                         ld      (hl),a

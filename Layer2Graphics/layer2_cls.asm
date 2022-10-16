@@ -67,7 +67,6 @@ l2_cls_upper_two_thirds_burst:;ld a,0								; pretend we are plotting pixel on 
                         call l2_cls_dma_bank_burst
                         ret
 
-
 l2_cls_lower_third:     ;ld a,128							; pretend we are plotting pixel on row 64 to force mid selection
                         asm_l2_bank_2_macro; call asm_l2_row_bank_select
                         ld 	a,COLOUR_TRANSPARENT
@@ -78,6 +77,7 @@ l2_cls_lower_third_burst:asm_l2_bank_2_macro; call asm_l2_row_bank_select
                         ld 	a,COLOUR_TRANSPARENT
                         call l2_cls_dma_bank_burst
                         ret
+                                                       
                         
 l2_cls_burst:           call l2_cls_upper_two_thirds_burst
                         jp   l2_cls_lower_third_burst
@@ -86,12 +86,15 @@ l2_cls_burst:           call l2_cls_upper_two_thirds_burst
 l2_cls:                 call l2_cls_upper_two_thirds
                         jp   l2_cls_lower_third
 	
-l2_320_cls:             call l2_cls_upper_two_thirds
-                        call   l2_cls_lower_third
-                        ; need to clear banks 4 and 5 via normal paging, say into C000 with interrupts disabled
-                        ret
-	    
+l2_320_cls:             	    
 l2_640_cls:             call l2_cls_upper_two_thirds
                         call   l2_cls_lower_third
                         ; need to clear banks 4 and 5 via normal paging, say into C000 with interrupts disabled
-                        jp   l2_cls_lower_third
+                        asm_l2_bank_3_macro
+                        ld 	a,COLOUR_TRANSPARENT
+                        call l2_cls_dma_bank
+                        asm_l2_bank_4_macro
+                        ld 	a,COLOUR_TRANSPARENT
+                        call l2_cls_dma_bank
+
+                        ret

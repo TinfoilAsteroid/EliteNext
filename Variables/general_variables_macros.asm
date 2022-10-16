@@ -247,6 +247,10 @@ ClearTemperatures:      MACRO
                         ld      (CabinTemperature),a
                         ld      (GunTemperature),a
                         ENDM
+                        
+ClearWarpPressed:       MACRO
+                        SetMemFalse WarpPressed
+                        ENDM
 
 CoolCabin:              MACRO
                         ld      a,(CabinTemperature)
@@ -306,18 +310,18 @@ BoostSystem:            MACRO   SystemMem, BoostMem
 .ExitPoint              
                         ENDM
                         
-HasEngineSoundChanged:  MACRO
-                        ld      a,(EngineSoundChanged)
-                        and     a
-                        ENDM
-                        
-ClearEngineSoundChanged:MACRO
-                        xor      a
-                        ld      (EngineSoundChanged),a
-                        ENDM
-
-SetEngineSoundChanged:  MACRO
-                        ld      a,$FF
-                        ld      (EngineSoundChanged),a
-                        ENDM
+;DEFUNCT DONE IN INTERRUPT HANDLER HasEngineSoundChanged:  MACRO
+;DEFUNCT DONE IN INTERRUPT HANDLER                         ld      a,(EngineSoundChanged)
+;DEFUNCT DONE IN INTERRUPT HANDLER                         and     a
+;DEFUNCT DONE IN INTERRUPT HANDLER                         ENDM
+;DEFUNCT DONE IN INTERRUPT HANDLER                         
+;DEFUNCT DONE IN INTERRUPT HANDLER ClearEngineSoundChanged:MACRO
+;DEFUNCT DONE IN INTERRUPT HANDLER                         xor      a
+;DEFUNCT DONE IN INTERRUPT HANDLER                         ld      (EngineSoundChanged),a
+;DEFUNCT DONE IN INTERRUPT HANDLER                         ENDM
+;DEFUNCT DONE IN INTERRUPT HANDLER 
+;DEFUNCT DONE IN INTERRUPT HANDLER SetEngineSoundChanged:  MACRO
+;DEFUNCT DONE IN INTERRUPT HANDLER                         ld      a,$FF
+;DEFUNCT DONE IN INTERRUPT HANDLER                         ld      (EngineSoundChanged),a
+;DEFUNCT DONE IN INTERRUPT HANDLER                         ENDM
                         

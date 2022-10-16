@@ -17,7 +17,8 @@ ConditionNameIdxLen EQU $ - ConditionNameIdx
 
 StatusDiagrams		DB "ABOUSEITILETSTONLONUTHNOALLEXEGEZACEBISOUSESARMAINDIREA?ERATENBERALAVETIEDORQUANTEISRION",0
 
-RankingTable		DW	$0000,$0008,$0010,$0020,$0040,$0080,$0200,$0A00,$1900,$4900,$FFFF
+RankingTableLow		DW	$0000,$0004,$0008,$0010,$0020,$0100,$0200,$0A00,$1900,$C1FF,$FFFF
+RankingTableHigh	DW	$0003,$0007,$000F,$001F,$00FF,$01FF,$09FF,$18FF,$C0FF,$FEFF,$FFFF
 
 RankingName1		DB 	"Harmless",0
 RankingName2		DB 	"Mostly Harmless",0
@@ -30,6 +31,20 @@ RankingName8		DB 	"Deadly",0
 RankingName9		DB 	"---- E L I T E ---",0
 RankingName10		DB 	"Skollobsgod",0
 RankingName11		DB 	"Nutter",0
+
+RankingEQHarmless	EQU 0
+RankingEQMostly		EQU 1
+RankingEQPoor		EQU 2
+RankingEQAverage	EQU 3
+RankingEQAbove		EQU 4
+RankingEQCompetent  EQU 5
+RankingEQDangerous	EQU 6
+RankingEQDeadly		EQU 7
+RankingEQElite		EQU 8
+RankingEQSkollob	EQU 9
+RankingEQNutter		EQU 10
+
+
 
 RankingNameIdx		dw RankingName1,RankingName2,RankingName3,RankingName4,RankingName5,RankingName6,RankingName7,RankingName8,RankingName9,RankingName10,RankingName11
 RankingNameIdxLen EQU $ - RankingNameIdx
@@ -63,7 +78,7 @@ getRankIndex:
 	cp		0
 	ret		z								; quicks skip for 0 kills
 	xor 	a
-	ld		hl,RankingTable
+	ld		hl,RankingTableLow
 .testLoop:
 	ld		c,(hl)
 	inc		hl

@@ -111,6 +111,43 @@ InitialiseHyperStars:   ld      b,MaxNumberOfStars
                         djnz    .InitStarsLoop
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
+SaveCurrentDust:        ld          iy,varDust
+                        ld          ix,varDustWarpRender
+                        ld          b, MaxNumberOfStars
+.SaveLoop               ld          a,(iy+1)
+                        ld          l,a
+                        and         $7F
+                        JumpOnBitSet l,7,.StarNegXPt
+                        add         a,$80
+                        ld          e,a
+                        jp          .StarDoneX
+.StarNegXPt:            ld          d,a
+                        ld          a,$80
+                        sub         d
+                        ld          e,a
+.StarDoneX:             ld          a,(iy+3)
+                        ld          l,a
+                        and         $7F
+                        JumpOnBitSet l,7,.StarNegYPt
+                        add         a,$60
+                        ld          d,a
+                        jp          .StarDoneY
+.StarNegYPt:            ld          d,a
+                        ld          a,$60
+                        sub         d
+                        ld          d,a
+.StarDoneY:             ld          (ix+0),e
+                        ld          (ix+1),d
+                        inc         ix
+                        inc         ix
+                        ld          hl,iy
+                        ld          a,6
+                        add         hl,a
+                        ld          iy,hl
+                        djnz        .SaveLoop
+                        ret
+                                
+;----------------------------------------------------------------------------------------------------------------------------------
 DustForward:            ld      b,MaxNumberOfStars                  ; get the number of stars to process
                         ld      iy,varDust                          ; hl is now a pointer to the dust array
 StarProcessLoop:        push    bc                                  ; save counter +1
@@ -264,7 +301,8 @@ StarNegYPt:             ld      b,a
                         ld      b,a
 StarDoneY:              ld      a,L2DustColour
                         push    bc
-.DrawStar:              MMUSelectLayer2 : call    l2_plot_pixel 
+.DrawStar:              MMUSelectLayer2 
+                        call    l2_plot_pixel 
                         ld      a,(iy+5)
                         pop    bc
                         JumpIfAGTENusng $60,EndofStarsLoop
@@ -279,12 +317,14 @@ StarDoneY:              ld      a,L2DustColour
                         ld      a,L2DustColour
                         inc     b
                         push    bc
-                        MMUSelectLayer2 :   call    l2_plot_pixel 
+                        MMUSelectLayer2 
+                        call    l2_plot_pixel 
                         ld      a,(iy+5)
                         pop    bc
                         ld      a,L2DustColour
                         dec     c
-                        MMUSelectLayer2 :   call    l2_plot_pixel  
+                        MMUSelectLayer2
+                        call    l2_plot_pixel  
 EndofStarsLoop:         pop     bc                                      ;  0
 NextStarLoop3:          push    iy                                      ; +1
                         pop     hl                                      ;  0

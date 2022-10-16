@@ -209,13 +209,25 @@ draw_hyperspace:        MMUSelectLayer1
                         ld          (DockedFlag),a
                         ret
                         
+;----------------------------------------------------------------------------------------------------------------------------------        
+front_warp:             ;call        SaveCurrentDust                         ; save current dust positions
+                        ld          b,175                                    ; loop for x iterations
+.warploop:              push        bc
+                        call        DustForward
+                        MMUSelectLayer2
+                        call        l2_flip_buffers
+                        pop         bc
+                        djnz        .warploop
+                        ret                        
                         
-loop_hyperspace                        
-                        
+;----------------------------------------------------------------------------------------------------------------------------------
+loop_hyperspace         ret
+;----------------------------------------------------------------------------------------------------------------------------------                        
 dampenRate:             equ     $04
 dampenRcounter:         DB      dampenRate
 dampenPcounter:         DB      dampenRate
-input_front_view:       ClearEngineSoundChanged
+;----------------------------------------------------------------------------------------------------------------------------------
+input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         ld      hl,(addr_Pressed_Accellerate)
                         ld      a,(hl)
                         JumpIfAIsZero     .TestDecellerate
@@ -228,7 +240,7 @@ input_front_view:       ClearEngineSoundChanged
                         ld      hl,(DELT4Lo)
                         add     hl,4
                         ld      (DELT4Lo),hl
-                        SetEngineSoundChanged                   
+                        ;DEFUNCT SetEngineSoundChanged                   
 .TestDecellerate:       ld      hl,(addr_Pressed_Decellerate)
                         ld      a,(hl)
                         JumpIfAIsZero   .TestLeftPressed
@@ -242,7 +254,7 @@ input_front_view:       ClearEngineSoundChanged
                         dec     hl
                         dec     hl
                         ld      (DELT4Lo),hl   
-                        SetEngineSoundChanged                        
+                        ;DEFUNCT SetEngineSoundChanged                        
 .TestLeftPressed:       ld      hl,(addr_Pressed_RollLeft)
                         ld      a,(hl)
                         JumpIfAIsZero   .TestRightPressed
@@ -359,6 +371,16 @@ input_front_view:       ClearEngineSoundChanged
 .NoTargetSelected
 .InsufficientFuel
 .NotHyperspace:         
+;--- Check for in system Jump---------------------------------------
+.CheckForWarpPressd:    ld      hl,(InnerHyperCount)                ; if hyperspace was enaged then cancel
+                        ld      a,h                                 ; hyperspace
+                        or      l                                   ; .
+                        jr      nz,.WarpNotPressed                
+                        ld      a,c_Pressed_Warp
+                        call    is_key_up_state
+                        jr      z, .WarpNotPressed
+                        SetMemTrue  WarpPressed                     ; This signals the event , teh main loop will cancel this as an acknowlege                        
+.WarpNotPressed:                        
 .CheckForLaserPressed:  call    IsLaserUseable                      ; no laser or destroyed?
                         jr      z,.CheckTargetting
 .CanLaserStillFire:     SetMemFalse FireLaserPressed                ; default to no laser

@@ -10,6 +10,7 @@ ResetPlayerShip:        ZeroThrottle
                         ClearECM
                         ChargeEnergyAndShields
                         ClearTemperatures
+                        ClearWarpPressed
                         call    IsLaserUseable
                         MMUSelectCommander
                         call    LoadLaserToCurrent
@@ -81,6 +82,24 @@ InitMainLoop:           call    ClearUnivSlotList
                         InitEventCounter
                         ClearMissJump
                         SetMemFalse TextInputMode
+                        ret
+
+; needs to be called after a kill too
+SetPlayerRank:          ld      hl,(KillTally)
+                        ld      ix,RankingTableLow
+                        ld      b,0
+.CompareLoop:           ld      d,(ix+1)
+                        ld      e,(ix+0)
+                        and     a             ; compare HL to DE
+                        sbc     hl,de         ; we can throw away HL now
+                        jr      z,.FoundRank
+                        jr      c,.FoundRank
+                        inc     ix
+                        inc     ix
+                        inc     b
+                        jr      .CompareLoop
+.FoundRank:             ld      a,b
+                        ld      (CurrentRank),a
                         ret
 
 SetSpeedZero:           ld      a,0

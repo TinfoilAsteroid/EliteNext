@@ -1,3 +1,164 @@
+Laser Logic
+
+Need a special cast if a ship flies away from plant and sun to just stop updaing their position to avoid being lost in space or wrapping around
+
+Fire Key Test:
+      JumpIfMemFalse FirePressed, .FireNotPressed
+.FirePressed:       ReturnIfMemFalse        LaserBeamOn
+                    ReturnIfMemNotZero      CurrentCooldown
+                    copy mem LaserBeamCount to CurrentBurstCount
+                    SetMemZero  CurrentBurstPulse
+                    SetMemTrue  LaserBeamOn
+                    call        TriggerLaserSound
+                    ret
+.FireNotPressed:    ReturnIfMemNotZero  CurrentBurstCount
+                    ReturnIfMemNotZero  CurretnDuration
+                    ReturnIfMemFalse    LaserBeamOn
+                    copy mem    LaserCooldownTime to CurrentCooldown
+                    SetMemFalse LaserBeamOn
+                    SetMemZero  CurrentBurstCount
+                    SetMemZero  CurrentBurstPause
+                    ret
+                    
+Main Loop for laser
+                    JumpIfMemFalse LaserBeamOn, .LaserOff
+.LaserOnL            ld        hl,duration
+                    dec (hl)
+                    jp      nz, .LaserOnBurstTest
+                    ld          hl,CurrentBurstCount
+                    dec     (jl)
+                    jp      nz, >laserOnBurstPause
+.LaserOnC99o        copy LaserCooldown to CurrentCooldown
+                     set mem false laser beam on
+                     ret
+.laseronburstpause: set mem 0 currentcooldown
+                    copy mem laserburstpause current burstpause
+                    setMemFalse LaserBeamOn
+                    ret
+>LaserOff:          ReturnIfMemZero     CurrentCooldown
+                    ld      hl,cooldown
+                    dec     (hl)
+                    ret
+                    
+                    
+See jumpDrive code
+                    Main loop  
+                    if system jump pressed
+                        if warpcooldown > 0 - Sound bong , cooling, done
+                        if in space station safe zone, bong mass lock, done
+                        if any non junk in area - bong mass lock, done
+                        if planet z +ve
+                            get max of x y z of planet
+                            if < 2 - bong mass locked done
+                            if planet xhi > 2 xhi --, xshift -1
+                            if planet yhi > 2 yhi --, yshift -1
+                            if planet zhi > 2 zhi --, zshift -1                            
+                        else going to sun
+                            if < 2 - bong mass locked done
+                            if sun xhi > 2 xhi --, xshift -1
+                            if sun yhi > 2 yhi --, yshift -1
+                            if sun zhi > 2 zhi --, zshift -1
+                            same shift logic applies as everythign is relative to shop
+                        x y z shift = 0
+                        for each object z x y += z x y shift
+                        play warp sfx
+                        set warp cooldown
+                           
+                            
+        
+        
+      
+Event logic
+
+If timer event triggers:
+
+Spawn a Trader
+--------------
+a = random shift right clearing bit 7 and moving bit 0 to carry
+shipAi = a
+roll coutner = a clockwise with a 1 in 127 chance of no damping
+Set missile count to carry flag
+speed = a AND 15
+Generate a new random
+if negative then skip the following
+    set bits 6 & 7 of ship AI to make it aggressive if attacked
+    set bit 4 of NEWB to indicate docking
+call hordes to spawn a pack of ships (from nbrs 11 to 14 in original)
+
+
+
+
+
+Hordes
+------
+Set up hoard base +1 and mask base +1 with the nbrs for 11 & 3
+if  random >== 248 jump to hoard_large for up to 8 ships
+else
+  set a to the random AND 3
+a = the random AND 7
+
+
+
+Main Loop Ship Spawn Event
+---------------
+a = random
+if a < 52 &  we have < 4 junk then jump to spawnjunk
+if we are in space station safe zone
+    Even chance:
+        spawn 1 to 3 cops
+        spawn trader going 
+        spawn trader launched from dock        
+else
+    if  special system then do localised logic (e.g. mission impacted)
+    if  Governement type anarchy
+            50% : 1 to 4 pirates
+            40% : bounty hunter
+            10% : asteroid
+    if governement state > random AND 7
+            50% : 1 to 3 pirates
+            40  : bounty hunter
+            10% : asteroid
+    else
+            20% : Cop
+            30% : trader going to station
+            15% : pirate as non hostile going to station
+            15% : hunter as non hostile going to station
+            5%  : pirate hostile
+            5%  : hunter hostile
+    
+    35% of pirate or bounty
+    
+           0 - 20 : spawn a cop
+            : spawn 1 to 4 piratesdd
+            : spawn a trader going to station
+            : spawn a hunter
+            : spawn a thargoid
+            : check if existing ships can launch fighters
+            
+            
+    
+
+random position
+-----------------
+sign for xy random, z sign is 0
+x hi random 0 to 31, low random 0 to 255
+y hi random 0 to 31, low random 0 to 255
+z hi random 17 to 79, low random 0
+
+
+SpawnCops
+---------
+For each copy 
+    t = calculate our contrabnd * 2
+    if there are cops in system already
+        t = t or Fugitive status
+        if random < T
+            spawn copy
+            spawn as hostile
+        else
+            spawn as friendly
+
+
 Done
 CIRCLE (Flight)	Drawing circles	Draw a circle for the planet
 CIRCLE2 (Flight)	Drawing circles	Draw a circle (for the planet or chart)
@@ -27,6 +188,38 @@ Main game loop (Part 5 of 6) (Flight)	Main loop	Cool down lasers, make calls to 
 Main game loop (Part 6 of 6) (Flight)	Main loop	Process non-flight key presses (red function keys, docked keys)
 
 
+Mission ideas:
+Each mission has an address table for event handling that plugs into self modifying code hook points,
+e.g.
+
+Main loop (so the main loop event handles each time)
+Kill Ship
+Hit Ship
+Hyperspace jump
+Hyperspace complete (i.e. entering system)
+galactic Jump
+galactic Complete
+Spawn ship (i.e. for special ships)
+Sell item
+Buy item
+Dock at station (e.g. for super nova)
+Leave station
+Increase rannk points
+Display Equipment trade (for injecting special items)
+Display system info
+(Others)
+If the table is empty for that cell then that event can not trigger, e.g. leave station would not be needed for sell item
+Missions can also impact systems, e.g. supernova removes the system from the respective map
+
+
+For certain kill missions there will be ship variants, e.g. Thargoid controlled stations which have
+energy levels or can only be killed by a special weap
+
+Document for mission list (on my OneDrive so no spoilers ) Elite next Mission List.docx 
+
+Add load /save page
+Add configuration page (music volume)
+
 ToDo
 #
 CAP max sun and planet
@@ -38,8 +231,6 @@ ADD (Flight)	    Maths (Arithmetic)	Calculate (A X) = (A P) + (S R)
 ANGRY (Flight)	    Tactics	Make a ship hostile
 ARCTAN (Flight)	    Maths (Geometry)	Calculate A = arctan(P / Q)
 auton (Flight)	    Keyboard	Get the docking computer to "press" the flight keys to dock the ship
-B% (Loader 1)	    Screen mode	VDU commands for switching to a mode 7 screen
-B% (Loader 3)	    Screen mode	VDU commands for setting the square mode 4 screen
 BAD (Flight)	    Status	Calculate how bad we have been
 BEEP (Flight)	    Sound	Make a short, high beep
 BEGIN (Loader 1)	Copy protection	Decrypt the loader code using a rolling EOR that uses the decryption routine itself to seed the decryption
@@ -81,14 +272,6 @@ DEATH2 (Flight)	Start and end	Reset most of the game and restart from the title 
 DELAY (Flight)	Utility routines	Wait for a specified time, in 1/50s of a second
 DENGY (Flight)	Flight	Drain some energy from the energy banks
 DET1 (Flight)	Screen mode	Show or hide the dashboard (for when we die)
-DIALS (Part 1 of 4) (Flight)	Dashboard	Update the dashboard: speed indicator
-DIALS (Part 2 of 4) (Flight)	Dashboard	Update the dashboard: pitch and roll indicators
-DIALS (Part 3 of 4) (Flight)	Dashboard	Update the dashboard: four energy banks
-DIALS (Part 4 of 4) (Flight)	Dashboard	Update the dashboard: shields, fuel, laser & cabin temp, altitude
-DIL (Flight)	Dashboard	The range of the indicator is 0-16 (for the energy banks)
-DIL-1 (Flight)	Dashboard	The range of the indicator is 0-32 (for the speed indicator)
-DIL2 (Flight)	Dashboard	Update the roll or pitch indicator on the dashboard
-DILX (Flight)	Dashboard	Update a bar-based indicator on the dashboard
 DILX+2 (Flight)	Dashboard	The range of the indicator is 0-64 (for the fuel indicator)
 DK4 (Flight)	Keyboard	Scan for pause, configuration and secondary flight keys
 DKJ1 (Flight)	Keyboard	Read joystick and flight controls
@@ -105,11 +288,6 @@ DORND (Flight)	Utility routines	Generate random numbers
 DORND (Loader 3)	Utility routines	Generate random numbers
 DORND2 (Flight)	Utility routines	Make sure the C flag doesn't affect the outcome
 DOT (Flight)	Dashboard	Draw a dash on the compass
-DV41 (Flight)	Maths (Arithmetic)	Calculate (P R) = 256 * DELTA / A
-DV42 (Flight)	Maths (Arithmetic)	Calculate (P R) = 256 * DELTA / z_hi
-DVID3B2 (Flight)	Maths (Arithmetic)	Calculate K(3 2 1 0) = (A P+1 P) / (z_sign z_hi z_lo)
-DVID4 (Flight)	Maths (Arithmetic)	Calculate (P R) = 256 * A / Q
-DVIDT (Flight)	Maths (Arithmetic)	Calculate (P+1 A) = (A P) / Q
 E% (Loader 3)	Sound	Sound envelope definitions
 ECBLB (Flight)	Dashboard	Light up the E.C.M. indicator bulb ("E") on the dashboard
 ECBLB2 (Flight)	Dashboard	Start up the E.C.M. (indicator, start countdown and make sound)
@@ -118,26 +296,15 @@ ECHAR (Loader 2)	Loader	Character definitions for the Electron to mimic the grap
 ECMOF (Flight)	Sound	Switch off the E.C.M.
 EDGES (Flight)	Drawing lines	Draw a horizontal line given a centre and a half-width
 ee3 (Flight)	Text	Print the hyperspace countdown in the top-left of the screen
-EE51 (Flight)	Drawing ships	Remove the current ship from the screen, called from SHPPT before drawing the ship as a point
-Elite loader (Loader 1)	Loader	Reset vectors, change to mode 7, and load and run the ELITE3 loader
-Elite loader (Part 1 of 2) (Loader 2)	Loader	Various copy protection checks, and make sure there is no Tube
-Elite loader (Part 2 of 2) (Loader 2)	Loader	Load and run the ELITE4 loader
-Elite loader (Part 1 of 3) (Loader 3)	Loader	Set up the split screen mode, move code around, set up the sound envelopes and configure the system
-Elite loader (Part 2 of 3) (Loader 3)	Loader	Include binaries for recursive tokens, Missile blueprint and images
-Elite loader (Part 3 of 3) (Loader 3)	Loader	Include binaries for the loading screen images
 ESCAPE (Flight)	Flight	Launch our escape pod
 ex (Flight)	Text	Print a recursive token
 EXNO (Flight)	Sound	Make the sound of a laser strike or ship explosion
 EXNO-2 (Flight)	Sound	Set X = 7 and fall through into EXNO to make the sound of a ship exploding
 EXNO2 (Flight)	Sound	Process us making a kill
 EXNO3 (Flight)	Sound	Make an explosion sound
-FAROF (Flight)	Maths (Geometry)	Compare x_hi, y_hi and z_hi with 224
-FAROF2 (Flight)	Maths (Geometry)	Compare x_hi, y_hi and z_hi with A
 FLFLLS (Flight)	Drawing suns	Reset the sun line heap
 FLIP (Flight)	Stardust	Reflect the stardust particles in the screen diagonal
 FLKB (Flight)	Keyboard	Flush the keyboard buffer
-FMLTU (Flight)	Maths (Arithmetic)	Calculate A = A * Q / 256
-FMLTU2 (Flight)	Maths (Arithmetic)	Calculate A = K * sin(A)
 FNE (Loader 3)	Sound	Macro definition for defining a sound envelope
 fq1 (Flight)	Tactics	Used to add a cargo canister to the universe
 FR1 (Flight)	Tactics	Display the "missile jammed" message
@@ -146,8 +313,6 @@ FRCE (Flight)	Main loop	The entry point for the main game loop if we want to jum
 FRMIS (Flight)	Tactics	Fire a missile from our ship
 FRS1 (Flight)	Tactics	Launch a ship straight ahead of us, below the laser sights
 fwl (Flight)	Text	Print fuel and cash levels
-GC2 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (A P) * 4
-GCASH (Flight)	Maths (Arithmetic)	Calculate (Y X) = P * Q * 4
 Ghy (Flight)	Flight	Perform a galactic hyperspace jump
 GINF (Flight)	Universe	Fetch the address of a ship's data block into INF
 GOIN (Flight)	Main loop	We jump here from part 3 of the main flight loop if the docking computer is activated by pressing "C"
@@ -186,28 +351,15 @@ LAUN (Flight)	Drawing circles	Make the launch sound and draw the launch tunnel
 LL10-1 (Flight)	Drawing ships	Contains an RTS
 LL118 (Flight)	Drawing lines	Move a point along a line until it is on-screen
 LL118-1 (Flight)	Drawing lines	Contains an RTS
-LL120 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (S x1_lo) * XX12+2 or (S x1_lo) / XX12+2
-LL121 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (S R) / Q and set the sign to the opposite of the top byte on the stack
-LL122 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (S R) * Q and set the sign to the opposite of the top byte on the stack
-LL123 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (S R) / XX12+2 or (S R) * XX12+2
-LL128 (Flight)	Maths (Arithmetic)	Contains an RTS
-LL129 (Flight)	Maths (Arithmetic)	Calculate Q = XX12+2, A = S EOR XX12+3 and (S R) = |S R|
-LL133 (Flight)	Maths (Arithmetic)	Negate (Y X) and return from the subroutine LL128 Contains an RTS
 LL145 (Part 1 of 4) (Flight)	Drawing lines	Clip line: Work out which end-points are on-screen, if any
 LL145 (Part 2 of 4) (Flight)	Drawing lines	Clip line: Work out if any part of the line is on-screen
 LL145 (Part 3 of 4) (Flight)	Drawing lines	Clip line: Calculate the line's gradient
 LL145 (Part 4 of 4) (Flight)	Drawing lines	Clip line: Call the routine in LL188 to do the actual clipping
 LL147 (Flight)	Drawing lines	Don't initialise the values in SWAP or A
 LL164 (Flight)	Drawing circles	Make the hyperspace sound and draw the hyperspace tunnel
-LL28 (Flight)	Maths (Arithmetic)	Calculate R = 256 * A / Q
-LL28+4 (Flight)	Maths (Arithmetic)	Skips the A >= Q check and always returns with C flag cleared, so this can be called if we know the division will work
 LL30 (Flight)	Drawing lines	LL30 is a synonym for LOIN and draws a line from (X1, Y1) to (X2, Y2)
-LL31 (Flight)	Maths (Arithmetic)	Skips the A >= Q check and does not set the R counter, so this can be used for jumping straight into the division loop if R is already set to 254 and we know the division will work
-LL38 (Flight)	Maths (Arithmetic)	Calculate (S A) = (S R) + (A Q)
-LL5 (Flight)	Maths (Arithmetic)	Calculate Q = SQRT(R Q)
-LL51 (Flight)	Maths (Geometry)	Calculate the dot product of XX15 and XX16
-LL61 (Flight)	Maths (Arithmetic)	Calculate (U R) = 256 * A / Q
-LL62 (Flight)	Maths (Arithmetic)	Calculate 128 - (U R)
+FAROF (Flight)	Maths (Geometry)	Compare x_hi, y_hi and z_hi with 224
+FAROF2 (Flight)	Maths (Geometry)	Compare x_hi, y_hi and z_hi with A
 LL70+1 (Flight)	Drawing ships	Contains an RTS (as the first byte of an LDA instruction)
 LL81+2 (Flight)	Drawing ships	Draw the contents of the ship line heap, used to draw the ship as a dot from SHPPT
 LL9 (Part 1 of 12) (Flight)	Drawing ships	Draw ship: Check if ship is exploding, check if ship is in front
@@ -263,27 +415,6 @@ MESS1 (Loader 3)	Loader	The OS command string for changing the disc directory to
 MESS2 (Loader 1)	Loader	The OS command string for loading the the ELITE3 binary
 MJP (Flight)	Flight	Process a mis-jump into witchspace
 MLOOP (Flight)	Main loop	The entry point for the main game loop. This entry point comes after the call to the main flight loop and spawning routines, so it marks the start of the main game loop for when we are docked (as we don't need to call the main flight loop or spawning routines if we aren't in space)
-MLS1 (Flight)	Maths (Arithmetic)	Calculate (A P) = ALP1 * A
-MLS2 (Flight)	Maths (Arithmetic)	Calculate (S R) = XX(1 0) and (A P) = A * ALP1
-MLTU2 (Flight)	Maths (Arithmetic)	Calculate (A P+1 P) = (A ~P) * Q
-MLTU2-2 (Flight)	Maths (Arithmetic)	Set Q to X, so this calculates (A P+1 P) = (A ~P) * X
-MLU1 (Flight)	Maths (Arithmetic)	Calculate Y1 = y_hi and (A P) = |y_hi| * Q for Y-th stardust
-MLU2 (Flight)	Maths (Arithmetic)	Calculate (A P) = |A| * Q
-MPL (Loader 2)	Utility routines	Move two pages of memory from LOADcode to LOAD and jump to ENTRY2
-MSBAR (Flight)	Dashboard	Draw a specific indicator in the dashboard's missile bar
-msblob (Flight)	Dashboard	Display the dashboard's missile indicators in green
-MU1 (Flight)	Maths (Arithmetic)	Copy X into P and A, and clear the C flag
-MU11 (Flight)	Maths (Arithmetic)	Calculate (A P) = P * X
-MU5 (Flight)	Maths (Arithmetic)	Set K(3 2 1 0) = (A A A A) and clear the C flGag
-MU6 (Flight)	Maths (Arithmetic)	Set P(1 0) = (A A)
-MULT1 (Flight)	Maths (Arithmetic)	Calculate (A P) = Q * A
-MULT12 (Flight)	Maths (Arithmetic)	Calculate (S R) = Q * A
-MULT3 (Flight)	Maths (Arithmetic)	Calculate K(3 2 1 0) = (A P+1 P) * Q
-MULTS-2 (Flight)	Maths (Arithmetic)	Calculate (A P) = X * A
-MULTU (Flight)	Maths (Arithmetic)	Calculate (A P) = P * Q
-MUT1 (Flight)	Maths (Arithmetic)	Calculate R = XX and (A P) = Q * A
-MUT2 (Flight)	Maths (Arithmetic)	Calculate (S R) = XX(1 0) and (A P) = Q * A
-MUT3 (Flight)	Maths (Arithmetic)	Unused routine that does the same as MUT2
 MV40 (Flight)	Moving	Rotate the planet or sun's location in space by the amount of pitch and roll of our ship
 MV45 (Flight)	Moving	Rejoin the MVEIT routine after the rotation, tactics and scanner code
 MVBL (Loader 3)	Utility routines	Decrypt and move a multi-page block of memory
@@ -410,14 +541,6 @@ SPBT (Flight)	Dashboard	The bitmap definition for the space station indicator bu
 spc (Flight)	Text	Print a text token followed by a space
 SPIN (Flight)	Universe	Randomly spawn cargo from a destroyed ship
 SPIN2 (Flight)	Universe	Remove any randomness: spawn cargo of a specific type (given in X), and always spawn the number given in A
-SPS1 (Flight)	Maths (Geometry)	Calculate the vector to the planet and store it in XX15
-SPS1+1 (Flight)	Maths (Geometry)	A BRK instruction
-SPS2 (Flight)	Maths (Arithmetic)	Calculate (Y X) = A / 10
-SPS3 (Flight)	Maths (Geometry)	Copy a space coordinate from the K% block into K3
-SPS4 (Flight)	Maths (Geometry)	Calculate the vector to the space station
-SQUA (Flight)	Maths (Arithmetic)	Clear bit 7 of A and calculate (A P) = A * A
-SQUA2 (Flight)	Maths (Arithmetic)	Calculate (A P) = A * A
-SQUA2 (Loader 3)	Maths (Arithmetic)	Calculate (A P) = A * A
 STARS (Flight)	Stardust	The main routine for processing the stardust
 STARS1 (Flight)	Stardust	Process the stardust for the front view
 STARS2 (Flight)	Stardust	Process the stardust for the left or right view
@@ -438,18 +561,8 @@ TACTICS (Part 5 of 7) (Flight)	Tactics	Apply tactics: Consider whether to launch
 TACTICS (Part 6 of 7) (Flight)	Tactics	Apply tactics: Consider firing a laser at us, if aim is true
 TACTICS (Part 7 of 7) (Flight)	Tactics	Apply tactics: Set pitch, roll, and acceleration
 tal (Flight)	Text	Print the current galaxy number
-TAS1 (Flight)	Maths (Arithmetic)	Calculate K3 = (x_sign x_hi x_lo) - V(1 0)
-TAS2 (Flight)	Maths (Geometry)	Normalise the three-coordinate vector in K3
-TAS3 (Flight)	Maths (Geometry)	Calculate the dot product of XX15 and an orientation vector
-TAS3-2 (Flight)	Maths (Geometry)	Calculate nosev . XX15
-TAS4 (Flight)	Maths (Geometry)	Calculate the dot product of XX15 and one of the space station's orientation vectors
-TAS6 (Flight)	Maths (Geometry)	Negate the vector in XX15 so it points in the opposite direction
 TENS (Flight)	Text	A constant used when printing large numbers in BPRNT
 THERE (Flight)	Missions	Check whether we are in the Constrictor's system in mission 1
-TIDY (Flight)	Maths (Geometry)	Orthonormalise the orientation vectors for a ship
-TIS1 (Flight)	Maths (Arithmetic)	Calculate (A ?) = (-X * A + (S R)) / 96
-TIS2 (Flight)	Maths (Arithmetic)	Calculate A = A / Q
-TIS3 (Flight)	Maths (Arithmetic)	Calculate -(nosev_1 * roofv_1 + nosev_2 * roofv_2) / nosev_3
 tnpr (Flight)	Market	Work out if we have space for a specific amount of cargo
 tnpr1 (Flight)	Market	Work out if we have space for one tonne of cargo
 TT100 (Flight)	Main loop	The entry point for the start of the main game loop, which calls the main flight loop and the moves into the spawning routine
@@ -460,7 +573,6 @@ TT11 (Flight)	Text	Print a 16-bit number, left-padded to n digits, and optional 
 TT110 (Flight)	Flight	Launch from a station or show the front space view
 TT111 (Flight)	Universe	Set the current system to the nearest system to a point
 TT111-1 (Flight)	Universe	Contains an RTS
-TT113 (Flight)	Maths (Arithmetic)	Contains an RTS
 TT114 (Flight)	Charts	Display either the Long-range or Short-range Chart
 TT123 (Flight)	Charts	Move galactic coordinates by a signed delta
 TT128 (Flight)	Drawing circles	Draw a circle on a chart
@@ -540,6 +652,79 @@ WPSHPS (Flight)	Dashboard	Clear the scanner, reset the ball line and sun line he
 WSCAN (Flight)	Screen mode	Wait for the vertical sync
 wW (Flight)	Flight	Start a hyperspace countdown
 
+MATHS
+-----------------------------------------------------------------------------------------------
+MLS1 (Flight)	Maths (Arithmetic)	Calculate (A P) = ALP1 * A
+MLS2 (Flight)	Maths (Arithmetic)	Calculate (S R) = XX(1 0) and (A P) = A * ALP1
+MLTU2 (Flight)	Maths (Arithmetic)	Calculate (A P+1 P) = (A ~P) * Q
+MLTU2-2 (Flight)	Maths (Arithmetic)	Set Q to X, so this calculates (A P+1 P) = (A ~P) * X
+MLU1 (Flight)	Maths (Arithmetic)	Calculate Y1 = y_hi and (A P) = |y_hi| * Q for Y-th stardust
+MLU2 (Flight)	Maths (Arithmetic)	Calculate (A P) = |A| * Q
+MPL (Loader 2)	Utility routines	Move two pages of memory from LOADcode to LOAD and jump to ENTRY2
+MSBAR (Flight)	Dashboard	Draw a specific indicator in the dashboard's missile bar
+msblob (Flight)	Dashboard	Display the dashboard's missile indicators in green
+MU1 (Flight)	Maths (Arithmetic)	Copy X into P and A, and clear the C flag
+MU11 (Flight)	Maths (Arithmetic)	Calculate (A P) = P * X
+MU5 (Flight)	Maths (Arithmetic)	Set K(3 2 1 0) = (A A A A) and clear the C flGag
+MU6 (Flight)	Maths (Arithmetic)	Set P(1 0) = (A A)
+MULT1 (Flight)	Maths (Arithmetic)	Calculate (A P) = Q * A
+MULT12 (Flight)	Maths (Arithmetic)	Calculate (S R) = Q * A
+MULT3 (Flight)	Maths (Arithmetic)	Calculate K(3 2 1 0) = (A P+1 P) * Q
+MULTS-2 (Flight)	Maths (Arithmetic)	Calculate (A P) = X * A
+MULTU (Flight)	Maths (Arithmetic)	Calculate (A P) = P * Q
+MUT1 (Flight)	Maths (Arithmetic)	Calculate R = XX and (A P) = Q * A
+MUT2 (Flight)	Maths (Arithmetic)	Calculate (S R) = XX(1 0) and (A P) = Q * A
+MUT3 (Flight)	Maths (Arithmetic)	Unused routine that does the same as MUT2
+SPS1 (Flight)	Maths (Geometry)	Calculate the vector to the planet and store it in XX15
+SPS1+1 (Flight)	Maths (Geometry)	A BRK instruction
+SPS2 (Flight)	Maths (Arithmetic)	Calculate (Y X) = A / 10
+SPS3 (Flight)	Maths (Geometry)	Copy a space coordinate from the K% block into K3
+SPS4 (Flight)	Maths (Geometry)	Calculate the vector to the space station
+SQUA (Flight)	Maths (Arithmetic)	Clear bit 7 of A and calculate (A P) = A * A
+SQUA2 (Flight)	Maths (Arithmetic)	Calculate (A P) = A * A
+SQUA2 (Loader 3)	Maths (Arithmetic)	Calculate (A P) = A * A
+TAS1 (Flight)	Maths (Arithmetic)	Calculate K3 = (x_sign x_hi x_lo) - V(1 0)
+TAS2 (Flight)	Maths (Geometry)	Normalise the three-coordinate vector in K3
+TAS3 (Flight)	Maths (Geometry)	Calculate the dot product of XX15 and an orientation vector
+TAS3-2 (Flight)	Maths (Geometry)	Calculate nosev . XX15
+TAS4 (Flight)	Maths (Geometry)	Calculate the dot product of XX15 and one of the space station's orientation vectors
+TAS6 (Flight)	Maths (Geometry)	Negate the vector in XX15 so it points in the opposite direction
+TIDY (Flight)	Maths (Geometry)	Orthonormalise the orientation vectors for a ship
+TIS1 (Flight)	Maths (Arithmetic)	Calculate (A ?) = (-X * A + (S R)) / 96
+TIS2 (Flight)	Maths (Arithmetic)	Calculate A = A / Q
+TIS3 (Flight)	Maths (Arithmetic)	Calculate -(nosev_1 * roofv_1 + nosev_2 * roofv_2) / nosev_3
+TT113 (Flight)	Maths (Arithmetic)	Contains an RTS
+GC2 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (A P) * 4
+GCASH (Flight)	Maths (Arithmetic)	Calculate (Y X) = P * Q * 4
+FMLTU (Flight)	Maths (Arithmetic)	Calculate A = A * Q / 256
+FMLTU2 (Flight)	Maths (Arithmetic)	Calculate A = K * sin(A)
+LL120 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (S x1_lo) * XX12+2 or (S x1_lo) / XX12+2
+LL121 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (S R) / Q and set the sign to the opposite of the top byte on the stack
+LL122 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (S R) * Q and set the sign to the opposite of the top byte on the stack
+LL123 (Flight)	Maths (Arithmetic)	Calculate (Y X) = (S R) / XX12+2 or (S R) * XX12+2
+LL128 (Flight)	Maths (Arithmetic)	Contains an RTS
+LL129 (Flight)	Maths (Arithmetic)	Calculate Q = XX12+2, A = S EOR XX12+3 and (S R) = |S R|
+LL133 (Flight)	Maths (Arithmetic)	Negate (Y X) and return from the subroutine LL128 Contains an RTS
+LL28 (Flight)	Maths (Arithmetic)	Calculate R = 256 * A / Q
+LL28+4 (Flight)	Maths (Arithmetic)	Skips the A >= Q check and always returns with C flag cleared, so this can be called if we know the division will work
+LL31 (Flight)	Maths (Arithmetic)	Skips the A >= Q check and does not set the R counter, so this can be used for jumping straight into the division loop if R is already set to 254 and we know the division will work
+LL38 (Flight)	Maths (Arithmetic)	Calculate (S A) = (S R) + (A Q)
+LL5 (Flight)	Maths (Arithmetic)	Calculate Q = SQRT(R Q)
+LL51 (Flight)	Maths (Geometry)	Calculate the dot product of XX15 and XX16
+LL61 (Flight)	Maths (Arithmetic)	Calculate (U R) = 256 * A / Q
+LL62 (Flight)	Maths (Arithmetic)	Calculate 128 - (U R)
+
+
+
+
+*DONE*>DIALS (Part 1 of 4) (Flight)	Dashboard	Update the dashboard: speed indicator
+*DONE*>DIALS (Part 2 of 4) (Flight)	Dashboard	Update the dashboard: pitch and roll indicators
+*DONE*>DIALS (Part 3 of 4) (Flight)	Dashboard	Update the dashboard: four energy banks
+*DONE*>DIALS (Part 4 of 4) (Flight)	Dashboard	Update the dashboard: shields, fuel, laser & cabin temp, altitude
+*DONE*>DIL (Flight)	Dashboard	The range of the indicator is 0-16 (for the energy banks)
+*DONE*>DIL-1 (Flight)	Dashboard	The range of the indicator is 0-32 (for the speed indicator)
+*DONE*>DIL2 (Flight)	Dashboard	Update the roll or pitch indicator on the dashboard
+*DONE*>DILX (Flight)	Dashboard	Update a bar-based indicator on the dashboard
 
 
 Variables
@@ -780,253 +965,266 @@ U (Flight)	Workspace variable	Temporary storage, used in a number of places
 V (Flight)	Workspace variable	Temporary storage, typically used for storing an address pointer
 VIEW (Flight)	Workspace variable	The number of the current space view
 
+*DONE*
+*DONE*Blueprints
+*DONE*---------------------------------------
+*DONE*VERTEX (Missile ship blueprint)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints A)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints B)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints C)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints D)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints E)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints F)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints G)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints H)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints I)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints J)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints K)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints L)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints M)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints N)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints O)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*VERTEX (Ship blueprints P)	Drawing ships	Macro definition for adding vertices to ship blueprints
+*DONE*SHIP_ADDER (Ship blueprints B)	Drawing ships	Ship blueprint for an Adder
+*DONE*SHIP_ADDER (Ship blueprints G)	Drawing ships	Ship blueprint for an Adder
+*DONE*SHIP_ADDER (Ship blueprints I)	Drawing ships	Ship blueprint for an Adder
+*DONE*SHIP_ADDER (Ship blueprints M)	Drawing ships	Ship blueprint for an Adder
+*DONE*SHIP_ANACONDA (Ship blueprints L)	Drawing ships	Ship blueprint for an Anaconda
+*DONE*SHIP_ASP_MK_2 (Ship blueprints N)	Drawing ships	Ship blueprint for an Asp Mk II
+*DONE*SHIP_ASP_MK_2 (Ship blueprints P)	Drawing ships	Ship blueprint for an Asp Mk II
+*DONE*SHIP_ASTEROID (Ship blueprints C)	Drawing ships	Ship blueprint for an asteroid
+*DONE*SHIP_ASTEROID (Ship blueprints D)	Drawing ships	Ship blueprint for an asteroid
+*DONE*SHIP_ASTEROID (Ship blueprints H)	Drawing ships	Ship blueprint for an asteroid
+*DONE*SHIP_ASTEROID (Ship blueprints K)	Drawing ships	Ship blueprint for an asteroid
+*DONE*SHIP_ASTEROID (Ship blueprints N)	Drawing ships	Ship blueprint for an asteroid
+*DONE*SHIP_ASTEROID (Ship blueprints O)	Drawing ships	Ship blueprint for an asteroid
+*DONE*SHIP_ASTEROID (Ship blueprints P)	Drawing ships	Ship blueprint for an asteroid
+*DONE*SHIP_BOA (Ship blueprints C)	Drawing ships	Ship blueprint for a Boa
+*DONE*SHIP_BOA (Ship blueprints F)	Drawing ships	Ship blueprint for a Boa
+*DONE*SHIP_BOULDER (Ship blueprints B)	Drawing ships	Ship blueprint for a boulder
+*DONE*SHIP_BOULDER (Ship blueprints E)	Drawing ships	Ship blueprint for a boulder
+*DONE*SHIP_BOULDER (Ship blueprints F)	Drawing ships	Ship blueprint for a boulder
+*DONE*SHIP_BOULDER (Ship blueprints G)	Drawing ships	Ship blueprint for a boulder
+*DONE*SHIP_BOULDER (Ship blueprints P)	Drawing ships	Ship blueprint for a boulder
+*DONE*SHIP_CANISTER (Ship blueprints A)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints B)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints C)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints D)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints E)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints F)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints G)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints H)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints I)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints J)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints K)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints L)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints M)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints N)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints O)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_CANISTER (Ship blueprints P)	Drawing ships	Ship blueprint for a cargo canister
+*DONE*SHIP_COBRA_MK_1 (Ship blueprints D)	Drawing ships	Ship blueprint for a Cobra Mk I
+*DONE*SHIP_COBRA_MK_1 (Ship blueprints E)	Drawing ships	Ship blueprint for a Cobra Mk I
+*DONE*SHIP_COBRA_MK_1 (Ship blueprints J)	Drawing ships	Ship blueprint for a Cobra Mk I
+*DONE*SHIP_COBRA_MK_1 (Ship blueprints K)	Drawing ships	Ship blueprint for a Cobra Mk I
+*DONE*SHIP_COBRA_MK_1 (Ship blueprints M)	Drawing ships	Ship blueprint for a Cobra Mk I
+*DONE*SHIP_COBRA_MK_1 (Ship blueprints O)	Drawing ships	Ship blueprint for a Cobra Mk I
+*DONE*SHIP_COBRA_MK_3 (Ship blueprints B)	Drawing ships	Ship blueprint for a Cobra Mk III
+*DONE*SHIP_COBRA_MK_3 (Ship blueprints C)	Drawing ships	Ship blueprint for a Cobra Mk III
+*DONE*SHIP_COBRA_MK_3 (Ship blueprints D)	Drawing ships	Ship blueprint for a Cobra Mk III
+*DONE*SHIP_COBRA_MK_3 (Ship blueprints E)	Drawing ships	Ship blueprint for a Cobra Mk III
+*DONE*SHIP_COBRA_MK_3 (Ship blueprints F)	Drawing ships	Ship blueprint for a Cobra Mk III
+*DONE*SHIP_COBRA_MK_3 (Ship blueprints G)	Drawing ships	Ship blueprint for a Cobra Mk III
+*DONE*SHIP_COBRA_MK_3 (Ship blueprints K)	Drawing ships	Ship blueprint for a Cobra Mk III
+*DONE*SHIP_COBRA_MK_3 (Ship blueprints L)	Drawing ships	Ship blueprint for a Cobra Mk III
+*DONE*SHIP_COBRA_MK_3 (Ship blueprints N)	Drawing ships	Ship blueprint for a Cobra Mk III
+*DONE*SHIP_COBRA_MK_3 (Ship blueprints O)	Drawing ships	Ship blueprint for a Cobra Mk III
+*DONE*SHIP_COBRA_MK_3 (Ship blueprints P)	Drawing ships	Ship blueprint for a Cobra Mk III
+*DONE*SHIP_COBRA_MK_3_P (Ship blueprints A)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
+*DONE*SHIP_COBRA_MK_3_P (Ship blueprints H)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
+*DONE*SHIP_COBRA_MK_3_P (Ship blueprints I)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
+*DONE*SHIP_COBRA_MK_3_P (Ship blueprints J)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
+*DONE*SHIP_COBRA_MK_3_P (Ship blueprints M)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
+*DONE*SHIP_CONSTRICTOR (Ship blueprints G)	Drawing ships	Ship blueprint for a Constrictor
+*DONE*SHIP_CORIOLIS (Ship blueprints A)	Drawing ships	Ship blueprint for a Coriolis space station
+*DONE*SHIP_CORIOLIS (Ship blueprints C)	Drawing ships	Ship blueprint for a Coriolis space station
+*DONE*SHIP_CORIOLIS (Ship blueprints E)	Drawing ships	Ship blueprint for a Coriolis space station
+*DONE*SHIP_CORIOLIS (Ship blueprints G)	Drawing ships	Ship blueprint for a Coriolis space station
+*DONE*SHIP_CORIOLIS (Ship blueprints I)	Drawing ships	Ship blueprint for a Coriolis space station
+*DONE*SHIP_CORIOLIS (Ship blueprints K)	Drawing ships	Ship blueprint for a Coriolis space station
+*DONE*SHIP_CORIOLIS (Ship blueprints M)	Drawing ships	Ship blueprint for a Coriolis space station
+*DONE*SHIP_CORIOLIS (Ship blueprints O)	Drawing ships	Ship blueprint for a Coriolis space station
+*DONE*SHIP_DODO (Ship blueprints B)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+*DONE*SHIP_DODO (Ship blueprints D)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+*DONE*SHIP_DODO (Ship blueprints F)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+*DONE*SHIP_DODO (Ship blueprints H)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+*DONE*SHIP_DODO (Ship blueprints J)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+*DONE*SHIP_DODO (Ship blueprints L)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+*DONE*SHIP_DODO (Ship blueprints N)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+*DONE*SHIP_DODO (Ship blueprints P)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
+*DONE*SHIP_ESCAPE_POD (Ship blueprints A)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints B)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints C)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints D)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints E)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints F)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints G)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints H)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints I)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints J)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints K)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints L)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints N)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints O)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_ESCAPE_POD (Ship blueprints P)	Drawing ships	Ship blueprint for an escape pod
+*DONE*SHIP_FER_DE_LANCE (Ship blueprints A)	Drawing ships	Ship blueprint for a Fer-de-Lance
+*DONE*SHIP_FER_DE_LANCE (Ship blueprints L)	Drawing ships	Ship blueprint for a Fer-de-Lance
+*DONE*SHIP_GECKO (Ship blueprints D)	Drawing ships	Ship blueprint for a Gecko
+*DONE*SHIP_GECKO (Ship blueprints E)	Drawing ships	Ship blueprint for a Gecko
+*DONE*SHIP_GECKO (Ship blueprints F)	Drawing ships	Ship blueprint for a Gecko
+*DONE*SHIP_GECKO (Ship blueprints J)	Drawing ships	Ship blueprint for a Gecko
+*DONE*SHIP_GECKO (Ship blueprints K)	Drawing ships	Ship blueprint for a Gecko
+*DONE*SHIP_GECKO (Ship blueprints M)	Drawing ships	Ship blueprint for a Gecko
+*DONE*SHIP_GECKO (Ship blueprints N)	Drawing ships	Ship blueprint for a Gecko
+*DONE*SHIP_KRAIT (Ship blueprints A)	Drawing ships	Ship blueprint for a Krait
+*DONE*SHIP_KRAIT (Ship blueprints B)	Drawing ships	Ship blueprint for a Krait
+*DONE*SHIP_KRAIT (Ship blueprints C)	Drawing ships	Ship blueprint for a Krait
+*DONE*SHIP_KRAIT (Ship blueprints E)	Drawing ships	Ship blueprint for a Krait
+*DONE*SHIP_KRAIT (Ship blueprints G)	Drawing ships	Ship blueprint for a Krait
+*DONE*SHIP_KRAIT (Ship blueprints H)	Drawing ships	Ship blueprint for a Krait
+*DONE*SHIP_KRAIT (Ship blueprints I)	Drawing ships	Ship blueprint for a Krait
+*DONE*SHIP_KRAIT (Ship blueprints J)	Drawing ships	Ship blueprint for a Krait
+*DONE*SHIP_KRAIT (Ship blueprints M)	Drawing ships	Ship blueprint for a Krait
+*DONE*SHIP_KRAIT (Ship blueprints N)	Drawing ships	Ship blueprint for a Krait
+*DONE*SHIP_KRAIT (Ship blueprints O)	Drawing ships	Ship blueprint for a Krait
+*DONE*SHIP_KRAIT (Ship blueprints P)	Drawing ships	Ship blueprint for a Krait
+*DONE*SHIP_MAMBA (Ship blueprints A)	Drawing ships	Ship blueprint for a Mamba
+*DONE*SHIP_MAMBA (Ship blueprints B)	Drawing ships	Ship blueprint for a Mamba
+*DONE*SHIP_MAMBA (Ship blueprints E)	Drawing ships	Ship blueprint for a Mamba
+*DONE*SHIP_MAMBA (Ship blueprints G)	Drawing ships	Ship blueprint for a Mamba
+*DONE*SHIP_MAMBA (Ship blueprints I)	Drawing ships	Ship blueprint for a Mamba
+*DONE*SHIP_MAMBA (Ship blueprints J)	Drawing ships	Ship blueprint for a Mamba
+*DONE*SHIP_MAMBA (Ship blueprints L)	Drawing ships	Ship blueprint for a Mamba
+*DONE*SHIP_MAMBA (Ship blueprints M)	Drawing ships	Ship blueprint for a Mamba
+*DONE*SHIP_MAMBA (Ship blueprints O)	Drawing ships	Ship blueprint for a Mamba
+*DONE*SHIP_MISSILE (Missile ship blueprint)	Drawing ships	Ship blueprint for a missile
+*DONE*SHIP_MORAY (Ship blueprints K)	Drawing ships	Ship blueprint for a Moray
+*DONE*SHIP_PLATE (Ship blueprints A)	Drawing ships	Ship blueprint for an alloy plate
+*DONE*SHIP_PLATE (Ship blueprints B)	Drawing ships	Ship blueprint for an alloy plate
+*DONE*SHIP_PLATE (Ship blueprints E)	Drawing ships	Ship blueprint for an alloy plate
+*DONE*SHIP_PLATE (Ship blueprints G)	Drawing ships	Ship blueprint for an alloy plate
+*DONE*SHIP_PLATE (Ship blueprints I)	Drawing ships	Ship blueprint for an alloy plate
+*DONE*SHIP_PLATE (Ship blueprints J)	Drawing ships	Ship blueprint for an alloy plate
+*DONE*SHIP_PLATE (Ship blueprints O)	Drawing ships	Ship blueprint for an alloy plate
+*DONE*SHIP_PLATE (Ship blueprints P)	Drawing ships	Ship blueprint for an alloy plate
+*DONE*SHIP_PYTHON (Ship blueprints A)	Drawing ships	Ship blueprint for a Python
+*DONE*SHIP_PYTHON (Ship blueprints H)	Drawing ships	Ship blueprint for a Python
+*DONE*SHIP_PYTHON (Ship blueprints K)	Drawing ships	Ship blueprint for a Python
+*DONE*SHIP_PYTHON_P (Ship blueprints I)	Drawing ships	Ship blueprint for a Python (pirate)
+*DONE*SHIP_PYTHON_P (Ship blueprints O)	Drawing ships	Ship blueprint for a Python (pirate)
+*DONE*SHIP_SHUTTLE (Ship blueprints H)	Drawing ships	Ship blueprint for a Shuttle
+*DONE*SHIP_SIDEWINDER (Ship blueprints A)	Drawing ships	Ship blueprint for a Sidewinder
+*DONE*SHIP_SIDEWINDER (Ship blueprints C)	Drawing ships	Ship blueprint for a Sidewinder
+*DONE*SHIP_SIDEWINDER (Ship blueprints D)	Drawing ships	Ship blueprint for a Sidewinder
+*DONE*SHIP_SIDEWINDER (Ship blueprints E)	Drawing ships	Ship blueprint for a Sidewinder
+*DONE*SHIP_SIDEWINDER (Ship blueprints F)	Drawing ships	Ship blueprint for a Sidewinder
+*DONE*SHIP_SIDEWINDER (Ship blueprints H)	Drawing ships	Ship blueprint for a Sidewinder
+*DONE*SHIP_SIDEWINDER (Ship blueprints I)	Drawing ships	Ship blueprint for a Sidewinder
+*DONE*SHIP_SIDEWINDER (Ship blueprints J)	Drawing ships	Ship blueprint for a Sidewinder
+*DONE*SHIP_SIDEWINDER (Ship blueprints K)	Drawing ships	Ship blueprint for a Sidewinder
+*DONE*SHIP_SIDEWINDER (Ship blueprints L)	Drawing ships	Ship blueprint for a Sidewinder
+*DONE*SHIP_SIDEWINDER (Ship blueprints M)	Drawing ships	Ship blueprint for a Sidewinder
+*DONE*SHIP_SIDEWINDER (Ship blueprints N)	Drawing ships	Ship blueprint for a Sidewinder
+*DONE*SHIP_SIDEWINDER (Ship blueprints P)	Drawing ships	Ship blueprint for a Sidewinder
+*DONE*SHIP_SPLINTER (Ship blueprints C)	Drawing ships	Ship blueprint for a splinter
+*DONE*SHIP_SPLINTER (Ship blueprints D)	Drawing ships	Ship blueprint for a splinter
+*DONE*SHIP_SPLINTER (Ship blueprints H)	Drawing ships	Ship blueprint for a splinter
+*DONE*SHIP_SPLINTER (Ship blueprints K)	Drawing ships	Ship blueprint for a splinter
+*DONE*SHIP_SPLINTER (Ship blueprints N)	Drawing ships	Ship blueprint for a splinter
+*DONE*SHIP_SPLINTER (Ship blueprints O)	Drawing ships	Ship blueprint for a splinter
+*DONE*SHIP_SPLINTER (Ship blueprints P)	Drawing ships	Ship blueprint for a splinter
+*DONE*SHIP_THARGOID (Ship blueprints C)	Drawing ships	Ship blueprint for a Thargoid mothership
+*DONE*SHIP_THARGOID (Ship blueprints D)	Drawing ships	Ship blueprint for a Thargoid mothership
+*DONE*SHIP_THARGON (Ship blueprints C)	Drawing ships	Ship blueprint for a Thargon
+*DONE*SHIP_THARGON (Ship blueprints D)	Drawing ships	Ship blueprint for a Thargon
+*DONE*SHIP_TRANSPORTER (Ship blueprints F)	Drawing ships	Ship blueprint for a Transporter
+*DONE*SHIP_VIPER (Ship blueprints A)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints B)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints C)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints D)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints E)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints F)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints G)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints H)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints I)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints J)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints K)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints L)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints M)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints N)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints O)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_VIPER (Ship blueprints P)	Drawing ships	Ship blueprint for a Viper
+*DONE*SHIP_WORM (Ship blueprints B)	Drawing ships	Ship blueprint for a Worm
+*DONE*SHIP_WORM (Ship blueprints L)	Drawing ships	Ship blueprint for a Worm
+*DONE*E% (Ship blueprints A)	Drawing ships	Ship blueprints default NEWB flags for the D.MOA file
+*DONE*E% (Ship blueprints B)	Drawing ships	Ship blueprints default NEWB flags for the D.MOB file
+*DONE*E% (Ship blueprints C)	Drawing ships	Ship blueprints default NEWB flags for the D.MOC file
+*DONE*E% (Ship blueprints D)	Drawing ships	Ship blueprints default NEWB flags for the D.MOD file
+*DONE*E% (Ship blueprints E)	Drawing ships	Ship blueprints default NEWB flags for the D.MOE file
+*DONE*E% (Ship blueprints F)	Drawing ships	Ship blueprints default NEWB flags for the D.MOF file
+*DONE*E% (Ship blueprints G)	Drawing ships	Ship blueprints default NEWB flags for the D.MOG file
+*DONE*E% (Ship blueprints H)	Drawing ships	Ship blueprints default NEWB flags for the D.MOH file
+*DONE*E% (Ship blueprints I)	Drawing ships	Ship blueprints default NEWB flags for the D.MOI file
+*DONE*E% (Ship blueprints J)	Drawing ships	Ship blueprints default NEWB flags for the D.MOJ file
+*DONE*E% (Ship blueprints K)	Drawing ships	Ship blueprints default NEWB flags for the D.MOK file
+*DONE*E% (Ship blueprints L)	Drawing ships	Ship blueprints default NEWB flags for the D.MOL file
+*DONE*E% (Ship blueprints M)	Drawing ships	Ship blueprints default NEWB flags for the D.MOM file
+*DONE*E% (Ship blueprints N)	Drawing ships	Ship blueprints default NEWB flags for the D.MON file
+*DONE*E% (Ship blueprints O)	Drawing ships	Ship blueprints default NEWB flags for the D.MOO file
+*DONE*E% (Ship blueprints P)	Drawing ships	Ship blueprints default NEWB flags for the D.MOP file
+*DONE*EDGE (Missile ship blueprint)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints A)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints B)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints C)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints D)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints E)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints F)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints G)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints H)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints I)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints J)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints K)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints L)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints M)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints N)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints O)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*EDGE (Ship blueprints P)	Drawing ships	Macro definition for adding edges to ship blueprints
+*DONE*FACE (Missile ship blueprint)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints A)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints B)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints C)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints D)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints E)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints F)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints G)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints H)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints I)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints J)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints K)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints L)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints M)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints N)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints O)	Drawing ships	Macro definition for adding faces to ship blueprints
+*DONE*FACE (Ship blueprints P)	Drawing ships	Macro definition for adding faces to ship blueprints
 
-Blueprints
----------------------------------------
-VERTEX (Missile ship blueprint)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints A)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints B)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints C)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints D)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints E)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints F)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints G)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints H)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints I)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints J)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints K)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints L)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints M)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints N)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints O)	Drawing ships	Macro definition for adding vertices to ship blueprints
-VERTEX (Ship blueprints P)	Drawing ships	Macro definition for adding vertices to ship blueprints
-SHIP_ADDER (Ship blueprints B)	Drawing ships	Ship blueprint for an Adder
-SHIP_ADDER (Ship blueprints G)	Drawing ships	Ship blueprint for an Adder
-SHIP_ADDER (Ship blueprints I)	Drawing ships	Ship blueprint for an Adder
-SHIP_ADDER (Ship blueprints M)	Drawing ships	Ship blueprint for an Adder
-SHIP_ANACONDA (Ship blueprints L)	Drawing ships	Ship blueprint for an Anaconda
-SHIP_ASP_MK_2 (Ship blueprints N)	Drawing ships	Ship blueprint for an Asp Mk II
-SHIP_ASP_MK_2 (Ship blueprints P)	Drawing ships	Ship blueprint for an Asp Mk II
-SHIP_ASTEROID (Ship blueprints C)	Drawing ships	Ship blueprint for an asteroid
-SHIP_ASTEROID (Ship blueprints D)	Drawing ships	Ship blueprint for an asteroid
-SHIP_ASTEROID (Ship blueprints H)	Drawing ships	Ship blueprint for an asteroid
-SHIP_ASTEROID (Ship blueprints K)	Drawing ships	Ship blueprint for an asteroid
-SHIP_ASTEROID (Ship blueprints N)	Drawing ships	Ship blueprint for an asteroid
-SHIP_ASTEROID (Ship blueprints O)	Drawing ships	Ship blueprint for an asteroid
-SHIP_ASTEROID (Ship blueprints P)	Drawing ships	Ship blueprint for an asteroid
-SHIP_BOA (Ship blueprints C)	Drawing ships	Ship blueprint for a Boa
-SHIP_BOA (Ship blueprints F)	Drawing ships	Ship blueprint for a Boa
-SHIP_BOULDER (Ship blueprints B)	Drawing ships	Ship blueprint for a boulder
-SHIP_BOULDER (Ship blueprints E)	Drawing ships	Ship blueprint for a boulder
-SHIP_BOULDER (Ship blueprints F)	Drawing ships	Ship blueprint for a boulder
-SHIP_BOULDER (Ship blueprints G)	Drawing ships	Ship blueprint for a boulder
-SHIP_BOULDER (Ship blueprints P)	Drawing ships	Ship blueprint for a boulder
-SHIP_CANISTER (Ship blueprints A)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints B)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints C)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints D)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints E)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints F)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints G)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints H)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints I)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints J)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints K)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints L)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints M)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints N)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints O)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_CANISTER (Ship blueprints P)	Drawing ships	Ship blueprint for a cargo canister
-SHIP_COBRA_MK_1 (Ship blueprints D)	Drawing ships	Ship blueprint for a Cobra Mk I
-SHIP_COBRA_MK_1 (Ship blueprints E)	Drawing ships	Ship blueprint for a Cobra Mk I
-SHIP_COBRA_MK_1 (Ship blueprints J)	Drawing ships	Ship blueprint for a Cobra Mk I
-SHIP_COBRA_MK_1 (Ship blueprints K)	Drawing ships	Ship blueprint for a Cobra Mk I
-SHIP_COBRA_MK_1 (Ship blueprints M)	Drawing ships	Ship blueprint for a Cobra Mk I
-SHIP_COBRA_MK_1 (Ship blueprints O)	Drawing ships	Ship blueprint for a Cobra Mk I
-SHIP_COBRA_MK_3 (Ship blueprints B)	Drawing ships	Ship blueprint for a Cobra Mk III
-SHIP_COBRA_MK_3 (Ship blueprints C)	Drawing ships	Ship blueprint for a Cobra Mk III
-SHIP_COBRA_MK_3 (Ship blueprints D)	Drawing ships	Ship blueprint for a Cobra Mk III
-SHIP_COBRA_MK_3 (Ship blueprints E)	Drawing ships	Ship blueprint for a Cobra Mk III
-SHIP_COBRA_MK_3 (Ship blueprints F)	Drawing ships	Ship blueprint for a Cobra Mk III
-SHIP_COBRA_MK_3 (Ship blueprints G)	Drawing ships	Ship blueprint for a Cobra Mk III
-SHIP_COBRA_MK_3 (Ship blueprints K)	Drawing ships	Ship blueprint for a Cobra Mk III
-SHIP_COBRA_MK_3 (Ship blueprints L)	Drawing ships	Ship blueprint for a Cobra Mk III
-SHIP_COBRA_MK_3 (Ship blueprints N)	Drawing ships	Ship blueprint for a Cobra Mk III
-SHIP_COBRA_MK_3 (Ship blueprints O)	Drawing ships	Ship blueprint for a Cobra Mk III
-SHIP_COBRA_MK_3 (Ship blueprints P)	Drawing ships	Ship blueprint for a Cobra Mk III
-SHIP_COBRA_MK_3_P (Ship blueprints A)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
-SHIP_COBRA_MK_3_P (Ship blueprints H)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
-SHIP_COBRA_MK_3_P (Ship blueprints I)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
-SHIP_COBRA_MK_3_P (Ship blueprints J)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
-SHIP_COBRA_MK_3_P (Ship blueprints M)	Drawing ships	Ship blueprint for a Cobra Mk III (pirate)
-SHIP_CONSTRICTOR (Ship blueprints G)	Drawing ships	Ship blueprint for a Constrictor
-SHIP_CORIOLIS (Ship blueprints A)	Drawing ships	Ship blueprint for a Coriolis space station
-SHIP_CORIOLIS (Ship blueprints C)	Drawing ships	Ship blueprint for a Coriolis space station
-SHIP_CORIOLIS (Ship blueprints E)	Drawing ships	Ship blueprint for a Coriolis space station
-SHIP_CORIOLIS (Ship blueprints G)	Drawing ships	Ship blueprint for a Coriolis space station
-SHIP_CORIOLIS (Ship blueprints I)	Drawing ships	Ship blueprint for a Coriolis space station
-SHIP_CORIOLIS (Ship blueprints K)	Drawing ships	Ship blueprint for a Coriolis space station
-SHIP_CORIOLIS (Ship blueprints M)	Drawing ships	Ship blueprint for a Coriolis space station
-SHIP_CORIOLIS (Ship blueprints O)	Drawing ships	Ship blueprint for a Coriolis space station
-SHIP_DODO (Ship blueprints B)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
-SHIP_DODO (Ship blueprints D)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
-SHIP_DODO (Ship blueprints F)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
-SHIP_DODO (Ship blueprints H)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
-SHIP_DODO (Ship blueprints J)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
-SHIP_DODO (Ship blueprints L)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
-SHIP_DODO (Ship blueprints N)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
-SHIP_DODO (Ship blueprints P)	Drawing ships	Ship blueprint for a Dodecahedron ("Dodo") space station
-SHIP_ESCAPE_POD (Ship blueprints A)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints B)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints C)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints D)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints E)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints F)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints G)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints H)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints I)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints J)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints K)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints L)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints N)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints O)	Drawing ships	Ship blueprint for an escape pod
-SHIP_ESCAPE_POD (Ship blueprints P)	Drawing ships	Ship blueprint for an escape pod
-SHIP_FER_DE_LANCE (Ship blueprints A)	Drawing ships	Ship blueprint for a Fer-de-Lance
-SHIP_FER_DE_LANCE (Ship blueprints L)	Drawing ships	Ship blueprint for a Fer-de-Lance
-SHIP_GECKO (Ship blueprints D)	Drawing ships	Ship blueprint for a Gecko
-SHIP_GECKO (Ship blueprints E)	Drawing ships	Ship blueprint for a Gecko
-SHIP_GECKO (Ship blueprints F)	Drawing ships	Ship blueprint for a Gecko
-SHIP_GECKO (Ship blueprints J)	Drawing ships	Ship blueprint for a Gecko
-SHIP_GECKO (Ship blueprints K)	Drawing ships	Ship blueprint for a Gecko
-SHIP_GECKO (Ship blueprints M)	Drawing ships	Ship blueprint for a Gecko
-SHIP_GECKO (Ship blueprints N)	Drawing ships	Ship blueprint for a Gecko
-SHIP_KRAIT (Ship blueprints A)	Drawing ships	Ship blueprint for a Krait
-SHIP_KRAIT (Ship blueprints B)	Drawing ships	Ship blueprint for a Krait
-SHIP_KRAIT (Ship blueprints C)	Drawing ships	Ship blueprint for a Krait
-SHIP_KRAIT (Ship blueprints E)	Drawing ships	Ship blueprint for a Krait
-SHIP_KRAIT (Ship blueprints G)	Drawing ships	Ship blueprint for a Krait
-SHIP_KRAIT (Ship blueprints H)	Drawing ships	Ship blueprint for a Krait
-SHIP_KRAIT (Ship blueprints I)	Drawing ships	Ship blueprint for a Krait
-SHIP_KRAIT (Ship blueprints J)	Drawing ships	Ship blueprint for a Krait
-SHIP_KRAIT (Ship blueprints M)	Drawing ships	Ship blueprint for a Krait
-SHIP_KRAIT (Ship blueprints N)	Drawing ships	Ship blueprint for a Krait
-SHIP_KRAIT (Ship blueprints O)	Drawing ships	Ship blueprint for a Krait
-SHIP_KRAIT (Ship blueprints P)	Drawing ships	Ship blueprint for a Krait
-SHIP_MAMBA (Ship blueprints A)	Drawing ships	Ship blueprint for a Mamba
-SHIP_MAMBA (Ship blueprints B)	Drawing ships	Ship blueprint for a Mamba
-SHIP_MAMBA (Ship blueprints E)	Drawing ships	Ship blueprint for a Mamba
-SHIP_MAMBA (Ship blueprints G)	Drawing ships	Ship blueprint for a Mamba
-SHIP_MAMBA (Ship blueprints I)	Drawing ships	Ship blueprint for a Mamba
-SHIP_MAMBA (Ship blueprints J)	Drawing ships	Ship blueprint for a Mamba
-SHIP_MAMBA (Ship blueprints L)	Drawing ships	Ship blueprint for a Mamba
-SHIP_MAMBA (Ship blueprints M)	Drawing ships	Ship blueprint for a Mamba
-SHIP_MAMBA (Ship blueprints O)	Drawing ships	Ship blueprint for a Mamba
-SHIP_MISSILE (Missile ship blueprint)	Drawing ships	Ship blueprint for a missile
-SHIP_MORAY (Ship blueprints K)	Drawing ships	Ship blueprint for a Moray
-SHIP_PLATE (Ship blueprints A)	Drawing ships	Ship blueprint for an alloy plate
-SHIP_PLATE (Ship blueprints B)	Drawing ships	Ship blueprint for an alloy plate
-SHIP_PLATE (Ship blueprints E)	Drawing ships	Ship blueprint for an alloy plate
-SHIP_PLATE (Ship blueprints G)	Drawing ships	Ship blueprint for an alloy plate
-SHIP_PLATE (Ship blueprints I)	Drawing ships	Ship blueprint for an alloy plate
-SHIP_PLATE (Ship blueprints J)	Drawing ships	Ship blueprint for an alloy plate
-SHIP_PLATE (Ship blueprints O)	Drawing ships	Ship blueprint for an alloy plate
-SHIP_PLATE (Ship blueprints P)	Drawing ships	Ship blueprint for an alloy plate
-SHIP_PYTHON (Ship blueprints A)	Drawing ships	Ship blueprint for a Python
-SHIP_PYTHON (Ship blueprints H)	Drawing ships	Ship blueprint for a Python
-SHIP_PYTHON (Ship blueprints K)	Drawing ships	Ship blueprint for a Python
-SHIP_PYTHON_P (Ship blueprints I)	Drawing ships	Ship blueprint for a Python (pirate)
-SHIP_PYTHON_P (Ship blueprints O)	Drawing ships	Ship blueprint for a Python (pirate)
-SHIP_SHUTTLE (Ship blueprints H)	Drawing ships	Ship blueprint for a Shuttle
-SHIP_SIDEWINDER (Ship blueprints A)	Drawing ships	Ship blueprint for a Sidewinder
-SHIP_SIDEWINDER (Ship blueprints C)	Drawing ships	Ship blueprint for a Sidewinder
-SHIP_SIDEWINDER (Ship blueprints D)	Drawing ships	Ship blueprint for a Sidewinder
-SHIP_SIDEWINDER (Ship blueprints E)	Drawing ships	Ship blueprint for a Sidewinder
-SHIP_SIDEWINDER (Ship blueprints F)	Drawing ships	Ship blueprint for a Sidewinder
-SHIP_SIDEWINDER (Ship blueprints H)	Drawing ships	Ship blueprint for a Sidewinder
-SHIP_SIDEWINDER (Ship blueprints I)	Drawing ships	Ship blueprint for a Sidewinder
-SHIP_SIDEWINDER (Ship blueprints J)	Drawing ships	Ship blueprint for a Sidewinder
-SHIP_SIDEWINDER (Ship blueprints K)	Drawing ships	Ship blueprint for a Sidewinder
-SHIP_SIDEWINDER (Ship blueprints L)	Drawing ships	Ship blueprint for a Sidewinder
-SHIP_SIDEWINDER (Ship blueprints M)	Drawing ships	Ship blueprint for a Sidewinder
-SHIP_SIDEWINDER (Ship blueprints N)	Drawing ships	Ship blueprint for a Sidewinder
-SHIP_SIDEWINDER (Ship blueprints P)	Drawing ships	Ship blueprint for a Sidewinder
-SHIP_SPLINTER (Ship blueprints C)	Drawing ships	Ship blueprint for a splinter
-SHIP_SPLINTER (Ship blueprints D)	Drawing ships	Ship blueprint for a splinter
-SHIP_SPLINTER (Ship blueprints H)	Drawing ships	Ship blueprint for a splinter
-SHIP_SPLINTER (Ship blueprints K)	Drawing ships	Ship blueprint for a splinter
-SHIP_SPLINTER (Ship blueprints N)	Drawing ships	Ship blueprint for a splinter
-SHIP_SPLINTER (Ship blueprints O)	Drawing ships	Ship blueprint for a splinter
-SHIP_SPLINTER (Ship blueprints P)	Drawing ships	Ship blueprint for a splinter
-SHIP_THARGOID (Ship blueprints C)	Drawing ships	Ship blueprint for a Thargoid mothership
-SHIP_THARGOID (Ship blueprints D)	Drawing ships	Ship blueprint for a Thargoid mothership
-SHIP_THARGON (Ship blueprints C)	Drawing ships	Ship blueprint for a Thargon
-SHIP_THARGON (Ship blueprints D)	Drawing ships	Ship blueprint for a Thargon
-SHIP_TRANSPORTER (Ship blueprints F)	Drawing ships	Ship blueprint for a Transporter
-SHIP_VIPER (Ship blueprints A)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints B)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints C)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints D)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints E)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints F)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints G)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints H)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints I)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints J)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints K)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints L)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints M)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints N)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints O)	Drawing ships	Ship blueprint for a Viper
-SHIP_VIPER (Ship blueprints P)	Drawing ships	Ship blueprint for a Viper
-SHIP_WORM (Ship blueprints B)	Drawing ships	Ship blueprint for a Worm
-SHIP_WORM (Ship blueprints L)	Drawing ships	Ship blueprint for a Worm
-E% (Ship blueprints A)	Drawing ships	Ship blueprints default NEWB flags for the D.MOA file
-E% (Ship blueprints B)	Drawing ships	Ship blueprints default NEWB flags for the D.MOB file
-E% (Ship blueprints C)	Drawing ships	Ship blueprints default NEWB flags for the D.MOC file
-E% (Ship blueprints D)	Drawing ships	Ship blueprints default NEWB flags for the D.MOD file
-E% (Ship blueprints E)	Drawing ships	Ship blueprints default NEWB flags for the D.MOE file
-E% (Ship blueprints F)	Drawing ships	Ship blueprints default NEWB flags for the D.MOF file
-E% (Ship blueprints G)	Drawing ships	Ship blueprints default NEWB flags for the D.MOG file
-E% (Ship blueprints H)	Drawing ships	Ship blueprints default NEWB flags for the D.MOH file
-E% (Ship blueprints I)	Drawing ships	Ship blueprints default NEWB flags for the D.MOI file
-E% (Ship blueprints J)	Drawing ships	Ship blueprints default NEWB flags for the D.MOJ file
-E% (Ship blueprints K)	Drawing ships	Ship blueprints default NEWB flags for the D.MOK file
-E% (Ship blueprints L)	Drawing ships	Ship blueprints default NEWB flags for the D.MOL file
-E% (Ship blueprints M)	Drawing ships	Ship blueprints default NEWB flags for the D.MOM file
-E% (Ship blueprints N)	Drawing ships	Ship blueprints default NEWB flags for the D.MON file
-E% (Ship blueprints O)	Drawing ships	Ship blueprints default NEWB flags for the D.MOO file
-E% (Ship blueprints P)	Drawing ships	Ship blueprints default NEWB flags for the D.MOP file
-EDGE (Missile ship blueprint)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints A)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints B)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints C)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints D)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints E)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints F)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints G)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints H)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints I)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints J)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints K)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints L)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints M)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints N)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints O)	Drawing ships	Macro definition for adding edges to ship blueprints
-EDGE (Ship blueprints P)	Drawing ships	Macro definition for adding edges to ship blueprints
-FACE (Missile ship blueprint)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints A)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints B)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints C)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints D)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints E)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints F)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints G)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints H)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints I)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints J)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints K)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints L)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints M)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints N)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints O)	Drawing ships	Macro definition for adding faces to ship blueprints
-FACE (Ship blueprints P)	Drawing ships	Macro definition for adding faces to ship blueprints
+EE51 (Flight)	Drawing ships	Remove the current ship from the screen, called from SHPPT before drawing the ship as a point
+DV41 (Flight)	Maths (Arithmetic)	Calculate (P R) = 256 * DELTA / A
+DV42 (Flight)	Maths (Arithmetic)	Calculate (P R) = 256 * DELTA / z_hi
+DVID3B2 (Flight)	Maths (Arithmetic)	Calculate K(3 2 1 0) = (A P+1 P) / (z_sign z_hi z_lo)
+DVID4 (Flight)	Maths (Arithmetic)	Calculate (P R) = 256 * A / Q
+DVIDT (Flight)	Maths (Arithmetic)	Calculate (P+1 A) = (A P) / Q
+Elite loader (Loader 1)	Loader	Reset vectors, change to mode 7, and load and run the ELITE3 loader
+Elite loader (Part 1 of 2) (Loader 2)	Loader	Various copy protection checks, and make sure there is no Tube
+Elite loader (Part 2 of 2) (Loader 2)	Loader	Load and run the ELITE4 loader
+Elite loader (Part 1 of 3) (Loader 3)	Loader	Set up the split screen mode, move code around, set up the sound envelopes and configure the system
+Elite loader (Part 2 of 3) (Loader 3)	Loader	Include binaries for recursive tokens, Missile blueprint and images
+Elite loader (Part 3 of 3) (Loader 3)	Loader	Include binaries for the loading screen images

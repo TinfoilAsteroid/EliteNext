@@ -33,23 +33,40 @@ ShiftHLDiv8:   MACRO
 			   rr  l
 			   ENDM 
 			   
-ShiftHLLeft1:  MACRO
+ShiftHLLeft1:  MACRO    ; 16 T states
 			   sla l
 			   rl  h
 			   ENDM
             
-ShiftDELeft1:  MACRO
+ShiftDELeft1:  MACRO    ; 16 T states
 			   sla e
 			   rl  d
 			   ENDM
 
+BarrelHLLeft3: MACRO
+               ex       de,hl   ; 4   43 T states vs 32 for doing ShiftHL Twice, so need at least 3 Shifts
+               push     bc      ; 10
+               ld       b,3     ; 7
+               bsrl     de,b    ; 8 
+               pop      bc      ; 10
+               ex       de,hl   ; 4
+               ENDM
 
-RollDELeft1:   MACRO			   
+BarrelHLRight3: MACRO
+               ex       de,hl   ; 4   43 T states vs 32 for doing ShiftHL Twice, so need at least 3 Shifts
+               push     bc      ; 10
+               ld       b,3     ; 7
+               bsrl     de,b    ; 8 
+               pop      bc      ; 10
+               ex       de,hl   ; 4
+               ENDM
+
+RollDELeft1:   MACRO	; 16 T states  
                rl  e
                rl  d
                ENDM
 			   
-ShiftBCLeft1:  MACRO
+ShiftBCLeft1:  MACRO    ; 16 T states
 			   sla c
 			   rl  b
 			   ENDM

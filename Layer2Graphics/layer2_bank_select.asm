@@ -70,6 +70,8 @@ asm_l2_bank_0_macro:        MACRO
                             or		LAYER2_VISIBLE_MASK  |  LAYER2_WRITE_ENABLE_MASK | LAYER2_SHIFTED_SCREEN_TOP
                             ld 		bc, IO_LAYER2_PORT
                             out 	(c),a
+                          ;  ld      a,%0001000              ; Bank offset of + 1
+                          ;  out     (c),a
                             ZeroA						; set a to 0
                             ld		(varL2_BANK_SELECTED),a	; save selected bank number 0
                             ENDM
@@ -79,6 +81,8 @@ asm_l2_bank_1_macro:        MACRO
                             or		LAYER2_VISIBLE_MASK  |  LAYER2_WRITE_ENABLE_MASK | LAYER2_SHIFTED_SCREEN_MIDDLE
                             ld 		bc, IO_LAYER2_PORT
                             out 	(c),a
+                           ; ld      a,%0001000              ; Bank offset of + 1
+                          ;  out     (c),a
                             ld      a,1						; set a to 0
                             ld		(varL2_BANK_SELECTED),a	; save selected bank number 0
                             ENDM
@@ -88,10 +92,31 @@ asm_l2_bank_2_macro:        MACRO
                             or		LAYER2_VISIBLE_MASK  |  LAYER2_WRITE_ENABLE_MASK | LAYER2_SHIFTED_SCREEN_BOTTOM
                             ld 		bc, IO_LAYER2_PORT
                             out 	(c),a
+                          ;  ld      a,%0001000              ; Bank offset of + 1
+                           ; out     (c),a
                             ld      a,2						; set a to 0
                             ld		(varL2_BANK_SELECTED),a	; save selected bank number 0
                             ENDM
-                        
+
+asm_l2_bank_3_macro:        MACRO
+                            ld      a,(varL2_BUFFER_MODE)
+                            or		LAYER2_VISIBLE_MASK  |  LAYER2_WRITE_ENABLE_MASK | LAYER2_SHIFTED_SCREEN_TOP
+                            or      %0001011  
+                            ld 		bc, IO_LAYER2_PORT
+                            out 	(c),a
+                            ld      a,3						; set a to 0
+                            ld		(varL2_BANK_SELECTED),a	; save selected bank number 0
+                            ENDM
+
+asm_l2_bank_4_macro:        MACRO
+                            ld      a,(varL2_BUFFER_MODE)
+                            or		LAYER2_VISIBLE_MASK  |  LAYER2_WRITE_ENABLE_MASK | LAYER2_SHIFTED_SCREEN_MIDDLE
+                            ld 		bc, IO_LAYER2_PORT
+                            out 	(c),a
+                            ld      a,4						; set a to 0
+                            ld		(varL2_BANK_SELECTED),a	; save selected bank number 0
+                            ENDM
+
 ; "asm_l2_row_bank_select"
 ; "A (unsinged) = y row of pixel line from top, sets the bank to top middle or bottom and adjusts a reg to row memory address"  
 ; "Could optimise by holding the previous bank but given its only an out statement it may not save T states at all"
@@ -115,7 +140,46 @@ asm_l2_row_bank_select:     JumpIfAGTENusng 128, .BottomBank
 .NoBottomChange:            ex      af,af'                            
                             sub     128
                             ret
-                            
+
+
+; "asm_l2_row_bank_select"
+; "HL (unsinged) = x column of pixel line from left
+; 0-  63
+; 64- 127
+; 128 - 191
+; 192 - 255
+; 256 - 321
+; outputs l with the correct column number
+asm_l2_320_col_bank_select: ld      a,d         
+                            JumpIfAIsNotZero .Bank5             ; 256 - 321
+                            ld      a,e
+                            JumpIfAGTENusng 192, .Bank4       
+                            JumpIfAGTENusng 128, .Bank3      
+                            JumpIfAGTENusng 64 , .Bank2
+.Bank1:                     asm_l2_bank_0_macro
+                            ret
+.Bank2:                     asm_l2_bank_1_macro
+                            ClearCarryFlag
+                            ld      a,l
+                            and     %10111111       ; fast subtract 64, just clear bit
+                            ld      h,a
+                            ret
+.Bank3:                     asm_l2_bank_2_macro
+                            ClearCarryFlag
+                            ld      a,l
+                            and     %01111111       ; fast subtract 128, just clear bit
+                            ld      h,a
+                            ret
+.Bank4:                     asm_l2_bank_3_macro
+                            ClearCarryFlag
+                            ld      a,e
+                            and     %00111111       ; fast subtract 192, just clear bit
+                            ld      h,a
+                            ret
+.Bank5:                     asm_l2_bank_4_macro
+                            ld      h,l             ; fast subtract 256, just clear bit
+                            ret
+                           
 ;;;                            
 ;;;                            
 ;;;                            cp 		64			; row < 64?

@@ -173,4 +173,23 @@ l2_print_7at:           ld	a,(hl)							; Return if empty string
                         ex		af,af'
                         inc		hl
                         jr		l2_print_7at					; Just loop until 0 found
+
+
+; "l2_print_7at b= row, hl = col de = addr of message, c = colour"
+; "No error trapping, if there is no null is will just cycle on the line"
+
+l2_print_7at_320:       ld	a,(de)							; Return if empty string
+                        cp	0
+                        ret	z
+                        push	hl,,de,,bc
+                        ld		d,a							; bc = pos, de = char and colour
+                        ;TODOcallcall 	l2_print_7chr_at_320
+                        pop		hl,,de,,bc
+.Move7Pixlestoright:	ex		af,af'
+                        ld		a,c
+                        add		7
+                        ld		c,a
+                        ex		af,af'
+                        inc		hl
+                        jr		l2_print_7at_320		    ; Just loop until 0 found
 	

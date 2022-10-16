@@ -56,6 +56,21 @@ ShipTypeText            equ 253
 ShipTypeDebug           equ 254
 ShipTypeEmpty           equ 255
 
+SpawnTypeStation        EQU 0
+SpawnTypeAsteroid       EQU SpawnTypeStation        + 1
+SpawnTypeJunk           EQU SpawnTypeAsteroid       + 1
+SpawnTypeCop            EQU SpawnTypeJunk           + 1
+SpawnTypeTrader         EQU SpawnTypeCop            + 1
+SpawnTypeNonTrader      EQU SpawnTypeTrader         + 1
+SpawnTypePirate         EQU SpawnTypeNonTrader      + 1
+SpawnTypeHunter         EQU SpawnTypePirate         + 1
+SpawnTypeThargoid       EQU SpawnTypeHunter         + 1
+SpawnTypeMission        EQU SpawnTypeThargoid       + 1
+SpawnTypeStationDebris  EQU SpawnTypeMission        + 1
+SpawnTypeMissionEvent   EQU SpawnTypeStationDebris  + 1
+SpawnTypeDoNotSpawn     EQU SpawnTypeMissionEvent   + 1
+
+
 ; Laser and Missile Settings
 ; Laser and Missile
 ShipLaserPower          equ %11110000
@@ -143,9 +158,12 @@ StageMissileTargeting   equ $FE
 ShipMaxDistance     equ 192
 HyperSpaceTimers    equ $0B0B
 
-
+; -- game limts
 MaxNumberOfStars	equ 11
 ConsoleRefreshInterval  equ 5
+MaxJunkStation      equ 3
+MaxJunkFreeSpace    equ 5
+WarpCoolDownPeriod  equ 90
 
 ShipTypeSize		equ	32 			;??????? just a guess for now
 ShipSST				equ 4			; its a space station
@@ -163,6 +181,7 @@ UniverseObjectSlot	equ	7
 KeyForwardsView		equ	$20
 ; Game specific equates
 MissileDropHeight   equ 5           ; how far the missile is ejected on launch in y axis
+WarpSequenceCount   equ 50
 
 ;...Game Colour Mapping
 L2DustColour        equ L2ColourGREY_1

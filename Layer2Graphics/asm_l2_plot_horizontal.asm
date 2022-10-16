@@ -72,6 +72,7 @@ l2_draw_horz_line:      ld		a,d
 .l2_draw_horz_line_1:   ld		a,e
                         l2_plot_macro; jp		l2_plot_pixel				; hijack return
                         ret
+
 	
 ; "l2_draw_horz_line_to"
 ; "bc = left side row,col, d right pixel, e = color"
