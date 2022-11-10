@@ -20,6 +20,10 @@ Sidewinder:	            DB $00                      ; Number of cargo canisters 
                         DB 0                        ; NewB Tactics 
                         DB ShipCanAnger             ; AI Flags            
                         DB $30                      ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 
 SidewinderVertices:	DB $20, $00, $24, $9F, $10, $54
 	DB $20, $00, $24, $1F, $20, $65

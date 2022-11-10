@@ -20,6 +20,10 @@ Thargoid:	            DB $00                                                    
                         DB 0                                                        ; NewB Tactics 
                         DB ShipCanAnger | ShipFighterBaySize  | ShipFighterThargon  ; AI Flags            
                         DB $FF                                                      ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 
 ThargoidVertices:	    DB $20, $30, $30, $5F, $40, $88 ; 01
                         DB $20, $44, $00, $5F, $10, $44 ; 02

@@ -67,11 +67,11 @@ NormalAI:               ;ld      a,(ShipAIEnabled)
 .ItsNotHostile:         ld      a,(ShipNewBitsAddr)
                         and     ShipIsDocking                   ; if bit 4 is not clear
                         jr      nz,.NotDocking
-.ItsDocking:            break
+.ItsDocking:            ;break
                         ;       do docking algorithm
                         ;       return
                         ret
-.NotDocking:            break
+.NotDocking:            ;break
                         ;       calcuilate vector to planet
                         ;       move towards planet
                         ;       return
@@ -91,7 +91,7 @@ NormalAI:               ;ld      a,(ShipAIEnabled)
                         jr      z,.NoFighters
 .CanSpawnFighter:       call    doRandom
                         JumpIfALTNusng 200, .NoFighters
-                        break
+                        ;break
                         ;SPAWN FIGHTER of Type UBnKFighterShipId at Y - 20 z - 20
                         ld      hl,UBnKFightersLeft             ;reduced figters left
                         dec     (hl)

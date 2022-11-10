@@ -20,6 +20,10 @@ Fer_De_Lance:	        DB $00                          ; Number of cargo canister
                         DB 0                            ; NewB Tactics 
                         DB ShipCanAnger                 ; AI Flags            
                         DB $FF                          ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+
 Fer_De_LanceVertices:	DB $00, $0E, $6C, $5F, $01, $59
                         DB $28, $0E, $04, $FF, $12, $99
                         DB $0C, $0E, $34, $FF, $23, $99

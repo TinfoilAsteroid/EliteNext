@@ -65,6 +65,7 @@ FaceArraySize               equ 30
 EdgeHeapSize                equ 40
 NodeArraySize               equ 40
 LineArraySize               equ 50
+TraingleArraySize           equ 25
 ; Storage arrays for data
 ; Structure of arrays
 ; Visibility array  - 1 Byte per face/normal on ship model Bit 7 (or FF) visible, 0 Invisible
@@ -74,10 +75,14 @@ LineArraySize               equ 50
 ; Line Array        -  4 bytes per eleement     0           1            2          3
 ;                                               X1          Y1           X2         Y2
 UbnkFaceVisArray            DS FaceArraySize            ; XX2 Up to 16 faces this may be normal list, each entry is controlled by bit 7, 1 visible, 0 hidden
+; Node array holds the projected to screen position regardless of if its clipped or not
+; When we use traingles we can cheat a bit on clipping as all lines will be horizontal so clipping is much simplified
 UBnkNodeArray               DS NodeArraySize * 4        ; XX3 Holds the points as an array, its an array not a heap
 UBnkNodeArray2              DS NodeArraySize * 4        ; XX3 Holds the points as an array, its an array not a heap
 UbnkLineArray               DS LineArraySize * 4        ; XX19 Holds the clipped line details
+UBnkTriangleOverspill       DS TraingleArraySize * 4    ; jsut a padding for testing
 UBnkLinesHeapMax            EQU $ - UbnkLineArray
+UBnkTraingleArray           EQU UbnkLineArray           ; We can use the line array as we draw lines or traingles
 UbnkEdgeProcessedList DS EdgeHeapSize
 ; Array current Lengths
 UbnkFaceVisArrayLen         DS 1
@@ -125,13 +130,16 @@ ShipTypeAddr                equ UBnkHullCopy + ShipTypeOffset
 ShipNewBitsAddr             equ UBnkHullCopy + ShipNewBitsOffset    
 ShipAIFlagsAddr             equ UBnkHullCopy + ShipAIFlagsOffset
 ShipECMFittedChanceAddr     equ UBnkHullCopy + ShipECMFittedChanceOffset
+ShipSolidFlagAddr           equ UBnkHullCopy + ShipSolidFlagOffset
+ShipSolidFillAddr           equ UBnkHullCopy + ShipSolidFillOffset
+ShipSolidLenAddr            equ UBnkHullCopy + ShipSolidLenOffset
 ; Static Ship Data. This is copied in when creating the universe object
 XX0                         equ UBnkHullCopy        ; general hull index pointer TODO find biggest ship design
 
 UBnkHullVerticies           DS  40 * 6              ; largetst is trasnport type 10 at 37 vericies so alows for 40 * 6 Bytes  = 
 UBnkHullEdges               DS  50 * 4              ; ype 10 is 46 edges so allow 50
 UBnkHullNormals             DS  20 * 4              ; type 10 is 14 edges so 20 to be safe
-
+UBnkHullSolid               DS  100 * 4             ; Up to 100 triangles (May optimise so only loads non hidden faces later
 
 OrthagCountdown             DB  12
 

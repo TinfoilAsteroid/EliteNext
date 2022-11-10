@@ -122,7 +122,25 @@ CopyNormalDataToUBnkC:
                         ex          de,hl                       ; dma transfer goes de -> hl i.e. opposite of ldir
                         call        memcopy_dma
                         ret
-
+                        
+                        IFDEF SHIPBANKA
+CopyTrianlDataToUBnk: 
+CopyTrianDataToUBnkA:               
+                        ENDIF
+                        IFDEF SHIPBANKB
+CopyTrianDataToUBnkB:
+                        ENDIF
+                        IFDEF SHIPBANKC
+CopyTrianDataToUBnkC:
+                        ENDIF
+                        ld          hl,(ShipSolidFillAddr)      ; now the pointers are in Ubnk its easy to read
+                        ld          de,UBnkHullSolid
+                        ld          b,0
+                        ld          a,(ShipSolidLenAddr)
+                        ld          c,a
+                        ex          de,hl                       ; dma transfer goes de -> hl i.e. opposite of ldir
+                        call        memcopy_dma
+                        ret
 ;CopyShipIdToUbnk:       ld      
 
 
@@ -157,14 +175,13 @@ CopyShipDataToUBnkC:    push        af
                         call        CopyVerticesDataToUBnk
                         call        CopyEdgeDataToUBnk
                         call        CopyNormalDataToUBnk
+                        ReturnIfMemFalse ShipSolidFlagAddr
+                        call        CopyTrianlDataToUBnk
                         ret
 
 ; change to there are two banks
 ; the master table in both has the bank and ship replicated in boht banks to simplify quick bank switch
 ;
-
-
-                       
 
 ; Ships in Bank A
                          IFDEF SHIPBANKA

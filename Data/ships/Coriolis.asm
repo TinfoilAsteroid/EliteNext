@@ -20,6 +20,10 @@ Coriolis:	            DB $00                                      ; Number of ca
                         DB 0                                        ; NewB Tactics     
                         DB ShipFighterBaySize | ShipFighterViper    ; AI Flags            
                         DB $FF                                      ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+
 CoriolisVertices:	    DB $A0, $00, $A0, $1F, $10, $62
                         DB $00, $A0, $A0, $1F, $20, $83
                         DB $A0, $00, $A0, $9F, $30, $74

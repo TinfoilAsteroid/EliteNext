@@ -20,7 +20,11 @@ Python_P:	            DB $02                           ; Number of cargo caniste
                         DB 0                             ; NewB Tactics    
                         DB ShipCanAnger                  ; AI Flags               
                         DB $F0                           ; chance of ECM module   
-                                                         
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
+                                                        
 Python_PVertices:	    DB $00, $00, $E0, $1F, $10, $32
                         DB $00, $30, $30, $1F, $10, $54
                         DB $60, $00, $10, $3F, $FF, $FF

@@ -20,6 +20,10 @@ Cobra_Mk_1:	            DB $03                              ; Number of cargo ca
                         DB 0                                ; NewB Tactics                        
                         DB ShipCanAnger                     ; AI Flags
                         DB $30                              ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+
 Cobra_Mk_1Vertices:	    DB $12, $01, $32, $DF, $01, $23
                         DB $12, $01, $32, $5F, $01, $45
                         DB $42, $00, $07, $9F, $23, $88

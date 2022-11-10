@@ -20,6 +20,10 @@ Thargon:	            DB $F0                          ; Number of cargo canisters
                         DB 0                            ; NewB Tactics 
                         DB ShipCanAnger                 ; AI Flags            
                         DB $00                          ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 
 	
 ThargonVertices:	    DB $09, $00, $28, $9F, $01, $55

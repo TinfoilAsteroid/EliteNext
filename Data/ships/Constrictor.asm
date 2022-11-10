@@ -20,6 +20,10 @@ Constrictor:    	    DB $F3                         ; Number of cargo canisters 
                         DB 0                           ; NewB Tactics 
                         DB ShipCanAnger                ; AI Flags            
                         DB $FF                         ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+
 ConstrictorVertices     DB $14, $07, $50, $5F, $02, $99 
                         DB $14, $07, $50, $DF, $01, $99 
                         DB $36, $07, $28, $DF, $14, $99 

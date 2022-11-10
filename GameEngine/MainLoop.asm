@@ -1,4 +1,4 @@
-    DEFINE  MAINLOOP_UPDATE_LASERS
+
     DEFINE  MAINLOOP_COOL_LASERS
     DEFINE  MAINLOOP_ECM
     DEFINE  MAINLOOP_KEYBOARDSCAN
@@ -14,38 +14,38 @@
     DEFINE  MAINLOOP_MODEL_RENDER    1
     DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
     DEFINE  MAINLOOP_WARP_ENABLED 1
-    
+
 ;.................................................................................................................................    
 MainLoop:	            call    doRandom                                                ; redo the seeds every frame
-    IFDEF MAINLOOP_UPDATE_LASERS
+                IFDEF LASER_V2
+                        call    LaserBeamV2
+                ELSE
                         UpdateLaserOnCounter
                         UpdateLaserOffCounter
                         UpdateLaserRestCounter
-    ENDIF
-    IFDEF MAINLOOP_COOL_LASERS
                         CoolLasers
-    ENDIF
-    IFDEF MAINLOOP_ECM
+                ENDIF
+                IFDEF MAINLOOP_ECM
                         INCLUDE "./GameEngine/MainLoop_ECM.asm"
-    ENDIF
-    IFDEF MAINLOOP_WARP_ENABLED
+                ENDIF
+                IFDEF MAINLOOP_WARP_ENABLED
                         ld      a,(WarpCooldown)
                         and     a
                         jp      z,.AlreadyCool
                         dec     a
                         ld      (WarpCooldown),a
 .AlreadyCool
-    ENDIF
-    IFDEF MAINLOOP_KEYBOARDSCAN
+                ENDIF
+                IFDEF MAINLOOP_KEYBOARDSCAN
                         call    scan_keyboard                                           ; perform the physical input scan
-    ENDIF
+                ENDIF
 ;.. This bit allows cycling of ships on universe 0 in demo.........................................................................
-    IFDEF MAINLOOP_DEMOSHIPS
+                IFDEF MAINLOOP_DEMOSHIPS
 DemoOfShipsDEBUG:       call    TestForNextShip
-    ENDIF
+                ENDIF
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
 InputBlockerCheck:      ld      a,$0
-    IFDEF MAINLOOP_INPUTHANDLER
+                IFDEF MAINLOOP_INPUTHANDLER
                         JumpIfAEqNusng $01, SkipInputHandlers                           ; as we are in a transition the whole update AI is skipped
                         JumpIfMemTrue TextInputMode, SkipInputHandlers                  ; in input mode all keys are processed by input
                         call    ViewKeyTest
@@ -55,7 +55,7 @@ InputBlockerCheck:      ld      a,$0
                         jp      nz,MainLoop
                         call    MovementKeyTest
 ;.. Process cursor keys for respective screen if the address is 0 then we skill just skip movement.................................
-    ENDIF
+                ENDIF
 HandleMovement:         ld      a,(CallCursorRoutine+2)
                         JumpIfAIsZero     TestAreWeDocked
 ;.. Handle displaying correct screen ..............................................................................................
@@ -69,27 +69,27 @@ CallCursorRoutine:      call    $0000
 SkipInputHandlers:      
 ;.. For Docked flag its - 0 = in free space, FF = Docked, FE transition, FD = Setup open space and transition to not docked
 TestAreWeDocked:        JumpIfMemNeNusng DockedFlag, StateNormal, UpdateLoop            ; if if we are in free space do universe updateelse we skip it. As we are also in dock/transition then no models should be updated so we dont; need to draw
-    IFDEF MAINLOOP_EVENTHANDLER
+                IFDEF MAINLOOP_EVENTHANDLER
 .UpdateEventCounter:    ld      hl,EventCounter                                         ; evnery 256 cycles we do a trigger test
                         dec     (hl)    
 .ProcessEvent:          call    z,LoopEventTriggered    
-    ENDIF
-    IFDEF MAINLOOP_RECHARGE
+                ENDIF
+                IFDEF MAINLOOP_RECHARGE
 .ProcessRecharge:       ld      a,(EventCounter)    
                         and     7   
                         call    z, RechargeShip 
-    ENDIF
-    IFDEF MAINLOOP_LAUNCHMISSILE
+                ENDIF
+                IFDEF MAINLOOP_LAUNCHMISSILE
 .PlayerMissileLaunch:   AnyMissilesLeft
                         jr      z,.NoMissiles                                           ; just in case last one gets destroyed
                         IsMissileLaunchFlagged
                         call    z,  LaunchPlayerMissile
 .NoMissiles
-    ENDIF
+                ENDIF
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
 ;.. First update Sun...............................................................................................................
-    IFDEF MAINLOOP_WARP_ENABLED
+                IFDEF MAINLOOP_WARP_ENABLED
 ProcessWarp:            JumpIfMemFalse  WarpPressed, .NoWarp
 .WarpIsPressed:         SetMemFalse     WarpPressed                               ; clear and acknowlege
                         JumpIfMemZero   WarpCooldown, .WarpDriveCool
@@ -143,7 +143,7 @@ ProcessWarp:            JumpIfMemFalse  WarpPressed, .NoWarp
                         jp      .DoneWarp
 .NoWarp:                MMUSelectLayer1
 .DoneWarp:
-    ENDIF
+                ENDIF
 UpdateShipsControl:     ld      a,0
                         and     a
     IFDEF MAINLOOP_UPDATEUNIVERSE
@@ -200,6 +200,14 @@ DrawDustForwards:       ld     a,$DF
 DustUpdateBank:         MMUSelectViewFront                                              ; This needs to be self modifying
 DustUpdateRoutine:      call   DustForward                                              ; This needs to be self modifying
 ;ProcessSun:             call    DrawForwardSun
+            IFDEF   LASER_V2            
+ProcessLaser:           MMUSelectSpriteBank
+                        JumpIfMemFalse LaserBeamOn, .NoLaser
+.FireLaser:             call    sprite_laser_show
+                        call    LaserDrainSystems
+                        jp      ProcessPlanet
+.NoLaser:               call    sprite_laser_hide
+            ELSE
 ProcessLaser:           ld      a,(CurrLaserPulseRate)
                         JumpIfAIsNotZero .CheckForPulse
                         JumpIfMemFalse FireLaserPressed, .NoLaser
@@ -211,6 +219,7 @@ ProcessLaser:           ld      a,(CurrLaserPulseRate)
                         jp      ProcessPlanet
 .NoLaser:               MMUSelectSpriteBank
                         call    sprite_laser_hide
+            ENDIF
 ProcessPlanet:
     IFDEF   MAINLOOP_MODEL_RENDER
 ProcessShipModels:      call   DrawForwardShips                                     ; Draw all ships (this may need to be self modifying)
@@ -245,6 +254,62 @@ WeAreHEntering:         ld      a,StateCompletedHJump
                         ld      (DockedFlag),a
                         jp      DoubleBufferCheck
 
+; laser duration goign below 0 for some reason
+; if laser is on
+;    if laser duration = master duration - do sfx
+;    laser duration ---
+;    if laser duration = 0
+;          **should set beam off***
+;       curr burst count --
+;       if busrt count = 0 
+;          set cooldown to post pulserests
+;       else
+;          set cooldown to 0
+;          pause = pulse off time
+;    else
+;       return
+;  else
+;     if burst count <> 0
+;        current burst pause --
+;        return if not zero
+;        set laser beam on
+;        return
+;      else
+;         cooldown-- if not zero
+
+LaserBeamV2:            JumpIfMemFalse LaserBeamOn, .LaserIsOff                          ; If laser is not on then skip
+.LaserIsOn:             ld          hl,CurrLaserPulseOnTime
+                        ld          a,(CurrLaserDuration)
+                        cp          (hl)                                                ; if duration just started
+                        ;call        z, SoundLaserFiring                                ; queue sound
+                        dec         a
+                        ld          (CurrLaserDuration),a                               ; if duration is 0    
+                        ;break
+                        ReturnIfANotZero                                                ; the do the end of pulse
+.EndOfPulse:            SetMemFalse LaserBeamOn
+                        ld          a,(CurrLaserBurstCount)
+                        dec         a
+                        ld          (CurrLaserBurstCount),a                             ; if we have run out of
+                        JumpIfAIsNotZero    .SkipBurstEnd                               ; pulses then 
+.EndOfBurst:            ldCopyByte  CurrLaserPulseRest,  CurrentCooldown                ; main cool down
+                        ret
+.SkipBurstEnd:          SetMemZero  CurrentCooldown                                     ; else its just pulse 
+                        ldCopyByte  CurrLaserPulseOffTime,  CurrentBurstPause           ; cooldown
+.SkipPulseEnd:          ret
+.LaserIsOff:            ld          a,(CurrLaserBurstCount)
+                        JumpIfAIsZero .FullCool
+.BurstCool:             ld          a,(CurrentBurstPause)
+                        dec         a
+                        ld          (CurrentBurstPause),a
+                        ret         nz
+                        SetMemTrue  LaserBeamOn
+                        ldCopyByte  CurrLaserPulseOnTime, CurrLaserDuration
+                        ret
+.FullCool:              ld          a,(CurrentCooldown)
+                        ReturnIfAIsZero
+                        dec         a
+                        ld          (CurrentCooldown),a
+                        ret
 
 ; to create planet position 
 ;       take seed 2 AND %00000011 + 3 + carry and store in z sign
@@ -321,7 +386,7 @@ LoopEventTriggered:     ; for now just do spawn
     DEFINE  SPAWN_TABLE_SELECT   1
     DEFINE  SPAWN_GENERATE_COUNT 1
     DEFINE  SPAWN_LOOP           1
-    DEFINE  SPAWN_IGNORE         1
+;    DEFINE  SPAWN_IGNORE         1
     
 
 SpawnEvent:             IFDEF   SPAWN_IGNORE
@@ -333,9 +398,8 @@ SpawnEvent:             IFDEF   SPAWN_IGNORE
                             SetMemFalse SpaceStationSafeZone                        
                         ENDIF
 .SpawnIsPossible:       ld      iyh,c                               ; save slot free in iyh
-                        break
-                        call    SelectSpawnTable
-.GetSpawnDetails:       call    SelectSpawnTableData                ; get table data
+                        call    SelectSpawnTable                    ; ix = correct row in spawn table
+.GetSpawnDetails:       call    SelectSpawnTableData                ; get table data, 
 .CheckIfInvalid:        ld      a,b                                 ; if b was 0
                         or      a                                   ; then its an invalid
                         ret     z                                   ; ship or just not to spawn
@@ -384,7 +448,7 @@ LaunchEnemyMissile:     ; break
                         ret
 
 LaunchEnemyFighter:     ld      a,10
-                        break;call    CopyUBnKtoLaunchParameters
+                        ;break;call    CopyUBnKtoLaunchParameters
                         ;copymatrix,rot and speed
                         ret
 

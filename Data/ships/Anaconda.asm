@@ -20,6 +20,10 @@ Anaconda:	            DB $07                                                    
                         DB 0                                                          ; NewB Tactics                       
                         DB ShipCanAnger | ShipFighterBaySize2 | ShipFighterSidewinder ; AI Flags
                         DB $D0                                                        ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+
 AnacondaVertices:	    DB $00, $07, $3A, $3E, $01, $55 ;01
                         DB $2B, $0D, $25, $FE, $01, $22 ;02
                         DB $1A, $2F, $03, $FE, $02, $33 ;03

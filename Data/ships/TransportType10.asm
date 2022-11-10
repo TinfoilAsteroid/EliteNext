@@ -20,6 +20,10 @@ TransportType10:	    DB $00                             ; Number of cargo canist
                         DB 0                               ; NewB Tactics 
                         DB 0                               ; AI Flags            
                         DB $FF                             ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 
 TransportType10Vertices:DB $00, $0A, $1A, $3F, $06, $77     ;01
                         DB $19, $04, $1A, $BF, $01, $77     ;02

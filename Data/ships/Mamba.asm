@@ -20,6 +20,10 @@ Mamba:	                DB $01                     ; Number of cargo canisters re
                         DB 0                       ; NewB Tactics 
                         DB ShipCanAnger            ; AI Flags            
                         DB $E0                     ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 
 MambaVertices:	DB $00, $00, $40, $1F, $10, $32
                 DB $40, $08, $20, $FF, $20, $44

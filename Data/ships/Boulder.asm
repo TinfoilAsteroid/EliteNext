@@ -20,6 +20,10 @@ Boulder:	            DB $00                               ; Number of cargo cani
                         DB 0                                 ; NewB Tactics                        
                         DB 0                                 ; AI Flags
                         DB $A0                               ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+
 BoulderVertices:	    DB $12, $25, $0B, $BF, $01, $59
                         DB $1E, $07, $0C, $1F, $12, $56
                         DB $1C, $07, $0C, $7F, $23, $67

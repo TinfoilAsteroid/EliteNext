@@ -1,9 +1,10 @@
- DEVICE ZXSPECTRUMNEXT
- DEFINE  DOUBLEBUFFER 1
+    DEVICE ZXSPECTRUMNEXT
+    DEFINE  DOUBLEBUFFER 1
  ;DEFINE  LOGMATHS     1
  ;DEFINE  DIAGSPRITES 1
  ; DEFINE   SKIPATTRACT 1
  ; DEFINE DEBUGMISSILETEST 1
+     DEFINE  LASER_V2    1
  CSPECTMAP eliteN.map
  OPT --zxnext=cspect --syntax=a --reversepop
                 DEFINE  SOUNDPACE 3
@@ -76,7 +77,7 @@ ScreenHyperspace EQU ScreenDocking+1
                         INCLUDE "./Data/ShipIdEquates.asm"
                         
 
-
+    IFNDEF  LASER_V2
 UpdateLaserCountersold: MACRO
                         JumpIfMemZero CurrLaserPulseOnCount,   .SkipPulseOn     ; if beam on count > 0 then beam on count --
                         dec     a                                               ; .
@@ -94,7 +95,7 @@ UpdateLaserCountersold: MACRO
 .ZeroRateCounter:       ld      (CurrLaserPulseRateCount),a
 .SkipRestCounter:       
                         ENDM
-                        
+    ENDIF 
 MessageAt:              MACRO   x,y,message
                         MMUSelectLayer1
                         ld      d,y
@@ -130,7 +131,7 @@ EliteNextStartup:       di
 .InitialisePeripherals: nextreg     PERIPHERAL_2_REGISTER, AUDIO_CHIPMODE_AY ; Enable Turbo Sound
                         nextreg     PERIPHERAL_3_REGISTER, DISABLE_RAM_IO_CONTENTION | ENABLE_TURBO_SOUND | INTERNAL_SPEAKER_ENABLE
                         nextreg     PERIPHERAL_4_REGISTER, %00000000
-                        
+                        nextreg     ULA_CONTROL_REGISTER,  %00010000                ; set up ULA CONRTROL may need to change bit 0 at least, but bit 4 is separate extended keys from main matrix
                         MMUSelectSound
                         call        InitAudio
 .InitialiseInterrupts:  ld	        a,VectorTable>>8
@@ -566,7 +567,7 @@ SeedGalaxy0Loop:        push    ix
 
     include "./Maths/Utilities/XX12EquNodeDotOrientation.asm"
     include "./ModelRender/CopyXX12ToXX15.asm"	
-    include "./ModelRender/CopyXX15ToXX12.asm"
+    ;;DEFUNCTinclude "./ModelRender/CopyXX15ToXX12.asm"
     include "./Maths/Utilities/ScaleXX16Matrix197.asm"
 		    
     include "./Universe/StarDust/StarRoutines.asm"
@@ -621,7 +622,7 @@ XX12PVarSign3		DB 0
 
     INCLUDE "./Maths/Utilities/APequQmulA-MULT1.asm"
     INCLUDE "./Maths/Utilities/badd_ll38.asm"
-    INCLUDE "./Maths/Utilities/moveship4-MVS4.asm"
+;;DEFUNCT    INCLUDE "./Maths/Utilities/moveship4-MVS4.asm"
 
     INCLUDE "./Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
     INCLUDE "./Maths/Utilities/RequAdivQ-LL61.asm"
@@ -637,6 +638,7 @@ XX12PVarSign3		DB 0
     INCLUDE "./Hardware/drive_access.asm"
 
     INCLUDE "./Menus/common_menu.asm"
+    DISPLAY "Main Non Banked Code Ends at ",$
 
     org $B000
     DISPLAY "Vector Table Starts at ",$

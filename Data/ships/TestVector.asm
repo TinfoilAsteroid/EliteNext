@@ -20,6 +20,10 @@ TestVector:             DB $03                      ; Number of cargo canisters 
                         DB 0                        ; NewB Tactics 
                         DB 0                        ; AI Flags            
                         DB $00                      ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 
 TestVectorVertices	    DB $00,$40,$00,$1F,$00,$00 
                         DB $00,$20,$00,$1F,$00,$00 

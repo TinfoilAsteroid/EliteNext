@@ -22,6 +22,9 @@ ShipTypeOffset              equ 23
 ShipNewBitsOffset           equ 24
 ShipAIFlagsOffset           equ 25
 ShipECMFittedChanceOffset   equ 26
+ShipSolidFlagOffset         equ 27 ; Intially for non cargo these will be garbage
+ShipSolidFillOffset         equ 28
+ShipSolidLenOffset          equ 29
 ShipDataLength              equ ShipECMFittedChanceOffset+1
 
 CobraTablePointer           equ 43

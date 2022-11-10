@@ -22,9 +22,9 @@ LaserStatsTableWidth    EQU 12
 ;                          Typ  Rate On   Off  Rst  Dam  Drn  Het  Dur  DAt  Mrk  Tek
 LaserStatsTable:        DB $00, $02, $05, $20, $40, $03, $10, $02, $20 ,$10 ,$00, $00; basic laser
                         DB $01, $01, $08, $08, $20, $03, $10, $08, $20 ,$10 ,$00, $01; pulse laser
-                        DB $02, $06, $08, $03, $3A, $03, $10, $02, $20 ,$10 ,$00, $02; burst laser TODO THIS ONE IS ODD
-                        DB $03, $11, $06, $04, $50, $02, $10, $05, $30 ,$10 ,$00, $03; Gatling laser
-                        DB $04, $00, $01, $00, $03, $03, $03, $10, $20 ,$10 ,$00, $04; beam ; DOES NOT WORK
+                        DB $02, $03, $06, $06, $3A, $03, $05, $02, $20 ,$10 ,$00, $02; burst laser TODO THIS ONE IS ODD
+                        DB $03, $01, $05, $05, $01, $02, $04, $05, $30 ,$10 ,$00, $03; Gatling laser
+                        DB $04, $01, $01, $00, $00, $03, $03, $10, $20 ,$10 ,$00, $04; beam ; DOES NOT WORK
                         DB $05, $01, $20, $30, $60, $03, $02, $02, $20 ,$10 ,$00, $05; mining
                         DB $06, $00, $01, $00, $06, $05, $05, $05, $10 ,$10 ,$00, $08; military beam DOES NOT WORK
                         DB $07, $01, $01, $02, $20, $22, $01, $30, $30 ,$11 ,$01, $10; thargoid 

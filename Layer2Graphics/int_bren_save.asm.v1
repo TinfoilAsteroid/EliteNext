@@ -1,0 +1,135 @@
+OPCODE_IncHL            EQU $23
+OPCODE_DecHL            EQU $2B
+OPCODE_IncHLIndirect    EQU $34
+OPCODE_DecHLIndirect    EQU $35
+
+SetIncrement:           MACRO   Location
+                        ld      a,OPCODE_IncHL
+                        ld      (Location),a
+                        ENDM
+SetDecrement:           MACRO   Location
+                        ld      a,OPCODE_DecHL
+                        ld      (Location),a
+                        ENDM
+                        
+l2_X0                   DW 0
+l2_Y0                   DW 0
+l2_X1                   DW 0
+l2_Y1                   DW 0
+l2_DX                   DW 0
+l2_DY                   DW 0
+;;l2_SX                   DW 0
+;;l2_SY                   DW 0
+l2_Error                DW 0
+l2_E2                   DW 0
+; Uses HL DE
+
+int_bren_save_Array1:   ld      hl,(l2_X1)          ; if X0 < X1
+                        ld      de,(l2_X0)          ; calculate SX DX
+                        ClearCarryFlag              ;
+                        sbc     hl,de               ;
+                        bit     7,h                 ;
+                        jr      z,.DXPositive       ;
+.DXNegative:            NegHL                       ;
+                        SetDecrement .UpdateX0Operation
+                        jp      .DoneCalcDx         ;
+.DXPositive:            SetIncrement .UpdateX0Operation
+.DoneCalcDx:            ld      (l2_DX),hl          ;
+                        ld      de,(l2_X0)          ; fetch in X0 so we can exx
+                        ld      bc,(l2_X1)          ; and also X1
+                        exx                         ; now hl' = DX, DE'=X0, BC' = X1
+.CalcDY:                ld      hl,(l2_Y1)          ; If Y1 < Y1
+                        ld      de,(l2_Y0)          ; calculate SY DY 
+                        ClearCarryFlag              ;
+                        sbc     hl,de               ;
+                        bit     7,h                 ;
+                        jr      z,.DYPositive       ;
+.DYNegative:            SetDecrement .UpdateY0Operation 
+                        jp      .DoneCalcDx         ;
+.DYPositive:            NegHL                       ;
+                        SetIncrement .UpdateY0Operation
+.DoneCalcDy:            ld      (l2_DY),hl      
+                        ld      de,(l2_Y0)          ; fetch in X0
+                        ld      bc,(l2_Y1)          ; now hl = DY, DE=X0, BC = X1
+; at this point hl' = DX, DE'=X0, BC' = X1 and hl = DY, DE=X0, BC = X1                 
+.CalcError:             ld      hl,(l2_DX)
+                        ld      de,(l2_DY)
+                        add     hl,de
+                        ld      (l2_Error),hl
+.CalcLoop:              break
+                        ld      hl,(l2_X0)          ; get X0 and Y0
+.CheckYRange:           ld      de,(l2_Y0)
+                        ld      a,d                 ; if Y > 127
+                        and     a                   ; or Y is negative
+                        jr      nz,.YOutOfRange     ; then we can skip the plot
+                        ld      a,e                 ;
+                        and     $80                 ;
+                        jr      nz,.YOutOfRange     ;
+.CheckXRange:           ld      a,h                 ; if X0 is negative 
+                        and     a
+                        jr      z,.XOKToPlot
+                        and     $80
+                        jr      z,.NotXNegative
+.XNegative:             ld      a,0
+                        jp      .ClipXDone
+.NotXNegative:          ld      a,255
+                        jp      .ClipXDone
+.XOKToPlot:             ld      a,l                 ; no clip therefore we can just use l
+.ClipXDone:             push    hl
+                        push    af                  ; using the Y coordinate
+                        ld      hl,l2targetArray1   ; plot the X value for this row
+                        ld      a,e
+                        add     hl,a
+                        pop     af
+                        ld      (hl),a
+                        pop     hl
+.YOutOfRange: ; At this point we have either plotted or its outside array range
+                        ld      bc,(l2_X1)
+.CheckEndXY:            cpHLEquBC .CheckEndXYOK     ; hl will equal X0 still by here
+                        jp      nz,.x0x1Differ
+.CheckEndXYOK:          ld      bc,(l2_Y1)
+                        cpDEEquBC  .x0x1Differ      ; de will equal Y0 still by here
+                        ret     z                   ; if they are both the same we are done
+.x0x1Differ:
+.SetError2:             ld      hl,(l2_Error)       ; e2 = 2 * error	
+                        add     hl,hl               ; .
+                        ld      (l2_E2),hl          ; .
+.CheckE2gteDY:          ld      de,(l2_DY)          ; if e2 >= dy	
+                        call    compare16HLDE       ; .
+                        jp      pe, .E2DyParitySet
+                        jp      m,  .E2ltDY         ; to get here overflow clear, so if m is set then HL<DE
+                        jp      .E2gteDY
+.E2DyParitySet:         jp      p,  .E2ltDY         ; if pe is set, then if sign is clear HL<DE
+.E2gteDY:               ld      hl,(l2_X0)          ;      if x0 == x1 break		
+                        ld      de,(l2_X1)          ;      .
+                        cpHLEquDE .ErrorUpdateDY    ;      .
+                        ret     z                   ;      .
+.ErrorUpdateDY:         ld      hl,(l2_Error)       ;      error = error + dy	
+                        ld      de,(l2_DY)          ;      .
+                        add     hl,de               ;      .
+                        ld      (l2_Error),hl       ;      .
+.UpdateX0:              ld      hl,(l2_X0)          ;      x0 = x0 + sx
+.UpdateX0Operation:     nop
+                        ld      (l2_X0),hl          ;      .
+.E2ltDY:
+.CheckE2lteDX:          ld      hl,(l2_E2)          ; if e2 <= dx
+                        ld      de,(l2_DX)          ; as we can't do skip on e2>dx 
+                        call    compare16HLDE       ; we will jump based on e2 <= dx
+                        jp      z, .E2lteDX
+                        jp      pe, .E2DxParitySet
+                        jp      m,  .E2lteDX         ; to get here overflow clear, so if m is set then HL<DE
+                        jp      .E2gteDx
+.E2DxParitySet:         jp      p,  .E2lteDX   
+                        jp      .E2gteDx
+.E2lteDX:               ld      hl,(l2_Y0)          ;      .
+                        ld      de,(l2_Y1)          ;      .
+                        cpHLEquDE .ErrorUdpateDX    ;      .
+                        ret     z                   ;      .
+.ErrorUdpateDX:         ld      hl,(l2_Error)       ;      error = error + dx	
+                        ld      de,(l2_DX)          ;      .
+                        add     hl,de               ;      .
+                        ld      (l2_Error),hl       ;      .                        
+.UpdateY0:              ld      hl,(l2_Y0)          ;      y0 = y0 + sy
+.UpdateY0Operation:     nop
+                        ld      (l2_Y0),hl         ;      .
+.E2gteDx:               jp      .CalcLoop           ; repeat until we have a return

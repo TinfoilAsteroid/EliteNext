@@ -20,6 +20,10 @@ Adder:	                DB $00                              ; Number of cargo can
                         DB 0                                ; NewB Tactics 
                         DB ShipCanAnger                     ; AI Flags            
                         DB $80                              ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
                                        ; chance of ECM module
 AdderVertices:	        DB $12, $00, $28, $9F, $01, $BC     ;01
                         DB $12, $00, $28, $1F, $01, $23     ;02

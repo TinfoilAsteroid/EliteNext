@@ -12,6 +12,7 @@ ResetPlayerShip:        ZeroThrottle
                         ClearTemperatures
                         ClearWarpPressed
                         call    IsLaserUseable
+                        SetMemFalse LaserBeamOn
                         MMUSelectCommander
                         call    LoadLaserToCurrent
                         ret     z

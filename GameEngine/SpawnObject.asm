@@ -99,9 +99,13 @@ SpawnTrader:       ; TODO
 ;        de = spawn table address
 ;        hl = spawn handler address
 SelectSpawnTableData:   ld      a,(ix+1*SpawnTableSize)             ; Table Type
-                        ld      hl,SpawnTypeHandlers                ; hl = the call address for setting up a spawn
+                        ld      hl,SpawnTypeHandlers                ; hl = the location in spawn table for the call address for setting up a spawn
                         add     hl,a                                ; of type A
                         add     hl,a                                ; 
+                        ld      a,(hl)
+                        inc     hl
+                        ld      h,(hl)
+                        ld      l,a                                 ; hl now is proper address
                         ld      b,(ix+2*SpawnTableSize)             ; Nbr to Spawn
                         ld      e,(ix+3*SpawnTableSize)             ; Spawn Table Addr Low
                         ld      d,(ix+4*SpawnTableSize)             ; Spawn Table Addr Hi

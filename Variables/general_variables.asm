@@ -1,4 +1,6 @@
-
+    IFNDEF LASER_V2
+    DEFINE  LASER_V2    1
+    ENDIF
 
 varAxis1	DW 	0				; address of first axis in a rotation action
 varAxis2	DW	0				; address of 2nd axis in a roation action
@@ -431,9 +433,15 @@ CurrLaserPulseRate      DB  0               ; current view laser amount of pulse
 CurrLaserPulseOnTime    DB  0               ; how many cycles the laser is on
 CurrLaserPulseOffTime   DB  0               ; how many cycles the laser is on
 CurrLaserPulseRest      DB  0               ; current view laser delay setup between pulses
-
+    
+    IFDEF LASER_V2
+LaserBeamOn             DB  0
+CurrLaserDuration       DB  0   ; == CurrLaserPulseOnTime
+CurrentBurstPause       DB  0   ; == CurrLaserPulseOffTime
+CurrentCooldown         DB  0   ; == CurrLaserPulseRest
+    ENDIF
 CurrLaserBurstRate      DB  0
-CurrLaserBurstCount     DB  0
+CurrLaserBurstCount     DB  0   ; == LaserPulseRate
 CurrLaserDamageOutput   DB  0
 CurrLaserEnergyDrain    DB  0
 CurrLaserHeat           DB  0

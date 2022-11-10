@@ -20,6 +20,10 @@ Escape_Pod:             DB $20                          ; Number of cargo canist
                         DB 0                            ; NewB Tactics 
                         DB 0                            ; AI Flags            
                         DB $FF                          ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+
 Escape_PodVertices:	    DB $07, $00, $24, $9F, $12, $33
                         DB $07, $0E, $0C, $FF, $02, $33
                         DB $07, $0E, $0C, $BF, $01, $33

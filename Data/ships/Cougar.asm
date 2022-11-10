@@ -20,6 +20,10 @@ Cougar:	                DB $03                         ; Number of cargo caniste
                         DB 0                           ; NewB Tactics 
                         DB ShipCanAnger                ; AI Flags            
                         DB $B0                         ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+
 CougarVertices:	        DB $00, $05, $43, $1F, $02, $44
                         DB $14, $00, $28, $9F, $01, $22
                         DB $28, $00, $28, $BF, $01, $55

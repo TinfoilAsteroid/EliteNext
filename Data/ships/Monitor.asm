@@ -20,6 +20,10 @@ Monitor:	            DB $04                     ; Number of cargo canisters rele
                         DB 0                       ; NewB Tactics 
                         DB ShipCanAnger            ; AI Flags            
                         DB $40                     ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 
 MonitorVertices:	    DB $00, $0A, $8C, $1F, $FF, $FF
                         DB $14, $28, $14, $3F, $23, $01

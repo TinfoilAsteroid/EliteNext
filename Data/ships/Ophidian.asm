@@ -20,6 +20,10 @@ Ophidian:	            DB $02                     ; Number of cargo canisters rel
                         DB 0                       ; NewB Tactics 
                         DB ShipCanAnger            ; AI Flags            
                         DB $C0                     ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
                         
 OphidianVertices:	    DB $14, $00, $46, $9F, $68, $02 ; 01
                         DB $14, $00, $46, $1F, $67, $01 ; 02

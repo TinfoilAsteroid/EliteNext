@@ -66,6 +66,73 @@ cpHLDE:                 MACRO
                         pop     hl
                         ENDM
 
+cpABSDEHL:              MACRO
+                        push     hl,,de
+                        ld      a,h
+                        and     $7F
+                        ld      h,a
+                        ld      a,d
+                        and     $7F
+                        ld      d,a
+                        ex      de,hl
+                        sbc     hl,de
+                        pop     hl,,de
+                        ENDM
+
+; Simple are they both the same setting z if they are
+; tehcicall this works but it measn the final ret z is alwys done
+; so jp needs to be to a target
+cpHLEquDE:              MACRO   passedCheck
+                        ld      a,h
+                        cp      d
+                        jp      nz, passedCheck
+                        ld      a,l
+                        cp      e
+.NoTheSame:                        
+                        ENDM
+
+cpHLEquBC:              MACRO   passedCheck
+                        ld      a,h
+                        cp      b
+                        jp      nz, passedCheck
+                        ld      a,l
+                        cp      c
+.NoTheSame:                        
+                        ENDM
+                        
+cpDEEquBC:              MACRO   passedCheck
+                        ld      a,d
+                        cp      b
+                        jp      nz, passedCheck
+                        ld      a,e
+                        cp      c
+.NoTheSame:                        
+                        ENDM                        
+; Simple version just sets carry if HL < DE reset, does an initial compare for z
+cpHLDELeadSign:         MACRO
+                        ld      a,h
+                        cp      d
+                        jr      nz,.FullCompare
+                        ld      a,l
+                        cp      e
+                        ret     z
+.FullCompare:           ld      a,h
+                        xor     d
+                        and     $80
+                        jr      nz,.OppositeSigns   ; If opposite signs is a simple sign test
+                        ld      a,h                 ; same signs so a little simpler
+                        and     $80
+                        jp      z,cpHLDE            ; if h is positive then both are positive by here so just cpHLDE
+                        jp      cpABSDEHL           ; else we have to do ABScpDEHL
+.OppositeSigns:         ld      a,h
+                        and     $80
+                        and     $80
+                        jp      z,.HLGTDE
+.HLLTDE:                SetCarryFlag
+                        ret
+.HLGTDE:                ClearCarryFlag
+                        ret
+                      
 ;Unsigned
 ;If HL == DE, then Z flag is set.
 ;If HL != DE, then Z flag is reset.

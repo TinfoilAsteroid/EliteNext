@@ -20,6 +20,10 @@ Moray:	                DB $01                    ; Number of cargo canisters rel
                         DB 0                      ; NewB Tactics 
                         DB ShipCanAnger           ; AI Flags            
                         DB $C0                    ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
                         
 MorayVertices:	        DB $0F, $00, $41, $1F, $02, $78
                         DB $0F, $00, $41, $9F, $01, $67

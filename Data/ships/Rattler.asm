@@ -20,6 +20,10 @@ Rattler:	            DB $02                       ; Number of cargo canisters re
                         DB 0                         ; NewB Tactics 
                         DB ShipCanAnger              ; AI Flags            
                         DB $90                       ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 
 
 RattlerVertices:	    DB $00, $00, $3C, $1F, $89, $23

@@ -20,6 +20,10 @@ Dodo:	                DB $00                        ; Number of cargo canisters 
                         DB 0                          ; NewB Tactics 
                         DB 0                          ; AI Flags            
                         DB $FF                        ; chance of ECM module                                  
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+
 DodoVertices:	        DB $00, $96, $C4, $1F, $01, $55
                         DB $8F, $2E, $C4, $1F, $01, $22
                         DB $58, $79, $C4, $5F, $02, $33

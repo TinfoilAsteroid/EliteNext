@@ -20,6 +20,10 @@ Bushmaster:	            DB $00                           ; Number of cargo canis
                         DB 0                             ; NewB Tactics                        
                         DB ShipCanAnger                  ; AI Flags
                         DB $70                           ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+
 BushmasterVertices:	    DB $00, $00, $3C, $1F, $23, $01  ; 01
                         DB $32, $00, $14, $1F, $57, $13  ; 02
                         DB $32, $00, $14, $9F, $46, $02  ; 03

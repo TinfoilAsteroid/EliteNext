@@ -205,7 +205,9 @@ SPRITE_PORT_MIRROR_ATTRIBUTE_2          EQU 115
 SPRITE_PORT_MIRROR_ATTRIBUTE_3          EQU 116
 SPRITE_PORT_MIRROR_ATTRIBUTE_4          EQU 117
 USER_STORAGE_0_REGISTER                 EQU 118 ; general purpose variable, e.g. for copper
-EXPANSION_BUS_ENABLE_REGISTER
+EXPANSION_BUS_ENABLE_REGISTER           EQU 128
+EXTENDED_KEYS_0_REGISTER                EQU 176
+EXTENDED_KEYS_1_REGISTER                EQU 177
 
 INTERUPT_CONTROL                        EQU $0C ; Interrupt control
 NMI_RETURN_LSB				            EQU	$0C2	; NMI Return Address LSB
@@ -235,12 +237,20 @@ CTCEND                                  EQU CTCBASE+(CTCSIZE*2)
 DEBUG_LEDS_REGISTER						EQU 255
 
 
-GetNextReg:	MACRO register
-            push bc
-                ld bc,$243B
+GetNextRegSaveBC:	MACRO register
+                    push bc
+                    ld bc,$243B
                     ld a,register
                     out (c),a
                     inc b
-                in a,(c)
-            pop bc
+                    in a,(c)
+                    pop bc
+                    ENDM
+
+GetNextReg:	MACRO register
+            ld bc,$243B
+            ld a,register
+            out (c),a
+            inc b
+            in a,(c)
             ENDM

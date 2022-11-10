@@ -20,6 +20,10 @@ Rock_Hermit:	        DB $07                            ; Number of cargo caniste
                         DB 0                              ; NewB Tactics 
                         DB ShipCanAnger                   ; AI Flags            
                         DB $30                            ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 
 	
 Rock_HermitVertices:	DB $00, $50, $00, $1F, $FF, $FF

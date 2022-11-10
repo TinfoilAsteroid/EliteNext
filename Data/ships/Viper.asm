@@ -20,6 +20,10 @@ Viper:                  DB $00                         ; Number of cargo caniste
                         DB 0                           ; NewB Tactics 
                         DB ShipCanAnger                ; AI Flags            
                         DB $FF                         ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
                         
 ViperVertices:          DB $00, $00, $48, $1F, $21, $43 
                         DB $00, $10, $18, $1E, $10, $22 

@@ -20,6 +20,9 @@ Iguana:	                DB $01                      ; Number of cargo canisters 
                         DB 0                        ; NewB Tactics 
                         DB ShipCanAnger             ; AI Flags            
                         DB $80                      ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
 
 	
 IguanaVertices:	DB $00, $00, $5A, $1F, $23, $01

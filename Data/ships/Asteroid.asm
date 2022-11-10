@@ -20,6 +20,10 @@ Asteroid:	            DB $00                          ; Number of cargo canister
                         DB 0                            ; NewB Tactics                        
                         DB 0                            ; AI Flags
                         DB $00                          ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+
 AsteroidVertices:	    DB $00, $50, $00, $1F, $FF, $FF ;01
                         DB $50, $0A, $00, $DF, $FF, $FF ;02
                         DB $00, $50, $00, $5F, $FF, $FF ;03

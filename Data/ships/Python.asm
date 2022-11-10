@@ -21,6 +21,10 @@ Python:                 DB $05                                                  
                         DB 0                                                     ; AI Flags            
                         DB ShipCanAnger | ShipFighterBaySize1 | ShipFighterWorm  ; chance of ECM module
                         DB $E0                                                   
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 PythonVertices:         DB $00, $00, $E0, $1F, $10, $32 
                         DB $00, $30, $30, $1E, $10, $54 
                         DB $60, $00, $10, $3F, $FF, $FF 

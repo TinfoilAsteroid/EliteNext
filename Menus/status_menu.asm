@@ -1,15 +1,31 @@
 status_page_marker  DB "Status      PG63"    
 
-status_boiler_text		DW $0240,txt_commander
+txt_stat_commander 			DB "COMMANDER",0
+txt_stat_inventory 			DB "INVENTORY",0
+txt_stat_present_system		DB "Present System   :",0
+txt_stat_hyperspace_system	DB "Hyperspace System:",0
+txt_stat_condition			DB "Condition   :",0
+txt_stat_fuel				DB "Fuel        :",0
+txt_stat_cash				DB "Cash        :",0
+txt_stat_legal_status		DB "Legal Status:",0
+txt_stat_rating				DB "Rating      :",0
+txt_stat_equipment			DB "EQUIPMENT:",0
+
+txt_stat_fuel_level			DB "00.0 Light Years",0
+txt_stat_cash_amount		DB "XXXXXXXXXX",0
+txt_stat_cash_decimal       DB "."
+txt_stat_cash_fraction      DB "X Cr",0
+
+status_boiler_text		DW $0240,txt_stat_commander
 						DW $0290,CommanderName
-						DW $0B08,txt_present_system
-						DW $1308,txt_hyperspace_system
-						DW $1B08,txt_condition
-						DW $2308,txt_fuel
-						DW $2B08,txt_cash
-						DW $3308,txt_legal_status
-						DW $3B08,txt_rating
-						DW $4B08,txt_equipment	
+						DW $0B08,txt_stat_present_system
+						DW $1308,txt_stat_hyperspace_system
+						DW $1B08,txt_stat_condition
+						DW $2308,txt_stat_fuel
+						DW $2B08,txt_stat_cash
+						DW $3308,txt_stat_legal_status
+						DW $3B08,txt_stat_rating
+						DW $4B08,txt_stat_equipment	
 
 equipment_cursor		DW  $0000
 present_position		equ	$0B98
@@ -196,11 +212,14 @@ draw_STAT_boilertext:   ld		b,10
                         ld		hl,status_boiler_text
                         call	STAT_print_boiler_text
                         ret
-                                   
+                          
+GetStatFuelLevel:       INCLUDE "Menus/get_fuel_level_inlineinclude.asm"
+                          
 ;----------------------------------------------------------------------------------------------------------------------------------	
 draw_STAT_maintext:    	ld		bc,$0101
                         ld		de,$BEFD
                         ld		a,$C0
+                        break
                         MMUSelectLayer2
                         call	l2_draw_box
                         call    draw_STAT_boilertext
@@ -233,7 +252,7 @@ draw_STAT_maintext:    	ld		bc,$0101
                         MMUSelectLayer2
                         ld      e,txt_status_colour
                         call    l2_print_at
-.DisplayFuel:           call	GetFuelLevel
+.DisplayFuel:           call	GetStatFuelLevel
                         ld		hl, txt_fuel_level
                         ld		a,(hl)
                         cp		'0'
@@ -272,6 +291,8 @@ draw_STAT_maintext:    	ld		bc,$0101
                         MMUSelectLayer2
                         ld      e,txt_status_colour
                         call    l2_print_at
+                        ;break
+                        
                         ret
 
 

@@ -20,6 +20,10 @@ Splinter:	            DB $B0                      ; Number of cargo canisters re
                         DB 0                        ; NewB Tactics 
                         DB 0                        ; AI Flags            
                         DB $00                      ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 
 SplinterVertices:	    DB $18, $19, $10, $DF, $12, $33
                         DB $00, $0C, $0A, $3F, $02, $33

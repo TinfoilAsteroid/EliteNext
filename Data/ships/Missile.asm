@@ -21,6 +21,10 @@ Missile:	            DB $00                     ; Number of cargo canisters rele
                         DB 0                       ; NewB Tactics 
                         DB 0                       ; AI Flags            
                         DB $00                     ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 
 ;;;     Byte 0 = X magnitide with origin at middle of ship
 ;;;		Byte 1 = Y magnitide with origin at middle of ship		

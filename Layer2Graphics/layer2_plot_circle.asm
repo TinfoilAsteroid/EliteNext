@@ -6,6 +6,99 @@ l2_circle_x			DB 0
 l2_circle_y			DB 0
 l2_circle_d			DB 0
 
+l2_circle_xHeap 	DS 2*66
+l2_circle_yHeap     DS 2*66
+l2_circle_heap_size DB 0
+l2_circle_clip_y    DW 0
+l2_circle_clip_x    DW 0
+l2_circle_flag      DB 0
+l2_circle_counter   DB 0
+;Sine table
+;FOR I%, 0, 31
+;
+; N = ABS(SIN((I% / 64) * 2 * PI))
+;
+; IF N >= 1
+;  EQUB 255
+; ELSE
+;  EQUB INT(256 * N + 0.5)
+; ENDIF
+;
+;NEXT
+;---------------------------------------------------------------------------------------------------------------------------------
+; in HL = xPixelPos, DE = yPixelPos, A = Radius
+;IFDEF   CIRCLE2
+;;;;+l2_circle_clipped:	ld		(l2_circle_radius),a
+;;;;+					ld		(l2_circle_clip_y),de
+;;;;+					ld		(l2_circle_clip_x),hl
+;;;;+					ZeroA
+;;;;+					ld		(l2_circle_heap_size),a
+;;;;+					ld		(l2_circle_counter),a
+;;;;+					dec		a
+;;;;+					ld		(l2_circle_flag),a
+;;;;+.CircleLoop:		call	SinCounter						; a = sin (counter) * 256
+;;;;+					ld		d,a
+;;;;+					ld		a,(l2_circle_radius)
+;;;;+					ld		e,a
+;;;;+					mul										; de = k * sin (counter) so d = k * sin (counter) / 256
+;;;;+					ld		e,d								; using de as TA
+;;;;+					ld		d,0
+;;;;+					ld		a,(l2_circle_counter)
+;;;;+					JumpIfALTNusng 33,.RightHalf
+;;;;+.LeftHalf:			NegateDE								; if >= 33 then DE = de * -1 (2's c)
+;;;;+					K6 = de + l2_circle_clip_x
+;;;;+					call	CosCounter
+;;;;+					ld		d,a
+;;;;+					ld		a,(l2_circla_radius)
+;;;;+					mul		de
+;;;;+					ld		e,d
+;;;;+					ld		d,0
+;;;;+					a 		= l2_counter + 15 mod 64
+;;;;+					JumpIfALTNusng	33, .BottomHalf
+;;;;+.TopHalf:			NegateDE
+;;;;+					K62 = de + l2_circle_clip_y
+;;;;+					ld		a,(l2_circle_flag)
+;;;;+					JumpIfAIsZZero		.SkipFlagUpdate
+;;;;+					inc		a
+;;;;+					ld		(l2_circle_flag),a
+;;;;+.SkipFlagUpdate:	
+;;;;+					
+;;;;+                X = K * SIN (CNT + 16) (i.e X = K * COS (CNT)
+;;;;+                A = (CNT + 15) mod 64
+;;;;+                if  A >= 33     ; top half of circle
+;;;;+                    X = neg X
+;;;;+                    T = negative
+;;;;+                call    Bline (draw segment)
+;;;;+                        K6(32) = TX + K4(10) = y corrc of center + new point
+;;;;+                        if flag <> 0
+;;;;+                            flag ++ (as flag initially will be $FF so go to 0)
+;;;;+                        BL5:    
+;;;;+                        if LSY2[LSP-1] <> $FF and LSY2 [LSP1] <> $FF    (BL5)
+;;;;+                            X15 [0 1] = K5(10)                      (BL1)
+;;;;+                            X15 [2 3] = K5(32)
+;;;;+                            X15 [4 5] = K6(10)
+;;;;+                            X15 [6 7] = K6(32)
+;;;;+                            call clip X1Y1 to X2Y2
+;;;;+                            if Line off scren goto BL5
+;;;;+                            IF swap <> 0
+;;;;+                                swap X1Y1 with X2Y2
+;;;;+                            Y = LAP                                 (BL9)
+;;;;+                            A = LSY2-1 [Y]
+;;;;+                            if A = $FF
+;;;;+                                LSX2[Y] = X1
+;;;;+                                LSY2[Y] = Y1
+;;;;+                                Y++
+;;;;+                                
+;;;;+                            Store X2 in LSX2(Y)                     (BL8)
+;;;;+                            Store Y2 in lSY2(y)
+;;;;+                            call    DrawLine from (X1 Y1 to X2 Y2)
+;;;;+                            if  XX13 <> 0 goto BL5
+;;;;+                                                                (BL7)
+;;;;+                        Copy data for K6(3210) into K5(3210) for next call (K5(10) = x  K5(32) = y)
+;;;;+                        CNT = CNT + STP
+;;;;+            while CNT < 65
+;ENDIF
+;---------------------------------------------------------------------------------------------------------------------------------
 ; ">l2_draw_circle BC = center row col, d = radius, e = colour"
 l2_draw_circle:     ld		a,e
                     ld		(.PlotPixel+1),a

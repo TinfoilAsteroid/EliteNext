@@ -20,6 +20,10 @@ Chameleon:	            DB $03                          ; Number of cargo caniste
                         DB 0                            ; NewB Tactics                   
                         DB ShipCanAnger                 ; AI Flags
                         DB $40                          ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+
 ChameleonVertices:	    DB $12, $00, $6E, $9F, $25, $01
                         DB $12, $00, $6E, $1F, $34, $01
                         DB $28, $00, $00, $9F, $8B, $25

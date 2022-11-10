@@ -97,6 +97,7 @@ loadCommander:          ld      hl, defaultSaveName             ; default debug 
                         call    copyCommanderFromSave
                         ClearMissileTargetting
                         call    SetPlayerRank
+                        SetMemFalse LaserBeamOn
                         ret
                         
  ; For now hard laod, later correctlt sequence gneeral vars and dma fill with 0 for a start
@@ -125,7 +126,7 @@ defaultCommander:       ldCopyStringLen defaultName, CommanderName, 8
                         SetAFalse
                         ld      (EquipmentFitted+EQ_FRONT_BEAM),a
                         ld		(MissionData),a						;The Plan/Mission
-                        ld      a,4                                  ; a = 0 = pulse laser
+                        ld      a,3                                  ; a = 0 = pulse laser
                         ld		(LaserType),a
                         ld      a,$FF                                 ; a = 255
                         ld		(LaserType+1),a
@@ -160,6 +161,7 @@ defaultCommander:       ldCopyStringLen defaultName, CommanderName, 8
                         call    LoadLaserToCurrent
                         ClearMissileTargetting
                         call    SetPlayerRank
+                        SetMemFalse LaserBeamOn
                         ret     
 
 

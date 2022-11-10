@@ -1,3 +1,4 @@
+ 
 front_page_page_marker  DB "FrontView   PG62"    
 
 draw_front_calc_alpha:  ld      b,a
@@ -380,7 +381,33 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         call    is_key_up_state
                         jr      z, .WarpNotPressed
                         SetMemTrue  WarpPressed                     ; This signals the event , teh main loop will cancel this as an acknowlege                        
-.WarpNotPressed:                        
+.WarpNotPressed:      
+                IFDEF   LASER_V2
+                        call    IsLaserUseable                      ; no laser or destroyed?
+                        jr      z,          .FireNotPressed
+.IsFirePressed:         ld      a,c_Pressed_FireLaser               ; else (beam type) if fire is pressed
+                        call    is_key_up_state 
+                        jr      z,.FireNotPressed
+.FirePressed:           ;break
+                        JumpIfMemNotZero    CurrentCooldown,     .LaserDone
+                        JumpIfMemNotZero    CurrentBurstPause,   .LaserDone
+                        JumpIfMemNotZero    CurrLaserBurstCount, .LaserDone
+                        JumpIfMemTrue       LaserBeamOn,         .LaserDone
+                        ldCopyByte          CurrLaserPulseRate,   CurrLaserBurstCount
+                        ldCopyByte          CurrLaserPulseOnTime, CurrLaserDuration
+                        SetMemTrue          LaserBeamOn
+                        ;call               TriggerLaserSound
+                        jp                  .LaserDone
+.FireNotPressed:        ReturnIfMemNotZero  CurrLaserBurstCount
+                        ReturnIfMemNotZero  CurrLaserDuration
+                        ReturnIfMemFalse    LaserBeamOn
+                        break
+                        ldCopyByte          CurrLaserPulseRest, CurrentCooldown
+                        SetMemFalse         LaserBeamOn
+                        SetMemZero          CurrLaserBurstCount
+                        SetMemZero          CurrentBurstPause
+.LaserDone:
+                ELSE
 .CheckForLaserPressed:  call    IsLaserUseable                      ; no laser or destroyed?
                         jr      z,.CheckTargetting
 .CanLaserStillFire:     SetMemFalse FireLaserPressed                ; default to no laser
@@ -415,6 +442,7 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
 .PulseLimitReached:     ;ZeroA                                       ;
                         ;ld      (CurrLaserPulseRateCount),a         ;
                         ;ldCopyByte CurrLaserPulseRest, CurrLaserPulseRestCount   ; start the rest phase
+                ENDIF
 ; . Here we check to see if the target lock has been pressed                        
 .CheckTargetting:       call    TargetMissileTest
 .CheckForMissile:       ld      a,c_Pressed_FireMissile             ; launch pressed?

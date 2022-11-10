@@ -20,6 +20,10 @@ Worm:	                DB $00                      ; Number of cargo canisters re
                         DB 0                        ; NewB Tactics 
                         DB ShipCanAnger             ; AI Flags            
                         DB $B0                      ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 WormVertices:	        DB $0A, $0A, $23, $5F, $02, $77
                         DB $0A, $0A, $23, $DF, $03, $77
                         DB $05, $06, $0F, $1F, $01, $24

@@ -20,6 +20,10 @@ Gecko:	                DB $00                         ; Number of cargo canister
                         DB 0                           ; NewB Tactics 
                         DB ShipCanAnger                ; AI Flags            
                         DB $60                         ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+
 GeckoVertices:	        DB $0A, $04, $2F, $DF, $03, $45
                         DB $0A, $04, $2F, $5F, $01, $23
                         DB $10, $08, $17, $BF, $05, $67

@@ -20,6 +20,10 @@ Logo:	                DB $00                    ; Number of cargo canisters rele
                         DB 0                      ; NewB Tactics 
                         DB 0                      ; AI Flags            
                         DB $FF                    ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 
 LogoVertices:	DB $00, $09, $37, $5F, $00, $00
 	DB $0A, $09, $1E, $DF, $00, $00

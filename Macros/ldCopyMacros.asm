@@ -19,6 +19,11 @@ SetMemTrue              MACRO   mem
                         xor     a
                         ld      (mem),a
                         ENDM                        
+                        
+SetMemZero:             MACRO   mem
+                        xor     a
+                        ld      (mem),a
+                        ENDM
 
 SetMemToN:              MACRO   mem,value
                         ld      a,value

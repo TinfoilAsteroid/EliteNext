@@ -18,7 +18,12 @@
 ;  VK_0    VK_9,   VK_8,   VK_7,   VK_6,   VK_P ,    VK_O,  VK_I,   VK_U,   VK_Y
 ;   30     31      32      33      34      35       36      37      38      39       
 ; VK_ENTER VK_L,   VK_K,   VK_J,   VK_H,   VK_SPACE VK_SYM, VK_M,   VK_N,   VK_B
-; 
+;
+; ZX Spectrum Next Compound keys
+;   40     41       42       43      44      45       46       47
+;  VK_SEMI VK_QUOTE VK_COMMA VK_STOP VK_UP   VK_DOWN  VK_LEFT  VK _RIGHT        $Register B0 bits 7 to 0    (Set to set ULA Register ($68) bit to to prevent default keystrokes
+;   48       49      50       51         52          53       54      55
+;  VK_DELETE VK_EDIT VK_BREAK VK_INV_VID VK_TRUE_VID VK_GRAPH VK_CAPS VK_EXTEND $Register B1 bits 7 to 0
 ; Default map
 ;-----------------------------------------------------------------------------------------------------------------------------------
 ;   0          1           2             3              4           5           6           7           8           9       
@@ -39,6 +44,16 @@
 ;   VK_ENTER   VK_L,       VK_K,         VK_J,          VK_H,       VK_SPACE    VK_SYM,     VK_M,       VK_N,       VK_B
 ;              Launch                    Distance       Hyperspace  Laser                               DockComp    BuyCargo
 ;              ResumeGame                WarpJump
+;-----------------------------------------------------------------------------------------------------------------------------------
+;   40         41          42            43             44          45          46          47          48          49       
+;   VK_SEMI    VK_QUOTE    VK_COMMA      VK_STOP        VK_UP       VK_DOWN     VK_LEFT     VK _RIGHT   VK_DELETE   VK_EDIT
+;   Market     EquipShip   PlanetData    NearestObject  Map Cursor no auto repeat....................   Delete      Find System
+;                                                                                   
+;-----------------------------------------------------------------------------------------------------------------------------------
+;   50         51          52            53             54          55
+;   VK_BREAK   VK_INV_VID  VK_TRUE_VID   VK_GRAPH       VK_EXTCAPS  VK_EXTEND 
+;   EscapePod  Inventory   Status        GalacticChart  LocalChart  SystemJump
+;                                                     
 
 ; You can read address to check keystate by address KeyboardMap + c_Pressed corresponding key. There is also an addr_ helper too
 
@@ -85,6 +100,22 @@ c_Pressed_Find          equ 39 * 2
 c_Pressed_Yes           equ 40 * 2
 c_Pressed_No            equ 41 * 2
 c_Pressed_Warp          equ 42 * 2
+c_Pressed_ExtMarket     equ 43 * 2
+c_Pressed_ExtEquip      equ 44 * 2
+c_Pressed_ExtPlanet     equ 45 * 2
+c_Pressed_ExtNearest    equ 46 * 2
+c_Pressed_ExtCurUp      equ 47 * 2
+c_Pressed_ExtCurDown    equ 48 * 2
+c_Pressed_ExtCurLeft    equ 49 * 2
+c_Pressed_ExtCurRight   equ 50 * 2
+c_Pressed_ExtDelete     equ 51 * 2
+c_Pressed_ExtFindSystem equ 52 * 2
+c_Pressed_ExtEscapePod  equ 53 * 2
+c_Pressed_ExtInventory  equ 54 * 2
+c_Pressed_ExtStatus     equ 55 * 2
+c_Pressed_ExtGlactic    equ 56 * 2
+c_Pressed_ExtLocal      equ 57 * 2
+c_Pressed_ExtSystemJump equ 58 * 2
 
 ; half row 1
 VK_CAPS  				equ 0
@@ -96,7 +127,7 @@ VK_V  					equ 4
 VK_A  					equ 5
 VK_S  					equ 6
 VK_D  					equ 7
-VK_F  					equ 8
+VK_F					equ 8
 VK_G  					equ 9
 ; half row 3
 VK_Q  					equ 10
@@ -134,7 +165,24 @@ VK_SYM  				equ 36
 VK_M  					equ 37
 VK_N  					equ 38
 VK_B  					equ 39
-
+; Extended Group B0
+VK_SEMI                 equ 40
+VK_QUOTE                equ 41
+VK_COMMA                equ 42
+VK_STOP                 equ 43
+VK_UP                   equ 44
+VK_DOWN                 equ 45
+VK_LEFT                 equ 46
+VK_RIGHT                equ 47
+; Extended Group B1
+VK_DELETE               equ 48
+VK_EDIT                 equ 49
+VK_BREAK                equ 50
+VK_INV_VID              equ 51
+VK_TRUE_VID             equ 52
+VK_GRAPH                equ 53
+VK_EXTCAPS              equ 54
+VK_EXTEND               equ 55
 ;KeyboardMapping
 KeyCode_Front        	equ VK_1
 KeyCode_Aft          	equ VK_2
@@ -148,7 +196,7 @@ KeyCode_Accellerate  	equ VK_W
 KeyCode_Decellerate  	equ VK_S
 KeyCode_FireLaser    	equ VK_SPACE
 KeyCode_TargetMissle 	equ VK_T
-KeyCode_FireMissile  	equ VK_F
+KeyCode_FireMissile  	equ VK_STOP
 KeyCode_Find        	equ VK_F
 KeyCode_UnarmMissile 	equ VK_R
 KeyCode_ECM          	equ VK_E
@@ -171,7 +219,7 @@ KeyCode_GameSkip     	equ VK_Z
 KeyCode_Save         	equ VK_O
 KeyCode_Freeze       	equ VK_B
 KeyCode_Resume       	equ VK_L
-KeyCode_Recentre     	equ VK_D
+KeyCode_Recentre     	equ VK_STOP
 KeyCode_Quit         	equ VK_Y
 KeyCode_PlanetData   	equ VK_0
 KeyCode_CursorUp        equ VK_Q
@@ -179,10 +227,26 @@ KeyCode_CursorDown      equ VK_A
 KeyCode_PressedYes      equ VK_Y
 KeyCode_PressedNo       equ VK_N
 KeyCode_Warp            equ VK_J
+KeyCode_ExtMarket       equ VK_SEMI
+KeyCode_ExtEquip        equ VK_QUOTE
+KeyCode_ExtPlanet       equ VK_COMMA
+KeyCode_ExtNearest      equ VK_STOP
+KeyCode_ExtCurUp        equ VK_UP
+KeyCode_ExtCurDown      equ VK_DOWN
+KeyCode_ExtCurLeft      equ VK_LEFT
+KeyCode_ExtCurRight     equ VK_RIGHT
+KeyCode_ExtDelete       equ VK_DELETE
+KeyCode_ExtFindSystem   equ VK_EDIT
+KeyCode_ExtEscapePod    equ VK_BREAK
+KeyCode_ExtInventory    equ VK_INV_VID
+KeyCode_ExtStatus       equ VK_TRUE_VID
+KeyCode_ExtGlactic      equ VK_GRAPH
+KeyCode_ExtLocal        equ VK_EXTCAPS
+KeyCode_ExtSystemJump   equ VK_EXTEND 
 
-Keys					DS	40          ; This is the list of key states for all the VK keys presssed i.e. VK_CAPS through to VK_B
+Keys					DS	55          ; This is the list of key states for all the VK keys presssed i.e. VK_CAPS through to VK_B
 c_KeyBoardLen 			equ $ - Keys
-RawKeys					DS	8
+RawKeys					DS	10          ; increased for extended keys
 KeyAddrTab				DB	$FE, $FD, $FB, $F7, $EF, $DF, $BF, $7F
 ; Now keyboard map lists each game key and the corresponding address in the Keys table to get the value. This way redefining keys is just a case 
 ; of updating this table with the respective location to look up
@@ -195,9 +259,12 @@ KeyboardMap             DW  Keys+KeyCode_Front        ,Keys+KeyCode_Aft         
                         DW  Keys+KeyCode_GalacticChrt ,Keys+KeyCode_LocalChart   ,Keys+KeyCode_MarketPrices ,Keys+KeyCode_Status       ,Keys+KeyCode_Inventory    
                         DW  Keys+KeyCode_GameSkip     ,Keys+KeyCode_Save         ,Keys+KeyCode_Freeze       ,Keys+KeyCode_Resume       ,Keys+KeyCode_Recentre     
                         DW  Keys+KeyCode_Quit         ,Keys+KeyCode_PlanetData   ,Keys+KeyCode_CursorUp     ,Keys+KeyCode_CursorDown   ,Keys+KeyCode_Find
-                        DW  Keys+KeyCode_PressedYes   ,Keys+KeyCode_PressedNo    ,Keys+KeyCode_Warp
-
-ASCII_Map:              DB "#","Z","X","C","V"
+                        DW  Keys+KeyCode_PressedYes   ,Keys+KeyCode_PressedNo    ,Keys+KeyCode_Warp         ,Keys+KeyCode_ExtMarket    ,Keys+KeyCode_ExtEquip
+                        DW  Keys+KeyCode_ExtPlanet    ,Keys+KeyCode_ExtNearest   ,Keys+KeyCode_ExtCurUp     ,Keys+KeyCode_ExtCurDown   ,Keys+KeyCode_ExtCurLeft
+                        DW  Keys+KeyCode_ExtCurRight  ,Keys+KeyCode_ExtDelete    ,Keys+KeyCode_ExtFindSystem,Keys+KeyCode_ExtEscapePod ,Keys+KeyCode_ExtInventory 
+                        DW  Keys+KeyCode_ExtStatus    ,Keys+KeyCode_ExtGlactic   ,Keys+KeyCode_ExtLocal     ,Keys+KeyCode_ExtSystemJump
+s
+ASCII_Map:              DB "?","Z","X","C","V"
                         DB "A","S","D","F","G"
                         DB "Q","W","E","R","T"
                         DB "1","2","3","4","5"
@@ -205,7 +272,10 @@ ASCII_Map:              DB "#","Z","X","C","V"
                         DB "P","O","I","U","Y"
                         DB ">","L","K","J","H"
                         DB " ","^","M","N","B"
-
+                        DB "?","?","?","?","?"  ; Extended keys
+                        DB "?","?","?","#","?"  ; delete key is marked as hash
+                        DB "?","?","?","?","?"
+                        DB "?"
 ; mapping of a code to the lookup table Keyboard map. So if you are using an addr_Pressed you can then fetch from KeyboardMap the address in Keys
 ; for the raw key press status
 addr_Pressed_Front         equ KeyboardMap+c_Pressed_Front       
@@ -276,7 +346,6 @@ scan_keyboard:          ld		ix,RawKeys                      ; hl = table of raw 
                         inc		hl                              ; and ready for next read
 .ProcessInputBits:      ld		b,5								; loop all bits (there are only 5 keys to a group)
 .ProcessBitsLoop:       rra                                     ; shit bit 0 into carry
-                        bit		0,a								; is bit set
                         jr      nc,.SetKeyPressed               ; low bit means it was pressed
                         ld      iyl,a
                         ZeroA
@@ -293,6 +362,36 @@ scan_keyboard:          ld		ix,RawKeys                      ; hl = table of raw 
                         djnz	.ProcessBitsLoop				; Process all key group bits
                         dec     c                               ; thats one row of bits all processed
                         jr      nz,.PortReadLoop				; Read next input port
+.ReadExtend0:           GetNextReg EXTENDED_KEYS_0_REGISTER
+                        ld      (RawKeys+8),a                      ; save to extended slot
+                        ld      b,8
+                        ld      hl,Keys + VK_SEMI
+.ProcessExtend0:        rla                                     ; shift bits left into carry for extended keys
+                        jr      nc,.SetExtend0KeyPressed
+.Extend0NotPressed:     ZeroA                       
+                        jp      .SetExtend0Key
+.SetExtend0KeyPressed:  ld      a,(hl)
+                        cp      2
+                        jr      z,.Extend0AlreadyHeld
+                        inc     a
+.SetExtend0Key:         ld      (hl),a
+.Extend0AlreadyHeld:    inc     hl
+                        djnz    .ProcessExtend0
+.ReadExtend1:           GetNextReg EXTENDED_KEYS_1_REGISTER
+                        ld      (RawKeys+9),a                      ; save to extended slot
+                        ld      b,8
+                        ld      hl,Keys + VK_DELETE
+.ProcessExtend1:        rla                                     ; shift bits left into carry for extended keys
+                        jr      nc,.SetExtend1KeyPressed
+.Extend1NotPressed:     ZeroA                       
+                        jp      .SetExtend1Key
+.SetExtend1KeyPressed:  ld      a,(hl)
+                        cp      2
+                        jr      z,.Extend1AlreadyHeld
+                        inc     a
+.SetExtend1Key:         ld      (hl),a
+.Extend1AlreadyHeld:    inc     hl
+                        djnz    .ProcessExtend1
                         ret
                         
                         
@@ -532,11 +631,10 @@ InputName:              SetMemFalse InputChanged
                         cp      "A"
                         jr      nc,.AlphaPressed
 ; CAPS and Symbol act as delete for now
-.DeleteOrEnterOnly      cp      " "                             ; if space was  pressed (mapped to Hash in ASCII table))
-                        jr      z,.SpacePressed               ; for now we will ignore the shift and just assume delete
+.DeleteOrEnterOnly      cp      "#"                             ; if space was  pressed (mapped to Hash in ASCII table))
+                        jr      z,.SpacePressed                 ; for now we will ignore the shift and just assume delete
                         cp      ">"         ; ENTER
                         jr      z,.EnterPressed
-                        cp      "#"         ; CAPS
                         ret
 .AlphaPressed:          ld      b,a
                         ld      a,(InputCursor)

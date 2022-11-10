@@ -20,6 +20,10 @@ Plate:	                DB $80                    ; Number of cargo canisters rel
                         DB 0                      ; NewB Tactics 
                         DB ShipCanAnger           ; AI Flags            
                         DB $00                    ; chance of ECM module
+                        DB $FF                              ; Supports Solid Fill = false
+                        DW $0000                            ; no solid data
+                        DB $00                              ; no solid data
+                        
 
 	
 PlateVertices:	        DB $0F, $16, $09, $FF, $FF, $FF
