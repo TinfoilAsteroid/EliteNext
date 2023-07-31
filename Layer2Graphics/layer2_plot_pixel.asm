@@ -1,3 +1,6 @@
+
+line_gfx_colour db $DF
+
 l2_plot_macro:          MACRO
                         ld      a,b
                         JumpIfAGTENusng 192 ,.NoPlot

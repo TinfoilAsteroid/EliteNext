@@ -21,7 +21,7 @@ CargoType5              DB $00                                     ; Number of c
                         DB 0                                       ; AI Flags
                         DB $0                                      ; chance of ECM module
                         DB $00                                     ; Supports Solid Fill
-                        DW CargoType5FaceTrangles                  ;
+                        DW CargoType5Traingles                  ;
                         DB CargoType5TrainglesSize
 ; So cargo is               Edge offset $0050  Face Offset $008C, Verices will alwys be +20, LineMax 31 -> 4  EdgeCnt 15  VertexCnt 60 -> 10     FaceCn 28 -> 7
 ;                                       Faces
@@ -70,7 +70,7 @@ CargoType5Len           equ $  - CargoType5
 ; Ideal is pointers have a DW at the end to the list of triangles and count
 ; for testing we will do a simple search
 ;                          Nrm NodeOffset X 1
-                                 0    1    2
+;                                0    1    2
 CargoType5Traingles     DB $00,$00*4, $01*4, $04*4
                         DB $00,$01*4, $02*4, $04*4
                         DB $00,$02*4, $03*4, $04*4

@@ -1,29 +1,25 @@
 ;divdide by 16 using undocumented instrunctions
-Norm256mulAdivQ:
-    ld      b,a
-    ld      c,0
-    ld      d,0
-    ld      a,(varQ)
-    ld      e,a
+Norm256mulAdivQ:        ld      b,a
+                        ld      c,0
+                        ld      d,0
+                        ld      a,(varQ)
+                        ld      e,a
 ;Input: BC = Dividend, DE = Divisor, HL = 0
 ;Output: BC = Quotient, HL = Remainder
-NormDIV16UNDOC:
-    ld      hl,0
-    ld      a,b 
-    ld      b,16
-NormDIV16UNDOCLOOP:
-	sll	    c		; unroll 16 times
-	rla	    		; ...
-	adc	    hl,hl		; ...
-	sbc	    hl,de		; ...
-	jr	    nc,NormDIV16UNDOCSKIP		; ...
-	add	    hl,de		; ...
-	dec	    c		; ...
-NormDIV16UNDOCSKIP:
-    djnz    NormDIV16UNDOCLOOP
-    ld      a,c
-    ld      (varR),a
-    ret
+NormDIV16UNDOC:         ld      hl,0
+                        ld      a,b 
+                        ld      b,16
+NormDIV16UNDOCLOOP:     sll	    c		; unroll 16 times
+                        rla	    		; ...
+                        adc	    hl,hl		; ...
+                        sbc	    hl,de		; ...
+                        jr	    nc,NormDIV16UNDOCSKIP		; ...
+                        add	    hl,de		; ...
+                        dec	    c		; ...
+NormDIV16UNDOCSKIP:     djnz    NormDIV16UNDOCLOOP
+                        ld      a,c
+                        ld      (varR),a
+                        ret
 
 Norm256mulAdivQSignA:   ld      iyh,a
                         ClearSignBitA

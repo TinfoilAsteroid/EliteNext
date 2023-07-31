@@ -1,3 +1,8 @@
+JumpIfHLNegative:       MACRO target
+                        bit     7,h
+                        jp      nz,target
+                        ENDM
+
 JumpIfPositive:	        MACRO target
                         jp		p, target
                         ENDM
@@ -269,6 +274,13 @@ JumpIfRegIsNotZero:     MACRO   reg, target
                         ld      a,reg
                         and     a
                         jp	    nz,target
+                        ENDM
+
+JumpIfRegLTE:           MACRO   reg, value, target
+                        ld      a,reg
+                        cp      value
+                        jp	    z,target
+                        jp		c, target     
                         ENDM
 
 JumpIfAIsNotZero:       MACRO target

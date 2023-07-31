@@ -78,8 +78,8 @@
 ;		..BCDEHL/IXIY/af......	same
 ;		AF....../..../..bcdehl	different
 ;
-line_gfx_colour db $DF
-line_gfx_coords	dw 0
+line_gfx_coords         dw  0
+
 LineHLtoDE:
 TestMaxY:               ld	a,h ; were h = y or l = y?
                         cp	192

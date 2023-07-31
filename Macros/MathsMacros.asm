@@ -1,3 +1,53 @@
+; sets z flag is HL less than 255 else sets it to nz (note opposite of GT127)
+IsHLGT255:              MACRO
+                        bit     7,h
+                        ret     z
+                        ld      a,h
+                        and     a
+                        ENDM
+                        
+; Sets z flat if HL = 255 else sets it to nz                        
+IsHLEqu255:             MACRO
+                        ld      a,h
+                        and     a               ; if its non zero then it can't be 255
+                        ret     nz
+                        ld      a,l
+                        inc     a               ; if it was 255 the inc will set it to zero
+                        ENDM
+                        
+; Sets Z flag if GT 127 else nz
+IsHLGT127:              MACRO       
+                        bit     7,h             ; -ve?
+                        jr      nz,.DoneCheck
+                        ld      a,h             ; +ve > 256?
+                        and     a
+                        jr      nz,.DoneCheck
+                        ld      a,l
+                        and     $80             ; this will set z to false if bit 7 set and clear lower bits
+                        cp      $80             ; this will set z to true if bit 7 set
+.DoneCheck:
+                        ENDM
+
+ReturnIfHLGT127:        MACRO       
+                        bit     7,h             ; -ve?
+                        jr      nz,.DoneCheck   ; forces check complete
+                        ld      a,h             ; +ve > 256?
+                        and     a               ;
+                        ret     nz              ; forces a return
+                        bit     7,l             ; bit 7 of lower set?
+                        ret     nz              ; forces a return
+.DoneCheck:
+                        ENDM
+                        
+IsDEGT127:              MACRO       
+                        bit     7,d
+                        jr      nz,.DoneCheck
+                        ld      a,d
+                        jr      nz,.DoneCheck
+                        ld      a,e
+                        and     $80
+.DoneCheck:
+                        ENDM
 
 ABSa2c:                 MACRO
                         bit     7,a
@@ -132,6 +182,7 @@ cpHLDELeadSign:         MACRO
                         ret
 .HLGTDE:                ClearCarryFlag
                         ret
+                        ENDM
                       
 ;Unsigned
 ;If HL == DE, then Z flag is set.

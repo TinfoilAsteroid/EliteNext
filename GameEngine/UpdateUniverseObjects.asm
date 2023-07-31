@@ -53,13 +53,17 @@ UpdateUniverseObjects:  xor     a
                         ld      iyl,a                                           ; save type into iyl for later
 .UniverseObjectFound:   ld      a,d                                             ; Get back Universe slot as we want it
                         MMUSelectUniverseA                                      ; and we apply roll and pitch
-                        IFDEF   CLIPDEBUG
+        IFDEF   CLIPDEBUG
 .DEBUG:                     ld      a,(SelectedUniverseSlot)
                             cp      0
                             jr      nz,.ProperUpdate
+        ENDIF
+        IFDEF   DEBUG_SHIP_MOVEMENT
 .DebugUpdate:               call    FixStationPos                        
+        ENDIF
+        IFDEF   CLIPDEBUG
                             jp      .CheckExploding
-                        ENDIF
+        ENDIF
 .ProperUpdate:          call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
                         ld      a,(UBnKRotZCounter)
                         cp      0
@@ -219,6 +223,40 @@ DrawForwardShips:       xor     a
                         IFDEF ROTATIONDEBUG
                             call    SavePosition
                         ENDIF
+;Debug set position     
+              ;         ld      hl,$0000
+              ;         ld      a,$00
+              ;         ld      (UBnKxlo),hl
+              ;         ld      (UBnKxsgn),a
+              ;         ld      hl,$0148
+              ;         ld      a,$00
+              ;         ld      (UBnKylo),hl
+              ;         ld      (UBnKysgn),a
+              ;         ld      hl,$0149
+              ;         ld      a,$00
+              ;         ld      (UBnKzlo),hl
+              ;         ld      (UBnKzsgn),a
+              ;         ld      hl,$A558
+              ;         ld      (UBnkrotmatSidevX),hl
+              ;         ld      hl,$D8CE
+              ;         ld      (UBnkrotmatSidevY),hl
+              ;         ld      hl,$0000
+              ;         ld      (UBnkrotmatSidevZ),hl
+              ;         ld      hl,$58CE
+              ;         ld      (UBnkrotmatRoofvX),hl
+              ;         ld      hl,$A558
+              ;         ld      (UBnkrotmatRoofvY),hl
+              ;         ld      hl,$0000
+              ;         ld      (UBnkrotmatRoofvZ),hl
+              ;         ld      hl,$8000
+              ;         ld      (UBnkrotmatNosevX),hl
+              ;         ld      hl,$8000
+              ;         ld      (UBnkrotmatNosevY),hl
+              ;         ld      hl,$6000
+              ;         ld      (UBnkrotmatNosevZ),hl
+                        
+                        
+                        
 .ProcessUnivShip:       call    ProcessShip          ; The whole explosion logic is now encapsulated in process ship ;TODO TUNE THIS   ;; call    ProcessUnivShip
 ; Debris still appears on radar                        
                         IFDEF ROTATIONDEBUG
@@ -233,7 +271,8 @@ DrawForwardShips:       xor     a
                         CallIfMemTrue ConsoleRedrawFlag,UpdateScannerShip ; Always update ship positions                        
 .ProcessedDrawShip:     ld      a,(CurrentShipUniv)
                         inc     a
-                        JumpIfALTNusng   UniverseSlotListSize, .DrawShipLoop
+                        ;   DEBUGGING SHIPS RENDERING
+                        ;   JumpIfALTNusng   UniverseSlotListSize, .DrawShipLoop
 .DrawSunCompass:        MMUSelectSun
                         call    UpdateCompassSun                ; Always update the sun position
                         call    UpdateScannerSun                ; Always attempt to put the sun on the scanner 
@@ -249,8 +288,7 @@ DrawForwardShips:       xor     a
                         
 ;..................................................................................................................................
                         
-TestForNextShip:        ld      a,c_Pressed_Quit
-                        call    is_key_pressed
+TestForNextShip:        MacroIsKeyPressed c_Pressed_Quit
                         ret     nz
                         ld      a,(currentDemoShip)
                         inc     a

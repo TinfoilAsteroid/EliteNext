@@ -40,6 +40,7 @@ SPRITEAddr              equ $e000
 ConsoleImageAddr        equ $e000
 GalaxyDataAddr          equ $e000
 SoundAddr               equ $e000
+KeyboardAddr            equ $e000
 
 EXSDOSMMU0              equ MMU_SLOT_0_REGISTER
 MathsTablesMMU          equ MMU_SLOT_0_REGISTER
@@ -69,6 +70,7 @@ StockTableMMU		    equ MMU_SLOT_7_REGISTER
 ConsoleImageDataMMU	    equ MMU_SLOT_7_REGISTER
 GalaxyDataMMU	        equ MMU_SLOT_7_REGISTER
 SoundMMU                equ MMU_SLOT_7_REGISTER
+KeyboardMMU             equ MMU_SLOT_7_REGISTER
 
 ; banks 8 to 17 are reserved for layer 2 memory
 BankResetUniv           equ 49
@@ -120,5 +122,8 @@ BankGalaxyData7         equ 98
 
 BankMathsTables         equ 99
 BankSound               equ 100
+BankKeyboard            equ 101
 
 BankROM                 equ 255
+
+

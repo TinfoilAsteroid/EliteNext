@@ -219,7 +219,6 @@ GetStatFuelLevel:       INCLUDE "Menus/get_fuel_level_inlineinclude.asm"
 draw_STAT_maintext:    	ld		bc,$0101
                         ld		de,$BEFD
                         ld		a,$C0
-                        break
                         MMUSelectLayer2
                         call	l2_draw_box
                         call    draw_STAT_boilertext
@@ -363,11 +362,9 @@ draw_status_menu:       InitNoDoubleBuffer
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Handles all the input whilst in the market menu
-loop_STAT_menu:         ld      a,c_Pressed_CursorUp  
-                        call    is_key_pressed
+loop_STAT_menu:         MacroIsKeyPressed c_Pressed_CursorUp  
                         call    z,STAT_UpPressed
-                        ld      a,c_Pressed_CursorDown
-                        call    is_key_pressed
+                        MacroIsKeyPressed c_Pressed_CursorDown
                         call    z,STAT_DownPressed
                         ret
 

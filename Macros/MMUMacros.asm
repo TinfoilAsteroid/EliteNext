@@ -11,6 +11,10 @@ MMUSelectMathsTables:MACRO
                      nextreg MathsTablesMMU,    BankMathsTables
                      ENDM
 
+MMUSelectKeyboard:   MACRO
+                     nextreg KeyboardMMU,       BankKeyboard
+                     ENDM
+
 MMUSelectSpriteBank: MACRO
 					 nextreg SpritememMMU,	    BankSPRITE
 					 ENDM

@@ -1,3 +1,13 @@
+ReturnIfHLNegative:     MACRO   target
+                        bit     7,h
+                        ret     nz
+                        ENDM
+
+ReturnIfDENegative:     MACRO   target
+                        bit     7,d
+                        ret     nz
+                        ENDM
+
 ReturnOnBitSet:         MACRO  reg, bitnbr
                         bit 	bitnbr,reg
                         ret     nz

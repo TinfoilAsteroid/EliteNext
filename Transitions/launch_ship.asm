@@ -164,7 +164,8 @@ draw_launch_ship:       MMUSelectLayer1
                         ret
                 
 
-draw_docking_ship:      MMUSelectLayer1
+draw_docking_ship:      break
+                        MMUSelectLayer1
                         call    l1_cls
                         call    l1_attr_cls
                         MMUSelectSpriteBank

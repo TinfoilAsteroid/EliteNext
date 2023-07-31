@@ -1,0 +1,60 @@
+; Input:
+;       HL = 1st value
+;       DE = 2nd value
+; Output:
+;       CF, ZF = results of comparison:
+;
+;               CF      ZF      Result
+;               -----------------------------------
+;               0       0       HL > DE
+;               0       1       HL == DE
+;               1       0       HL < DE
+;               1       1       Impossible
+;
+
+CompareBCDESigned:  push    hl
+                    and     a
+                    ld      hl,bc
+                    sbc     hl,de
+                    pop     hl
+                    ret
+
+CompareDEBCSigned:  push    hl
+                    and     a
+                    ld      hl,de
+                    sbc     hl,bc
+                    pop     hl
+                    ret                    
+
+; IF HL equals DE, Z=1,C=0
+; IF HL is less than DE, Z=0,C=1
+; IF HL is more than DE, Z=0,C=0
+CompareHLDESigned:
+compare16HLDE:      push    hl
+                    and     a
+                    sbc     hl,de
+                    pop     hl
+                    ret
+
+CompareHLBCSigned:  push    hl
+                    and     a
+                    sbc     hl,bc
+                    pop     hl
+                    ret
+
+; With compare signed we do ABS comparison
+; this is used for view ports as we just want to know if its +/- out side of 90 degrees
+
+compare16HLDEABS:   push    hl,,de
+                    ld      a,h                                     ; Quick pass see of both the same sign
+                    and     SignMask8Bit
+                    ld      h,a
+                    ld      a,d                                     ; Quick pass see of both the same sign
+                    and     SignMask8Bit
+                    ld      d,a
+                    and     a
+                    sbc     hl,de
+                    pop     hl,,de
+                    ret
+                    
+                   

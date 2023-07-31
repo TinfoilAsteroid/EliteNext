@@ -477,13 +477,15 @@ PrepLines:              ldWriteZero UbnkLineArrayLen                    ; curren
 .PrepLoop:              ld          a,(PLEDGECTR)
                         sla         a
                         sla         a
-                        call        getVertexNodeAtAToX1Y1              ; get the points X1Y1 from node
+                        ld          de,UBnkX1
+                        call        getVertexNodeAtAtoDE                ;;  getVertexNodeAtAToX1Y1              ; get the points X1Y1 from node
                         ld          a,(PLEDGECTR)
                         inc         a
                         ld          (PLEDGECTR),a
                         sla         a
                         sla         a
-                        call        getVertexNodeAtAToX2Y2              ; get the points X2Y2 from node
+                        ld          de,UBnkX2
+                        call        getVertexNodeAtAtoDE                ;;  getVertexNodeAtAToX2Y2              ; get the points X2Y2 from node
                         call        ClipLineV3
                         ld          a,(ClipSuccess)
                         and         a

@@ -1,4 +1,6 @@
 ;    DEFINE DEBUGMISSILELAUNCH 1
+;    DEFINE PLOTPOINTSONLY 1
+;   DEFINE OVERLAYNODES 1
 ; In  flight ship data tables
 ; In  flight ship data tables
 ; There can be upto &12 objects in flight.
@@ -64,8 +66,8 @@ VarBackface                 DB 0
 FaceArraySize               equ 30
 EdgeHeapSize                equ 40
 NodeArraySize               equ 40
-LineArraySize               equ 50
-TraingleArraySize           equ 25
+LineArraySize               equ 50; incerased for max of 28 lines, of 4 points of 16 bits each
+; ONLY IF TESTING SOLID FILL TraingleArraySize           equ 25
 ; Storage arrays for data
 ; Structure of arrays
 ; Visibility array  - 1 Byte per face/normal on ship model Bit 7 (or FF) visible, 0 Invisible
@@ -79,8 +81,8 @@ UbnkFaceVisArray            DS FaceArraySize            ; XX2 Up to 16 faces thi
 ; When we use traingles we can cheat a bit on clipping as all lines will be horizontal so clipping is much simplified
 UBnkNodeArray               DS NodeArraySize * 4        ; XX3 Holds the points as an array, its an array not a heap
 UBnkNodeArray2              DS NodeArraySize * 4        ; XX3 Holds the points as an array, its an array not a heap
-UbnkLineArray               DS LineArraySize * 4        ; XX19 Holds the clipped line details
-UBnkTriangleOverspill       DS TraingleArraySize * 4    ; jsut a padding for testing
+UbnkLineArray               DS LineArraySize * 8        ; XX19 Holds the clipped line details
+; ONLY IF TESTING SOLID FILL UBnkTriangleOverspill       DS TraingleArraySize * 4    ; jsut a padding for testing
 UBnkLinesHeapMax            EQU $ - UbnkLineArray
 UBnkTraingleArray           EQU UbnkLineArray           ; We can use the line array as we draw lines or traingles
 UbnkEdgeProcessedList DS EdgeHeapSize
@@ -106,25 +108,25 @@ UbnKEdgeExplosionType       DS 1
 UBnkXX19                    DS  3
 
 UBnkHullCopy                DS  ShipDataLength
-ScoopDebrisAddr             equ UBnkHullCopy + ScoopDebrisOffset	 
-MissileLockLoAddr           equ UBnkHullCopy + MissileLockLoOffset	 
-MissileLockHiAddr           equ UBnkHullCopy + MissileLockHiOffset	 
-EdgeAddyAddr                equ UBnkHullCopy + EdgeAddyOffset		 
-LineX4Addr                  equ UBnkHullCopy + LineX4Offset		 
-GunVertexAddr               equ UBnkHullCopy + GunVertexOffset		 
-ExplosionCtAddr             equ UBnkHullCopy + ExplosionCtOffset	
-VertexCountAddr             equ UBnkHullCopy + VertexCountOffset	
-VertexCtX6Addr              equ UBnkHullCopy + VertexCtX6Offset	 
-EdgeCountAddr               equ UBnkHullCopy + EdgeCountOffset		 
-BountyLoAddr                equ UBnkHullCopy + BountyLoOffset		 
-BountyHiAddr                equ UBnkHullCopy + BountyHiOffset		 
-FaceCtX4Addr                equ UBnkHullCopy + FaceCtX4Offset		 
-DotAddr                     equ UBnkHullCopy + DotOffset			 
-EnergyAddr                  equ UBnkHullCopy + EnergyOffset		 
-SpeedAddr                   equ UBnkHullCopy + SpeedOffset			 
-FaceAddyAddr                equ UBnkHullCopy + FaceAddyOffset		 
-QAddr                       equ UBnkHullCopy + QOffset				 
-LaserAddr                   equ UBnkHullCopy + LaserOffset			 
+ScoopDebrisAddr             equ UBnkHullCopy + ScoopDebrisOffset     
+MissileLockLoAddr           equ UBnkHullCopy + MissileLockLoOffset   
+MissileLockHiAddr           equ UBnkHullCopy + MissileLockHiOffset   
+EdgeAddyAddr                equ UBnkHullCopy + EdgeAddyOffset        
+LineX4Addr                  equ UBnkHullCopy + LineX4Offset      
+GunVertexAddr               equ UBnkHullCopy + GunVertexOffset       
+ExplosionCtAddr             equ UBnkHullCopy + ExplosionCtOffset    
+VertexCountAddr             equ UBnkHullCopy + VertexCountOffset    
+VertexCtX6Addr              equ UBnkHullCopy + VertexCtX6Offset  
+EdgeCountAddr               equ UBnkHullCopy + EdgeCountOffset       
+BountyLoAddr                equ UBnkHullCopy + BountyLoOffset        
+BountyHiAddr                equ UBnkHullCopy + BountyHiOffset        
+FaceCtX4Addr                equ UBnkHullCopy + FaceCtX4Offset        
+DotAddr                     equ UBnkHullCopy + DotOffset             
+EnergyAddr                  equ UBnkHullCopy + EnergyOffset      
+SpeedAddr                   equ UBnkHullCopy + SpeedOffset           
+FaceAddyAddr                equ UBnkHullCopy + FaceAddyOffset        
+QAddr                       equ UBnkHullCopy + QOffset               
+LaserAddr                   equ UBnkHullCopy + LaserOffset           
 VerticesAddyAddr            equ UBnkHullCopy + VerticiesAddyOffset  
 ShipTypeAddr                equ UBnkHullCopy + ShipTypeOffset       
 ShipNewBitsAddr             equ UBnkHullCopy + ShipNewBitsOffset    
@@ -139,8 +141,9 @@ XX0                         equ UBnkHullCopy        ; general hull index pointer
 UBnkHullVerticies           DS  40 * 6              ; largetst is trasnport type 10 at 37 vericies so alows for 40 * 6 Bytes  = 
 UBnkHullEdges               DS  50 * 4              ; ype 10 is 46 edges so allow 50
 UBnkHullNormals             DS  20 * 4              ; type 10 is 14 edges so 20 to be safe
+    IFDEF SOLIDHULLTEST
 UBnkHullSolid               DS  100 * 4             ; Up to 100 triangles (May optimise so only loads non hidden faces later
-
+    ENDIF
 OrthagCountdown             DB  12
 
 UBnkShipCopy                equ UBnkHullVerticies               ; Buffer for copy of ship data, for speed will copy to a local memory block, Cobra is around 400 bytes on creation of a new ship so should be plenty
@@ -379,6 +382,7 @@ UnivSetDemoPostion:     call    UnivSetSpawnPosition
                         ld      h,a
 .SkipFurther            ld      (UBnKzlo),hl
                         ret
+    DISPLAY "Tracing 1", $
 ; --------------------------------------------------------------
 ; This sets the position of the current ship randomly, called after spawing
 UnivSetSpawnPosition:   call    InitialiseOrientation
@@ -437,7 +441,7 @@ ShipCargoType:          ld      a,(ShipTypeAddr)
                         ret
 .EscapePod:             ld      a,SlavesIndex
                         ret
-
+        IFDEF DEBUG_SHIP_MOVEMENT
 FixStationPos:          ld      hl, DebugPos
                         ld      de, UBnKxlo
                         ld      bc,9
@@ -447,12 +451,13 @@ FixStationPos:          ld      hl, DebugPos
                         ld      bc,6*3
                         ldir
                         ret
-                        
+        ENDIF
+        IFDEF DEBUG_SHIP_MOVEMENT
 DebugPos:               DB $00,$00,$00,$92,$01,$00,$7E,$04,$00                        
 DebugRotMat:            DB $37,$88,$9A,$DC,$1B,$F7
 DebugRotMat1:           DB $DF,$6D,$2A,$07,$C1,$83
 DebugRotMat2:           DB $00,$80,$4A,$9B,$AA,$D8                     
-                        
+        ENDIF
 
 ; --------------------------------------------------------------                        
 ; This sets current univrse object to space station
@@ -538,6 +543,7 @@ UnivInitRuntime:        ld      bc,UBnKRuntimeSize
 .ECMFitted:             SetMemTrue  UBnKECMFitted
 .DoneECM:               ; TODO set up laser power
                         ret
+    DISPLAY "Tracing 2", $
     
                         include "Universe/Ships/InitialiseOrientation.asm"
 
@@ -560,8 +566,8 @@ UnivInitRuntime:        ld      bc,UBnKRuntimeSize
 ;INPUTS:    bhl = dividend  cde = divisor where b and c are sign bytes
 ;OUTPUTS:   cahl = quotient cde = divisor
 ;--------------------------------------------------------------------------------------------------------
-                        include "./ModelRender/EraseOldLines-EE51.asm"
-                        include "./ModelRender/TrimToScreenGrad-LL118.asm"
+                        ;include "./ModelRender/EraseOldLines-EE51.asm"
+ ; OBSOLETE                       include "./ModelRender/TrimToScreenGrad-LL118.asm"
                         include "./ModelRender/CLIP-LL145.asm"
 ;--------------------------------------------------------------------------------------------------------
                         include "./Universe/Ships/CopyRotmatToTransMat.asm"
@@ -615,6 +621,8 @@ SetAllFacesHiddenLoop:  ld      (hl),a
 ;;;;  Until ZtempHi = 0
 ;;;;......................................................
 ;-LL21---------------------------------------------------------------------------------------------------
+    DISPLAY "Tracing 3", $
+
                         include "Universe/Ships/NormaliseTransMat.asm"
 ;;;                        include "Universe/Ships/NormaliseXX15.asm"
 ;-LL91---------------------------------------------------------------------------------------------------
@@ -668,6 +676,7 @@ XX12CalcZ:              N0equN1byN2div256 varQ,(hl),(UBnkZScaled)       ; Q = |s
                         ret
 
 
+    DISPLAY "Tracing 4", $
 
 ;-- LL51---------------------------------------------------------------------------------------------------------------------------
 ;TESTED OK
@@ -709,7 +718,6 @@ XX12EquXX15DotProductXX16:
 ; is the angle between the ship -> camera vector and the normal of the face as long as both are unit vectors soo we can check that normal z > 0
 ; normal vector = cross product of ship ccordinates 
 ;
-
                         include "./Universe/Ships/CopyFaceToXX15.asm"
                         include "./Universe/Ships/CopyFaceToXX12.asm"
 ;--------------------------------------------------------------
@@ -792,10 +800,7 @@ XX12EquXX15DotProductXX16:
 ; So lin eof sight = vector from 0,0,0 to ship pos, now we need to consider teh ship's facing
 ; now if we add teh veector for teh normal(times magnitude)) to teh ship position we have the true center of the face
 ; now we can calcualt teh dot product of this caulated vector and teh normal which if < 0 is goot. this means we use rot mat not inverted rotmat.
-
     include "./ModelRender/BackfaceCull.asm"
-
-
 ;--LL52 to LL55-----------------------------------------------------------------------------------------------------------------                    
 
 TransposeXX12NodeToXX15:
@@ -867,6 +872,7 @@ SetAndMopY:
         ld          (UBnKylo),hl                       ; XX15+0
 FinishedThisNodeY:
     
+    DISPLAY "Tracing 5", $
 
 TransposeZ:
 LL55:                                                   ; Both y signs arrive here, Onto z                                          ;;;
@@ -1115,19 +1121,20 @@ LL49:
         call        ProcessVisibleNode                  ; Process node to determine if it goes on heap
         ret
 
+    DISPLAY "Tracing 6", $
 
 ProjectNodeToEye:
-	ld			bc,(UBnkZScaled)					; BC = Z Cordinate. By here it MUST be positive as its clamped to 4 min
-	ld			a,c                                 ;  so no need for a negative check
-	ld			(varQ),a		                    ; VarQ = z
-    ld          a,(UBnkXScaled)                     ; XX15	\ rolled x lo which is signed
-	call		DIV16Amul256dCUNDOC					; result in BC which is 16 bit TODO Move to 16 bit below not just C reg
+    ld          bc,(UBnkZScaled)                    ; BC = Z Cordinate. By here it MUST be positive as its clamped to 4 min
+    ld          a,c                                 ;  so no need for a negative check
+    ld          (varQ),a                            ; VarQ = z
+    ld          a,(UBnkXScaled)                     ; XX15  \ rolled x lo which is signed
+    call        DIV16Amul256dCUNDOC                 ; result in BC which is 16 bit TODO Move to 16 bit below not just C reg
     ld          a,(UBnkXScaledSign)                 ; XX15+2 \ sign of X dist
     JumpOnBitSet a,7,EyeNegativeXPoint             ; LL62 up, -ve Xdist, RU screen onto XX3 heap
-EyePositiveXPoint:									; x was positive result
-    ld          l,ScreenCenterX						; 
+EyePositiveXPoint:                                  ; x was positive result
+    ld          l,ScreenCenterX                     ; 
     ld          h,0
-    add         hl,bc								; hl = Screen Centre + X
+    add         hl,bc                               ; hl = Screen Centre + X
     jp          EyeStoreXPoint
 EyeNegativeXPoint:                                 ; x < 0 so need to subtract from the screen centre position
     ld          l,ScreenCenterX                     
@@ -1139,22 +1146,22 @@ EyeStoreXPoint:                                    ; also from LL62, XX3 node he
     ld          (iy+0),e                            ; Update X Point TODO this bit is 16 bit aware just need to fix above bit
     ld          (iy+1),d                            ; Update X Point
 EyeProcessYPoint:
-	ld			bc,(UBnkZScaled)					; Now process Y co-ordinate
-	ld			a,c
-	ld			(varQ),a
-    ld          a,(UBnkYScaled)                     ; XX15	\ rolled x lo
-	call		DIV16Amul256dCUNDOC	                ; a = Y scaled * 256 / zscaled
+    ld          bc,(UBnkZScaled)                    ; Now process Y co-ordinate
+    ld          a,c
+    ld          (varQ),a
+    ld          a,(UBnkYScaled)                     ; XX15  \ rolled x lo
+    call        DIV16Amul256dCUNDOC                 ; a = Y scaled * 256 / zscaled
     ld          a,(UBnkYScaledSign)                 ; XX15+2 \ sign of X dist
     JumpOnBitSet a,7,EyeNegativeYPoint             ; LL62 up, -ve Xdist, RU screen onto XX3 heap top of screen is Y = 0
-EyePositiveYPoint:									; Y is positive so above the centre line
+EyePositiveYPoint:                                  ; Y is positive so above the centre line
     ld          l,ScreenCenterY
     ClearCarryFlag
-    sbc         hl,bc  							 	; hl = ScreenCentreY - Y coord (as screen is 0 at top)
+    sbc         hl,bc                               ; hl = ScreenCentreY - Y coord (as screen is 0 at top)
     jp          EyeStoreYPoint
-EyeNegativeYPoint:									; this bit is only 8 bit aware TODO FIX
-    ld          l,ScreenCenterY						
+EyeNegativeYPoint:                                  ; this bit is only 8 bit aware TODO FIX
+    ld          l,ScreenCenterY                     
     ld          h,0
-    add         hl,bc								; hl = ScreenCenterY + Y as negative is below the center of screen
+    add         hl,bc                               ; hl = ScreenCenterY + Y as negative is below the center of screen
 EyeStoreYPoint:                                    ; also from LL62, XX3 node heap has xscreen node so far.
     ex          de,hl
     ld          (iy+2),e                            ; Update Y Point
@@ -1204,11 +1211,51 @@ ProcessDot:            ; break
                         xor     a
                         call    XX12EquNodeDotOrientation
                         call    TransposeXX12ByShipToXX15
-                        call	ScaleNodeTo8Bit					    ; scale to 8 bit values, why don't we hold the magnitude here?x
+                        call    ScaleNodeTo8Bit                     ; scale to 8 bit values, why don't we hold the magnitude here?x
                         ld      iy,UBnkNodeArray
                         call    ProjectNodeToEye
                         ret
-                 
+                
+; .....................................................
+; Plot Node points as part of debugging
+PlotAllNodes:           ld      a,(VertexCtX6Addr)               ; get Hull byte#9 = number of vertices *6                                   ;;;
+.GetActualVertexCount:  ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
+                        ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
+                        ld      d,6
+                        call    asm_div8                         ; asm_div8 C_Div_D - C is the numerator, D is the denominator, A is the remainder, B is 0, C is the result of C/D,D,E,H,L are not changed"
+                        ld      b,c                              ; c = number of vertices
+                        ld      iy,UBnkNodeArray
+.PlotLoop:              ld      e,(iy)
+                        ld      d,(iy+1)
+                        ld      l,(iy+2)
+                        ld      h,(iy+3)
+                        push    bc,,iy
+                        call    PlotAtDEHL
+                        pop     bc,,iy
+                        inc     iy
+                        inc     iy
+                        inc     iy
+                        inc     iy
+                        djnz    .PlotLoop
+                        ret
+
+PlotAtDEHL:             ld      a,d
+                        and     a
+                        ret     nz
+                        ld      a,h
+                        and     a
+                        ret     nz
+                        ld      a,l
+                        and     $80
+                        ret     nz
+                        MMUSelectLayer2
+                        ld      b,l
+                        ld      c,e
+                        ld      a,$88
+                        call    l2_plot_pixel
+                        ret
+
+
 ; .....................................................
 ; Process Nodes does the following:
 ; for each node:
@@ -1232,31 +1279,31 @@ GetActualVertexCount:   ld      c,a                              ; XX20 also c =
                         ld      b,c                              ; c = number of vertices
                         ld      iy,UBnkNodeArray
 LL48:   
-PointLoop:	            push	bc                                  ; save counters
-                        push	hl                                  ; save verticies list pointer
-                        push	iy                                  ; save Screen plot array pointer
+PointLoop:              push    bc                                  ; save counters
+                        push    hl                                  ; save verticies list pointer
+                        push    iy                                  ; save Screen plot array pointer
                         ld      a,b
                         ;break
                         call    CopyNodeToXX15                      ; copy verices at hl to xx15
-                        ld		a,(UBnkXScaledSign)
+                        ld      a,(UBnkXScaledSign)
                         call    XX12EquNodeDotOrientation
                         call    TransposeXX12ByShipToXX15
-                        call	ScaleNodeTo8Bit					    ; scale to 8 bit values, why don't we hold the magnitude here?x
-                        pop		iy                                  ; get back screen plot array pointer
+                        call    ScaleNodeTo8Bit                     ; scale to 8 bit values, why don't we hold the magnitude here?x
+                        pop     iy                                  ; get back screen plot array pointer
                         call    ProjectNodeToEye                     ; set up screen plot list entry
    ; ld      hl,UbnkLineArrayLen
   ;  inc     (hl)                                ; another node done
-ReadyForNextPoint:      push	iy                                  ; copy screen plot pointer to hl
-                        pop		hl
-                        ld		a,4
-                        add		hl,a
-                        push	hl                                  ; write it back at iy + 4
-                        pop		iy								    ; and put it in iy again
-                        pop		hl                                  ; get hl back as vertex list
-                        ld		a,6
-                        add 	hl,a                                ; and move to next vertex
-                        pop		bc                                  ; get counter back
-                        djnz	PointLoop
+ReadyForNextPoint:      push    iy                                  ; copy screen plot pointer to hl
+                        pop     hl
+                        ld      a,4
+                        add     hl,a
+                        push    hl                                  ; write it back at iy + 4
+                        pop     iy                                  ; and put it in iy again
+                        pop     hl                                  ; get hl back as vertex list
+                        ld      a,6
+                        add     hl,a                                ; and move to next vertex
+                        pop     bc                                  ; get counter back
+                        djnz    PointLoop
 ; ......................................................   
                         ClearCarryFlag
                         ret                                         
@@ -1288,10 +1335,25 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
                         ret
 ;............................................................  
 .CarryOnWithDraw:       call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
-                        call    CullV2
                        ; break
-                        call    PrepLines
-                        call    DrawLines
+                    IFDEF PLOTPOINTSONLY 
+                        ld      a,$F6
+                        ld      (line_gfx_colour),a  
+                        call    PlotAllNodes
+                    ELSE
+                        ld      a,$E3
+                        ld      (line_gfx_colour),a  
+                        call    CullV2
+                        call    PrepLines                       ; With late clipping this just moves the data to the line array which is now x2 size
+                        call    DrawLinesLateClipping
+                    ENDIF
+                    IFDEF OVERLAYNODES
+                        ld      a,$CF
+                        ld      (line_gfx_colour),a  
+                        call    PlotAllNodes
+                    ENDIF
+                     call   l2_flip_buffers
+                      call   l2_flip_buffers
                         ret 
 ;............................................................  
 .ExplodingCloud:        call    ProcessNodes
@@ -1509,9 +1571,7 @@ LL74DecX2:
         ld          (UBnkX2Lo),a                        ; rather than dec (hl) just load with 255 as it will always be that at this code point
 LL74SkipDec:        
         call        ClipLineV3                            ; LL145 \ clip test on XX15 XX12 vector, returns carry 
-        ld          a,(ClipSuccess)
-        and         a
-        jr          z,CalculateNewLines
+        jr          c,CalculateNewLines
 ;        jr          c,CalculateNewLines                 ; LL170 clip returned carry set so not visibile if carry set skip the rest (laser not firing)
 ; Here we are usign hl to replace VarU as index        
         ld          hl,(varU16)
@@ -1532,6 +1592,10 @@ LL74SkipDec:
         ld          (varU16),hl
         ret
 
+    DISPLAY "Tracing 7", $
+
     INCLUDE "Universe/Ships/PrepLines.asm"
+
+    DISPLAY "Tracing XX", $
 
 UnivBankSize  EQU $ - StartOfUniv

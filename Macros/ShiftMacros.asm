@@ -7,6 +7,15 @@ ShiftIYRight1: MACRO
 			   ld	iyl,a
 			   ENDM
 
+ShiftIXRight1: MACRO
+			   ld 	a,ixh
+			   srl 	a
+			   ld	ixh,a
+			   ld 	a,ixl
+			   rra
+			   ld	ixl,a
+			   ENDM      
+
 ShiftHLRight1: MACRO
 			   srl h
 			   rr  l
@@ -59,6 +68,11 @@ BarrelHLRight3: MACRO
                bsrl     de,b    ; 8 
                pop      bc      ; 10
                ex       de,hl   ; 4
+               ENDM
+
+RollBCLeft1:   MACRO	; 16 T states  
+               rl  c
+               rl  b
                ENDM
 
 RollDELeft1:   MACRO	; 16 T states  

@@ -322,10 +322,12 @@ addr_Pressed_Warp          equ KeyboardMap+c_Pressed_Warp
 
 
 MIsKeyPressed:          MACRO   keyaddress, misstarget
+                        MMUSelectKeyboard
                         ld      hl,(keyaddress)
                         ld      a,(hl)
                         JumpIfAIsZero   misstarget
                         ENDM
+
 
 init_keyboard:          ld		hl,Keys                         ; no key s are pressed by default
                         ld		de, c_KeyBoardLen               ;

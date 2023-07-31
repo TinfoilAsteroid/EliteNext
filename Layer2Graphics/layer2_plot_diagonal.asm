@@ -382,8 +382,7 @@ l2targetArray2 ds	256
 ;;;;;
 ;;;;;
 
-
-
+        IFDEF L2_DIAGONAL_SAVE
 l2_draw_diagonal_save:  cp		1
                         jr		z,l2S_ItsArray1
                         ld		hl,l2targetArray2
@@ -485,7 +484,9 @@ l2S_ErrZero:            ld		hl,(l2deltaX)
 l2S_adjustCol2:         nop										; update X and Y
                         inc		b
                         jr		l2S_Loop	
-
+        ENDIF
+        DEFINE  L2_DRAW_DIAGONAL 1
+        IFDEF L2_DRAW_DIAGONAL
 ; ">l2_draw_diagonal, bc = y0,x0 de=y1,x1,a=color) Thsi version performs a pre sort based on y axis"
 l2_draw_diagonal:       ld		(l2linecolor),a					;save colour for later
                         ld		hl,0                            ;
@@ -573,7 +574,7 @@ l2D_adjustCol2:         nop										; update X and Y
                         inc		b
                         jr		l2D_Loop
 ;----------------------------------------------------------------------------------------------------------------------------------
-
+        ENDIF
 	
 
 

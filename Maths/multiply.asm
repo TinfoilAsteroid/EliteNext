@@ -265,6 +265,25 @@ mulCHLbyDSigned:        ld      a,d                 ; get sign from d
 ;  E =  A + E + carry                H*D (lo) + carry
 ;                                
 ;
+mulHLbyDE2sc:           ld      a,d
+                        xor     h
+                        and     SignOnly8Bit
+                        ld      iyh,a               ; save sign bit for result
+                        ld      a,h
+                        and     SignOnly8Bit
+                        jr      z,.HLPositive
+.HLNegative:            NegHL
+.HLPositive:            ld      a,d
+                        and     SignOnly8Bit
+                        jr      z,.DEPositive
+.DENegative:            NegDE
+.DEPositive:            call    mulDEbyHL           ; now do calc
+                        ld      a,iyh
+                        and     a                   ; if its 0 then we are good
+                        ret     z
+                        
+
+
 mulHLEbyDSigned:        ld      a,d                 ; get sign from d
                         xor     h                   ; xor with h to get resultant sign
                         and     SignOnly8Bit        ; .

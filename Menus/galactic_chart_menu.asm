@@ -158,6 +158,7 @@ gc_display_find_text:   ld		de,galactic_find_position   ; Wipe input area on scr
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 gc_display_find_string: ld      de,gcInputText
+                        MMUSelectKeyboard
                         call    keyboard_copy_input_to_de
                         ld      hl,gcCursorChar         ; Now just copy cursor char too
                         ldi                             ; Copy cursor to local
@@ -197,16 +198,17 @@ blink_cursor:           ld      a,(gcCursorBlink)
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; The main loop handles the find key
 loop_gc_menu:           JumpIfMemTrue TextInputMode,AlreadyInInputMode  ;if we are in input mode then go directly there
-.StartFindCheck:        ld      a,c_Pressed_Find                        ;Is F pressed
-                        call    is_key_pressed
+.StartFindCheck:        MacroIsKeyPressed c_Pressed_Find                        ;Is F pressed
                         ret     nz                                      ;the main loop handles find key 
+                        MMUSelectKeyboard
                         call    initInputText                           ;Initialise find input
                         SetMemTrue TextInputMode                        ;Set input mode to true
                         SetMemToN gcCursorBlink, gcBlinkVal             ; set up blink
 .DisplayInputbar:       call    gc_display_find_text                    ; now prep the boiler plate input text
                         ret                                             ; and exit so next interation handles new input as we have to rescan keyboard
 ;Already in input mode post pressing find
-AlreadyInInputMode:     call    InputName                               ; Call input routine to parse a key
+AlreadyInInputMode:     MMUSelectKeyboard
+                        call    InputName                               ; Call input routine to parse a key
                         JumpIfMemFalse InputChanged, .blinkNoDelay      ; no key they bypass rest of input
 .WasItEnter:            JumpIfMemTrue EnterPressed, .FindEnterPressed   ; if enter was pressed then find
                         call    gc_display_find_string                  ; update string

@@ -1,5 +1,5 @@
-AttractDuration             EQU $00F0
-AttractCounterStart         EQU $80
+AttractDuration            EQU $00F0
+AttractCounterStart        EQU $80
 AttractTimer:              DW      AttractDuration
 AttractCounter:            DB      AttractCounterStart
 
@@ -64,11 +64,14 @@ AttractModeInit:        MMUSelectLayer1
 ;                        jp          z,.StartShip            ; we only refresh once per interupt
 ;                        ld          (hl),a
                         
-AttractModeMain:        call    scan_keyboard
+AttractModeMain:        MMUSelectKeyboard
+                        call    scan_keyboard
                         ld      a,c_Pressed_Yes
+                        MMUSelectKeyboard
                         call    is_key_up_state
                         jr      nz,.YPressed
                         ld      a,c_Pressed_No
+                        MMUSelectKeyboard
                         call    is_key_up_state
                         jr      nz,.NPressed
                         jp      AttractModeMain
@@ -112,7 +115,11 @@ AttractModeUpdate:      ld      hl,(AttractTimer)
 .CullV2:                call    CullV2
                         jp      .DoneIM2
 .PrepLines:             call    PrepLines
+        IFDEF LATECLIPPING
+.DrawLines:             call    DrawLinesLateClipping      
+        ELSE
 .DrawLines:             call    DrawLines
+        ENDIF
 .Drawbox:               ld		bc,$0101
                         ld		de,$7FFD
                         ld		a,$C0

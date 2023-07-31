@@ -373,17 +373,13 @@ MarketLoop:	            push	af
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Handles all the input whilst in the market menu
-loop_market_menu:       ld      a,c_Pressed_CursorUp  
-                        call    is_key_pressed
+loop_market_menu:       MacroIsKeyPressed c_Pressed_CursorUp  
                         call    z,mkt_UpPressed
-                        ld      a,c_Pressed_CursorDown
-                        call    is_key_pressed
+                        MacroIsKeyPressed c_Pressed_CursorDown
                         call    z,mkt_DownPressed
-                        ld      a,c_Pressed_RollLeft
-                        call    is_key_pressed
+                        MacroIsKeyPressed c_Pressed_RollLeft
                         call    z,mkt_LeftPressed
-                        ld      a,c_Pressed_RollRight
-                        call    is_key_pressed
+                        MacroIsKeyPressed c_Pressed_RollRight
                         call    z,mkt_RightPressed
                         ret
 
@@ -398,6 +394,7 @@ mkt_UpPressed:          ld      a,(mkt_selected_row)
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 mkt_DownPressed:        ld      a,c_Pressed_CursorDown
+                        MMUSelectKeyboard
                         call    get_key_a_state
                         cp      1
                         jr      z,.ItsOK

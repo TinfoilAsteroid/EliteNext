@@ -83,8 +83,22 @@ l2_E2                   DW 0
 l2_dY2                  DW 0
 ld_dxHi                 DW 0
 l2_dxRemainder          DW 0
+l2_dxRemainder2         DW 0
 l2_dXRemainderAdj       DW 0
 l2_integer              DW 0
+l2_integer2             DW 0
+
+ScaleDXDY:              ld      hl,(l2_DX)
+                        ld      de,(l2_DY)
+.ScaleLoop:             ld      a,h
+                        or      d
+                        jr      z,.ScaleDone
+                        ShiftHLRight1
+                        ShiftDERight1
+                        jp      .ScaleLoop
+.ScaleDone:             ld      (l2_DX),hl
+                        ld      (l2_DY),de
+                        ret
 
 HLEquMidX:              ld      hl,(l2_X1)
                         ld      de,(l2_X0)
@@ -96,6 +110,8 @@ HLEquMidX:              ld      hl,(l2_X1)
                         ClearCarryFlag
                         sbc     hl,de
                         ld      (l2_DY),hl
+                        break
+                        call    ScaleDXDY
                         ld      hl,(ld_YMid)
                         ClearCarryFlag
                         sbc     hl,de
@@ -118,10 +134,12 @@ HLEquMidX:              ld      hl,(l2_X1)
                         ld      de,(ld_dxHi)        ; .
                         call    DEHLequDEmulHL      ; .
                         ld      (l2_integer),de     ; .
+                        ld      (l2_integer2),hl    ; .
 .CalcRemainderFraction: ld      bc,(l2_dxRemainder) ; dXRemainder = TRUNC((dxRemainder)/DY)*256
                         ld      de,(l2_DY)          ; .
-                        call    BC_Div_DE           ; .
+                        call    BC_Div_DE           ; BC, remainder in HL
                         ld      (l2_dXRemainderAdj),bc
+                        ld      (l2_dxRemainder2),hl
 .CalcAdjustment:        ld      hl,(l2_dY2)         ; Adj component = DY2 * dXRemainder /256
                         ld      de,bc               ;
                         call    DEHLequDEmulHL      ;

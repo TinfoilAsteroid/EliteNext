@@ -12,9 +12,74 @@
 ;               1       1       Impossible
 ;
 
+                    
+CompareBCDESigned:  push    hl
+                    and     a
+                    ld      hl,bc
+                    sbc     hl,de
+                    pop     hl
+                    ret
+
+CompareDEBCSigned:  push    hl
+                    and     a
+                    ld      hl,de
+                    sbc     hl,bc
+                    pop     hl
+                    ret                    
+
+
+;### CMPGTE -> test if A>=B
+;### Input      HL=A, DE=B if hl=> de no carry else de > hl and set carry
+CompareHLDESgn:     ld a,h
+                    xor d
+                    jp m, .cmpgte2
+                    sbc hl,de
+                    jr nc, .cmpgte3
+.cmpgte1            add hl,de
+                    SetCarryFlag
+                    ret
+.cmpgte2            bit 7,d
+                    jr z,.cmpgte4
+.cmpgte5:           ClearCarryFlag
+                    ret                    
+.cmpgte3            add hl,de
+                    ClearCarryFlag
+                    ret
+.cmpgte4:           SetCarryFlag
+                    ret                 
+
+; Compares HL and DE sets z flag if same, else nz
+CompareHLDESame:    ld  a,h
+                    cp  d
+                    ret nz
+                    ld  a,l
+                    cp  e
+                    ret
+
+                    
+
+CompareHLBCSgn:     ld a,h
+                    xor b
+                    jp m, .cmpgte2
+                    sbc hl,bc
+                    jr nc, .cmpgte3
+.cmpgte1            SetCarryFlag
+                    ret
+.cmpgte2            bit 7,b
+                    jr z,.cmpgte1
+.cmpgte3            ClearCarryFlag
+                    ret
+
+CompareHLDESigned:
 compare16HLDE:      push    hl
                     and     a
                     sbc     hl,de
+                    pop     hl
+                    ret
+CompareHLBCSigned:
+CompareHLBC:        push    hl
+                    and     a
+                    sbc     hl,bc
                     pop     hl
                     ret
 

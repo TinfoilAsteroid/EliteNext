@@ -1,0 +1,382 @@
+5DCB.10 F3           di
+
+; Note: The address AD26h is in a different bank.
+5DCC.10 CD 26 AD     call AD26h
+
+5DCF.10 ED 91 07 03  nextreg REG_TURBO_MODE,RTM_28MHZ
+5DD3.10 ED 91 57 3C  nextreg REG_MMU7,3Ch
+
+; Note: The address E594h is in a different bank.
+5DD7.10 CD 94 E5     call E594h
+
+5DDA.10 ED 91 57 39  nextreg REG_MMU7,39h
+
+; Note: The address E00Fh is in a different bank.
+5DDE.10 CD 0F E0     call E00Fh
+
+5DE1.10 ED 91 50 FF  nextreg REG_MMU0,FFh
+5DE5.10 ED 91 51 FF  nextreg REG_MMU1,FFh
+5DE9.10 ED 91 06 01  nextreg REG_PERIPHERAL_2,01h
+5DED.10 ED 91 08 52  nextreg REG_PERIPHERAL_3,52h
+5DF1.10 ED 91 09 00  nextreg 09h,00h
+5DF5.10 ED 91 68 10  nextreg 68h,10h
+5DF9.10 ED 91 57 64  nextreg REG_MMU7,64h
+
+; Note: The address E04Bh is in a different bank.
+5DFD.10 CD 4B E0     call E04Bh
+
+5E00.10 3E B0        ld a,B0h
+5E02.10 ED 47        ld i,a
+5E04.10 ED 91 22 06  nextreg REG_LINE_INTERRUPT_CONTROL,06h
+5E08.10 ED 91 23 00  nextreg REG_LINE_INTERRUPT_VALUE_L,00h
+5E0C.10 ED 5E        im 2
+5E0E.10 ED 91 57 38  nextreg REG_MMU7,38h
+
+; Note: The address E252h is in a different bank.
+5E12.10 CD 52 E2     call E252h
+
+; Note: The address E218h is in a different bank.
+5E15.10 CD 18 E2     call E218h
+
+5E18.10 ED 91 57 3A  nextreg REG_MMU7,3Ah
+
+; Note: The address E08Fh is in a different bank.
+5E1C.10 CD 8F E0     call E08Fh
+
+5E1F.10 3E 07        ld a,07h
+
+; Note: The address E0AAh is in a different bank.
+5E21.10 CD AA E0     call E0AAh
+
+5E24.10 ED 91 57 3A  nextreg REG_MMU7,3Ah
+5E28.10 3E FF        ld a,FFh
+
+; Note: The address E0B4h is in a different bank.
+5E2A.10 CD B4 E0     call E0B4h
+
+5E2D.10 ED 91 57 39  nextreg REG_MMU7,39h
+
+; Note: The address E245h is in a different bank.
+5E31.10 CD 45 E2     call E245h
+
+5E34.10 ED 91 57 3A  nextreg REG_MMU7,3Ah
+5E38.10 16 00        ld d,00h
+5E3A.10 1E 00        ld e,00h
+5E3C.10 21 75 66     ld hl,6675h
+
+; Note: The address E124h is in a different bank.
+5E3F.10 CD 24 E1     call E124h
+
+5E42.10 ED 91 57 3A  nextreg REG_MMU7,3Ah
+5E46.10 3E 01        ld a,01h
+
+; Note: The address E0B4h is in a different bank.
+5E48.10 CD B4 E0     call E0B4h
+
+5E4B.10 ED 91 57 3A  nextreg REG_MMU7,3Ah
+5E4F.10 16 08        ld d,08h
+5E51.10 1E 00        ld e,00h
+5E53.10 21 81 66     ld hl,6681h
+
+; Note: The address E124h is in a different bank.
+5E56.10 CD 24 E1     call E124h
+
+5E59.10 AF           xor a
+5E5A.10 32 A5 66     ld (66A5h),a
+5E5D.10 ED 91 57 3C  nextreg REG_MMU7,3Ch
+
+; Note: The address E620h is in a different bank.
+5E61.10 CD 20 E6     call E620h
+
+; Note: The address 7E3Ah is in a different bank.
+5E64.10 CD 3A 7E     call 7E3Ah
+
+5E67.10 3E FF        ld a,FFh
+5E69.10 32 7B 69     ld (697Bh),a
+5E6C.10 ED 91 57 3A  nextreg REG_MMU7,3Ah
+5E70.10 3E 04        ld a,04h
+
+; Note: The address E0B4h is in a different bank.
+5E72.10 CD B4 E0     call E0B4h
+
+5E75.10 ED 91 57 3C  nextreg REG_MMU7,3Ch
+
+; Note: The address E5AFh is in a different bank.
+5E79.10 CD AF E5     call E5AFh
+
+5E7C.10 ED 91 57 3A  nextreg REG_MMU7,3Ah
+5E80.10 3E 05        ld a,05h
+
+; Note: The address E0B4h is in a different bank.
+5E82.10 CD B4 E0     call E0B4h
+
+; Note: The address 7F3Ah is in a different bank.
+5E85.10 CD 3A 7F     call 7F3Ah
+
+5E88.10 ED 91 57 3C  nextreg REG_MMU7,3Ch
+
+; Note: The address E59Fh is in a different bank.
+5E8C.10 CD 9F E5     call E59Fh
+
+5E8F.10 3E 10        ld a,10h
+5E91.10 32 19 68     ld (6819h),a
+5E94.10 AF           xor a
+5E95.10 32 00 81     ld (8100h),a
+5E98.10 3E FF        ld a,FFh
+5E9A.10 32 85 82     ld (8285h),a
+5E9D.10 ED 91 57 3A  nextreg REG_MMU7,3Ah
+5EA1.10 3E 06        ld a,06h
+
+; Note: The address E0B4h is in a different bank.
+5EA3.10 CD B4 E0     call E0B4h
+
+5EA6.10 ED 91 57 3A  nextreg REG_MMU7,3Ah
+5EAA.10 3E 07        ld a,07h
+
+; Note: The address E0B4h is in a different bank.
+5EAC.10 CD B4 E0     call E0B4h
+
+5EAF.10 ED 91 57 3A  nextreg REG_MMU7,3Ah
+5EB3.10 16 18        ld d,18h
+5EB5.10 1E 00        ld e,00h
+5EB7.10 21 90 66     ld hl,6690h
+
+; Note: The address E124h is in a different bank.
+5EBA.10 CD 24 E1     call E124h
+
+; Note: The address 697Ch is in a different bank.
+5EBD.10 CD 7C 69     call 697Ch
+
+; Note: The address 69A4h is in a different bank.
+5EC0.10 CD A4 69     call 69A4h
+
+; Note: The address 69CDh is in a different bank.
+5EC3.10 CD CD 69     call 69CDh
+
+5EC6.10 ED 91 57 3C  nextreg REG_MMU7,3Ch
+
+; Note: The address E58Ah is in a different bank.
+5ECA.10 CD 8A E5     call E58Ah
+
+5ECD.10 DD 01        invalid instruction	; mostly equivalent to nop.
+5ECF.10 ED 91 57 3A  nextreg REG_MMU7,3Ah
+
+; Note: The address E08Fh is in a different bank.
+5ED3.10 CD 8F E0     call E08Fh
+
+5ED6.10 ED 91 57 3A  nextreg REG_MMU7,3Ah
+5EDA.10 3E 00        ld a,00h
+
+; Note: The address E0B4h is in a different bank.
+5EDC.10 CD B4 E0     call E0B4h
+
+5EDF.10 F3           di
+5EE0.10 ED 91 57 64  nextreg REG_MMU7,64h
+
+; Note: The address E0B7h is in a different bank.
+5EE4.10 CD B7 E0     call E0B7h
+
+5EE7.10 21 0D B2     ld hl,B20Dh
+5EEA.10 22 C4 B1     ld (B1C4h),hl
+
+; Note: The address 7765h is in a different bank.
+5EED.10 CD 65 77     call 7765h
+
+5EF0.10 FB           ei
+
+; Note: The address 77BAh is in a different bank.
+5EF1.10 CD BA 77     call 77BAh
+
+5EF4.10 F3           di
+5EF5.10 21 D7 B1     ld hl,B1D7h
+5EF8.10 22 C4 B1     ld (B1C4h),hl
+5EFB.10 ED 91 57 64  nextreg REG_MMU7,64h
+
+; Note: The address E04Bh is in a different bank.
+5EFF.10 CD 4B E0     call E04Bh
+
+5F02.10 A7           and a
+5F03.10 CA 10 5F     jp z,LBL_5F10
+
+5F06.10 ED 91 57 38  nextreg REG_MMU7,38h
+
+; Note: The address E252h is in a different bank.
+5F0A.10 CD 52 E2     call E252h
+
+5F0D.10 C3 10 5F     jp LBL_5F10
+
+5F10.10 LBL_5F10:
+
+; Note: The address 8661h is in a different bank.
+5F10.10 CD 61 86     call 8661h
+
+5F13.10 LBL_5F13:
+
+; Note: The address 8831h is in a different bank.
+5F13.10 CD 31 88     call 8831h
+
+; Note: The address 60FBh is in a different bank.
+5F16.10 CD FB 60     call 60FBh
+
+5F19.10 3A 8D 82     ld a,(828Dh)
+5F1C.10 A7           and a
+5F1D.10 CA 2F 5F     jp z,LBL_5F2F
+
+5F20.10 3D           dec a
+5F21.10 32 8D 82     ld (828Dh),a
+5F24.10 3A 19 85     ld a,(8519h)
+5F27.10 A7           and a
+5F28.10 CA 2F 5F     jp z,LBL_5F2F
+
+5F2B.10 3D           dec a
+5F2C.10 32 19 85     ld (8519h),a
+
+5F2F.10 LBL_5F2F:
+5F2F.10 3A FE 80     ld a,(80FEh)
+5F32.10 A7           and a
+5F33.10 CA 3A 5F     jp z,LBL_5F3A
+
+5F36.10 3D           dec a
+5F37.10 32 FE 80     ld (80FEh),a
+
+5F3A.10 LBL_5F3A:
+5F3A.10 3A 9E 83     ld a,(839Eh)
+5F3D.10 A7           and a
+5F3E.10 CA 45 5F     jp z,LBL_5F45
+
+5F41.10 3D           dec a
+5F42.10 32 9E 83     ld (839Eh),a
+
+5F45.10 LBL_5F45:
+
+; Note: The address 7E46h is in a different bank.
+5F45.10 CD 46 7E     call 7E46h
+
+5F48.10 3E 00        ld a,00h
+5F4A.10 FE 01        cp 01h
+5F4C.10 CA 76 5F     jp z,LBL_5F76
+
+5F4F.10 3A C2 83     ld a,(83C2h)
+5F52.10 A7           and a
+5F53.10 CA 76 5F     jp z,LBL_5F76
+
+; Note: The address 6AA4h is in a different bank.
+5F56.10 CD A4 6A     call 6AA4h
+
+; Note: The address 6788h is in a different bank.
+5F59.10 CD 88 67     call 6788h
+
+5F5C.10 3A 97 83     ld a,(8397h)
+5F5F.10 FE 00        cp 00h
+5F61.10 C2 13 5F     jp nz,LBL_5F13
+
+; Note: The address 8039h is in a different bank.
+5F64.10 CD 39 80     call 8039h
+
+5F67.10 3A 75 5F     ld a,(CODE_5F73+2)
+5F6A.10 A7           and a
+5F6B.10 CA 76 5F     jp z,LBL_5F76
+
+5F6E.10 3E 00        ld a,00h
+5F70.10 ED 92 56     nextreg REG_MMU6,a
+
+; Note: The address 0000h is in a different bank.
+5F73.10 CODE_5F73:
+5F73.10 CD 00 00     call 0000h
+
+5F76.10 LBL_5F76:
+5F76.10 3A 96 83     ld a,(8396h)
+5F79.10 FE 00        cp 00h
+
+; Note: The address 60B1h is in a different bank.
+5F7B.10 C2 B1 60     jp nz,60B1h
+
+5F7E.10 21 9F 83     ld hl,839Fh
+5F81.10 35           dec (hl)
+
+; Note: The address 61C1h is in a different bank.
+5F82.10 CC C1 61     call z,61C1h
+
+5F85.10 3A 9F 83     ld a,(839Fh)
+5F88.10 E6 07        and 07h
+
+; Note: The address 86D1h is in a different bank.
+5F8A.10 CC D1 86     call z,86D1h
+
+5F8D.10 3A 8C 82     ld a,(828Ch)
+5F90.10 A7           and a
+5F91.10 28 08        jr z,LBL_5F9B
+
+5F93.10 3A 1C 85     ld a,(851Ch)
+5F96.10 E6 80        and 80h
+
+; Note: The address 6232h is in a different bank.
+5F98.10 CC 32 62     call z,6232h
+
+5F9B.10 LBL_5F9B:
+5F9B.10 3A C5 83     ld a,(83C5h)
+5F9E.10 A7           and a
+
+; Note: The address 6028h is in a different bank.
+5F9F.10 C2 28 60     jp nz,6028h
+
+5FA2.10 3E FF        ld a,FFh
+5FA4.10 32 C5 83     ld (83C5h),a
+5FA7.10 3A 9E 83     ld a,(839Eh)
+5FAA.10 A7           and a
+5FAB.10 CA B1 5F     jp z,LBL_5FB1
+
+; Note: The address 6028h is in a different bank.
+5FAE.10 C3 28 60     jp 6028h
+
+5FB1.10 LBL_5FB1:
+5FB1.10 3A 85 82     ld a,(8285h)
+5FB4.10 A7           and a
+5FB5.10 C2 BB 5F     jp nz,LBL_5FBB
+
+5FB8.10 LBL_5FB8:
+
+; Note: The address 6028h is in a different bank.
+5FB8.10 C3 28 60     jp 6028h
+
+5FBB.10 LBL_5FBB:
+
+; Note: The address 87B3h is in a different bank.
+5FBB.10 CD B3 87     call 87B3h
+
+5FBE.10 30 F8        jr nc,LBL_5FB8
+
+5FC0.10 ED 91 56 53  nextreg REG_MMU6,53h
+5FC4.10 3A 18 C0     ld a,(C018h)
+5FC7.10 E6 80        and 80h
+5FC9.10 CA F7 5F     jp z,LBL_5FF7
+
+; Note: The address 6028h is in a different bank.
+5FCC.10 C3 28 60     jp 6028h
+
+5FF7.10 LBL_5FF7:
+5FF7.10 3A 18 C0     ld a,(C018h)
+5FFA.10 21 12 C0     ld hl,C012h
+5FFD.10 B6           or (hl)
+
+; Note: The opcode at 5FFEh spreads over 2 different banks. This could be wrong. The disassembly stops here.
+; Note: The address 6001h is in a different bank.
+5FFE.10 21 15 C0     ld hl,C015h
+
+6819.11 00 21 3D...  DEFB 00 21 3D 68 11 20 C0 01 ; ASCII: ?!=h? ??
+697B.11 FF ED 91...  DEFB FF ED 91 50 46 3E 01 06 ; ASCII: ???PF>??
+80FE.4 00 00        DEFB 00 00 ; ASCII: ??
+8100.4 00 00 00...  DEFB 00 00 00 00 00 00 1F E1 ; ASCII: ????????
+8285.4 00 00 00...  DEFB 00 00 00 00 00 00 00 ; ASCII: ???????
+828C.4 00           DEFB 00 ; ASCII: ?
+828D.4 00 00 00...  DEFB 00 00 00 00 00 00 00 00 ; ASCII: ????????
+8396.4 00           DEFB 00 ; ASCII: ?
+8397.4 00 00 00...  DEFB 00 00 00 00 00 00 00 ; ASCII: ???????
+839E.4 00           DEFB 00 ; ASCII: ?
+839F.4 00 00 00...  DEFB 00 00 00 00 00 00 00 00 ; ASCII: ????????
+83C2.4 00 00 00     DEFB 00 00 00 ; ASCII: ???
+83C5.4 00 00 00...  DEFB 00 00 00 00 00 00 00 00 ; ASCII: ????????
+8519.4 00 00 00     DEFB 00 00 00 ; ASCII: ???
+851C.4 00 00 00...  DEFB 00 00 00 00 00 00 00 00 ; ASCII: ????????
+B1C4.5 D7 B1 E1...  DEFB D7 B1 E1 D1 C1 F1 08 D9 ; ASCII: ????????
+C018.0 00 00 00...  DEFB 00 00 00 00 00 00 00 00 ; ASCII: ????????

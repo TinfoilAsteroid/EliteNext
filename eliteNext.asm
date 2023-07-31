@@ -1,16 +1,20 @@
     DEVICE ZXSPECTRUMNEXT
+    SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
     DEFINE  DOUBLEBUFFER 1
- ;DEFINE  LOGMATHS     1
- ;DEFINE  DIAGSPRITES 1
- ; DEFINE   SKIPATTRACT 1
- ; DEFINE DEBUGMISSILETEST 1
+    DEFINE  LATECLIPPING 1
+    ;DEFINE  CLIPVersion3 1
+    ;DEFINE  LOGMATHS     1
+    ;DEFINE  DIAGSPRITES 1
+    DEFINE   SKIPATTRACT 1
+    ; DEFINE DEBUGMISSILETEST 1
+    ; DEFINE DEBUGLINEDRAW 1
      DEFINE  LASER_V2    1
  CSPECTMAP eliteN.map
  OPT --zxnext=cspect --syntax=a --reversepop
                 DEFINE  SOUNDPACE 3
-                DEFINE  ENABLE_SOUND 1
+;                DEFINE  ENABLE_SOUND 1
 ; DEFINE     MAIN_INTERRUPTENABLE 1
- ;               DEFINE INTERRUPT_BLOCKER 1
+               DEFINE INTERRUPT_BLOCKER 1
 DEBUGSEGSIZE   equ 1
 DEBUGLOGSUMMARY equ 1
 ;DEBUGLOGDETAIL equ 1
@@ -70,6 +74,7 @@ ScreenHyperspace EQU ScreenDocking+1
                         INCLUDE "./Macros/returnMacros.asm"
                         INCLUDE "./Macros/ShiftMacros.asm"
                         INCLUDE "./Macros/signBitMacros.asm"
+                        INCLUDE "./Macros/KeyboardMacros.asm"
                         INCLUDE "./Tables/message_queue_macros.asm"
                         INCLUDE "./Variables/general_variables_macros.asm"
                         INCLUDE "./Variables/UniverseSlot_macros.asm"
@@ -104,7 +109,7 @@ MessageAt:              MACRO   x,y,message
                         call    l1_print_at_wrap
                         ENDM
                         
-SetBorder:              MACRO   value
+SetBorder:              MACRO   value 
                         MMUSelectLayer1
                         ld          a,value
                         call        l1_set_border
@@ -156,13 +161,15 @@ EliteNextStartup:       di
                         ld          (LoadCounter),a
 .StreamSpriteData:      MMUSelectSpriteBank
                         call        load_pattern_files
+                        MMUSelectKeyboard
                         call        init_keyboard
 .PostDiag:              ClearForceTransition
                         SetBorder   $04
                         MMUSelectSpriteBank
                         call        sprite_diagnostic
                         SetBorder   $05
-.PostDiag2:             call        WaitForAnyKey                      
+.PostDiag2:             MMUSelectKeyboard
+                        call        WaitForAnyKey                      
                         MMUSelectSpriteBank
                         call        sprite_diagnostic_clear                     
 TidyDEBUG:              ld          a,16
@@ -171,12 +178,395 @@ TestText:               xor			a
                         ld      (JSTX),a
 DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks su n
                         SetBorder   $06
+TRIANGLEDIAGNOSTICS:   ;break
+                       ;ld          c,10
+                       ;ld          e,20
+                       ;ld          l,120
+                       ;MMUSelectLayer2
+                       ;call        l2_draw_horz_saved
+                       ;break
+                       ;ld          c,20
+                       ;ld          e,120
+                       ;ld          l,20
+                       ;call        l2_draw_horz_saved
+                       ;break
+                       ;ld          hl,120
+                       ;call        l2_drawHorzClipY
+                       ;break
+                       ;ld          hl,30
+                       ;ld          de,50
+                       ;exx
+                       ;ld          hl,40
+                       ;ld          de,60
+                       ;ld          ix,SaveArrayS2
+                       ;ld          a,$FF
+                       ;call        Layer2_Save_ClipY_Line ; Why was is very slow?
+;                        break
+;                        ld          hl,100; x1 64 hl'
+;                        ld          de,150; x2 96 de'
+;                        ld          bc,120; x3 78 bc'
+;                        exx
+;                        ld          hl,50  ;y1 32 hl
+;                        ld          de,75  ;y2 4B de
+;                        ld          bc,90  ;y3 5A bc
+;                        MMUSelectLayer2
+;                        call        l2_draw_fillclip_tri
+;TRIANGLEDIAGDONE:       break          0136 0153 FF81 FF98  310, 339  = -127, -104 dx 437, 443  (218 221)  91,117
+                         break
+                         MMUSelectUniverseN  0
+                         MMUSelectLayer2
+    ;DEFINE DEBUG_LL122_DIRECT 1 ; PASS
+    ;DEFINE DEBUG_LL121_DIRECT 1 ; PASS
+    ;DEFINE DEBUG_LL129_DIRECT 1 ; PASS
+    ;DEFINE DEBUG_LL120_DIRECT 1 ; PASS
+    ;DEFINE DEBUG_LL123_DIRECT 1 ; PASS
+    DEFINE DEBUG_LL118_DIRECT 1
+    ;DEFINE DEBUG_LL128_DIRECT
 
+
+
+                  IFDEF DEBUG_LL122_DIRECT
+                        call    Debug_LL122_6502
+                  ENDIF
+
+                  IFDEF DEBUG_LL121_DIRECT   
+                        call Debug_LL121_6502
+                  ENDIF
+                        
+                  
+                  IFDEF DEBUG_LL129_DIRECT
+                        call Debug_LL129_6502
+                  ENDIF
+                  
+                  IFDEF DEBUG_LL120_DIRECT
+                        call Debug_LL120_6502
+                  ENDIF
+                        
+;                  DEFINE DEBUG_LL123_DIRECT 1
+                  IFDEF DEBUG_LL123_DIRECT
+                        call Debug_LL123_6502
+                  ENDIF
+
+;                  DEFINE DEBUG_LL118_DIRECT 1
+                  IFDEF DEBUG_LL118_DIRECT
+                        call Debug_LL118_6502
+                  ENDIF
+                  
+;                  DEFINE DEBUG_LL28_6502
+                  IFDEF DEBUG_LL28_6502
+                        call Debug_LL28_6502
+                  ENDIF
+                  
+ ;                 DEFINE DEBUG_LL145_6502
+                  IFDEF DEBUG_LL145_6502
+                        call Debug_LL145_6502
+                  ENDIF
+                        
+                  
+;                DEFINE DEBUG_LL129
+                IFDEF DEBUG_LL129                         
+                        ld      a,240       :ld      (XX12p2),a ; Gradient
+                        ld      a,$FF       :ld      (XX12p3),a ; Slope
+                        ld      hl,-50      :ld      (SRvarPair),hl
+                        call    LL129_6502  ; Should be Q = 240, A = +ve SR = 50 >> PASS
+                        break
+                        ld      a,240       :ld      (XX12p2),a ; Gradient
+                        ld      a,0         :ld      (XX12p3),a ; Slope
+                        ld      hl,-50      :ld      (SRvarPair),hl
+                        call    LL129_6502  ; Should be Q = 240, A = -ve SR = 50 >> PASS
+                        break
+                        ld      a,240       :ld      (XX12p2),a ; Gradient
+                        ld      a,$FF       :ld      (XX12p3),a ; Slope
+                        ld      hl, 150     :ld      (SRvarPair),hl
+                        call    LL129_6502  ; Should be Q = 240, A = -ve SR = 150 >> PASS
+                        ld      a,140       :ld      (XX12p2),a ; Gradient
+                        ld      a,$0        :ld      (XX12p3),a ; Slope
+                        ld      hl,50       :ld      (SRvarPair),hl
+                        call    LL129_6502  ; Should be Q = 140, A = +ve SR = 50 >> PASS
+                ENDIF
+ ;               DEFINE DEBUG_LL120 1
+                IFDEF DEBUG_LL120
+                        break
+                        ld      a,0         :ld      (Tvar),a   ; slope +ve so multiply
+                        ld      a,$FF       :ld      (Svar),a   ; S var -ve
+                        ld      hl,-10      :ld      (XX1510),hl; x1_lo -ve
+                        ld      a,168       :ld      (XX12p2),a ; Gradient 
+                        ld      a,$FF       :ld      (XX12p3),a ; slope direction    
+                        ; LL129 shoud be q = 168, a +ve SR 10 >> PASS 
+                        call    LL120_6502  ; Should be -ve 10 * 168  so xy -15   >> FAIL
+                        break
+                        ld      a,$FF       :ld      (Tvar),a   ; slope -ve so divide
+                        ld      a,$FF       :ld      (Svar),a   ; S var -ve
+                        ld      hl,-10      :ld      (XX1510),hl; x1_lo -ve
+                        ld      a,168       :ld      (XX12p2),a ; Gradient 
+                        ld      a,$FF       :ld      (XX12p3),a ; slope direction    
+                        ; LL129 shoud be q = 168, a +ve SR 10 >> PASS 
+                        call    LL120_6502  ; Should be -ve 10 / 168  so xy -6 >> PASS
+                ENDIF
+            DEFINE DEBUGCLIP 1
+            IFDEF  DEBUGCLIP
+                        break
+                        MMUSelectUniverseN 0
+                        MMUSelectLayer2
+                        call   l2_cls_upper_two_thirds
+                        ld      hl,PlotTestData
+                        ld      b,32
+.testLoop:              push    bc
+                        push    hl
+                        ld      de,x1
+                        ld      bc, 8
+                        pop     hl
+                        ldir
+                        break
+                        push    hl
+                        call    l2_draw_6502_line;l2_draw_elite_line
+                        break
+                        ;MMUSelectKeyboard
+                        ;call    WaitForAnyKey
+                        pop     hl
+                        pop     bc
+                        djnz    .testLoop
+                        break
+                        jp      InitialiseGalaxies
+                      ;  ld      hl,$FFF7 : ld (x1),hl : ld hl,$0009 : ld (y1),hl : ld hl,$000F : ld (x2),hl : ld hl,$FFEF : ld (y2),hl : call l2_draw_elite_line
+                      ;  ld      hl,259   : ld (x1),hl : ld hl,35    : ld (y1),hl : ld hl,250   : ld (x2),hl : ld hl,-12   : ld (y2),hl : call l2_draw_elite_line
+                         ld      hl,237   : ld (x1),hl : ld hl,258   : ld (y1),hl : ld hl,353   : ld (x2),hl : ld hl,237   : ld (y2),hl : call l2_draw_elite_line
+                      ;  ld      hl,6     : ld (x1),hl : ld hl,-65   : ld (y1),hl : ld hl,-15   : ld (x2),hl : ld hl,7     : ld (y2),hl : call l2_draw_elite_line
+
+PlotTestData:  ; dw  281 ,   60, 252 ,   90  ; pass
+               ; dw   -9 ,    9,  16 ,  -17  ; pass
+                dw -10  ,  -10,  50 ,   50 ;0:0:50:50   pass
+                dw -10  ,    0,  50 ,   50 ;0:8:50:50   fail load x1 y1 as 0,0
+                dw -20  ,    0,  50 ,   50 ;0:14:50:50  fail load x1 y1 as 0,0
+                dw  -5  ,  -10,  50 ,   50 ;4.5:0:50:50 fail load x1 y1 as 0,0
+               
+                dw -10  ,  -10,  50 ,   50
+                dw  10  ,    0,  50 ,   50
+                dw   0  ,    0,  50 ,   50
+                dw   0  ,   -5,  50 ,   50
+                
+                dw  259 ,   35, 250 ,  -12
+                dw  237 ,  258, 353 ,  237
+                dw    6 ,  -65, -15 ,    7
+                dw  280 ,   90, 300 ,   70
+                dw  -80 ,   90, -20 ,   70
+                dw  -10 ,  120,  10 ,  145
+                dw  120 ,  -10,  45 ,   10
+                dw  220 , -100,   5 ,   80
+                dw  220 ,  120,  35 ,  190
+                dw  235 ,  120,  20 ,  190
+                dw  -50 ,   60, 145 ,   70
+                dw  150 ,   60, 345 ,   70
+                dw  140 ,   90, 240 ,   70
+                dw  163 ,  256, 116 ,  173
+                dw   83 ,  184,  55 ,  192
+                dw   68 ,  192,  54 ,  103
+                dw  125 , 3937, 127 ,   41
+                dw  125 , 3937,  81 ,  111
+                dw  310 ,  339,  81 , 3992
+                dw  -37 , 4096,  38 ,  560
+                dw  283 , 101 ,  65 ,  163
+                dw  283 , 101 , 146 ,   78 
+                dw  146 , 78  ,   3 ,   93 
+                dw  3   , 93  ,  65 ,  163
+                dw  -127, 346 ,   3 ,   93 
+                dw  44	, 351 , -43 ,  126
+                dw  92	, 54  , 144 ,  -14
+                dw  144	, -14 , 164 ,    4
+                dw  95	, 40  , 159 ,   31 
+                dw  159	, 31  , 161 ,   51 
+
+
+
+/*007D FF61 FF81 006F
+007D FF61 017F 0029
+0096 FF61 FF81 004D
+0096 FF61 017F 004D
+017F 004F 0072 015F
+0072 015F FF81 004D
+0019 002B 00F6 002B
+00F6 002B 00F6 006F
+00F6 006F 0019 006F
+0019 006F 0019 002B
+005A 0079 0095 0027
+0096 0027 00AC 0028
+0051 005D 00A2 0040
+00A2 0040 00AA 0058
+005F 0056 00A3 004A
+00A3 004A 00A6 005F
+0073 0070 007D 0072
+007D 0072 007D 0075
+006C 0083 0076 0088
+0076 0072 007D 0074
+006C 0083 0076 0088
+0076 0088 0074 008B*/
+
+
+/*;;
+28 01 79 00 5a 01 8f 00 28 01 79 00 2f 01 3a 00
+2f 01 3a 00 5f 01 53 00 5f 01 53 00 5a 01 8f 00
+5a 01 8f 00 14 01 a1 00 28 01 79 00 14 01 a1 00
+28 01 79 00 ed 00 53 00 ed 00 53 00 2F 01 3a 00
+14 01 a1 00 e3 00 78 00 ed 00 53 00 e3 00 78 00
+47 01 6d 00 40 01 5f 00 40 01 5f 00 44 01 5d 00
+44 01 5d 00 4b 01 6a 00 4b 01 6a 00 47 01 6d 00
+42 01 5d 00 47 01 5d 00 47 01 5d 00 48 01 6d 00
+48 01 6d 00 43 01 6d 00 47 01 6d 00 43 01 6c 00
+47 01 6d 00 42 01 6c 00 14 00 dc ff 12 00 e1 ff*/
+
+                         MMUSelectKeyboard
+                         call        WaitForAnyKey    
+            ELSE
+                         DISPLAY "Not debugging clip code"            
+            ENDIF
+            IFDEF DEBUGLINEDRAW
+RenderDiagnostics:      MMUSelectLayer2
+                        ld      h, 0
+                        ld      l, 0
+                        ld      d,0
+                        ld      e,255
+                        ld      ixl,16
+                        ld      a,$C5
+                        ld      (line_gfx_colour),a
+                        ; draw a grid
+.horizontalLoop:        push    hl,,de,,ix
+                        call    LineHLtoDE
+                        pop     hl,,de,,ix
+                        ld      a,h
+                        add     8
+                        ld      h,a
+                        ld      d,a
+                        dec     ixl
+                        jr      nz,.horizontalLoop
+.verticalGrid:          ld      h, 0
+                        ld      l, 0
+                        ld      d, 127
+                        ld      e,0
+                        ld  ixl,32
+                        ld      a,$C6
+                        ld      (line_gfx_colour),a
+.verticalLoop:          push    hl,,de,,ix
+                        call    LineHLtoDE
+                        pop     hl,,de,,ix
+                        ld      a,l
+                        add     8
+                        ld      l,a
+                        ld      e,a
+                        dec     ixl
+                        jr      nz,.verticalLoop
+                        ld      a,$A6
+                        ld      (line_gfx_colour),a
+                        ld      hl,0
+                        ld      de,$7FFF
+                        call    LineHLtoDE
+                        ld      hl,$00FF
+                        ld      de,$7F00
+                        call    LineHLtoDE
+                        ld      a,0
+                        MMUSelectUniverseA
+                        ; CLip -10,-10 to 20,30
+                        ld      a,$56
+                        ld      (line_gfx_colour),a
+                        break
+.LineTest1:             ld      hl, DrawTestDataLine1
+                        call    DrawClippedLineDebug
+.LineTest2:             ld      hl, DrawTestDataLine2
+                        call    DrawClippedLineDebug
+.LineTest3:             ld      hl, DrawTestDataLine3
+                        call    DrawClippedLineDebug
+.LineTest4:             ld      hl, DrawTestDataLine4
+                        call    DrawClippedLineDebug
+                        ld      hl, DrawTestDataLine5
+                        call    DrawClippedLineDebug
+                        ld      hl, DrawTestDataLine6
+                        call    DrawClippedLineDebug
+                        ld      hl, DrawTestDataLine7
+                        call    DrawClippedLineDebug
+                        ld      hl, DrawTestDataLine8
+                        call    DrawClippedLineDebug
+                        ld      hl, DrawTestDataLine9
+                        call    DrawClippedLineDebug
+                        ld      hl, DrawTestDataLine10
+                        call    DrawClippedLineDebug
+                        ld      hl, DrawTestDataLine11
+                        call    DrawClippedLineDebug
+                        ld      hl, DrawTestDataLine12
+                        call    DrawClippedLineDebug
+                        ld      a,$A8
+                        ld      (line_gfx_colour),a                        
+                        ld      hl, DrawTestDataLine13
+                        call    DrawClippedLineDebug
+                        ld      hl, DrawTestDataLine14
+                        call    DrawClippedLineDebug
+                        ld      hl, DrawTestDataLine15
+                        call    DrawClippedLineDebug
+                        ld      hl, DrawTestDataLine16
+                        call    DrawClippedLineDebug
+                        break
+                        ; draw diagonals on screen tL br, tr bl
+                        ; draw diagonals on screen bl tr, br tl
+                        ; draw clipped horzontals left clip from -1000 -10 to 50
+                        ; draw clipped horzontals right clip from 200 to 260 to +1000
+                        ; draw clipped horzontals both clip from -1000 -10 to 260 to 1000
+                        ; draw clipped horzontals top clip from -1000 -10 to 50
+                        ; draw clipped horzontals bottom clip from 200 to 260 to +1000
+                        ; draw clipped horzontals both clip from -1000 -10 to 260 to 1000
+                        ; draw diagonal left clip
+                        ; draw diagonal right clip
+                        ; draw diagonal top clip
+                        ; draw diagonal bottom clip
+                        ; draw diagonal left top clip
+                        ; draw diagonal right top clip
+                        ; draw diagonal left bottom clip
+                        ; draw diagonal left bottom clip
+                        ; draw diagnoal left clip to right clip
+                        ; draw diagnoal top clip to bottom clip
+                        ; draw diagnoal left top clip to right clip
+                        ; flip right to left
+                        ; flip bottom to top
+.DebugPause:           ; jp      .DebugPause
+                        jp      InitialiseGalaxies
+
+DrawTestDataLine1:      DW      -10,   -10,   20,   30
+DrawTestDataLine2:      DW      265,   -10,  235,   30
+DrawTestDataLine3:      DW      -10,   -10,   30,   20
+DrawTestDataLine4:      DW      265,   -10,  225,   20
+DrawTestDataLine5:      DW    -1000,   -10,  127,   60
+DrawTestDataLine6:      DW     1000,   -10,  128,   60 
+DrawTestDataLine7:      DW    -1000,   138,  127,   60
+DrawTestDataLine8:      DW     1000,   138,  128,   60 
+DrawTestDataLine9:      DW      -10, -1000,  127,   60
+DrawTestDataLine10:     DW      265, -1000,  128,   60 
+DrawTestDataLine11:     DW      -10,  1138,  127,   60
+DrawTestDataLine12:     DW      265,  1138,  128,   60 
+DrawTestDataLine13:     DW      -10, -1000,  127,  360
+DrawTestDataLine14:     DW      265, -1000,  128,  360 
+DrawTestDataLine15:     DW      -10,  1138,  127, -360
+DrawTestDataLine16:     DW      265,  1138,  128, -360 
+                                                 
+
+DrawClippedLineDebug:   ld      bc,8
+                        ld      de,UbnkPreClipX1
+                        ldir
+                        call    ClipLine
+                        ld      a,(UBnkNewY1)
+                        ld      h,a
+                        ld      a,(UBnkNewX1)
+                        ld      l,a
+                        ld      a,(UBnkNewY2)
+                        ld      d,a
+                        ld      a,(UBnkNewX2)
+                        ld      e,a
+                        call    LineHLtoDE
+                        ret
+
+                ENDIF
 ;.ClearLayer2Buffers:    DoubleBufferIfPossible
 ;                        DoubleBufferIfPossible
 ; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files                        
                         SetBorder   $07
 InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
+                        break
                         call		ResetUniv                       ; Reset ship data
                         call        ResetGalaxy                     ; Reset each galaxy copying in code
                         call        SeedAllGalaxies
@@ -185,9 +575,9 @@ InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
                         MMUSelectLayer1
                         call		l1_cls
                         SetBorder   $00
-                        IFDEF SKIPATTRACT
-                            jp DefaultCommander
-                        ENDIF                        
+                    IFDEF SKIPATTRACT
+                        jp DefaultCommander
+                    ELSE
 StartAttractMode:       di                                          ; we are changing interrupts
                         MMUSelectSound
                         call        InitAudioMusic
@@ -205,6 +595,7 @@ StartAttractMode:       di                                          ; we are cha
                             ei 
                         ENDIF
                         JumpIfAIsZero  SkipDefaultCommander
+                    ENDIF
 DefaultCommander:       MMUSelectCommander
                         call		defaultCommander
                         jp          InitialiseMainLoop:
@@ -326,21 +717,18 @@ TestPauseMode:          ld      a,(GamePaused)
                         jr      nz,.TestForResume
 .CheckViewMode:         ld      a,(ScreenIndex)                     ; we can only pause if not on screen view
                         ReturnIfAGTENusng       ScreenFront
-.CheckPauseKey:         ld      a,c_Pressed_Freeze
-                        call    is_key_pressed
+.CheckPauseKey:         MacroIsKeyPressed c_Pressed_Freeze
                         ret     nz
 .PausePressed:          SetAFalse                                  ; doesn't really matter if we were in pause already as resume is a different key
                         ld      (GamePaused),a
                         ret
-.TestForResume:         ld      a,c_Pressed_Resume                  ; In pause loop so we can check for resume key
-                        call    is_key_pressed
+.TestForResume:         MacroIsKeyPressed c_Pressed_Resume                  ; In pause loop so we can check for resume key
                         ret     nz
 .ResumePressed:         xor     a             
                         ld      (GamePaused),a                      ; Resume pressed to reset pause state
                         ret
 
-TestQuit:               ld      a,c_Pressed_Quit
-                        call    is_key_pressed
+TestQuit:               MacroIsKeyPressed c_Pressed_Quit
                         ret
 currentDemoShip:        DB      13;$12 ; 13 - corirollis 
 
@@ -563,7 +951,11 @@ SeedGalaxy0Loop:        push    ix
 
             
     ;include "./ModelRender/testdrawing.asm"
-    include "./Menus/AttractMode.asm"
+    IFDEF SKIPATTRACT
+        DISPLAY "NOT LOADING ATTRACT MODE CODE"
+    ELSE
+        include "./Menus/AttractMode.asm"
+    ENDIF
 
     include "./Maths/Utilities/XX12EquNodeDotOrientation.asm"
     include "./ModelRender/CopyXX12ToXX15.asm"	
@@ -588,8 +980,6 @@ XX12PVarResult3		DW 0
 XX12PVarSign2		DB 0
 XX12PVarSign1		DB 0								; Note reversed so BC can do a little endian fetch
 XX12PVarSign3		DB 0
-    INCLUDE "./Hardware/keyboard.asm"
-    
     INCLUDE "./Variables/constant_equates.asm"
     INCLUDE "./Variables/general_variables.asm"
     INCLUDE "./Variables/general_variablesRoutines.asm"
@@ -609,10 +999,10 @@ XX12PVarSign3		DB 0
     INCLUDE "./Maths/multiply.asm"
     INCLUDE "./Maths/asm_square.asm"
     INCLUDE "./Maths/asm_sqrt.asm"
+    INCLUDE "./Maths/negate16.asm"
     INCLUDE "./Maths/asm_divide.asm"
     INCLUDE "./Maths/asm_unitvector.asm"
     INCLUDE "./Maths/compare16.asm"
-    INCLUDE "./Maths/negate16.asm"
     INCLUDE "./Maths/normalise96.asm"
     INCLUDE "./Maths/binary_to_decimal.asm"
     INCLUDE "./Maths/Utilities/AequAdivQmul96-TIS2.asm"
@@ -638,6 +1028,7 @@ XX12PVarSign3		DB 0
     INCLUDE "./Hardware/drive_access.asm"
 
     INCLUDE "./Menus/common_menu.asm"
+MainNonBankedCodeEnd:
     DISPLAY "Main Non Banked Code Ends at ",$
 
     org $B000
@@ -735,9 +1126,13 @@ IM2PlayDanube:          SaveMMU7
                         ret
                         
 IM2AttractMode:         call    IM2PlayDanube
+                    IF SKIPATTRACT
+                        DISPLAY "NOT LOADING IM2 ATTRACT MODE"
+                    ELSE
                         SaveMMU6
                         call    AttractModeUpdate
                         RestoreMMU6
+                    ENDIF
                         ret
 
 ; ARCHIVED INCLUDE "Menus/draw_fuel_and_crosshair.asm"
@@ -811,8 +1206,9 @@ IM2AttractMode:         call    IM2PlayDanube
     INCLUDE "./Layer2Graphics/asm_l2_plot_horizontal.asm"
     INCLUDE "./Layer2Graphics/asm_l2_plot_vertical.asm"
     INCLUDE "./Layer2Graphics/layer2_plot_diagonal.asm"
-    INCLUDE "./Layer2Graphics/asm_l2_plot_triangle.asm"
-    INCLUDE "./Layer2Graphics/asm_l2_fill_triangle.asm"
+;    INCLUDE "./Layer2Graphics/asm_l2_plot_triangle.asm"
+;    INCLUDE "./Layer2Graphics/asm_l2_fill_triangle.asm"
+;    INCLUDE "./Layer2Graphics/L2_SolidTriangles.asm"
     INCLUDE "./Layer2Graphics/layer2_plot_circle.asm"
     INCLUDE "./Layer2Graphics/layer2_plot_circle_fill.asm"
     INCLUDE "./Layer2Graphics/l2_draw_any_line.asm"
@@ -823,6 +1219,7 @@ IM2AttractMode:         call    IM2PlayDanube
     SLOT    LAYER1Addr
     PAGE    BankLAYER1
     ORG     LAYER1Addr, BankLAYER1
+Layer1Header:  DB "Bank L1 Utils--"
 
     INCLUDE "./Layer1Graphics/layer1_attr_utils.asm"
     INCLUDE "./Layer1Graphics/layer1_cls.asm"
@@ -895,49 +1292,57 @@ CopyBodyToUniverse3:    MCopyBodyToUniverse     CopyShipToUniverse3
 ;;Privisioned for more models 	ORG     ShipModelsAddr, BankShipModels4
     DISPLAY "Bank ",BankShipModels3," - Bytes free ",/D, $2000 - ($-ShipModelsAddr), " - BankShipModels3"
 ; Bank 60  ------------------------------------------------------------------------------------------------------------------------
-    SLOT    SpritemembankAddr
-    PAGE    BankSPRITE
-	ORG     SpritemembankAddr, BankSPRITE
-    INCLUDE "./Layer3Sprites/sprite_routines.asm"
-    INCLUDE "./Layer3Sprites/sprite_load.asm"
-;;;***    INCLUDE "./Layer3Sprites/SpriteSheet.asm"
-    DISPLAY "Bank ",BankSPRITE," - Bytes free ",/D, $2000 - ($-ShipModelsAddr), " - BankSPRITE"
+                    SLOT    SpritemembankAddr
+                    PAGE    BankSPRITE
+                    ORG     SpritemembankAddr, BankSPRITE
+                    INCLUDE "./Layer3Sprites/sprite_routines.asm"
+                    INCLUDE "./Layer3Sprites/sprite_load.asm"
+;;;***    INCLUDE " A./Layer3Sprites/SpriteSheet.asm"
+                    DISPLAY "Bank ",BankSPRITE," - Bytes free ",/D, $2000 - ($-ShipModelsAddr), " - BankSPRITE"
+                    ASSERT $-SpritemembankAddr <8912 , Bank code leaks over 8K boundary
 ; Bank 61  ------------------------------------------------------------------------------------------------------------------------
-    SLOT    ConsoleImageAddr
-    PAGE    BankConsole
-	ORG     ConsoleImageAddr, BankConsole
-    INCLUDE "./Images/ConsoleImageData.asm"
-    DISPLAY "Bank ",BankConsole," - Bytes free ",/D, $2000 - ($-ConsoleImageAddr), " - BankConsole"
+                    SLOT    ConsoleImageAddr
+                    PAGE    BankConsole
+                    ORG     ConsoleImageAddr, BankConsole
+                    INCLUDE "./Images/ConsoleImageData.asm"
+                    DISPLAY "Bank ",BankConsole," - Bytes free ",/D, $2000 - ($-ConsoleImageAddr), " - BankConsole"
+                    ASSERT $-ConsoleImageAddr <8912 , Bank code leaks over 8K boundary
 ; Bank 62  ------------------------------------------------------------------------------------------------------------------------
-    SLOT    ViewFrontAddr
-    PAGE    BankFrontView
-    ORG     ViewFrontAddr  
-    INCLUDE "./Views/Front_View.asm"    
-    DISPLAY "Bank ",BankFrontView," - Bytes free ",/D, $2000 - ($-ViewFrontAddr), " - BankFrontView"
+                    SLOT    ViewFrontAddr
+                    PAGE    BankFrontView
+                    ORG     ViewFrontAddr  
+                    INCLUDE "./Views/Front_View.asm"    
+                    DISPLAY "Bank ",BankFrontView," - Bytes free ",/D, $2000 - ($-ViewFrontAddr), " - BankFrontView"
+                    ASSERT $-ViewFrontAddr <8912 , Bank code leaks over 8K boundary
 ; Bank 63  ------------------------------------------------------------------------------------------------------------------------
-    SLOT    MenuStatusAddr
-    PAGE    BankMenuStatus
-    ORG     MenuStatusAddr
-    INCLUDE "./Menus/status_menu.asm"
-    DISPLAY "Bank ",BankMenuStatus," - Bytes free ",/D, $2000 - ($-MenuStatusAddr), " - BankMenuStatus"
+                    SLOT    MenuStatusAddr
+                    PAGE    BankMenuStatus
+                    ORG     MenuStatusAddr
+                    INCLUDE "./Menus/status_menu.asm"
+                    DISPLAY "Bank ",BankMenuStatus," - Bytes free ",/D, $2000 - ($-MenuStatusAddr), " - BankMenuStatus"
+                    ASSERT $-MenuStatusAddr <8912 , Bank code leaks over 8K boundary
 ; Bank 64  ------------------------------------------------------------------------------------------------------------------------
-    SLOT    MenuEquipSAddr
-    PAGE    BankMenuEquipS
-    ORG     MenuEquipSAddr  
-    INCLUDE "./Menus/equip_ship_menu.asm"    
-    DISPLAY "Bank ",BankMenuEquipS," - Bytes free ",/D, $2000 - ($-MenuEquipSAddr), " - BankMenuEquipS"
+                    SLOT    MenuEquipSAddr
+                    PAGE    BankMenuEquipS
+                    ORG     MenuEquipSAddr  
+                    INCLUDE "./Menus/equip_ship_menu.asm"    
+                    DISPLAY "Bank ",BankMenuEquipS," - Bytes free ",/D, $2000 - ($-MenuEquipSAddr), " - BankMenuEquipS"
+                    ASSERT $-MenuEquipSAddr <8912 , Bank code leaks over 8K boundary
 ; Bank 65  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    LaunchShipAddr
                     PAGE    BankLaunchShip
                     ORG     LaunchShipAddr
                     INCLUDE "./Transitions/launch_ship.asm"
                     DISPLAY "Bank ",BankLaunchShip," - Bytes free ",/D, $2000 - ($-LaunchShipAddr), " - BankLaunchShip"
+                    ASSERT $-LaunchShipAddr <8912 , Bank code leaks over 8K boundary
 ; Bank 70  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA0
                     ORG	    UniverseBankAddr,BankUNIVDATA0
                     INCLUDE "./Universe/Ships/univ_ship_data.asm"
+                    DISPLAY "Sizing Bank ",BankUNIVDATA0," - Start ",UniverseBankAddr," End - ",$, "- Universe Data A"
                     DISPLAY "Bank ",BankUNIVDATA0," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data A"
+                    ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 71  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA1
@@ -945,6 +1350,7 @@ CopyBodyToUniverse3:    MCopyBodyToUniverse     CopyShipToUniverse3
 UNIVDATABlock1      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA1," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data B"
+                    ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 72  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA2
@@ -952,6 +1358,7 @@ UNIVDATABlock1      DB $FF
 UNIVDATABlock2      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA2," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data C"
+                    ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 73  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA3
@@ -959,6 +1366,7 @@ UNIVDATABlock2      DB $FF
 UNIVDATABlock3      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data D"
+                    ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA4
@@ -966,6 +1374,7 @@ UNIVDATABlock3      DB $FF
 UNIVDATABlock4      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data E"
+                    ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 75  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA5
@@ -973,6 +1382,7 @@ UNIVDATABlock4      DB $FF
 UNIVDATABlock5      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data F"
+                    ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 76  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA6
@@ -980,6 +1390,7 @@ UNIVDATABlock5      DB $FF
 UNIVDATABlock6      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data G"
+                    ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA7
@@ -987,6 +1398,7 @@ UNIVDATABlock6      DB $FF
 UNIVDATABlock7      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data H"
+                    ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA8
@@ -994,6 +1406,7 @@ UNIVDATABlock7      DB $FF
 UNIVDATABlock8      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data I"
+                    ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA9
@@ -1001,6 +1414,7 @@ UNIVDATABlock8      DB $FF
 UNIVDATABlock9      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data J"
+                    ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA10
@@ -1008,6 +1422,7 @@ UNIVDATABlock9      DB $FF
 UNIVDATABlock10     DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data K"
+                    ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA11
@@ -1015,6 +1430,7 @@ UNIVDATABlock10     DB $FF
 UNIVDATABlock11     DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data L"
+                    ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 74  ------------------------------------------------------------------------------------------------------------------------             
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA12
@@ -1022,18 +1438,21 @@ UNIVDATABlock11     DB $FF
 UNIVDATABlock12     DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data M"
+                    ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 83  ------------------------------------------------------------------------------------------------------------------------
-                        SLOT    SunBankAddr
-                        PAGE    BankSunData
-                        ORG	    SunBankAddr,BankSunData
-                        INCLUDE "./Universe/Sun/sun_data.asm"
-                        DISPLAY "Bank ",BankSunData," - Bytes free ",/D, $2000 - ($-SunBankAddr), " - BankSunData"
+                    SLOT    SunBankAddr
+                    PAGE    BankSunData
+                    ORG	    SunBankAddr,BankSunData
+                    INCLUDE "./Universe/Sun/sun_data.asm"
+                    DISPLAY "Bank ",BankSunData," - Bytes free ",/D, $2000 - ($-SunBankAddr), " - BankSunData"
+                    ASSERT $-SunBankAddr <8912, Bank code leaks over 8K boundary
 ; Bank 84  ------------------------------------------------------------------------------------------------------------------------
-                        SLOT    PlanetBankAddr
-                        PAGE    BankPlanetData
-                        ORG	    PlanetBankAddr,BankPlanetData
-                        INCLUDE "./Universe/Planet/planet_data.asm"
-                        DISPLAY "Bank ",BankPlanetData," - Bytes free ",/D, $2000 - ($-PlanetBankAddr), " - BankPlanetData"
+                    SLOT    PlanetBankAddr
+                    PAGE    BankPlanetData
+                    ORG	    PlanetBankAddr,BankPlanetData
+                    INCLUDE "./Universe/Planet/planet_data.asm"
+                    DISPLAY "Bank ",BankPlanetData," - Bytes free ",/D, $2000 - ($-PlanetBankAddr), " - BankPlanetData"
+                    ASSERT $-PlanetBankAddr <8912, Bank code leaks over 8K boundary
 ;;;***; Bank 85  ------------------------------------------------------------------------------------------------------------------------
 ;;;***                        SLOT    SpriteDataAAddr
 ;;;***                        PAGE    BankSpriteDataA
@@ -1049,79 +1468,94 @@ UNIVDATABlock12     DB $FF
 ;;;***                        INCLUDE "./Layer3Sprites/SpriteSheetB.asm"
 ;;;***                        DISPLAY "Bank ",BankSpriteDataB," - Bytes free ",/D, $2000 - ($-SpriteDataBAddr), " - BankSpriteDataB"
 ; Bank 91  ------------------------------------------------------------------------------------------------------------------------
-                        SLOT    GalaxyDataAddr
-                        PAGE    BankGalaxyData0
-                        ORG GalaxyDataAddr, BankGalaxyData0
-                        INCLUDE "./Universe/Galaxy/galaxy_data.asm"                                                            
-                        DISPLAY "Bank ",BankGalaxyData0," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData0"
+                    SLOT    GalaxyDataAddr
+                    PAGE    BankGalaxyData0
+                    ORG GalaxyDataAddr, BankGalaxyData0
+                    INCLUDE "./Universe/Galaxy/galaxy_data.asm"                                                            
+                    DISPLAY "Bank ",BankGalaxyData0," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData0"
+                    ASSERT $-GalaxyDataAddr <8912, Bank code leaks over 8K boundary
 ; Bank 92  ------------------------------------------------------------------------------------------------------------------------
-                        SLOT    GalaxyDataAddr
-                        PAGE    BankGalaxyData1
-                        ORG GalaxyDataAddr, BankGalaxyData1
-GALAXYDATABlock1         DB $FF
-                         DS $1FFF                 ; just allocate 8000 bytes for now  
-                        DISPLAY "Bank ",BankGalaxyData1," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData1"
+                    SLOT    GalaxyDataAddr
+                    PAGE    BankGalaxyData1
+                    ORG GalaxyDataAddr, BankGalaxyData1
+GALAXYDATABlock1:   DB $FF
+                    DS $1FFF                 ; just allocate 8000 bytes for now  
+                    DISPLAY "Bank ",BankGalaxyData1," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData1"
+                    ASSERT $-GalaxyDataAddr <8912, Bank code leaks over 8K boundary
 ; Bank 93  ------------------------------------------------------------------------------------------------------------------------
-                        SLOT    GalaxyDataAddr
-                        PAGE    BankGalaxyData2
-                        ORG GalaxyDataAddr, BankGalaxyData2
-GALAXYDATABlock2        DB $FF
-                        DS $1FFF                 ; just allocate 8000 bytes for now
-                        DISPLAY "Bank ",BankGalaxyData2," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData2"
+                    SLOT    GalaxyDataAddr
+                    PAGE    BankGalaxyData2
+                    ORG GalaxyDataAddr, BankGalaxyData2
+GALAXYDATABlock2:   DB $FF
+                    DS $1FFF                 ; just allocate 8000 bytes for now
+                    DISPLAY "Bank ",BankGalaxyData2," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData2"
+                    ASSERT $-GalaxyDataAddr <8912, Bank code leaks over 8K boundary
 ; Bank 94  ------------------------------------------------------------------------------------------------------------------------
-                        SLOT    GalaxyDataAddr
-                        PAGE    BankGalaxyData3
-                        ORG GalaxyDataAddr, BankGalaxyData3
-GALAXYDATABlock3        DB $FF
-                        DS $1FFF                 ; just allocate 8000 bytes for now
-                        DISPLAY "Bank ",BankGalaxyData3," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData3"
+                    SLOT    GalaxyDataAddr
+                    PAGE    BankGalaxyData3
+                    ORG GalaxyDataAddr, BankGalaxyData3
+GALAXYDATABlock3:   DB $FF
+                    DS $1FFF                 ; just allocate 8000 bytes for now
+                    DISPLAY "Bank ",BankGalaxyData3," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData3"
+                    ASSERT $-GalaxyDataAddr <8912, Bank code leaks over 8K boundary
 ; Bank 95  ------------------------------------------------------------------------------------------------------------------------
-                        SLOT    GalaxyDataAddr
-                        PAGE    BankGalaxyData4
-                        ORG GalaxyDataAddr, BankGalaxyData4
-GALAXYDATABlock4        DB $FF
-                        DS $1FFF                 ; just allocate 8000 bytes for now
-                        DISPLAY "Bank ",BankGalaxyData4," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData4"
+                    SLOT    GalaxyDataAddr
+                    PAGE    BankGalaxyData4
+                    ORG GalaxyDataAddr, BankGalaxyData4
+GALAXYDATABlock4:   DB $FF
+                    DS $1FFF                 ; just allocate 8000 bytes for now
+                    DISPLAY "Bank ",BankGalaxyData4," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData4"
+                    ASSERT $-GalaxyDataAddr <8912, Bank code leaks over 8K boundary
 ; Bank 96  ------------------------------------------------------------------------------------------------------------------------
-                        SLOT    GalaxyDataAddr
-                        PAGE    BankGalaxyData5
-                        ORG GalaxyDataAddr,BankGalaxyData5
-GALAXYDATABlock5        DB $FF
-                        DS $1FFF                 ; just allocate 8000 bytes for now
-                        DISPLAY "Bank ",BankGalaxyData5," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData5"
+                    SLOT    GalaxyDataAddr
+                    PAGE    BankGalaxyData5
+                    ORG GalaxyDataAddr,BankGalaxyData5
+GALAXYDATABlock5:   DB $FF
+                    DS $1FFF                 ; just allocate 8000 bytes for now
+                    DISPLAY "Bank ",BankGalaxyData5," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData5"
+                    ASSERT $-GalaxyDataAddr <8912, Bank code leaks over 8K boundary
 ; Bank 97  ------------------------------------------------------------------------------------------------------------------------
-                        SLOT    GalaxyDataAddr
-                        PAGE    BankGalaxyData6
-                        ORG GalaxyDataAddr,BankGalaxyData6
-GALAXYDATABlock6        DB $FF
-                        DS $1FFF                 ; just allocate 8000 bytes for now
-                        DISPLAY "Bank ",BankGalaxyData6," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData6"
+                    SLOT    GalaxyDataAddr
+                    PAGE    BankGalaxyData6
+                    ORG GalaxyDataAddr,BankGalaxyData6
+GALAXYDATABlock6:   DB $FF
+                    DS $1FFF                 ; just allocate 8000 bytes for now
+                    DISPLAY "Bank ",BankGalaxyData6," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData6"
+                    ASSERT $-GalaxyDataAddr <8912, Bank code leaks over 8K boundary
 ; Bank 98  ------------------------------------------------------------------------------------------------------------------------
-                        SLOT    GalaxyDataAddr
-                        PAGE    BankGalaxyData7
-                        ORG GalaxyDataAddr,BankGalaxyData7
-GALAXYDATABlock7        DB $FF
-                        DS $1FFF                 ; just allocate 8000 bytes for now
-                        DISPLAY "Bank ",BankGalaxyData7," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData7"
+                    SLOT    GalaxyDataAddr
+                    PAGE    BankGalaxyData7
+                    ORG GalaxyDataAddr,BankGalaxyData7
+GALAXYDATABlock7:   DB $FF
+                    DS $1FFF                 ; just allocate 8000 bytes for now
+                    DISPLAY "Bank ",BankGalaxyData7," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData7"
+                    ASSERT $-GalaxyDataAddr <8912, Bank code leaks over 8K boundary
 ; Bank 99  ------------------------------------------------------------------------------------------------------------------------
-                        SLOT    MathsTablesAddr
-                        PAGE    BankMathsTables
-                        ORG     MathsTablesAddr,BankMathsTables
-                        INCLUDE "./Maths/logmaths.asm"
-                        INCLUDE "./Tables/antilogtable.asm"
-                        INCLUDE "./Tables/logtable.asm"
-                        DISPLAY "Bank ",BankMathsTables," - Bytes free ",/D, $2000 - ($-MathsTablesAddr), " - BankMathsTables"
-
+                    SLOT    MathsTablesAddr
+                    PAGE    BankMathsTables
+                    ORG     MathsTablesAddr,BankMathsTables
+                    INCLUDE "./Maths/logmaths.asm"
+                    INCLUDE "./Tables/antilogtable.asm"
+                    INCLUDE "./Tables/logtable.asm"
+                    DISPLAY "Bank ",BankMathsTables," - Bytes free ",/D, $2000 - ($-MathsTablesAddr), " - BankMathsTables"
+                    ASSERT $-MathsTablesAddr <8912, Bank code leaks over 8K boundary
 ; Bank 100  -----------------------------------------------------------------------------------------------------------------------
-               
-                        SLOT    SoundAddr
-                        PAGE    BankSound
-                        ORG SoundAddr, BankSound             
-                        INCLUDE "./Hardware/sound.asm"
-                        DISPLAY "Sound ",BankSound," - Bytes free ",/D, $2000 - ($-SoundAddr), " - BankSound"
-    
+                    SLOT    KeyboardAddr
+                    PAGE    BankKeyboard
+                    ORG SoundAddr, BankKeyboard             
+                    INCLUDE "./Hardware/keyboard.asm"
+                    DISPLAY "Keyboard ",BankKeyboard," - Bytes free ",/D, $2000 - ($-KeyboardAddr), " - BankKeyboard"
+                    ASSERT $-KeyboardAddr <8912, Bank code leaks over 8K boundary
+; Bank 101  -----------------------------------------------------------------------------------------------------------------------
+                    SLOT    SoundAddr
+                    PAGE    BankSound
+                    ORG SoundAddr, BankSound             
+                    INCLUDE "./Hardware/sound.asm"
+                    DISPLAY "Sound ",BankSound," - Bytes free ",/D, $2000 - ($-SoundAddr), " - BankSound"
+                    ASSERT $-SoundAddr <8912, Bank code leaks over 8K boundary
     SAVENEX OPEN "EliteN.nex", EliteNextStartup , TopOfStack
     SAVENEX CFG  0,0,0,1
     SAVENEX AUTO
     SAVENEX CLOSE
+    ASSERT MainNonBankedCodeEnd < 0B000H, Program code leaks into interrup vector table
     

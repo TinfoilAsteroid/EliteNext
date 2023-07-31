@@ -9,11 +9,13 @@ ZI1:                    ld      hl, 0
                         ld      (UBnkrotmatRoofvZ),hl                ; set the zeroes
                         ld      (UBnkrotmatNosevX),hl                ; set the zeroes
                         ld      (UBnkrotmatNosevY),hl                ; set the zeroes
-                        ld      hl, $6000					; 96 in hi byte
+; Optimised as already have 0 in l
+                        ld      h, $60	             				; 96 in hi byte
                         ;ld      hl,1
                         ld      (UBnkrotmatSidevX),hl
                         ld      (UBnkrotmatRoofvY),hl
-                        ld      hl, $E000					; -96 in hi byte which is +96 with hl bit 7 set
+; Optimised as already have 0 in l
+                        ld      h, $E0					            ; -96 in hi byte which is +96 with hl bit 7 set
                         ld      (UBnkrotmatNosevZ),hl
                         ret
 

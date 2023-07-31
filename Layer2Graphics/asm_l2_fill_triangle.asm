@@ -270,9 +270,59 @@ l2_fillBottomFlatTriangle:;break
                         jr 		nc,.SaveForLoop					; Is this the right point??
                         ret
 
+l2_fill_BoundsTest:     ld      a,ixh
+                        xor     b
+                        and     $80
+                        jr      nz,.Y0Y1SpanScreen              ; they are opposite signs
+                        ld      a,b
+                        and     $80
+                        jr      z,.NotOnScreen                  ; both negative if at least one is negative
+                        ld      a,ixl                           ; so to get here, both must be positive
+                        and     c
+                        and     $80
+                        jr      nz,.NotOnScreen                 ; if both ahave bit 7 set of low they are both > 127
+                        ld      a,ixh
+                        and     a
+                        jr      z,.Y0Y1SpanScreen               ; so if Y0 is low byte only then its between 0 and 127
+                        ld      a,b
+                        and     a
+                        jr      z,.Y0Y1SpanScreen               ; so if YCommon is low byte only then its between 0 and 127
+.NotOnScreen:           SetCarryFlag
+                        ret
+.Y0Y1SpanScreen:         ret
+
+
 ;16 bit soli l2_fill16BottomFlatTriangle BC y0x0 DE x1x2, H YCommon, L Colour"
-;IT [01]X0[23]Y0[45]X1[67]X2[89]YCommon[10]Colour
+;IY Offsets IY=X0 IX=Y0 HL=X1 DE=X2 BC=YCommon A= Colour
 l2_fill16BottomFlatTriangle:;break
+                        ; test if Y0 and YCommon on screen 
+.TestY0YCommon          ld      (l2_Y0),ix
+                        ld      (l2_Y1),hl
+
+
+                        ld      a,ixh
+                        xor     b
+                        and     $80
+                        jr      nz,.Y0Y1SpanScreen              ; they are opposite signs
+                        ld      a,b
+                        and     $80
+                        ret     z                               ; both negative if at least one is negative
+                        ld      a,ixl                           ; so to get here, both must be positive
+                        and     c
+                        and     $80
+                        ret     nz                              ; if both ahave bit 7 set of low they are both > 127
+                        ld      a,ixh
+                        and     a
+                        jr      z,.Y0Y1SpanScreen               ; so if Y0 is low byte only then its between 0 and 127
+                        ld      a,b
+                        and     a
+                        jr      z,.Y0Y1SpanScreen               ; so if YCommon is low byte only then its between 0 and 127
+                        ret                                     ; 
+.Y0Y1SpanScreen:        ret
+                        
+                        ld      (l2linecolor),a                 ; Set Colour
+                        ;CompareHLDE
+                        
                         ld      a,e
                         JumpIfAGTENusng d, .x2gtex1                       
 ;                        ld		a,d                             ; if x0 < x2 goto x2<x1

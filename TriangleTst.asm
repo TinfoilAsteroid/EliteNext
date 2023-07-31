@@ -154,6 +154,16 @@ MainLoop:               call        asm_l2_double_buffer_off
                         inc     hl
                         djnz    .LineLoop
 
+
+;;#optmisation to try
+;;sort all 3 coordinates y ascending
+;;if y0 and y1 == then simple flat top
+;;if y1 aand y2 == then simple flat bottom
+;;else
+;;  start drawing flat bottom traingle from x0,y0
+;;  when y line calulation reaches row y1 we switch to doinig a flat top triangle from xcurrycurr to x1y1 ad x2y2
+;;  saves all the precalculating
+
 LargerTriangle:         ld      hl, 100         ; 64
                         ld      (l2_X0),hl
                         ld      hl, 100

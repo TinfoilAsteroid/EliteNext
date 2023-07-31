@@ -9,13 +9,17 @@
 ;            while a = normal index
 ;                  triangle pointer + 4
 ;                  a = (triangle pointer)
-;   
-;
-;
-;
-;
-;
-;
+;            if a = $FF then we are done early
+;       Yes  -  IY = traingle list
+;               for i = 0 to 3
+;                   a = (trianglepointer)
+;                   hl = ubnkline array + a 
+;                   (IY[01]) = (hl [01]
+;                   (IY[23]) = (hl [23]
+;                    iy += 4
+;                next
+;                drawtriangle IY 01,23  45,67 89,1011
+; next
 PrepTriangles:
         ;break
         ldWriteZero UbnkLineArrayLen                    ; current line array index = 0
@@ -80,9 +84,7 @@ VisibileEdge:                                           ; Now we need to node id
         call        getVertexNodeAtAToX2Y2              ; get the points X2Y2 from node
         IFDEF       CLIPVersion3
             call        ClipLineV3
-            ld          a,(ClipSuccess)
-            and         a
-            jr          z,LL78EdgeNotVisible
+            jr          c,LL78EdgeNotVisible
         ELSE
             call        ClipLine
             jr          c,LL78EdgeNotVisible                ; LL78 edge not visible

@@ -429,17 +429,13 @@ eqip_refesh_buffer:     call    eqshp_buffer_list
                         
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Handles all the input whilst in the market menu
-loop_eqshp_menu:        ld      a,c_Pressed_CursorUp  
-                        call    is_key_pressed
+loop_eqshp_menu:        MacroIsKeyPressed c_Pressed_CursorUp  
                         call    z,eqshp_UpPressed
-                        ld      a,c_Pressed_CursorDown
-                        call    is_key_pressed
+                        MacroIsKeyPressed c_Pressed_CursorDown
                         call    z,eqshp_DownPressed
-                        ld      a,c_Pressed_RollLeft
-                        call    is_key_pressed
+                        MacroIsKeyPressed c_Pressed_RollLeft
                         call    z,eqshp_LeftPressed
-                        ld      a,c_Pressed_RollRight
-                        call    is_key_pressed
+                        MacroIsKeyPressed c_Pressed_RollRight
                         call    z,eqshp_RightPressed
                         ret
 

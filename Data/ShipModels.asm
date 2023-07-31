@@ -133,6 +133,8 @@ CopyTrianDataToUBnkB:
                         IFDEF SHIPBANKC
 CopyTrianDataToUBnkC:
                         ENDIF
+    IFDEF SOLIDHULLTEST
+
                         ld          hl,(ShipSolidFillAddr)      ; now the pointers are in Ubnk its easy to read
                         ld          de,UBnkHullSolid
                         ld          b,0
@@ -141,6 +143,7 @@ CopyTrianDataToUBnkC:
                         ex          de,hl                       ; dma transfer goes de -> hl i.e. opposite of ldir
                         call        memcopy_dma
                         ret
+    ENDIF
 ;CopyShipIdToUbnk:       ld      
 
 
@@ -175,8 +178,10 @@ CopyShipDataToUBnkC:    push        af
                         call        CopyVerticesDataToUBnk
                         call        CopyEdgeDataToUBnk
                         call        CopyNormalDataToUBnk
+    IFDEF SOLIDHULLTEST
                         ReturnIfMemFalse ShipSolidFlagAddr
                         call        CopyTrianlDataToUBnk
+    ENDIF
                         ret
 
 ; change to there are two banks

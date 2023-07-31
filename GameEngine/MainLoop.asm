@@ -5,12 +5,13 @@
 ;    DEFINE  MAINLOOP_DEMOSHIPS
 ;   DEFINE  MAINLOOP_DEBUGMISSILE 1
     DEFINE  MAINLOOP_INPUTHANDLER
-    DEFINE  MAINLOOP_EVENTHANDLER
-    DEFINE  MAINLOOP_RECHARGE
-    DEFINE  MAINLOOP_LAUNCHMISSILE
-    DEFINE  MAINLOOP_UPDATEUNIVERSE
-    DEFINE  MAINLOOP_SUN_RENDER 1
-    DEFINE  MAINLOOP_PLANET_RENDER 1
+   ; DEFINE  MAINLOOP_EVENTHANDLER 1
+    DEFINE  MAINLOOP_RECHARGE 1
+ ;   DEFINE  MAINLOOP_LAUNCHMISSILE
+    DEFINE  MAINLOOP_UPDATEUNIVERSE 1
+    DEFINE  MAINLOOP_DUST_RENDER 1    
+;    DEFINE  MAINLOOP_SUN_RENDER 1
+;    DEFINE  MAINLOOP_PLANET_RENDER 1
     DEFINE  MAINLOOP_MODEL_RENDER    1
     DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
     DEFINE  MAINLOOP_WARP_ENABLED 1
@@ -37,6 +38,7 @@ MainLoop:	            call    doRandom                                          
 .AlreadyCool
                 ENDIF
                 IFDEF MAINLOOP_KEYBOARDSCAN
+                        MMUSelectKeyboard
                         call    scan_keyboard                                           ; perform the physical input scan
                 ENDIF
 ;.. This bit allows cycling of ships on universe 0 in demo.........................................................................
@@ -53,6 +55,7 @@ InputBlockerCheck:      ld      a,$0
                         ld      a,(GamePaused)
                         cp      0
                         jp      nz,MainLoop
+                        MMUSelectKeyboard
                         call    MovementKeyTest
 ;.. Process cursor keys for respective screen if the address is 0 then we skill just skip movement.................................
                 ENDIF
@@ -198,7 +201,9 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
 DrawDustForwards:       ld     a,$DF
                         ld     (line_gfx_colour),a                         
 DustUpdateBank:         MMUSelectViewFront                                              ; This needs to be self modifying
+    IFDEF   MAINLOOP_DUST_RENDER
 DustUpdateRoutine:      call   DustForward                                              ; This needs to be self modifying
+    ENDIF
 ;ProcessSun:             call    DrawForwardSun
             IFDEF   LASER_V2            
 ProcessLaser:           MMUSelectSpriteBank

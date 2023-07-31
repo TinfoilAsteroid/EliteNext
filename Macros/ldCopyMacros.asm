@@ -73,7 +73,11 @@ ldAtHLtoMem:            MACRO   memto
                         ld      (memto),a
                         ENDM
 
-ldCopy2Byte             MACRO  memfrom, memto
+ldCopyWord:             MACRO memfrom, memto
+                        ldCopy2Byte memfrom, memto
+                        ENDM
+
+ldCopy2Byte:            MACRO  memfrom, memto
                         ld       hl,(memfrom)
                         ld       (memto),hl
                         ENDM

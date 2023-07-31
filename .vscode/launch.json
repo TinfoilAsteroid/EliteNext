@@ -5,40 +5,36 @@
         {
             "type": "dezog",
             "request": "launch",
-            "name": "DeZog",
+            "name": "CSpect",
             "remoteType": "cspect",
-            "cspect": 
-            {
-                    "hostname": "localhost",
-                    "port": 11000
+            "cspect":{
+                "port":11000
             },
-            "zxnext": 
-            {
-                    "baudrate": 230400,
-                    "port": "/dev/tty.usbserial"
-            },
-            "rootFolder": "${fileDirname}",
-            "listFiles": [
+            "sjasmplus": [
                 {
-                    "path": "H:\\OneDrive\\EliteNext\\eliteNext.lst",
-                    "asm": "sjasmplus",
-                    "mainFile": "H:\\OneDrive\\EliteNext\\eliteNext.asm"
+                    "path": "H:\\OneDrive\\EliteNext\\eliteNext.sld"
                 }
-              ],
-            "skipInterrupt": false,
-            "startAutomatically": false,
-            "history": {
-                "reverseDebugInstructionCount": 10000,
-            },
-            "commandsAfterLaunch": [
-                //"-sprites",
-                //"-patterns"
             ],
-
-            "topOfStack": "$7F00",
-            "load": "${fileDirname}/EliteN.nex",
-            "smallValuesMaximum": 513,
-            "tmpDir": ".tmp"
-        }      
+            "commandsAfterLaunch": [],
+            "history": {
+                "reverseDebugInstructionCount": 1000000,
+                "spotCount": 10,
+                "codeCoverageEnabled": false
+            },
+            "startAutomatically": false,
+            "rootFolder": "H:\\OneDrive\\EliteNext",
+            "load": "H:\\OneDrive\\EliteNext\\EliteN.nex",
+            "topOfStack": "TopOfStack"
+        }
+       //     "cspect": 
+        //    {
+        //            "hostname": "localhost",
+        //            "port": 11000
+       //     },
+       //     "zxnext": 
+       //     {
+       //            "baudrate": 230400,
+       //             "port": "/dev/tty.usbserial"
+       //     }  
     ]
 }

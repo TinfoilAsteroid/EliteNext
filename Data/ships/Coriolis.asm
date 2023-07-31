@@ -23,25 +23,58 @@ Coriolis:	            DB $00                                      ; Number of ca
                         DB $FF                              ; Supports Solid Fill = false
                         DW $0000                            ; no solid data
                         DB $00                              ; no solid data
-
-CoriolisVertices:	    DB $A0, $00, $A0, $1F, $10, $62
-                        DB $00, $A0, $A0, $1F, $20, $83
-                        DB $A0, $00, $A0, $9F, $30, $74
-                        DB $00, $A0, $A0, $5F, $10, $54
-                        DB $A0, $A0, $00, $5F, $51, $A6
-                        DB $A0, $A0, $00, $1F, $62, $B8
-                        DB $A0, $A0, $00, $9F, $73, $C8
-                        DB $A0, $A0, $00, $DF, $54, $97
-                        DB $A0, $00, $A0, $3F, $A6, $DB
-                        DB $00, $A0, $A0, $3F, $B8, $DC
-                        DB $A0, $00, $A0, $BF, $97, $DC
-                        DB $00, $A0, $A0, $7F, $95, $DA
-                        DB $0A, $1E, $A0, $5E, $00, $00
-                        DB $0A, $1E, $A0, $1E, $00, $00
-                        DB $0A, $1E, $A0, $9E, $00, $00
-                        DB $0A, $1E, $A0, $DE, $00, $00
+;Need to do a debug cube and test that, even better a debug square only 
+; a debug cube would be -160, 160, 160  to -160,160,-160    top left forward     to top left rear         TLF   $A0, $A0, $A0, $9F, $14, $50 
+;                       -160, 160, 160  to -160,-160,160    top left forward     to bottom left forward   TLR   $A0, $A0, $A0, $BF, $45, $60
+;                       -160, 160,-160  to  160,160,-160    top left rear        to top right rear        BLF   $A0, $A0, $A0, $DF, $12, $40
+;                       -160, 160,-160  to -160,-160,-160   top left rear        to bottom left rear      TRR   $A0, $A0, $A0, $3F, $35, $60
+;                       -160,-160,-160  to -160,-160,-160   bottom left forward  to bottom left rear      BLR   $A0, $A0, $A0, $FF, $24, $60
+;                       -160, 160, 160  to  160, 160, 160   top left forward     to top right forward     TRF   $A0, $A0, $A0, $1F, $13, $60
+;                       -160,-160, 160  to  160,-160, 160   bottom left forward  to bottom right forward  BRF   $A0, $A0, $A0, $5F, $12, $30
+;                       -160,-160,-160  to  160,-160,-160   bottom left rear     to bottom right rear     BRR   $A0, $A0, $A0, $7F, $23, $50
+;                        160, 160, 160  to  160, 160,-160   top right forward    to top right rear        
+;                        160,-160, 160  to  160,-160,-160   bottom right forward to bottom right rear
+;                        160, 160, 160  to  160,-160, 160   top right forward    to bottom right forward
+;                        160, 160,-160  to  160,-160,-160   top right rear       to bottom right rear
+CoriolisVertices:	    ; DB $A0, $A0, $A0, $9F, $14, $50    ; TLF 1
+                        ; DB $A0, $A0, $A0, $BF, $45, $60    ; TLR 2
+                        ; DB $A0, $A0, $A0, $DF, $12, $40    ; BLF 3
+                        ; DB $A0, $A0, $A0, $3F, $35, $60    ; TRR 4
+                        ; DB $A0, $A0, $A0, $FF, $24, $60    ; BLR 5
+                        ; DB $A0, $A0, $A0, $1F, $13, $60    ; TRF 6
+                        ; DB $A0, $A0, $A0, $5F, $12, $30    ; BRF 7
+                        ; DB $A0, $A0, $A0, $7F, $23, $50    ; BRR 8
+                         DB $A0, $00, $A0, $1F, $10, $62     ; 160,   0 , 160   
+                         DB $00, $A0, $A0, $1F, $20, $83     ;   0, 160 , 160
+                         DB $A0, $00, $A0, $9F, $30, $74     ;-160,   0 , 160
+                         DB $00, $A0, $A0, $5F, $10, $54     ;   0,-160 , 160
+                         DB $A0, $A0, $00, $5F, $51, $A6     ; 160,-160 ,   0
+                         DB $A0, $A0, $00, $1F, $62, $B8     ; 160, 160 ,   0
+                         DB $A0, $A0, $00, $9F, $73, $C8     ;-160, 160 ,   0
+                         DB $A0, $A0, $00, $DF, $54, $97     ;-160,-160 ,   0
+                         DB $A0, $00, $A0, $3F, $A6, $DB     ; 160,   0 ,-160
+                         DB $00, $A0, $A0, $3F, $B8, $DC     ;   0, 160 ,-160
+                         DB $A0, $00, $A0, $BF, $97, $DC     ;-160,   0 ,-160
+                         DB $00, $A0, $A0, $7F, $95, $DA     ;   0,-160 ,-160
+                         DB $0A, $1E, $A0, $5E, $00, $00     ; 160, -30 , 160
+                         DB $0A, $1E, $A0, $1E, $00, $00     ; 160,  30 , 160
+                         DB $0A, $1E, $A0, $9E, $00, $00     ;-160,  30 , 160
+                        DB $0A, $1E, $A0, $DE, $00, $00     ;-160, -30 , 160
 CoriolisVertSize:       equ $ - CoriolisVertices	
-CoriolisEdges:	        DB $1F, $10, $00, $0C
+CoriolisEdges:	        ; DB $1F, $46, $01, $02
+                        ; DB $1F, $56, $02, $04
+                        ; DB $1F, $36, $06, $04
+                        ; DB $1F, $16, $01, $06
+                        ; DB $1F, $14, $01, $03
+                        ; DB $1F, $46, $02, $05
+                        ; DB $1F, $35, $04, $08
+                        ; DB $1F, $23, $06, $07
+                        ; DB $1F, $24, $03, $05
+                        ; DB $1F, $25, $05, $08
+                        ; DB $1F, $23, $07, $08
+                        ; DB $1F, $12, $03, $07
+
+                        DB $1F, $10, $00, $0C
                         DB $1F, $20, $00, $04
                         DB $1F, $30, $04, $08
                         DB $1F, $40, $08, $0C
@@ -71,7 +104,14 @@ CoriolisEdges:	        DB $1F, $10, $00, $0C
                         DB $1E, $00, $3C, $30
 CoriolisEdgesSize:      equ $ - CoriolisEdges	
 CoriolisEdgesCnt:       equ CoriolisEdgesSize/4	
-CoriolisNormals:	    DB $1F, $00, $00, $A0
+CoriolisNormals:	    ; DB $1F, $6B, $00, $00
+                        ; DB $5F, $00, $6B, $00
+                        ; DB $1F, $6B, $00, $00
+                        ; DB $9F, $6B, $00, $00
+                        ; DB $3F, $00, $00, $6B
+                        ; DB $1F, $00, $6B, $00
+
+                        DB $1F, $00, $00, $A0
                         DB $5F, $6B, $6B, $6B
                         DB $1F, $6B, $6B, $6B
                         DB $9F, $6B, $6B, $6B

@@ -3,15 +3,13 @@
     // for the documentation about the tasks.json format
     "version": "2.0.0",
     "tasks": [
-        {
+         {
             "label": "sjasmplus",
             "type": "shell",
             "command": "sjasmplus",
-            "args": [
-                "--lst=${fileDirname}/${fileBasenameNoExtension}.lst",
-                "${file}"
+            "args": ["--msg=all" ,"--color=auto", "--sld=eliteNext.sld", "--fullpath", "eliteNext.asm"
             ],
-            "problemMatcher": [],
+           "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": true

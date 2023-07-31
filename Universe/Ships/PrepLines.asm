@@ -1,8 +1,17 @@
-    ;DEFINE  CLIPVersion3 1
+
 ;--------------------------------------------------------------------------------------------------------
+        DISPLAY "Tracing 8", $
+
     INCLUDE "./ModelRender/getVertexNodeAtAToX1Y1.asm"
+    
+        DISPLAY "Tracing 9", $
+
     INCLUDE "./ModelRender/getVertexNodeAtAToX2Y2.asm"
+        DISPLAY "Tracing 10", $
+
     INCLUDE "./ModelRender/GetFaceAtA.asm"
+        DISPLAY "Tracing 11", $
+
 ;--------------------------------------------------------------------------------------------------------
 ; LL72 Goes through each edge in to determine if they are on a visible face, if so load start and end to line array as clipped lines
  ;   DEFINE NOBACKFACECULL 1
@@ -23,11 +32,12 @@ PrepLines:
 ;        ld          a, $08                              ; set bit 3 of a and fall into LL74
 ;
 ;--------------------------------------------------------------------------------------------------------
+
 InitialiseLineRead:  
         ;break
         ldWriteZero UbnkLineArrayLen                    ; current line array index = 0
-        ldWriteZero UbnkLineArrayBytes                  ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
-        ldWriteZero PLEDGECTR
+        ld          (UbnkLineArrayBytes),a              ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
+        ld          (PLEDGECTR),a
         ld          a,(EdgeCountAddr)
         ld          ixh,a                               ; ixh = XX17 = Total number of edges to traverse
         ld          iyl,0                               ; ixl = current edge index
@@ -82,23 +92,37 @@ VisibileEdge:                                           ; Now we need to node id
 ;LL79--Visible edge--------------------------------------
 ; Get Edge Byte 2
         ld          a,(IY+2)                            ; get Node id
-        call        getVertexNodeAtAToX1Y1              ; get the points X1Y1 from node
+        ld          de,UBnkX1
+        call        getVertexNodeAtAToDE; getVertexNodeAtAToX1Y1              ; get the points X1Y1 from node
         ld          a,(IY+3)
-        call        getVertexNodeAtAToX2Y2              ; get the points X2Y2 from node
+        ld          de,UBnkX2
+        call        getVertexNodeAtAToDE; getVertexNodeAtAToX2Y2              ; get the points X2Y2 from node
+
         IFDEF       CLIPVersion3
             call        ClipLineV3
-            ld          a,(ClipSuccess)
-            and         a
-            jr          z,LL78EdgeNotVisible
-        ELSE
-            call        ClipLine
-            jr          c,LL78EdgeNotVisible                ; LL78 edge not visible
+            jr          nc,.SkipBreak1
+            nop
+            nop
+            ;break
+.SkipBreak1:            
+            jr          c,LL78EdgeNotVisible
+//COMMENEDOUT FOR LATECLIPPING        ELSE
+//COMMENEDOUT FOR LATECLIPPING            call        ClipLine
+//COMMENEDOUT FOR LATECLIPPING            jr          c,LL78EdgeNotVisible                ; LL78 edge not visible
         ENDIF
 LL80:                                                   ; ll80 \ Shove visible edge onto XX19 ship lines heap counter U
-        ld          de,(varU16)                         ; clipped edges heap address
-        ld          hl,UBnkNewX1
-        FourLDIInstrunctions
-        ld          (varU16),de                         ; update U16 with current address
+        IFDEF       LATECLIPPING
+                ld          de,(varU16)                         ; clipped edges heap address
+                ld          hl,UbnkPreClipX1
+                FourLDIInstrunctions
+                FourLDIInstrunctions
+                ld          (varU16),de                         ; update U16 with current address
+        ELSE
+                ld          de,(varU16)                         ; clipped edges heap address
+                ld          hl,UBnkNewX1
+                FourLDIInstrunctions
+                ld          (varU16),de                         ; update U16 with current address
+        ENDIF
         ld          hl,UbnkLineArrayLen                 ; we have loaded one line
         inc         (hl)
         ld          a,(hl)
@@ -120,6 +144,9 @@ LL81SHPPT:                                              ; SHPPT ship is a point 
         ld          a,(UbnkLineArrayLen)                ; UbnkLineArrayLen = nbr of lines loaded 
         sla         a
         sla         a                                   ; multiple by 4 to equal number of bytes
+        IFDEF       LATECLIPPING        
+                sla         a                           ; multiple by 8 to equal number of bytes
+        ENDIF
         ld          (UbnkLineArrayBytes),a              ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
 ExitEdgeDataLoop:
         ret

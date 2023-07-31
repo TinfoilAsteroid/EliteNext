@@ -32,25 +32,25 @@ CopyCameraToXX15Signed: ld  hl,(UBnkDrawCam0xLo)
                         ld  (UBnkZScaled),hl
                         ret
                         
-CopyXX18ScaledToXX15:
-CopyDrawCamToScaledMatrix:
-        ldCopyByte  UBnkDrawCam0zSgn, UBnkZScaledSign   ; XX18+8 => XX15+5
-        ldCopyByte  UBnkDrawCam0xLo,  UBnkXScaled       ; XX18+0 => XX15+0
-        ldCopyByte  UBnkDrawCam0xSgn, UBnkXScaledSign   ; XX18+2 => XX15+1
-        ldCopyByte  UBnkDrawCam0yLo,  UBnkYScaled       ; XX18+3 => XX15+2
-        ldCopyByte  UBnkDrawCam0ySgn, UBnkYScaledSign   ; XX18+5 => XX15+3
-        ldCopyByte  UBnkDrawCam0zLo,  UBnkZScaled       ; XX18+6 => XX15+4
-        ret
+;;;CopyXX18ScaledToXX15:
+;;;CopyDrawCamToScaledMatrix:
+;;;        ldCopyByte  UBnkDrawCam0zSgn, UBnkZScaledSign   ; XX18+8 => XX15+5
+;;;        ldCopyByte  UBnkDrawCam0xLo,  UBnkXScaled       ; XX18+0 => XX15+0
+;;;        ldCopyByte  UBnkDrawCam0xSgn, UBnkXScaledSign   ; XX18+2 => XX15+1
+;;;        ldCopyByte  UBnkDrawCam0yLo,  UBnkYScaled       ; XX18+3 => XX15+2
+;;;        ldCopyByte  UBnkDrawCam0ySgn, UBnkYScaledSign   ; XX18+5 => XX15+3
+;;;        ldCopyByte  UBnkDrawCam0zLo,  UBnkZScaled       ; XX18+6 => XX15+4
+;;;        ret
 		
-CopyXX15ToXX18Scaled:
-CopyScaledMatrixToDrawCam:
-        ldCopyByte UBnkZScaledSign,   UBnkDrawCam0zSgn  ; XX15+5 => XX18+8  
-        ldCopyByte UBnkXScaled,       UBnkDrawCam0xLo   ; XX15+0 => XX18+0  
-        ldCopyByte UBnkXScaledSign,   UBnkDrawCam0xSgn  ; XX15+1 => XX18+2  
-        ldCopyByte UBnkYScaled,       UBnkDrawCam0yLo   ; XX15+2 => XX18+3  
-        ldCopyByte UBnkYScaledSign,   UBnkDrawCam0ySgn  ; XX15+3 => XX18+5  
-        ldCopyByte UBnkZScaled,       UBnkDrawCam0zLo   ; XX15+4 => XX18+6  
-        ret
+;;;CopyXX15ToXX18Scaled:
+;;;CopyScaledMatrixToDrawCam:
+;;;        ldCopyByte UBnkZScaledSign,   UBnkDrawCam0zSgn  ; XX15+5 => XX18+8  
+;;;        ldCopyByte UBnkXScaled,       UBnkDrawCam0xLo   ; XX15+0 => XX18+0  
+;;;        ldCopyByte UBnkXScaledSign,   UBnkDrawCam0xSgn  ; XX15+1 => XX18+2  
+;;;        ldCopyByte UBnkYScaled,       UBnkDrawCam0yLo   ; XX15+2 => XX18+3  
+;;;        ldCopyByte UBnkYScaledSign,   UBnkDrawCam0ySgn  ; XX15+3 => XX18+5  
+;;;        ldCopyByte UBnkZScaled,       UBnkDrawCam0zLo   ; XX15+4 => XX18+6  
+;;;        ret
         
 		        
 XX15EquXX15AddXX18:

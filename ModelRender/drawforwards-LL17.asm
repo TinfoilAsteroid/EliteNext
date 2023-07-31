@@ -56,11 +56,15 @@ LL42:	                                    ; DO nodeX-Ycoords their comment  \  T
 
         call    ProcessNodes                ; Loop through and determine visibility based on faces and position
 DrawResults:
+    IFDEF SOLIDHULLTEST
         JumpIfMemTrue ShipSolidFlagAddr  .DrawSolidResults
+    ENDIF
         call    PrepLines                   ; LL72, process lines and clip
         call    DrawLines                   ; Need to plot all lines
         ret
+    IFDEF SOLIDHULLTEST
 .DrawSolidResults:        
         call    PrepTriangles               ; LL72, process lines and clip
         call    DrawTriangles               ; Need to plot all lines
         ret
+    ENDIF

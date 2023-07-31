@@ -1,4 +1,54 @@
 
+macronegate16hl:	MACRO
+					xor 	a
+					sub 	l
+					ld 		l,a
+					sbc 	a,a
+					sub 	h
+					ld 		h,a
+					ENDM
+
+
+macroAbsHL:         MACRO
+                    bit     7,h
+                    jp      z,.alreadyABS
+					xor 	a
+					sub 	l
+					ld 		l,a
+					sbc 	a,a
+					sub 	h
+					ld 		h,a
+.alreadyABS:        
+                    ENDM                                        
+
+macronegate16de:	MACRO
+					xor 	a
+                    sub 	e
+                    ld 		e,a
+                    sbc 	a,a
+                    sub 	d
+                    ld 		d,a
+					ENDM		
+                    
+macronegate16bc:	MACRO
+					xor 	a
+                    sub 	c
+                    ld 		c,a
+                    sbc 	a,a
+                    sub 	b
+                    ld 		b,a
+					ENDM		
+
+macronegate16ix:	MACRO
+					xor 	a
+                    sub 	ixl
+                    ld 		ixl,a
+                    sbc 	a,a
+                    sub 	ixh
+                    ld 		ixh,a
+					ENDM
+
+
 NegIY:			    MACRO
                     xor a
                     sub iyl

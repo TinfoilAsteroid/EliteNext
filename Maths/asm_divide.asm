@@ -224,38 +224,34 @@ MacroDEDivBC:       MACRO
                     add     hl,bc
                     ENDM
 
-DEequDEDivBC:    
-    xor a 
-    sbc hl,hl
-    ld a,d
-    MacroDEDivBC
-    MacroDEDivBC
-    MacroDEDivBC
-    MacroDEDivBC
-    MacroDEDivBC
-    MacroDEDivBC
-    MacroDEDivBC
-    MacroDEDivBC
-    rla 
-    cpl 
-    ld d,a
+DEequDEDivBC:       xor a 
+                    sbc hl,hl
+                    ld a,d
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    rla 
+                    cpl 
+                    ld d,a
 
-    ld a,e
-    MacroDEDivBC
-    MacroDEDivBC
-    MacroDEDivBC
-    MacroDEDivBC
-    MacroDEDivBC
-    MacroDEDivBC
-    MacroDEDivBC
-    MacroDEDivBC
-    rla
-    cpl 
-    ld e,a
-    ret
-    
-    
-    
+                    ld a,e
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    MacroDEDivBC
+                    rla
+                    cpl 
+                    ld e,a
+                    ret
 ;divdide by 16 using undocumented instrunctions
 ;Input: BC = Dividend, DE = Divisor, HL = 0
 ;Output: BC = Quotient, HL = Remainder
@@ -406,3 +402,131 @@ BC_Div_DE:              xor a
                         rla
                         ld c,a
                         ret	
+; BC = BC / DE
+; HL = BC % DE
+; if HL > 0 BC -= 1
+Floor_DivQ:             ld      a,d
+                        or      e
+                        jr      z, .divideBy0
+                        push    de
+.DoDivide:              call    BC_Div_DE       ; bc(q0) = bc / de , hl(r0) = bc %de
+                        pop     de              ; get divisor back to test
+                        bit     7,d             ; if divisor <0 or = 0 goto else branch
+                        jp      nz,.deLTE0
+                        ld      a,d
+                        or      e
+                        jp      z,.deLTE0
+.deGT0:                 bit     7,h             ; if remainder >=0 return with no adjustment
+                        ret     z               ; if remainder was not negative then all done
+                        dec     bc              ; else q --
+                        ClearCarryFlag          ;      r += b
+                        adc     hl,de           ;      .
+                        ret
+.deLTE0:                bit     7,h             ; if remainder <= 0 retun with no adjustment
+                        ret     z               ; (return if negative)
+                        ld      a,h
+                        or      l               ; (return if zero)
+                        ret     z
+                        dec     bc              ; else q --
+                        ClearCarryFlag          ;      r += b
+                        adc     hl,de           ;      .
+                        ret
+
+
+.divideBy0:             ld      hl,0
+                        ld      bc,1
+                        ret      
+
+
+L_DIV_0_ITERATION:      MACRO
+                        rl      de              ;left shift dividend + quotient carry
+                        ex      de,hl
+                        rl      de              ;left shift remainder + dividend carry
+                        ex      de,hl
+                        sub     hl,bc           ;substract divisor from remainder
+                        jp      nc,.skip_revert0 ;if remainder < divisor, add back divisor
+                        add     hl,bc           ;revert subtraction of divisor
+.skip_revert0:          ccf                     ;complement carry
+                        rl      de              ;left shift dividend + quotient carry
+                        ex      de,hl
+                        rl      de              ;left shift remainder + dividend carry
+                        ex      de,hl
+                        sub     hl,bc           ;substract divisor from remainder
+                        jp      NC,.skip_revert1 ;if remainder < divisor, add back divisor
+                        add     hl,bc           ;revert subtraction of divisor
+.skip_revert1:          ccf                     ;complement carry
+                        ENDM
+
+; HL = DE / BC, DE = DE % BC
+l_div_0:                ld      hl,0            ;clear remainder
+                        L_DIV_0_ITERATION
+                        L_DIV_0_ITERATION
+                        L_DIV_0_ITERATION
+                        L_DIV_0_ITERATION
+                        L_DIV_0_ITERATION
+                        L_DIV_0_ITERATION
+                        L_DIV_0_ITERATION
+                        L_DIV_0_ITERATION
+                        rl      de              ;left shift dividend + quotient carry
+                        ex      de,hl           ;dividend<>remainder
+                        ret
+
+
+ 
+LLHLdivC:               ld      de,$FFFE                    ; set XY to &FFFE at start, de holds XY                        
+.LL130:                 ShiftHLLeft1                        ; RS *= 2
+                        ld      a,h
+                        jr      c,.LL131                    ; if S overflowed skip Q test and do subtractions
+                        JumpIfALTNusng c, .LL132            ; if S <  Q = 256/gradient skip subtractions
+.LL131:                 ccf                                 ; compliment carry
+                        sbc     a,c                         ; q
+                        ld      h,a                         ; h (s)
+                        ld      a,l                         ; r
+                        sbc     a,0                         ; 0 - so in effect SR - Q*256
+                        scf                                 ; set carry for next rolls
+                        ccf
+.LL132:                 RollDELeft1                         ; Rotate de bits left
+                        jr      c,.LL130                    ; 
+                        ex      de,hl                       ; hl = result
+                        ret
+                        
+                        
+div_hl_c:               xor	a
+                        ld	b, 16           
+.loop:                  add	hl, hl
+                        rla
+                        jr	c, $+5
+                        cp	c
+                        jr	c, $+4
+                        sub	c
+                        inc	l                      
+                        djnz	.loop
+                        ret
+;l_div, signed division
+; comes in with DE and HL
+; HL = DE / HL, DE = DE % HL                       
+l_div:                  ld      c,d             ;sign of dividend
+                        ld      b,h             ;sign of divisor
+                        push    bc              ;save signs
+                        ld      c,l             ;divisor to bc
+                        ld      a,d
+                        or      a
+                        jp      p,.NotDENeg
+.DeNegate:              macronegate16de
+.NotDENeg:              ld      a,b
+                        or      a
+                        jp      p,.NotBCNeg     ; if signs are opposite them flip
+                        macronegate16bc
+.NotBCNeg:              call    l_div_0         ;unsigned HL = DE / BC, DE = DE % BC
+                        ; C standard requires that the result of division satisfy a = (a/b)*b + a%b emainder takes sign of the dividend
+                        pop     bc              ;restore sign info
+                        ld      a,b
+                        xor     c               ;quotient, sign of dividend^divisor
+                        jp      p,.NotHLNeg
+                        macronegate16hl
+.NotHLNeg:              ld      a,c
+                        or      a,a             ;remainder, sign of dividend
+                        ret     p
+                        macronegate16de
+                        ret
+

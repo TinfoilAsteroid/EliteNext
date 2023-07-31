@@ -335,8 +335,7 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
 ; Now test hyperpsace. We can't be docked as this is a view routine piece of logic but for say local charts we may 
 ; be in flight and they have to force a forward view when hyperspace is pressed
 ; We won't do galatic here, but for other views force to forward view
-.ForwardCursorKeysDone: ld      a,c_Pressed_Hyperspace              ; Check for hyperspace
-                        call    is_key_pressed
+.ForwardCursorKeysDone: MacroIsKeyPressed c_Pressed_Hyperspace              ; Check for hyperspace
                         jr      nz,.NotHyperspace
 ; If we are in hyperspace countdown then test for hyperspace
                         ld      hl,(InnerHyperCount)                ; if hyperspace was enaged then cancel
@@ -378,6 +377,7 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         or      l                                   ; .
                         jr      nz,.WarpNotPressed                
                         ld      a,c_Pressed_Warp
+                        MMUSelectKeyboard
                         call    is_key_up_state
                         jr      z, .WarpNotPressed
                         SetMemTrue  WarpPressed                     ; This signals the event , teh main loop will cancel this as an acknowlege                        
@@ -386,6 +386,7 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         call    IsLaserUseable                      ; no laser or destroyed?
                         jr      z,          .FireNotPressed
 .IsFirePressed:         ld      a,c_Pressed_FireLaser               ; else (beam type) if fire is pressed
+                        MMUSelectKeyboard
                         call    is_key_up_state 
                         jr      z,.FireNotPressed
 .FirePressed:           ;break
@@ -423,6 +424,7 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         or      (hl)                                ;    .
                         jr      nz, .CheckTargetting                ;    .
 .IsFirePressed:         ld      a,c_Pressed_FireLaser               ;       if fire is pressed
+                        MMUSelectKeyboard
                         call    is_key_up_state                     ;       .
                         jr      z,.CheckTargetting                  ;       .
 .CanProcesFire:         ld      a,(CurrLaserPulseRateCount)         ;            pulse rate count ++
@@ -433,6 +435,7 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                      ;   ldCopyByte CurrLaserPulseRest, CurrLaserPulseRestCount  ; pulse rest count = pulse rest time
                         jp      .CheckTargetting                   
 .BeamType:              ld      a,c_Pressed_FireLaser               ; else (beam type) if fire is pressed
+                        MMUSelectKeyboard
                         call    is_key_up_state                     ;                   .
                         jr      z,.CheckTargetting                  ;                   .
                         SetMemTrue FireLaserPressed                 ;                   set pulse on to 1
@@ -444,9 +447,9 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         ;ldCopyByte CurrLaserPulseRest, CurrLaserPulseRestCount   ; start the rest phase
                 ENDIF
 ; . Here we check to see if the target lock has been pressed                        
-.CheckTargetting:       call    TargetMissileTest
-.CheckForMissile:       ld      a,c_Pressed_FireMissile             ; launch pressed?
-                        call    is_key_pressed
+.CheckTargetting:       MMUSelectKeyboard
+                        call    TargetMissileTest
+.CheckForMissile:       MacroIsKeyPressed c_Pressed_FireMissile             ; launch pressed?
                         jr      nz,.NotMissileLaunch
                         AnyMissilesLeft                             
                         jr      z,.NotMissileLaunch                 ; no missiles in rack
@@ -459,8 +462,7 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         JumpIfAEqNusng EquipmentItemNotFitted,.NoECM
 .CheckECMActive:        ld      a,(PlayerECMActiveCount)
                         JumpIfAIsNotZero .NoECM
-.CheckForKeyPress:      ld      a, c_Pressed_ECM
-                        call    is_key_pressed
+.CheckForKeyPress:      MacroIsKeyPressed c_Pressed_ECM
                         jr      nz, .NoECM
 .FireECM:               SetMemToN      PlayerECMActiveCount, ECMCounterMax 
                         ld      a,(ECMCountDown)
