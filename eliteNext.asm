@@ -220,7 +220,7 @@ TRIANGLEDIAGNOSTICS:   ;break
     ;DEFINE DEBUG_LL129_DIRECT 1 ; PASS
     ;DEFINE DEBUG_LL120_DIRECT 1 ; PASS
     ;DEFINE DEBUG_LL123_DIRECT 1 ; PASS
-    DEFINE DEBUG_LL118_DIRECT 1
+    ;DEFINE DEBUG_LL118_DIRECT 1
     ;DEFINE DEBUG_LL128_DIRECT
 
 
@@ -303,7 +303,7 @@ TRIANGLEDIAGNOSTICS:   ;break
                         ; LL129 shoud be q = 168, a +ve SR 10 >> PASS 
                         call    LL120_6502  ; Should be -ve 10 / 168  so xy -6 >> PASS
                 ENDIF
-            DEFINE DEBUGCLIP 1
+           ; DEFINE DEBUGCLIP 1
             IFDEF  DEBUGCLIP
                         break
                         MMUSelectUniverseN 0

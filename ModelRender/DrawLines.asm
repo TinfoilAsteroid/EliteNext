@@ -42,14 +42,34 @@ DrawLinesLateClipping:  ld	a,$65 ; DEBUG
                         MMUSelectLayer2
                         ld    a,$BF
                         ld    (line_gfx_colour),a
-.DrawLinesLoop:         ld    de,x1
+LateDrawLinesLoop:      ld    de,x1
                         FourLDIInstrunctions
                         FourLDIInstrunctions
                         push  hl,,iy
                         //call  l2_draw_clipped_line
                         //call  l2_draw_elite_line
                         call    l2_draw_6502_line
-                        pop   hl,,iy
+                        jp      c,LateNoLineToDraw
+                        
+PreLate:                push    hl,,bc,,de,,iy
+                        ld      a,(x1)
+                        ld      c,a
+                        ld      a,(y1)
+                        ld      b,a
+                        ld      a,(x2)
+                        ld      e,a
+                        ld      a,(y2)
+                        ld      d,a
+                        ; bc = y0,x0 de=y1,x1,a=color)
+                        ld	    a, $D5 ; colour
+                        MMUSelectLayer2
+LateLine:               call    l2_draw_elite_line; l2_draw_diagonal
+                        call   l2_flip_buffers
+                        call   l2_flip_buffers
+                        pop     hl,,bc,,de,,iy
+                        
+                        
+LateNoLineToDraw:       pop   hl,,iy
                         dec   iyh
-                        jr	nz, .DrawLinesLoop
+                        jr	nz, LateDrawLinesLoop
                         ret                                     ; --- Wireframe end  \ LL118-1

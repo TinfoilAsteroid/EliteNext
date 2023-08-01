@@ -63,6 +63,7 @@ IsEdgeInVisibilityRange:
         ld          hl,(varV)
         push        hl
         pop         iy
+        DEFINE NOBACKFACECULL 1
         IFDEF NOBACKFACECULL
             jp          VisibileEdge; DEBUGTODO
         ENDIF

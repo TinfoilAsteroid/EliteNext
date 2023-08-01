@@ -1296,6 +1296,8 @@ l2_draw_6502_line:      ld      hl,x1                           ; copy from curr
                         ld      (y2),a
                         ld      d,a
                         ld      a,$FF
+                        ClearCarryFlag
+                        ret
                    ;     call    l2_draw_clipped_line
 ;                        call    l2_draw_diagonal                ; ">l2_draw_diagonal, bc = y0,x0 de=y1,x1,a=color) Thsi version performs a pre sort based on y axis"
 ;................................................................

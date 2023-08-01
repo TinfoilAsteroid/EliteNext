@@ -130,9 +130,19 @@ Debug_LL118_6502:       ld      a,$FF       :ld      (Tvar),a                  ;
                         ld      a,60        :ld      (XX12p2),a                ; XX12+2 = 120 (120/256) = 0.46875   
                         ld      a,0         :ld      (XX12p3),a                ; Slope Direction so TL to BR
                         ; -20, -20 steep TL>BR, gradient 120/256: Dir -1 so 
-                        call    LL118_6502  ; Expect * so 108,0  FAIL
+                        call    LL118_6502  ; Expect * so 108,0  PASS (fixed carry flag issue in LL121 and re-tested LL121)
+                        break                        
+
+                        ld      a,$0        :ld      (Tvar),a                  ; SLOPE FF so steep
+                        ld      hl,-20      :ld      (XX1510),hl               ; x1 = -20
+                        ld      hl,-20      :ld      (XX1532),hl               ; y1 = -20
+                        ld      a,60        :ld      (XX12p2),a                ; XX12+2 = 120 (120/256) = 0.46875   
+                        ld      a,0         :ld      (XX12p3),a                ; Slope Direction so TL to BR
+                        ; -20, -20 steep TL>BR, gradient 120/256: Dir -1 so 
+                        call    LL118_6502  ; Expect * so 108,0  PASS (fixed carry flag issue in LL121 and re-tested LL121)
                         break                        
                         ret
+
                 ENDIF
                
                 IFDEF DEBUG_LL28_6502
@@ -193,6 +203,7 @@ xX13        DB 0
 XX1510      DW 0    ; x1 as a 16-bit coordinate (x1_hi x1_lo)
 XX1532      DW 0    ; y1 as a 16-bit coordinate (y1_hi y1_lo)
 XX1554      DW 0    ; x2
+XX1554p1    EQU XX1554+1
 XX1576      DW 0    ; y2
 XX1210      EQU XX1576
 XX12p1      EQU XX1210+1
@@ -497,15 +508,18 @@ LL136_6502:         ret                             ; RTS                    \ R
 LL145_6502:         ZeroA                           ; LDA #0                 \ Set SWAP = 0
                     ld      (SWAP),a                ; STA SWAP
                     ld      a,(XX1554+1)            ; LDA XX15+5             \ Set A = x2_hi (use b as a substibute for a)
-                    ld      b,a
-LL147_6502:         ld      a,127                   ; LDX #Y*2-1             \ Set X = #Y * 2 - 1. The constant #Y is 96, the y-coordinate of the mid-point of the space view, so this sets Y2 to 191, the y-coordinate of the bottom pixel row of the space view
-                    ld      c,a                     ;                          using x as a temporary x reg
+                    ld      b,a                     ; .
+; Note that as we are interested in the sign of XX113 then this needs to be >= 128 or < 128 or 0, we will use 191 as per bbc for now
+; for the screen coord we will use 127 though, we use c as a temporay X register
+LL147_6502:         ld      a,191                   ; LDX #Y*2-1             \ Set X = #Y * 2 - 1. The constant #Y is 96, the y-coordinate of the mid-point of the space view, so this sets Y2 to 191, the y-coordinate of the bottom pixel row of the space view
                     ld      (Xreg),a                ; .
-                    ld      a,b                     ; ORA XX12+1             \ If one or both of x2_hi and y2_hi are non-zero, jump
+;                    ld      a,127
+;                    ld      c,a
+.CheckX2Y2High:     ld      a,b                     ; ORA XX12+1             \ If one or both of x2_hi and y2_hi are non-zero, jump
                     ld      hl,XX12p1               ; .
                     or      (hl)                    ; .
                     jp      nz,LL107_6502           ; BNE LL107              \ to LL107 to skip the following, leaving X at 191
-                    ld      a,c                     ; get back the temporary x reg from c
+.CheckY2Lo:         ld      a,127 ;,c               ; get back the temporary x reg from c
                     ld      hl,XX1210               ; CPX XX12               \ If y2_lo > the y-coordinate of the bottom of screen (a is being used as X at this point still)
                     cp      (hl)                    ; .
                     jp      c,LL107_6502            ; BCC LL107              \ then (x2, y2) is off the bottom of the screen, so skip the following instruction, leaving X at 127
@@ -519,9 +533,9 @@ LL107_6502:         ld      a,(Xreg)                ; STX XX13               \ S
                     jp      nz,LL83_6502            ; BNE LL83
                     ld      a,127                   ; LDA #Y*2-1             \ If y1_lo > the y-coordinate of the bottom of screen
                     ld      hl,(XX1532)             ; CMP XX15+2             \ then (x1, y1) is off the bottom of the screen, so jump
-                    cp      (hl)                    ; .
-                    jp      nc, LL83_6502           ; BCC LL83               \ to LL83 If we get here, (x1, y1) is on-screen
-                    ld      a,(XX13)                ; LDA XX13               \ If XX13 is non-zero, i.e. (x2, y2) is off-screen, jump
+                    cp      (hl)                    ; .                      \ to LL83
+                    jp      nc, LL83_6502           ; BCC LL83               \ . 
+                    ld      a,(XX13)                ; LDA XX13               \ If we get here, (x1, y1) is on-screen. If XX13 is non-zero, i.e. (x2, y2) is off-screen, jump
                     and     a                       ; BNE LL108              \ to LL108 to halve it before continuing at LL83
                     jp      nz,LL108_6502               
 ; If we get here, the high bytes are all zero, which means the x-coordinates are < 256 and therefore fit on screen, and neither coordinate is off the bottom of the screen. That means both coordinates are already on
@@ -559,11 +573,11 @@ LL83_6502:          ld      a,(XX13)                ; LDA XX13               \ I
                     ld      a,(XX1510+1)            ; LDX XX15+1             \ Set A = X = x1_hi - 1
                     dec     a                       ; DEX
                     ld      (Xreg),a                ; TXA
-                    push    af                      ; LDX XX15+5             \ Set XX12+2 = x2_hi - 1, we need to save a register first
+                    push    af                      ; LDX XX15+5     SP+1    \ Set XX12+2 = x2_hi - 1, we need to save a register first
                     ld      a,(XX1554+1)            ; .
                     dec     a                       ; DEX
                     ld      (Xreg),a                ; STX XX12+2
-                    pop     af                      ; .                      restore a register
+                    pop     af                      ; .              SP+0    restore a register
                     ld      hl,XX1576+1             ; ORA XX12+2             \ If neither (x1_hi - 1) or (x2_hi - 1) have bit 7 set,
                     or      (hl)                    ; .
                     jp      p, LL109_6502           ; BPL LL109              \ jump to LL109 to return from the subroutine with the C flag set, as the line doesn't fit on-screen
@@ -584,7 +598,7 @@ LL83_6502:          ld      a,(XX13)                ; LDA XX13               \ I
 ;-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ;-- LL145 (Part 3 of 4) Summary: Clip line: Calculate the line's gradient
 LL115_6502:         ld      a,(Yreg)                ; TYA                    \ Store Y on the stack so we can preserve it through the call to this routine
-                    push    af                      ; PHA                    \ call to this subroutine
+                    push    af                      ; PHA            SP+1    \ call to this subroutine
                     ld      hl,(XX1554)             ; LDA XX15+4             \ Set XX12+2 = x2_lo - x1_lo
                     ld      de,(XX1510)             ; LDA XX15+5             \ Set XX12+3 = x2_hi - x1_hi
                     ClearCarryFlag                  ; SBC XX15+1
@@ -617,9 +631,11 @@ LL111_6502:         ld      hl,(delta_x)
                     ld      de,(delta_y)
                     ld      a,h                     ; TAX                    \ If |delta_x_hi| is non-zero, skip the following
                     or      d                       ; BNE LL112
-                    jp      z,LL113_6502           ; LDX XX12+5             \ If |delta_y_hi| = 0, jump down to LL113 (as both |delta_x_hi| and |delta_y_hi| are 0)
+                    jp      z,LL113_6502            ; LDX XX12+5             \ If |delta_y_hi| = 0, jump down to LL113 (as both |delta_x_hi| and |delta_y_hi| are 0)
 LL112_6502:         ShiftHLRight1                   ; LSR A                  \ Halve the value of delta_x in (A XX12+2)
                     ShiftDERight1                   ; LSR XX12+5             \ Halve the value of delta_y XX12(5 4)
+                    ld      (delta_x),hl
+                    ld      (delta_y),de            ; write them back so we don't end up in an infinite loop
                     jp  LL111_6502                  ; JMP LL111              \ Loop back to LL111
 ;-- By now, the high bytes of both |delta_x| and |delta_y| are zero
 LL113_6502:         ZeroA                           ; STX T                  \ We know that X = 0 as that's what we tested with a BEQ  above, so this sets T = 0
@@ -669,20 +685,21 @@ LL117_6502:         ld      a,(XX1510+1)            ; LDA XX15+1             \ I
                     jp      nc, LL137_6502          ; BCS LL137              \ C flag set, as the line doesn't fit on-screen
 ;-- If we get here, XX13 = 95 or 191, and in both cases (x2, y2) is off-screen, so we now need to swap the (x1, y1) and (x2, y2) coordinates around before doing the actual clipping, because we need to clip (x2, y2) but the clipping routine at LL118 only clips (x1, y1)
 LLX117_6502:        ld      hl,(XX1510)             ; LDX XX15               \ Swap x1_lo = x2_lo
-                    ld      de,(XX1532)
+                    ld      de,(XX1554)
                     ld      (XX1510),de
-                    ld      (XX1532),hl
-                    ld      hl,(XX1554)             ;  LDX XX15+2             \ Swap y1_lo = y2_lo
-                    ld      de,(XX1576)
-                    ld      (XX1554),de
+                    ld      (XX1554),hl
+                    ld      hl,(XX1532)             ; LDX XX15+2             \ Swap y1_lo = y2_lo
+                    ld      de,(XX1576) 
+                    ld      (XX1532),de
                     ld      (XX1576),hl
                     call    LL118_6502              ; JSR LL118              \ Call LL118 to move (x1, y1) along the line onto the screen, i.e. clip the line at the (x1, y1) end
                     ld      hl,SWAP
                     dec     (hl)                    ; DEC SWAP               \ Set SWAP = &FF to indicate that we just clipped the line at the (x2, y2) end by swapping the coordinates (the DEC does this as we set SWAP to 0 at the start of this subroutine)
-LL124_6502:         pop     af                      ; PLA                    \ Restore Y from the stack so it gets preserved through
+LL124_6502:         pop     af                      ; PLA            SP+0    \ Restore Y from the stack so it gets preserved through
                     ld      (Yreg),a                ; TAY                    \ the call to this subroutine
                     call    LL146_6502              ; JMP LL146              \ Jump up to LL146 to move the low bytes of (x1, y1) and (x2, y2) into (X1, Y1) and (X2, Y2), and return from the subroutine with a successfully clipped line
-LL137_6502:         pop     af                      ; PLA                    \ Restore Y from the stack so it gets preserved through
+                    ret                             ; then exit so we don't pop it twice
+LL137_6502:         pop     af                      ; PLA            SP+0    \ Restore Y from the stack so it gets preserved through
                     ld      (Yreg),a                ; TAY                    \ the call to this subroutine
                     SetCarryFlag                    ; SEC                    \ Set the C flag to indicate the clipped line does not fit on-screen
                     ret                             ; RTS                    \ Return from the subroutine
