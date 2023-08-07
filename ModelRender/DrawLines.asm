@@ -64,8 +64,6 @@ PreLate:                push    hl,,bc,,de,,iy
                         ld	    a, $D5 ; colour
                         MMUSelectLayer2
 LateLine:               call    l2_draw_elite_line; l2_draw_diagonal
-                        call   l2_flip_buffers
-                        call   l2_flip_buffers
                         pop     hl,,bc,,de,,iy
                         
                         

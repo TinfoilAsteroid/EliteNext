@@ -187,13 +187,53 @@ Debug_LL28_6502:        ld      a,27        :ld     (Qvar),a
                 
                 
                 IFDEF DEBUG_LL145_6502
-Debug_LL145_6502:       ld      a,27        :ld     (Qvar),a
-                        ld      hl,-10      :ld     (XX1510),hl
-                        ld      hl,-10      :ld     (XX1532),hl
-                        ld      hl,110       :ld     (XX1554),hl
-                        ld      hl,50       :ld     (XX1576),hl
-                        call    LL145_6502  ; Should clip to p1 0,5, 110,50
-                        break
+Debug_LL145_6502:       ; ld  a,1      : ld  (UbnkLineArrayLen),a
+                        ; ld  hl,$0116 : ld  (UbnkLineArray),hl
+                        ; ld  hl,$004B : ld  (UbnkLineArray+2),hl
+                        ; ld  hl,$00F8 : ld  (UbnkLineArray+4),hl
+                        ; ld  hl,$002F : ld  (UbnkLineArray+6),hl
+                        ; call    DrawLinesLateClipping : break
+                        ; ld  a,1      : ld  (UbnkLineArrayLen),a
+                        ; ld  hl,$0033 : ld  (UbnkLineArray),hl
+                        ; ld  hl,$0016 : ld  (UbnkLineArray+2),hl
+                        ; ld  hl,$001D : ld  (UbnkLineArray+4),hl
+                        ; ld  hl,$FFBE : ld  (UbnkLineArray+6),hl
+                        ; call    DrawLinesLateClipping : break
+                        ; ld  a,1      : ld  (UbnkLineArrayLen),a
+                        ; ld  hl,$0055 : ld  (UbnkLineArray),hl
+                        ; ld  hl,$FF83 : ld  (UbnkLineArray+2),hl
+                        ; ld  hl,$0033 : ld  (UbnkLineArray+4),hl
+                        ; ld  hl,$0016 : ld  (UbnkLineArray+6),hl
+                        ; call    DrawLinesLateClipping :  break
+                        
+                        ;ld  a,1      : ld  (UbnkLineArrayLen),a
+                        ;ld  hl,$00B3 : ld  (UbnkLineArray),hl
+                        ;ld  hl,$0054 : ld  (UbnkLineArray+2),hl
+                        ;ld  hl,$005d : ld  (UbnkLineArray+4),hl
+                        ;ld  hl,$ffd5 : ld  (UbnkLineArray+6),hl
+                        ;call    DrawLinesLateClipping :  break
+                        ;
+                        ;ld  a,1      : ld  (UbnkLineArrayLen),a
+                        ;ld  hl,$005d : ld  (UbnkLineArray),hl
+                        ;ld  hl,$ffd5 : ld  (UbnkLineArray+2),hl
+                        ;ld  hl,$00b9 : ld  (UbnkLineArray+4),hl
+                        ;ld  hl,$0028 : ld  (UbnkLineArray+6),hl
+                        ;call    DrawLinesLateClipping :  break
+
+                        ld  a,1      : ld  (UbnkLineArrayLen),a
+                        ld  hl,$ffc7 : ld  (UbnkLineArray),hl
+                        ld  hl,$001a : ld  (UbnkLineArray+2),hl
+                        ld  hl,$005d : ld  (UbnkLineArray+4),hl
+                        ld  hl,$ffd5 : ld  (UbnkLineArray+6),hl
+                        call    DrawLinesLateClipping :  break
+                       
+                        ;ld  a,1      : ld  (UbnkLineArrayLen),a
+                        ;ld  hl,$0089 : ld  (UbnkLineArray),hl
+                        ;ld  hl,$00e2 : ld  (UbnkLineArray+2),hl
+                        ;ld  hl,$fff3 : ld  (UbnkLineArray+4),hl
+                        ;ld  hl,$00b9 : ld  (UbnkLineArray+6),hl
+                        ;call    DrawLinesLateClipping :  break
+
                         ret
                 ENDIF
         DEFINE DEBUG_6502_LINE_CLIPPING             
@@ -207,6 +247,15 @@ XX1554p1    EQU XX1554+1
 XX1576      DW 0    ; y2
 XX1210      EQU XX1576
 XX12p1      EQU XX1210+1
+XX15X1lo    EQU XX1510
+XX15X1hi    EQU XX1510+1
+XX15Y1lo    EQU XX1532
+XX15Y1hi    EQU XX1532+1
+XX15X2lo    EQU XX1554
+XX15X2hi    EQU XX1554+1
+XX15Y2lo    EQU XX1210
+XX15Y2hi    EQU XX1210+1
+
 XX12p2      DB 0    ; The line's gradient * 256 (so 1.0 = 256)
 XX12p3      DB 0    ; The direction of slope ; + LT to BR; - TR to BL
 XX12p4      DB 0
@@ -226,6 +275,12 @@ YXregPair   EQU Xreg
 ;-- Name: LL28 Calculate R = 256 * A / Q
 ;-- LL28+4              Skips the A >= Q check and always returns with C flag cleared, so this can be called if we know the division will work
 ;-- LL31                Skips the A >= Q check and does not set the R counter, so this can be used for jumping straight into the division loop if R is already set to 254 and we know the division will work
+;   Reg mapping 6502  Z80
+;               a     a
+;               b     x
+;               c     q
+;               d     r
+;               
 LL28_6502:          ld      hl,Qvar                 ; CMP Q                  \ If A >= Q, then the answer will not fit in one byte,
                     ld      c,(hl)                  ; using c as Q var
                     cp      c
@@ -234,7 +289,8 @@ LL28_6502:          ld      hl,Qvar                 ; CMP Q                  \ I
                     ld      b,$FE                   ; LDX #%11111110         \ Set R to have bits 1-7 set, so we can rotate through 7 loop iterations, getting a 1 each time, and then we use b as Rvar
 LL31_6502:          sla     a                       ; ASL A                  \ Shift A to the left
                     jp      c,LL29_6502             ; BCS LL29               \ If bit 7 of A was set, then jump straight to the subtraction
-                    JumpIfALTNusng c, LL31_SKIPSUB_6502 ; CMP Q                  \ If A < Q, skip the following subtraction
+                    FlipCarryFlag                   ;                          If A < N, then C flag is set.
+                    JumpIfALTNusng c, LL31_SKIPSUB_6502 ; CMP Q              \ If A < Q, skip the following subtraction
                                                     ; BCC P%+4
                     sub     c                       ; SBC Q                  \ A >= Q, so set A = A - Q
                     ClearCarryFlag
@@ -246,7 +302,7 @@ LL31_SKIPSUB_6502:  FlipCarryFlag
                     ret                             ; RTS                    \ R left with remainder of division
 LL29_6502:          sub     c                       ; SBC Q                  \ A >= Q, so set A = A - Q
                     SetCarryFlag                    ; SEC                    \ Set the C flag to rotate into the result in R
-                    rl      c                       ; ROL R                  \ Rotate the counter in R to the left, and catch the result bit into bit 0 (which will be a 0 if we didn't do the subtraction, or 1 if we did)
+                    rl      b                       ; ROL R                  \ Rotate the counter in R to the left, and catch the result bit into bit 0 (which will be a 0 if we didn't do the subtraction, or 1 if we did)
                     jp      c, LL31_6502            ; BCS LL31               \ If we still have set bits in R, loop back to LL31 to do the next iteration of 7
                     ld      a,b                     ; RTS                    \ Return from the subroutine with R containing the
                     ld      (Rvar),a                ; .
@@ -259,6 +315,13 @@ LL2_6502:           ld      a,$FF                   ; LDA #255               \ T
 ADDXRegtoY1:        ld      a,(Xreg)                ; Set y1 = y1 + (Y X)
                     ld      c,a
                     ld      b,0
+                    ld      hl,(XX1532)
+                    ClearCarryFlag                
+                    adc     hl,bc
+                    ld      (XX1532),hl
+                    ret
+
+ADDYXRegtoY1:       ld      bc,(YXregPair)          ; Set y1 = y1 + (Y X)
                     ld      hl,(XX1532)
                     ClearCarryFlag                
                     adc     hl,bc
@@ -290,6 +353,31 @@ ShiftLeftMem:       MACRO   reg
                     sla     (hl)
                     ENDM
 
+
+ClampX:             ld      a,h
+                    and     a
+                    ld      a,l
+                    ret     z
+                    jp      p,.Max255
+.Min0:              ZeroA
+                    ret
+.Max255:            ld      a,$FF
+                    ret
+
+ClampY:             ld      a,h
+                    and     a
+                    jp      z,.ClampYlo
+                    jp      p,.Max127
+.Min0:              ZeroA
+                    ret
+.Max127:            ld      a,127
+                    ret
+.ClampYlo:          ld      a,l
+                    and     a
+                    ret     p
+                    ld      a,127
+                    ret
+                    
 ;-- Rountes to code:
 ;-- LL118
 ;-- LL120   Done
@@ -321,7 +409,7 @@ LL120_6502:         ld      a,(XX1510)              ;LDA XX15               \ Se
                     push    af                      ;PHA                    \ Store A on the stack so we can use it later
 ; DONT NEED PLUS MESSES UP FLAGS                    push    af                      ;LDX T                  \ If T is non-zero, then it's a steep slope, so jump
                     ld      a,(Tvar)                ; .
-                    ld      (Xreg),a                ;.
+                    ld      (Xreg),a                ;. REDUNDANT REMOVE IN OPTIMISATION
                     and     a                       ;BNE LL121              \ down to LL121 to calculate this instead (Y X) = (S R) / Q
 ; DONT NEED PLUS MESSES UP FLAGS                    pop     af                      ;.                      (recover teh saved A before the cp)
                     jr      nz,LL121_6502           ;.
@@ -447,11 +535,11 @@ LL127_6502:         ld      hl,XX12p3               ;EOR XX12+3             \ Se
 LL118_6502:         ld      a,(XX1510+1)            ; LDA XX15+1             \ If x1_hi is positive, jump down to LL119 to skip the
                     and     a                       ; BPL LL119              \ .
                     jp      p, LL119_6502           ;                        \ following
-.X1Positive:        ld      (Svar),a                ; STA S                  \ Otherwise x1_hi is negative, i.e. off the left of the screen, so set S = x1_hi
+.X1Negative:        ld      (Svar),a                ; STA S                  \ Otherwise x1_hi is negative, i.e. off the left of the screen, so set S = x1_hi
                     call    LL120_6502              ; Call LL120 to calculate:  (Y X) = (S x1_lo) * XX12+2      if T = 0   = x1 * gradient
                                                     ;                            (Y X) = (S x1_lo) / XX12+2      if T <> 0  = x1 / gradient
                                                     ; with the sign of (Y X) set to the opposite of the line's direction of slope
-                    call    ADDXRegtoY1             ; Set y1 = y1 + (Y X)
+                    call    ADDYXRegtoY1             ; Set y1 = y1 + (Y X)
                     ld      (XX1532),hl             ; .
                     ld      hl,0                    ; Set x1 = 0
                     ld      (XX1510),hl             ; .
@@ -467,7 +555,7 @@ LL119_6502:         jp      z,LL134_6502            ; BEQ LL134              \ x
                     call    LL120_6502              ; JSR LL120              \ Call LL120 to calculate:  (Y X) = (S x1_lo) * XX12+2      if T = 0   = (x1 - 256) * gradient
                                                     ;                        \                           (Y X) = (S x1_lo) / XX12+2      if T <> 0 = (x1 - 256) / gradient
                                                     ;                        \ with the sign of (Y X) set to the opposite of the line's direction of slope
-                    call    ADDXRegtoY1             ; TXA                    \ Set y1 = y1 + (Y X)
+                    call    ADDYXRegtoY1             ; TXA                    \ Set y1 = y1 + (Y X)
                     ld      hl,255                  ; LDX #255               \ Set x1 = 255
                     ld      (XX1510),hl             ; STX XX15 ;INX; STX XX15+1
 ;--  We have moved the point so the x-coordinate is on  screen (i.e. in the range 0-255), so now for the  y-coordinate
@@ -505,6 +593,7 @@ LL136_6502:         ret                             ; RTS                    \ R
 ;         XX13 The state of the original coordinates on-screen:* 0   = (x2, y2) on-screen* 95(64)  = (x1, y1) on-screen,  (x2, y2) off-screen* 191(128) = (x1, y1) off-screen, (x2, y2) off-screen
 ;              So XX13 is non-zero if the end of the line was clipped,meaning the next line sent to BLINE can't join onto the end but has to start a new segment
 ;         SWAP The swap status of the returned coordinates:* &FF if we swapped the values of (x1, y1) and(x2, y2) as part of the clipping process* 0 if the coordinates are still in the same order
+; TODO treat horizonal/vert and single pixel as special cases
 LL145_6502:         ZeroA                           ; LDA #0                 \ Set SWAP = 0
                     ld      (SWAP),a                ; STA SWAP
                     ld      a,(XX1554+1)            ; LDA XX15+5             \ Set A = x2_hi (use b as a substibute for a)
@@ -531,25 +620,35 @@ LL107_6502:         ld      a,(Xreg)                ; STX XX13               \ S
                     ld      hl,XX1532+1             ; ORA XX15+3             \ to LL83
                     or      (hl)                    ; .
                     jp      nz,LL83_6502            ; BNE LL83
-                    ld      a,127                   ; LDA #Y*2-1             \ If y1_lo > the y-coordinate of the bottom of screen
-                    ld      hl,(XX1532)             ; CMP XX15+2             \ then (x1, y1) is off the bottom of the screen, so jump
-                    cp      (hl)                    ; .                      \ to LL83
-                    jp      nc, LL83_6502           ; BCC LL83               \ . 
+; DEBUG SIMPLIFIED CODE, now we just compare y1 lo > 127
+                    ld      a,(XX1532)              ; If y1_lo > the y-coordinate of the bottom of screen (If A >= N, then C flag is reset.) ;ld      a,127                   ; LDA #Y*2-1             \ If y1_lo > the y-coordinate of the bottom of screen (If A >= N, then C flag is reset.)
+                    ld      h,127                   ; then (x1, y1) is off the bottom of the screen, so jump                                 ;ld      hl,XX1532               ; CMP XX15+2             \ then (x1, y1) is off the bottom of the screen, so jump
+                    cp      h                       ; to LL83                                                                                ;cp      (hl)                    ; .                      \ to LL83
+                    jp      nc, LL83_6502         ; BCC LL83               \ . (y1 > 127 jump, i.e. 127 <= y1 )
                     ld      a,(XX13)                ; LDA XX13               \ If we get here, (x1, y1) is on-screen. If XX13 is non-zero, i.e. (x2, y2) is off-screen, jump
                     and     a                       ; BNE LL108              \ to LL108 to halve it before continuing at LL83
                     jp      nz,LL108_6502               
 ; If we get here, the high bytes are all zero, which means the x-coordinates are < 256 and therefore fit on screen, and neither coordinate is off the bottom of the screen. That means both coordinates are already on
 ; screen, so we don't need to do any clipping, all weneed to do is move the low bytes into (X1, Y1) and X2, Y2) and return
 ; X1 = XX15 (10)  Y1 = XX15+1 X2 = XX15+2 Y2 = XX15+3 
-LL146_6502:         ld      hl,(XX1532)
-                    ld      de,(XX1554)
-                    ld      bc,(XX1576)
-                    ld      a,l
-                    ld      (XX1510+1),a
-                    ld      a,e
-                    ld      (XX1510+2),a
-                    ld      a,c
-                    ld      (XX1510+3),a
+    DEFINE CLAMPINGEXTREMES
+LL146_6502: IFDEF CLAMPINGEXTREMES
+                    ld      hl,(XX1510)             ;  Save X1 to XX1510
+                    call    ClampX
+                    ld      (XX1510),a
+            ENDIF
+                    ld      hl,(XX1532)             ;  hl = y1
+                    call    ClampY
+                    ld      (XX1510+1),a            ;  XX1510... = [X1][Y1]
+                    
+                    ld      hl,(XX1554)             ;  de = x2
+                    call    ClampX
+                    ld      (XX1510+2),a            ;  XX1510... = [X1][Y1][X2]
+                    
+                    ld      hl,(XX1576)             ;  bc = y2
+                    call    ClampY
+                    ld      (XX1510+3),a            ;  XX1510... = [X1][Y1][X2][Y2]
+                    
                     ClearCarryFlag                  ; CLC                    \ Clear the C flag as the clipped line fits on-screen
                     ret                             ; RTS                    \ Return from the subroutine
 LL109_6502:         SetCarryFlag                    ; SEC                    \ Set the C flag to indicate the clipped line does not fit on-screen
@@ -581,16 +680,18 @@ LL83_6502:          ld      a,(XX13)                ; LDA XX13               \ I
                     ld      hl,XX1576+1             ; ORA XX12+2             \ If neither (x1_hi - 1) or (x2_hi - 1) have bit 7 set,
                     or      (hl)                    ; .
                     jp      p, LL109_6502           ; BPL LL109              \ jump to LL109 to return from the subroutine with the C flag set, as the line doesn't fit on-screen
-                    ld      a,(XX1532)              ; LDA XX15+2             \ If y1_lo < y-coordinate of screen bottom, clear the C
-                    cp      128                     ; CMP #Y*2               \ flag, otherwise set it
-                    ld      a,(XX1532+1)           ; LDA XX15+3             \ Set XX12+2 = y1_hi - (1 - C), so:
-                    FlipCarryFlag                   ; as 6502 uses borrow in subtracts we flip for SBC
+; for this bit, while z80 uses carry the opposite way to 6502, 6502 uses borrow, in effect inverting the flip
+;NOTEFOUND A PATH WHERE IT DOES NOT DO THIS CHECK e.g. 90 B2 8D A2
+LL83_DEBUG:         ld      a,(XX1532)              ; LDA XX15+2             \ If y1_lo < y-coordinate of screen bottom, clear the C
+                    cp      128                     ; CMP #Y*2               \ flag, otherwise set it (NOTE FLIPPED IN z80)                   
+                    ld      a,(XX1532+1)            ; LDA XX15+3             \ Set XX12+2 = y1_hi - (1 - C), so:
+;                    FlipCarryFlag                   ; as 6502 uses borrow in subtracts we flip for SBC as z80 CP does opposite too, if A < N carry set so flip
                     sbc     0                       ; SBC #0                 \ .
                     ld      (XX12p2),a              ; STA XX12+2             \  * Set XX12+2 = y1_hi - 1 if y1_lo is on-screen * Set XX12+2 = y1_hi  otherwise We do this subtraction because we are only interested
                     ld      a,(XX1576)              ; LDA XX12               \ If y2_lo < y-coordinate of screen bottom, clear the C
                     cp      128                     ; CMP #Y*2               \ flag, otherwise set it
                     ld      a,(XX1576+1)            ; LDA XX12+1             \ Set XX12+2 = y2_hi - (1 - C), so:
-                    FlipCarryFlag
+;                    FlipCarryFlag
                     sbc     0                       ; SBC #0                   * Set XX12+1 = y2_hi - 1 if y2_lo is on-screen  * Set XX12+1 = y2_hi     otherwise
                     ld      hl,XX12p2               ; ORA XX12+2             \ If neither XX12+1 or XX12+2 have bit 7 set, jump to
                     or      (hl)                    ; .
@@ -643,7 +744,7 @@ LL113_6502:         ZeroA                           ; STX T                  \ W
                     ld      a,(delta_x)             ; LDA XX12+2             \ If delta_x_lo < delta_y_lo, so our line is more
                     ld      hl,delta_y              ; CMP XX12+4             \ vertical than horizontal, jump to LL114
                     cp      (hl)
-                    jp      c, LL114_6502           ; BCC LL114              ; of delta y as > delta x then its a steep slope
+                    jp      c, LL114_6502           ; BCC LL114              ; if delta y > delta x then its a steep slope so we do 256*dy/dx
 ;-- If we get here then our line is more horizontal than vertical, so it is a shallow slope
                     ld      a,(delta_x)             ; STA Q                  \ Set Q = delta_x_lo
                     ld      (Qvar),a                ; .

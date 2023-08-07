@@ -257,8 +257,9 @@ TRIANGLEDIAGNOSTICS:   ;break
                         call Debug_LL28_6502
                   ENDIF
                   
- ;                 DEFINE DEBUG_LL145_6502
+                  DEFINE DEBUG_LL145_6502 1
                   IFDEF DEBUG_LL145_6502
+                        break
                         call Debug_LL145_6502
                   ENDIF
                         
