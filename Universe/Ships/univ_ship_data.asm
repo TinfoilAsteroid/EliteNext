@@ -1352,8 +1352,13 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
                         ld      (line_gfx_colour),a  
                         call    PlotAllNodes
                     ENDIF
-                     call   l2_flip_buffers
-                      call   l2_flip_buffers
+                    IFDEF FLIPBUFFERSTEST
+                        DISPLAY "Univ_ship_data flip buffer test Enabled"
+                        call   l2_flip_buffers
+                        call   l2_flip_buffers
+                    ELSE
+                        DISPLAY "Univ_ship_data flip buffer test Disabled"
+                    ENDIF
                         ret 
 ;............................................................  
 .ExplodingCloud:        call    ProcessNodes

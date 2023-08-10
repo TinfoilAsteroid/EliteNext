@@ -5,7 +5,7 @@
     ;DEFINE  CLIPVersion3 1
     ;DEFINE  LOGMATHS     1
     ;DEFINE  DIAGSPRITES 1
-    DEFINE   SKIPATTRACT 1
+;    DEFINE   SKIPATTRACT
     ; DEFINE DEBUGMISSILETEST 1
     ; DEFINE DEBUGLINEDRAW 1
      DEFINE  LASER_V2    1
@@ -13,8 +13,8 @@
  OPT --zxnext=cspect --syntax=a --reversepop
                 DEFINE  SOUNDPACE 3
 ;                DEFINE  ENABLE_SOUND 1
-; DEFINE     MAIN_INTERRUPTENABLE 1
-               DEFINE INTERRUPT_BLOCKER 1
+               DEFINE     MAIN_INTERRUPTENABLE 1
+;               DEFINE INTERRUPT_BLOCKER 1
 DEBUGSEGSIZE   equ 1
 DEBUGLOGSUMMARY equ 1
 ;DEBUGLOGDETAIL equ 1
@@ -223,8 +223,6 @@ TRIANGLEDIAGNOSTICS:   ;break
     ;DEFINE DEBUG_LL118_DIRECT 1
     ;DEFINE DEBUG_LL128_DIRECT
 
-
-
                   IFDEF DEBUG_LL122_DIRECT
                         call    Debug_LL122_6502
                   ENDIF
@@ -257,7 +255,7 @@ TRIANGLEDIAGNOSTICS:   ;break
                         call Debug_LL28_6502
                   ENDIF
                   
-                  DEFINE DEBUG_LL145_6502 1
+                  ;DEFINE DEBUG_LL145_6502 1
                   IFDEF DEBUG_LL145_6502
                         break
                         call Debug_LL145_6502
@@ -567,7 +565,7 @@ DrawClippedLineDebug:   ld      bc,8
 ; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files                        
                         SetBorder   $07
 InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
-                        break
+                        ;break
                         call		ResetUniv                       ; Reset ship data
                         call        ResetGalaxy                     ; Reset each galaxy copying in code
                         call        SeedAllGalaxies
@@ -577,8 +575,10 @@ InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
                         call		l1_cls
                         SetBorder   $00
                     IFDEF SKIPATTRACT
+                        DISPLAY "INITGALAXIES SKIP ATTRACT"
                         jp DefaultCommander
                     ELSE
+                        DISPLAY "INITGALAXIES ATTRACT ENABLED"
 StartAttractMode:       di                                          ; we are changing interrupts
                         MMUSelectSound
                         call        InitAudioMusic
@@ -586,6 +586,7 @@ StartAttractMode:       di                                          ; we are cha
                         ld          (IM2SoundHandler+1),hl
                         call        AttractModeInit
                         ei
+                        ;break
                         call        AttractModeMain                 ; now drive attact mode keyboard scan
                         di                                          ; set up for main 
                         ld          hl,SoundInterrupt               ; sound handler
@@ -593,7 +594,10 @@ StartAttractMode:       di                                          ; we are cha
                         MMUSelectSound
                         call        InitAudio                       ; jsut re-init all audio for now rather than sound off
                         IFDEF MAIN_INTERRUPTENABLE
+                            DISPLAY "Main Interrupt Enabled"
                             ei 
+                        ELSE
+                            DISPLAY "Main Interrupt Disabled"
                         ENDIF
                         JumpIfAIsZero  SkipDefaultCommander
                     ENDIF
@@ -1065,8 +1069,11 @@ StartOfInterruptHandler:
 ; keeping the handler to a minimal size in order to make best use of
 ; non pageable memory    
 IM2Routine:             IFDEF INTERRUPT_BLOCKER
+                                DISPLAY "Interrupt Blocker Enabled"
                                 ei
                                 reti
+                        ELSE
+                                DISPLAY "Interrupt Blocker Disabled"
                         ENDIF
                         push    af,,bc,,de,,hl,,ix,,iy
                         ex      af,af'
@@ -1126,13 +1133,25 @@ IM2PlayDanube:          SaveMMU7
 .DoneInterrupt:         RestoreMMU7
                         ret
                         
-IM2AttractMode:         call    IM2PlayDanube
-                    IF SKIPATTRACT
-                        DISPLAY "NOT LOADING IM2 ATTRACT MODE"
+IM2AttractMode:         ;break
+                    ;DEFINE SKIPATTRACTMUSIC 1
+                    ;DEFINE SKIPATTRACTGRAPHICS 1
+                    IFDEF SKIPATTRACTMUSIC
+                        DISPLAY "Attract mode Music disabled"
+                    ELSE                        
+                        DISPLAY "Attract mode Music enabled"
+                        call    IM2PlayDanube
+                    ENDIF
+                    IFDEF SKIPATTRACTGRAPHICS
+                        DISPLAY "Attract mode graphics disabled"
                     ELSE
+                        DISPLAY "Attract mode graphics enabled"
                         SaveMMU6
+                        SaveMMU7
+                        ;break
                         call    AttractModeUpdate
                         RestoreMMU6
+                        RestoreMMU7
                     ENDIF
                         ret
 

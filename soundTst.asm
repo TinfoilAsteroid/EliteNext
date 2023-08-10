@@ -194,7 +194,7 @@ IM2Routine:     push    af,,bc,,de,,hl,,ix,,iy
 IM2SoundHandler:call    PlayDanube       ; this does the work
 .DoneInterrupt: ld      a,(SavedMMU7)               ; now restore up post interrupt
                 nextreg MMU_SLOT_7_REGISTER,a       ; Restore MMU7
-                pop    af,,bc,,de,,hl
+                pop     af,,bc,,de,,hl
                 ex      af,af'
                 exx
                 pop     af,,bc,,de,,hl,,ix,,iy
@@ -202,7 +202,7 @@ IM2SoundHandler:call    PlayDanube       ; this does the work
                 reti
 
                 
-IM2RoutineSFX:     push    af,,bc,,de,,hl,,ix,,iy          ; we arn't using alternate registers in this test code
+IM2RoutineSFX:  push    af,,bc,,de,,hl,,ix,,iy          ; we arn't using alternate registers in this test code
                 GetNextReg  MMU_SLOT_7_REGISTER         ; get current MMU and save it
                 ld      (SavedMMU7),a                   ; set MMU7 to sound bank
                 MMUSelectSound

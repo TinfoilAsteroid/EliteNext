@@ -92,7 +92,7 @@ AttractModeUpdate:      ld      hl,(AttractTimer)
                         call    SelectARandomShip
                         ret
 .DrawShip:              ;BREAK
-.SelectShipData:        call    doRandom
+.RandomRotateShip:      call    doRandom
                         MMUSelectUniverseN  1
                         ld      a,(AttractStep)
                         and     a       ; 0
@@ -115,18 +115,22 @@ AttractModeUpdate:      ld      hl,(AttractTimer)
 .CullV2:                call    CullV2
                         jp      .DoneIM2
 .PrepLines:             call    PrepLines
+                        ;break
         IFDEF LATECLIPPING
-.DrawLines:             call    DrawLinesLateClipping      
+.DrawLines:             call    DrawLinesLateClipping     
+                        ;break
         ELSE
 .DrawLines:             call    DrawLines
         ENDIF
 .Drawbox:               ld		bc,$0101
                         ld		de,$7FFD
                         ld		a,$C0
+                        ;break
                         MMUSelectLayer2
                         call	l2_draw_box
 .DoubleBuffer:          call    l2_flip_buffers
 .UpdateZPosIfReady:     ld      a,(AttractCounter)
+                        ;break
                         and     a
                         jp      z,.DoneIM2
                         dec     a
@@ -142,6 +146,7 @@ AttractModeUpdate:      ld      hl,(AttractTimer)
                         ret     nz
                         ZeroA
                         ld      (AttractStep),a
+                        ;break
                         ret
 
 
