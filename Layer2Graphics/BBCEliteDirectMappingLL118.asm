@@ -4,7 +4,7 @@
 Debug_LL122_6502:       ld      hl, 20      :ld      (SRvarPair),hl
                         ld      a,  140     :ld      (Qvar),a
                         call    LL122_6502  ; -10                               >> PASS
-                        break
+                        ;break
                         ; yxregpair = 20 * 140 = 17d 11h
                         ld      hl, 20      :ld      (SRvarPair),hl
                         ld      a,  230     :ld      (Qvar),a
@@ -21,12 +21,12 @@ Debug_LL122_6502:       ld      hl, 20      :ld      (SRvarPair),hl
 Debug_LL121_6502:       ld      hl, 20      :ld      (SRvarPair),hl            
                         ld      a,  140     :ld      (Qvar),a
                         call    LL121_6502  ; -36                               >> PASS
-                        break
+                        ;break
                         ; yxregpair =  20 / 140 = 20*256 / 230 = 22d, 11h                        
                         ld      hl, 20      :ld      (SRvarPair),hl
                         ld      a,  230     :ld      (Qvar),a
                         call    LL121_6502  ; -22                               >> PASS
-                        break
+                        ;break
                         ret
                 ENDIF
                 
@@ -35,22 +35,22 @@ Debug_LL129_6502:       ld      hl,-20      :ld     (SRvarPair),hl
                         ld      a, 0        :ld     (XX12p3),a
                         ld      a, 10       :ld     (XX12p2),a
                         call    LL129_6502  ; expect q = 10, a = $FF SR = 20    >> PASS
-                        break
+                        ;break
                         ld      hl,20       :ld     (SRvarPair),hl
                         ld      a, 0        :ld     (XX12p3),a
                         ld      a, 40       :ld     (XX12p2),a
                         call    LL129_6502  ; expect q = 40, a = 00 SR = 20     >> PASS
-                        break
+                        ;break
                         ld      hl,40       :ld     (SRvarPair),hl
                         ld      a, $FF      :ld     (XX12p3),a
                         ld      a, 40       :ld     (XX12p2),a
                         call    LL129_6502  ; expect q = 40, a = $FF SR = 40    >> PASS
-                        break
+                        ;break
                         ld      hl,-40      :ld     (SRvarPair),hl
                         ld      a, $FF      :ld     (XX12p3),a
                         ld      a, 40       :ld     (XX12p2),a
                         call    LL129_6502  ; expect q = 40, a = 00 SR = 40     >> PASS
-                        break
+                        ;break
                         ret
                 ENDIF
          
@@ -61,14 +61,14 @@ Debug_LL120_6502:       ld      a,0         :ld      (Tvar),a                  ;
                         ld      a,0         :ld      (XX12p3),a                ; SLOPE DIRECTION so -ve result
                         ; post LL129 Q = 140 a = 00  SR YX = (20 * 140) /256 * -1 = -10 
                         call    LL120_6502  ; Expect mulitply so (Y X) -10      >> PASS
-                        break
+                        ;break
                         ld      a,0         :ld      (Tvar),a                  ; SLOPE 0 so calcualte YX = S X1lo * XX12+2
                         ld      hl,20       :ld a,h: ld (Svar),a : ld a,l: ld (XX1510),a  ; S x1lo = 20
                         ld      a,140       :ld      (XX12p2),a                ; XX12+2 140, gradient 0.546875
                         ld      a,$FF       :ld      (XX12p3),a                ; sLOPE DIRECTION so +ve result
                         ; post LL129 Q = 140 a = FF  SR = 20  YX = (20 * 140) /256 = 10 
                         call    LL120_6502  ; Expect / so (Y X)10                   >> PASS
-                        break
+                        ;break
                         ld      a,$FF       :ld      (Tvar),a                  ; SLOPE <> 0 so calcualte YX = S X1lo / XX12+2
                         ld      hl,20       :ld a,h: ld (Svar),a : ld a,l: ld (XX1510),a  ; S x1lo = 20
                         ld      a,140       :ld      (XX12p2),a                ; XX12+2 140, gradient 0.546875
@@ -94,13 +94,13 @@ Debug_LL123_6502:       ld      a,$00       :ld      (Tvar),a                  ;
                         ld      a,140       :ld      (XX12p2),a                ; XX12+2 gradient 0.546875
                         ld      a,0         :ld      (XX12p3),a                ; sLOPE DIRECTION
                         call    LL123_6502  ; Expect * so (Y X)-36 = (20 / 140 ) * 256 * -1 PASS
-                        break
+                        ;break
                         ld      a,$00       :ld      (Tvar),a                  ; SLOPE 0 (Y X) = (S R) / XX12+2
                         ld      hl,20       :ld      (SRvarPair),hl
                         ld      a,140       :ld      (XX12p2),a                ; XX12+2 gradient 0.546875
                         ld      a,$FF       :ld      (XX12p3),a                ; sLOPE DIRECTION
                         call    LL123_6502  ; Expect * so (Y X)36 = (20 / 140 ) * 256  PASS
-                        break
+                        ;break
                         ld      a,$FF       :ld      (Tvar),a                  ; SLOPE <> 0 (Y X) = (S R) * XX12+2
                         ld      hl,20       :ld      (SRvarPair),hl
                         ld      a,140       :ld      (XX12p2),a                ; XX12+2 gradient 0.546875
@@ -122,7 +122,7 @@ Debug_LL118_6502:       ld      a,$FF       :ld      (Tvar),a                  ;
                         ld      a,0         :ld      (XX12p3),a                ; Slope Direction so TL to BR
                         ; -20, -20 steep TL>BR, gradient 120/256: Dir -1 so 
                         call    LL118_6502  ; Expect * so x = 0 y =  -20 + (-20/(120/256)) = 22, x1 = 0 so stop there PASS
-                        break
+                        ;break
 
                         ld      a,$FF       :ld      (Tvar),a                  ; SLOPE FF so steep
                         ld      hl,-30      :ld      (XX1510),hl               ; x1 = -20
@@ -131,7 +131,7 @@ Debug_LL118_6502:       ld      a,$FF       :ld      (Tvar),a                  ;
                         ld      a,0         :ld      (XX12p3),a                ; Slope Direction so TL to BR
                         ; -20, -20 steep TL>BR, gradient 120/256: Dir -1 so 
                         call    LL118_6502  ; Expect * so 108,0  PASS (fixed carry flag issue in LL121 and re-tested LL121)
-                        break                        
+                        ;break                        
 
                         ld      a,$0        :ld      (Tvar),a                  ; SLOPE FF so steep
                         ld      hl,-20      :ld      (XX1510),hl               ; x1 = -20
@@ -140,7 +140,7 @@ Debug_LL118_6502:       ld      a,$FF       :ld      (Tvar),a                  ;
                         ld      a,0         :ld      (XX12p3),a                ; Slope Direction so TL to BR
                         ; -20, -20 steep TL>BR, gradient 120/256: Dir -1 so 
                         call    LL118_6502  ; Expect * so 108,0  PASS (fixed carry flag issue in LL121 and re-tested LL121)
-                        break                        
+                        ;break                        
                         ret
 
                 ENDIF
@@ -149,39 +149,39 @@ Debug_LL118_6502:       ld      a,$FF       :ld      (Tvar),a                  ;
 Debug_LL28_6502:        ld      a,27        :ld     (Qvar),a
                         ld      a,76
                         call    LL28_6502   ; Expect $FF carry
-                        break                        
+                        ;break                        
                         ld      a,76        :ld     (Qvar),a
                         ld      a,27        ; Expect 2
                         call    LL28_6502
-                        break                
+                        ;break                
                         ld      a,200        :ld     (Qvar),a
                         ld      a,50
                         call    LL28_6502   ; Expect 4
-                        break
+                        ;break
                         ld      a,97        :ld     (Qvar),a
                         ld      a,76
                         call    LL28_6502   ; Expect 1
-                        break
+                        ;break
                         ld      a,$20       :ld     (Qvar),a
                         ld      a,$10
                         call    LL28_6502   ; Expect 1
-                        break
+                        ;break
                         ld      d,27
                         ld      a,76
                         call    AEquAmul256DivD
-                        break
+                        ;break
                         ld      d,76
                         ld      a,27
                         call    AEquAmul256DivD
-                        break
+                        ;break
                         ld      d,200
                         ld      a,50
                         call    AEquAmul256DivD
-                        break
+                        ;break
                         ld      d,$20
                         ld      a,$10
                         call    AEquAmul256DivD
-                        break
+                        ;break
                         ret
                 ENDIF
                 
@@ -192,47 +192,47 @@ Debug_LL145_6502:       ; ld  a,1      : ld  (UbnkLineArrayLen),a
                         ; ld  hl,$004B : ld  (UbnkLineArray+2),hl
                         ; ld  hl,$00F8 : ld  (UbnkLineArray+4),hl
                         ; ld  hl,$002F : ld  (UbnkLineArray+6),hl
-                        ; call    DrawLinesLateClipping : break
+                        ; call    DrawLinesLateClipping : ;break
                         ; ld  a,1      : ld  (UbnkLineArrayLen),a
                         ; ld  hl,$0033 : ld  (UbnkLineArray),hl
                         ; ld  hl,$0016 : ld  (UbnkLineArray+2),hl
                         ; ld  hl,$001D : ld  (UbnkLineArray+4),hl
                         ; ld  hl,$FFBE : ld  (UbnkLineArray+6),hl
-                        ; call    DrawLinesLateClipping : break
+                        ; call    DrawLinesLateClipping : ;break
                         ; ld  a,1      : ld  (UbnkLineArrayLen),a
                         ; ld  hl,$0055 : ld  (UbnkLineArray),hl
                         ; ld  hl,$FF83 : ld  (UbnkLineArray+2),hl
                         ; ld  hl,$0033 : ld  (UbnkLineArray+4),hl
                         ; ld  hl,$0016 : ld  (UbnkLineArray+6),hl
-                        ; call    DrawLinesLateClipping :  break
+                        ; call    DrawLinesLateClipping :  ;break
                         
                         ;ld  a,1      : ld  (UbnkLineArrayLen),a
                         ;ld  hl,$00B3 : ld  (UbnkLineArray),hl
                         ;ld  hl,$0054 : ld  (UbnkLineArray+2),hl
                         ;ld  hl,$005d : ld  (UbnkLineArray+4),hl
                         ;ld  hl,$ffd5 : ld  (UbnkLineArray+6),hl
-                        ;call    DrawLinesLateClipping :  break
+                        ;call    DrawLinesLateClipping :  ;break
                         ;
                         ;ld  a,1      : ld  (UbnkLineArrayLen),a
                         ;ld  hl,$005d : ld  (UbnkLineArray),hl
                         ;ld  hl,$ffd5 : ld  (UbnkLineArray+2),hl
                         ;ld  hl,$00b9 : ld  (UbnkLineArray+4),hl
                         ;ld  hl,$0028 : ld  (UbnkLineArray+6),hl
-                        ;call    DrawLinesLateClipping :  break
+                        ;call    DrawLinesLateClipping :  ;break
 
                         ld  a,1      : ld  (UbnkLineArrayLen),a
                         ld  hl,$ffc7 : ld  (UbnkLineArray),hl
                         ld  hl,$001a : ld  (UbnkLineArray+2),hl
                         ld  hl,$005d : ld  (UbnkLineArray+4),hl
                         ld  hl,$ffd5 : ld  (UbnkLineArray+6),hl
-                        call    DrawLinesLateClipping :  break
+                        call    DrawLinesLateClipping :  ;break
                        
                         ;ld  a,1      : ld  (UbnkLineArrayLen),a
                         ;ld  hl,$0089 : ld  (UbnkLineArray),hl
                         ;ld  hl,$00e2 : ld  (UbnkLineArray+2),hl
                         ;ld  hl,$fff3 : ld  (UbnkLineArray+4),hl
                         ;ld  hl,$00b9 : ld  (UbnkLineArray+6),hl
-                        ;call    DrawLinesLateClipping :  break
+                        ;call    DrawLinesLateClipping :  ;break
 
                         ret
                 ENDIF

@@ -212,7 +212,7 @@ TRIANGLEDIAGNOSTICS:   ;break
 ;                        MMUSelectLayer2
 ;                        call        l2_draw_fillclip_tri
 ;TRIANGLEDIAGDONE:       break          0136 0153 FF81 FF98  310, 339  = -127, -104 dx 437, 443  (218 221)  91,117
-                         break
+                         ;break
                          MMUSelectUniverseN  0
                          MMUSelectLayer2
     ;DEFINE DEBUG_LL122_DIRECT 1 ; PASS
@@ -257,7 +257,7 @@ TRIANGLEDIAGNOSTICS:   ;break
                   
                   ;DEFINE DEBUG_LL145_6502 1
                   IFDEF DEBUG_LL145_6502
-                        break
+                        ;break
                         call Debug_LL145_6502
                   ENDIF
                         
@@ -268,12 +268,12 @@ TRIANGLEDIAGNOSTICS:   ;break
                         ld      a,$FF       :ld      (XX12p3),a ; Slope
                         ld      hl,-50      :ld      (SRvarPair),hl
                         call    LL129_6502  ; Should be Q = 240, A = +ve SR = 50 >> PASS
-                        break
+                        ;break
                         ld      a,240       :ld      (XX12p2),a ; Gradient
                         ld      a,0         :ld      (XX12p3),a ; Slope
                         ld      hl,-50      :ld      (SRvarPair),hl
                         call    LL129_6502  ; Should be Q = 240, A = -ve SR = 50 >> PASS
-                        break
+                        ;break
                         ld      a,240       :ld      (XX12p2),a ; Gradient
                         ld      a,$FF       :ld      (XX12p3),a ; Slope
                         ld      hl, 150     :ld      (SRvarPair),hl
@@ -285,7 +285,7 @@ TRIANGLEDIAGNOSTICS:   ;break
                 ENDIF
  ;               DEFINE DEBUG_LL120 1
                 IFDEF DEBUG_LL120
-                        break
+                        ;break
                         ld      a,0         :ld      (Tvar),a   ; slope +ve so multiply
                         ld      a,$FF       :ld      (Svar),a   ; S var -ve
                         ld      hl,-10      :ld      (XX1510),hl; x1_lo -ve
@@ -293,7 +293,7 @@ TRIANGLEDIAGNOSTICS:   ;break
                         ld      a,$FF       :ld      (XX12p3),a ; slope direction    
                         ; LL129 shoud be q = 168, a +ve SR 10 >> PASS 
                         call    LL120_6502  ; Should be -ve 10 * 168  so xy -15   >> FAIL
-                        break
+                        ;break
                         ld      a,$FF       :ld      (Tvar),a   ; slope -ve so divide
                         ld      a,$FF       :ld      (Svar),a   ; S var -ve
                         ld      hl,-10      :ld      (XX1510),hl; x1_lo -ve
@@ -304,7 +304,7 @@ TRIANGLEDIAGNOSTICS:   ;break
                 ENDIF
            ; DEFINE DEBUGCLIP 1
             IFDEF  DEBUGCLIP
-                        break
+                        ;break
                         MMUSelectUniverseN 0
                         MMUSelectLayer2
                         call   l2_cls_upper_two_thirds
@@ -316,16 +316,16 @@ TRIANGLEDIAGNOSTICS:   ;break
                         ld      bc, 8
                         pop     hl
                         ldir
-                        break
+                        ;break
                         push    hl
                         call    l2_draw_6502_line;l2_draw_elite_line
-                        break
+                        ;break
                         ;MMUSelectKeyboard
                         ;call    WaitForAnyKey
                         pop     hl
                         pop     bc
                         djnz    .testLoop
-                        break
+                        ;break
                         jp      InitialiseGalaxies
                       ;  ld      hl,$FFF7 : ld (x1),hl : ld hl,$0009 : ld (y1),hl : ld hl,$000F : ld (x2),hl : ld hl,$FFEF : ld (y2),hl : call l2_draw_elite_line
                       ;  ld      hl,259   : ld (x1),hl : ld hl,35    : ld (y1),hl : ld hl,250   : ld (x2),hl : ld hl,-12   : ld (y2),hl : call l2_draw_elite_line
@@ -466,7 +466,7 @@ RenderDiagnostics:      MMUSelectLayer2
                         ; CLip -10,-10 to 20,30
                         ld      a,$56
                         ld      (line_gfx_colour),a
-                        break
+                        ;break
 .LineTest1:             ld      hl, DrawTestDataLine1
                         call    DrawClippedLineDebug
 .LineTest2:             ld      hl, DrawTestDataLine2
@@ -501,7 +501,7 @@ RenderDiagnostics:      MMUSelectLayer2
                         call    DrawClippedLineDebug
                         ld      hl, DrawTestDataLine16
                         call    DrawClippedLineDebug
-                        break
+                        ;break
                         ; draw diagonals on screen tL br, tr bl
                         ; draw diagonals on screen bl tr, br tl
                         ; draw clipped horzontals left clip from -1000 -10 to 50

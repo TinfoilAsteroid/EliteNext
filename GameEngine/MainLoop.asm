@@ -10,7 +10,7 @@
  ;   DEFINE  MAINLOOP_LAUNCHMISSILE
     DEFINE  MAINLOOP_UPDATEUNIVERSE 1
     DEFINE  MAINLOOP_DUST_RENDER 1    
-;    DEFINE  MAINLOOP_SUN_RENDER 1
+    DEFINE  MAINLOOP_SUN_RENDER 1
 ;    DEFINE  MAINLOOP_PLANET_RENDER 1
     DEFINE  MAINLOOP_MODEL_RENDER    1
     DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
@@ -177,8 +177,11 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
 .JustViewPortCLS:       call   l2_cls_upper_two_thirds
 .ViewPortCLSDone:
                         MMUSelectLayer1
-.UpdateSun:             MMUSelectSun
-.DEBUGFORCE:            
+.UpdateSun:             
+                        IFDEF   MAINLOOP_SUN_RENDER
+ 
+                            MMUSelectSun
+;.DEBUGFORCE:            
                        ;ld          hl,$0081
                        ;ld          (SBnKxlo),hl
                        ;ld          hl,$0001
@@ -190,13 +193,12 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
                         ;ld          (SBnKysgn),a
                        ; ZeroA
                       ;  ld          (SBnKzsgn),a
-    IFDEF   MAINLOOP_SUN_RENDER
                             call    SunUpdateAndRender
-    ENDIF
-.UpdatePlanet:          MMUSelectPlanet
-    IFDEF   MAINLOOP_PLANET_RENDER
+                        ENDIF
+.UpdatePlanet:          IFDEF   MAINLOOP_PLANET_RENDER
+                            MMUSelectPlanet
                             call    PlanetUpdateAndRender
-    ENDIF
+                        ENDIF
 ;..Later this will be done via self modifying code to load correct stars routine for view..........................................
 DrawDustForwards:       ld     a,$DF
                         ld     (line_gfx_colour),a                         
@@ -226,9 +228,9 @@ ProcessLaser:           ld      a,(CurrLaserPulseRate)
                         call    sprite_laser_hide
             ENDIF
 ProcessPlanet:
-    IFDEF   MAINLOOP_MODEL_RENDER
-ProcessShipModels:      call   DrawForwardShips                                     ; Draw all ships (this may need to be self modifying)
-    ENDIF
+                        IFDEF   MAINLOOP_MODEL_RENDER
+ProcessShipModels:          call   DrawForwardShips                                     ; Draw all ships (this may need to be self modifying)
+                        ENDIF
                         ; add in loop so we only update every 4 frames, need to change CLS logic too, 
                         ; every 4 frames needs to do 2 updates so updates both copies of buffer
                         ; now will CLS bottom thrid
@@ -247,7 +249,7 @@ HandleLaunched:         JumpIfAEqNusng  StateCompletedLaunch,   WeHaveCompletedL
                         JumpIfAEqNusng  StateHEntering,         WeAreHEntering
                         JumpIfAEqNusng  StateCompletedHJump,    WeHaveCompletedHJump
                         
-                        jp  DoubleBufferCheck
+                        jp      DoubleBufferCheck
 WeHaveCompletedLaunch:  call    LaunchedFromStation
                         jp      DoubleBufferCheck
 WeAreHJumping:          call    hyperspace_Lightning
