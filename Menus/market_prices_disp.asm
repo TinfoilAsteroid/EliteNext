@@ -131,6 +131,7 @@ MPD_DispPriceAtoDE:     ld h,0
                         ld	c,-10
                         call	MPD_Num1
                         ld		a,'.'					; we could assume preformat but
+                                    DISPLAY "TODO: optimse"
                         ld		(de),a					; we can optimse that later TODO
                         inc		de						; with just an inc De
                         ld	c,-1

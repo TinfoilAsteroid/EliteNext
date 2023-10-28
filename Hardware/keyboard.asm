@@ -263,7 +263,8 @@ KeyboardMap             DW  Keys+KeyCode_Front        ,Keys+KeyCode_Aft         
                         DW  Keys+KeyCode_ExtPlanet    ,Keys+KeyCode_ExtNearest   ,Keys+KeyCode_ExtCurUp     ,Keys+KeyCode_ExtCurDown   ,Keys+KeyCode_ExtCurLeft
                         DW  Keys+KeyCode_ExtCurRight  ,Keys+KeyCode_ExtDelete    ,Keys+KeyCode_ExtFindSystem,Keys+KeyCode_ExtEscapePod ,Keys+KeyCode_ExtInventory 
                         DW  Keys+KeyCode_ExtStatus    ,Keys+KeyCode_ExtGlactic   ,Keys+KeyCode_ExtLocal     ,Keys+KeyCode_ExtSystemJump
-s
+
+
 ASCII_Map:              DB "?","Z","X","C","V"
                         DB "A","S","D","F","G"
                         DB "Q","W","E","R","T"
@@ -272,10 +273,8 @@ ASCII_Map:              DB "?","Z","X","C","V"
                         DB "P","O","I","U","Y"
                         DB ">","L","K","J","H"
                         DB " ","^","M","N","B"
-                        DB "?","?","?","?","?"  ; Extended keys
-                        DB "?","?","?","#","?"  ; delete key is marked as hash
-                        DB "?","?","?","?","?"
-                        DB "?"
+                        DB ";",'"',",",".","^","v","[","]"  ; Extended keys register 0 semicolon, quote, comman, fullstop, up, down, left, right
+                        DB "#","e","b","i","t","g","c","x"  ; Extended keys register 1 delete, edit, break, inv video, true video graph, caps, extend
 ; mapping of a code to the lookup table Keyboard map. So if you are using an addr_Pressed you can then fetch from KeyboardMap the address in Keys
 ; for the raw key press status
 addr_Pressed_Front         equ KeyboardMap+c_Pressed_Front       
@@ -365,7 +364,7 @@ scan_keyboard:          ld		ix,RawKeys                      ; hl = table of raw 
                         dec     c                               ; thats one row of bits all processed
                         jr      nz,.PortReadLoop				; Read next input port
 .ReadExtend0:           GetNextReg EXTENDED_KEYS_0_REGISTER
-                        ld      (RawKeys+8),a                      ; save to extended slot
+                        ld      (RawKeys+8),a                   ; save to extended slot
                         ld      b,8
                         ld      hl,Keys + VK_SEMI
 .ProcessExtend0:        rla                                     ; shift bits left into carry for extended keys
@@ -591,9 +590,11 @@ WaitForAnyKey:          push    af,,de,,bc,,hl
 
 InputString             DS  30              ; used for a 30 character input buffer
                         DB  0               ; end of string marker as a safety
-InputCursor             DB  0
+InputLength             DB  0               ; Current String length
+InputCursor             DB  0               ; Current Cursor Position
 EnterPressed            DB  0               ; zero notpressed FF pressed
 InputChanged            DB  0
+InsertMode              DB  0
 InputLimit              EQU 20 
 
 keyboard_copy_input_to_de:  ld      hl,InputString
@@ -607,8 +608,62 @@ keyboard_copy_input_to_de:  ld      hl,InputString
                             ld      (de),a
                             ret
 
-initInputText:          xor     a
+ ;Input routine logic
+ ;Intialise input state 
+ 
+; Scans the key pressed to determine if its an alpha, returns ascii code or 0 if not alpha 
+; Input a = key pressed, returns with carry set if no alpha else carry is clear
+isKeyAlpha:             JumpIfALTNusng  "A",   .NotAlpha
+                        JumpIfAGTENusng "Z"+1, .NotAlpha
+                        ClearCarryFlag
+                        ret
+.NotAlpha               SetCarryFlag
+                        ret
+
+InsertKeystroke:        ld      a,(InputCursor)                         ; Current Cursor position
+                        cp      30                                      ; protect from buffer overflow
+                        ret     z                                       ; .
+                        ld      hl,InputString                          ; position hl to position in input string
+                        add     hl,a                                    ; .
+                        push    hl                                      ; save current cursor position
+                        ld      b,a                                     ; as a quick optimisation
+                        JumpIfMemFalse InsertMode, .NoCopyNeeded        ; if we are in overtype mode skip copy 
+                        ld      a,(InputLength)                         ; no need to shuffle string
+                        cp      b                                       ; if we are at the end already
+                        ld      a,b                                     ; .
+                        jp      z,.NoCopyNeeded                         ; so we can behave like overtype mode
+                        ld      de,InputString+29                       ; now from the end of the string
+                        ld      hl,InputString+28                       ; .
+                        ld      b,29                                    ; for up to 29 characters
+                        ld      c,a                                     ; back to the current cursor position
+.CopyLoop:              push    bc                                      ; save current position
+                        ld      a,(hl)                                  ; now suffle from left char to right char
+                        ld      (de),a                                  ; .
+                        dec     hl                                      ; moving back one byte at a time
+                        dec     de                                      ;   
+                        dec     b                                       ; and reducing the current copy position
+                        ld      a,c                                     ; have we reached the input cursor pos
+                        cp      b                                       ;
+                        pop     bc                      
+                        jp      nz,.CopyLoop
+.NoCopyNeeded:          pop     hl
+                        ld      a,(LastKeyPressed)
+                        ld      (hl),a
+                        ld      hl,InputLength
+                        inc     (hl)
+                        inc     hl                                      ;  to input cursor as a short cut to logic
+                        inc     (hl)
+                        ret
+                        
+
+; We won't have any auto repeat on input
+LastKeyPressed:         db 0
+
+initInputText:          ZeroA
                         ld      (InputCursor),a
+                        ld      (LastKeyPressed),a
+                        ld      (InputLength),a
+                        SetMemTrue  InsertMode
                         SetMemFalse EnterPressed
                         SetMemFalse InputChanged
                         ld      hl,InputString
@@ -617,7 +672,75 @@ initInputText:          xor     a
                         inc     hl
                         djnz    .wipeloop
                         ret
-    
+                            
+;;;InputNameV2:            call    is_any_key_pressed              ; scan for key states
+;;;                        cp      $FF                             ; no key means we reset auto repeat
+;;;                        jp      z,.NoKeyPressed                 ;
+;;;.IsItLastKeyHeld:       ld      hl,LastKeyPressed               ; is it the same key as before
+;;;                        cp      (hl)                            ;
+;;;                        ret     z                               ; if so just ignore it to avoid auto repeat
+;;;.SetNewAntiRepeat:      ld      (LastKeyPressed),a
+;;;.CheckKeyPressed:       call    isKeyAlpha
+;;;                        jp      nc,.AlphaKeyPressed
+;;;.CheckSpaceKeyPressed:  cp      " "
+;;;                        jp      z,.SpacePressed
+;;;.CheckEnterPressed:     cp      ">"
+;;;                        jp      z,.EnterPressed
+;;;.CheckLeftPressed:      cp      "["
+;;;                        jp      z,.LeftPressed
+;;;.CheckRightPressed:     cp      "]"
+;;;                        jp      z,.RightPressed
+;;;.CheckDeletePressed:    cp      "#"
+;;;                        jp      z,.DeletePressed
+;;;.AnyOtherKeyIsIgnored:  ret
+;;;.AlphaKeyPressed:       ld      a,(InputLength)
+;;;                        JumpIfAGTENusng 30,.MaxInputReached
+;;;.InsertKey:             call    InsertKeystroke
+;;;                        ret
+;;;.SpacePressed:          call    InsertKeystroke
+;;;                        ret
+;;;.EnterPressed:          
+;;;
+;;;.LeftPressed:           ld      a,(InputCusor)
+;;;                        JumpIfAIsZero, .MaxInputReached
+;;;                        dec     a
+;;;                        ld      (InputCursor),a
+;;;                        ret
+;;;.RightPressed:          ld      a,(InputLength)
+;;;                        inc     a
+;;;                        ld      b,a
+;;;                        ld      a,(InputCursor)
+;;;                        JumpIfMemGTENusng b, .MaxInputReached
+;;;                        inc     a
+;;;                        ld      (InputCursor),a
+;;;                        ret
+;;;.DeletaPressed:         ld      a,(InputCusor)
+;;;                        ld      c,a
+;;;                        JumpIfAisZero, .MaxInputReached
+;;;                        ld      a,(InputLength)
+;;;                        JumpIfAisZero, .MaxInputReached
+;;;                        ld      de,InputString
+;;;                        ld      hl,de
+;;;                        inc     hl
+;;;                        ld      a,(InputLength)                 ; copy backwards
+;;;                        dec     c                               ; for string length - curretn cursor
+;;;                        ld      c,a
+;;;                        ld      b,0
+;;;                        ldir        
+;;;                        ret
+;;;GOTTOHERE                        
+                       
+                        
+                        
+.MaxInputReached:       ret ; will add a beep later                        
+                        
+
+                        
+                        
+.NoKeyPressed:          ZeroA
+                        ld      (LastKeyPressed),a              ; Clear last key pressed
+
+
 InputName:              SetMemFalse InputChanged
                         call    is_any_key_pressed
                         cp      $FF

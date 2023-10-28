@@ -1,6 +1,51 @@
 ; a equal a / d * 96
 
 	
+NormaliseIXVector:      ld		a,(ix+0)	        ; XX15+0
+                        and		SignMask8Bit        ; a = unsigned version
+.n96SQX:	            inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2
+                        ld		hl,de		 		; h == varR d = varO e= varA
+.n96SQY:                ld		a,(ix+1)			
+                        and		SignMask8Bit        ; = abs 
+                        inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2		:: so DE = XX15[y]^2
+                        add		hl,de				; hl = XX15[x]^2 + XX15[y]^2
+.n96SQZ:                ld		a,(ix+2)			; Note comments say \ ZZ15+2  should be \ XX15+2 as per code
+                        and		SignMask8Bit        ; unsigned
+                        inline_squde				; Use inline square for speed	objective is SQUA \ P.A =A7*A7 x^2		:: so DE = XX15[z]^2
+.n96SQADD:              add		hl,de				; hl = XX15[x]^2 + XX15[y]^2 + XX15[z]^2
+                        ex		de,hl				; hl => de ready for square root
+.n96SQRT:               call	asm_sqrt			; hl = de = sqrt(XX15[x]^2 + XX15[y]^2 + XX15[z]^2), we just are interested in l which is the new Q
+.n96NORMX:              ld		a,(ix+0)            
+                        ld		c,a                 ; save copy into c
+                        and		SignMask8Bit
+                        ld		d,l					; Q(i.e. l) => D, later we can just pop into de
+                        call	AequAdivDmul967Bit	; does not use HL so we can retain it
+                        ld		b,a				    ;++SGN
+                        ld      a,c
+                        and     SignOnly8Bit			    ;++SGN
+                        or		b				    ;++SGN
+                        ld		(ix+0),a
+.n96NORMY:              ld		a,(ix+1)            
+                        ld		c,a                 ; save copy into c
+                        and		SignMask8Bit
+                        ld		d,l					; Q(i.e. l) => D, later we can just pop into de
+                        call	AequAdivDmul967Bit	; does not use HL so we can retain it
+                        ld		b,a				    ;++SGN
+                        ld      a,c
+                        and     SignOnly8Bit			    ;++SGN
+                        or		b				    ;++SGN
+                        ld		(ix+1),a
+.n96NORMZ:              ld		a,(ix+2)
+                        ld		c,a                 ; save copy into c
+                        and		SignMask8Bit
+                        ld		d,l					; Q(i.e. l) => D, later we can just pop into de
+                        call	AequAdivDmul967Bit	; does not use HL so we can retain it
+                        ld		b,a				    ;++SGN
+                        ld      a,c
+                        and     SignOnly8Bit			    ;++SGN
+                        or		b				    ;++SGN
+                        ld		(ix+2),a
+                        ret                      
 
 ; .NORM	\ -> &3BD6 \ Normalize 3-vector length of XX15
 normaliseXX1596S7:      ld		a,(XX15VecX)	    ; XX15+0

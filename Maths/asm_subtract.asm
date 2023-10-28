@@ -21,6 +21,7 @@ subHLDES15:             ld      a,h
                         ClearCarryFlag
                         sbc     hl,de
                         JumpIfNegative .SUBHLDESameOvrFlw            
+                                            DISPLAY "TODO:  don't bother with overflow for now"
                         ld      a,h                         ; now set bit for negative value, we won't bother with overflow for now TODO
                         or      SignOnly8Bit
                         ld      h,a

@@ -51,6 +51,7 @@ IsEdgeInVisibilityRange:
         push        hl
         pop         iy
         IFDEF NOBACKFACECULL
+                                            DISPLAY "TODO: dbugtodo"
             jp          VisibileEdge; DEBUGTODO
         ENDIF
         ld          a,(LastNormalVisible)               ; XX4 is visibility range
@@ -65,6 +66,7 @@ IsFace1Visibile:                                        ; edges have 2 faces to 
         ld          c,a                                 ;  c = a copy of byte 1
         and         $0F                                 ;
         GetFaceAtA
+                                            DISPLAY "TODO: debug bodge todo"
 ;       jp  VisibileEdge; DEBUG BODGE TEST TODO
         JumpIfAIsNotZero VisibileEdge                     ; LL70 visible edge
 IsFace2Visibile:

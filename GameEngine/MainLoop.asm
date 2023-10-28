@@ -11,7 +11,7 @@
     DEFINE  MAINLOOP_UPDATEUNIVERSE 1
     DEFINE  MAINLOOP_DUST_RENDER 1    
     DEFINE  MAINLOOP_SUN_RENDER 1
-;    DEFINE  MAINLOOP_PLANET_RENDER 1
+    DEFINE  MAINLOOP_PLANET_RENDER 1
     DEFINE  MAINLOOP_MODEL_RENDER    1
     DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
     DEFINE  MAINLOOP_WARP_ENABLED 1
@@ -93,34 +93,49 @@ TestAreWeDocked:        JumpIfMemNeNusng DockedFlag, StateNormal, UpdateLoop    
 ;.. we do one universe slot each loop update ......................................................................................
 ;.. First update Sun...............................................................................................................
                 IFDEF MAINLOOP_WARP_ENABLED
+;... Warp or in system jump thsi moves everything by 1 on the high (sign) byte away or towards ship based on their z axis only
+;... its not a true move in the right direction, more a z axis warp                
 ProcessWarp:            JumpIfMemFalse  WarpPressed, .NoWarp
 .WarpIsPressed:         SetMemFalse     WarpPressed                               ; clear and acknowlege
                         JumpIfMemZero   WarpCooldown, .WarpDriveCool
-;Need logic for jump drive malfunction
-.JumpDriveHot:          ; call bong jump drive hot
-                        ; flash jump drive status icon
+                        DISPLAY "TODO Need logic for in system jump drive malfunction"
+.JumpDriveHot:          DISPLAY "TODO call bong jump drive hot"
+                        DISPLAY "TODO flash jump drive status icon"
                         jp      .NoWarp
 .WarpDriveCool:         JumpIfMemFalse    SpaceStationSafeZone, .NotInSpaceStationRange
-.MassLocked:            ; call bong
-                        ; message mass locked
+.MassLocked:            DISPLAY "TODO Mass locked by object call bong"
+                        DISPLAY "TODO message mass locked"
+                        DISPLAY "TODO make space station a body just like planet and sun"
                         jp      .NoWarp
 .NotInSpaceStationRange:call    AreShipsPresent
                         jr      nc,     .MassLocked
-.NoShipsInSystem:      ;MMUSelectPlanet
-                       ;ld      a,(PBnKzsgn)
-                       ;and     $80
-                       ;jp      z,.JumpToPlanetCheck
-                        MMUSelectSun
-                        ld      a,(SBnKzsgn)
-                        and     $80
-                        jp      z,.JumpToSunCheck
+.IsPlanetMassLocking:   MMUSelectPlanet                 ; is planet within 256 then mass locked
+                        ld      hl,(P_BnKzhi)
+                        ld      a,h                     ; if z sign is <> 0 then mass locked
+                        and     $7F                     ; h = abs zsign
+                        or      l                       ; to get to here a must be zero to or with l will give a quick result
+                        jp      z,     .MassLocked
+.IsSunMassLocking:      MMUSelectSun
+                        ld      hl,(SBnKzhi)
+                        ld      a,h                     ; if z sign is <> 0 then mass locked
+                        and     $7F                     ; h = abs zsign
+                        or      l                       ; to get to here a must be zero to or with l will give a quick result
+                        jp      z,     .MassLocked
+            IFDEF SIMPLEWARP
+                        ld      hl,(P_BnKzhi)           ; z hi,sign must be > 0 else we are mass locked so can't hit here
+                        DecHLSigned
+                        ld      (P_BnKzhi),hl
+                        ld      hl,(SBnKzhi)           ; z hi,sign must be > 0 else we are mass locked so can't hit here
+                        DecHLSigned
+                        ld      (SBnKzhi),hl
+            ELSE
 .NotCorrectFacing:      ;       call bong, align with body
                         jp      .NoWarp
-.JumpToPlanetCheck:     ld      a,(PBnKzhi)
+.JumpToPlanetCheck:     ld      a,(P_BnKzhi)
                         JumpIfAGTENusng  2, .PlanetRangeOK 
-                        ld      a,(PBnKyhi)
+                        ld      a,(P_BnKyhi)
                         JumpIfAGTENusng  2, .PlanetRangeOK
-                        ld      a,(PBnKxhi)
+                        ld      a,(P_BnKxhi)
                         JumpIfAGTENusng  2, .PlanetRangeOK
                         jp      .MassLocked
 .PlanetRangeOK:         call    WarpPlanetCloser
@@ -138,6 +153,7 @@ ProcessWarp:            JumpIfMemFalse  WarpPressed, .NoWarp
 .SunRangeOK:            call    WarpSunCloser
                         MMUSelectPlanet
                         call    WarpPlanetFurther
+            ENDIF
 .MoveJunk:              call    ClearJunk;  call    WarpJunk - as it will move sign bit hi then all junk will be lost
                         ld      a,WarpCoolDownPeriod
                         ld      (WarpCooldown),a
@@ -149,9 +165,9 @@ ProcessWarp:            JumpIfMemFalse  WarpPressed, .NoWarp
                 ENDIF
 UpdateShipsControl:     ld      a,0
                         and     a
-    IFDEF MAINLOOP_UPDATEUNIVERSE
-.UpdateShips:           call    z, UpdateUniverseObjects
-    ENDIF
+                        IFDEF MAINLOOP_UPDATEUNIVERSE
+.UpdateShips:               call    z, UpdateUniverseObjects
+                        ENDIF
                         JumpIfMemNeNusng ScreenTransitionForced, $FF, BruteForceChange  ; if we docked then a transition would have been forced
 CheckIfViewUpdate:      ld      a,$00                                                   ; if this is set to a view number then we process a view
                         JumpIfAIsZero  UpdateLoop                                       ; This will change as more screens are added TODO
@@ -179,7 +195,6 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
                         MMUSelectLayer1
 .UpdateSun:             
                         IFDEF   MAINLOOP_SUN_RENDER
- 
                             MMUSelectSun
 ;.DEBUGFORCE:            
                        ;ld          hl,$0081
@@ -196,6 +211,7 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
                             call    SunUpdateAndRender
                         ENDIF
 .UpdatePlanet:          IFDEF   MAINLOOP_PLANET_RENDER
+                            ;break
                             MMUSelectPlanet
                             call    PlanetUpdateAndRender
                         ENDIF
@@ -203,30 +219,30 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
 DrawDustForwards:       ld     a,$DF
                         ld     (line_gfx_colour),a                         
 DustUpdateBank:         MMUSelectViewFront                                              ; This needs to be self modifying
-    IFDEF   MAINLOOP_DUST_RENDER
-DustUpdateRoutine:      call   DustForward                                              ; This needs to be self modifying
-    ENDIF
+                        IFDEF   MAINLOOP_DUST_RENDER
+DustUpdateRoutine:          call   DustForward                                              ; This needs to be self modifying
+                        ENDIF
 ;ProcessSun:             call    DrawForwardSun
-            IFDEF   LASER_V2            
-ProcessLaser:           MMUSelectSpriteBank
-                        JumpIfMemFalse LaserBeamOn, .NoLaser
-.FireLaser:             call    sprite_laser_show
-                        call    LaserDrainSystems
-                        jp      ProcessPlanet
-.NoLaser:               call    sprite_laser_hide
-            ELSE
-ProcessLaser:           ld      a,(CurrLaserPulseRate)
-                        JumpIfAIsNotZero .CheckForPulse
-                        JumpIfMemFalse FireLaserPressed, .NoLaser
-                        jp      .FireLaser
-.CheckForPulse:         JumpIfMemZero CurrLaserPulseOnCount, .NoLaser
-.FireLaser:             MMUSelectSpriteBank
-                        call    sprite_laser_show
-                        call    LaserDrainSystems
-                        jp      ProcessPlanet
-.NoLaser:               MMUSelectSpriteBank
-                        call    sprite_laser_hide
-            ENDIF
+                        IFDEF   LASER_V2            
+ProcessLaser:               MMUSelectSpriteBank
+                            JumpIfMemFalse LaserBeamOn, .NoLaser
+.FireLaser:                 call    sprite_laser_show
+                            call    LaserDrainSystems
+                            jp      ProcessPlanet
+.NoLaser:                   call    sprite_laser_hide
+                        ELSE
+ProcessLaser:               ld      a,(CurrLaserPulseRate)
+                            JumpIfAIsNotZero .CheckForPulse
+                            JumpIfMemFalse FireLaserPressed, .NoLaser
+                            jp      .FireLaser
+.CheckForPulse:             JumpIfMemZero CurrLaserPulseOnCount, .NoLaser
+.FireLaser:                 MMUSelectSpriteBank
+                            call    sprite_laser_show
+                            call    LaserDrainSystems
+                            jp      ProcessPlanet
+.NoLaser:                   MMUSelectSpriteBank
+                            call    sprite_laser_hide
+                        ENDIF
 ProcessPlanet:
                         IFDEF   MAINLOOP_MODEL_RENDER
 ProcessShipModels:          call   DrawForwardShips                                     ; Draw all ships (this may need to be self modifying)
@@ -318,18 +334,9 @@ LaserBeamV2:            JumpIfMemFalse LaserBeamOn, .LaserIsOff                 
                         ld          (CurrentCooldown),a
                         ret
 
-; to create planet position 
-;       take seed 2 AND %00000011 + 3 + carry and store in z sign
-;       take result and divide by 2 then store in x and y sign
-;         
-;       take seed 4 AND %00000111 OR %10000001 and store in z sign
-;       take seed 6 AND %00000011 and store in x sign and y sign
-;       set pitch and roll to 0
-;
-;
-;                                   
-; --- At the end of a hyperspace jump we have to reset compass, market universe sun and planets etc
-WeHaveCompletedHJump:   ld      a,(Galaxy)                      ; DEBUG as galaxy n is not working
+;;called from LaunchedFromStation  & WeHaveCompletedHJump to re-seed the system
+
+InitialiseLocalUniverse:ld      a,(Galaxy)                      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      hl,(TargetSystemX)
                         ld      (PresentSystemX),hl
@@ -344,6 +351,21 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)                      ; DEBUG as galax
                         call    copy_working_to_system         ; and propogate copies of seeds
                         call    copy_working_to_galaxy         ; .
                         call    get_planet_data_working_seed   ; sort out system data
+                        ret
+
+
+; to create planet position 
+;       take seed 2 AND %00000011 + 3 + carry and store in z sign
+;       take result and divide by 2 then store in x and y sign
+;         
+;       take seed 4 AND %00000111 OR %10000001 and store in z sign
+;       take seed 6 AND %00000011 and store in x sign and y sign
+;       set pitch and roll to 0
+;
+;
+;                                   
+; --- At the end of a hyperspace jump we have to reset compass, market universe sun and planets etc
+WeHaveCompletedHJump:   call    InitialiseLocalUniverse
                         ;call    GetDigramGalaxySeed           ; .           
                         MMUSelectStockTable                    ; .
                         call    generate_stock_market          ; generate new prices
@@ -354,6 +376,7 @@ WeHaveCompletedHJump:   ld      a,(Galaxy)                      ; DEBUG as galax
                         call    CreateSun                      ; create the local sun and set position based on seed
                         MMUSelectPlanet
                         call    CreatePlanet
+            DISPLAY "TODO:  GENEATE SUB AND PLANET POS"
 ;TODO                        call    generateSunAndPlanetPos        ; uses current carry state too
 ;TODO.CreateSun:             call    SetSunSlot
 ; PROBABLY NOT NEEDED NOW                      MMUSelectShipBank1
@@ -462,6 +485,7 @@ LaunchEnemyFighter:     ld      a,10
 LaunchPlayerMissile:   ; break
                         call    FindNextFreeSlotInC                 ; Check if we have a slot free
                         jr      c,.MissileMissFire                  ; give a miss fire indicator as we have no slots
+            DISPLAY "TODO: FOR NOW ONLY 1 MISSILE TYPE"
 .LaunchGood:            ld      a,0                                 ; TODO For now only 1 missile type
                         GetByteAInTable ShipMissileTable            ; swap in missile data
                         call    SpawnShipTypeA                      ; spawn the ship
@@ -471,7 +495,7 @@ LaunchPlayerMissile:   ; break
                         ClearMissileTargetting                      ; reset targetting
                         ld      hl, NbrMissiles
                         dec     (hl)
-                        ; TODO handle removal of missile from inventory and console
+            DISPLAY "TODO: handle removal of missile from inventory and console"
                         ret
 .MissileMissFire:       ClearMissileTargetting
                         ret ; TODO bing bong noise misfire message

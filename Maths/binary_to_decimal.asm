@@ -38,6 +38,7 @@ DispPriceAtoDE:
 	ld	c,-10
 	call	Num1
 	ld		a,'.'					; we could assume preformat but
+                    DISPLAY "TODO:  optimise "
 	ld		(de),a					; we can optimse that later TODO
 	inc		de						; with just an inc De
 	ld	c,-1

@@ -1,0 +1,86 @@
+# file opened: macroTst.asm
+ 1    0000               DEVICE ZXSPECTRUMNEXT
+ 2    0000
+ 3    0000               CSPECTMAP clipTst.map
+ 4    0000               OPT --zxnext=cspect --syntax=a --reversepop
+ 5    0000
+ 6    0000                  MACRO LL121_TEST prefix1?, prefix2?, prefix3?
+ 7    0000 ~            prefix1?_JumpPoint: ld a, 1
+ 8    0000 ~            prefix2?JumpPoint:  ld b, 1
+ 9    0000 ~            prefix3?JumpPoint:  ld c, a
+10    0000 ~
+11    0000                  ENDM
+12    0000
+13    0000                  MACRO LL121_6502 prefix1?, prefix2?, prefix3?
+14    0000 ~                DEFINE __testM_arg1_tmp prefix1?
+15    0000 ~                DEFINE __testM_arg2_tmp prefix2?
+16    0000 ~                DEFINE __testM_arg3_tmp prefix3?
+17    0000 ~                LUA ALLPASS
+18    0000 ~                            xp = sj.get_define("__testM_arg1_tmp")
+19    0000 ~                            yp = sj.get_define("__testM_arg2_tmp")
+20    0000 ~                            zp = sj.get_define("__testM_arg3_tmp")
+21    0000 ~
+22    0000 ~                            _pl(xp .. "BnKXScaled                  DB  0               ; XX15+0Xscaled")
+23    0000 ~                            _pl(xp .. "coord:         DB 0 ; dumpt")
+24    0000 ~                            _pl(yp .. "coord:         DB 0")
+25    0000 ~                            _pl(zp .. "coord:         DB 0")
+26    0000 ~
+27    0000 ~                            _pl(xp .. "_label:     ld  a,(" .. xp .. "coord)")
+28    0000 ~                            _pc("     ld  b,a")
+29    0000 ~                            _pc("     ld  a,(" .. yp .. "coord)")
+30    0000 ~                            _pc("     add a,b")
+31    0000 ~                            _pc("     ld  (" .. zp .. "coord),a")
+32    0000 ~
+33    0000 ~                ENDLUA
+34    0000                              ENDM
+35    0000
+36    0000
+37    0000
+38    0000                                      INCLUDE "./Universe/UniverseMacros/XX15DefineMacro.asm"
+# file opened: ./Universe/UniverseMacros/XX15DefineMacro.asm
+ 1+   0000
+ 2+   0000              XX15DefineMacro: MACRO   prefix1?
+ 3+   0000 ~                DEFINE __XX15_arg1_tmp prefix1?
+ 4+   0000 ~                LUA ALLPASS
+ 5+   0000 ~                    prf = sj.get_define("__XX15_arg1_tmp")
+ 6+   0000 ~
+ 7+   0000 ~                    _pl(prf .. "BnKXScaled                  DB  0               ; XX15+0Xscaled")
+ 8+   0000 ~                    _pl(prf .. "BnKXScaledSign              DB  0               ; XX15+1xsign")
+ 9+   0000 ~                    _pl(prf .. "BnKYScaled                  DB  0               ; XX15+2yscaled")
+10+   0000 ~                    _pl(prf .. "BnKYScaledSign              DB  0               ; XX15+3ysign")
+11+   0000 ~                    _pl(prf .. "BnKZScaled                  DB  0               ; XX15+4zscaled")
+12+   0000 ~                    _pl(prf .. "BnKZScaledSign              DB  0               ; XX15+5zsign")
+13+   0000 ~
+14+   0000 ~                    _pl(prf .. "XX15:                       equ " .. prf .. "BnKXScaled")
+15+   0000 ~                    _pl(prf .. "XX15VecX:                   equ " .. prf .. "XX15")
+16+   0000 ~                    _pl(prf .. "XX15VecY:                   equ " .. prf .. "XX15+1")
+17+   0000 ~                    _pl(prf .. "XX15VecZ:                   equ " .. prf .. "XX15+2")
+18+   0000 ~                    _pl(prf .. "BnKXPoint:                  equ " .. prf .. "XX15")
+19+   0000 ~                    _pl(prf .. "BnKXPointLo:                equ " .. prf .. "XX15+0")
+20+   0000 ~                    _pl(prf .. "BnKXPointHi:                equ " .. prf .. "XX15+1")
+21+   0000 ~                    _pl(prf .. "BnKXPointSign:              equ " .. prf .. "XX15+2")
+22+   0000 ~                    _pl(prf .. "BnKYPoint:                  equ " .. prf .. "XX15+3")
+23+   0000 ~                    _pl(prf .. "BnKYPointLo:                equ " .. prf .. "XX15+3")
+24+   0000 ~                    _pl(prf .. "BnKYPointHi:                equ " .. prf .. "XX15+4")
+25+   0000 ~                    _pl(prf .. "BnKYPointSign:              equ " .. prf .. "XX15+5")
+26+   0000 ~                ENDLUA
+27+   0000                                          ENDM
+# file closed: ./Universe/UniverseMacros/XX15DefineMacro.asm
+39    0000
+40    0000
+41    0000                                      ORG         $8000
+42    8000                                      ;ExampleMacro  X, Y, Z
+43    8000                                      LL121_TEST A, B, C
+43    8000 3E 01       >A_JumpPoint: ld a, 1
+43    8002 06 01       >prefix2?JumpPoint:  ld b, 1
+43    8004 4F          >prefix3?JumpPoint:  ld c, a
+43    8005             >
+44    8005                                    ;  XX15DefineMacro P
+45    8005 C3 05 80     EndCode:               jp           EndCode
+46    8008
+47    8008                  SAVENEX OPEN "macroTst.nex", $8000 , $7F00
+48    8008                  SAVENEX CFG  0,0,0,1
+49    8008                  SAVENEX AUTO
+50    8008                  SAVENEX CLOSE
+51    8008
+# file closed: macroTst.asm

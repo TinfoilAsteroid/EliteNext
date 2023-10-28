@@ -1,5 +1,6 @@
 ; "l2_draw_thick_box bc=rowcol, de=heightwidth h=color"
 ; TODO DMA Optimise
+                DISPLAY "TODO: dma optimise"
 l2_draw_fill_box:       push    bc,,de,,hl
                         ld      d,e
                         ld      e,h

@@ -84,6 +84,13 @@ ShiftBCLeft1:  MACRO    ; 16 T states
 			   sla c
 			   rl  b
 			   ENDM
+
+ShiftLeftMem:       MACRO   reg
+                    ld      hl,reg
+                    sla     (hl)
+                    ENDM
+
+
                     
 ShiftMem16Right1:   MACRO memaddr
                     ld    hl,(memaddr)

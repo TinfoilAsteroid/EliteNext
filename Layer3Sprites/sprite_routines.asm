@@ -252,10 +252,11 @@ ScannerX                    equ 128
 ScannerY                    equ 171 
 SunScanCenterX              equ 92
 SunScanCenterY              equ 171 
-PlanetScanCenterX           equ 164
+PlanetScanCenterX           equ 229
 PlanetScanCenterY           equ 171
 
-    
+
+; Put on compas based on bc = Y X position offset from compass center    
 compass_sun_move:       ld		a,compass_sun
                         nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
 ; write out X position bits 1 to 8
@@ -268,6 +269,7 @@ compass_sun_move:       ld		a,compass_sun
                         nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                         ret    
 
+; Put on compas based on bc = Y X position offset from compass center    
 compass_station_move:   ld		a,compass_station
                         nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
 ; write out X position bits 1 to 8

@@ -45,6 +45,7 @@ GCM_draw_chart_circle_and_crosshair:
 	MMUSelectLayer2
 	call	l2_draw_circle
 	ret
+                DISPLAY "TODO: move cursor code"
 ; TODO MOVE CURSOR CODE
 
 GCM_draw_hyperspace_cross_hair: ld		bc,(TargetSystemX)              ; bc = selected jump

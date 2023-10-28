@@ -23,6 +23,11 @@ Bit1Clear           equ %11111101
 Bit0Clear           equ %11111110
 ConstPi				equ $80
 ConstNorm           equ 197
+;OpCodes
+OpCodeSCF           equ $37
+OpCodeCCF           equ $3F
+OpCodeAndA          equ $A7
+OpCodeClearCarryFlag equ OpCodeAndA
 
 ;Text Tokens
 EliteToken			equ $1E			; Token ID for text messsage ---- E L I T E ----
@@ -46,6 +51,9 @@ FarInFront			equ $C0
 EquipmentItemFitted     equ $FF
 EquipmentItemNotFitted  equ 0
 ; Universe Managment
+PlanetTypeMeridian      equ 128
+PlanetMinRadius         equ 6
+
 ShipTotalModelCount     equ 44
 ShipTypeScoopable       equ 4         ; a sub set of junk
 ShipTypeJunk            equ 3

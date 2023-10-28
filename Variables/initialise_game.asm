@@ -41,9 +41,10 @@ WipeScanner:								; WPSHPS	\ -> &35D8  \ Wipe Ships on scanner
 	cp		UniverseSlotListSize
 	jr		nz,.OuterLoop
 .ClearLineBuffers:
-	ld		a,$FF
-	ld		(LSX2),a						; Lines x2 and y2
-	ld		(LSY2),a                        ; Lines x2 and y2
+    DISPLAY "TODO clear up LSX2 and LSY2 references"
+;	ld		a,$FF
+;	ld		(LSX2),a						; Lines x2 and y2
+;	ld		(LSY2),a                        ; Lines x2 and y2
 .FloodFills
 ; "TODO call	FLFLLS"
 	ret

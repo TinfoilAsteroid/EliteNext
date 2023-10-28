@@ -40,6 +40,41 @@
 ;DOES NOT WORK IF SIGNED RPLACE WITH ADDBCHTODELSIGNED CALLS                        jp      .OppositeCDEgtBHL
 ; example
 ; bhl - 00 00 06 CDE - 80 00 0B so equates to 000006 + (-00000B) or -000005 or 800005
+                
+; Adds DE to HL, in form S15 result will also be S15 rather than 2's C                
+AddDEtoHLSigned:        ld      a,h                         ; extract h sign to b
+                        and     $80                         ; hl = abs (hl)
+                        ld      b,a
+                        ld      a,h
+                        and     $7F
+                        ld      h,a
+                        ld      a,d                         ; extract d sign to c
+                        and     $80                         ; de = abs (de)
+                        ld      c,a
+                        ld      a,d
+                        and     $7F
+                        ld      d,a
+                        ld      a,b
+                        xor     c
+                        jp      nz,.OppositeSigns
+.SameSigns              add     hl,de                       ; same signs so just add
+                        ld      a,b                         ; and bring in the sign from b
+                        or      h                           ; note this has to be 15 bit result
+                        ld      h,a                         ; but we can assume that
+                        ret
+.OppositeSigns:         ClearCarryFlag
+                        sbc     hl,de
+                        jr      c,.OppsiteSignInvert
+.OppositeSignNoInvert:  ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
+                        or      h
+                        ld      h,a                         ; set the previou sign value
+                        ret
+.OppsiteSignInvert:     NegHL                              ; we need to flip the sign and 2'c the Hl result
+                        ld      a,b
+                        xor     SignOnly8Bit               ; flip sign bit
+                        or      h
+                        ld      h,a                         ; recover sign
+                        ret 
                         
 ADDHLDESignBC:          ld      a,b
                         and     SignOnly8Bit
@@ -52,6 +87,7 @@ ADDHLDEsBCSameSigns:    ld      a,b
                         ret
 ADDHLDEsBCSameNeg:      add     hl,de
                         ld      a,b
+                                            DISPLAY "TODO: don't bother with overflow for now"
                         or      c                           ; now set bit for negative value, we won't bother with overflow for now TODO
                         ret
 ADDHLDEsBCOppSGN:       ClearCarryFlag
@@ -82,6 +118,7 @@ ADDHLDESignedV4:        ld      a,h
                         ld      d,a
                         add     hl,de
                         ld      a,SignOnly8Bit
+                                        DISPLAY "TODO:  dont bother with overflow for now"
                         or      h                           ; now set bit for negative value, we won't bother with overflow for now TODO
                         ld      h,a
                         ret
@@ -154,33 +191,35 @@ ADDHLDESignedV4:        ld      a,h
                         
 ; 06 06 2022 not used
 ; HL = HL (signed) + A (unsigned), uses HL, DE, A
-AddAusngToHLsng:        ld      d,a
-                        ld      e,h
-                        ld      a,h
-                        and     SignMask8Bit
-                        ld      h,a
-                        ld      a,d
-                        add     hl,a
-                        ld      a,e
-                        and     SignOnly8Bit
-                        or      h
-                        ret
+        DISPLAY "TODO: AddAusngToHLsng not used"
+;;;AddAusngToHLsng:        ld      d,a
+;;;                        ld      e,h
+;;;                        ld      a,h
+;;;                        and     SignMask8Bit
+;;;                        ld      h,a
+;;;                        ld      a,d
+;;;                        add     hl,a
+;;;                        ld      a,e
+;;;                        and     SignOnly8Bit
+;;;                        or      h
+;;;                        ret
 ; 06 06 2022 not used
 ; HL = A (unsigned) - HL (signed), uses HL, DE, BC, A
-HLEequAusngMinusHLsng:  ld      b,h
-                        ld      c,a
-                        ld      a,b
-                        and     SignOnly8Bit
-                        jr      nz,.DoAdd
-.DoSubtract:            ex      de,hl               ; move hl into de
-                        ld      h,0                 ; hl = a
-                        ld      l,c
-                        ClearCarryFlag
-                        sbc     hl,de               ; hl = a - hl
-                        ret
-.DoAdd:                 ld      a,c
-                        add hl,a
-                        ret 
+        DISPLAY "TODO: HLEequAusngMinusHLsng not used"
+;;;HLEequAusngMinusHLsng:  ld      b,h
+;;;                        ld      c,a
+;;;                        ld      a,b
+;;;                        and     SignOnly8Bit
+;;;                        jr      nz,.DoAdd
+;;;.DoSubtract:            ex      de,hl               ; move hl into de
+;;;                        ld      h,0                 ; hl = a
+;;;                        ld      l,c
+;;;                        ClearCarryFlag
+;;;                        sbc     hl,de               ; hl = a - hl
+;;;                        ret
+;;;.DoAdd:                 ld      a,c
+;;;                        add hl,a
+;;;                        ret 
 ;tested mathstestsun2
 ; DEL = DEL + BCH signed, uses BC, DE, HL, IY, A
 AddBCHtoDELsigned:      ld      a,b                 ; Are the values both the same sign?
@@ -262,21 +301,22 @@ AddBCHtoDELsigned:      ld      a,b                 ; Are the values both the sa
 
 ; 06 06 2022 not used                       
 ;BHL = AHL + DE where AHL = 16 bit + A sign and DE = 15 bit signed    
-AddAHLtoDEsigned:       ld      b,a                     ; B = A , C = D (save sign bytes)
-                        ld      c,d                     ; .
-                        xor     c                       ; A = A xor C
-                        res     7,d                     ; clear sign bit of D
-                        jr nz,  .OppositeSigns          ; if A xor C is opposite signs job to A0A1
-                        add     hl,de                   ; HL = HL + DE
-                        ret                             ; return 
-.OppositeSigns:         sbc     hl,de                   ; HL = HL -DE
-                        ret     nc                      ; if no carry return
-                        add     hl,de                   ; else HL = HL + DE
-                        ex      de,hl                   ;      swap HL and DE
-                        and     a                       ;      reset carry
-                        sbc     hl,de                   ;      HL = DE - HL (as they were swapped)
-                        ld      b,c                     ;      B = sign of C
-                        ret                             ;      ret
+        DISPLAY "TODO: AddAHLtoDEsigned not used"
+;;;AddAHLtoDEsigned:       ld      b,a                     ; B = A , C = D (save sign bytes)
+;;;                        ld      c,d                     ; .
+;;;                        xor     c                       ; A = A xor C
+;;;                        res     7,d                     ; clear sign bit of D
+;;;                        jr nz,  .OppositeSigns          ; if A xor C is opposite signs job to A0A1
+;;;                        add     hl,de                   ; HL = HL + DE
+;;;                        ret                             ; return 
+;;;.OppositeSigns:         sbc     hl,de                   ; HL = HL -DE
+;;;                        ret     nc                      ; if no carry return
+;;;                        add     hl,de                   ; else HL = HL + DE
+;;;                        ex      de,hl                   ;      swap HL and DE
+;;;                        and     a                       ;      reset carry
+;;;                        sbc     hl,de                   ;      HL = DE - HL (as they were swapped)
+;;;                        ld      b,c                     ;      B = sign of C
+;;;                        ret                             ;      ret
 
 
 ; 06 06 2022 not used   

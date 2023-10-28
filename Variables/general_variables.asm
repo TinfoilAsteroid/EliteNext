@@ -34,7 +34,7 @@ SLSP 		DW	0				; &03B0 \ SLSP \ ship lines pointer
 
 
 ;UNIV		DS FreeListSize*2	; Array of Universe Pointers
-;HULLINDEX	DS ShipTypeSize*2	; hull index for table at XX21= &5600 XX21-1,Y
+;HULLINDEX	DS ShipTypeSize*2	; hull index for table at XX21= &F XX21-1,Y
 
 ; Present System Variables
 
@@ -197,8 +197,10 @@ varK3p3					DB	0				; 43
 varK3p1					equ varK3+1			; D3
 varK4					DS	4				; E0
 varK4p1					equ varK4+1			; D3
-
-
+varK5                   DS  6 
+varK5p2                 equ varK5+2
+varK6                   DS  6
+varK6p2                 equ varK6+2
 ;Heap
 
 HeapStart				DS	2				; &0100 XX3 50 bytes for now
@@ -387,10 +389,11 @@ ShipLinesBufferSP		equ EdgesBufferSP	; was $0CFF
 ShipLineStack			DS  70			; For now but will be in the page later										
 ShipLineStackTop		equ $ - ShipLineStack	
 
-LSO						DS 	$C0				;0E00 Line Buffer Solar of 192 lines (may be 191 in reality)
+; No longer needed
+;LSO						DS 	$C0				;0E00 Line Buffer Solar of 192 lines (may be 191 in reality)
 ; LSX vector overlaps with LSO
-LSX2					DB	0				; &0EC0	    \ LSX2 bline buffer size?
-LSY2					DB	0           	; &0F0E	    \ LSY2
+;LSX2					DS	$C0				; &0EC0	    \ LSX2 bline buffer size?
+;LSY2					DS  $C)	           	; &0F0E	    \ LSY2
 
 ; -- Player Runtime Data
 GunTemperature          DB  0

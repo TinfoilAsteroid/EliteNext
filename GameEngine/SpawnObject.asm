@@ -79,7 +79,7 @@ SpawnHostileCop:        ld      a,ShipID_Viper
                         call    SpawnShipTypeA                      ; call rather than jump
                         call    SetShipHostile                      ; as we have correct universe banked in now
                         ret
-
+            DISPLAY "TODO: SPAWN TRADER"
 SpawnTrader:       ; TODO
 
 ; DEFUNCT?SpawnAHostileHunter:    ld      hl, ExtraVesselsCounter             ; prevent the next spawning

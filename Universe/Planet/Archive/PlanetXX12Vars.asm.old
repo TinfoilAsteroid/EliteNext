@@ -9,7 +9,7 @@ PBnKXX12zSign               DB  0               ; XX12+5
 PXX12Save                   DS  6
 PXX12Save2                  DS  6
 PXX12                       equ PBnKXX12xLo
-varPXX12                    equ PBnKXX12xLo
+PvarXX12                    equ PBnKXX12xLo
 ; Repurposed XX12 when plotting lines
 PBnkY2                      equ PXX12+0
 PbnKy2Lo                    equ PXX12+0

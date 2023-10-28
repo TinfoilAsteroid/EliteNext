@@ -38,13 +38,15 @@ ShipAiJumpTableMax:   EQU ($ - ShipAIJumpTable)/2
 UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
                        ld      hl,TidyCounter
                        dec     (hl)
-                       ;call     z,TidyUbnK  ;TODO SEE IF THIS IS AN ISSUE
+                       DISPLAY "TODO: SEE IF THIS IS AN ISSUE"
+                       call     z,TidyUbnK  ;TODO SEE IF THIS IS AN ISSUE"
                        ; This shoudl be a call nz to tidy *****ret     nz
                        ld      a,16
                        ld      (TidyCounter),a
                        ;call    TidyUbnK
                        ; add AI in here too
                        ld       a,(ShipTypeAddr)
+                                   DISPLAY "TODO: capture duff jumps"
                        ReturnIfAGTEusng ShipAiJumpTableMax              ; TODO capture duff jumps whilst debugging in case a new shjip type code is added
                        ld       hl,ShipAIJumpTable
                        add      hl,a
@@ -112,6 +114,7 @@ MakeHostile:            ld      a,(ShipNewBitsAddr)                     ; Check 
 .SetNewbHostile:        call    SetShipHostile
                         ret
 
+            DISPLAY "TODO: Missile Did Hit Us"
 ;----------------------------------------------------------------------------------------------------------------------------------
 MissileDidHitUs:        ret ; TODO
 
@@ -131,12 +134,14 @@ PlayerHitByMissile:     MMUSelectLayer1
 .HitRear:               ld      a,(AftShield)
                         call    ApplyDamage
                         ld      (AftShield),a  
+                                    DISPLAY "TODO: Set up blast radius"
                         ret; TODO , do hit set up blast radius etc
 ;----------------------------------------------------------------------------------------------------------------------------------
 MissileHitShipA:        MMUSelectLayer1
                         ld      a,L1ColourInkRed
                         call    l1_set_border
                         call    UnivExplodeShip
+                                    DISPLAY "TODO:  hit ship do explosion"
                         ret; TODO hit ship do explosion, check for near by and if player is near and missile type logic, e.g. AP or HE
 ;----------------------------------------------------------------------------------------------------------------------------------
 SetStationHostile:      call    IsSpaceStationPresent                   ; only if present
@@ -573,7 +578,7 @@ NormalizeTactics:       ld      hl, (TacticsVectorX)        ; pull XX15 into reg
                         SignBitOnlyMem TacticsVectorZ+2     ;  its worth it)
                         ret
 
-
+            DISPLAY "TODO: TactivtsPosMinus Target"
 ;TODOcall    TacticsPosMinusTarget              ; calculate vector to target
 ;;TODO                        check range
 ;;TODO                        if target has ecm then 7% chance it will active, reduce target energy (i.e. damage)

@@ -134,7 +134,7 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
 ; If we get here its close enough to detonate
 .CloseMissileExplode:   ld      a,(UBnKMissileTarget) 
                         jp      MissileHitShipA
-;   *far away ** TODO need to set memory read write on page 0
+            DISPLAY "TODO: far away ** TODO need to set memory read write on page 0"
 .FarAway:               SelectTargetBank
                         JumpIfMemFalse      UBnKECMFitted, .NoECM                   ; if target has ECM and enough energy to use it
                         JumpIfMemLTNusng    UBnKEnergy,    ECMCounterMax, .NoECM    ; .

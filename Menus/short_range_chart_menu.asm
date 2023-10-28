@@ -26,6 +26,7 @@ src_default_dist        DB "  0.0"
 src_distance_val        DS  6
 src_fill_buffer_len     EQU 32
 src_fill_buffer_size    EQU 4 * src_fill_buffer_len                          ; up to 32 labels topx topy lengthx spare
+            DISPLAY "TODO: space for occupied cells may mvoe to bit flags"
 src_printed_text        DS  src_fill_buffer_size                             ; space for occupied cells may move to bit flags later TODO
 src_buffer_size         DB  0
 ;----------------------------------------------------------------------------------------------------------------------------------
@@ -42,6 +43,7 @@ SRM_draw_chart_circle_and_crosshair:
                         MMUSelectLayer2
                         call	l2_draw_circle
                         ret
+                                        DISPLAY "TODO:  move cursor code"
 ; TODO MOVE CURSOR CODE
 ;----------------------------------------------------------------------------------------------------------------------------------
 SRM_draw_hyperspace_cross_hair:
@@ -304,17 +306,20 @@ SRCpixelRowToRefRow:    ld		a,(local_name_row)
                         srl		a
                         srl		a
                         srl		a					; divide by 8 to get character row
+                                    DISPLAY "TODO: dont overwrite header"
                     ;	sub		2					; don;t write over header TODO tweaks
                         ld		hl,IndexedWork
                         add		hl,a
                         ld		a,(hl)
                         cp		0
+                                    DISPLAY "TODO: need to test +- 1 row"
                         jr		nz, SRCtryAbove		; if its not empty don't print *(need to test +-1 row TODO)
                         ld		(hl),1				; flag as in use
                         jr		SRCFoundRow
 SRCtryAbove:            dec		hl
                         ld		a,(hl)
                         cp		0
+                                    DISPLAY "TODO: need to test +- 1 row"
                         jr		nz, SRCtryBelow		; if its not empty don't print *(need to test +-1 row TODO)
                         ld		(hl),1				; flag as in use
                         jr		SRCFoundRow

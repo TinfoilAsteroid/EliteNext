@@ -1,6 +1,177 @@
+;   K(3 2 1 0)           The result of the division
+;   X                    X is preserved
+
+; Calculate K(3 2 1 0) = (A P+1 P) / (z_sign z_hi z_lo) where zsign hi lo is in DE with zsign leading hi
+varQRS                 DS      4
+varAPP                  DS     3
+
+                    DISPLAY "TODO:  neds rewrite of whoel DIDV3B2"
+;; NEEDS REWRITE TODO OF WHOLE DIVD3B2
+;; NEEDS REWRITE TODO
+
+; b = varR, c= varQ
+Requ256mulAdivQ_6502:
+.LL31_6502:             sla     a                       ; ASL A                   \ Shift A to the left
+                        jp      c,.LL29_6502             ; BCS LL29               \ If bit 7 of A was set, then jump straight to the subtraction
+                        FlipCarryFlag                   ;                          If A < N, then C flag is set.
+                        JumpIfALTNusng c, .LL31_SKIPSUB_6502 ; CMP Q              \ If A < Q, skip the following subtraction
+                                                        ; BCC P%+4
+                        sub     c                       ; SBC Q                  \ A >= Q, so set A = A - Q
+                        ClearCarryFlag
+.LL31_SKIPSUB_6502:     FlipCarryFlag
+                        rl      b                       ; ROL R                  \ Rotate the counter in R to the left, and catch the result bit into bit 0 (which will be a 0 if we didn't do the subtraction, or 1 if we did)
+                        jp      c, .LL31_6502            ; BCS LL31               \ If we still have set bits in R, loop back to LL31 to do the next iteration of 7
+                        ld      a,b
+                        ld      (Rvar),a
+                        ret                             ; RTS                    \ R left with remainder of division
+.LL29_6502:             sub     c                       ; SBC Q                  \ A >= Q, so set A = A - Q
+                        SetCarryFlag                    ; SEC                    \ Set the C flag to rotate into the result in R
+                        rl      b                       ; ROL R                  \ Rotate the counter in R to the left, and catch the result bit into bit 0 (which will be a 0 if we didn't do the subtraction, or 1 if we did)
+                        jp      c, .LL31_6502            ; BCS LL31               \ If we still have set bits in R, loop back to LL31 to do the next iteration of 7
+                        ld      a,b                     ; RTS                    \ Return from the subroutine with R containing the
+                        ld      (Rvar),a                ; .
+                        ret                             ; .                      \ remainder of the division
+.LL2_6502:              ld      a,$FF                   ; LDA #255               \ The division is very close to 1, so return the closest
+                        ld      (varR),a                ; STA R                  \ possible answer to 256, i.e. R = 255
+                        ld      b,a                     ; as we are using b as varR
+                        SetCarryFlag                    ; we failed so need carry flag set
+                        ret                             ; RTS                    \ Return from the subroutine
 
 
+DIVD3B_SHIFT_REG:       DB      0
 
+DIV3B2DE:               ld      a,e                         ; load QRS with Z sign hi lo
+                        ld      (varQRS+2),a
+                        ld      a,d
+                        and     $7F
+                        ld      (varQRS+1),a
+                        ld      a,d
+                        and     $80
+                        ld      (varQRS),a
+                        jp      DVID3B
+; Calculate K(3 2 1 0) = (A P+1 P) / (z_sign z_hi z_lo) = A P[1 0 ] / (SRQ)
+; We don't use zlo and assume its already loaded into SRQ
+DVID3B2:                ld      (varP+2),a                  ;STA P+2                \ Set P+2 = A
+                                                            ; LDA INWK+6             \ Set Q = z_lo
+                                                            ; STA Q
+                                                            ; LDA INWK+7             \ Set R = z_hi
+                                                            ; STA R
+                                                            ; LDA INWK+8             \ Set S = z_sign
+                                                            ; STA S
+;  Given the above assignments, we now want to calculate K(3 2 1 0) = P(2 1 0) / (S R Q)
+DVID3B:                 ld      a,(varP)                    ; LDA P                 \ Make sure P(2 1 0) is at least 1
+                        or      1                           ; ORA #1
+                        ld      (varP),a                    ; STA P
+;--- t = sign of P2 xor S (i.e. sign of result) ------------;
+                        ld      a,(varP+2)                  ; LDA P+2                \ Set T to the sign of P+2 * S (i.e. the sign of the
+                        ld      hl, varS                    ; EOR S                  \ result) and store it in T
+                        xor     (hl)
+                        and     $80                         ; AND #%10000000
+                        ld      (varT),a                    ; STA T
+;--- New bit added to aviod a divde by 0 -------------------;
+.CheckQRSAtLeast1:      ld      a,(varQ)                    ;
+                        ld      hl,varR                     ;
+                        or      (hl)                        ;
+                        jp      nz,.DVL9Prep                ;
+                        ld      a,1                         ;
+                        ld      (varQ),a                    ;
+; A P(1) P(0) = ABS P(2 1 0)
+.DVL9Prep:              ld      b,0                         ; LDY #0                 \ Set Y = 0 to store the scale factor (use b as Y)
+                        ld      a,(varP+2)                  ; LDA P+2                \ Clear the sign bit of P+2, so the division can be done
+                        and     $7F                         ; AND #%01111111         \ with positive numbers and we'll set the correct sign below, once all the maths is done
+; We now shift (A P+1 P) left until A >= 64, counting the number of shifts in Y. This makes the top part of the division as large as possible, thus retaining as
+; much accuracy as we can.  When we come to return the final result, we shift the result by the number of places in Y, and in the correct direction
+                        DISPLAY "TODO DVL9 and DVL6 move P and QRS into registers for faster shift"
+;-- while A < 64 shift A P(1) P(0) -------------------------;
+.DVL9:                  cp      64                          ; CMP #64                \ If A >= 64, jump down to DV14
+                        jp      nc, .DV14                   ; BCS DV14
+                        ld      hl,varP                     ; ASL P                  \ Shift (A P+1 P) to the left
+                        sla     (hl)
+                        inc     hl                          ; ROL P+1
+                        rl      (hl)
+                        rl      a                           ; ROL A
+                        inc     b                           ; INY                    \ Increment the scale factor in Y
+                        jp      .DVL9                       ; BNE DVL9               \ Loop up to DVL9 (this BNE is effectively a JMP, as Y will never be zero)
+; If we get here, A >= 64 and contains the highest byte of the numerator, scaled up by the number of left shifts in Y (b in our code)
+.DV14:                  ld      (varP+2),a                  ; Store A in P+2, so we now have the scaled value of the numerator in P(2 1 0)
+                        ld      a,(varS)                    ; LDA S                  \ Set A = |S|
+                        and     $7F                         ; AND #%01111111
+                        ;nop                                ;  BMI DV9               \ If bit 7 of A is set, jump down to DV9 (which can never happen)
+; We now shift (S R Q) left until bit 7 of S is set, reducing Y by the number of shifts. This makes the bottom part of the division as large as possible, thus
+; retaining as much accuracy as we can. When we come to return the final result, we shift the result by the total number of places in Y, and in the correct
+; direction, to give us the correct result
+; We set A to |S| above, so the following actually shifts (A R Q)
+.DVL6:                  dec     b                           ; DEY                    \ Decrement the scale factor in Y (b)
+                        ld      hl,varQ                     ; ASL Q                  \ Shift (A R Q) to the left
+                        sla     (hl)                        ; .
+                        ld      hl,varR                     ; ROL R
+                        rl      (hl)                        ; .
+                        rl      a                           ; ROL A
+                        jp      p,.DVL6                     ; BPL DVL6               \ Loop up to DVL6 to do another shift, until bit 7 of A is set and we can't shift left any further
+; We have now shifted both the numerator and denominator left as far as they will go, keeping a tally of the overall scale factor of the various shifts in Y. We
+; can now divide just the two highest bytes to get our result
+.DV9:                   ld      (varQ),a                    ; STA Q                  \ Set Q = A, the highest byte of the denominator
+                        ld      c,a                         ; for Requ256mulAdivQ_6502 as it uses c as Q
+                        ld      a,b                         ; preserve shift register in DEVD3B_SHIFT_REG
+                        ld      (DIVD3B_SHIFT_REG),a
+; Note in Requ256mulAdivQ_6502 we use B as R Var for shift register
+                        ld      b,254                       ; LDA #254               \ Set R to have bits 1-7 set, so we can pass this to
+                        ld      (varR),a                    ; STA R                  \ LL31 to act as the bit counter in the division
+                        ld      a,(varP+2)                  ; LDA P+2                \ Set A to the highest byte of the numerator
+                        call    Requ256mulAdivQ_6502        ; JSR LL31               \ Call LL31 to calculate: R = 256 * A / Q which means result is in b
+; The result of our division is now in R, so we just need to shift it back by the scale factor in Y
+                        ZeroA                               ; LDA #0                \ Set K(3 2 1) = 0 to hold the result (we populate K)
+                        ld      (varK+1),a                  ; STA K+1               \ next)
+                        ld      (varK+2),a                  ; STA K+2
+                        ld      (varK+3),a                  ; STA K+3
+                        ld      a,(DIVD3B_SHIFT_REG)        ; TYA                   \ If Y (shift counter in b) is positive, jump to DV12
+                        or      a                           ; .                      we want to check the sign or if its zero
+                        jp      z,.DV13                     ; Optimisation to save a second jump from DV12 to DV13
+                        jp      p,.DV12                     ; BPL DV12
+; If we get here then Y is negative, so we need to shift the result R to the left by Y places, and then set the correct sign for the result
+                        DISPLAY "TODO check oprimisation here for var r  in b"
+                        ld      c,b
+                        ld      a,(DIVD3B_SHIFT_REG)
+                        ld      b,a
+                        ld      a,c
+                        ; OPTIM ld      a,(varR)                    ; LDA R                  \ Set A = R
+.DVL8:                  sla     a                           ; ASL A                  \ Shift (K+3 K+2 K+1 A) left
+                        ld      hl,varK+1                   ; ROL K+1
+                        rl      (hl)                        ; .                  
+                        inc     hl                          ; ROL K+2
+                        rl      (hl)                        ; .
+                        inc     hl                          ; ROL K+3
+                        rl      (hl)                        ; .
+                        inc     b                           ; INY                    \ Increment the scale factor in Y
+                        jp      nz,.DVL8                    ; BNE DVL8               \ Loop back to DVL8 until we have shifted left by Y places
+                        ld      (varK),a                    ; STA K                  \ Store A in K so the result is now in K(3 2 1 0)
+                        ld      a,(varK+3)                  ; LDA K+3                \ Set K+3 to the sign in T, which we set above to the
+                        ld      hl,varT                     ; ORA T                  \ correct sign for the result
+                        or      (hl)                        ; .
+                        ld      (varK+3),a                  ; STA K+3
+                        ret                                 ; RTS                    \ Return from the subroutine
+; If we get here then Y is zero, so we don't need to shift the result R, we just need to set the correct sign for the result
+.DV13:                  ld      a,b; varR)                  ; LDA R                  \ Store R in K so the result is now in K(3 2 1 0)
+                        ld      (varK),a                    ; STA K
+                        ld      a,(varT)                    ; LDA T                  \ Set K+3 to the sign in T, which we set above to the
+                        ld      (varK+3),a                  ; STA K+3                \ correct sign for the result
+                        ret                                 ; RTS                    \ Return from the subroutine
+; if we get here U is positive but still could be zero, now this is handled in DV9                        
+.DV12:                  ; nop                               ; BEQ DV13               \ We jumped here having set A to the scale factor in Y, so this jumps up to DV13 if Y = 0
+; If we get here then Y is positive and non-zero, so we need to shift the result R to the right by Y places and then set the correct sign for the result. We also
+; know that K(3 2 1) will stay 0, as we are shifting the lowest byte to the right, so no set bits will make their way into the top three bytes
+                        ;ld      a,(varR)                    ; LDA R                  \ Set A = R
+                        ld      c,b
+                        ld      a,(DIVD3B_SHIFT_REG)
+                        ld      b,a
+                        ld      a,c
+.DVL10:                 srl     a                           ; LSR A                  \ Shift A right
+                        dec     b                           ; DEY                    \ Decrement the scale factor in Y
+                        jp      nz,.DVL10                   ; BNE DVL10              \ Loop back to DVL10 until we have shifted right by Y places
+                        ld      (varK),a                    ; STA K                  \ Store the shifted A in K so the result is now in K(3 2 1 0)
+                        ld      a,(varT)                    ; LDA T                  \ Set K+3 to the sign in T, which we set above to the
+                        ld      (varK+3),a                  ; STA K+3                \ correct sign for the result
+                        ret                                 ; RTS                    \ Return from the subroutine
 ;
 ;   Set flags E to 11111110
 ;   Loop:   A << 2
@@ -125,6 +296,7 @@ Div16by24usgn:          inc     d                           ; can we fast retu
                         ret
 
 ;DIVD4 P-R=A/Qunsg  \P.R = A/Q unsigned called by Hall
+            IFDEF HLEquAmul256DivD_Used
 HLEquAmul256DivD:       ld		b,8							; counter
                         sla		a							; 
                         ld		h,a							; r a * 2 we will build result in hl
@@ -159,6 +331,7 @@ HLEquAmul256DivD:       ld		b,8							; counter
                         ret                       
 .RemainderTooBig:       ld      l,$FF                       ; now hl = result
                         ret
+            ENDIF
 
 AEquAmul256DivD:        cp      d
                         jr      z,.BothSame
@@ -184,7 +357,6 @@ AEquAmul256DivD:        cp      d
                         ret
 .DgtA:                  ld  a,255                           ; Fail with FF as result
                         ret
-
 
 ; Divide 8-bit values
 ; In: Divide E by divider C

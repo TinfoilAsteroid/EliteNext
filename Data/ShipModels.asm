@@ -236,8 +236,8 @@ ShipNormalTable:        EQU ShipNormalTableA
                         ENDIF
 
 
-; TODO Later reorg these offsets for better 16 bit read - Done
-; TODO Add in roll max rates and data to allow ship replacement, reference to custom console
+                DISPLAY "TODO: Later reorg these offsets for better 16 bit read - Done"
+                DISPLAY "TODO: Add in roll max rates and data to allow ship replacement, reference to custom console"
 
 
 ; -> &565D	\ Start Hull Data. For each hull, first 20 bytes give header info.

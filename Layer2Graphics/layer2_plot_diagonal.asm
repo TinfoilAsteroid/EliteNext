@@ -834,6 +834,7 @@ l2D_adjustCol2:         nop										; update X and Y
 
 
 ;;l2_draw_diagonalopt:
+                DISPLAY "TODO: optimisation"
 	; ">TODO l2_draw_diagonalopt fast horz vert optmisation"
 ;;	push	af
 ;;	ld		a,b

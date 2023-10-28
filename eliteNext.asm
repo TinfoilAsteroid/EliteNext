@@ -2,6 +2,37 @@
     SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
     DEFINE  DOUBLEBUFFER 1
     DEFINE  LATECLIPPING 1
+    DEFINE  SIMPLEWARP   1
+    ;DEFINE DEBUGCIRCLE1 1
+    ;DEFINE DEBUGCIRCLE2 1 
+    ;DEFINE DEBUGCIRCLE3 1 
+    ;DEFINE DEBUGCIRCLE4 1 
+    ;DEFINE DEBUGCIRCLE5 1 
+    ;DEFINE DEBUGCIRCLE6 1 
+    ;DEFINE  DEBUGPLANET 1
+    ;DEFINE  DEBUGPLANETCIRCLE 1
+    ;DEFINE  MERIDANLINEDEBUG 1
+    DEFINE  PLANETSARESOLID 1
+    ;DEFINE DEBUG_LL122_DIRECT 1 ; PASS
+    ;DEFINE DEBUG_LL121_DIRECT 1 ; PASS
+    ;DEFINE DEBUG_LL129_DIRECT 1 ; PASS
+    ;DEFINE DEBUG_LL120_DIRECT 1 ; PASS
+    ;DEFINE DEBUG_LL123_DIRECT 1 ; PASS
+    ;DEFINE DEBUG_LL118_DIRECT 1
+    ;DEFINE DEBUG_LL128_DIRECT
+;                  DEFINE DEBUG_LL123_DIRECT 1
+;                  DEFINE DEBUG_LL118_DIRECT 1
+;                  DEFINE DEBUG_LL28_6502
+                  ;DEFINE DEBUG_LL145_6502 1
+;                DEFINE DEBUG_LL129
+ ;               DEFINE DEBUG_LL120 1
+           ; DEFINE DEBUGCLIP 1
+    ;DEFINE SKIPATTRACTMUSIC 1
+    ;DEFINE SKIPATTRACTGRAPHICS 1
+    ;DEFINE  SKIPATTRACT 1
+    ;DEFINE  LOGDIVIDEDEBUG 1
+    ; DEFINE  BLINEDEBUG 1
+    ;DEFINE  TESTMERIDIAN 1
     ;DEFINE  CLIPVersion3 1
     ;DEFINE  LOGMATHS     1
     ;DEFINE  DIAGSPRITES 1
@@ -75,6 +106,8 @@ ScreenHyperspace EQU ScreenDocking+1
                         INCLUDE "./Macros/ShiftMacros.asm"
                         INCLUDE "./Macros/signBitMacros.asm"
                         INCLUDE "./Macros/KeyboardMacros.asm"
+                        INCLUDE "./Universe/UniverseMacros/asm_linedraw.asm"
+                        INCLUDE "./Universe/UniverseMacros/UniverseVarsDefineMacro.asm"
                         INCLUDE "./Tables/message_queue_macros.asm"
                         INCLUDE "./Variables/general_variables_macros.asm"
                         INCLUDE "./Variables/UniverseSlot_macros.asm"
@@ -215,13 +248,6 @@ TRIANGLEDIAGNOSTICS:   ;break
                          ;break
                          MMUSelectUniverseN  0
                          MMUSelectLayer2
-    ;DEFINE DEBUG_LL122_DIRECT 1 ; PASS
-    ;DEFINE DEBUG_LL121_DIRECT 1 ; PASS
-    ;DEFINE DEBUG_LL129_DIRECT 1 ; PASS
-    ;DEFINE DEBUG_LL120_DIRECT 1 ; PASS
-    ;DEFINE DEBUG_LL123_DIRECT 1 ; PASS
-    ;DEFINE DEBUG_LL118_DIRECT 1
-    ;DEFINE DEBUG_LL128_DIRECT
 
                   IFDEF DEBUG_LL122_DIRECT
                         call    Debug_LL122_6502
@@ -240,29 +266,24 @@ TRIANGLEDIAGNOSTICS:   ;break
                         call Debug_LL120_6502
                   ENDIF
                         
-;                  DEFINE DEBUG_LL123_DIRECT 1
                   IFDEF DEBUG_LL123_DIRECT
                         call Debug_LL123_6502
                   ENDIF
 
-;                  DEFINE DEBUG_LL118_DIRECT 1
                   IFDEF DEBUG_LL118_DIRECT
                         call Debug_LL118_6502
                   ENDIF
                   
-;                  DEFINE DEBUG_LL28_6502
                   IFDEF DEBUG_LL28_6502
                         call Debug_LL28_6502
                   ENDIF
                   
-                  ;DEFINE DEBUG_LL145_6502 1
                   IFDEF DEBUG_LL145_6502
                         ;break
                         call Debug_LL145_6502
                   ENDIF
                         
                   
-;                DEFINE DEBUG_LL129
                 IFDEF DEBUG_LL129                         
                         ld      a,240       :ld      (XX12p2),a ; Gradient
                         ld      a,$FF       :ld      (XX12p3),a ; Slope
@@ -283,7 +304,6 @@ TRIANGLEDIAGNOSTICS:   ;break
                         ld      hl,50       :ld      (SRvarPair),hl
                         call    LL129_6502  ; Should be Q = 140, A = +ve SR = 50 >> PASS
                 ENDIF
- ;               DEFINE DEBUG_LL120 1
                 IFDEF DEBUG_LL120
                         ;break
                         ld      a,0         :ld      (Tvar),a   ; slope +ve so multiply
@@ -302,7 +322,6 @@ TRIANGLEDIAGNOSTICS:   ;break
                         ; LL129 shoud be q = 168, a +ve SR 10 >> PASS 
                         call    LL120_6502  ; Should be -ve 10 / 168  so xy -6 >> PASS
                 ENDIF
-           ; DEFINE DEBUGCLIP 1
             IFDEF  DEBUGCLIP
                         ;break
                         MMUSelectUniverseN 0
@@ -418,6 +437,140 @@ PlotTestData:  ; dw  281 ,   60, 252 ,   90  ; pass
             ELSE
                          DISPLAY "Not debugging clip code"            
             ENDIF
+            IFDEF LOGDIVIDEDEBUG
+                        break
+                        MMUSelectMathsTables
+                        ld      a,4
+                        ld      (varQTEST),a
+                        ld      a,1
+                        ld      (varATEST),a
+                        ld      b,250
+                        ld      hl, outputbuffer
+.LoopTest:              push    bc,,hl
+                        ld      a,(varQTEST)
+                        ld      (varQ),a
+                        ld      a,(varATEST)
+                        call    Requ256mulAdivQ_Log
+                        pop     bc,,hl
+                        ld      (hl),a
+                        inc     hl
+                        ld      a,(varATEST)
+                        inc     a
+                        ld      (varATEST),a
+                        ld      a,(varQTEST)
+                        ld      (varQTEST),a
+                        djnz    .LoopTest
+                        break
+                        
+varATEST    DB  0
+varQTEST    DB  0                        
+                        
+                        
+                        
+outputbuffer DS 256    
+            ENDIF
+            IFDEF DEBUGCIRCLE1
+                        break
+                        ld      hl,128
+                        ld      de, 64
+                        ld      c,20
+                        ld      b,$59
+                        MMUSelectLayer2
+                        call    l2_draw_clipped_circle_filled
+            ENDIF
+            IFDEF DEBUGCIRCLE2
+                        break
+                        ld      hl,128
+                        ld      de, 64
+                        ld      c,200
+                        ld      b,$49
+                        MMUSelectLayer2
+                        call    l2_draw_clipped_circle_filled
+                        break
+            ENDIF
+
+            IFDEF DEBUGCIRCLE3
+                        break
+                        ld      hl,128
+                        ld      de, 64
+                        ld      c,130
+                        ld      b,$49
+                        MMUSelectLayer2
+                        call    l2_draw_clipped_circle_filled
+                        break
+            ENDIF
+
+            IFDEF DEBUGCIRCLE4
+                        break
+                        ld      hl,320
+                        ld      de, 128
+                        ld      c,10
+                        ld      b,$49
+                        MMUSelectLayer2
+                        call    l2_draw_clipped_circle_filled
+                        break
+            ENDIF            
+            
+            IFDEF DEBUGPLANET
+DebugPlanetCode:        MMUSelectPlanet
+                        call    CreatePlanet
+                        ld      a,0
+                        ld      (P_BnKzsgn),a
+                        ld      (P_BnKxsgn),a
+                        ld      (P_BnKysgn),a
+                        ld      hl,$0200
+                        ld      (P_BnKzlo),hl
+                        ld      hl,$00000
+                        ld      (P_BnKxlo),hl
+                        ld      (P_BnKylo),hl
+                        ld      a,127
+                        ld      (UBnKRotXCounter),a
+                        ld      (UBnKRotZCounter),a
+                        break
+.PlanetDebugLoop:       MMUSelectPlanet
+                        call    PlanetDraw
+                        call    ApplyPlanetRollAndPitch
+                        call    P_NormaliseRotMat
+                        ;call    ApplyPlanetPitch
+                        
+                        ;MMUSelectKeyboard
+                        ;call        WaitForAnyKey 
+                        break                        
+                        MMUSelectLayer2
+                        call		l2_cls
+                        jp          .PlanetDebugLoop
+            ENDIF
+
+            IFDEF DEBUGPLANETCIRCLE
+DebugPlanetCode:        MMUSelectPlanet
+                        call    CreatePlanet
+                        ld      a,0
+                        ld      (P_BnKzsgn),a
+                        ld      (P_BnKxsgn),a
+                        ld      (P_BnKysgn),a
+                        ld      hl,$0200
+                        ld      (P_BnKzlo),hl
+                        ld      hl,$00000
+                        ld      (P_BnKxlo),hl
+                        ld      (P_BnKylo),hl
+                        ld      a,127
+                        ld      (UBnKRotXCounter),a
+                        ld      (UBnKRotZCounter),a
+                        break
+.PlanetDebugLoop:       MMUSelectPlanet
+                        call    PlanetDraw
+                        call    ApplyPlanetRollAndPitch
+                        call    P_NormaliseRotMat
+                        ;call    ApplyPlanetPitch
+                        
+                        ;MMUSelectKeyboard
+                        ;call        WaitForAnyKey 
+                        break                        
+                        MMUSelectLayer2
+                        call		l2_cls
+                        jp          .PlanetDebugLoop
+            ENDIF
+            
             IFDEF DEBUGLINEDRAW
 RenderDiagnostics:      MMUSelectLayer2
                         ld      h, 0
@@ -562,7 +715,10 @@ DrawClippedLineDebug:   ld      bc,8
                 ENDIF
 ;.ClearLayer2Buffers:    DoubleBufferIfPossible
 ;                        DoubleBufferIfPossible
-; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files                        
+; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files            
+                IFDEF LOGDIVIDEDEBUG
+                   DISPLAY "DEBUG: SKIPPING INIT TO SAVE MEMORY FOR LOG DIVIDE DEBUG TEST"
+                ELSE
                         SetBorder   $07
 InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
                         ;break
@@ -574,10 +730,11 @@ InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
                         MMUSelectLayer1
                         call		l1_cls
                         SetBorder   $00
-                    IFDEF SKIPATTRACT
+                ENDIF
+                IFDEF SKIPATTRACT
                         DISPLAY "INITGALAXIES SKIP ATTRACT"
                         jp DefaultCommander
-                    ELSE
+                ELSE
                         DISPLAY "INITGALAXIES ATTRACT ENABLED"
 StartAttractMode:       di                                          ; we are changing interrupts
                         MMUSelectSound
@@ -600,7 +757,7 @@ StartAttractMode:       di                                          ; we are cha
                             DISPLAY "Main Interrupt Disabled"
                         ENDIF
                         JumpIfAIsZero  SkipDefaultCommander
-                    ENDIF
+                ENDIF
 DefaultCommander:       MMUSelectCommander
                         call		defaultCommander
                         jp          InitialiseMainLoop:
@@ -697,7 +854,6 @@ InitialiseMainLoop:     call    InitMainLoop
 ;;;                        call   DrawLines
 ;;;                        ClearCarryFlag
 ;;;                        ret                        
-                        
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 InitialiseMessage       DB "Intialising",0
@@ -718,6 +874,11 @@ NeedAMessageQueue:
 ;DisplayCountDownNumber
 ;----------------------------------------------------------------------------------------------------------------------------------
 TestPauseMode:          ld      a,(GamePaused)
+                IFDEF LOGDIVIDEDEBUG
+                        DISPLAY "DEBUG: SKIPPING PAUSE MODE TO SAVE MEMORY FOR LOG DIVIDE DEBUG TEST"
+                        ret
+                ELSE
+
                         cp      0
                         jr      nz,.TestForResume
 .CheckViewMode:         ld      a,(ScreenIndex)                     ; we can only pause if not on screen view
@@ -732,7 +893,7 @@ TestPauseMode:          ld      a,(GamePaused)
 .ResumePressed:         xor     a             
                         ld      (GamePaused),a                      ; Resume pressed to reset pause state
                         ret
-
+                ENDIF
 TestQuit:               MacroIsKeyPressed c_Pressed_Quit
                         ret
 currentDemoShip:        DB      13;$12 ; 13 - corirollis 
@@ -740,6 +901,10 @@ currentDemoShip:        DB      13;$12 ; 13 - corirollis
 
 GetStationVectorToWork: ld      hl,UBnKxlo
                         ld      de,varVector9ByteWork
+                IFDEF LOGDIVIDEDEBUG
+                        DISPLAY "DEBUG: SKIPPING GetStationVectorToWork TO SAVE MEMORY FOR LOG DIVIDE DEBUG TEST"
+                        ret
+                ELSE
                         ldi
                         ldi
                         ldi
@@ -785,13 +950,14 @@ GetStationVectorToWork: ld      hl,UBnKxlo
                         ld      (XX15VecZ),a         ; note this is now a signed highbyte                        
                         call    normaliseXX1596S7 
                         ret                          ; will return with a holding Vector Z
+                ENDIF
 
 TidyCounter             DB  0
 
             INCLUDE "./debugMatrices.asm"
 
 
-;TODO Optimisation
+            DISPLAY "TODO: Optimisation"
 ; Need this table to handle differnet events 
 ; 1-main loop update - just general updates specfic to that screen that are not galaxy or stars, e.g. update heat, console
 ; cursor key, joystick press
@@ -805,14 +971,19 @@ ScreenTransitionForced  DB $FF
 
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-LaunchedFromStation:    MMUSelectSun
+LaunchedFromStation:    
+                IFDEF DEBUGPLANET
+                        DISPLAY "In planet debug, removing Launched From Station to save memory"
+                ELSE
+                        call    InitialiseLocalUniverse
+                        MMUSelectSun
                         call    CreateSunLaunched                   ; create the local sun and set position based on seed
                         MMUSelectPlanet
                         call    CreatePlanetLaunched
                         call    ClearUnivSlotList                   ; slot list is clear to 0 is gauranteed next slot
                         ld      a,CoriloisStation
                         call    SpawnShipTypeA
-                        
+                ENDIF    
 ;;.SpawnSpaceStation:     call    SetSlot0ToSpaceStation              ; set slot 1 to space station
 ;;                        MMUSelectUniverseN 0                        ; Prep Target universe
 ;;                        MMUSelectShipBank1                          ; Bank in the ship model code
@@ -890,7 +1061,7 @@ SetInitialShipPosition: ld      hl,$0000
                         ld      (UBnKxsgn),a
                         ld      (UBnKysgn),a
                         ld      (UBnKzsgn),a
-;    call    Reset TODO
+            DISPLAY "TODO:  call    Reset TODO"
                         call	InitialiseOrientation            ;#00;
                         ld      a,1
                         ld      (DELTA),a
@@ -1003,7 +1174,11 @@ XX12PVarSign3		DB 0
     INCLUDE "./Maths/DIVD3B2.asm"
     INCLUDE "./Maths/multiply.asm"
     INCLUDE "./Maths/asm_square.asm"
+    INCLUDE "./Maths/asm_sine.asm"
     INCLUDE "./Maths/asm_sqrt.asm"
+    INCLUDE "./Maths/asm_arctan.asm"
+    INCLUDE "./Maths/SineTable.asm"
+    INCLUDE "./Maths/ArcTanTable.asm"
     INCLUDE "./Maths/negate16.asm"
     INCLUDE "./Maths/asm_divide.asm"
     INCLUDE "./Maths/asm_unitvector.asm"
@@ -1013,7 +1188,7 @@ XX12PVarSign3		DB 0
     INCLUDE "./Maths/Utilities/AequAdivQmul96-TIS2.asm"
     INCLUDE "./Maths/Utilities/AequAmulQdiv256-FMLTU.asm"
     INCLUDE "./Maths/Utilities/PRequSpeedDivZZdiv8-DV42-DV42IYH.asm"
-    INCLUDE "./Maths/Utilities/AequDmulEdiv256usgn-DEFMUTL.asm"
+;    INCLUDE "./Maths/Utilities/AequDmulEdiv256usgn-DEFMUTL.asm" Moved to general multiply code
 
     INCLUDE "./Maths/Utilities/APequQmulA-MULT1.asm"
     INCLUDE "./Maths/Utilities/badd_ll38.asm"
@@ -1134,8 +1309,6 @@ IM2PlayDanube:          SaveMMU7
                         ret
                         
 IM2AttractMode:         ;break
-                    ;DEFINE SKIPATTRACTMUSIC 1
-                    ;DEFINE SKIPATTRACTGRAPHICS 1
                     IFDEF SKIPATTRACTMUSIC
                         DISPLAY "Attract mode Music disabled"
                     ELSE                        
@@ -1232,7 +1405,7 @@ IM2AttractMode:         ;break
     INCLUDE "./Layer2Graphics/layer2_plot_circle.asm"
     INCLUDE "./Layer2Graphics/layer2_plot_circle_fill.asm"
     INCLUDE "./Layer2Graphics/l2_draw_any_line.asm"
-    INCLUDE "./Layer2Graphics/clearLines-LL155.asm"
+;    INCLUDE "./Layer2Graphics/clearLines-LL155.asm"
     INCLUDE "./Layer2Graphics/l2_draw_line_v2.asm"
     DISPLAY "Bank ",BankLAYER2," - Bytes free ",/D, $2000 - ($-LAYER2Addr), " - BankLAYER2"
 ; Bank 58  ------------------------------------------------------------------------------------------------------------------------
@@ -1577,5 +1750,6 @@ GALAXYDATABlock7:   DB $FF
     SAVENEX CFG  0,0,0,1
     SAVENEX AUTO
     SAVENEX CLOSE
-    ASSERT MainNonBankedCodeEnd < 0B000H, Program code leaks into interrup vector table
+    DISPLAY "Main Non Banked Code End ", MainNonBankedCodeEnd , " Bytes free ", 0B000H - MainNonBankedCodeEnd
+    ASSERT MainNonBankedCodeEnd < 0B000H, Program code leaks intot interrup vector table
     

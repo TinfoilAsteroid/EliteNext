@@ -1,8 +1,8 @@
-CopyPXX12toPXX15:       ldCopyByte  PBnkXX12xLo     ,PBnkXScaled        ; xlo
-                        ldCopyByte  PBnkXX12xSign   ,PBnkXScaledSign    ; xsg
-                        ldCopyByte  PBnkXX12yLo     ,PBnkYScaled        ; xlo
-                        ldCopyByte  PBnkXX12ySign   ,PBnkYScaledSign    ; xsg
-                        ldCopyByte  PBnkXX12zLo     ,PBnkZScaled        ; xlo
-                        ldCopyByte  PBnkXX12zSign   ,PBnkZScaledSign    ; xsg
+CopyPXX12toPXX15:       ldCopyByte  P_BnkXX12xLo     ,P_BnkXScaled        ; xlo
+                        ldCopyByte  P_BnkXX12xSign   ,P_BnkXScaledSign    ; xsg
+                        ldCopyByte  P_BnkXX12yLo     ,P_BnkYScaled        ; xlo
+                        ldCopyByte  P_BnkXX12ySign   ,P_BnkYScaledSign    ; xsg
+                        ldCopyByte  P_BnkXX12zLo     ,P_BnkZScaled        ; xlo
+                        ldCopyByte  P_BnkXX12zSign   ,P_BnkZScaledSign    ; xsg
                         ret
 		

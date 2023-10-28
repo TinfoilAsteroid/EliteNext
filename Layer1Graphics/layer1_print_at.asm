@@ -31,6 +31,7 @@ l1_print_at:
                         add		a,8
                         ld		e,a							; move 1 screen character right
                         jr		.PrintLoop
+                                        DISPLAY "TODO: looks liek rogue popde"
 .Clearstackandfinish:   ;pop		de                      ; TODO LOOOKS TO BE A ROGUE POPDE
                         ret
 

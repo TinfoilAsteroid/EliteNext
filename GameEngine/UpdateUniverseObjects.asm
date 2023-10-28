@@ -64,6 +64,7 @@ UpdateUniverseObjects:  xor     a
         IFDEF   CLIPDEBUG
                             jp      .CheckExploding
         ENDIF
+                            DISPLAY "TODO: Make all 4 of these 1 call"
 .ProperUpdate:          call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
                         ld      a,(UBnKRotZCounter)
                         cp      0
@@ -115,6 +116,7 @@ UpdateUniverseObjects:  xor     a
                         jp      .ApplyDamage
 .SmallBump:             ld      a,(DELTA)                                       ; if out ship speed < 5 then set damage to 
                         ld      b,a
+                                    DISPLAY "TODO: det target too"
                         call    DamageShip                                      ; dent target too  TODO make damge totally proportional to speed
                         jp      .ApplyDamage
 .ApplyDamage:           call    SetSpeedZero
@@ -256,7 +258,7 @@ DrawForwardShips:       xor     a
               ;         ld      (UBnkrotmatNosevZ),hl
                         
                         
-                        
+                                    DISPLAY "TODO: Tune this"
 .ProcessUnivShip:       call    ProcessShip          ; The whole explosion logic is now encapsulated in process ship ;TODO TUNE THIS   ;; call    ProcessUnivShip
 ; Debris still appears on radar                        
                         IFDEF ROTATIONDEBUG
@@ -276,7 +278,7 @@ DrawForwardShips:       xor     a
 .DrawSunCompass:        MMUSelectSun
                         call    UpdateCompassSun                ; Always update the sun position
                         call    UpdateScannerSun                ; Always attempt to put the sun on the scanner 
-.CheckPlanetCompass:    JumpIfMemFalse SpaceStationSafeZone, .DrawStationCompass
+.CheckPlanetCompass:    ;JumpIfMemFalse SpaceStationSafeZone, .DrawStationCompass
 .DrawPlanetCompass:     MMUSelectPlanet
                         call    UpdateCompassPlanet
                         call    UpdateScannerPlanet

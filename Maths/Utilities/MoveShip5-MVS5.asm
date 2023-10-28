@@ -28,6 +28,7 @@ MVS5:								; Moveship5, small rotation in matrix (1-1/2/256 = cos  1/16 = sine
 	ld		(varR),a				; R	\ Xindex one is 1-1/512
 	ld		a,e						; restore copy of  INWK+1,X
 	sbc		a,0						; hi
+                    DISPLAY "TODO:  optimise"
 	ld		(varS),a				; S, TODO could we simplify this by loading xlohi into hl and subtracting 1?
 	ld		hl,UBnKxlo				; hl = INWK+0
 .IndexY:

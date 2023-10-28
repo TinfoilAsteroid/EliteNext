@@ -347,11 +347,7 @@ AddSRToYX:          ld      hl,(YXregPair)
                     adc     hl,de
                     ld      (YXregPair),hl
                     ret
-           
-ShiftLeftMem:       MACRO   reg
-                    ld      hl,reg
-                    sla     (hl)
-                    ENDM
+
 
 
 ClampX:             ld      a,h
@@ -593,6 +589,7 @@ LL136_6502:         ret                             ; RTS                    \ R
 ;         XX13 The state of the original coordinates on-screen:* 0   = (x2, y2) on-screen* 95(64)  = (x1, y1) on-screen,  (x2, y2) off-screen* 191(128) = (x1, y1) off-screen, (x2, y2) off-screen
 ;              So XX13 is non-zero if the end of the line was clipped,meaning the next line sent to BLINE can't join onto the end but has to start a new segment
 ;         SWAP The swap status of the returned coordinates:* &FF if we swapped the values of (x1, y1) and(x2, y2) as part of the clipping process* 0 if the coordinates are still in the same order
+                    DISPLAY "TODO: treat horz vert and sigle pixel as special cases"
 ; TODO treat horizonal/vert and single pixel as special cases
 LL145_6502:         ZeroA                           ; LDA #0                 \ Set SWAP = 0
                     ld      (SWAP),a                ; STA SWAP

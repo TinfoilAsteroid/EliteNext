@@ -64,3 +64,41 @@ HLEquAddrAtHLPlusA: MACRO
                     ld          h,(hl)
                     ld          l,a
                     ENDM
+
+;-- Performs HL = |HL| - 1
+DecHLABS:           MACRO
+                    bit         7,h
+                    jp          nz,.NegativeDec
+.IsHLZero:          ld          a,h                 ; if its zero it becomes negative
+                    or          l
+                    jp          z,.HLZero
+.PositiveDec:       dec         hl
+                    jp          .Done
+.NegativeDec:       ld          a,h
+                    and         $7F
+                    ld          h,a
+                    dec         hl
+                    set         7,h
+                    jp          .Done
+.HLZero:            ld          hl,$8001                    
+.Done:
+                    ENDM
+
+;-- Performs HL = HL - 1 
+DecHLSigned:        MACRO
+                    bit         7,h
+                    jp          nz,.NegativeDec
+.IsHLZero:          ld          a,h                 ; if its zero it becomes negative
+                    or          l
+                    jp          z,.HLZero
+.PositiveDec:       dec         hl
+                    jp          .Done
+.NegativeDec:       ld          a,h
+                    and         $7F
+                    ld          h,a
+                    inc         hl                  ; if its already negative then add 1 to make it further
+                    set         7,h
+                    jp          .Done
+.HLZero:            ld          hl,$8001                    
+.Done:
+                    ENDM

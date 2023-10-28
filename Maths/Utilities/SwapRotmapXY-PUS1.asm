@@ -30,6 +30,7 @@ pus1:
 		ld		l,a								;  hold result in l so we can put it in iyh later
 		ld		a,(RAT2)
 		ld		h,a
+                DISPLAY "TODO: why x hi not sign"
 		ld		a,iyh							; get Y sign (don;t know why previous uses x hi not x sign TODO
 		xor		h
 		ld		b,a								; now b holds IY Sign manuipulated and L holds IX Sign manuipulated

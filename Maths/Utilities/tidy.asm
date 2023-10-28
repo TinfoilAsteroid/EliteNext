@@ -294,6 +294,7 @@ TIS1SkipSub:
 
 
 
+            DISPLAY "TODO: look at note on TODO"
 TidyRotYSmall:
 		call	CalcRoofvZ
 		ld		(UBnkrotmatRoofvZ+1),a			; set roofvy hi?? Says roofz TODO

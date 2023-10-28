@@ -494,17 +494,17 @@ SunShiftRight           MACRO   reglo, reghi, regsgn
 ;                        ld      d,a
 ;                        ret
 ;                        
-ScalePlanetPos:         ld      de,(PBnKzhi)                ; de = abs z & save sign on stack
+ScalePlanetPos:         ld      de,(P_BnKzhi)               ; de = abs z & save sign on stack
                         ld      a,d                         ; .
                         push    af                          ; .
                         and     SignMask8Bit                ; .
                         ld      d,a                         ; .
-                        ld      hl,(PBnKxhi)                ; hl = abs x & save sign on stack
+                        ld      hl,(P_BnKxhi)               ; hl = abs x & save sign on stack
                         ld      a,h                         ; .
                         push    af                          ; .
                         and     SignMask8Bit                ; .
                         ld      h,a                         ; .
-                        ld      bc,(PBnKyhi)                ; bc = abs y & save sign on stack
+                        ld      bc,(P_BnKyhi)                ; bc = abs y & save sign on stack
                         ld      a,b                         ; .
                         push    af                          ; .
                         and     SignMask8Bit                ; .
@@ -731,7 +731,7 @@ UpdateCompassSun:       MMUSelectSun
                         ld      c,ixh                       ; x = saved X
 .SetSprite:             MMUSelectSpriteBank
                         call    compass_sun_move
-                        ld      a,ixl
+                        ld      a,(SBnKzsgn)
                         bit     7,a
                         jr      nz,.SunBehind
 .SunInfront:            call    show_compass_sun_infront
@@ -799,7 +799,7 @@ UpdateCompassPlanet:    MMUSelectPlanet
                         ld      c,ixh                       ; x = saved X
 .SetSprite:             MMUSelectSpriteBank
                         call    compass_station_move
-                        ld      a,ixl
+                        ld      a,(P_BnKzsgn)
                         bit     7,a
                         jr      nz,.PlanetBehind
 .PlanetInfront:         call    show_compass_station_infront
@@ -808,23 +808,23 @@ UpdateCompassPlanet:    MMUSelectPlanet
                         ret
 
 UpdatePlanetSun:        MMUSelectPlanet
-                        Shift24BitScan  PBnKyhi, PBnKylo
-.IsItInRange:           ld      a,(PBnKxsgn)                ; if the high byte is not
-                        ld      hl,PBnKysgn                 ; a sign only
+                        Shift24BitScan  P_BnKyhi, P_BnKylo
+.IsItInRange:           ld      a,(P_BnKxsgn)                ; if the high byte is not
+                        ld      hl,P_BnKysgn                 ; a sign only
                         or      (hl)                        ; then its too far away
-                        ld      hl,PBnKzsgn                 ; for the scanner to draw
+                        ld      hl,P_BnKzsgn                 ; for the scanner to draw
                         or      (hl)                        ; so rely on the compass
                         and     SignMask8Bit                ;
                         ret     nz                          ;
-.ItsInRange:            ld      hl,(PBnKzlo)                ; we will get unsigned values
-                        ld      de,(PBnKxlo)
-                        ld      bc,(PBnKylo)
+.ItsInRange:            ld      hl,(P_BnKzlo)                ; we will get unsigned values
+                        ld      de,(P_BnKxlo)
+                        ld      bc,(P_BnKylo)
                         ld      a,h
                         or      d
                         or      b
                         and     %11000000
                         ret     nz                          ; if distance Hi > 64 on any ccord- off screen
-.MakeX2Compliment:      ld      a,(PBnKxsgn)
+.MakeX2Compliment:      ld      a,(P_BnKxsgn)
                         bit     7,a
                         jr      z,.absXHi
                         NegD                                
@@ -833,7 +833,7 @@ UpdatePlanetSun:        MMUSelectPlanet
                         ld      ixh,a                       ; store adjusted X in ixh
 .ProcessZCoord:         srl     h
                         srl     h
-.MakeZ2Compliment:      ld      a,(PBnKzsgn)
+.MakeZ2Compliment:      ld      a,(P_BnKzsgn)
                         bit     7,a
                         jr      z,.absZHi
                         NegH
@@ -846,7 +846,7 @@ UpdatePlanetSun:        MMUSelectPlanet
                         ld      iyl,a    
                         MMUSelectLayer2  
                         jp      .NoStick
-.StickHasLength:        ld      a,(PBnKysgn)                ; if b  =  0 then no line
+.StickHasLength:        ld      a,(P_BnKysgn)                ; if b  =  0 then no line
                         bit     7,a
                         jr      z,.absYHi
                         NegB
@@ -1026,23 +1026,23 @@ UpdateScannerSun:       MMUSelectSun
 
 ; This will do a planet update if we are not in space station range
 UpdateScannerPlanet:    MMUSelectPlanet
-                        Shift24BitScan  PBnKyhi, PBnKylo
-.IsItInRange:           ld      a,(PBnKxsgn)                ; if the high byte is not
-                        ld      hl,PBnKysgn                 ; a sign only
+                        Shift24BitScan  P_BnKyhi, P_BnKylo
+.IsItInRange:           ld      a,(P_BnKxsgn)                ; if the high byte is not
+                        ld      hl,P_BnKysgn                 ; a sign only
                         or      (hl)                        ; then its too far away
-                        ld      hl,PBnKzsgn                 ; for the scanner to draw
+                        ld      hl,P_BnKzsgn                 ; for the scanner to draw
                         or      (hl)                        ; so rely on the compass
                         and     SignMask8Bit                ;
                         ret     nz                          ;
-.ItsInRange:            ld      hl,(PBnKzlo)                ; we will get unsigned values
-                        ld      de,(PBnKxlo)
-                        ld      bc,(PBnKylo)
+.ItsInRange:            ld      hl,(P_BnKzlo)                ; we will get unsigned values
+                        ld      de,(P_BnKxlo)
+                        ld      bc,(P_BnKylo)
                         ld      a,h
                         or      d
                         or      b
                         and     %11000000
                         ret     nz                          ; if distance Hi > 64 on any ccord- off screen
-.MakeX2Compliment:      ld      a,(PBnKxsgn)
+.MakeX2Compliment:      ld      a,(P_BnKxsgn)
                         bit     7,a
                         jr      z,.absXHi
                         NegD                                
@@ -1051,7 +1051,7 @@ UpdateScannerPlanet:    MMUSelectPlanet
                         ld      ixh,a                       ; store adjusted X in ixh
 .ProcessZCoord:         srl     h
                         srl     h
-.MakeZ2Compliment:      ld      a,(PBnKzsgn)
+.MakeZ2Compliment:      ld      a,(P_BnKzsgn)
                         bit     7,a
                         jr      z,.absZHi
                         NegH
@@ -1064,7 +1064,7 @@ UpdateScannerPlanet:    MMUSelectPlanet
                         ld      iyl,a    
                         MMUSelectLayer2  
                         jp      .NoStick
-.StickHasLength:        ld      a,(PBnKysgn)                ; if b  =  0 then no line
+.StickHasLength:        ld      a,(P_BnKysgn)                ; if b  =  0 then no line
                         bit     7,a
                         jr      z,.absYHi
                         NegB

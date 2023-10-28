@@ -15,6 +15,7 @@ ViewHeightHalf      equ 63
 ViewWidthHalf       equ 127
 ViewCenterY         equ 64
 ViewCenterX         equ 128
+                        DISPLAY "TODO: place odler for debugging"
 ShipColour			equ $FF		; place holder for debugging TODO
 ScreenL1Bottom      equ $5000
 ScreenL1BottomLen   equ 32 * 8 * 8

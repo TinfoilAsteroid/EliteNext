@@ -1,36 +1,32 @@
-LogTable:               DW $0000                                                            ; 0
-                        DW $0000, $2006, $320F, $400D, $4AEC, $5216, $59C2, $6013           ; 8
-                        DW $651E, $6AF2, $6E9A, $721C, $7680, $79C9, $7DFB, $801A           ; 16
-                        DW $8227, $8525, $8715, $8AF9, $8CD2, $8EA0, $9066, $9223           ; 24
-                        DW $94D8, $9686, $982E, $99CF, $9B6B, $9D02, $9E93, $A020           ; 32
-                        DW $A1A9, $A22E, $A4AE, $A52C, $A6A5, $A71C, $A98F, $AA00           ; 40
-                        DW $AB6D, $ACD8, $AD41, $AEA7, $AF0B, $B06C, $B1CC, $B229           ; 48
-                        DW $B385, $B4DF, $B537, $B68D, $B7E1, $B834, $B986, $B9D6           ; 56
-                        DW $BA25, $BB72, $BCBE, $BD08, $BD52, $BE9A, $BFE1, $C027           ; 64
-                        DW $C06C, $C1B0, $C2F2, $C234, $C375, $C4B5, $C4F4, $C532           ; 72
-                        DW $C66F, $C6AC, $C7E7, $C722, $C85C, $C996, $C9CE, $CA06           ; 80
-                        DW $CA3D, $CB74, $CCAA, $CCDF, $CD13, $CD47, $CE7B, $CEAD           ; 88
-                        DW $CFE0, $CF11, $D042, $D073, $D1A3, $D1D2, $D201, $D230           ; 96
-                        DW $D35E, $D38B, $D4B9, $D4E5, $D511, $D53D, $D568, $D693           ; 104
-                        DW $D6BE, $D7E8, $D712, $D83B, $D864, $D98C, $D9B5, $D9DD           ; 112
-                        DW $DA04, $DA2B, $DB52, $DB78, $DB9E, $DCC4, $DCEA, $DD0F           ; 120
-                        DW $DD34, $DD58, $DE7D, $DEA1, $DEC4, $DFE8, $DF0B, $E02E           ; 128
-                        DW $E050, $E072, $E194, $E1B6, $E1D8, $E2F9, $E21A, $E23B           ; 136
-                        DW $E35B, $E37C, $E39C, $E4BC, $E4DB, $E4FB, $E51A, $E539           ; 144
-                        DW $E557, $E676, $E694, $E6B2, $E7D0, $E7EE, $E70C, $E729           ; 152
-                        DW $E846, $E863, $E880, $E99C, $E9B9, $E9D5, $EAF1, $EA0D           ; 160
-                        DW $EA28, $EA44, $EB5F, $EB7A, $EB95, $ECB0, $ECCB, $ECE5           ; 168
-                        DW $EC00, $ED1A, $ED34, $ED4E, $ED68, $EE81, $EE9B, $EEB4           ; 176
-                        DW $EECD, $EFE6, $EFFF, $EF18, $EF30, $F049, $F061, $F079           ; 184
-                        DW $F191, $F1A9, $F1C1, $F1D9, $F1F0, $F208, $F21F, $F236           ; 192
-                        DW $F24E, $F364, $F37B, $F392, $F3A9, $F4BF, $F4D5, $F4EC           ; 200
-                        DW $F402, $F518, $F52E, $F544, $F559, $F56F, $F685, $F69A           ; 208
-                        DW $F6AF, $F6C4, $F7DA, $F7EF, $F703, $F718, $F72D, $F842           ; 216
-                        DW $F856, $F86B, $F87F, $F993, $F9A7, $F9BB, $F9CF, $F9E3           ; 224
-                        DW $FAF7, $FA0B, $FA1E, $FA32, $FA45, $FB58, $FB6C, $FB7F           ; 232
-                        DW $FB92, $FBA5, $FCB8, $FCCB, $FCDE, $FCF0, $FC03, $FD16           ; 240
-                        DW $FD28, $FD3A, $FD4D, $FD5F, $FD71, $FE83, $FE95, $FEA7           ; 248
-                        DW $FEB9, $FECB, $FFDD, $FFEE, $FF00, $FF11, $FF23                  ; 255
+LogTable:               DW $0000                                                                   ; 0
+                        DW $0000, $2000, $32B8, $4000, $4A4D, $52B8, $59D6, $6000, $6570, $6A4D    ;   1 TO  10
+                        DW $6EB4, $72B8, $766A, $79D6, $7D05, $8000, $82CC, $8570, $87EF, $8A4D    ;  11 TO  20
+                        DW $8C8E, $8EB4, $90C1, $92B8, $949A, $966A, $9828, $99D6, $9B75, $9D05    ;  21 TO  30
+                        DW $9E89, $A000, $A16C, $A2CC, $A423, $A570, $A6B4, $A7EF, $A922, $AA4D    ;  31 TO  40
+                        DW $AB71, $AC8E, $ADA4, $AEB4, $AFBD, $B0C1, $B1BF, $B2B8, $B3AC, $B49A    ;  41 TO  50
+                        DW $B585, $B66A, $B74B, $B828, $B901, $B9D6, $BAA7, $BB75, $BC3F, $BD05    ;  51 TO  60
+                        DW $BDC9, $BE89, $BF46, $C000, $C0B7, $C16C, $C21D, $C2CC, $C379, $C423    ;  61 TO  70
+                        DW $C4CB, $C570, $C613, $C6B4, $C752, $C7EF, $C88A, $C922, $C9B9, $CA4D    ;  71 TO  80
+                        DW $CAE0, $CB71, $CC00, $CC8E, $CD1A, $CDA4, $CE2D, $CEB4, $CF39, $CFBD    ;  81 TO  90
+                        DW $D040, $D0C1, $D141, $D1BF, $D23C, $D2B8, $D332, $D3AC, $D424, $D49A    ;  91 TO 100
+                        DW $D510, $D585, $D5F8, $D66A, $D6DB, $D74B, $D7BA, $D828, $D895, $D901    ; 101 TO 110
+                        DW $D96C, $D9D6, $DA3F, $DAA7, $DB0E, $DB75, $DBDA, $DC3F, $DCA2, $DD05    ; 111 TO 120
+                        DW $DD67, $DDC9, $DE29, $DE89, $DEE8, $DF46, $DFA3, $E000, $E05C, $E0B7    ; 121 TO 130
+                        DW $E112, $E16C, $E1C5, $E21D, $E275, $E2CC, $E323, $E379, $E3CE, $E423    ; 131 TO 140
+                        DW $E477, $E4CB, $E51E, $E570, $E5C2, $E613, $E664, $E6B4, $E703, $E752    ; 141 TO 150
+                        DW $E7A1, $E7EF, $E83D, $E88A, $E8D6, $E922, $E96E, $E9B9, $EA03, $EA4D    ; 151 TO 160
+                        DW $EA97, $EAE0, $EB29, $EB71, $EBB9, $EC00, $EC47, $EC8E, $ECD4, $ED1A    ; 161 TO 170
+                        DW $ED5F, $EDA4, $EDE8, $EE2D, $EE70, $EEB4, $EEF7, $EF39, $EF7B, $EFBD    ; 171 TO 180
+                        DW $EFFF, $F040, $F081, $F0C1, $F101, $F141, $F180, $F1BF, $F1FE, $F23C    ; 181 TO 190
+                        DW $F27A, $F2B8, $F2F5, $F332, $F36F, $F3AC, $F3E8, $F424, $F45F, $F49A    ; 191 TO 290
+                        DW $F4D5, $F510, $F54A, $F585, $F5BE, $F5F8, $F631, $F66A, $F6A3, $F6DB    ; 201 TO 210
+                        DW $F713, $F74B, $F783, $F7BA, $F7F1, $F828, $F85F, $F895, $F8CB, $F901    ; 211 TO 220
+                        DW $F936, $F96C, $F9A1, $F9D6, $FA0A, $FA3F, $FA73, $FAA7, $FADB, $FB0E    ; 221 TO 230
+                        DW $FB42, $FB75, $FBA7, $FBDA, $FC0C, $FC3F, $FC71, $FCA2, $FCD4, $FD05    ; 231 TO 240
+                        DW $FD36, $FD67, $FD98, $FDC9, $FDF9, $FE29, $FE59, $FE89, $FEB8, $FEE8    ; 241 TO 250
+                        DW $FF17, $FF46, $FF75, $FFA3, $FFA3                                       ; 251 TO 255
+
+                        
 
 LogReverseHighByte:     DW $00, 000, $20, 002, $32, 003, $40, 004, $4A, 005, $52, 006
                         DW $59, 007, $60, 008, $65, 009, $6A, 010, $6E, 011, $72, 012

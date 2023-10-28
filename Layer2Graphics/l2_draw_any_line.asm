@@ -7,6 +7,7 @@ SaveArrayS2             DS     128*2
 
     INCLUDE "./Layer2Graphics/BBCEliteDirectMappingLL118.asm"
     
+        IFDEF Add_l2_drawHorzClipY
 l2_drawHorzClipY:       
 .ClipY:                 ex      de,hl                       ; get X1 into de
 .ClipDE:                bit     7,d
@@ -37,8 +38,9 @@ l2_drawHorzClipY:
                         ret     nc
 .ForceEndYSet:          ld      (endy),de
                         ret
+        ENDIF
 
-
+        
 l2_drawVertClip:        ld      hl,(y1)
                         ld      de,(y2)
                         call    CompareHLDESgn
@@ -61,6 +63,7 @@ l2_drawVertClip:        ld      hl,(y1)
                         ld      e,$BF
                         jp      l2_draw_vert_line_to                ; ">bc = row col d = to position, e = color"
 
+
 l2_drawHorzClip:        ld      hl,(x1)
                         ld      de,(x2)
                         call    CompareHLDESgn
@@ -80,6 +83,7 @@ l2_drawHorzClip:        ld      hl,(x1)
                         ld      e,$BF
                         jp      l2_draw_horz_line_to                ; "bc = left side row,col, d right pixel, e = color"
 
+        IFDEF Add_l2_drawVertClipY
 l2_drawVertClipY:       bit     7,d                     ; i = (py1<0?0:py1);
                         jr      z,.PYIsOK
 .SetPYTo0:              ld      de,0
@@ -105,7 +109,7 @@ l2_drawVertClipY:       bit     7,d                     ; i = (py1<0?0:py1);
                         inc     a                       ; use a as a counter for the end when we update EndY
                         djnz    .UpdateArray            ; .
                         ret                             ; we are now done
-
+        ENDIF
 
 
 ; ">l2_draw_any_line, bc = y0,x0 de=y1,x1,a=color: determines if its horizontal, vertical or diagonal then hands off the work"

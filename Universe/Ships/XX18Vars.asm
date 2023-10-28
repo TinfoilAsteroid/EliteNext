@@ -12,3 +12,4 @@ UBnkDrawCam0zHi             DB  0               ; XX18+7
 UBnkDrawCam0zSgn            DB  0               ; XX18+8
 UBnkDrawCam0z               equ UBnkDrawCam0zLo
 XX18                        equ UBnkDrawCam0xLo
+    

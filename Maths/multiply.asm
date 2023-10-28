@@ -18,6 +18,19 @@ HLeqyHLmulAdiv256:      push    bc,,de
                         pop     bc,,de                        
                         ret
 
+; FMLTU - A = A * Q / 256    
+AequAmulQdiv256usgn:    ld      d,a
+                        ld      a,(varQ)
+                        ld      e,a
+asm_defmutl:
+; "ASM_FMUTKL .FMLTU	\ -> &2847  \ A=D*E/256unsg  Fast multiply"
+AequDmulEdiv256usgn:    mul     de
+                        ld	a,d				; we get only the high byte which is like doing a /256 if we think of a as low
+                        ret
+
+    
+
+
 
 MacroDEEquQmulASigned:  MACRO
                         ld      d,a                         ; save a into d

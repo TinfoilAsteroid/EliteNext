@@ -111,14 +111,9 @@ WarpSunFurther:         ld      hl,SBnKzsgn
 ; byte 2 is end x pos
 ; if they are both 0 then skip
 ; its always horizontal, yellow
-
-; PLANET
-
-                        
+                       
 .SunNoDraw:             SetCarryFlag                    ; ship is behind so do not draw, so we don't care abour draw as dot
                         ret
-
-
                         
 SunBankDraw:            MACRO
 .drawLoop               ld      a,(hl)

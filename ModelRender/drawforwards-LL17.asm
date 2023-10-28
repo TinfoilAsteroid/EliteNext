@@ -30,6 +30,7 @@ LL15:   call    CopyRotmatToTransMat        ; Copy Ship rotation to XX16        
 LL91lc: call    LoadCraftToCamera           ; Load Ship Coords to XX18
 ; ......................................................                                                                            ;;; 
 LastNormalAlwaysVisible:      
+                                    DISPLAY "TODO: revert back to macro later"
         call    SetLastFaceVisCall          ; DEBUG TODO revert back to MACRO later                                                                                                          ;;; Set last Normal to visible FF regarless
 ; HEre original does LDY 12
 ; ......................................................                                                                            ;;; (Originally loaded faces count here and stored in B, but will remove to simplify code)
