@@ -80,7 +80,6 @@ prefix1?_NewYPos                    DW 0
 prefix1?_Colour1                    DB 0
 prefix1?_Colour2                    DB 0
 prefix1?_Colour2Thickness           DB 0
-
 ;        -- _pl(prf .. "Radius                     DW  0
 ;        -- _pl(prf .. "RadiusHigh                 equ prefix1?_Radius+1
                              ENDM
@@ -102,7 +101,84 @@ prefix1?_BnKElipseCenterY           DW  0
 prefix1?_BnKElipseRadiusU           DW  0
 prefix1?_BnKElipseRadiusV           DW  0
                             ENDM
+                            
+UnivModelVarsMacro:         MACRO prefix1?
+prefix1?_BnKFaceVisArray            DS FaceArraySize            ; XX2 Up to 16 faces this may be normal list, each entry is controlled by bit 7, 1 visible, 0 hidden
+; Node array holds the projected to screen position regardless of if its clipped or not
+; When we use traingles we can cheat a bit on clipping as all lines will be horizontal so clipping is much simplified
+prefix1?_BnKNodeArray               DS NodeArraySize * 4        ; XX3 Holds the points as an array, its an array not a heap
+prefix1?_BnKNodeArray2              DS NodeArraySize * 4        ; XX3 Holds the points as an array, its an array not a heap
+prefix1?_BnKLineArray               DS LineArraySize * 8        ; XX19 Holds the clipped line details
+; ONLY IF TESTING SOLID FILL prefix1?_BnKTriangleOverspill       DS TraingleArraySize * 4    ; jsut a padding for testing
+prefix1?_BnKLinesHeapMax            EQU $ - prefix1?_BnKLineArray
+prefix1?_BnKTraingleArray           EQU prefix1?_BnKLineArray           ; We can use the line array as we draw lines or traingles
+prefix1?_BnKEdgeProcessedList DS EdgeHeapSize
+; Array current Lengths
+prefix1?_BnKFaceVisArrayLen         DS 1
+prefix1?_BnKNodeArrayLen            DS 1
+prefix1?_BnKLineArrayLen            DS 1                        ; total number of lines loaded to array 
+prefix1?_BnKLineArrayBytes          DS 1                        ; total number of bytes loaded to array  = array len * 4
+prefix1?_XX20                       equ prefix1?_BnKLineArrayLen
+varprefix1?_XX20                    equ prefix1?_BnKLineArrayLen
 
+prefix1?_BnKEdgeHeapSize            DS 1
+prefix1?_BnKEdgeHeapBytes           DS 1
+prefix1?_BnKLinesHeapLen            DS 1
+prefix1?_BnKEdgeHeapCounter         DS 1
+prefix1?_BnKEdgeRadius              DS 1
+prefix1?_BnKEdgeShipType            DS 1
+prefix1?_BnKEdgeExplosionType       DS 1
+
+; Lines
+prefix1?_BnKXX19                    DS  3
+                            ENDM
+
+
+ShipDataMacro:              MACRO prefix1?
+prefix1?_BnKHullCopy                DS  ShipDataLength
+prefix1?_ScoopDebrisAddr            equ prefix1?_BnKHullCopy + ScoopDebrisOffset     
+prefix1?_MissileLockLoAddr          equ prefix1?_BnKHullCopy + MissileLockLoOffset   
+prefix1?_MissileLockHiAddr          equ prefix1?_BnKHullCopy + MissileLockHiOffset   
+prefix1?_EdgeAddyAddr               equ prefix1?_BnKHullCopy + EdgeAddyOffset        
+prefix1?_LineX4Addr                 equ prefix1?_BnKHullCopy + LineX4Offset      
+prefix1?_GunVertexAddr              equ prefix1?_BnKHullCopy + GunVertexOffset       
+prefix1?_ExplosionCtAddr            equ prefix1?_BnKHullCopy + ExplosionCtOffset    
+prefix1?_VertexCountAddr            equ prefix1?_BnKHullCopy + VertexCountOffset    
+prefix1?_VertexCtX6Addr             equ prefix1?_BnKHullCopy + VertexCtX6Offset  
+prefix1?_EdgeCountAddr              equ prefix1?_BnKHullCopy + EdgeCountOffset       
+prefix1?_BountyLoAddr               equ prefix1?_BnKHullCopy + BountyLoOffset        
+prefix1?_BountyHiAddr               equ prefix1?_BnKHullCopy + BountyHiOffset        
+prefix1?_FaceCtX4Addr               equ prefix1?_BnKHullCopy + FaceCtX4Offset        
+prefix1?_DotAddr                    equ prefix1?_BnKHullCopy + DotOffset             
+prefix1?_EnergyAddr                 equ prefix1?_BnKHullCopy + EnergyOffset      
+prefix1?_SpeedAddr                  equ prefix1?_BnKHullCopy + SpeedOffset           
+prefix1?_FaceAddyAddr               equ prefix1?_BnKHullCopy + FaceAddyOffset        
+prefix1?_QAddr                      equ prefix1?_BnKHullCopy + QOffset               
+prefix1?_LaserAddr                  equ prefix1?_BnKHullCopy + LaserOffset           
+prefix1?_VerticesAddyAddr           equ prefix1?_BnKHullCopy + VerticiesAddyOffset  
+prefix1?_ShipTypeAddr               equ prefix1?_BnKHullCopy + ShipTypeOffset       
+prefix1?_ShipNewBitsAddr            equ prefix1?_BnKHullCopy + ShipNewBitsOffset    
+prefix1?_ShipAIFlagsAddr            equ prefix1?_BnKHullCopy + ShipAIFlagsOffset
+prefix1?_ShipECMFittedChanceAddr    equ prefix1?_BnKHullCopy + ShipECMFittedChanceOffset
+prefix1?_ShipSolidFlagAddr          equ prefix1?_BnKHullCopy + ShipSolidFlagOffset
+prefix1?_ShipSolidFillAddr          equ prefix1?_BnKHullCopy + ShipSolidFillOffset
+prefix1?_ShipSolidLenAddr           equ prefix1?_BnKHullCopy + ShipSolidLenOffset
+                        ENDM
+                        
+; Now this will mean some special coding for the copy from model to univ bank
+ShipModelDataMacro:         MACRO prefix1?
+prefix1?_BnKHullVerticies           DS  40 * 6              ; largetst is trasnport type 10 at 37 vericies so alows for 40 * 6 Bytes  = 
+prefix1?_BnKHullEdges               DS  50 * 4              ; ype 10 is 46 edges so allow 50
+prefix1?_BnKHullNormals             DS  20 * 4              ; type 10 is 14 edges so 20 to be safe
+    IFDEF SOLIDHULLTEST
+prefix1?_BnKHullSolid               DS  100 * 4             ; Up to 100 triangles (May optimise so only loads non hidden faces later
+    ENDIF
+prefix1?_OrthagCountdown             DB  12
+prefix1?_BnKShipCopy                equ Sprefix1?__BnKHullVerticies               ; Buffer for copy of ship data, for speed will copy to a local memory block, Cobra is around 400 bytes on creation of a new ship so should be plenty
+                            ENDM
+                        
+                        
+                        
 ; Rotation data is stored as lohi, but only 15 bits with 16th bit being  a sign bit. Note this is NOT 2'c compliment
 ;-Rotation Matrix of Universe Object-----------------------------------------------------------------------------------------------
 UnivRotationVarsMacro:      MACRO prefix1?
@@ -328,3 +404,146 @@ prefix1?_InitRotMat:    ld      hl, 0
                         ld      (prefix1?_BnKrotmatNosevZ),hl
                         ret
                             ENDM
+                            
+ZeroPitchAndRollMacro:  MACRO   prefix1?                
+prefix1?_ZeroPitchAndRoll:
+                        xor     a
+                        ld      (prefix1?_BnKRotXCounter),a
+                        ld      (prefix1?_BnKRotZCounter),a
+                        ENDM
+
+MaxPitchAndRollMacro:   MACRO   prefix1?
+prefix1?_MaxPitchAndRoll: 
+                        ld      a,127
+                        ld      (prefix1?_BnKRotXCounter),a
+                        ld      (prefix1?_BnKRotZCounter),a
+                        ENDM                   
+
+RandomPitchAndRollMacro: MACRO  prefix1?
+prefix1?_RandomPitchAndRoll:
+                        call    doRandom
+                        or      %01101111
+                        ld      (prefix1?_BnKRotXCounter),a
+                        call    doRandom
+                        or      %01101111
+                        ld      (prefix1?_BnKRotZCounter),a
+                        ENDM
+
+RandomSpeedMacro:       MACRO   prefix1?
+prefix1?_RandomSpeed:   
+                        call    doRandom
+                        and     31
+                        ld      (prefix1?_BnKSpeed),a
+                        ENDM
+                        
+MaxSpeedMacro:          MACRO   prefix1?
+prefix1?_MaxSpeed:      ld      a,31
+                        ld      (prefix1?_BnKSpeed),a
+                        ENDM
+                        
+ZeroAccellerationMacro: MACRO   predix1?
+prefix1?_ZeroAccelleration:  
+                        xor     a
+                        ld      (prefix1?_BnKAccel),a
+                        ENDM                            
+
+
+SetShipHostileMacro:    MACRO   prefix1?
+prefix1?_SetShipHostile ld      a,(prefix1?_ShipNewBitsAddr)
+                        or      ShipIsHostile 
+                        ld      (prefix1?_ShipNewBitsAddr),a
+                        ret
+                        ENDM
+                        
+ClearShipHostileMacro:  MACRO    prefix1?
+prefix1?_ClearShipHostile: ld      a,(prefix1?_ShipNewBitsAddr)
+                        and     ShipNotHostile 
+                        ld      (prefix1?_ShipNewBitsAddr),a
+                        ret             
+                        ENDM
+                        
+ResetBankDataMacro:     MACRO   prefix1?
+prefix1?_ResetBnKData:  ld      hl,prefix1?_StartOfUniv
+                        ld      de,prefix?_BnK_Data_len
+                        xor     a
+                        call    memfill_dma
+                        ret
+                        ENDM
+                        
+ResetBnKPositionMacro:  MACRO   prefix1?
+prefix1?_ResetBnkPosition:                        
+                        ld      hl,prefix1?_BnKxlo
+                        ld      b, 3*3
+                        xor     a
+.zeroLoop:              ld      (hl),a
+                        inc     hl
+                        djnz    .zeroLoop
+                        ret
+                        ENDM
+                        
+FireEMCMacro:           MACRO   prefix1?                        
+prefix1?_FireECM:       ld      a,ECMCounterMax                 ; set ECM time
+                        ld      (prefix1?_BnKECMCountDown),a            ;
+                        ld      a,(ECMCountDown)
+                        ReturnIfALTNusng ECMCounterMax
+                        ld      a,ECMCounterMax
+                        ld      (ECMCountDown),a
+                        ret
+                        ENDM
+                        
+
+RechargeEnergyMacro:    MACRO   prefix1?
+prefix1?_RechargeEnergy:ld      a,(prefix1?_BnKEnergy)
+                        ReturnIfAGTEMemusng EnergyAddr
+                        inc     a
+                        ld      (prefix1?_BnKEnergy),a
+                        ret        
+                        ENDM
+                        
+                        
+UpdateECMMacro:         MACRO   prefix1?
+prefix1?_UpdateECM:     ld      a,(prefix1?_BnKECMCountDown)
+                        ReturnIfAIsZero
+                        dec     a
+                        ld      (prefix1?_BnKECMCountDown),a
+                        ld      hl,prefix1?_BnKEnergy
+                        dec     (hl)
+                        ret     p
+.ExhaustedEnergy:       call    prefix1?_UnivExplodeShip      ; if it ran out of energy it was as it was also shot or collided as it checks in advance. Main ECM loop will continue as a compromise as multiple ships can fire ECM simultaneously
+                        ret
+                        ENDM
+                           
+ ;-- This takes an Axis and subtracts 1, handles leading sign and boundary of 0 going negative
+JumpOffSetMacro:        MACRO   prefix1?, Axis
+prefix1?_JumpOffSet:    ld      hl,(Axis)
+                        ld      a,h
+                        and     SignOnly8Bit
+                        jr      nz,.NegativeAxis
+.PositiveAxis:          dec     l
+                        jp      m,.MovingNegative
+                        jp      .Done
+.NegativeAxis:          inc     l                               ; negative means increment the z
+                        jp      .Done
+.MovingNegative:        ld      hl,$8001                        ; -1
+.Done                   ld      (Axis),hl
+                        ENDM
+                        
+
+WarpOffSetMacro:        MACRO   prefix1?
+prefix1?_WarpOffset:    prefix1?_JumpOffSet  prefix1?_BnKzhi                     ; we will simplify on just moving Z
+                        ret 
+                        ENDM
+                           
+                           
+; --------------------------------------------------------------                        
+; This sets the ship as a shower of explosiondwd
+ExplodeShipMacro:       MACRO   prefix1?
+prefix1?_ExplodeShip:   ld      a,(prefix1?_BnKaiatkecm)
+                        or      ShipExploding | ShipKilled      ; Set Exlpoding flag and mark as just been killed
+                        and     Bit7Clear                       ; Remove AI
+                        ld      (prefix1?_BnKaiatkecm),a
+                        xor     a
+                        ld      (prefix1?_BnKEnergy),a
+                        ;TODO
+                        ret  
+                        ENDM

@@ -1,52 +1,58 @@
+; Rendering and Models
+FaceArraySize               equ 30
+EdgeHeapSize                equ 40
+NodeArraySize               equ 40
+LineArraySize               equ 50; incerased for max of 28 lines, of 4 points of 16 bits each
+
 ;Contants
 
-SignMask8Bit		equ %01111111
-SignMask16Bit		equ %0111111111111111
-SignOnly8Bit		equ $80
-SignOnly16Bit		equ $8000
+SignMask8Bit		    equ %01111111
+SignMask16Bit		    equ %0111111111111111
+SignOnly8Bit		    equ $80
+SignOnly16Bit		    equ $8000
 
-Bit7Only            equ %10000000
-Bit6Only            equ %01000000
-Bit5Only            equ %00100000
-Bit4Only            equ %00010000
-Bit3Only            equ %00001000
-Bit2Only            equ %00000100
-Bit1Only            equ %00000010
-Bit0Only            equ %00000001
-Bit7Clear           equ %01111111
-Bit6Clear           equ %10111111
-Bit5Clear           equ %11011111
-Bit4Clear           equ %11101111
-Bit3Clear           equ %11110111
-Bit2Clear           equ %11111011
-Bit1Clear           equ %11111101
-Bit0Clear           equ %11111110
-ConstPi				equ $80
-ConstNorm           equ 197
+Bit7Only                equ %10000000
+Bit6Only                equ %01000000
+Bit5Only                equ %00100000
+Bit4Only                equ %00010000
+Bit3Only                equ %00001000
+Bit2Only                equ %00000100
+Bit1Only                equ %00000010
+Bit0Only                equ %00000001
+Bit7Clear               equ %01111111
+Bit6Clear               equ %10111111
+Bit5Clear               equ %11011111
+Bit4Clear               equ %11101111
+Bit3Clear               equ %11110111
+Bit2Clear               equ %11111011
+Bit1Clear               equ %11111101
+Bit0Clear               equ %11111110
+ConstPi				    equ $80
+ConstNorm               equ 197
 ;OpCodes
-OpCodeSCF           equ $37
-OpCodeCCF           equ $3F
-OpCodeAndA          equ $A7
-OpCodeClearCarryFlag equ OpCodeAndA
+OpCodeSCF               equ $37
+OpCodeCCF               equ $3F
+OpCodeAndA              equ $A7
+OpCodeClearCarryFlag    equ OpCodeAndA
 
 ;Text Tokens
-EliteToken			equ $1E			; Token ID for text messsage ---- E L I T E ----
-BrabenBellToken 	equ $0D
-AcorToken			equ $0C
+EliteToken			    equ $1E			; Token ID for text messsage ---- E L I T E ----
+BrabenBellToken 	    equ $0D
+AcorToken			    equ $0C
 ; Cursor Bits
-CursorClimb         equ %10000000
-CursorDive          equ %01000000
-CursorLeft          equ %00100000
-CursorRight         equ %00010000
-CursorHome          equ %00001000
-CursorRecenter      equ %00000100
+CursorClimb             equ %10000000
+CursorDive              equ %01000000
+CursorLeft              equ %00100000
+CursorRight             equ %00010000
+CursorHome              equ %00001000
+CursorRecenter          equ %00000100
 
 ; Intro Screen
-TitleShip			equ	$8C
-RotationUnity		equ $60
-DBCheckCode			equ $DB
-MaxVisibility		equ $1F
-FarInFront			equ $C0
+TitleShip			    equ	$8C
+RotationUnity		    equ $60
+DBCheckCode			    equ $DB
+MaxVisibility		    equ $1F
+FarInFront			    equ $C0
 ; Equipment Flags     
 EquipmentItemFitted     equ $FF
 EquipmentItemNotFitted  equ 0
@@ -163,39 +169,41 @@ StageMissileNotTargeting equ $FF
 StageMissileTargeting   equ $FE
 
 
-ShipMaxDistance     equ 192
-HyperSpaceTimers    equ $0B0B
-
-; -- game limts
-MaxNumberOfStars	equ 11
+ShipMaxDistance         equ 192
+HyperSpaceTimers        equ $0B0B
+    
+; -- game limts 
+MaxNumberOfStars	    equ 11
 ConsoleRefreshInterval  equ 5
-MaxJunkStation      equ 3
-MaxJunkFreeSpace    equ 5
-WarpCoolDownPeriod  equ 90
+MaxJunkStation          equ 3
+MaxJunkFreeSpace        equ 5
+WarpCoolDownPeriod      equ 90
 
-ShipTypeSize		equ	32 			;??????? just a guess for now
-ShipSST				equ 4			; its a space station
-UniverseBasePage 	equ 70			; Base memory bank for universe Item #0
-ShipDataBasePage	equ	90			; Needs 2mb upgrade but what the heck
-ShipCountMax		equ	2			; For now just 2 ships to debug
-LineLimitPerShip	equ 70			; Max lines per ship
-FaceLimitPerShip	equ	70			; Same as line limit to simplify some logic
+ShipTypeSize		    equ	32 			;??????? just a guess for now
+ShipSST				    equ 4			; its a space station
+UniverseBasePage 	    equ 70			; Base memory bank for universe Item #0
+ShipDataBasePage	    equ	90			; Needs 2mb upgrade but what the heck
+ShipCountMax		    equ	2			; For now just 2 ships to debug
+LineLimitPerShip	    equ 70			; Max lines per ship
+FaceLimitPerShip	    equ	70			; Same as line limit to simplify some logic
 ; "NEED TO DEFINE SHIPTYPESIZE TODO"
 
 ; Memory page managment	(Refers to a memory slot as a place to access data)
-ShipDataSlot		equ	6			; this may move into rom swap out space later
-UniverseObjectSlot	equ	7
+ShipDataSlot		    equ	6			; this may move into rom swap out space later
+UniverseObjectSlot	    equ	7
 
-KeyForwardsView		equ	$20
+KeyForwardsView		    equ	$20
 ; Game specific equates
-MissileDropHeight   equ 5           ; how far the missile is ejected on launch in y axis
-WarpSequenceCount   equ 50
+MissileDropHeight       equ 5           ; how far the missile is ejected on launch in y axis
+WarpSequenceCount       equ 50
 
 ;...Game Colour Mapping
-L2DustColour        equ L2ColourGREY_1
-L2SunScannerBright  equ 252
-L2SunScanner        equ 180
-L2DebrisColour      equ L2ColourYELLOW_1
+L2DustColour            equ L2ColourGREY_1
+L2SunScannerBright      equ 252
+L2SunScanner            equ 180
+L2DebrisColour          equ L2ColourYELLOW_1
+L2PlanetScannerBright   equ 20
+L2PlanetScanner         equ 16
 
 
 ; Ship Data
