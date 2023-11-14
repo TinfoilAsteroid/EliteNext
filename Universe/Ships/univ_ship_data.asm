@@ -149,11 +149,23 @@ OrthagCountdown             DB  12
 UBnkShipCopy                equ UBnkHullVerticies               ; Buffer for copy of ship data, for speed will copy to a local memory block, Cobra is around 400 bytes on creation of a new ship so should be plenty
 UBnk_Data_len               EQU $ - StartOfUniv
 
+
+ZeroUnivPitch:          MACRO
+                        xor     a
+                        ld      (UBnKRotZCounter),a
+                        ENDM
+
+ZeroUnivRoll:           MACRO
+                        xor     a
+                        ld      (UBnKRotXCounter),a
+                        ENDM
+
 ZeroUnivPitchAndRoll:   MACRO
                         xor     a
                         ld      (UBnKRotXCounter),a
                         ld      (UBnKRotZCounter),a
                         ENDM
+
 
 MaxUnivPitchAndRoll:    MACRO
                         ld      a,127
@@ -161,6 +173,22 @@ MaxUnivPitchAndRoll:    MACRO
                         ld      (UBnKRotZCounter),a
                         ENDM                   
 
+InfinitePitch:          MACRO
+                        ld      a,$FF
+                        ld      (UBnKRotZCounter),a
+                        ENDM   
+
+InfiniteRoll:           MACRO
+                        ld      a,$FF
+                        ld      (UBnKRotXCounter),a
+                        ENDM   
+
+InfinitePitchAndRoll:    MACRO
+                        ld      a,$FF
+                        ld      (UBnKRotXCounter),a
+                        ld      (UBnKRotZCounter),a
+                        ENDM   
+                        
 RandomUnivPitchAndRoll: MACRO
                         call    doRandom
                         or      %01101111
@@ -383,6 +411,126 @@ UnivSetDemoPostion:     call    UnivSetSpawnPosition
 .SkipFurther            ld      (UBnKzlo),hl
                         ret
     DISPLAY "Tracing 1", $
+    
+; --------------------------------------------------------------
+CopyPlanetGlobaltoSpaceStation:
+                        ld      hl,ParentPlanetX
+                        ld      de,UBnKxlo
+                        ld      bc,3*3
+                        ldir
+                        ret
+; --------------------------------------------------------------
+CopySpaceStationtoPlanetGlobal:
+                        ld      hl,UBnKxlo
+                        ld      de,ParentPlanetX
+                        ld      bc,3*3
+                        ldir
+                        ret  
+; --------------------------------------------------------------
+; generate space station type based on seed values
+UnivSelSpaceStationType:ld      a,(DisplayEcononmy)
+                        ld      hl,(DisplayGovernment)          ; h = TekLevel, l = Government
+                        ld      de,(DisplayPopulation)          ; d = productivity e = Population
+                        ; so its economdy + government - TekLevel + productivity - population %00000001
+                        add     a,l
+                        sbc     a,h
+                        add     a,d
+                        sbc     a,e
+                        and     $01
+                        ld      hl,MasterStations               ; in main memory
+                        add     hl,a
+                        ld      a,(hl)
+                        ret                        
+; --------------------------------------------------------------
+CalculateSpaceStationWarpPositon:
+.CalcZPosition:         ld      a,(WorkingSeeds+1)      ; seed d & 7 
+                        and     %00000111               ; .
+                        add     a,7                     ; + 7
+                        sra     a                       ; / 2
+.SetZPosition:          ld      (UBnKzsgn),a            ; << 16 (i.e. load into z sign byte
+                        ld      hl, $0000               ; now set z hi and lo
+                        ld      (UBnKzlo),hl            ;
+.CalcXandYPosition:     ld      a,(WorkingSeeds+5)      ; seed f & 3
+                        and     %00000011               ; .
+                        add     a,3                     ; + 3
+                        ld      b,a
+                        ld      a,(WorkingSeeds+4)      ; get low bit of seed e
+                        and     %00000001
+                        rra                             ; roll bit 0 into bit 7
+                        or      b                       ; now calc is f & 3 * -1 if seed e is odd
+.SetXandYPosition:      ld      (UBnKxsgn),a            ; set into x and y sign byte
+                        ld      (UBnKysgn),a            ; .
+                        ld      a,b                     ; we want just seed f & 3 here
+                        ld      (UBnKxhi),a             ; set into x and y high byte
+                        ld      (UBnKyhi),a             ; .
+                        ZeroA
+                        ld      (UBnKxlo),a
+                        ld      (UBnKylo),a                        
+.CaclculateSpaceStationOffset:
+.CalculateOffset:       ld      a,(WorkingSeeds+2)
+                        and     %00000011
+                        ld      c,a
+                        ld      a,(WorkingSeeds)
+                        and     %00000001
+                        rla     
+                        ld      b,a
+                        ld      h,c
+                        ld      c,0
+.TransposeX:            push    bc,,hl
+                        ld      de,(UBnKxhi)
+                        ld      a,(UBnKxsgn)
+                        ld      l,a
+                        MMUSelectMathsBankedFns : call        AddBCHtoDELsigned
+                        ld      (UBnKxhi),de
+                        ld      a,l
+                        ld      (UBnKxsgn),a
+.TransposeY:            pop     bc,,hl
+                        push    bc,,hl
+                        ld      de,(UBnKyhi)
+                        ld      a,(UBnKysgn)
+                        ld      l,a
+                        MMUSelectMathsBankedFns : call        AddBCHtoDELsigned
+                        ld      (UBnKyhi),de
+                        ld      a,l
+                        ld      (UBnKysgn),a
+.TransposeZ:            pop     bc,,hl
+                        ld      de,(UBnKzhi)
+                        ld      a,(UBnKzsgn)
+                        ld      l,a
+                        MMUSelectMathsBankedFns : call        AddBCHtoDELsigned
+                        ld      (UBnKzhi),de
+                        ld      a,l
+                        ld      (UBnKzsgn),a
+                        ret
+; --------------------------------------------------------------
+UnivSpawnSpaceStationLaunched:
+                        call    UnivSpawnSpaceStation
+                        call    CopySpaceStationtoPlanetGlobal
+; --------------------------------------------------------------
+SpaceStationLaunchPositon:
+                        ld      hl,0
+                        ZeroA
+                        ld      (UBnKxlo),hl
+                        ld      (UBnKxsgn),a
+                        ld      (UBnKylo),hl
+                        ld      (UBnKysgn),a
+                        ld      a,$81
+                        ld      (UBnKzlo),hl
+                        ld      (UBnKzsgn),a
+                        ret                 
+; --------------------------------------------------------------
+UnivSpawnSpaceStation:  ;    UnivSelSpaceStationType ; set a to type
+                        ;ld      c,13                    ; c to slot 13 which is space station
+                        ;call    SpawnShipTypeASlotC     ; load inito universe slot
+.CalculatePosition:     call    CopyPlanetGlobaltoSpaceStation
+.CalcOrbitOffset:       call    CalculateSpaceStationWarpPositon
+                        call    InitialiseOrientation
+.SetRollCounters:       ZeroUnivPitch
+                        InfiniteRoll
+.SetOrientation:        FlipSignMem UBnkrotmatNosevX+1;  as its 0 flipping will make no difference
+                        FlipSignMem UBnkrotmatNosevY+1;  as its 0 flipping will make no difference
+                        FlipSignMem UBnkrotmatNosevZ+1
+                        ret                        
 ; --------------------------------------------------------------
 ; This sets the position of the current ship randomly, called after spawing
 UnivSetSpawnPosition:   call    InitialiseOrientation

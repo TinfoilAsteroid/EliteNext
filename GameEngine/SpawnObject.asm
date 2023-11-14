@@ -3,7 +3,6 @@ SpawnStationHandler:            call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ret
 
-
 SpawnHermitHandler:             call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ret

@@ -266,6 +266,9 @@ DisplayPopulation		DW	0				; 03BB \ QQ6  \ population*10
 DisplayProductivity		DW	0				; 03BD \ QQ7   \ productivity*10
 Distance          		DW	0				; 03BE \ QQ8 distince in 0.1LY units
 DisplayRadius			DW	0
+ParentPlanetX           DS  3               ; used when spawining space station to determine origin
+ParentPlanetY           DS  3               ;
+ParentPlanetZ           DS  3               ;
 ; --- Used in creation of sun and planet ------------------------------------------------------------------------------------------------
 PlanetXPos              DS  1
 PlanetYPos              DS  1

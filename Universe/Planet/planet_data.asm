@@ -208,7 +208,50 @@ WarpPlanetFurther:      ld      hl,P_BnKzsgn
                         ld      a,(hl)
                         ReturnIfAGTENusng $7F                   ; this is the hard limit else it woudl turn negative and flip to -0
                         inc     (hl)                           ; if its negative it will still increase as we will block insane values
-                        ret       
+                        ret      
+
+; --------------------------------------------------------------                        
+; This sets current universe object to a planet,they use sign + 23 bit positions
+; we need to have variable size and color
+CalculatePlanetWarpPositon:
+.CalcZPosition:         ld      a,(WorkingSeeds+1)      ; seed d & 7 
+                        and     %00000111               ; .
+                        add     a,7                     ; + 7
+                        sra     a                       ; / 2
+.SetZPosition:          ld      (P_BnKzsgn),a            ; << 16 (i.e. load into z sign byte
+                        ld      hl, $0000               ; now set z hi and lo
+                        ld      (P_BnKzlo),hl            ;
+.CalcXandYPosition:     ld      a,(WorkingSeeds+5)      ; seed f & 3
+                        and     %00000011               ; .
+                        add     a,3                     ; + 3
+                        ld      b,a
+                        ld      a,(WorkingSeeds+4)      ; get low bit of seed e
+                        and     %00000001
+                        rra                             ; roll bit 0 into bit 7
+                        or      b                       ; now calc is f & 3 * -1 if seed e is odd
+.SetXandYPosition:      ld      (P_BnKxsgn),a            ; set into x and y sign byte
+                        ld      (P_BnKysgn),a            ; .
+                        ld      a,b                     ; we want just seed f & 3 here
+                        ld      (P_BnKxhi),a             ; set into x and y high byte
+                        ld      (P_BnKyhi),a             ; .
+                        ZeroA
+                        ld      (P_BnKxlo),a
+                        ld      (P_BnKylo),a                        
+                        ret         
+
+CalculatePlanetLaunchedPosition:
+.CalcXPosition:         MMUSelectMathsBankedFns
+                        ld      ix,ParentPlanetX
+                        ld      iy,P_BnKxlo
+                        call    AddAtIXtoAtIY24Signed
+.CalcYPosition:         ld      ix,ParentPlanetY
+                        ld      iy,P_BnKylo
+                        call    AddAtIXtoAtIY24Signed
+.CalcZPosition:         ld      ix,ParentPlanetZ
+                        ld      iy,P_BnKzlo
+                        call    AddAtIXtoAtIY24Signed
+                        ret
+                 
 ; --------------------------------------------------------------                        
 ; This sets current universe object to a planet,they use sign + 23 bit positions
 ; we need to have variable size and color
