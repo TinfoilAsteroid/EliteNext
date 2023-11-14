@@ -1646,14 +1646,6 @@ UNIVDATABlock12     DB $FF
                     INCLUDE "./Universe/Planet/planet_data.asm"
                     DISPLAY "Bank ",BankPlanetData," - Bytes free ",/D, $2000 - ($-PlanetBankAddr), " - BankPlanetData"
                     ASSERT $-PlanetBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 85  ------------------------------------------------------------------------------------------------------------------------
-                    SLOT    SpaceStationBankAddr
-                    PAGE    BankSpaceStationData
-                    ORG	    SpaceStationBankAddr,BankSpaceStationData
-                    ;INCLUDE "./Universe/Planet/planet_data.asm"
-                    DISPLAY "Bank ",BankSpaceStationData," - Bytes free ",/D, $2000 - ($-SpaceStationBankAddr), " - BankSpaceStationData"
-                    ASSERT $-SpaceStationBankAddr <8912, Bank code leaks over 8K boundary
-
 ;;;***; Bank 85  ------------------------------------------------------------------------------------------------------------------------
 ;;;***                        SLOT    SpriteDataAAddr
 ;;;***                        PAGE    BankSpriteDataA
