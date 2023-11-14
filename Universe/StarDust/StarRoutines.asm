@@ -180,7 +180,6 @@ StarProcessLoop:        push    bc                                  ; save count
                         and     $80                                 ;
                         or      d                                   ; set sign bit in d
                         ld      d,a                                 ;
-                        MMUSelectMathsBankedFns
                         call    ADDHLDESignedV4                  ; x = x + (x hi/256 * Q)
                         ld      a,h
                         and     $7F
@@ -196,7 +195,6 @@ StarProcessLoop:        push    bc                                  ; save count
                         and     $80                                 ;
                         or      d                                   ; set sign bit in d
                         ld      d,a                                 ;
-                        MMUSelectMathsBankedFns
                         call    ADDHLDESignedV4                  ; y = y + (x hi/256 * Q)
                         ld      a,h
                         and     $7F
@@ -253,7 +251,6 @@ StarProcessLoop:        push    bc                                  ; save count
                         or      d
                         ld      d,a                                 ; de = signed alpha & y high / 256
                         ld      hl,(iy+2)                           ; h = iy+1, l = iy+0
-                        MMUSelectMathsBankedFns
                         call    ADDHLDESignedV4                  ; we are usign add, so may need to fip sign?
                         ld      (iy+2),hl
 .NoRoll:                ld      a,(BET1)
@@ -271,7 +268,6 @@ StarProcessLoop:        push    bc                                  ; save count
                         or      d
                         ld      d,a                                 ; de = - (2 * ((BETA & Yhi) ^ 2))
                         ld      hl,(iy+2)
-                        MMUSelectMathsBankedFns
                         call    ADDHLDESignedV4
                         ld      (iy+2),hl
 ; now work out screen pos

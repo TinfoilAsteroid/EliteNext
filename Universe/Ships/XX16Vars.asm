@@ -11,22 +11,22 @@ UBnkTransmatNosevX          DW 0
 UBnkTransmatNosev           EQU UBnkTransmatNosevX
 UBnkTransmatNosevY          DW 0                ; XX16+2
 UBnkTransmatNosevZ          DW 0                ; XX16+2
-UBnkTransmatTransX          DW 0
-UBnkTransmatTransY          DW 0
-UBnkTransmatTransZ          DW 0
+UbnkTransmatTransX          DW 0
+UbnkTransmatTransY          DW 0
+UbnkTransmatTransZ          DW 0
 XX16                        equ UBnkTransmatSidev
 ;-- XX16Inv --------------------------------------------------------------------------------------------------------------------------
-UBnkTransInvRow0x0          DW 0
-UBnkTransInvRow0x1          DW 0
-UBnkTransInvRow0x2          DW 0
-UBnkTransInvRow0x3          DW 0
-UBnkTransInvRow1y0          DW 0
-UBnkTransInvRow1y1          DW 0
-UBnkTransInvRow1y2          DW 0
-UBnkTransInvRow1y3          DW 0
-UBnkTransInvRow2z0          DW 0
-UBnkTransInvRow2z1          DW 0
-UBnkTransInvRow2z2          DW 0
-UBnkTransInvRow2z3          DW 0
+UbnkTransInvRow0x0          DW 0
+UbnkTransInvRow0x1          DW 0
+UbnkTransInvRow0x2          DW 0
+UbnkTransInvRow0x3          DW 0
+UbnkTransInvRow1y0          DW 0
+UbnkTransInvRow1y1          DW 0
+UbnkTransInvRow1y2          DW 0
+UbnkTransInvRow1y3          DW 0
+UbnkTransInvRow2z0          DW 0
+UbnkTransInvRow2z1          DW 0
+UbnkTransInvRow2z2          DW 0
+UbnkTransInvRow2z3          DW 0
 
-XX16Inv             equ UBnkTransInvRow0x0
+XX16Inv             equ UbnkTransInvRow0x0

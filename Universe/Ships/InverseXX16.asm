@@ -34,21 +34,21 @@ InverseXX16:								; lead routine into .LL42	\ ->  &4B04 \ DO nodeX-Ycoords the
         ld      hl,(UBnkTransmatSidevX)     ;  
         ld      de,(UBnkTransmatRoofvX)     ;  
         ld      bc,(UBnkTransmatNosevX)     ;  
-        ld      (UBnkTransInvRow0x0),hl     ;  
-        ld      (UBnkTransInvRow0x1),de     ;  
-        ld      (UBnkTransInvRow0x2),bc     ;  
+        ld      (UbnkTransInvRow0x0),hl     ;  
+        ld      (UbnkTransInvRow0x1),de     ;  
+        ld      (UbnkTransInvRow0x2),bc     ;  
         ld      hl,(UBnkTransmatSidevY)     ;  
         ld      de,(UBnkTransmatRoofvY)     ;  
         ld      bc,(UBnkTransmatNosevY)     ;  
-        ld      (UBnkTransInvRow1y0),hl     ;  
-        ld      (UBnkTransInvRow1y1),de     ;  
-        ld      (UBnkTransInvRow1y2),bc     ;  
+        ld      (UbnkTransInvRow1y0),hl     ;  
+        ld      (UbnkTransInvRow1y1),de     ;  
+        ld      (UbnkTransInvRow1y2),bc     ;  
         ld      hl,(UBnkTransmatSidevZ)     ;  
         ld      de,(UBnkTransmatRoofvZ)     ;  
         ld      bc,(UBnkTransmatNosevZ)     ;  
-        ld      (UBnkTransInvRow2z0),hl     ;  
-        ld      (UBnkTransInvRow2z1),de     ;  
-        ld      (UBnkTransInvRow2z2),bc     ;  
+        ld      (UbnkTransInvRow2z0),hl     ;  
+        ld      (UbnkTransInvRow2z1),de     ;  
+        ld      (UbnkTransInvRow2z2),bc     ;  
         ret
         
 		

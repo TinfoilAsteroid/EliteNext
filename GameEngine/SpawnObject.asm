@@ -1,25 +1,4 @@
-; --------------------------------------------------------------
-; generate space station type based on seed values
-SelectSpaceStationType:         ld      a,(DisplayEcononmy)
-                                ld      hl,(DisplayGovernment)          ; h = TekLevel, l = Government
-                                ld      de,(DisplayPopulation)          ; d = productivity e = Population
-                                ; so its economdy + government - TekLevel + productivity - population %00000001
-                                add     a,l
-                                sbc     a,h
-                                add     a,d
-                                sbc     a,e
-                                and     $01
-                                ld      hl,MasterStations               ; in main memory
-                                add     hl,a
-                                ld      a,(hl)
-                                ret
 
-SpawnSpaceStation:              call    SelectSpaceStationType
-                                ld      iyl,a
-                                ld      c,BankUNIVDATA0 - BankSpaceStationData
-                                jp      SpawnShipTypeASlotC
-                                ; implicit return from jp
-                        
 SpawnStationHandler:            call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ret

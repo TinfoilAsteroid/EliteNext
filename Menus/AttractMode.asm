@@ -44,11 +44,11 @@ AttractModeInit:        MMUSelectLayer1
                         call    l2_flip_buffers
                         call    l2_cls     
                         MMUSelectConsoleBank
-.LoadConsole:           ld          hl,ScreenL1Bottom       ; now the pointers are in UBnk its easy to read
+.LoadConsole:           ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
                         ld          de,ConsoleImageData
                         ld          bc, ScreenL1BottomLen
                         call        memcopy_dma
-                        ld          hl,ScreenL1AttrBtm       ; now the pointers are in UBnk its easy to read
+                        ld          hl,ScreenL1AttrBtm       ; now the pointers are in Ubnk its easy to read
                         ld          de,ConsoleAttributes
                         ld          bc, ScreenL1AttrBtmLen
                         call        memcopy_dma
@@ -105,9 +105,9 @@ AttractModeUpdate:      ld      hl,(AttractTimer)
                         call    RandomXCounter
                         call    RandomYCounter
                         ld      a,(LocalXCounter)
-                        ld      (UBnkRotXCounter),a
+                        ld      (UBnKRotXCounter),a
                         ld      a,(LocalZCounter)
-                        ld      (UBnkRotZCounter),a
+                        ld      (UBnKRotZCounter),a
 .ClearScreen:           MMUSelectLayer2
                         call    l2_cls_upper_two_thirds
                         jp      .DoneIM2
@@ -135,10 +135,10 @@ AttractModeUpdate:      ld      hl,(AttractTimer)
                         jp      z,.DoneIM2
                         dec     a
                         ld      (AttractCounter),a
-                        ld      hl, (UBnkzlo)
+                        ld      hl, (UBnKzlo)
 .UpdatePos:             ld      de, $0008
                         sbc     hl,de
-                        ld      (UBnkzlo),hl                        
+                        ld      (UBnKzlo),hl                        
 .DoneIM2:               ld      a,(AttractStep)
                         inc     a
                         cp      3
@@ -156,7 +156,6 @@ SelectARandomShip:      ld      b,1                             ; Demo screen us
                         MMUSelectShipBank1
                         ld      iyh, 1
 .SelectRandom:          call    doRandom
-                        ld      a,$0D
                         JumpIfAGTENusng ShipID_Rattler+1, .SelectRandom
                         ld      iyl,a
                         call    GetShipBankId                       ; find actual memory location of data

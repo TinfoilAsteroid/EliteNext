@@ -1,20 +1,20 @@
 SetLastFaceVisible: MACRO
                     ld      a,$FF                       ; last normal is always visible                                                         ;;; 
-                    ld      (UBnkFaceVisArray+15),a     ; XX2+15                                                                                ;;; 
+                    ld      (UbnkFaceVisArray+15),a     ; XX2+15                                                                                ;;; 
                     ENDM
 
 SetLastFaceVisCall: ld      a,$FF 
-                    ld      (UBnkFaceVisArray+15),a
+                    ld      (UbnkFaceVisArray+15),a
                     ret
 
 CheckIfExplodingCall:
 ; DEBUG TODO turn into MACRO later
 ; Sets Z flag to true if only some faces are visible
 ; Clears Z flag if exploding so all faces should be rendered
-        ld      a,(UBnkexplDsp)                 ; INWK+31                                                                               ;;; If bit 5 of exploding state is clear
+        ld      a,(UBnKexplDsp)                 ; INWK+31                                                                               ;;; If bit 5 of exploding state is clear
 ;;DEBUG
         or      $FF ; force bit 5 set so exploding
-        ld      (UBnkexplDsp),a
+        ld      (UBnKexplDsp),a
 ;;DEBUG        
         ld      c,a                         ; save explDsp into c                                                                   ;;; 
         and     $20                         ; mask bit5 exploding                                                                   ;;; 

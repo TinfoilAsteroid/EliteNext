@@ -1,4 +1,3 @@
-        DISPLAY "TODO : Can we move all tables into MMU Zero?"
 ; Note when selecting its skewed by rank which ads a filter so bigger ships should be later in the table
 ; More optimal will be to order all the ships and then have an entry point and length of tablea
 

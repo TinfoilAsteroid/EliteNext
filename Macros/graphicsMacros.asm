@@ -23,6 +23,8 @@ DoubleBuffer640IfPossible: MACRO
                         ENDIF
                         ENDM                        
 
+
+
 ErrorEquStepMinusDelta: MACRO   delta_step, delta_value
                         ld      hl,(delta_step)
                         ld      de,(delta_value)

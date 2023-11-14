@@ -12,7 +12,7 @@ MVS4PitchAlphaRollBeta:
 MVS4:										;.MVS4	\ -> &52A1 \ Moveship4, Y is matrix row, pitch&roll update to coordinates
 		ld		a,(ALPHA)					;  ALPHA	
 		ld		(varQ),a					; player ship's roll Q = Alpha
-		ld		hl,UBnkxsgn
+		ld		hl,UBnKxsgn
 		ld		a,b							; from 
 		add		hl,a						
 		ld		a,(hl)						; INWK+2,Y

@@ -76,7 +76,7 @@ CopyVerticesDataToUBnkB:
                         IFDEF SHIPBANKC
 CopyVerticesDataToUBnkC:
                         ENDIF
-                        ld          hl,(VerticesAddyAddr)       ; now the pointers are in UBnk its easy to read
+                        ld          hl,(VerticesAddyAddr)       ; now the pointers are in Ubnk its easy to read
                         ld          de,UBnkHullVerticies
                         ld          b,0
                         ld			a,(VertexCtX6Addr)
@@ -95,7 +95,7 @@ CopyEdgeDataToUBnkB:
                         IFDEF SHIPBANKC
 CopyEdgeDataToUBnkC:
                         ENDIF
-                        ld          hl,(EdgeAddyAddr)          ; now the pointers are in UBnk its easy to read
+                        ld          hl,(EdgeAddyAddr)          ; now the pointers are in Ubnk its easy to read
                         ld          de,UBnkHullEdges
                         ld          b,0
                         ld			a,(LineX4Addr)
@@ -114,7 +114,7 @@ CopyNormalDataToUBnkB:
                         IFDEF SHIPBANKC
 CopyNormalDataToUBnkC:
                         ENDIF
-                        ld          hl,(FaceAddyAddr)          ; now the pointers are in UBnk its easy to read
+                        ld          hl,(FaceAddyAddr)          ; now the pointers are in Ubnk its easy to read
                         ld          de,UBnkHullNormals
                         ld          b,0
                         ld          a,(FaceCtX4Addr)
@@ -135,7 +135,7 @@ CopyTrianDataToUBnkC:
                         ENDIF
     IFDEF SOLIDHULLTEST
 
-                        ld          hl,(ShipSolidFillAddr)      ; now the pointers are in UBnk its easy to read
+                        ld          hl,(ShipSolidFillAddr)      ; now the pointers are in Ubnk its easy to read
                         ld          de,UBnkHullSolid
                         ld          b,0
                         ld          a,(ShipSolidLenAddr)
@@ -144,7 +144,7 @@ CopyTrianDataToUBnkC:
                         call        memcopy_dma
                         ret
     ENDIF
-;CopyShipIdToUBnk:       ld      
+;CopyShipIdToUbnk:       ld      
 
 
                         IFDEF SHIPBANKA
@@ -162,7 +162,7 @@ CopyShipDataToUBnkC:    push        af
                         ENDIF
                         ld          (UBnkShipModelBank),a
                         pop         af                              ; save the current ship number and bank in case we need it later, say for a space station
-                        ld			(UBnkShipModelNbr),a			; mark ship type in bank
+                        ld			(UBnKShipModelNbr),a			; mark ship type in bank
                         
 .GetHullDataLength:     ld          hl,ShipModelSizeTable
                         add         hl,a

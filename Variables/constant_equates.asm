@@ -11,8 +11,6 @@ SignMask16Bit		    equ %0111111111111111
 SignOnly8Bit		    equ $80
 SignOnly16Bit		    equ $8000
 
-
-
 Bit7Only                equ %10000000
 Bit6Only                equ %01000000
 Bit5Only                equ %00100000
@@ -61,11 +59,6 @@ EquipmentItemNotFitted  equ 0
 ; Universe Managment
 PlanetTypeMeridian      equ 128
 PlanetMinRadius         equ 6
-UniverseBanks           equ 12
-SpaceStationBanks       equ 1
-TotalUniverseBanks      equ UniverseBanks
-UniverseSlotListSize    equ	UniverseBanks
-
 
 ShipTotalModelCount     equ 44
 ShipTypeScoopable       equ 4         ; a sub set of junk

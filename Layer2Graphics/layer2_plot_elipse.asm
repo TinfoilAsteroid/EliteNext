@@ -1,18 +1,18 @@
 
-l2_elipse_pos		DW 0
-l2_elipse_colour	DB 0
-l2_elipse_radius	DB 0
-l2_elipse_x			DB 0
-l2_elipse_y			DB 0
-l2_elipse_d			DB 0
+l2_circle_pos		DW 0
+l2_circle_colour	DB 0
+l2_circle_radius	DB 0
+l2_circle_x			DB 0
+l2_circle_y			DB 0
+l2_circle_d			DB 0
 
-l2_elipse_xHeap 	DS 2*66
-l2_elipse_yHeap     DS 2*66
-l2_elipse_heap_size DB 0
-l2_elipse_clip_y    DW 0
-l2_elipse_clip_x    DW 0
-l2_elipse_flag      DB 0
-l2_elipse_counter   DB 0
+l2_circle_xHeap 	DS 2*66
+l2_circle_yHeap     DS 2*66
+l2_circle_heap_size DB 0
+l2_circle_clip_y    DW 0
+l2_circle_clip_x    DW 0
+l2_circle_flag      DB 0
+l2_circle_counter   DB 0
 ;Sine table
 ;FOR I%, 0, 31
 ;
@@ -25,7 +25,6 @@ l2_elipse_counter   DB 0
 ; ENDIF
 ;
 ;NEXT
-
 ;---------------------------------------------------------------------------------------------------------------------------------
 ; in HL = xPixelPos, DE = yPixelPos, A = Radius
 ;IFDEF   CIRCLE2

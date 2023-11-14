@@ -1,18 +1,23 @@
- 
 
-XX25DefineMacro: MACRO   p?
-;-- XX25 --------------------------------------------------------------------------------------------------------------------------
-p?_BnkProjxLo                 DB  0
-p?_BnkProjxHi                 DB  0
-p?_BnkProjxSgn                DB  0
-p?_BnkProjx                   EQU p?_BnkProjxLo
-p?_BnkProjyLo                 DB  0
-p?_BnkProjyHi                 DB  0
-p?_BnkProjySgn                DB  0
-p?_BnkProjy                   EQU p?_BnkProjyLo
-p?_BnkProjzLo                 DB  0
-p?_BnkProjzHi                 DB  0
-p?_BnkProjzSgn                DB  0
-p?_BnkProjz                   EQU p?_BnkProjzLo
-p?_XX25                       EQU p?_BnkProjxLo
-                            ENDM      
+
+XX25DefineMacro: MACRO   prefix1?
+    DEFINE __XX25_arg1_tmp prefix1?
+    LUA ALLPASS 
+        prf = sj.get_define("__XX25_arg1_tmp")
+        
+        _pl(prf .. ";-- XX25 --------------------------------------------------------------------------------------------------------------------------")
+        _pl(prf .. "BnKProjxLo                 DB  0")
+        _pl(prf .. "BnKProjxHi                 DB  0")
+        _pl(prf .. "BnKProjxSgn                DB  0")
+        _pl(prf .. "BnKProjx                   EQU " .. prf .. "BnKProjxLo")
+        _pl(prf .. "BnKProjyLo                 DB  0")
+        _pl(prf .. "BnKProjyHi                 DB  0")
+        _pl(prf .. "BnKProjySgn                DB  0")
+        _pl(prf .. "BnKProjy                   EQU " .. prf .. "BnKProjyLo")
+        _pl(prf .. "BnKProjzLo                 DB  0")
+        _pl(prf .. "BnKProjzHi                 DB  0")
+        _pl(prf .. "BnKProjzSgn                DB  0")
+        _pl(prf .. "BnKProjz                   EQU " .. prf .. "BnKProjzLo")
+        _pl(prf .. "XX25                       EQU " .. prf .. "BnKProjxLo")
+    ENDLUA
+                            ENDM        

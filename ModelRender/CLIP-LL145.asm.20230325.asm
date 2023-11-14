@@ -21,10 +21,10 @@ Gradient                DB      0
 
 ;--------------------------------------------------------------------------------------
         IFNDEF       CLIPVersion3
-ClipLine:               ld      bc,(UBnkPreClipY1)          ; bc - XX15(2,3)
-                        ld      ix,(UBnkPreClipY2)          ; ix - XX12(0,1)
-                        ld      hl,(UBnkPreClipX1)          ; hl - XX15(0,1)
-                        ld      de,(UBnkPreClipX2)          ; de - XX15(4,5)
+ClipLine:               ld      bc,(UbnkPreClipY1)          ; bc - XX15(2,3)
+                        ld      ix,(UbnkPreClipY2)          ; ix - XX12(0,1)
+                        ld      hl,(UbnkPreClipX1)          ; hl - XX15(0,1)
+                        ld      de,(UbnkPreClipX2)          ; de - XX15(4,5)
                         xor     a
                         ld      (SWAP),a                    ; SWAP = 0
                         ld      a,d                         ; A = X2Hi
@@ -397,10 +397,10 @@ LL129:                  ld      a,(clipGradient)
 ClipLineV3:             ;break
         IFDEF       CLIPVersion3
 ;My logic version
-                        ld      bc,(UBnkPreClipY1)                  ; bc - XX15(2,3)
-                        ld      ix,(UBnkPreClipY2)                  ; ix - XX12(0,1)
-                        ld      hl,(UBnkPreClipX1)                  ; hl - XX15(0,1)
-                        ld      de,(UBnkPreClipX2)                  ; de - XX15(4,5)
+                        ld      bc,(UbnkPreClipY1)                  ; bc - XX15(2,3)
+                        ld      ix,(UbnkPreClipY2)                  ; ix - XX12(0,1)
+                        ld      hl,(UbnkPreClipX1)                  ; hl - XX15(0,1)
+                        ld      de,(UbnkPreClipX2)                  ; de - XX15(4,5)
 .CheckNoClip:           ld      a,b
                         or      d
                         or      h
@@ -448,8 +448,8 @@ ClipLineV3:             ;break
                         call    compare16HLDE
                         ret     m
 
-.StartProcessing:       ld      hl,(UBnkPreClipX1)                  ; hl - XX15(0,1)
-                        ld      de,(UBnkPreClipX2)                  ; de - XX15(4,5)
+.StartProcessing:       ld      hl,(UbnkPreClipX1)                  ; hl - XX15(0,1)
+                        ld      de,(UbnkPreClipX2)                  ; de - XX15(4,5)
                         ld      iyh,0
 ; if x1hi or y1 high <> 0 or y1 > 127 then set bit 1 of clipcoord
                         ld      a,h
@@ -541,8 +541,8 @@ ClipLineV3:             ;break
                         and     1
                         jp      z,.ClipP2
                         call    LL118v3
-                        ld      (UBnkPreClipY1), bc                 ; bc - XX15(2,3);;
-                        ld      (UBnkPreClipX1), hl
+                        ld      (UbnkPreClipY1), bc                 ; bc - XX15(2,3);;
+                        ld      (UbnkPreClipX1), hl
 ; if bit 2 of clipcoord is set
 ;        swap x1y1 with x2y2
 ;        call    LL118
@@ -550,15 +550,15 @@ ClipLineV3:             ;break
                         and     2
                         jp      z,.ClipComplete
                         call    LL118v3PreSwap
-                        ld      (UBnkPreClipY2), bc                 ; bc - XX15(2,3);;
-                        ld      (UBnkPreClipX2), hl
+                        ld      (UbnkPreClipY2), bc                 ; bc - XX15(2,3);;
+                        ld      (UbnkPreClipX2), hl
 ;clip compelte exit    
 .ClipComplete:          ld      a,$FF
                         ld      (ClipSuccess),a
-                        ld      bc,(UBnkPreClipY1)                  ; bc - XX15(2,3);;
-                        ld      hl,(UBnkPreClipX1)                        
-                        ld      ix,(UBnkPreClipY2)                  ; bc - XX15(2,3);;
-                        ld      de,(UBnkPreClipX2)
+                        ld      bc,(UbnkPreClipY1)                  ; bc - XX15(2,3);;
+                        ld      hl,(UbnkPreClipX1)                        
+                        ld      ix,(UbnkPreClipY2)                  ; bc - XX15(2,3);;
+                        ld      de,(UbnkPreClipX2)
                         ld      a,c                                 ; Y1 = y1 lo, x2 = x2 lo, x1 = x1 lo y1 = y1 lo                                   -- Nothing off screen
                         ld      (UBnkNewY1),a
                         ld      a,ixl
@@ -569,12 +569,12 @@ ClipLineV3:             ;break
                         ld      (UBnkNewX2),a
                         ret
 ;-----------------------------------------------------------------------------------------------------------------------------------
-LL118v3PreSwap:         ld      bc,(UBnkPreClipY2)                  ; bc - XX15(2,3);;
-                        ld      hl,(UBnkPreClipX2)
+LL118v3PreSwap:         ld      bc,(UbnkPreClipY2)                  ; bc - XX15(2,3);;
+                        ld      hl,(UbnkPreClipX2)
                         jp      LL118v3Fetched
 ;-----------------------------------------------------------------------------------------------------------------------------------
-LL118v3:                ld      bc,(UBnkPreClipY1)                  ; bc - XX15(2,3);;
-                        ld      hl,(UBnkPreClipX1)
+LL118v3:                ld      bc,(UbnkPreClipY1)                  ; bc - XX15(2,3);;
+                        ld      hl,(UbnkPreClipX1)
 ;-----------------------------------------------------------------------------------------------------------------------------------
 ; Enmtry point with bc - y coord hl - x coord signed
 LL118v3Fetched:                                  

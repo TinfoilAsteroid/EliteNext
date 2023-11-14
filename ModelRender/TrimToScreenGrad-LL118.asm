@@ -1,13 +1,13 @@
 ;TrimToScreenGrad:
 ;LL118:										; Trim XX15,XX15+2 to screen grad=XX12+2 for CLIP
 ;ret
-;TODO        ld      hl,(UBnkx1Lo)               ; XX15+0,1 \ x1 hi
+;TODO        ld      hl,(UBnKx1Lo)               ; XX15+0,1 \ x1 hi
 ;TODO        bit     7,a
 ;TODO        jr      nz,LL119		            ; x1 hi+ve skip down
 ;TODO        ld      a,h
 ;TODO        ld      (varS),a                    ; S	 \ else x1 hi -ve
 ;TODO        call    XYeqyx1loSmulMdiv256                       ; LL120	 \ X1<0  their comment \ X.Y = x1_lo.S *  M/2566
-;TODO        ld      bc,(UBnky1Lo)               ; step Y1 lo
+;TODO        ld      bc,(UbnKy1Lo)               ; step Y1 lo
         
 ;18                      CLC 
 ;65 36                   ADC &36		\ XX15+2 \ Y1 lo

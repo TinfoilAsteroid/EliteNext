@@ -1,6 +1,6 @@
 ; ClearLines (LL155)
 ;   y = 0
-; 	XX20 = UBnkEdgeHeapSize
+; 	XX20 = UbnkEdgeHeapSize
 ;   exit if XX20 < 4
 ;   ++y
 ;   do
@@ -11,9 +11,9 @@
 
 clearLines:
 layer2_clearLines:
-LL155cl:                ld		a,(UBnkLineArrayLen)
+LL155cl:                ld		a,(UbnkLineArrayLen)
                         ld		b,a
-                        ld		hl,UBnkLineArray
+                        ld		hl,UbnkLineArray
 clearLinesLoop:         push	bc
                         ld		a,(hl)
                         inc		hl

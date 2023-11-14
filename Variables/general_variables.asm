@@ -36,17 +36,6 @@ SLSP 		DW	0				; &03B0 \ SLSP \ ship lines pointer
 ;UNIV		DS FreeListSize*2	; Array of Universe Pointers
 ;HULLINDEX	DS ShipTypeSize*2	; hull index for table at XX21= &F XX21-1,Y
 
-; These should go into banks really
-XX12PVarQ			DW 0
-XX12PVarR			DW 0
-XX12PVarS			DW 0
-XX12PVarResult1		DW 0
-XX12PVarResult2		DW 0
-XX12PVarResult3		DW 0
-XX12PVarSign2		DB 0
-XX12PVarSign1		DB 0								; Note reversed so BC can do a little endian fetch
-XX12PVarSign3		DB 0
-
 ; Present System Variables
 
 RandomSeed				DB	43			    ; 00 DEBUG JUST SOME START VALUES
@@ -73,7 +62,7 @@ varXX					equ	varXXlo
 YYlo                    DB 0                ; 26		
 YYHi                    DB 0                ; 27		
 varYY					equ	YYlo
-                                            ;	28
+											;	28
 											;	29		
 ;PlayerShipPositionData - Must be contiguous for setup
 BETA 					DB	0               ; 2A        (pitch done)		
@@ -85,11 +74,6 @@ BET1MAXC                DB  31              ; max climb
 BET1MAXD                DB  -31             ; max dive
 XC						DB	0               ; 2C
 YC						DB 	0               ; 2D
-; This is used when passing data between space station to ship offset, sun and planet to correct positions
-LaunchedX               DS  3
-LaunchedY               DS  3
-LaunchedZ               DS  3
-
 ;... ECM logic. If another ship adds ECM then we just set the loop A and B to starting values so they overlap
 ECMCountDown            DB  0
 ECMLoopB                DB  0
@@ -282,9 +266,6 @@ DisplayPopulation		DW	0				; 03BB \ QQ6  \ population*10
 DisplayProductivity		DW	0				; 03BD \ QQ7   \ productivity*10
 Distance          		DW	0				; 03BE \ QQ8 distince in 0.1LY units
 DisplayRadius			DW	0
-ParentPlanetX           DS  3               ; used when spawining space station to determine origin
-ParentPlanetY           DS  3               ;
-ParentPlanetZ           DS  3               ;
 ; --- Used in creation of sun and planet ------------------------------------------------------------------------------------------------
 PlanetXPos              DS  1
 PlanetYPos              DS  1
@@ -349,6 +330,7 @@ ExtraVessels			DB	0				; 0349 EV Use d by cops, extra vessels still to spawn?
 Delay					DB	0				; 034A Delay general purpose eg. spawing EV or when printign messages
 CurrentMissileCheck:    DB  0               ; if > Universe Slot list then free for next missile
 MessageForDestroyed		DB	0				; 034B Message flag for item + destroyed
+UniverseSlotListSize    equ	12
 UniverseSlotList        DS  UniverseSlotListSize
 UniverseSlotType        DS  UniverseSlotListSize ; base type, e.g. missile, cargo etc, 
 ; Probably not needed UniverseTypeCount       DS  UniverseSlotListSize

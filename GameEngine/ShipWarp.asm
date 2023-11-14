@@ -16,7 +16,7 @@ ProcessWarp:            JumpIfMemFalse  WarpPressed, .NoWarp
 .NotInSpaceStationRange:call    AreShipsPresent
                         jr      nc,     .MassLocked
 .IsPlanetMassLocking:   MMUSelectPlanet                 ; is planet within 256 then mass locked
-                        ld      bc,(P_Bnkzhi)
+                        ld      bc,(P_BnKzhi)
                         ld      a,b                     ; if z sign is == 0 then mass locked
                         and     $7F                     ; h = abs zsign
                         or      l                       ; to get to here a must be zero to or with l will give a quick result
@@ -28,11 +28,7 @@ ProcessWarp:            JumpIfMemFalse  WarpPressed, .NoWarp
                         or      l                       ; to get to here a must be zero to or with l will give a quick result
                         jp      z,     .MassLocked
 .IsStationMassLocking:  MMUSelectSpaceStation
-                        IFDEF SPACESTATIONUNIQUECODE
-                        ld      de,(SS_Bnkzhi)          ; if z hi or sign == 0 then mass locked, needs to be at least 256 away
-                        ELSE
-                        ld      de,(UBnkzhi)
-                        ENDIF
+                        ld      de,(SS_BnKzhi)          ; if z hi or sign == 0 then mass locked, needs to be at least 256 away
                         ld      a,d
                         and     $7F
                         or      e
@@ -58,37 +54,26 @@ ProcessWarp:            JumpIfMemFalse  WarpPressed, .NoWarp
 .SmallJump:             ld      de,$0001
 ; When jumping distance is based on planet or sun not station, as station is near a planet then its not an issue
 .PerformJumpPlanet:     MMUSelectPlanet
-                        ld      hl,(P_Bnkzhi)
-                        MMUSelectMathsBankedFns
+                        ld      hl,(P_BnKzhi)
                         call    AddDEtoHLSigned
-                        ld      (P_Bnkzhi),hl
+                        ld      (P_BnKzhi),hl
 .PerformJumpStation:    MMUSelectSpaceStation
-                        IFDEF SPACESTATIONUNIQUECODE
-                        ld      de,(SS_Bnkzhi)
-                        ELSE
-                        ld      de,(UBnkzhi)
-                        ENDIF
-                        MMUSelectMathsBankedFns
+                        ld      hl,(SS_BnKzhi)
                         call    AddDEtoHLSigned
-                        IFDEF SPACESTATIONUNIQUECODE
-                        ld      de,(SS_Bnkzhi)
-                        ELSE
-                        ld      de,(UBnkzhi)
-                        ENDIF
+                        ld      (SS_BnKzhi),hl
 .PerformJumpSun:        MMUSelectSun
                         ld      (SBnKzhi),hl
-                        MMUSelectMathsBankedFns
                         call    AddDEtoHLSigned
                         ld      (SBnKzhi),hl
                         jp      .MoveJunk
             ELSE
 .NotCorrectFacing:      ;       call bong, align with body
                         jp      .NoWarp
-.JumpToPlanetCheck:     ld      a,(P_Bnkzhi)
+.JumpToPlanetCheck:     ld      a,(P_BnKzhi)
                         JumpIfAGTENusng  2, .PlanetRangeOK 
-                        ld      a,(P_Bnkyhi)
+                        ld      a,(P_BnKyhi)
                         JumpIfAGTENusng  2, .PlanetRangeOK
-                        ld      a,(P_Bnkxhi)
+                        ld      a,(P_BnKxhi)
                         JumpIfAGTENusng  2, .PlanetRangeOK
                         jp      .MassLocked
 .PlanetRangeOK:         call    WarpPlanetCloser

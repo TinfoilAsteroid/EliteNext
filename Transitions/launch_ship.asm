@@ -115,7 +115,7 @@ LaunchConsole:          MMUSelectConsoleBank                    ; Draw Console
                         ld      de,ConsoleImageData
                         ld      bc, ScreenL1BottomLen
                         call    memcopy_dma
-                        ld      hl,ScreenL1AttrBtm       ; now the pointers are in UBnk its easy to read
+                        ld      hl,ScreenL1AttrBtm       ; now the pointers are in Ubnk its easy to read
                         ld      de,ConsoleAttributes
                         ld      bc, ScreenL1AttrBtmLen
                         call    memcopy_dma

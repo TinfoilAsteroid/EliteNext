@@ -1,7 +1,7 @@
 ; Use bank 0 as source and bank 7 as write target
 ResetUniv:              MMUSelectCpySrcN BankUNIVDATA0	         ; master universe def in bank 0
                         ld		a,1             				 ; we can read bank 0 as if it was rom
-                        ld		b,TotalUniverseBanks
+                        ld		b,12
 .ResetCopyLoop:         push	bc,,af
                         MMUSelectUniverseA			             ; copy from bank 0 to 71 to 12
                         ld		hl,UniverseBankAddr

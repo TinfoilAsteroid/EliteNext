@@ -10,7 +10,7 @@ MoveShip5:
 	ld		bc,(regX)				; b = regY, c = regX
 MoveShip5regBC:
 MVS5:								; Moveship5, small rotation in matrix (1-1/2/256 = cos  1/16 = sine)
-	ld		hl,UBnkxhi				; hl - INWK1
+	ld		hl,UBnKxhi				; hl - INWK1
 .IndexX:
 	ld		a,c						;
 	add		hl,a					;
@@ -30,7 +30,7 @@ MVS5:								; Moveship5, small rotation in matrix (1-1/2/256 = cos  1/16 = sine
 	sbc		a,0						; hi
                     DISPLAY "TODO:  optimise"
 	ld		(varS),a				; S, TODO could we simplify this by loading xlohi into hl and subtracting 1?
-	ld		hl,UBnkxlo				; hl = INWK+0
+	ld		hl,UBnKxlo				; hl = INWK+0
 .IndexY:
 	ld		a,b						;
 	add		hl,a					;
@@ -102,13 +102,13 @@ MVS5:								; Moveship5, small rotation in matrix (1-1/2/256 = cos  1/16 = sine
 	xor		(hl)					;RAT2	\ rot sign
 	call	XAequPAaddRSfast		; ADD	\ X.A = P.A + R.S, note we still have bc on stack
 	pop		bc						; now we have x and y restored
-	ld		hl,UBnkxhi				;
+	ld		hl,UBnKxhi				;
 	ld		a,b
-	add		hl,a					; hl = UBnkxhi[y]
+	add		hl,a					; hl = UBnKxhi[y]
 	ld		(hl),d
-	dec		hl						; hl = UBnkxhi[y]
+	dec		hl						; hl = UBnKxhi[y]
 	ld		(hl),e					; as XA is in DE also we can just write that Yindex one now updated by 1/16th of a radian rotation
-	ld		hl,UBnkxhi
+	ld		hl,UBnKxhi
 	ld		a,c
 	add		hl,a					; hl = INKW+1[X]
 	ld		de,varKp1				; de = variable k hi

@@ -1,16 +1,16 @@
-LoadCraftToCamera:      ld      hl,(UBnkxlo)            ; UBnkxlo, UBnkxhi
-                        ld      de,(UBnkxsgn)           ; UBnkxsgn, UBnkylo
-                        ld      bc,(UBnkyhi)            ; UBnkyhi, UBnkysgn
+LoadCraftToCamera:      ld      hl,(UBnKxlo)            ; UBnKxlo, UBnKxhi
+                        ld      de,(UBnKxsgn)           ; UBnKxsgn, UBnKylo
+                        ld      bc,(UBnKyhi)            ; UBnKyhi, UBnKysgn
                         ld      (UBnkDrawCam0xLo),hl    ; UBnkDrawCam0xLo, UBnkDrawCam0xHi
                         ld      (UBnkDrawCam0xSgn),de   ; UBnkDrawCam0xSgn,UBnkDrawCam0yLo
                         ld      (UBnkDrawCam0yHi),bc    ; UBnkDrawCam0yHi, UBnkDrawCam0ySgn
                         
-                        ld      hl,(UBnkzlo)            ; UBnkzlo, UBnkzhi
-                        ld      a,(UBnkzsgn)             ; UBnkzlo
+                        ld      hl,(UBnKzlo)            ; UBnKzlo, UBnKzhi
+                        ld      a,(UBnKzsgn)             ; UBnKzlo
                         ld      (UBnkDrawCam0zLo),hl    ; UBnkDrawCam0zLo, UBnkDrawCam0zHi
                         ld      (UBnkDrawCam0zSgn),a    ; UBnkDrawCam0zSgn
                         ret
-;                       ld      hl,UBnkxlo
+;                       ld      hl,UBnKxlo
 ;                       ld      de,UBnkDrawCam0xLo
 ;                       NineLDIInstrunctions                ; transfer 9 bytes
                         ret
@@ -65,7 +65,6 @@ LL94Z:
         ld      e,a                                                     ;           
         ld      a,(UBnkDrawCam0zSgn)                                    ;
         ld      c,a                                                     ;
-        MMUSelectMathsBankedFns
         call    ADDHLDESignBC                                           ;           
         ld      b,a                                                     ;           
         ld      a,h                                                     ;           
@@ -84,7 +83,6 @@ LL94X:
         ld      e,a                                                     ;           
         ld      a,(UBnkDrawCam0xSgn)                                    ;
         ld      c,a                                                     ;
-        MMUSelectMathsBankedFns
         call    ADDHLDESignBC                                           ;           
         ld      b,a                                                     ;           
         ld      a,h                                                     ;           
@@ -103,7 +101,6 @@ LL94Y:
         ld      e,a                                                     ;           
         ld      a,(UBnkDrawCam0ySgn)                                    ;
         ld      c,a                                                     ;
-        MMUSelectMathsBankedFns
         call    ADDHLDESignBC                                           ;           
         ld      b,a                                                     ;           
         ld      a,h                                                     ;           

@@ -42,7 +42,6 @@ ConsoleImageAddr        equ $e000
 GalaxyDataAddr          equ $e000
 SoundAddr               equ $e000
 KeyboardAddr            equ $e000
-MathsBankedFnsAddr      equ $0000
 
 EXSDOSMMU0              equ MMU_SLOT_0_REGISTER
 MathsTablesMMU          equ MMU_SLOT_0_REGISTER
@@ -74,7 +73,6 @@ ConsoleImageDataMMU	    equ MMU_SLOT_7_REGISTER
 GalaxyDataMMU	        equ MMU_SLOT_7_REGISTER
 SoundMMU                equ MMU_SLOT_7_REGISTER
 KeyboardMMU             equ MMU_SLOT_7_REGISTER
-MathsBankedFnsMMU       equ MMU_SLOT_0_REGISTER
 
 ; banks 8 to 17 are reserved for layer 2 memory
 BankResetUniv           equ 49
@@ -100,7 +98,6 @@ BankShipModels3         equ 68
 BankShipModels4         equ 69
 
 BankUNIVDATA0           equ 70
-BankSpaceStationData    equ 70
 BankUNIVDATA1           equ 71
 BankUNIVDATA2           equ 72
 BankUNIVDATA3           equ 73
@@ -113,9 +110,9 @@ BankUNIVDATA9           equ 79
 BankUNIVDATA10          equ 80
 BankUNIVDATA11          equ 81
 BankUNIVDATA12          equ 82
-BankUNIVDATA13          equ 83
-BankSunData             equ 84
-BankPlanetData          equ 85
+BankSunData             equ 83
+BankPlanetData          equ 84
+BankSpaceStationData    equ 85
  
 BankGalaxyData0         equ 91
 BankGalaxyData1         equ 92
@@ -129,7 +126,6 @@ BankGalaxyData7         equ 98
 BankMathsTables         equ 99
 BankSound               equ 100
 BankKeyboard            equ 101
-BankMathsBankedFns      equ 102
 
 BankROM                 equ 255
 

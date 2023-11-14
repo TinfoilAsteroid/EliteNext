@@ -15,7 +15,7 @@ SplitAndDampenZ:        MACRO
                         dec     a                       ; dampen
                         ld      (univRAT2Val),a
                         or      c                       ; make S7 again after dampening
-                        ld      (UBnkRotZCounter),a
+                        ld      (UBnKRotZCounter),a
                         ENDM
                         
 SplitAndDampenX:        MACRO
@@ -32,18 +32,18 @@ SplitAndDampenX:        MACRO
                         dec     a                       ; dampen
                         ld      (univRAT2Val),a
                         or      c                       ; make S7 again after dampening
-                        ld      (UBnkRotXCounter),a
+                        ld      (UBnKRotXCounter),a
                         ENDM
                         
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; based on MVEIT part 4 of 9
 ; x and z counters are proper 2's c values
-ApplyShipRollAndPitch:  ld      a,(UBnkRotZCounter)
+ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)
                         cp      $FF
                         jr      z,.PitchSAxes
                         SplitAndDampenZ
-                        ;ld      a,(UBnkRotZCounter)
+                        ;ld      a,(UBnKRotZCounter)
 .PitchSAxes:            ld	    hl,UBnkrotmatRoofvX; UBnkrotmatSidevY
                         ld	    (varAxis1),hl
                         ld	    hl,UBnkrotmatNosevX; UBnkrotmatSidevZ	
@@ -59,7 +59,7 @@ ApplyShipRollAndPitch:  ld      a,(UBnkRotZCounter)
                         ld	    hl,UBnkrotmatNosevZ	
                         ld	    (varAxis2),hl
                         call    MVS5RotateAxis
-.ProcessRoll:           ld      a,(UBnkRotXCounter)
+.ProcessRoll:           ld      a,(UBnKRotXCounter)
                         cp      $FF
                         jr      z,.RollSAxis
                         SplitAndDampenX
@@ -141,7 +141,6 @@ MVS5RotateAxis:         ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                         pop     hl              ; get back RS POP ID 1
     ;ex     de,hl           ; swapping around so hl = AP and de = SR , shoud not matter though as its an add
 ;-now DE = (roofaxis/512) hl - abs(nosevaxis) --------------------------------------------------------------------------------
-                        MMUSelectMathsBankedFns
                         call    ADDHLDESignedV4 ; do add using hl and de
                         push    hl              ; we use stack to represent var K here now varK = Nosev axis /16 + (1 - 1/512) * roofv axis PUSH ID 2
 ;-push to stack nosev axis + roofvaxis /512  which is what roofv axis will be ------------------------------------------------  

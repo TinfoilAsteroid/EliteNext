@@ -12,13 +12,13 @@ XX12                        equ UBnkXX12xLo
 varXX12                     equ UBnkXX12xLo
 ; Repurposed XX12 when plotting lines
 UBnkY2                      equ XX12+0
-UBnky2Lo                    equ XX12+0
+UbnKy2Lo                    equ XX12+0
 UBnkY2Hi                    equ XX12+1
 UBnkDeltaXLo                equ XX12+2
 UBnkDeltaXHi                equ XX12+3
 UBnkDeltaYLo                equ XX12+4
 UBnkDeltaYHi                equ XX12+5
-UBnkGradient                equ XX12+2
+UbnkGradient                equ XX12+2
 UBnkTemp1                   equ XX12+2
 UBnkTemp1Lo                 equ XX12+2
 UBnkTemp1Hi                 equ XX12+3

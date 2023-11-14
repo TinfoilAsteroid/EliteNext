@@ -21,12 +21,12 @@ SignOnly16Bit		equ $8000
 testStartup:            ORG         $8000
                         ld      a, $80
                         ld      hl,1500
-                        ld      (UBnkxlo),hl
+                        ld      (UBnKxlo),hl
                         ld      hl,2000
-                        ld      (UBnkylo),hl
-                        ld      (UBnkysgn),a
+                        ld      (UBnKylo),hl
+                        ld      (UBnKysgn),a
                         ld      hl,1000
-                        ld      (UBnkzlo),hl
+                        ld      (UBnKzlo),hl
                         ld      a,$F9
                         ld      (UBnkrotmatSidevX),a
                         ld      (UBnkrotmatRoofvY),a
@@ -40,10 +40,9 @@ UpdateTargetingShipX : break
                         ld      a,(TargetKxsgn)                        ; and flip sign so we have missile - target
                         FlipSignBitA
                         ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
-                        ld      hl,(UBnkxlo)                        ; get missile x
-                        ld      a,(UBnkxsgn)                        ; get missile x sign
+                        ld      hl,(UBnKxlo)                        ; get missile x
+                        ld      a,(UBnKxsgn)                        ; get missile x sign
                         ld      b,a
-                        MMUSelectMathsBankedFns
                         call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
                         ld      (TacticsVectorX),hl
                         ld      (TacticsVectorX+2),a
@@ -51,10 +50,9 @@ UpdateTargetingShipX : break
                         ld      a,(TargetKysgn)
                         FlipSignBitA
                         ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
-                        ld      hl,(UBnkylo)                        ; get missile x
-                        ld      a,(UBnkysgn)                        ; get missile x sign
+                        ld      hl,(UBnKylo)                        ; get missile x
+                        ld      a,(UBnKysgn)                        ; get missile x sign
                         ld      b,a
-                        MMUSelectMathsBankedFns
                         call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
                         ld      (TacticsVectorY),hl
                         ld      (TacticsVectorY+2),a
@@ -62,10 +60,9 @@ UpdateTargetingShipX : break
                         ld      a,(TargetKzsgn)
                         FlipSignBitA
                         ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
-                        ld      hl,(UBnkzlo)                        ; get missile x
-                        ld      a,(UBnkzsgn)                        ; get missile x sign
+                        ld      hl,(UBnKzlo)                        ; get missile x
+                        ld      a,(UBnKzsgn)                        ; get missile x sign
                         ld      b,a
-                        MMUSelectMathsBankedFns
                         call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
                         ld      (TacticsVectorZ),hl
                         ld      (TacticsVectorZ+2),a
@@ -101,12 +98,12 @@ UpdateTargetingShipX : break
                         ld      a,(TacticsDotProduct1)
                         JumpIfALTNusng  22, .SlowDown
 .Accellerate:           ld      a,3                                 ; full accelleration
-                        ld      (UBnkAccel),a
+                        ld      (UBnKAccel),a
                         ret
 .SlowDown:              ld      a,(TacticsDotProduct2)              ; this is already abs so no need to do abs
                         ReturnIfALTNusng  18                        ; If A < 18 then the ship is way off the XX15 vector, so return without slowing down, as it still has quite a bit ofturning to do to get on course
                         ld      a,$FE                               ; A = -3 as missiles are more nimble and can brake more quickly
-                        ld      (UBnkAccel),a
+                        ld      (UBnKAccel),a
                         ret
 
                         INCLUDE "../GameEngine/TacticsWorkingData.asm"
@@ -132,15 +129,15 @@ TargetKzlo                     DB  $B8
 TargetKzhi                     DB  $0B 
 TargetKzsgn                    DB  0 
 Padding1                       DS 7
-UBnkxlo                     DB  0                       ; INWK+0
-UBnkxhi                     DB  0                       ; there are hi medium low as some times these are 24 bit
-UBnkxsgn                    DB  0                       ; INWK+2
-UBnkylo                     DB  0                       ; INWK+3 \ ylo
-UBnkyhi                     DB  0                       ; INWK+4 \ yHi
-UBnkysgn                    DB  0                       ; INWK +5
-UBnkzlo                     DB  0                       ; INWK +6
-UBnkzhi                     DB  0                       ; INWK +7
-UBnkzsgn                    DB  0                       ; INWK +8
+UBnKxlo                     DB  0                       ; INWK+0
+UBnKxhi                     DB  0                       ; there are hi medium low as some times these are 24 bit
+UBnKxsgn                    DB  0                       ; INWK+2
+UBnKylo                     DB  0                       ; INWK+3 \ ylo
+UBnKyhi                     DB  0                       ; INWK+4 \ yHi
+UBnKysgn                    DB  0                       ; INWK +5
+UBnKzlo                     DB  0                       ; INWK +6
+UBnKzhi                     DB  0                       ; INWK +7
+UBnKzsgn                    DB  0                       ; INWK +8
 Padding1B                       DS 7
 ;-Rotation Matrix of Ship----------------------------------------------------------------------------------------------------------
 ; Rotation data is stored as lohi, but only 15 bits with 16th bit being  a sign bit. Note this is NOT 2'c compliment
@@ -160,10 +157,10 @@ UBnkrotmatNosev             EQU UBnkrotmatNosevX
 UBnkrotmatNosevY            DW  0                       ; INWK +11
 UBnkrotmatNosevZ            DW  0                       ; INWK +13
 Padding4                    DS  10
-UBnkSpeed                   DB  0                       ; INWK +27
-UBnkAccel                   DB  0                       ; INWK +28
-UBnkRotXCounter             DB  0                       ; INWK +29
-UBnkRotZCounter             DB  0                       ; INWK +30
+UBnKSpeed                   DB  0                       ; INWK +27
+UBnKAccel                   DB  0                       ; INWK +28
+UBnKRotXCounter             DB  0                       ; INWK +29
+UBnKRotZCounter             DB  0                       ; INWK +30
 Padding5                    DS  10
 
 ;-Rotation Matrix of Ship----------------------------------------------------------------------------------------------------------
@@ -174,33 +171,33 @@ Padding5                    DS  10
 calcNPitch:             xor     SignOnly8Bit                    ; c = sign flipped of dot product only
                         and     SignOnly8Bit                    ; .
                         ld      c,a                             ; . (varT in effect)
-                        ld      a,(UBnkRotZCounter)             ; b = abs (currentz pitch)
+                        ld      a,(UBnKRotZCounter)             ; b = abs (currentz pitch)
                         and     SignMask8Bit                    ; . which will initially be 0
                         ld      b,a                             ; .
                         ld      a,(TacticsDotProduct2)          ; a = abs roof dot product
                         JumpIfALTNusng 4, .calcNPitch2          ; if a >= roll threshold
                         ld      a,3                             ;    z rot = z rot * dot product flipped sign
                         or      c                               ;    i.e. zrot = current magnitude but dot product sign flipped
-                        ld      (UBnkRotZCounter),a             ;    .
+                        ld      (UBnKRotZCounter),a             ;    .
                         ret                                     ; else (a LT current abs z)
 .calcNPitch2:           or      c                               ;     rot z = dot product with sign flipped
-                        ld      (UBnkRotZCounter),a             ;
+                        ld      (UBnKRotZCounter),a             ;
                         ret                                     ;
                         
 calcNRoll:              xor     SignOnly8Bit                    ; flip sign of dot product
                         and     SignOnly8Bit
                         ld      c,a
-                        ld      a,(UBnkRotXCounter)
+                        ld      a,(UBnKRotXCounter)
                         and     SignMask8Bit                    ; get ABS value
                         ld      b,a
                         ld      a,(TacticsDotProduct2)          ; now we have the dot product abs value
                         JumpIfALTNusng 4, .calcNRoll2
                         ld      a,3
                         or      c
-                        ld      (UBnkRotXCounter),a
+                        ld      (UBnKRotXCounter),a
                         ret
 .calcNRoll2:            or      c                               ;     rot z = dot product with sign flipped
-                        ld      (UBnkRotXCounter),a
+                        ld      (UBnKRotXCounter),a
                         ret
                         
 XX12EquTacticsDotNosev: IFDEF TACTICSDEBUG

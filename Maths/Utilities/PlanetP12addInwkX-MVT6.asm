@@ -2,14 +2,14 @@
 
 APPequXPosPlusAPP:      push    bc
                         ld      c,a                         ; save original value of a into c
-                        ld      a,(UBnkxsgn)
+                        ld      a,(UBnKxsgn)
                         ld      b,a
                         ld      a,c
                         xor     b                           ; a = a xor x postition sign
                         jp      m,.MV50                     ; if the sign is negative then A and X are both opposite signs
 ; Signs are the same to we just add and take which ever sign 
                         ld      de,(varP1)                  ; Note we take p+2,p+1 we we did a previous 24 bit mulitple
-                        ld      hl,(UBnkxlo)
+                        ld      hl,(UBnKxlo)
                         add     hl,de
                         ld      (varP1),hl                  ; now we have P1 and p2 with lo hi and
                         ld      a,c                         ; and a = original sign as they were both the same
@@ -17,7 +17,7 @@ APPequXPosPlusAPP:      push    bc
                         ret
 ; Signs are opposite so we subtract
 .MV50:                  ld      de,(varP1)
-                        ld      hl,(UBnkxlo)
+                        ld      hl,(UbnKxlo)
                         or      a
                         sbc     hl,de
                         jr      c,.MV51                     ; if the result was negative then negate result
@@ -36,14 +36,14 @@ APPequXPosPlusAPP:      push    bc
 ;also(A H L) is the result too
 APPequYPosPlusAPP:      push    bc
                         ld      c,a                         ; save original value of a into c
-                        ld      a,(UBnkysgn)
+                        ld      a,(UBnKysgn)
                         ld      b,a
                         ld      a,c
                         xor     b                           ; a = a xor x postition sign
                         jp      m,.MV50                     ; if the sign is negative then A and X are both opposite signs
 ; Signs are the same to we just add and take which ever sign 
                         ld      de,(varP1)                  ; Note we take p+2,p+1 we we did a previous 24 bit mulitple
-                        ld      hl,(UBnkylo)
+                        ld      hl,(UBnKylo)
                         add     hl,de
                         ld      (varP1),hl                  ; now we have P1 and p2 with lo hi and
                         ld      a,c                         ; and a = original sign as they were both the same
@@ -51,7 +51,7 @@ APPequYPosPlusAPP:      push    bc
                         ret
 ; Signs are opposite so we subtract
 .MV50:                  ld      de,(varP1)
-                        ld      hl,(UBnkylo)
+                        ld      hl,(UbnKylo)
                         or      a
                         sbc     hl,de
                         jr      c,.MV51                     ; if the result was negative then negate result
@@ -69,14 +69,14 @@ APPequYPosPlusAPP:      push    bc
                         
 APPequZPosPlusAPP:      push    bc
                         ld      c,a                         ; save original value of a into c
-                        ld      a,(UBnkzsgn)
+                        ld      a,(UBnKzsgn)
                         ld      b,a
                         ld      a,c
                         xor     b                           ; a = a xor x postition sign
                         jp      m,.MV50                     ; if the sign is negative then A and X are both opposite signs
 ; Signs are the same to we just add and take which ever sign 
                         ld      de,(varP1)                  ; Note we take p+2,p+1 we we did a previous 24 bit mulitple
-                        ld      hl,(UBnkzlo)
+                        ld      hl,(UBnKzlo)
                         add     hl,de
                         ld      (varP1),hl                  ; now we have P1 and p2 with lo hi and
                         ld      a,c                         ; and a = original sign as they were both the same
@@ -84,7 +84,7 @@ APPequZPosPlusAPP:      push    bc
                         ret
 ; Signs are opposite so we subtract
 .MV50:                  ld      de,(varP1)
-                        ld      hl,(UBnkzlo)
+                        ld      hl,(UBnKzlo)
                         or      a
                         sbc     hl,de
                         jr      c,.MV51                     ; if the result was negative then negate result
@@ -106,7 +106,7 @@ APPequZPosPlusAPP:      push    bc
 ;;;PlanetP12addInwkX:
 ;;;MVT6:										; Planet P(1,2) += inwk,x for planet (Asg is protected but with new sign)
 ;;;	ld		c,a								; Yreg = sg
-;;;	ld		hl,UBnkxsgn						;
+;;;	ld		hl,UBnKxsgn						;
 ;;;	ex		af,af'                          ; Save a for next bit
 ;;;	ld		a,(regX)                        ;
 ;;;	add		hl,a                            ;
@@ -126,7 +126,7 @@ APPequZPosPlusAPP:      push    bc
 ;;;	ld		a,c								;  restore old sg ok
 ;;;	ret
 ;;;.MV50:										; .MV50	\ sg -ve
-;;;	ld		hl,UBnkxlo						;
+;;;	ld		hl,UBnKxlo						;
 ;;;	ex		af,af'                          ; Save a for next bit
 ;;;	ld		a,(regX)                        ;
 ;;;	add		hl,a                            ;

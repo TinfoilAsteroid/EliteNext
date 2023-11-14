@@ -10,18 +10,18 @@
     call        NormaliseTransMat                                                                                                   ;;; 
 
     ld      a,0
-    ld      (UBnkxlo),a
-    ld      (UBnkylo),a
+    ld      (UBnKxlo),a
+    ld      (UBnKylo),a
 	ld      a,$55
-    ld      (UBnkzlo),a
+    ld      (UbnKzlo),a
     xor     a
-    ld      (UBnkxsgn),a
-    ld      (UBnkysgn),a
-    ld      (UBnkzsgn),a
-    ld      (UBnkxhi),a
-    ld      (UBnkyhi),a
+    ld      (UBnKxsgn),a
+    ld      (UBnKysgn),a
+    ld      (UBnKzsgn),a
+    ld      (UBnKxhi),a
+    ld      (UbnKyhi),a
 	ld      a,66
-    ld      (UBnkzhi),a
+    ld      (UBnKzhi),a
     call    LoadCraftToCamera 
 ;	call	TestRender
     call    SetAllFacesVisible     

@@ -55,16 +55,16 @@ ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then 
                         ld      (varXX17),a                  ; XX17 = normal scale factor for current ship adjusted for camera
                         ret
 
-CheckVisible:           ld      a,(UBnkzsgn)                 ; Is the ship behind us
+CheckVisible:           ld      a,(UBnKzsgn)                 ; Is the ship behind us
 .CheckBehind:           and     SignOnly8Bit                 ; which means z sign is negative
                         jr      nz,.ShipNoDraw               ; .
-.CheckViewPort:         ld      hl,(UBnkzlo)                 ; now check to see if its within 90 degree arc
+.CheckViewPort:         ld      hl,(UBnKzlo)                 ; now check to see if its within 90 degree arc
                         ld      a,h
                         JumpIfAGTENusng ShipMaxDistance, .ShipNoDraw
-.CheckXAxis:            ld      de,(UBnkxlo)                 ; if abs x > abx z then its out side of view port
+.CheckXAxis:            ld      de,(UBnKxlo)                 ; if abs x > abx z then its out side of view port
                         call    compare16HLDE                
                         jr      c,.ShipNoDraw               ; ship is too far out on the X Axis
-.CheckYAxis:            ld      de,(UBnkylo)                ; if abs y > abx z then its out side of view port
+.CheckYAxis:            ld      de,(UBnKylo)                ; if abs y > abx z then its out side of view port
                         call    compare16HLDE
                         jr      c,.ShipNoDraw               ; ship is too far out on the X Axis
                         IFDEF   CHECKDOTSHIPDATA
@@ -85,7 +85,8 @@ CheckVisible:           ld      a,(UBnkzsgn)                 ; Is the ship behin
                             srl     a                           ; if a / 16 <> 0 then ship is a dot
 .DrawAsDotCheck:            JumpIfNotZero   .ShipIsADot
                             ; Check visbility distance
-.SetXX4Dist:                ld      a,l
+.SetXX4Dist:                ;break
+                            ld      a,l
                             rra                                 ; l may have had bit 0 of h carried in
                             srl     a                           ; so move it to bit 4 giving A as distance $000xxxxx
                             srl     a
@@ -111,7 +112,8 @@ CheckVisible:           ld      a,(UBnkzsgn)                 ; Is the ship behin
                         
                                     DISPLAY "TODO:remove all teh processing of rotmat to load craft to camera as its already been done"
 CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;   
-                        call    CopyRotmatToTransMat        ; XX16 = UBnkRotMat    
+                       ; break                          
+                        call    CopyRotmatToTransMat        ; XX16 = UBNKRotMat    
                         call    ScaleXX16Matrix197          ; scale rotation matrix in XX16
                         call    LoadCraftToCamera           ; XX18 = camera
                         ;call    CopyCameraToXX15Signed      ; Copy the camera to XX15 as signed 15 bit

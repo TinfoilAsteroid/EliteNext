@@ -74,22 +74,20 @@ XX12MSBOnly:
 		xor		a									    ;
 		ld		h,a									    ;
 		ld		d,a									    ; so set high byte to 0
-		MMUSelectMathsBankedFns
-        call	ADDHLDESignBC                           ;  XX12ProcessCalcHLPlusDESignBC		; returns with HL = result1 + result 2 signed in a 
+		call	ADDHLDESignBC                           ;  XX12ProcessCalcHLPlusDESignBC		; returns with HL = result1 + result 2 signed in a 
 		ld		b,a									    ; move sign into b ready for next calc
 		ld		a,(XX12PVarSign3)					    ; result of the calcZ cell
 		ld		c,a									    ; goes into c to align with DE
 		ld		de,(XX12PVarResult3)				    ; now add result to Result 3
 		ld		e,d                                     ; d = result /256
 		ld		d,0									    ; and only us high byte
-		MMUSelectMathsBankedFns
-        call	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC		; returns with HL = result and a = sign
+		call	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC		; returns with HL = result and a = sign
 		ret											    ; hl = result, a = sign
 								    ; hl = result, a = sign
 
 XX12EquNodeDotTransMat:							    ; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vector is 16-bit x,y,z **** ACTUALLY XX16 is value in low sign bit in high
 ;...X cell
-		ld		hl,UBnkTransInvRow0x0     			; process orientation matrix row 0
+		ld		hl,UbnkTransInvRow0x0     			; process orientation matrix row 0
         call    XX12ProcessOneRow                   ; hl = result, a = sign
 		ld		b,a                                 ; b = sign
 		ld		a,h                                 ; a = high byte
@@ -98,7 +96,7 @@ XX12EquNodeDotTransMat:							    ; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vect
 		ld		a,l                                 ; the result will be in the lower byte now
         ld      (UBnkXX12xLo),a						; that is result done for
 ;...Y cell
-		ld		hl,UBnkTransInvRow1y0     			; process orientation matrix row 1
+		ld		hl,UbnkTransInvRow1y0     			; process orientation matrix row 1
         call    XX12ProcessOneRow
 		ld		b,a
 		ld		a,h
@@ -108,7 +106,7 @@ XX12EquNodeDotTransMat:							    ; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vect
 		ld		a,l                                 ; the result will be in the lower byte now
         ld      (UBnkXX12yLo),a						; that is result done for
 ;...Z cell
-		ld		hl,UBnkTransInvRow2z0     			; process orientation matrix row 1
+		ld		hl,UbnkTransInvRow2z0     			; process orientation matrix row 1
         call    XX12ProcessOneRow
 		ld		b,a
         ld		a,h
@@ -121,7 +119,7 @@ XX12EquNodeDotTransMat:							    ; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vect
 
 XX12EquNodeDotOrientation:							; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vector is 16-bit x,y,z **** ACTUALLY XX16 is value in low sign bit in high
 ;...X cell
-		ld		hl,UBnkTransInvRow0x0     			; process orientation matrix row 0
+		ld		hl,UbnkTransInvRow0x0     			; process orientation matrix row 0
         call    XX12ProcessOneRow                   ; hl = result, a = sign
 		ld		b,a                                 ; b = sign
 		ld		a,h                                 ; a = high byte
@@ -130,7 +128,7 @@ XX12EquNodeDotOrientation:							; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vecto
 		ld		a,l                                 ; the result will be in the lower byte now
         ld      (UBnkXX12xLo),a						; that is result done for
 ;...Y cell
-		ld		hl,UBnkTransInvRow1y0     			; process orientation matrix row 1
+		ld		hl,UbnkTransInvRow1y0     			; process orientation matrix row 1
         call    XX12ProcessOneRow
 		ld		b,a
 		ld		a,h
@@ -140,7 +138,7 @@ XX12EquNodeDotOrientation:							; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vecto
 		ld		a,l                                 ; the result will be in the lower byte now
         ld      (UBnkXX12yLo),a						; that is result done for
 ;...Z cell
-		ld		hl,UBnkTransInvRow2z0     			; process orientation matrix row 1
+		ld		hl,UbnkTransInvRow2z0     			; process orientation matrix row 1
         call    XX12ProcessOneRow
 		ld		b,a
         ld		a,h

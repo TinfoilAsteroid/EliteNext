@@ -15,11 +15,11 @@ SHPTOnScreenTest:
 	JumpIfAGTENusng ViewHeight,SHPTFinishup	; off view port?
 SHPTInjectFalseLine:						; it will always be 1 line only
 	ld		a,1
-	ld		(UBnkLineArrayLen),a
+	ld		(UbnkLineArrayLen),a
 	ld		a,4
-	ld		(UBnkLineArrayLen),a
+	ld		(UbnkLineArrayLen),a
 	ld		d,l                             ; de = Y lo X hi
-	ld		hl,UBnkLineArray				; head of array
+	ld		hl,UbnkLineArray				; head of array
 	ld		(hl),d
 	inc		hl
 	ld		(hl),e
@@ -35,9 +35,9 @@ SHPTIsOnScreen:
 	MMUSelectLayer2
     call    l2_plot_pixel
 SHPTFinishup:
-    ld      a,(UBnkexplDsp)
+    ld      a,(UBnKexplDsp)
     and     $F7                             ;  clear bit3
-    ld      (UBnkexplDsp),a                 ; set bit3 (to erase later) and plot as Dot display|missiles explosion state
+    ld      (UBnKexplDsp),a                 ; set bit3 (to erase later) and plot as Dot display|missiles explosion state
     ret                                     ; now it will return to the caller of 
     
 
@@ -48,8 +48,8 @@ SHPTFinishup:
 ;    call    l2_draw_diagonal:
 ;; ">l2_draw_diagonal, bc = y0,x0 de=y1,x1,a=color) Thsi version performs a pre sort based on y axis"
 DVID3B2:                ld      (varPhi2),a                     ;DVID3B2 \ Divide 3 bytes by 2, K = [P(HiLo).A]/[INWK_z HiLo], for planet radius, Xreg protected. ; P+2    \ num sg
-                        ldCopy2Byte UBnkzlo, varQ               ; [QR} = UBnk zlohi  (i.e. Inwk_z HiLo)
-                        ld      a,(UBnkzsgn)                    ; 
+                        ldCopy2Byte UBnKzlo, varQ               ; [QR} = Ubnk zlohi  (i.e. Inwk_z HiLo)
+                        ld      a,(UBnKzsgn)                    ; 
                         ld      (varS),a                        ; S = inkw z sign 
 DVID3B:                 ld      de,(varP)                       ; K (3bytes)=P(Lo Hi Hi2)/S.R.Q approx  Acc equiv K(0).; get P and P+1 into de
                         ld      a,e                             ; num lo
@@ -139,9 +139,9 @@ PL44:                   ret
 PL44TooBig:             scf
                         ret
 Project:
-PROJ:                   ld      hl,(UBnkxlo)                    ; Project K+INWK(x,y)/z to K3,K4 for center to screen
+PROJ:                   ld      hl,(UBnKxlo)                    ; Project K+INWK(x,y)/z to K3,K4 for center to screen
                         ld      (varP),hl
-                        ld      a,(UBnkxsgn)
+                        ld      a,(UBnKxsgn)
                         call    PLS6                            ; returns result in K (0 1) (unsigned) and K (3) = sign note to no longer does 2's C
                         ret     c                               ; carry means don't print
                         ld      hl,(varK)                       ; hl = k (0 1)
@@ -149,9 +149,9 @@ PROJ:                   ld      hl,(UBnkxlo)                    ; Project K+INWK
                         ld      a,ViewCenterX
                         add     hl,a                            ; add unsigned a to the 2's C HL to get pixel position
                         ld      (varK3),hl                      ; K3 = X position on screen
-ProjectY:               ld      hl,(UBnkylo)
+ProjectY:               ld      hl,(UBnKylo)
                         ld      (varP),hl
-                        ld      a,(UBnkysgn)
+                        ld      a,(UBnKysgn)
                         call    PLS6
                         ret     c
                         ld      hl,(varK)                       ; hl = k (0 1)

@@ -35,19 +35,19 @@ PrepLines:
 
 InitialiseLineRead:  
         ;break
-        ldWriteZero UBnkLineArrayLen                    ; current line array index = 0
-        ld          (UBnkLineArrayBytes),a              ; UBnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
+        ldWriteZero UbnkLineArrayLen                    ; current line array index = 0
+        ld          (UbnkLineArrayBytes),a              ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
         ld          (PLEDGECTR),a
         ld          a,(EdgeCountAddr)
         ld          ixh,a                               ; ixh = XX17 = Total number of edges to traverse
         ld          iyl,0                               ; ixl = current edge index
-        ld          hl,UBnkLineArray                    ; head of array
+        ld          hl,UbnkLineArray                    ; head of array
         ld          (varU16),hl                         ; store current line array pointer un varU16
         ldCopyByte  EdgeCountAddr, XX17                 ; XX17  = total number of edges to traverse edge counter
-        ld          a,(UBnkexplDsp)                     ; get explosion status
+        ld          a,(UBnKexplDsp)                     ; get explosion status
         JumpOnBitClear a,6,CalculateNewLines            ; LL170 bit6 of display state clear (laser not firing) \ Calculate new lines
         and         $BF                                 ; else laser is firing, clear bit6.
-        ld          (UBnkexplDsp),a                     ; INWK+31
+        ld          (UBnKexplDsp),a                     ; INWK+31
 ;   TODO commentedout as teh subroutine is a mess   call        AddLaserBeamLine                    ; add laser beam line to draw list
 ; NOw we can calculate hull after including laser line        
 CalculateNewLines:
@@ -114,7 +114,7 @@ VisibileEdge:                                           ; Now we need to node id
 LL80:                                                   ; ll80 \ Shove visible edge onto XX19 ship lines heap counter U
         IFDEF       LATECLIPPING
                 ld          de,(varU16)                         ; clipped edges heap address
-                ld          hl,UBnkPreClipX1
+                ld          hl,UbnkPreClipX1
                 FourLDIInstrunctions
                 FourLDIInstrunctions
                 ld          (varU16),de                         ; update U16 with current address
@@ -124,7 +124,7 @@ LL80:                                                   ; ll80 \ Shove visible e
                 FourLDIInstrunctions
                 ld          (varU16),de                         ; update U16 with current address
         ENDIF
-        ld          hl,UBnkLineArrayLen                 ; we have loaded one line
+        ld          hl,UbnkLineArrayLen                 ; we have loaded one line
         inc         (hl)
         ld          a,(hl)
         JumpIfAGTENusng LineArraySize,CompletedLineGeneration   ; have we hit max lines for a model hop over jmp to Exit edge data loop
@@ -142,13 +142,13 @@ LL78:
 CompletedLineGeneration:        
 LL81:
 LL81SHPPT:                                              ; SHPPT ship is a point arrives here with Acc=2, bottom entry in heap
-        ld          a,(UBnkLineArrayLen)                ; UBnkLineArrayLen = nbr of lines loaded 
+        ld          a,(UbnkLineArrayLen)                ; UbnkLineArrayLen = nbr of lines loaded 
         sla         a
         sla         a                                   ; multiple by 4 to equal number of bytes
         IFDEF       LATECLIPPING        
                 sla         a                           ; multiple by 8 to equal number of bytes
         ENDIF
-        ld          (UBnkLineArrayBytes),a              ; UBnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
+        ld          (UbnkLineArrayBytes),a              ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
 ExitEdgeDataLoop:
         ret
         

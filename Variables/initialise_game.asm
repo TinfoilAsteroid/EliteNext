@@ -48,9 +48,8 @@ WipeScanner:								; WPSHPS	\ -> &35D8  \ Wipe Ships on scanner
 .FloodFills
 ; "TODO call	FLFLLS"
 	ret
-    
 InitialilseUniverseBanks:                   ; Interrupts must be disabled before calling this
-    MMUSelectUniverseN 70 ; was 70 but thats a bug                   ; Select Primary ship register
+    MMUSelectUniverseN 70                   ; Select Primary ship register
     ld      c,71
     ld      b,12
 .InitLoop:    
@@ -60,7 +59,7 @@ InitialilseUniverseBanks:                   ; Interrupts must be disabled before
     ld      hl,dmaCopySrcAddr
     ld      de,UniverseBankAddr
     ld      bc,$2000                        ; just blanket copy all 78K for now
-    call    a
+    call    memfill_dma
     pop     bc
     inc     c
     djnz    .InitLoop

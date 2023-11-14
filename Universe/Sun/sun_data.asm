@@ -104,7 +104,7 @@ WarpSunFurther:         ld      hl,SBnKzsgn
                         ReturnIfAGTENusng $7F                   ; this is the hard limit else it woudl turn negative and flip to -0
                         inc     (hl)                           ; if its negative it will still increase as we will block insane values
                         ret
-; This uses UBnkNodeArray as the list
+; This uses UBNKNodeArray as the list
 ; the array is 256 * 2 bytes
 ; counter is current row y pos
 ; byte 1 is start x pos
@@ -189,54 +189,25 @@ SunDraw:                MMUSelectLayer2
 ; Could make this a sub routine but unwrapping saves a call                        
                         SunBankDraw
                         ret
-; -------------------------------------------------------------
-; Sun Position    z = ((seed.d & 7) | 1)      shift left 16
-;                 x = (seed.f & 3) shift left 16  | seed.f & 3 << 8 * -1 if seed f odd
-;                 y    = sun x position
-;
-CalculateSunWarpPositon:
-.CalcZPosition:         ld      a,(WorkingSeeds+3)      ; seed d & 7
-                        and     %00000111               ; .
-                        or      %10000001               ; | 1
-.SetZPosition:          ld      (SBnKzsgn),a            ; << 16 (i.e. load into z sign byte
-                        ld      hl, $0000               ; now set z hi and lo
-                        ld      (SBnKzlo),hl            ;
-.CalcXandYPosition:     ld      a,(WorkingSeeds+5)      ; seed f & 3
-                        and     %00000011               ; .
-                        ld      b,a
-                        ld      a,(WorkingSeeds+4)      ; get low bit of seed e
-                        and     %00000001
-                        rra                             ; roll bi t0 into bit 7
-                        or      b                       ; now calc is f & 3 * -1 if seed e is odd
-.SetXandYPosition:      ld      (SBnKxsgn),a            ; set into x and y sign byte
-                        ld      (SBnKysgn),a            ; .
-                        ld      a,b                     ; we want just seed f & 3 here
-                        ld      (SBnKxhi),a             ; set into x and y high byte
-                        ld      (SBnKyhi),a             ; .
-                        ZeroA
-                        ld      (SBnKxlo),a
-                        ld      (SBnKylo),a                        
-                        ret
-                        
-CalculateSunLaunchedPosition:
-.CalcXPosition:         MMUSelectMathsBankedFns
-                        ld      ix,ParentPlanetX
-                        ld      iy,SBnKxlo
-                        call    AddAtIXtoAtIY24Signed
-.CalcYPosition:         ld      ix,ParentPlanetY
-                        ld      iy,SBnKylo
-                        call    AddAtIXtoAtIY24Signed
-.CalcZPosition:         ld      ix,ParentPlanetZ
-                        ld      iy,SBnKzlo
-                        call    AddAtIXtoAtIY24Signed
-                        ret
+
 ; --------------------------------------------------------------
 ; This sets current universe object to a star / sun, they use sign + 23 bit positions
 CreateSun:              call    ResetSBnKData
-                        call    CalculateSunWarpPositon
+                        ld      a,(WorkingSeeds+3)
+                        and     %00000111
+                        or      %10000001
+                        ld      (SBnKzsgn),a
+                        ld      a,(WorkingSeeds+5)
+                        and     %00000011
+                        ld      (SBnKxsgn),a
+                        ld      (SBnKysgn),a
+                        ld      hl, $0000
+                        ld      (SBnKzhi),hl
+                        ld      a, $E3
+                        ld      (SBnKzlo),a
                         ret
-
-
+; --------------------------------------------------------------
+; This creates a sun relative to space station on launch
 CreateSunLaunched:      call    ResetSBnKData
                         ld      hl,0
                         ld      a,0
