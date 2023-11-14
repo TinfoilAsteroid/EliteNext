@@ -716,6 +716,7 @@ DrawClippedLineDebug:   ld      bc,8
 ;.ClearLayer2Buffers:    DoubleBufferIfPossible
 ;                        DoubleBufferIfPossible
 ; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files            
+                
                 IFDEF LOGDIVIDEDEBUG
                    DISPLAY "DEBUG: SKIPPING INIT TO SAVE MEMORY FOR LOG DIVIDE DEBUG TEST"
                 ELSE
@@ -744,6 +745,7 @@ StartAttractMode:       di                                          ; we are cha
                         call        AttractModeInit
                         ei
                         ;break
+                        break
                         call        AttractModeMain                 ; now drive attact mode keyboard scan
                         di                                          ; set up for main 
                         ld          hl,SoundInterrupt               ; sound handler
@@ -761,7 +763,11 @@ StartAttractMode:       di                                          ; we are cha
 DefaultCommander:       MMUSelectCommander
                         call		defaultCommander
                         jp          InitialiseMainLoop:
-SkipDefaultCommander:                        
+SkipDefaultCommander:           
+                        ; This bit needs to MMU Selet exdos
+                        ; bring up a browser for saves
+                        ; load saves it
+                        ; switch back to maths MMU
 ;                        call    FindNextFreeSlotInA
 ;                        ld      b,a
 ;                        ld      a,13 ;Coriolis station
@@ -1168,8 +1174,8 @@ XX12PVarSign3		DB 0
     INCLUDE "./Tables/name_digrams.asm"
 ;INCLUDE "Tables/inwk_table.asm" This is no longer needed as we will write to univer object bank
 ; Include all maths libraries to test assembly   
-    INCLUDE "./Maths/asm_add.asm"
-    INCLUDE "./Maths/asm_subtract.asm"
+    ;INCLUDE "./Maths/asm_add.asm"
+    ;INCLUDE "./Maths/asm_subtract.asm"
     INCLUDE "./Maths/Utilities/AddDEToCash.asm"
     INCLUDE "./Maths/DIVD3B2.asm"
     INCLUDE "./Maths/multiply.asm"
@@ -1584,7 +1590,7 @@ UNIVDATABlock6      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data G"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 77  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA7
                     ORG	UniverseBankAddr,BankUNIVDATA7
@@ -1592,7 +1598,7 @@ UNIVDATABlock7      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data H"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 78  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA8
                     ORG	UniverseBankAddr,BankUNIVDATA8
@@ -1600,7 +1606,7 @@ UNIVDATABlock8      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data I"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 79  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA9
                     ORG	UniverseBankAddr,BankUNIVDATA9
@@ -1608,7 +1614,7 @@ UNIVDATABlock9      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data J"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 80  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA10
                     ORG	UniverseBankAddr,BankUNIVDATA10
@@ -1616,7 +1622,7 @@ UNIVDATABlock10     DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data K"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 81  ------------------------------------------------------------------------------------------------------------------------    
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA11
                     ORG	UniverseBankAddr,BankUNIVDATA11
@@ -1624,7 +1630,7 @@ UNIVDATABlock11     DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data L"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 74  ------------------------------------------------------------------------------------------------------------------------             
+; Bank 82  ------------------------------------------------------------------------------------------------------------------------             
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA12
                     ORG	UniverseBankAddr,BankUNIVDATA12
@@ -1632,14 +1638,14 @@ UNIVDATABlock12     DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data M"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 83  ------------------------------------------------------------------------------------------------------------------------
+; Bank 84  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    SunBankAddr
                     PAGE    BankSunData
                     ORG	    SunBankAddr,BankSunData
                     INCLUDE "./Universe/Sun/sun_data.asm"
                     DISPLAY "Bank ",BankSunData," - Bytes free ",/D, $2000 - ($-SunBankAddr), " - BankSunData"
                     ASSERT $-SunBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 84  ------------------------------------------------------------------------------------------------------------------------
+; Bank 85  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    PlanetBankAddr
                     PAGE    BankPlanetData
                     ORG	    PlanetBankAddr,BankPlanetData
@@ -1746,6 +1752,14 @@ GALAXYDATABlock7:   DB $FF
                     INCLUDE "./Hardware/sound.asm"
                     DISPLAY "Sound ",BankSound," - Bytes free ",/D, $2000 - ($-SoundAddr), " - BankSound"
                     ASSERT $-SoundAddr <8912, Bank code leaks over 8K boundary
+ ; Bank 102  -----------------------------------------------------------------------------------------------------------------------
+                    SLOT    MathsBankedFnsAddr
+                    PAGE    BankMathsBankedFns
+                    ORG     MathsBankedFnsAddr,BankMathsBankedFns
+                    INCLUDE "./Maths/MathsBankedFns.asm"
+                    DISPLAY "Bank ",MathsBankedFnsAddr," - Bytes free ",/D, $2000 - ($-MathsBankedFnsAddr), " - BankMathsBankedAdd"
+                    ASSERT $-MathsBankedFnsAddr <8912, Bank code leaks over 8K boundary
+    
     SAVENEX OPEN "EliteN.nex", EliteNextStartup , TopOfStack
     SAVENEX CFG  0,0,0,1
     SAVENEX AUTO

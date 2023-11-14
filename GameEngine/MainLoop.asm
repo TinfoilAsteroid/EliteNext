@@ -17,7 +17,8 @@
     DEFINE  MAINLOOP_WARP_ENABLED 1
 
 ;.................................................................................................................................    
-MainLoop:	            call    doRandom                                                ; redo the seeds every frame
+MainLoop:	    MMUSelectMathsBankedFns                                         ; make sure we are in maths routines in case a save paged out
+                call    doRandom                                                ; redo the seeds every frame
                 IFDEF LASER_V2
                         call    LaserBeamV2
                 ELSE
