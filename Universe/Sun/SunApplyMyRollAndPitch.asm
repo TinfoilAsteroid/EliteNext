@@ -52,6 +52,7 @@ SunApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitch, 
                         ld      bc,(SunAlphaMulX+2)         ; BCH = Y sgn, hi, lo, we loose the C from result
                         ld      a,(SunAlphaMulX+1)          ; Deal with sign in byte 4
                         ld      h,a                         ; .
+                        MMUSelectMathsBankedFns
                         call    AddBCHtoDELsigned           ; DEL = y - (alpha * x)
                         ld      a,l                         ; K2  = DEA = DEL = y - (alpha * x)
                         ld      (SunK2),a                   ; we also need to save l for teh beta k2 calc
@@ -64,6 +65,7 @@ SunApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitch, 
 .CalcZ:                 ld      bc,(SBnKzhi)                ; BCH = z
                         ld      a,(SBnKzlo)                 ;
                         ld      h,a                         ;
+                        MMUSelectMathsBankedFns
                         call    AddBCHtoDELsigned           ; DEL still = Beta * K2 so its z + Beta * K2
                         ld      (SBnKzhi),de                ; z = resuklt
                         ld      a,l                         ; .
@@ -88,6 +90,7 @@ SunApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitch, 
                         ld      de,(SunK2+1)                ; DEL = k2
                         ld      a,(SunK2)
                         ld      l,a
+                        MMUSelectMathsBankedFns
                         call    AddBCHtoDELsigned           ; DEL = K2 - Beta * Z
                         ld      (SBnKyhi),de                ; y = DEL = K2 - Beta * Z
                         ld      a,l                         ; .
@@ -111,6 +114,7 @@ SunApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitch, 
                         ld      de,(SBnKxhi)                ; DEL = Y
                         ld      a,(SBnKxlo)                 ; .
                         ld      l,a                         ; .
+                        MMUSelectMathsBankedFns
                         call    AddBCHtoDELsigned           ; DEL = x + alpha * Y
 .SaveResult1:           ld      a,d                         ; Result 1 (X) = AHL + DEL
                         ld      h,e                         ;
@@ -125,6 +129,7 @@ SunApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitch, 
                         ld      de,(SBnKzhi)                ; DEL = z position
                         ld      a,(SBnKzlo)                 ; .
                         ld      l,a                         ; .
+                        MMUSelectMathsBankedFns
                         call    AddBCHtoDELsigned           ; update speed
                         ld      (SBnKzhi),DE                ; write back to zpos
                         ld      a,l

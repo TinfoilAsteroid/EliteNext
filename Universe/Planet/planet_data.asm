@@ -2,11 +2,11 @@
 ;- DEBUG CODE
                         IFDEF BLINEDEBUG
 TestBLINE:              ld  a,$FF
-                        ld  (P_BnKFlag),a
+                        ld  (P_BnkFlag),a
                         ld  a,5
-                        ld  (P_BnKSTP),a
+                        ld  (P_BnkSTP),a
                         ZeroA
-                        ld  (P_BnKCNT),a
+                        ld  (P_BnkCNT),a
 .DebugLoop:             ld  ix,(DataPointer)
                         ld  a,(ix+0)
                         ld  l,a
@@ -39,17 +39,17 @@ DataPointer:            DW  DataPoints
 
                         IFDEF TESTMERIDIAN
 TestMeridian:           ld      hl,20        ; 20
-                        ld      (P_BnKVx),hl ; vx
+                        ld      (P_BnkVx),hl ; vx
                         ld      hl,20        ; 20
-                        ld      (P_BnKVy),hl ; vy
+                        ld      (P_BnkVy),hl ; vy
                         ld      hl,20        ; 20
-                        ld      (P_BnKUx),hl ; ux
+                        ld      (P_BnkUx),hl ; ux
                         ld      hl, $8014    ; -20 
-                        ld      (P_BnKUy),hl ; uy
+                        ld      (P_BnkUy),hl ; uy
                         ld      de,120       ; 120
-                        ld      (P_BnKCx),de ; cx
+                        ld      (P_BnkCx),de ; cx
                         ld      de,69        ; 69
-                        ld      (P_BnKCy),de ; cy
+                        ld      (P_BnkCy),de ; cy
                         call    DrawMeridian
                         ENDIF                        
 
@@ -71,7 +71,7 @@ StartOfPlanet:     DB "Planet Data....."
 ;   \ -> & 565D \ See ship data files chosen and loaded after flight code starts running.
 ; Universe map substibute for INWK
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
-P_BnKDataBlock:
+P_BnkDataBlock:
                         ;INCLUDE "./Universe/Planet/PlanetPosVars.asm"
                         ;INCLUDE "./Universe/Planet/PlanetRotationMatrixVars.asm"
                         ;INCLUDE "./Universe/Planet/PlanetAIRuntimeData.asm"
@@ -86,7 +86,7 @@ P_BnKDataBlock:
                             XX18DefineMacro P
 
                             UnivCoreAIVarsMacro P
-                            
+                            CoreRuntimeDataMacro P
 
                         ;INCLUDE "./Universe/Planet/PlanetXX15Vars.asm"
                             XX15DefineMacro P
@@ -96,7 +96,7 @@ P_BnKDataBlock:
                             ClippingVarsMacro P
 
 
-P_BnK_Data_len               EQU $ - P_BnKDataBlock
+P_Bnk_Data_len               EQU $ - P_BnkDataBlock
     
     
                             ClippingCodeLL28Macro P
@@ -107,13 +107,13 @@ P_BnK_Data_len               EQU $ - P_BnKDataBlock
 
 ; --------------------------------------------------------------
 ; clear out the planet data block
-ResetP_BnKData:         ld      hl,P_BnKDataBlock       
-                        ld      de,P_BnK_Data_len
+ResetP_BnkData:         ld      hl,P_BnkDataBlock       
+                        ld      de,P_Bnk_Data_len
                         xor     a
                         call    memfill_dma
                         ret
 ; --------------------------------------------------------------
-ResetP_BnKPosition:     ld      hl,P_BnKxlo
+ResetP_BnkPosition:     ld      hl,P_Bnkxlo
                         ld      b, 3*3
                         xor     a
 .zeroLoop:              ld      (hl),a
@@ -145,7 +145,7 @@ P_NormaliseRotMat:      ld      hl,P_BnkTransmatNosevZ+1   ; initialise loop
                         ret
 
                         
-; This uses UBNKNodeArray as the list
+; This uses UBnkNodeArray as the list
 ; the array is 256 * 2 bytes
 ; counter is current row y pos
 ; byte 1 is start x pos
@@ -198,14 +198,14 @@ PlanetColour2Table:     DB       PlanetColour20DG, PlanetColour21MG, PlanetColou
 
 ; PLANET
         
-WarpPlanetCloser:       ld      hl,P_BnKzsgn
+WarpPlanetCloser:       ld      hl,P_Bnkzsgn
 .PositiveAxis:          ld      a,(hl)
                         ReturnIfALTNusng 2                      ; hard liit along z axis
                         dec     (hl)
                         ret
 
 ; It should normally be behind but someone could fly past a planet, turn aroudn and jump
-WarpPlanetFurther:      ld      hl,P_BnKzsgn
+WarpPlanetFurther:      ld      hl,P_Bnkzsgn
                         ld      a,(hl)
                         ReturnIfAGTENusng $7F                   ; this is the hard limit else it woudl turn negative and flip to -0
                         inc     (hl)                           ; if its negative it will still increase as we will block insane values
@@ -213,19 +213,56 @@ WarpPlanetFurther:      ld      hl,P_BnKzsgn
 ; --------------------------------------------------------------                        
 ; This sets current universe object to a planet,they use sign + 23 bit positions
 ; we need to have variable size and color
-CreatePlanet:           call    ResetP_BnKData          ; Clear out planet block
+; Planet positon  z = (((seed.b & 7) + 7 )/2) shift left 16
+;                 x    = seed f & 3  + 3      shift left 16 (if seed e is even x = x * -1)
+;                 y    = x                    shift left 16 (if seed e is even y = y * -1)
+
+CalculatePlanetWarpPositon:
+.CalcZPosition:         ld      a,(WorkingSeeds+1)      ; seed d & 7 
+                        and     %00000111               ; .
+                        add     a,7                     ; + 7
+                        sra     a                       ; / 2
+.SetZPosition:          ld      (P_Bnkzsgn),a            ; << 16 (i.e. load into z sign byte
+                        ld      hl, $0000               ; now set z hi and lo
+                        ld      (P_Bnkzlo),hl            ;
+.CalcXandYPosition:     ld      a,(WorkingSeeds+5)      ; seed f & 3
+                        and     %00000011               ; .
+                        add     a,3                     ; + 3
+                        ld      b,a
+                        ld      a,(WorkingSeeds+4)      ; get low bit of seed e
+                        and     %00000001
+                        rra                             ; roll bit 0 into bit 7
+                        or      b                       ; now calc is f & 3 * -1 if seed e is odd
+.SetXandYPosition:      ld      (P_Bnkxsgn),a            ; set into x and y sign byte
+                        ld      (P_Bnkysgn),a            ; .
+                        ld      a,b                     ; we want just seed f & 3 here
+                        ld      (P_Bnkxhi),a             ; set into x and y high byte
+                        ld      (P_Bnkyhi),a             ; .
+                        ZeroA
+                        ld      (P_Bnkxlo),a
+                        ld      (P_Bnkylo),a                        
+                        ret 
+
+CalculatePlanetLaunchedPosition:
+.CalcXPosition:         MMUSelectMathsBankedFns
+                        ld      ix,ParentPlanetX
+                        ld      iy,P_Bnkxlo
+                        call    AddAtIXtoAtIY24Signed
+.CalcYPosition:         ld      ix,ParentPlanetY
+                        ld      iy,P_Bnkylo
+                        call    AddAtIXtoAtIY24Signed
+.CalcZPosition:         ld      ix,ParentPlanetZ
+                        ld      iy,P_Bnkzlo
+                        call    AddAtIXtoAtIY24Signed
+                        ret
+
+CreatePlanet:           call    ResetP_BnkData          ; Clear out planet block
                         ld      a,(DisplayTekLevel)
                         and     %00000010               ; Set A = 128 or 130 depending on bit 1 of the system's tech level
                         or      %10000000
-                        ld      (P_BnKShipType),a       ; and load to ship type (synomous with planet type)
+                        ld      (P_BnkShipType),a       ; and load to ship type (synomous with planet type)
                         MaxUnivPitchAndRoll
-                        ld      a,(WorkingSeeds+1)      ; a= bits 1 and 0 of working seed1 + 3 + carry
-                        and     %00000011               ; .
-                        adc     3                       ; we also lauch planet side so its infront of us
-                        ld      (P_BnKzsgn),a           ; set z sign to 3 + C + 0..3 bits 
-                        rr      a
-                        ld      (P_BnKxsgn),a
-                        ld      (P_BnKysgn),a
+                        call    CalculatePlanetWarpPositon
 .SetColour:             ld      a,(DisplayTekLevel)
                         ld      hl,DisplayPopulation    ; add displaypopulation
                         add     a, (hl)
@@ -248,25 +285,25 @@ CreatePlanet:           call    ResetP_BnKData          ; Clear out planet block
 .SetOrientation:        call    P_InitRotMat
                         ret
 
-CreatePlanetLaunched:   call    ResetP_BnKData
+CreatePlanetLaunched:   call    ResetP_BnkData
                         call    CreatePlanet
                         ld      hl,0
-                        ld      (P_BnKxlo),hl
-                        ld      (P_BnKylo),hl
+                        ld      (P_Bnkxlo),hl
+                        ld      (P_Bnkylo),hl
                         ld      hl,$FF03
-                        ld      (P_BnKzlo),hl
+                        ld      (P_Bnkzlo),hl
                         ZeroA
-                        ld      (P_BnKxsgn),a
-                        ld      (P_BnKysgn),a
-                        ld      (P_BnKzsgn),a
+                        ld      (P_Bnkxsgn),a
+                        ld      (P_Bnkysgn),a
+                        ld      (P_Bnkzsgn),a
                         MaxUnivPitchAndRoll
                         ret
 ; NEED FINSIHGING
 
 
-ScalePlanetTo8Bit:		ld			bc,(P_BnKZScaled)
-                        ld			hl,(P_BnKXScaled)
-                        ld			de,(P_BnKYScaled)		
+ScalePlanetTo8Bit:		ld			bc,(P_BnkZScaled)
+                        ld			hl,(P_BnkXScaled)
+                        ld			de,(P_BnkYScaled)		
 .SetABSbc:              ld			a,b
                         ld			ixh,a
                         and			SignMask8Bit
@@ -300,9 +337,9 @@ ScalePlanetTo8Bit:		ld			bc,(P_BnKZScaled)
                         and			SignOnly8Bit
                         or			d
                         ld			d,a
-.SignsDoneSaveResult:	ld			(P_BnKZScaled),bc
-                        ld			(P_BnKXScaled),hl
-                        ld			(P_BnKYScaled),de
+.SignsDoneSaveResult:	ld			(P_BnkZScaled),bc
+                        ld			(P_BnkXScaled),hl
+                        ld			(P_BnkYScaled),de
                         ld			a,b
                         ld			(varU),a
                         ld			a,c
@@ -501,13 +538,13 @@ PlanetAHLequAHLDivCDE:  ld      b,a                         ; save a reg
 
 ; Project XY to screen location
 ProjectPlanet:          ld      ixh,0
-                        ld      hl,(P_BnKxlo)
-                        ld      a,(P_BnKxsgn)
+                        ld      hl,(P_Bnkxlo)
+                        ld      a,(P_Bnkxsgn)
                         call    PlanetProcessVertex         ; hl = PixelCentreY + (Y / Z)*-1 (as its 0 = top of screen)
                         ld      (P_centreX),hl
                         inc     ixh
-                        ld      hl,(P_BnKylo)
-                        ld      a,(P_BnKysgn)
+                        ld      hl,(P_Bnkylo)
+                        ld      a,(P_Bnkysgn)
                         call    PlanetProcessVertex         ; hl = PixelCentreY + (Y / Z)*-1 (as its 0 = top of screen)
                         ld      (P_centreY),hl
                         ret
@@ -515,8 +552,8 @@ ProjectPlanet:          ld      ixh,0
 ; PlanetProcessVertex AHL = X or Y position (sign in A)
 ;                     fetches z as this used in both calcs                        
 PlanetProcessVertex:    ld      b,a                         ; save sign/high byte
-.PlanetProjectToEye:    ld      de,(P_BnKzlo)               ; B H L   = X or Y
-                        ld      a,(P_BnKzsgn)               ; IYH D E = z
+.PlanetProjectToEye:    ld      de,(P_Bnkzlo)               ; B H L   = X or Y
+                        ld      a,(P_Bnkzsgn)               ; IYH D E = z
                         ld      iyh,a                       ; save sign
                         ClearSignBitA                       ; A D E   = | z |
                         ; Addeed as it neds to be AHL/0CD to force * 256 and get correct screen position on scaling
@@ -577,8 +614,8 @@ PlanetProcessVertex:    ld      b,a                         ; save sign/high byt
 ; .........................................................................................................................
 ; we only hit this if z is positive so we can ignore signs
 ; calculates 24576/z, maxes at 248
-PlanetCalculateRadius:  ld      bc,(P_BnKzlo)                ; DBC = z position
-                        ld      a,(P_BnKzsgn)                ; 
+PlanetCalculateRadius:  ld      bc,(P_Bnkzlo)                ; DBC = z position
+                        ld      a,(P_Bnkzsgn)                ; 
                         ld      d,a                         ; 
                         ld      hl,$6000  ; was hl          ; planet radius at Z = 1 006000
                         call    Div16by24usgn               ; radius = HL/DBC = 24576 / distance z
@@ -598,27 +635,27 @@ PlanetCalculateRadius:  ld      bc,(P_BnKzlo)                ; DBC = z position
                         JumpIfALTNusng 60, .DoneStepCalc
                         srl     d                           ; d = d / 2
 .DoneStepCalc:          ld      a,d
-                        ld      (P_BnKSTP),a
+                        ld      (P_BnkSTP),a
                         ret    
 
 ; Shorter version when sun does not need to be processed to screen                        
-PlanetUpdateCompass:    ld      a,(P_BnKxsgn)
-                        ld      hl,(P_BnKxlo)
+PlanetUpdateCompass:    ld      a,(P_Bnkxsgn)
+                        ld      hl,(P_Bnkxlo)
                         call    PlanetProcessVertex  
                         ld      (P_CompassX),hl
-                        ld      a,(P_BnKysgn)
-                        ld      hl,(P_BnKylo)
+                        ld      a,(P_Bnkysgn)
+                        ld      hl,(P_Bnkylo)
                         call    PlanetProcessVertex
                         ld      (P_CompassY),hl
                         ret
                         
                    ; could probabyl set a variable say "varGood", default as 1 then set to 0 if we end up with a good calulation?? may not need it as we draw here     
 PlanetUpdateAndRender:  call    PlanetApplyMyRollAndPitch    ; not needed for solid as yet
-.DrawSolidPlanet:       ld      a,(P_BnKzsgn)                ; a = z sign of position
+.DrawSolidPlanet:       ld      a,(P_Bnkzsgn)                ; a = z sign of position
 .ElimiateBehind:        and     a
                         jp      m,.SkipDrawPlanet            ; if its negative then behind so exit
 .TooFarAway:            JumpIfAGTENusng   48,.SkipDrawPlanet ; if sign (high byte 2) > 48 then too far away to render
-                        ld      hl, P_BnKzhi                 ; if |P_BnKzsgn| or P_BnKzhi or P_Bnkzlo upper byte are both 0 then the planet is too close so return
+                        ld      hl, P_Bnkzhi                 ; if |P_Bnkzsgn| or P_Bnkzhi or P_Bnkzlo upper byte are both 0 then the planet is too close so return
                         or      (hl)                         ; .
                         dec     hl
                         ld      b,a
@@ -656,21 +693,21 @@ PlanetUpdateAndRender:  call    PlanetApplyMyRollAndPitch    ; not needed for so
 ; 
 ; (PLS4)
 ; CNT2 =  = arctan(-nosev_z_hi / side_z_hi) / 4,  if nosev_z_hi >= 0 add PI
-CalcNoseSideArcTanPI:   ld      a, (P_BnKrotmatNosevZ + 1)   ; P = - nosevz hi
+CalcNoseSideArcTanPI:   ld      a, (P_BnkrotmatNosevZ + 1)   ; P = - nosevz hi
                         xor     $80
                         ld      (varP),a
-                        ld      a, (P_BnKrotmatSidevZ + 1)
+                        ld      a, (P_BnkrotmatSidevZ + 1)
                         jp      CalcArcTanPiPA
 ;  CNT2 =  = arctan(-nosev_z_hi / roofv_z_hi) / 4,  if nosev_z_hi >= 0 add PI
-CalcNoseRoofArcTanPI:   ld      a, (P_BnKrotmatNosevZ + 1)   ; P = - nosevz hi
+CalcNoseRoofArcTanPI:   ld      a, (P_BnkrotmatNosevZ + 1)   ; P = - nosevz hi
                         xor     $80
                         ld      (varP),a
-                        ld      a, (P_BnKrotmatRoofvZ + 1)
+                        ld      a, (P_BnkrotmatRoofvZ + 1)
 ; CNT2 = arctan(P / A) / 4  
 CalcArcTanPiPA:         ld      (varQ),a                    ; STA Q                  \ Set Q = A
                         call    ARCTAN                      ; A = arctan(P / Q)
                         ld      c,a                         ; save a
-                        ld      a,(P_BnKrotmatNosevZ+1)
+                        ld      a,(P_BnkrotmatNosevZ+1)
                         and     $80
                         ld      a,c                         ; restore a as it doesn't affect flags doing an ld
                         jp      m,.SkipFlipSign             ; If nosev_z_hi is negativeleave the angle in A as a positive
@@ -678,28 +715,28 @@ CalcArcTanPiPA:         ld      (varQ),a                    ; STA Q             
 .FlipSign:              xor     $80                         ; If we get here then nosev_z_hi is positive, so flip bit 7 of the angle in A, which is the same as adding 128
 .SkipFlipSign:          srl     a                           ; Set CNT2 = A / 4
                         srl     a                           ; .
-                        ld      (P_BnKCNT2),a                ; .
+                        ld      (P_BnkCNT2),a                ; .
                         ret                         
                         
 ; (PSL1)                     
 ; XX16 K2) = nosev_x / z   
-CalcNoseXDivNoseZ:      ld      hl,(P_BnKrotmatNosevX)
-                        ld      de,(P_BnKrotmatNosevZ)
+CalcNoseXDivNoseZ:      ld      hl,(P_BnkrotmatNosevX)
+                        ld      de,(P_BnkrotmatNosevZ)
                         jp      CalcRotMatDivide
-CalcNoseYDivNoseZ:      ld      hl,(P_BnKrotmatNosevY)
-                        ld      de,(P_BnKrotmatNosevZ)
+CalcNoseYDivNoseZ:      ld      hl,(P_BnkrotmatNosevY)
+                        ld      de,(P_BnkrotmatNosevZ)
                         jp      CalcRotMatDivide 
-CalcRoofXDivRoofZ:      ld      hl,(P_BnKrotmatRoofvX)
-                        ld      de,(P_BnKrotmatRoofvZ)
+CalcRoofXDivRoofZ:      ld      hl,(P_BnkrotmatRoofvX)
+                        ld      de,(P_BnkrotmatRoofvZ)
                         jp      CalcRotMatDivide 
-CalcRoofYDivRoofZ:      ld      hl,(P_BnKrotmatRoofvY)
-                        ld      de,(P_BnKrotmatRoofvZ)
+CalcRoofYDivRoofZ:      ld      hl,(P_BnkrotmatRoofvY)
+                        ld      de,(P_BnkrotmatRoofvZ)
                         jp      CalcRotMatDivide 
-CalcSideXDivSideZ:      ld      hl,(P_BnKrotmatSidevX)
-                        ld      de,(P_BnKrotmatSidevZ)
+CalcSideXDivSideZ:      ld      hl,(P_BnkrotmatSidevX)
+                        ld      de,(P_BnkrotmatSidevZ)
                         jp      CalcRotMatDivide 
-CalcSideYDivSideZ:      ld      hl,(P_BnKrotmatSidevY)
-                        ld      de,(P_BnKrotmatSidevZ)
+CalcSideYDivSideZ:      ld      hl,(P_BnkrotmatSidevY)
+                        ld      de,(P_BnkrotmatSidevZ)
 ; (PLS1) (Y A) = nosev_x / z where B = Y (also stores in regY), K+3 = sign of calculation             
 ; stores result in BC now as well
 ; does not do increment of X as its not needed when directly loading verticies of rotation
@@ -746,12 +783,12 @@ CalcRotMatDivide:
                         
 ; (PLS3)
 ;  (Y A P) = 222 * roofv_x / z to give the x-coordinate of the crater offset 
-Cacl222MulRoofXDivRoofZ:ld      hl,(P_BnKrotmatRoofvX)
-                        ld      de,(P_BnKrotmatRoofvZ)
+Cacl222MulRoofXDivRoofZ:ld      hl,(P_BnkrotmatRoofvX)
+                        ld      de,(P_BnkrotmatRoofvZ)
                         jp      Calc222MulHLDivDE
 ; (Y A P) = 222 * roofv_y / z to give the x-coordinate of the crater offset 
-Cacl222MulRoofYDivRoofZ:ld      hl,(P_BnKrotmatRoofvY)
-                        ld      de,(P_BnKrotmatRoofvZ)
+Cacl222MulRoofYDivRoofZ:ld      hl,(P_BnkrotmatRoofvY)
+                        ld      de,(P_BnkrotmatRoofvZ)
 ; Optimise, move result at the end into HL instead of YA (we can ignore P)                        
 Calc222MulHLDivDE:      call    CalcRotMatDivide            ; calculate (Y A) = nosev_x(orY) / z
                         ld      d,a                         ; P = |roofv_x / z|
@@ -797,11 +834,11 @@ P_BCmulRadiusInA:       ld      d,a                         ; d = radius already
 
    ; DEFINE  PlanetDebugLocal 1
 PlanetDraw:             INCLUDE "./Universe/Planet/PlanetDiagnostics.asm"
-                        ld      a,(P_BnKzsgn)                ; a = z sign of position
+                        ld      a,(P_Bnkzsgn)                ; a = z sign of position
 .ElimiateBehind:        and     a
                         ret     m                           ; if its negative then behind so exit
 .TooFarAway:            ReturnIfAGTEusng   48               ; if sign (high byte 2) > 48 then too far away to render
-                        ld      hl, P_BnKzhi                 ; if |P_BnKzsgn| or P_BnKzsgn are both 0 then the planet is too close so return
+                        ld      hl, P_Bnkzhi                 ; if |P_Bnkzsgn| or P_Bnkzsgn are both 0 then the planet is too close so return
                         or      (hl)                        ; .
                         ret     z                           ; .
 ;                       loads P_centreX and Y with planet on screen centre

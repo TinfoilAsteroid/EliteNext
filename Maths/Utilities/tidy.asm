@@ -100,7 +100,7 @@ TidyNormaliseRoofV:     MACRO
                         ENDM
 
 
-TidyUbnK:               ;break
+TidyUBnk:               ;break
                         TidyNormaliseNoseV
                         ld      a,(UBnkrotmatNosevX+1)      ; Now check and see which vector elemetn we are going to 
                         and     %01100000                   ; if X is not small then we go straigth to roofx

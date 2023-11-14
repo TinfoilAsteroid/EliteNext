@@ -8,10 +8,10 @@ ClearLine:                                  ; CLEAR LINEstr visited by EE31 when
       ;break                                                                             ; ObjectInFront:
 DrawLines:              ld	a,$65 ; DEBUG
                         ld    iyl,a							; set ixl to colour (assuming we come in here with a = colour to draw)
-                        ld	a,(UbnkLineArrayLen)			; get number of lines
+                        ld	a,(UBnkLineArrayLen)			; get number of lines
                         ReturnIfAIsZero   						; No lines then bail out.
                         ld	iyh,a			                ; number of lines still to draw
-                        ld	hl,UbnkLineArray
+                        ld	hl,UBnkLineArray
 .DrawLinesLoop:         ld    c,(hl)                          ; (XX19),Y c = varX1
                         inc   hl
                         ld    b,(hl)                          ; bc = point1 Y,X
@@ -35,10 +35,10 @@ DrawLines:              ld	a,$65 ; DEBUG
 
 DrawLinesLateClipping:  ld	a,$65 ; DEBUG
                         ld    iyl,a					      ; set ixl to colour (assuming we come in here with a = colour to draw)
-                        ld	a,(UbnkLineArrayLen)			; get number of lines
+                        ld	a,(UBnkLineArrayLen)			; get number of lines
                         ReturnIfAIsZero   				; No lines then bail out.
                         ld	iyh,a			                  ; number of lines still to draw
-                        ld	hl,UbnkLineArray
+                        ld	hl,UBnkLineArray
                         MMUSelectLayer2
                         ld    a,$BF
                         ld    (line_gfx_colour),a

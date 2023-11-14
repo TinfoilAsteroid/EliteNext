@@ -15,6 +15,10 @@ MMUSelectKeyboard:   MACRO
                      nextreg KeyboardMMU,       BankKeyboard
                      ENDM
 
+MMUSelectMathsBankedFns   MACRO
+                     nextreg MathsBankedFnsMMU, BankMathsBankedFns
+                     ENDM
+                     
 MMUSelectSpriteBank: MACRO
 					 nextreg SpritememMMU,	    BankSPRITE
 					 ENDM
@@ -83,6 +87,10 @@ MMUSelectSun:        MACRO
 
 MMUSelectPlanet:     MACRO
                      nextreg PlanetMMU,         BankPlanetData
+                     ENDM
+
+MMUSelectSpaceStation: MACRO
+                     nextreg SpaceStationMMU,         BankSpaceStationData
                      ENDM
 
 MMUSelectUniverseA:  MACRO

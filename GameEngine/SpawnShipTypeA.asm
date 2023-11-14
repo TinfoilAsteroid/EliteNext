@@ -5,10 +5,10 @@
 ;  b = ship class
 ;  a = iyh = slot number
 SpawnShipTypeA:         ;break
-                        ld      iyl,a                               ; save ship type in iyh
+                        ld      iyl,a                               ; save ship type in iyl
                         call    FindNextFreeSlotInC                 ; c = slot number to use
-                        ret     c                                   ; if carry flag was set then no spare slots
-                        ld      iyh,c                               ; preserve slot number for now
+                        ret     c                                   ; if carry flag was set then no spare slots                       
+SpawnShipTypeASlotC:    ld      iyh,c                               ; preserve slot number for now
                         MMUSelectShipBank1                          ; select bank 1
                         ld      a,iyh                               ; A = slot number
                         ld      b,iyl                               ; b = ship type
@@ -32,3 +32,19 @@ SpawnShipTypeA:         ;break
                         call    SetSlotAToClassB                    ;
                         ClearCarryFlag                              ; no carry on success
                         ret
+
+
+; iyh = 0 then its a hyperspace entry, if its $FF them its from a space station launch
+; for a hyperspace entry ParentPlanetX.. must be populated else its back populated
+;SpawnSpaceStation:      MMUSelectSpaceStation                       ; Get Space station bank in
+;                        call    SelectSpaceStationType              ; Use algorithim there to determine station type based on galaxy algorithm
+;                        ld      iyl,a                               ; iyl = station type
+;                        MMUSelectShipBank1
+;                        ld      a,<SpaceStationBank>
+;                        ls      a,iyl                               ; a = station type
+;.CopyOverShipData:      call    GetShipBankId
+;                        MMUSeelctShipBankA                          ; b = computed ship id for station type and bank
+;                        ld      a,b                                 ;
+;                        call    CopyShipToSpaceStation
+;                        call    
+                        

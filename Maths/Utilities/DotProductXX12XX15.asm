@@ -13,12 +13,6 @@
 
 
 
-
-
-MacroAequDxEdiv256usgn:	MACRO
-						mul
-						ld	a,d				; we get only the high byte which is like doing a /256 if we think of a as low
-						ENDM
 DotProductXX12XX15:
         ld          a,(UBnkXX12xLo)         ; Use e as var Q for xnormal lo
         JumpIfAIsZero dotxskipzero
@@ -67,6 +61,7 @@ dotaddxy:
         ld          e,c                     ; de = ylo + yscaled
         ld          b,iyh                   ; b = sign of xlo + xscaled
         ld          c,a                     ; c = sign of ylo + yscaled
+        MMUSelectMathsBankedFns
         call ADDHLDESignBC                  ; so now hl = result so will push sign to h
         ld          b,a                     ; b = resultant sign , hl = add so far
         ld          a,(UBnkXX12zLo)         ; 
@@ -85,6 +80,7 @@ dotaddxy:
         pop         hl
         ld          e,d
         ld          d,0
+        MMUSelectMathsBankedFns
         call ADDHLDESignBC
         ld          (varS),a
         ld          a,l

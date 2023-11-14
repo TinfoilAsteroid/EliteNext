@@ -20,9 +20,9 @@ Coriolis:	            DB $00                                      ; Number of ca
                         DB 0                                        ; NewB Tactics     
                         DB ShipFighterBaySize | ShipFighterViper    ; AI Flags            
                         DB $FF                                      ; chance of ECM module
-                        DB $FF                              ; Supports Solid Fill = false
-                        DW $0000                            ; no solid data
-                        DB $00                              ; no solid data
+                        DB $FF                                      ; Supports Solid Fill = false
+                        DW $0000                                    ; no solid data
+                        DB $00                                      ; no solid data
 ;Need to do a debug cube and test that, even better a debug square only 
 ; a debug cube would be -160, 160, 160  to -160,160,-160    top left forward     to top left rear         TLF   $A0, $A0, $A0, $9F, $14, $50 
 ;                       -160, 160, 160  to -160,-160,160    top left forward     to bottom left forward   TLR   $A0, $A0, $A0, $BF, $45, $60

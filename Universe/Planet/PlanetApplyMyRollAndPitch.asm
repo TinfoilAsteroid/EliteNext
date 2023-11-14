@@ -67,6 +67,7 @@ P_MVS5RotateAxis:       ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                         pop     hl              ; get back RS POP ID 1
     ;ex     de,hl           ; swapping around so hl = AP and de = SR , shoud not matter though as its an add
 ;-now DE = (roofaxis/512) hl - abs(nosevaxis) --------------------------------------------------------------------------------
+                        MMUSelectMathsBankedFns
                         call    ADDHLDESignedV4 ; do add using hl and de
                         push    hl              ; we use stack to represent var K here now varK = Nosev axis /16 + (1 - 1/512) * roofv axis PUSH ID 2
 ;-push to stack nosev axis + roofvaxis /512  which is what roofv axis will be ------------------------------------------------  
@@ -135,58 +136,58 @@ P_MVS5RotateAxis:       ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                         ld      (hl),d          ; copy result into nosev
                         ret
     
-ApplyPlanetPitchOnly:   ld      a,(UBnKRotZCounter)
+ApplyPlanetPitchOnly:   ld      a,(UBnkRotZCounter)
                         cp      $FF
-.PitchSAxes:            ld	    hl,P_BnKrotmatRoofvX; UBnkrotmatSidevY
+.PitchSAxes:            ld	    hl,P_BnkrotmatRoofvX; UBnkrotmatSidevY
                         ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatNosevX; UBnkrotmatSidevZ	
+                        ld	    hl,P_BnkrotmatNosevX; UBnkrotmatSidevZ	
                         ld	    (varAxis2),hl
                         call    P_MVS5RotateAxis
-.PitchRAxes:            ld	    hl,P_BnKrotmatRoofvY	
+.PitchRAxes:            ld	    hl,P_BnkrotmatRoofvY	
                         ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatNosevY;UBnkrotmatRoofvZ	
+                        ld	    hl,P_BnkrotmatNosevY;UBnkrotmatRoofvZ	
                         ld	    (varAxis2),hl
                         call    P_MVS5RotateAxis
-.PitchNAxes:            ld	    hl,P_BnKrotmatRoofvZ; UBnkrotmatNosevY	
+.PitchNAxes:            ld	    hl,P_BnkrotmatRoofvZ; UBnkrotmatNosevY	
                         ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatNosevZ	
+                        ld	    hl,P_BnkrotmatNosevZ	
                         ld	    (varAxis2),hl
                         call    P_MVS5RotateAxis
                         ret
     
-ApplyPlanetRollAndPitch:ld      a,(UBnKRotZCounter)
+ApplyPlanetRollAndPitch:ld      a,(UBnkRotZCounter)
                         cp      $FF
-.PitchSAxes:            ld	    hl,P_BnKrotmatRoofvX; UBnkrotmatSidevY
+.PitchSAxes:            ld	    hl,P_BnkrotmatRoofvX; UBnkrotmatSidevY
                         ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatNosevX; UBnkrotmatSidevZ	
+                        ld	    hl,P_BnkrotmatNosevX; UBnkrotmatSidevZ	
                         ld	    (varAxis2),hl
                         call    P_MVS5RotateAxis
-.PitchRAxes:            ld	    hl,P_BnKrotmatRoofvY	
+.PitchRAxes:            ld	    hl,P_BnkrotmatRoofvY	
                         ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatNosevY;UBnkrotmatRoofvZ	
+                        ld	    hl,P_BnkrotmatNosevY;UBnkrotmatRoofvZ	
                         ld	    (varAxis2),hl
                         call    P_MVS5RotateAxis
-.PitchNAxes:            ld	    hl,P_BnKrotmatRoofvZ; UBnkrotmatNosevY	
+.PitchNAxes:            ld	    hl,P_BnkrotmatRoofvZ; UBnkrotmatNosevY	
                         ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatNosevZ	
+                        ld	    hl,P_BnkrotmatNosevZ	
                         ld	    (varAxis2),hl
                         call    P_MVS5RotateAxis
 ApplyPlanetRollOnly:
-.ProcessRoll:           ld      a,(P_BnKRotXCounter)
+.ProcessRoll:           ld      a,(P_BnkRotXCounter)
                         cp      $FF
-.RollSAxis:           	ld	    hl,P_BnKrotmatRoofvX; UBnkrotmatSidevX	
+.RollSAxis:           	ld	    hl,P_BnkrotmatRoofvX; UBnkrotmatSidevX	
                         ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatSidevX; UBnkrotmatSidevY
+                        ld	    hl,P_BnkrotmatSidevX; UBnkrotmatSidevY
                         ld	    (varAxis2),hl
                         call    P_MVS5RotateAxis
-.RollRAxis:             ld	    hl,P_BnKrotmatRoofvY; UBnkrotmatRoofvX	
+.RollRAxis:             ld	    hl,P_BnkrotmatRoofvY; UBnkrotmatRoofvX	
                         ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatSidevY; UBnkrotmatRoofvY	
+                        ld	    hl,P_BnkrotmatSidevY; UBnkrotmatRoofvY	
                         ld	    (varAxis2),hl
                         call    P_MVS5RotateAxis
-.RollNAxis:             ld	    hl,P_BnKrotmatRoofvZ; UBnkrotmatNosevX
+.RollNAxis:             ld	    hl,P_BnkrotmatRoofvZ; UBnkrotmatNosevX
                         ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatSidevZ; UBnkrotmatNosevY	
+                        ld	    hl,P_BnkrotmatSidevZ; UBnkrotmatNosevY	
                         ld	    (varAxis2),hl
                         call    P_MVS5RotateAxis
                         ret
@@ -200,9 +201,9 @@ PlanetApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitc
 .CalcAlphaMulX:         ld      a,(ALPHA)                   ; get roll magnitude
                         xor     SignOnly8Bit                ; d = -alpha (Q value)
                         ld      d,a                         ; .
-                        ld      a,(P_BnKxlo)                 ; HLE = x sgn, hi, lo
+                        ld      a,(P_Bnkxlo)                 ; HLE = x sgn, hi, lo
                         ld      e,a                         ; .
-                        ld      hl,(P_BnKxhi)                ; .
+                        ld      hl,(P_Bnkxhi)                ; .
                         call    mulHLEbyDSigned             ; DELC = x * -alpha, so DEL = X * -alpha / 256 where d = sign byte
 .SaveAlphaMulX:         ;ld      a,c                         ; a = upper byte of results which will have the sign               ONLY NEEDED FOR DEBUGGING TEST
                         ;ld      (PlanetAlphaMulX),a            ; save sign from result, ELC holds actual result                   ONLY NEEDED FOR DEBUGGING TEST
@@ -212,12 +213,13 @@ PlanetApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitc
                         ld      (PlanetAlphaMulX+2),a
                         ld      a,d
                         ld      (PlanetAlphaMulX+3),a          ; we actually only want X1 X2 X3 later as its /256
-.CalcK2:                ld      de,(P_BnKyhi)                ; DEL = Y
-                        ld      a,(P_BnKylo)                 ; .
+.CalcK2:                ld      de,(P_Bnkyhi)                ; DEL = Y
+                        ld      a,(P_Bnkylo)                 ; .
                         ld      l,a                         ; .
                         ld      bc,(PlanetAlphaMulX+2)         ; BCH = Y sgn, hi, lo, we loose the C from result
                         ld      a,(PlanetAlphaMulX+1)          ; Deal with sign in byte 4
                         ld      h,a                         ; .
+                        MMUSelectMathsBankedFns
                         call    AddBCHtoDELsigned           ; DEL = y - (alpha * x)
                         ld      a,l                         ; K2  = DEA = DEL = y - (alpha * x)
                         ld      (PlanetK2),a                   ; we also need to save l for teh beta k2 calc
@@ -227,19 +229,20 @@ PlanetApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitc
                         ld      a,(BETA)                    ; D = BETA
                         ld      d,a                         ; .
                         call    mulHLEbyDSigned             ; DELC = Beta * K2, DEL = Beta/256 * K2
-.CalcZ:                 ld      bc,(P_BnKzhi)                ; BCH = z
-                        ld      a,(P_BnKzlo)                 ;
+.CalcZ:                 ld      bc,(P_Bnkzhi)                ; BCH = z
+                        ld      a,(P_Bnkzlo)                 ;
                         ld      h,a                         ;
+                        MMUSelectMathsBankedFns
                         call    AddBCHtoDELsigned           ; DEL still = Beta * K2 so its z + Beta * K2
-                        ld      (P_BnKzhi),de                ; z = resuklt
+                        ld      (P_Bnkzhi),de                ; z = resuklt
                         ld      a,l                         ; .
-                        ld      (P_BnKzlo),a                 ; .
+                        ld      (P_Bnkzlo),a                 ; .
 .CalcBetaZ:             ld      a,(BETA)
                         xor     SignOnly8Bit                ; d = -beta (Q value)
                         ld      d,a                         ; .
-                        ld      a,(P_BnKzlo)                 ; HLE = z
+                        ld      a,(P_Bnkzlo)                 ; HLE = z
                         ld      e,a                         ; .
-                        ld      hl,(P_BnKzhi)                ; .
+                        ld      hl,(P_Bnkzhi)                ; .
                         call    mulHLEbyDSigned             ; DELC = z * -beta, so DEL = Z * -beta / 256 where d = sign byte
 .SaveAlphaMulZ:         ;ld      a,c                         ; a = upper byte of results which will have the sign             ONLY NEEDED FOR DEBUGGING TEST
                         ;ld      (PlanetBetaMulZ),a             ; save sign from result, ELC holds actual result                 ONLY NEEDED FOR DEBUGGING TEST
@@ -254,15 +257,16 @@ PlanetApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitc
                         ld      de,(PlanetK2+1)                ; DEL = k2
                         ld      a,(PlanetK2)
                         ld      l,a
+                        MMUSelectMathsBankedFns
                         call    AddBCHtoDELsigned           ; DEL = K2 - Beta * Z
-                        ld      (P_BnKyhi),de                ; y = DEL = K2 - Beta * Z
+                        ld      (P_Bnkyhi),de                ; y = DEL = K2 - Beta * Z
                         ld      a,l                         ; .
-                        ld      (P_BnKylo),a                 ; .
+                        ld      (P_Bnkylo),a                 ; .
 .CalcAlphaMulY:         ld      a,(ALPHA)
                         ld      d,a                         ; d = alpha (Q value)
-                        ld      a,(P_BnKylo)                 ; HLE = x sgn, hi, lo
+                        ld      a,(P_Bnkylo)                 ; HLE = x sgn, hi, lo
                         ld      e,a                         ; .
-                        ld      hl,(P_BnKyhi)                ; .
+                        ld      hl,(P_Bnkyhi)                ; .
                         call    mulHLEbyDSigned             ; DELC = y * alpha, so DEL = Y * alpha / 256 where d = sign byte
 .SaveAlphaMulY:         ld      a,c                         ; a = upper byte of results which will have the sign
                         ld      (PlanetAlphaMulY),a            ; save sign from result, ELC holds actual result
@@ -274,25 +278,27 @@ PlanetApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitc
                         ld      (PlanetAlphaMulY+3),a                                             
 .CalcxPLusAlphaY:       ld      bc,de                        ; BCH = Y sgn, hi, lo, we loose the C from result Deal with sign in byte 4
                         ld      h,l                         ; .
-                        ld      de,(P_BnKxhi)                ; DEL = Y
-                        ld      a,(P_BnKxlo)                 ; .
+                        ld      de,(P_Bnkxhi)                ; DEL = Y
+                        ld      a,(P_Bnkxlo)                 ; .
                         ld      l,a                         ; .
+                        MMUSelectMathsBankedFns
                         call    AddBCHtoDELsigned           ; DEL = x + alpha * Y
 .SaveResult1:           ld      a,d                         ; Result 1 (X) = AHL + DEL
                         ld      h,e                         ;
-.CopyResultTo2:         ld      (P_BnKxlo+2),a               ; .
-                        ld      (P_BnKxlo) ,hl               ; .
+.CopyResultTo2:         ld      (P_Bnkxlo+2),a               ; .
+                        ld      (P_Bnkxlo) ,hl               ; .
                         ret
 .NoRotation:            ld      a,(DELTA)                   ; BCH = - Delta
                         ReturnIfAIsZero
                         ld      c,0                         ;
                         ld      h,a                         ; 
                         ld      b,$80                       ;
-                        ld      de,(P_BnKzhi)                ; DEL = z position
-                        ld      a,(P_BnKzlo)                 ; .
+                        ld      de,(P_Bnkzhi)                ; DEL = z position
+                        ld      a,(P_Bnkzlo)                 ; .
                         ld      l,a                         ; .
+                        MMUSelectMathsBankedFns
                         call    AddBCHtoDELsigned           ; update speed
-                        ld      (P_BnKzhi),DE                ; write back to zpos
+                        ld      (P_Bnkzhi),DE                ; write back to zpos
                         ld      a,l
-                        ld      (P_BnKzlo),a                ;
+                        ld      (P_Bnkzlo),a                ;
                         ret

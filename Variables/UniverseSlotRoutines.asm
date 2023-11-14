@@ -64,7 +64,10 @@ ClearFreeSlotListSaveA: ld      d,a
                         djnz    .fillLoop
                         ret
 
-ClearSlotA:             ld      hl,UniverseSlotList
+; Clear out slot. if its already FF then just drop out
+ClearSlotA:             cp      $FF
+                        ret     z
+                        ld      hl,UniverseSlotList
                         add     hl,a
                         ld      (hl),$FF
                         ld      a,UniverseSlotListSize  ; move to types
@@ -107,7 +110,7 @@ WarpJunk:               ld      hl,UniverseSlotType+1
                         MMUSelectUniverseA
                         call    WarpOffset
                         jp      .DoneIteration
-                        
+                        DISPLAY "TODO - This i sprojbabyl fixed but check IM OVERTHINKIGN THIS JUST MAKE SPACE STATION SLOT 0 AGAIN?"
 
 AreShipsPresent:        ld      hl,UniverseSlotType+1
                         ld      b,UniverseSlotListSize -1      ; ignore space station
@@ -132,10 +135,6 @@ GetTypeAtSlotA:         ld      hl,UniverseSlotList
                         ld      a,(hl)
                         ret
                         
-IsPlanetOrSpaceStation: ld      hl,UniverseSlotList+1
-                        ld      a,(hl)
-                        ret
-
 FindNextFreeSlotInC:    ld      hl,UniverseSlotList
                         ld      b, UniverseSlotListSize
                         ld      c, 0

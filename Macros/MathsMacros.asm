@@ -236,3 +236,45 @@ AddSpeedToVert:         MACRO   vertex
                         ld      (vertex),a
                         ld      (vertex+1),de
                         ENDM
+                        
+MacroAequDxEdiv256usgn:	MACRO
+						mul
+						ld	a,d				; we get only the high byte which is like doing a /256 if we think of a as low
+						ENDM
+                        
+                        
+
+APPequPosPlusAPP:       MACRO    Position, PositionSign
+                        push    bc
+                        ld      c,a                         ; save original value of a into c
+                        ld      a,(PositionSign)
+                        ld      b,a
+                        ld      a,c
+                        xor     b                           ; a = a xor x postition sign
+                        jp      m,.MV50                     ; if the sign is negative then A and X are both opposite signs
+; Signs are the same to we just add and take which ever sign 
+                        ld      de,(varPp1)                  ; Note we take p+2,p+1 we we did a previous 24 bit mulitple
+                        ld      hl,(Position)
+                        add     hl,de
+                        ld      (varPp1),hl                  ; now we have P1 and p2 with lo hi and
+                        ld      a,c                         ; and a = original sign as they were both the same
+                        pop     bc
+                        ret
+; Signs are opposite so we subtract
+.MV50:                  ld      de,(varPp1)
+                        ld      hl,(Position)
+                        or      a
+                        sbc     hl,de
+                        jr      c,.MV51                     ; if the result was negative then negate result
+                        ld      a,c                         ; get back the original sign
+                        ld      (varPp1),hl                 ; and save result to P[2][1]
+                        xor     SignOnly8Bit                ; flip sign and exit A = flip of a
+                        pop     bc
+                        ret
+.MV51:                  NegHL
+                        ld      (varPp1),hl
+                        ld      a,c                         ; the original sign will still be good
+                        pop     bc
+                        ret
+                        ENDM
+                        

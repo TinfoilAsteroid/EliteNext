@@ -1,8 +1,8 @@
-PlanetCopyPosToXX15:    ldCopyByte  P_BnKxhi         ,P_BnKXScaled        ; xlo
-                        ldCopyByte  P_BnKxsgn        ,P_BnKXScaledSign    ; xsg
-                        ldCopyByte  P_BnKyhi         ,P_BnKYScaled        ; xlo
-                        ldCopyByte  P_BnKysgn        ,P_BnKYScaledSign    ; xsg
-                        ldCopyByte  P_BnKzhi         ,P_BnKZScaled        ; xlo
-                        ldCopyByte  P_BnKzsgn        ,P_BnKZScaledSign    ; xsg
+PlanetCopyPosToXX15:    ldCopyByte  P_Bnkxhi         ,P_BnkXScaled        ; xlo
+                        ldCopyByte  P_Bnkxsgn        ,P_BnkXScaledSign    ; xsg
+                        ldCopyByte  P_Bnkyhi         ,P_BnkYScaled        ; xlo
+                        ldCopyByte  P_Bnkysgn        ,P_BnkYScaledSign    ; xsg
+                        ldCopyByte  P_Bnkzhi         ,P_BnkZScaled        ; xlo
+                        ldCopyByte  P_Bnkzsgn        ,P_BnkZScaledSign    ; xsg
                         ret
 		

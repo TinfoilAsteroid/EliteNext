@@ -20,10 +20,10 @@ Gradient                DB      0
 
 ;--------------------------------------------------------------------------------------
         IFNDEF       CLIPVersion3
-ClipLine:               ld      bc,(UbnkPreClipY1)          ; bc - XX15(2,3) Y1
-                        ld      ix,(UbnkPreClipY2)          ; ix - XX12(0,1) Y2
-                        ld      hl,(UbnkPreClipX1)          ; hl - XX15(0,1) X1
-                        ld      de,(UbnkPreClipX2)          ; de - XX15(4,5) X2
+ClipLine:               ld      bc,(UBnkPreClipY1)          ; bc - XX15(2,3) Y1
+                        ld      ix,(UBnkPreClipY2)          ; ix - XX12(0,1) Y2
+                        ld      hl,(UBnkPreClipX1)          ; hl - XX15(0,1) X1
+                        ld      de,(UBnkPreClipX2)          ; de - XX15(4,5) X2
                         xor     a
                         ld      (SWAP),a                    ; SWAP = 0
                         ld      a,d                         ; A = X2Hi
@@ -400,23 +400,23 @@ ClipLineV3:             ;break
         IFDEF       CLIPVersion3
 ;My logic version
 .CheckYorder:                     
-                        ld      hl,(UbnkPreClipY1)
-                        ld      de,(UbnkPreClipY2)
+                        ld      hl,(UBnkPreClipY1)
+                        ld      de,(UBnkPreClipY2)
                         call    CompareHLDESgn
                         jr      c,.LineP1toP2                          ; if Y1 < Y2 then we can use the points as is else we have to swap
-.LineP2toP1:            ld      bc,(UbnkPreClipY2)                      ; fetch and write out in reverse
-                        ld      ix,(UbnkPreClipY1)
-                        ld      de,(UbnkPreClipX1)
-                        ld      hl,(UbnkPreClipX2)
-                        ld      (UbnkPreClipY1),bc                      ; bc - XX15(2,3) Y1
-                        ld      (UbnkPreClipY2),ix                      ; ix - XX12(0,1) Y2
-                        ld      (UbnkPreClipX1),hl                      ; hl - XX15(0,1) X1 
-                        ld      (UbnkPreClipX2),de                      ;  de - XX15(4,5) X2
+.LineP2toP1:            ld      bc,(UBnkPreClipY2)                      ; fetch and write out in reverse
+                        ld      ix,(UBnkPreClipY1)
+                        ld      de,(UBnkPreClipX1)
+                        ld      hl,(UBnkPreClipX2)
+                        ld      (UBnkPreClipY1),bc                      ; bc - XX15(2,3) Y1
+                        ld      (UBnkPreClipY2),ix                      ; ix - XX12(0,1) Y2
+                        ld      (UBnkPreClipX1),hl                      ; hl - XX15(0,1) X1 
+                        ld      (UBnkPreClipX2),de                      ;  de - XX15(4,5) X2
                         jp      .CheckNoClip
-.LineP1toP2             ld      bc,(UbnkPreClipY1)                      ; bc - XX15(2,3) Y1
-                        ld      ix,(UbnkPreClipY2)                      ; ix - XX12(0,1) Y2
-                        ld      hl,(UbnkPreClipX1)                      ; hl - XX15(0,1) X1 
-                        ld      de,(UbnkPreClipX2)                      ; de - XX15(4,5) X2
+.LineP1toP2             ld      bc,(UBnkPreClipY1)                      ; bc - XX15(2,3) Y1
+                        ld      ix,(UBnkPreClipY2)                      ; ix - XX12(0,1) Y2
+                        ld      hl,(UBnkPreClipX1)                      ; hl - XX15(0,1) X1 
+                        ld      de,(UBnkPreClipX2)                      ; de - XX15(4,5) X2
 .CheckNoClip:           ld      a,b                                 
                         or      d
                         or      h
@@ -470,8 +470,8 @@ ClipLineV3:             ;break
 .Y1OnScreen:
 .Y2OnScreen:
 .Y1Y2OppositeSign:      
-.StartProcessing:       ld      hl,(UbnkPreClipX1)                      ; Now we can test and Clip 
-                        ld      de,(UbnkPreClipX2)                      ; de - XX15(4,5)
+.StartProcessing:       ld      hl,(UBnkPreClipX1)                      ; Now we can test and Clip 
+                        ld      de,(UBnkPreClipX2)                      ; de - XX15(4,5)
                         ld      iyh,0                                   ; set iyh flags to 0
 ; if x1hi or y1 high <> 0 or y1 > 127 then set bit 1 of clipcoord       ; we can optimise this later
                         ld      a,h
@@ -561,8 +561,8 @@ ClipLineV3:             ;break
                         test    $80                                     ;      .
                         SetCarryFlag                                    ;      .
                         ret     nz                                      ;      .
-                        ld      (UbnkPreClipY1), bc                     ;      else its valid and clipped point 1 so save ti back
-                        ld      (UbnkPreClipX1), hl
+                        ld      (UBnkPreClipY1), bc                     ;      else its valid and clipped point 1 so save ti back
+                        ld      (UBnkPreClipX1), hl
 ; if bit 2 of clipcoord is set
 ;        swap x1y1 with x2y2
 ;        call    LL118
@@ -579,13 +579,13 @@ ClipLineV3:             ;break
                         test    $80                                     ; .
                         SetCarryFlag                                    ; .
                         ret     nz                                      ; .
-                        ld      (UbnkPreClipY2), bc                     ; bc - XX15(2,3);;
-                        ld      (UbnkPreClipX2), hl
+                        ld      (UBnkPreClipY2), bc                     ; bc - XX15(2,3);;
+                        ld      (UBnkPreClipX2), hl
 ;clip compelte exit    
-.ClipComplete:          ld      bc,(UbnkPreClipY1)                      ; bc - XX15(2,3);;
-                        ld      hl,(UbnkPreClipX1)                        
-                        ld      ix,(UbnkPreClipY2)                      ; bc - XX15(2,3);;
-                        ld      de,(UbnkPreClipX2)
+.ClipComplete:          ld      bc,(UBnkPreClipY1)                      ; bc - XX15(2,3);;
+                        ld      hl,(UBnkPreClipX1)                        
+                        ld      ix,(UBnkPreClipY2)                      ; bc - XX15(2,3);;
+                        ld      de,(UBnkPreClipX2)
 .SaveClippedLine:       ld      a,c                                     ; Y1 = y1 lo, x2 = x2 lo, x1 = x1 lo y1 = y1 lo                                   -- Nothing off screen
                         ld      (UBnkNewY1),a
                         ld      a,ixl
@@ -597,12 +597,12 @@ ClipLineV3:             ;break
                         ClearCarryFlag                              ; we have a success so not carry
                         ret
 ;-----------------------------------------------------------------------------------------------------------------------------------
-LL118v3PreSwap:         ld      bc,(UbnkPreClipY2)                  ; bc - XX15(2,3);;
-                        ld      hl,(UbnkPreClipX2)
+LL118v3PreSwap:         ld      bc,(UBnkPreClipY2)                  ; bc - XX15(2,3);;
+                        ld      hl,(UBnkPreClipX2)
                         jp      LL118v3Fetched
 ;-----------------------------------------------------------------------------------------------------------------------------------
-LL118v3:                ld      bc,(UbnkPreClipY1)                  ; bc - XX15(2,3);;
-                        ld      hl,(UbnkPreClipX1)
+LL118v3:                ld      bc,(UBnkPreClipY1)                  ; bc - XX15(2,3);;
+                        ld      hl,(UBnkPreClipX1)
 ;-----------------------------------------------------------------------------------------------------------------------------------
 LL118v3Fetched:                                  
 ;                       At this point bc = y position, hl = x position both 16 bit

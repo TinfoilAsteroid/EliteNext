@@ -1,6 +1,6 @@
 ;--------------------------------------------------------------------------------------------------------
 GetFaceAtA:         MACRO
-                    ld          hl,UbnkFaceVisArray
+                    ld          hl,UBnkFaceVisArray
                     add         hl,a
                     ld          a,(hl)                              ; get face visibility
                     ENDM

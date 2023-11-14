@@ -8,11 +8,12 @@ TransposeXX12ByShipToXX15:
         and     $7F
         ld      h,a
         ;110921 debugld      h,0
-		ld		de,(UBnKxlo)						;
-		ld		a,(UBnKxsgn)						; get Ship Pos (low,high,sign)
+		ld		de,(UBnkxlo)						;
+		ld		a,(UBnkxsgn)						; get Ship Pos (low,high,sign)
 		and		$80									; make sure we only have bit 7
 		ld		c,a									; and put sign of unkxsgn c
-		call 	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC		; this will result in HL = result and A = sign
+		MMUSelectMathsBankedFns
+        call 	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC		; this will result in HL = result and A = sign
 		or		h									; combine sign in A with H to give 15 bit signed (*NOT* 2's c)
 		ld		h,a
 		ld		(UBnkXScaled),hl					; now write it out to XX15 X pos
@@ -26,11 +27,12 @@ TransposeXX12ByShipToXX15:
         and     $7F
         ld      h,a
         ;110921 debugld      h,0
-		ld		de,(UBnKylo)
-		ld		a,(UBnKysgn)
+		ld		de,(UBnkylo)
+		ld		a,(UBnkysgn)
 		and		$80									; make sure we only have bit 7
 		ld		c,a
-		call 	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC
+		MMUSelectMathsBankedFns
+        call 	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC
 		or		h									; combine sign in A with H
 		ld		h,a
 		ld		(UBnkYScaled),hl
@@ -44,11 +46,12 @@ TransposeXX12ByShipToXX15:
         and     $7F
         ld      h,a
         ;110921 debugld      h,0
-		ld		de,(UBnKzlo)
-		ld		a,(UBnKzsgn)
+		ld		de,(UBnkzlo)
+		ld		a,(UBnkzsgn)
 		and		$80									; make sure we only have bit 7
 		ld		c,a
-		call 	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC
+		MMUSelectMathsBankedFns
+        call 	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC
 		or		h									; combine sign in A with H
 		ld		h,a
 		bit		7,h                                 ; if sign if positive then we don't need to do the clamp so we ony jump 

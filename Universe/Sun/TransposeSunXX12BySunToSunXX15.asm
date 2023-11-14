@@ -12,6 +12,7 @@ TransposeSXX12BySunToSXX15:
                         ld		a,(SBnKxsgn)						; get Ship Pos (low,high,sign)
                         and		$80									; make sure we only have bit 7
                         ld		c,a									; and put sign of unkxsgn c
+                        MMUSelectMathsBankedFns
                         call 	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC		; this will result in HL = result and A = sign
                         or		h									; combine sign in A with H to give 15 bit signed (*NOT* 2's c)
                         ld		h,a
@@ -30,6 +31,7 @@ TransposeSXX12BySunToSXX15:
                         ld		a,(SBnKysgn)
                         and		$80									; make sure we only have bit 7
                         ld		c,a
+                        MMUSelectMathsBankedFns
                         call 	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC
                         or		h									; combine sign in A with H
                         ld		h,a
@@ -48,6 +50,7 @@ TransposeSXX12BySunToSXX15:
                         ld		a,(SBnKzsgn)
                         and		$80									; make sure we only have bit 7
                         ld		c,a
+                        MMUSelectMathsBankedFns
                         call 	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC
                         or		h									; combine sign in A with H
                         ld		h,a
