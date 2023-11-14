@@ -1,16 +1,16 @@
-LoadCraftToCamera:      ld      hl,(UBnKxlo)            ; UBnKxlo, UBnKxhi
-                        ld      de,(UBnKxsgn)           ; UBnKxsgn, UBnKylo
-                        ld      bc,(UBnKyhi)            ; UBnKyhi, UBnKysgn
+LoadCraftToCamera:      ld      hl,(UBnkxlo)            ; UBnkxlo, UBnkxhi
+                        ld      de,(UBnkxsgn)           ; UBnkxsgn, UBnkylo
+                        ld      bc,(UBnkyhi)            ; UBnkyhi, UBnkysgn
                         ld      (UBnkDrawCam0xLo),hl    ; UBnkDrawCam0xLo, UBnkDrawCam0xHi
                         ld      (UBnkDrawCam0xSgn),de   ; UBnkDrawCam0xSgn,UBnkDrawCam0yLo
                         ld      (UBnkDrawCam0yHi),bc    ; UBnkDrawCam0yHi, UBnkDrawCam0ySgn
                         
-                        ld      hl,(UBnKzlo)            ; UBnKzlo, UBnKzhi
-                        ld      a,(UBnKzsgn)             ; UBnKzlo
+                        ld      hl,(UBnkzlo)            ; UBnkzlo, UBnkzhi
+                        ld      a,(UBnkzsgn)             ; UBnkzlo
                         ld      (UBnkDrawCam0zLo),hl    ; UBnkDrawCam0zLo, UBnkDrawCam0zHi
                         ld      (UBnkDrawCam0zSgn),a    ; UBnkDrawCam0zSgn
                         ret
-;                       ld      hl,UBnKxlo
+;                       ld      hl,UBnkxlo
 ;                       ld      de,UBnkDrawCam0xLo
 ;                       NineLDIInstrunctions                ; transfer 9 bytes
                         ret

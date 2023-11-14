@@ -92,80 +92,12 @@ TestAreWeDocked:        JumpIfMemNeNusng DockedFlag, StateNormal, UpdateLoop    
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
 ;.. First update Sun...............................................................................................................
-                IFDEF MAINLOOP_WARP_ENABLED
-;... Warp or in system jump thsi moves everything by 1 on the high (sign) byte away or towards ship based on their z axis only
-;... its not a true move in the right direction, more a z axis warp                
-ProcessWarp:            JumpIfMemFalse  WarpPressed, .NoWarp
-.WarpIsPressed:         SetMemFalse     WarpPressed                               ; clear and acknowlege
-                        JumpIfMemZero   WarpCooldown, .WarpDriveCool
-                        DISPLAY "TODO Need logic for in system jump drive malfunction"
-.JumpDriveHot:          DISPLAY "TODO call bong jump drive hot"
-                        DISPLAY "TODO flash jump drive status icon"
-                        jp      .NoWarp
-.WarpDriveCool:         JumpIfMemFalse    SpaceStationSafeZone, .NotInSpaceStationRange
-.MassLocked:            DISPLAY "TODO Mass locked by object call bong"
-                        DISPLAY "TODO message mass locked"
-                        DISPLAY "TODO make space station a body just like planet and sun"
-                        jp      .NoWarp
-.NotInSpaceStationRange:call    AreShipsPresent
-                        jr      nc,     .MassLocked
-.IsPlanetMassLocking:   MMUSelectPlanet                 ; is planet within 256 then mass locked
-                        ld      hl,(P_BnKzhi)
-                        ld      a,h                     ; if z sign is <> 0 then mass locked
-                        and     $7F                     ; h = abs zsign
-                        or      l                       ; to get to here a must be zero to or with l will give a quick result
-                        jp      z,     .MassLocked
-.IsSunMassLocking:      MMUSelectSun
-                        ld      hl,(SBnKzhi)
-                        ld      a,h                     ; if z sign is <> 0 then mass locked
-                        and     $7F                     ; h = abs zsign
-                        or      l                       ; to get to here a must be zero to or with l will give a quick result
-                        jp      z,     .MassLocked
-            IFDEF SIMPLEWARP
-                        ld      hl,(P_BnKzhi)           ; z hi,sign must be > 0 else we are mass locked so can't hit here
-                        DecHLSigned
-                        ld      (P_BnKzhi),hl
-                        ld      hl,(SBnKzhi)           ; z hi,sign must be > 0 else we are mass locked so can't hit here
-                        DecHLSigned
-                        ld      (SBnKzhi),hl
-            ELSE
-.NotCorrectFacing:      ;       call bong, align with body
-                        jp      .NoWarp
-.JumpToPlanetCheck:     ld      a,(P_BnKzhi)
-                        JumpIfAGTENusng  2, .PlanetRangeOK 
-                        ld      a,(P_BnKyhi)
-                        JumpIfAGTENusng  2, .PlanetRangeOK
-                        ld      a,(P_BnKxhi)
-                        JumpIfAGTENusng  2, .PlanetRangeOK
-                        jp      .MassLocked
-.PlanetRangeOK:         call    WarpPlanetCloser
-                        MMUSelectSun
-                        call    WarpSunFurther
-                        jp      .MoveJunk
-.JumpToSunCheck:        ld      a,(SBnKzsgn)
-                        ld      hl,SBnKxsgn
-                        or      (hl)
-                        ld      hl,SBnKysgn
-                        or      (hl)
-                        and     SignMask8Bit
-                        JumpIfAGTENusng  2, .SunRangeOK
-                        jp      .MassLocked
-.SunRangeOK:            call    WarpSunCloser
-                        MMUSelectPlanet
-                        call    WarpPlanetFurther
-            ENDIF
-.MoveJunk:              call    ClearJunk;  call    WarpJunk - as it will move sign bit hi then all junk will be lost
-                        ld      a,WarpCoolDownPeriod
-                        ld      (WarpCooldown),a
-                        MMUSelectLayer1
-                        call    WarpSFX             ; Do the visual SFX based on facing
-                        jp      .DoneWarp
-.NoWarp:                MMUSelectLayer1
-.DoneWarp:
-                ENDIF
+            INCLUDE "./GameEngine/ShipWarp.asm"
+; NOte UpdateShipsControl + 1 is self modifying to determine if they get updated
 UpdateShipsControl:     ld      a,0
                         and     a
                         IFDEF MAINLOOP_UPDATEUNIVERSE
+                                                                              
 .UpdateShips:               call    z, UpdateUniverseObjects
                         ENDIF
                         JumpIfMemNeNusng ScreenTransitionForced, $FF, BruteForceChange  ; if we docked then a transition would have been forced
@@ -193,28 +125,20 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
 .JustViewPortCLS:       call   l2_cls_upper_two_thirds
 .ViewPortCLSDone:
                         MMUSelectLayer1
-.UpdateSun:             
-                        IFDEF   MAINLOOP_SUN_RENDER
+.UpdateSun:             IFDEF   MAINLOOP_SUN_RENDER
                             MMUSelectSun
-;.DEBUGFORCE:            
-                       ;ld          hl,$0081
-                       ;ld          (SBnKxlo),hl
-                       ;ld          hl,$0001
-                       ;ld          (SBnKylo),hl
-                       ; ld          hl,$0160
-                       ; ld          (SBnKzlo),hl
-                        ;ld          a,$80
-                        ;ld          (SBnKxsgn),a
-                        ;ld          (SBnKysgn),a
-                       ; ZeroA
-                      ;  ld          (SBnKzsgn),a
                             call    SunUpdateAndRender
                         ENDIF
 .UpdatePlanet:          IFDEF   MAINLOOP_PLANET_RENDER
-                            ;break
                             MMUSelectPlanet
                             call    PlanetUpdateAndRender
                         ENDIF
+                                              
+                                                     
+                                                                
+                             
+                                                
+                              
 ;..Later this will be done via self modifying code to load correct stars routine for view..........................................
 DrawDustForwards:       ld     a,$DF
                         ld     (line_gfx_colour),a                         
@@ -222,7 +146,8 @@ DustUpdateBank:         MMUSelectViewFront                                      
                         IFDEF   MAINLOOP_DUST_RENDER
 DustUpdateRoutine:          call   DustForward                                              ; This needs to be self modifying
                         ENDIF
-;ProcessSun:             call    DrawForwardSun
+                                                
+                                               
                         IFDEF   LASER_V2            
 ProcessLaser:               MMUSelectSpriteBank
                             JumpIfMemFalse LaserBeamOn, .NoLaser
@@ -252,6 +177,7 @@ ProcessShipModels:          call   DrawForwardShips                             
                         ; now will CLS bottom thrid
                         CallIfMemTrue ConsoleRedrawFlag, UpdateConsole
 ;..If we were not in views then we were in display screens/menus...................................................................
+                
 UpdateLoop:             JumpIfMemZero ScreenLoopJP+1,LoopRepeatPoint
 ;..This is the screen update routine for menus.....................................................................................
 ;.. Also used by transition routines
@@ -265,8 +191,83 @@ HandleLaunched:         JumpIfAEqNusng  StateCompletedLaunch,   WeHaveCompletedL
                         JumpIfAEqNusng  StateHEntering,         WeAreHEntering
                         JumpIfAEqNusng  StateCompletedHJump,    WeHaveCompletedHJump
                         
-                        jp      DoubleBufferCheck
-WeHaveCompletedLaunch:  call    LaunchedFromStation
+                                                 
+;-----------------------------------------------------------------------------
+; Initialise local universe bubble based on a hyperspace Jump
+IntitaliseBubble:       call    InitialiseLocalUniverse         ; Sets up galaxy twist for local universe
+                        ;call    GetDigramGalaxySeed            ; .           
+                        MMUSelectStockTable                     ; .
+                        call    generate_stock_market           ; generate new prices
+                        call    ClearUnivSlotList               ; clear out any ships
+                        call    ResetPlayerShip 
+                        HalveFugitiveStatus                     ; halves status and brings bit into carry
+.CreateSun:             MMUSelectSun
+                        call    CreateSun                       ; create the local sun and set absloute bubble position based on seed and hyperspace jump
+.CreatePlanet:          MMUSelectPlanet
+                        call    CreatePlanet                    ; create planet and set absolute bubble position and hyperspace jump
+.CopyPlanetXYZtoGlobal: ld      hl,P_Bnkxlo                     ; Copy parent planet to work out space station bubble absolute position
+                        ld      de,ParentPlanetX
+                        ld      bc,3*3
+                        ldir
+                        MMUSelectSpaceStation                   ; when creating Space station it is offset from planet to an absolute position
+.CreateSpaceStation:    call    SpawnSpaceStation               ; so we spawn it
+                        call    UnivSpawnSpaceStation           ; and set up bubble position based on ParentPlanet
+                        ret
+
+
+;----------------------------------------------------------------------------------------------------------------------------------
+LaunchedFromStation:    
+                        DISPLAY "TODO: Need to create launched relative to where they would"
+                        DISPLAY "be when jumping in but considering that the space station is"
+                        DISPLAY "offset to planet and behind ship, so need to consider that"
+                        DISPLAY "TODO: Check Z of space station is zsign 01"
+                        DISPLAY "TODO: Check spaace station z pos -1 sign"
+; Now we copy space station position to ParentPlanetX temporary vars
+.CorrectPositions:      MMUSelectSpaceStation
+.CopyStationXYZtoGlobal:ld      hl,UBnkxlo                      ; Copy planet position to Parent
+                        ld      de,ParentPlanetX                ; .
+                        ld      bc,3*3                          ; .
+                        ldir                                    ; .
+.AdjustPosForPlayer:    ld      bc,$8100                        ; now work out offset for player being at space station + 00000,00000,00001 (i.e subtract 00001 from space station z position)
+                        ld      h,0                             ; so its planet Z + -10000
+                        ld      de,(ParentPlanetZ+1)            ; .
+                        ld      a,(ParentPlanetZ)               ; .
+                        ld      l,a                             ; .
+                        MMUSelectMathsBankedFns                 ; .
+                        call    AddBCHtoDELsigned               ; .
+                        ld      (ParentPlanetZ+1),de            ; .
+                        ld      a,l                             ; .
+                        ld      (ParentPlanetZ),a               ; .
+.FlipSignsforSubtract:  ld      a,(ParentPlanetX+2)             ; now we flip all the signs for subtract 
+                        xor     $80                             ; so we have a value to move the universe
+                        ld      (ParentPlanetX),a               ; relative to player
+                        ld      a,(ParentPlanetY+2)             ; .
+                        xor     $80                             ; .
+                        ld      (ParentPlanetY),a               ; .
+                        ld      a,(ParentPlanetZ+2)             ; .
+                        xor     $80                             ; .
+                        ld      (ParentPlanetZ),a               ; .         
+.AdjustSpaceStation:    call    SpaceStationLaunchPositon       ; Space station is now 00000,00000,-10000
+.AdjustPlanet:          MMUSelectPlanet                         ; Calculate planet position relative to player
+                        call    CalculatePlanetLaunchedPosition ; .
+.AdjustSun:             MMUSelectSun                            ; Calculate sun position relative to player
+                        call    CalculateSunLaunchedPosition    ; .
+; Now we have the corrected bodies and space station positions
+.NowInFlight:           ld      a,StateNormal                   ; now we are in Normal flying state on
+                        ld      (DockedFlag),a                  ; front view port
+                        ForceTransition ScreenFront             ; .
+                        ld      a,$FF
+                        ld      (LAST_DELTA),a                  ; force sound update in interrupt
+                        call    ResetPlayerShip
+                        ret
+                        
+;-----------------------------------------------------------------------------
+; Essentially its just the same as a hyperspace jump except we then adjust
+; the sun, planet and space station relative based on the player spat out the space
+; station at z - 50
+WeHaveCompletedLaunch:  break
+                        call    IntitaliseBubble    ; Seed local galaxy, markets, remove ships, create sun, planet , copy planet to interface, spawn space station, COPY POS TO PLANET INTERFACE, RESET TO  at 0,0,-00001
+                        call    LaunchedFromStation
                         jp      DoubleBufferCheck
 WeAreHJumping:          call    hyperspace_Lightning
                         jp      c,DoubleBufferCheck
@@ -277,6 +278,50 @@ WeAreHEntering:         ld      a,StateCompletedHJump
                         ld      (DockedFlag),a
                         jp      DoubleBufferCheck
 
+; On lanch completion
+;   intialise bubble
+;       InitialiseLocalUniverse
+;               Seed Galaxy
+;       Generte stock marked
+;       ClearUnivSlotList              ; clear out any ships
+;       ceate sun and planet
+;       copy planet to interface
+;       spawn space station
+;       call UnivSpawnSpaceStationLaunched
+;   Launched from Station 
+;                       Set XYZ to 0 (not needed now)
+;                       adjust pos for player on planet                
+;                       Adjust space station for launch
+;                       adjust planet fo rlaunch
+;                       adjust sun for launch
+.AdjustSpaceStation:    call    CalculateSpaceStationLaunchPositon
+.AdjustPlanet:          MMUSelectPlanet
+                        call    CalculatePlanetLaunchedPosition
+.AdjustSun:             MMUSelectSun
+                        call    CalculateSunLaunchedPosition
+; Now we have the corrected bodies and space station positions
+.NowInFlight:           ld      a,StateNormal
+                        ld      (DockedFlag),a
+                        ForceTransition ScreenFront
+                        ld      a,$FF
+                        ld      (LAST_DELTA),a              ; force sound update in interrupt
+                        call    ResetPlayerShip
+                        ret
+                        
+                        
+
+; On hyperspace into a system
+
+; Space Station   = x y z of planet
+;                 x = x + (seed.a & 2 (if a is even * -1 ) << 8
+;                 y = y + (seed.c & 2 (if a is even * -1 ) << 8
+;                 z = z + (seed.c & 2 (if a is even * -1 ) << 8
+
+; on launch from space station then the above has to be back calculated as if space staion = player z - 50
+; so caclualte as normal then transpose all bodies to reflect new positon
+; so planet position = planet x,y,z - space station x,y,z z = z + 50 for offset
+;    sun    position = sun    x,y,z - space station x,y,z z = z + 50 for offset
+                    
 ; laser duration goign below 0 for some reason
 ; if laser is on
 ;    if laser duration = master duration - do sfx
@@ -460,7 +505,7 @@ EnemyMissileLaunchMat:  DS 2 * 3
 
 
 LaunchEnemyMissile:     ; break
-                        ld      a,(UbnKShipUnivBankNbr)             ; save current bank number
+                        ld      a,(UBnkShipUnivBankNbr)             ; save current bank number
                         ld      (EnemyShipBank),a                   ;
                         ld      a,5
                         call    CalcLaunchOffset
@@ -470,15 +515,15 @@ LaunchEnemyMissile:     ; break
                         ret     c                                   ; return if failed
                         call    UnivSetEnemyMissile                 ; as per player but sets as angry
                         ld      a,$FF
-                        ld      (UBnKMissileTarget),a               ; set as definte player as target
+                        ld      (UBnkMissileTarget),a               ; set as definte player as target
                         ld      a,(EnemyShipBank)                   ; Direct restore current bank
                         MMUSelectUnivBankA                          ;
-                        ld      hl, UBnKMissilesLeft                ; reduce enemy missile count
+                        ld      hl, UBnkMissilesLeft                ; reduce enemy missile count
                         dec     (hl)
                         ret
 
 LaunchEnemyFighter:     ld      a,10
-                        ;break;call    CopyUBnKtoLaunchParameters
+                        ;break;call    CopyUBnktoLaunchParameters
                         ;copymatrix,rot and speed
                         ret
 
@@ -490,7 +535,7 @@ LaunchPlayerMissile:   ; break
                         GetByteAInTable ShipMissileTable            ; swap in missile data
                         call    SpawnShipTypeA                      ; spawn the ship
                         ld      a,(MissileTargettingFlag)           ; Get target from computer
-                        ld      (UBnKMissileTarget),a               ; load target Data
+                        ld      (UBnkMissileTarget),a               ; load target Data
                         call    UnivSetPlayerMissile                ; .
                         ClearMissileTargetting                      ; reset targetting
                         ld      hl, NbrMissiles

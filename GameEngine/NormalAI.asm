@@ -1,8 +1,8 @@
  ;                       DEFINE DEBUGFORCEHOSTILE 1
 
-NewLaunchUBnKX          DS 3
-NewLaunchUBnKY          DS 3
-NewLaunchUBnKZ          DS 3
+NewLaunchUBnkX          DS 3
+NewLaunchUBnkY          DS 3
+NewLaunchUBnkZ          DS 3
 
 NewLaunchMatrix         DS 3*3*2    ; 3x3 matrix of 3 bytes
 NewLaunchSpeed          DS 1
@@ -12,8 +12,8 @@ NewLaunchRotZ           DS 1
 NewLaunchDataBlockSize  equ (3*3) + (3*3*2)
 ; ---------------------------------------------------------------------------------------------------------------------------------    
 ; a = y offset negative from center of ship
-CalcLaunchOffset:       ld      hl,UBnKxlo
-                        ld      de,NewLaunchUBnKX
+CalcLaunchOffset:       ld      hl,UBnkxlo
+                        ld      de,NewLaunchUBnkX
                         ld      bc,NewLaunchDataBlockSize
                         ldir
 .ApplyOffset:           sla     a
@@ -23,17 +23,17 @@ CalcLaunchOffset:       ld      hl,UBnKxlo
                         ld      a,b
                         xor     $80
                         ld      b,a
-.AddSpeedToX:           AddSpeedToVert NewLaunchUBnKX
+.AddSpeedToX:           AddSpeedToVert NewLaunchUBnkX
 .ApplyToY:              SpeedMulAxis    iyl, UBnkrotmatRoofvY     
                         ld      a,b
                         xor     $80
                         ld      b,a
-.AddSpeedToY:           AddSpeedToVert NewLaunchUBnKY
+.AddSpeedToY:           AddSpeedToVert NewLaunchUBnkY
 .ApplyToZ:              SpeedMulAxis    iyl, UBnkrotmatRoofvZ
                         ld      a,b
                         xor     $80
                         ld      b,a
-.AddSpeedToZ:           AddSpeedToVert NewLaunchUBnKZ
+.AddSpeedToZ:           AddSpeedToVert NewLaunchUBnkZ
                         ret
 
                         
@@ -86,21 +86,21 @@ NormalAI:               ;ld      a,(ShipAIEnabled)
                         call    CopyPosToVector
                         call    NormalizeTactics
 .NotAPirate:
-.SpawnFighter:          ld      a,(UBnKFightersLeft)
+.SpawnFighter:          ld      a,(UBnkFightersLeft)
                         and     a
                         jr      z,.NoFighters
 .CanSpawnFighter:       call    doRandom
                         JumpIfALTNusng 200, .NoFighters
                         ;break
-                        ;SPAWN FIGHTER of Type UBnKFighterShipId at Y - 20 z - 20
-                        ld      hl,UBnKFightersLeft             ;reduced figters left
+                        ;SPAWN FIGHTER of Type UBnkFighterShipId at Y - 20 z - 20
+                        ld      hl,UBnkFightersLeft             ;reduced figters left
                         dec     (hl)
                         ;inherits parent's ai angry
 .NoFighters:            ld      a,(RandomSeed3)                 ;if random >= 250
                         or      104                             ;set a noticable roll
 .CheckEnergyLevels:     ld      a,(EnergyAddr)
                         ld      b,a
-                        ld      a,(UBnKEnergy)
+                        ld      a,(UBnkEnergy)
                         srl     b                               ; max energy / 2
                         JumpIfAGTENusng b,.EnergyOverHalf       ; if ship max energy / 2 < current enerhy
                         srl     b
@@ -114,12 +114,12 @@ NormalAI:               ;ld      a,(ShipAIEnabled)
                         and     ShipAIDisabled                  ;  .
                         ld      (UBnkaiatkecm),a                ;  .
                         ;ZeroA                                   ;  .
-                        ld      (UBnKECMFitted),a               ;  .
+                        ld      (UBnkECMFitted),a               ;  .
 .LaunchEscapePod:       ;break                        
                         ;            goto spawn escape pod
 .EnergyOverHalf:
 .EnergyOverQuater:
-.NoEscapePod:           ld      a,(UBnKMissilesLeft)            ;      if missiles > 0
+.NoEscapePod:           ld      a,(UBnkMissilesLeft)            ;      if missiles > 0
                         ld      b,a
                         JumpIfAIsZero .NoMissileLaunch
 .MissileLaunchTest:     ld      a,(RandomSeed3)                 ;         if random and 15 > = nbr missiles
@@ -128,10 +128,10 @@ NormalAI:               ;ld      a,(ShipAIEnabled)
                         ld      a,(ECMCountDown)
                         JumpIfAIsNotZero  .NoMissileLaunch
                         jp    LaunchEnemyMissile                ; jump out and return if firing missile
-.NoMissileLaunch:       ld      a,(UBnKxhi)
-                        ld      hl,(UBnKyhi)
+.NoMissileLaunch:       ld      a,(UBnkxhi)
+                        ld      hl,(UBnkyhi)
                         or      (hl)
-                        ld      hl,(UBnKzhi)
+                        ld      hl,(UBnkzhi)
                         or      (hl)
                         JumpIfAGTENusng 160, .TooFarForLaser   ; if in laser range (all highs order together < 160)
                         call    XX12EquTacticsDotNosev
@@ -146,21 +146,21 @@ NormalAI:               ;ld      a,(ShipAIEnabled)
                         JumpIfAEqNusng      36, .LaserHitPlayer
 .LaserMissedPlayer:     jp      .DoneLaserShot
 .LaserHitPlayer:        ;break ;         do direct hit logic
-.DoneLaserShot:         ld      hl,UBnKAccel                   ;      Half attacking ship's accelleration in byte 28 (dec so must be 0 1 or 2)
+.DoneLaserShot:         ld      hl,UBnkAccel                   ;      Half attacking ship's accelleration in byte 28 (dec so must be 0 1 or 2)
                         sla     (hl)
 .TooFarForLaser:
 .UpdateShip             ;break
                         call    CalculateAgression              ; refresh aggression levels
-                        ld      a,(UBnKzhi)
+                        ld      a,(UBnkzhi)
                         JumpIfAGTENusng 3, .ShipFarAway
-                        ld      a,(UBnKxhi)
-                        ld      hl,(UBnKyhi)
+                        ld      a,(UBnkxhi)
+                        ld      hl,(UBnkyhi)
                         or      (hl)
                         and     %11111110
                         jr      z,.ShipTurnAway
 .ShipFarAway:           ld      a,(RandomSeed2)                     ; if random with bit 7 set < ship AI byte 32 flag
                         ;or      %10000000               ; .
-                        JumpIfAGTEMemusng UBnKShipAggression, .ShipTurnAway
+                        JumpIfAGTEMemusng UBnkShipAggression, .ShipTurnAway
                         FlipSignMem TacticsVectorX+2                ; negate vector in XX15 so it points opposite direction
                         FlipSignMem TacticsVectorY+2                ; we have already negated the dot product above
                         FlipSignMem TacticsVectorZ+2                ; .                         
@@ -193,14 +193,14 @@ ShipPitchv3:            ld      hl,(TacticsDotProduct2)            ; pitch count
                         JumpIfAGTENusng 16, .skipPitchZero         ; if its > 16 then update pitch
                         ZeroA                                      ; else we zero pitch but
                         or      h                                  ; we need to retain the sign
-                        ld      (UBnKRotZCounter),a                ; .
+                        ld      (UBnkRotZCounter),a                ; .
                         IFDEF MISSILEDEBUG
                             ld  (TacticsRotZ),a
                         ENDIF
                         ret
 .skipPitchZero:         ld      a,2
                         or      h
-                        ld      (UBnKRotZCounter),a
+                        ld      (UBnkRotZCounter),a
                         IFDEF MISSILEDEBUG
                             ld  (TacticsRotZ),a
                         ENDIF
@@ -219,7 +219,7 @@ ShipRollv3:             call    XX12EquTacticsDotSidev             ; calculate s
                         JumpIfAGTENusng 16,.skipRollZero           ;
                         ZeroA                                      ; if its zoer then set rotx to zero
                         or      b
-                        ld      (UBnKRotXCounter),a
+                        ld      (UBnkRotXCounter),a
                         IFDEF MISSILEDEBUG
                             ld  (TacticsRotX),a
                         ENDIF
@@ -227,7 +227,7 @@ ShipRollv3:             call    XX12EquTacticsDotSidev             ; calculate s
 .skipRollZero:          ld      a,2
                         or      h
                         xor     b
-                        ld      (UBnKRotXCounter),a
+                        ld      (UBnkRotXCounter),a
                         IFDEF MISSILEDEBUG
                             ld  (TacticsRotX),a
                         ENDIF
@@ -241,20 +241,20 @@ ShipSpeedv3:            ld      hl,(TacticsDotProduct1)
                         ld      a,l 
                         JumpIfALTNusng  22,.SlowDown                                  ; nose dot product < 
 .Accelerate:            ld      a,3                                 ; else
-                        ld      (UBnKAccel),a                       ;  accelleration = 3
+                        ld      (UBnkAccel),a                       ;  accelleration = 3
                         IFDEF MISSILEDEBUG
                             ld  (TacticsSpeed),a
                         ENDIF                        
                         ret                                         ;  .
 .SlowDown:              JumpIfALTNusng 18, .NoSpeedChange
 .Deccelerate:           ld      a,-1
-                        ld      (UBnKAccel),a
+                        ld      (UBnkAccel),a
                         IFDEF MISSILEDEBUG
                             ld  (TacticsSpeed),a
                         ENDIF
                         ret
 .NoSpeedChange:         ZeroA                                       ; else no change
-                        ld      (UBnKAccel),a
+                        ld      (UBnkAccel),a
                         IFDEF MISSILEDEBUG
                             ld  (TacticsSpeed),a
                         ENDIF
@@ -270,21 +270,21 @@ ShipSpeedv3:            ld      hl,(TacticsDotProduct1)
 ;;;                        JumpIfAGTENusng 16, .skipPitchZero         ; if its > 16 then update pitch
 ;;;                        ZeroA                                      ; else we zero pitch but
 ;;;                        or      h                                  ; we need to retain the sign
-;;;                        ld      (UBnKRotZCounter),a                ; .
+;;;                        ld      (UBnkRotZCounter),a                ; .
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsRotZ),a
 ;;;                        ENDIF
 ;;;                        ret
 ;;;.skipPitchZero:         ld      a,3
 ;;;                        or      h
-;;;                        ld      (UBnKRotZCounter),a
+;;;                        ld      (UBnkRotZCounter),a
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsRotZ),a
 ;;;                        ENDIF
 ;;;                        ret
                         
                         
-;;;ShipRollv2:             ld      a,(UBnKRotXCounter)
+;;;ShipRollv2:             ld      a,(UBnkRotXCounter)
 ;;;                        and     $7F
 ;;;                        cp      16
 ;;;                        ret     z
@@ -301,7 +301,7 @@ ShipSpeedv3:            ld      hl,(TacticsDotProduct1)
 ;;;                        JumpIfAGTENusng 16,.skipRollZero           ;
 ;;;                        ZeroA                                      ; if its zoer then set rotx to zero
 ;;;                        or      b
-;;;                        ld      (UBnKRotXCounter),a
+;;;                        ld      (UBnkRotXCounter),a
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsRotX),a
 ;;;                        ENDIF
@@ -309,7 +309,7 @@ ShipSpeedv3:            ld      hl,(TacticsDotProduct1)
 ;;;.skipRollZero:          ld      a,3
 ;;;                        or      h
 ;;;                        xor     b
-;;;                        ld      (UBnKRotXCounter),a
+;;;                        ld      (UBnkRotXCounter),a
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsRotX),a
 ;;;                        ENDIF
@@ -323,20 +323,20 @@ ShipSpeedv3:            ld      hl,(TacticsDotProduct1)
 ;;;                        ld      a,l 
 ;;;                        JumpIfALTNusng  22,.SlowDown                                  ; nose dot product < 
 ;;;.Accelerate:            ld      a,2                                 ; else
-;;;                        ld      (UBnKAccel),a                       ;  accelleration = 3
+;;;                        ld      (UBnkAccel),a                       ;  accelleration = 3
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsSpeed),a
 ;;;                        ENDIF                        
 ;;;                        ret                                         ;  .
 ;;;.SlowDown:              JumpIfALTNusng 18, .NoSpeedChange
 ;;;.Deccelerate:           ld      a,-1
-;;;                        ld      (UBnKAccel),a
+;;;                        ld      (UBnkAccel),a
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsSpeed),a
 ;;;                        ENDIF
 ;;;                        ret
 ;;;.NoSpeedChange:         ZeroA                                       ; else no change
-;;;                        ld      (UBnKAccel),a
+;;;                        ld      (UBnkAccel),a
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsSpeed),a
 ;;;                        ENDIF
@@ -359,14 +359,14 @@ ShipSpeedv3:            ld      hl,(TacticsDotProduct1)
 ;;;                        JumpIfAGTENusng RAT2, .skipPitchZero         ; if its > 16 then update pitch
 ;;;                        ZeroA                                      ; else we zero pitch but
 ;;;                        or      h                                  ; we need to retain the sign
-;;;                        ld      (UBnKRotZCounter),a                ; .
+;;;                        ld      (UBnkRotZCounter),a                ; .
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsRotZ),a
 ;;;                        ENDIF
 ;;;                        ret
 ;;;.skipPitchZero:         ld      a,l
 ;;;                        or      h
-;;;                        ld      (UBnKRotZCounter),a
+;;;                        ld      (UBnkRotZCounter),a
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsRotZ),a
 ;;;                        ENDIF
@@ -387,7 +387,7 @@ ShipSpeedv3:            ld      hl,(TacticsDotProduct1)
 ;;;                        JumpIfAGTENusng RAT2,.skipRollZero           ;
 ;;;                        ZeroA                                      ; if its zoer then set rotx to zero
 ;;;                        or      b
-;;;                        ld      (UBnKRotXCounter),a
+;;;                        ld      (UBnkRotXCounter),a
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsRotX),a
 ;;;                        ENDIF
@@ -395,7 +395,7 @@ ShipSpeedv3:            ld      hl,(TacticsDotProduct1)
 ;;;.skipRollZero:          ld      a,1
 ;;;                        or      h
 ;;;                        xor     b
-;;;                        ld      (UBnKRotXCounter),a
+;;;                        ld      (UBnkRotXCounter),a
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsRotX),a
 ;;;                        ENDIF
@@ -409,20 +409,20 @@ ShipSpeedv3:            ld      hl,(TacticsDotProduct1)
 ;;;                        ld      a,l 
 ;;;                        JumpIfALTNusng  22,.SlowDown                                  ; nose dot product < 
 ;;;.Accelerate:            ld      a,3                                 ; else
-;;;                        ld      (UBnKAccel),a                       ;  accelleration = 3
+;;;                        ld      (UBnkAccel),a                       ;  accelleration = 3
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsSpeed),a
 ;;;                        ENDIF                        
 ;;;                        ret                                         ;  .
 ;;;.SlowDown:              JumpIfALTNusng 18, .NoSpeedChange
 ;;;.Deccelerate:           ld      a,-1
-;;;                        ld      (UBnKAccel),a
+;;;                        ld      (UBnkAccel),a
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsSpeed),a
 ;;;                        ENDIF
 ;;;                        ret
 ;;;.NoSpeedChange:         ZeroA                                       ; else no change
-;;;                        ld      (UBnKAccel),a
+;;;                        ld      (UBnkAccel),a
 ;;;                        IFDEF MISSILEDEBUG
 ;;;                            ld  (TacticsSpeed),a
 ;;;                        ENDIF

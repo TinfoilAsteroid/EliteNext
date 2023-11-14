@@ -15,7 +15,7 @@ SplitAndDampenZ:        MACRO
                         dec     a                       ; dampen
                         ld      (univRAT2Val),a
                         or      c                       ; make S7 again after dampening
-                        ld      (UBnKRotZCounter),a
+                        ld      (UBnkRotZCounter),a
                         ENDM
                         
 SplitAndDampenX:        MACRO
@@ -32,18 +32,18 @@ SplitAndDampenX:        MACRO
                         dec     a                       ; dampen
                         ld      (univRAT2Val),a
                         or      c                       ; make S7 again after dampening
-                        ld      (UBnKRotXCounter),a
+                        ld      (UBnkRotXCounter),a
                         ENDM
                         
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; based on MVEIT part 4 of 9
 ; x and z counters are proper 2's c values
-ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)
+ApplyShipRollAndPitch:  ld      a,(UBnkRotZCounter)
                         cp      $FF
                         jr      z,.PitchSAxes
                         SplitAndDampenZ
-                        ;ld      a,(UBnKRotZCounter)
+                        ;ld      a,(UBnkRotZCounter)
 .PitchSAxes:            ld	    hl,UBnkrotmatRoofvX; UBnkrotmatSidevY
                         ld	    (varAxis1),hl
                         ld	    hl,UBnkrotmatNosevX; UBnkrotmatSidevZ	
@@ -59,7 +59,7 @@ ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)
                         ld	    hl,UBnkrotmatNosevZ	
                         ld	    (varAxis2),hl
                         call    MVS5RotateAxis
-.ProcessRoll:           ld      a,(UBnKRotXCounter)
+.ProcessRoll:           ld      a,(UBnkRotXCounter)
                         cp      $FF
                         jr      z,.RollSAxis
                         SplitAndDampenX

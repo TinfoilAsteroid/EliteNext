@@ -1,5 +1,5 @@
 JumpIfObjectIsPlanet:   MACRO target
-                        ld a,(UbnkHullCopy)
+                        ld a,(UBnkHullCopy)
                         bit 7,a
                         jp  nz,target
                         ENDM
@@ -39,7 +39,7 @@ MakeBothGunNodesVisible:
                         ENDM
 
 JumpIfTooFarAway:       MACRO   target
-                        ld		hl,(UBnKzlo)                    ; hl = z position, by this point it must be positive
+                        ld		hl,(UBnkzlo)                    ; hl = z position, by this point it must be positive
                         ShiftHLDiv8                             ; z position / 8
                         ld      a,h                             ; 
                         JumpIfAIsNotZero target                       ; LL13 - hop as far , i.e. zhi not 0 after divide by 8
@@ -48,7 +48,7 @@ JumpIfTooFarAway:       MACRO   target
 
 fillHeapRandom4Points:                      ; counter Y, 4 rnd bytes to edge heap 
 	ld		b,4                                                                                            
-	ld		hl,UbnkLineArray				; line data                                                    
+	ld		hl,UBnkLineArray				; line data                                                    
 FillRandom:                                 ; Writes random bytes hl = start address, b = nbr bytes to fill
 EE55:                                                                                                      
 	call	doRND							; get random                                                   
@@ -66,13 +66,13 @@ LL9:										; Draw object in current bank                                  ;;;
 LL9NotPlanet:
     SetMaxVisibility
 ;LL9TestRemoveShip:
-;    JumpOnMemBitSet UbnkNweb,7,EraseOldLines; if bit 7 is set goto EraseOldLines                         ;;;;    goto EraseOldLines
+;    JumpOnMemBitSet UBnkNweb,7,EraseOldLines; if bit 7 is set goto EraseOldLines                         ;;;;    goto EraseOldLines
 ; .................................................................................................................................
 LL9NoEraseLines:
-    JumpOnMemBitSet UBnKexplDsp,5,DoExplosionOrClear7 ; mask for bit 5, exploding, display explosion state|missiles  EE28 bit5 set, explosion ongoing
+    JumpOnMemBitSet UBnkexplDsp,5,DoExplosionOrClear7 ; mask for bit 5, exploding, display explosion state|missiles  EE28 bit5 set, explosion ongoing
     JumpOnBitClear a,7,DoExplosionOrClear7  ; we now have it in A so EE28 bit7 clear, else Start blowing up!                      ;;;;
 	and		$3F								; clear bits 7,6                                               ;;;; else
-	ld		(UBnKexplDsp),a					; INWK+31                                                      ;;;;    clear bit 7 & 6 of INKW31
+	ld		(UBnkexplDsp),a					; INWK+31                                                      ;;;;    clear bit 7 & 6 of INKW31
 ;...............................................................................................................................................................................
 LL9ZeroAccelRotCtr:
     ldWriteZero UBnkAccel                   ; byte #28 accel (INF),Y                                       ;;;;    set UBnkAccel & UBnkrotZCounter to 0	
@@ -80,20 +80,20 @@ LL9ZeroAccelRotCtr:
 	call	EraseOldLines					; EE51 \ if bit3 set erase old lines in XX19 heap              ;;;;    gosub erase old lines (EE51)   
 ;...............................................................................................................................................................................
 LL9SetExploRad:
-	ldWriteConst 18,UbnKEdgeHeapCounter		; Counter for explosion radius                                 ;;;;    set explosion raidus XX19[1] to 18 
-	ldCopyByte ExplosionCtAddr,UbnkEdgeHeapBytes ; Hull byte#7 explosion of ship type e.g. &2A           ;;;;    set XX19 [2] to Explosion type for ship (i.e nbr of 
+	ldWriteConst 18,UBnkEdgeHeapCounter		; Counter for explosion radius                                 ;;;;    set explosion raidus XX19[1] to 18 
+	ldCopyByte ExplosionCtAddr,UBnkEdgeHeapBytes ; Hull byte#7 explosion of ship type e.g. &2A           ;;;;    set XX19 [2] to Explosion type for ship (i.e nbr of 
     call    fillHeapRandom4Points                                                                          ;;;;    set first 4 bytes of XX19 Heap to random number      ::EE55
-    ld      a,(UBnKzsgn)                                                                                   ;;;;    set a to z pos sign
+    ld      a,(UBnkzsgn)                                                                                   ;;;;    set a to z pos sign
 	jp      ObjectInFront                                                                                  ;;;;    goto DoExplosion		
 ;...............................................................................................................................................................................
 DoExplosionOrClear7:	                                                                                   ;;;;     	
 EE28:										; bit5 set do explosion, or bit7 clear, dont kill.             ;;;;   DoExplosion:If z ccordinate sign is +ve 
 EE49:
-	JumpOnMemBitSet UBnKzsgn,7,TestToRemove ; if zSign is negative then its behind so see if we remove
+	JumpOnMemBitSet UBnkzsgn,7,TestToRemove ; if zSign is negative then its behind so see if we remove
 ;...............................................................................................................................................................................
 ObjectInFront:      
 LL10:										; LL10	 object in front of you                                   ; if object z is > FarInFront
-    JumpIfMemGTENusng UBnKzhi,FarInFront,TestToRemove  ; LL14		\ test to remove object                               ;    else if abs(x) > z or abs(y) > z
+    JumpIfMemGTENusng UBnkzhi,FarInFront,TestToRemove  ; LL14		\ test to remove object                               ;    else if abs(x) > z or abs(y) > z
 LL10CheckFov:
     JumpIfObjectOutsideFov TestToRemove     ; was the result -ve i.e. hl > de?  x > z so outside FoV                                                                          ;         .
 LookAtGunNode:
@@ -120,10 +120,10 @@ SkipToAsFar:
 LL13:                                       ; hopped to as far
 LL13DrawIfNearerThanDotDist:
 ; if dot_distance >= z_hi then we can still draw ship
-    JumpIfMemGTEMemusng DotAddr,UBnKzhi,ObjectDrawForwards
+    JumpIfMemGTEMemusng DotAddr,UBnkzhi,ObjectDrawForwards
 LL13DrawIfExplodingTest:
 ; if exploding then draw ship
-    ld      a,(UBnKexplDsp)                 ; INWK+31	\ exploding/display state|missiles
+    ld      a,(UBnkexplDsp)                 ; INWK+31	\ exploding/display state|missiles
     and     $20                             ; mask bit 5 exploding
     jp      nz,ObjectDrawForwards           ; LL17 hop over to Draw wireframe or exploding
 LL13TooFarPlotPoint:
@@ -143,11 +143,11 @@ LL13TooFarPlotPoint:
 ;;;
 TestToRemove:                                                                                             ;;;;   
 LL14:										; Test to remove object                                        ;;;;    
-	JumpOnMemBitSet UBnKexplDsp,5,EraseOldLines  ; bit5 currently exploding?                                      ;;;;  
+	JumpOnMemBitSet UBnkexplDsp,5,EraseOldLines  ; bit5 currently exploding?                                      ;;;;  
 ; Ship is exploding
 ; Not in documented code!!    JumpOnBitSet    a,7,EraseOldLines            ; bit7 ongoing explosion?                                      ;;;;  
 	and		$F7								; clear bit3  - No longer being drawn                                                          	
-	ld		(UBnKexplDsp),a					; INWK+31
+	ld		(UBnkexplDsp),a					; INWK+31
 	jp		DOEXP							; DOEXP \ Explosion                                               ;
 ;; EraseOldLines is in file EraseOldLines-EE51.asm
 

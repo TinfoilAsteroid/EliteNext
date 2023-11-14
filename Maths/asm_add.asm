@@ -324,7 +324,7 @@ AddBCHtoDELsigned:      ld      a,b                 ; Are the values both the sa
 ; b = offset (equivalent to regX)
 ; returns INWK [x] set to new value
 ; NOT USED addINWKbasigned:
-; NOT USED 		ld 		hl,UBnKxlo                  ; hl = INWK 0
+; NOT USED 		ld 		hl,UBnkxlo                  ; hl = INWK 0
 ; NOT USED 		ld      c,a                         ; preserve a
 ; NOT USED 		ld		a,b
 ; NOT USED 		add		hl,a                        ; hl = INWK[x]

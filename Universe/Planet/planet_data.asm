@@ -145,7 +145,7 @@ P_NormaliseRotMat:      ld      hl,P_BnkTransmatNosevZ+1   ; initialise loop
                         ret
 
                         
-; This uses UBNKNodeArray as the list
+; This uses UBnkNodeArray as the list
 ; the array is 256 * 2 bytes
 ; counter is current row y pos
 ; byte 1 is start x pos

@@ -10,19 +10,19 @@ XX15                        equ UBnkXScaled
 XX15VecX                    equ XX15
 XX15VecY                    equ XX15+1
 XX15VecZ                    equ XX15+2
-UbnkXPoint                  equ XX15
-UbnkXPointLo                equ XX15+0
-UbnkXPointHi                equ XX15+1
-UbnkXPointSign              equ XX15+2
-UbnkYPoint                  equ XX15+3
-UbnkYPointLo                equ XX15+3
-UbnkYPointHi                equ XX15+4
-UbnkYPointSign              equ XX15+5
+UBnkXPoint                  equ XX15
+UBnkXPointLo                equ XX15+0
+UBnkXPointHi                equ XX15+1
+UBnkXPointSign              equ XX15+2
+UBnkYPoint                  equ XX15+3
+UBnkYPointLo                equ XX15+3
+UBnkYPointHi                equ XX15+4
+UBnkYPointSign              equ XX15+5
 ; Repurposed XX15 pre clip plines
-UbnkPreClipX1               equ XX15+0
-UbnkPreClipY1               equ XX15+2
-UbnkPreClipX2               equ XX15+4
-UbnkPreClipY2               equ XX15+6
+UBnkPreClipX1               equ XX15+0
+UBnkPreClipY1               equ XX15+2
+UBnkPreClipX2               equ XX15+4
+UBnkPreClipY2               equ XX15+6
 ; Repurposed XX15 post clip lines
 UBnkNewX1                   equ XX15+0
 UBnkNewY1                   equ XX15+1
@@ -45,10 +45,10 @@ UBnkPoint2Clipped           equ UBnkYScaled
 ; Repurposed XX15 when plotting lines
 ; Repurposed XX15 before calling clip routine
 UBnkX1                      equ XX15
-UBnKx1Lo                    equ XX15
-UBnKx1Hi                    equ XX15+1
+UBnkx1Lo                    equ XX15
+UBnkx1Hi                    equ XX15+1
 UBnkY1                      equ XX15+2
-UbnKy1Lo                    equ XX15+2
+UBnky1Lo                    equ XX15+2
 UBnkY1Hi                    equ XX15+3
 UBnkX2                      equ XX15+4
 UBnkX2Lo                    equ XX15+4

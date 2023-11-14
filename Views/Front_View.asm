@@ -69,11 +69,11 @@ draw_front_view:        MMUSelectLayer1
                         call    sprite_missile_all_hide
                        ; call    sprite_laser_show
                         MMUSelectConsoleBank
-                        ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
+                        ld          hl,ScreenL1Bottom       ; now the pointers are in UBnk its easy to read
                         ld          de,ConsoleImageData
                         ld          bc, ScreenL1BottomLen
                         call        memcopy_dma
-                        ld          hl,ScreenL1AttrBtm       ; now the pointers are in Ubnk its easy to read
+                        ld          hl,ScreenL1AttrBtm       ; now the pointers are in UBnk its easy to read
                         ld          de,ConsoleAttributes
                         ld          bc, ScreenL1AttrBtmLen
                         call        memcopy_dma
@@ -193,11 +193,11 @@ draw_hyperspace:        MMUSelectLayer1
                         MMUSelectSpriteBank
                         call    sprite_cls_cursors
                         MMUSelectConsoleBank
-                        ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
+                        ld          hl,ScreenL1Bottom       ; now the pointers are in UBnk its easy to read
                         ld          de,ConsoleImageData
                         ld          bc, ScreenL1BottomLen
                         call        memcopy_dma
-                        ld          hl,ScreenL1AttrBtm       ; now the pointers are in Ubnk its easy to read
+                        ld          hl,ScreenL1AttrBtm       ; now the pointers are in UBnk its easy to read
                         ld          de,ConsoleAttributes
                         ld          bc, ScreenL1AttrBtmLen
                         call        memcopy_dma

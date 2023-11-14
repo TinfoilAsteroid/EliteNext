@@ -8,8 +8,8 @@ TransposeXX12ByShipToXX15:
         and     $7F
         ld      h,a
         ;110921 debugld      h,0
-		ld		de,(UBnKxlo)						;
-		ld		a,(UBnKxsgn)						; get Ship Pos (low,high,sign)
+		ld		de,(UBnkxlo)						;
+		ld		a,(UBnkxsgn)						; get Ship Pos (low,high,sign)
 		and		$80									; make sure we only have bit 7
 		ld		c,a									; and put sign of unkxsgn c
 		call 	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC		; this will result in HL = result and A = sign
@@ -26,8 +26,8 @@ TransposeXX12ByShipToXX15:
         and     $7F
         ld      h,a
         ;110921 debugld      h,0
-		ld		de,(UBnKylo)
-		ld		a,(UBnKysgn)
+		ld		de,(UBnkylo)
+		ld		a,(UBnkysgn)
 		and		$80									; make sure we only have bit 7
 		ld		c,a
 		call 	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC
@@ -44,8 +44,8 @@ TransposeXX12ByShipToXX15:
         and     $7F
         ld      h,a
         ;110921 debugld      h,0
-		ld		de,(UBnKzlo)
-		ld		a,(UBnKzsgn)
+		ld		de,(UBnkzlo)
+		ld		a,(UBnkzsgn)
 		and		$80									; make sure we only have bit 7
 		ld		c,a
 		call 	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC

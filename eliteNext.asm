@@ -3,6 +3,23 @@
     DEFINE  DOUBLEBUFFER 1
     DEFINE  LATECLIPPING 1
     DEFINE  SIMPLEWARP   1
+        DEFINE  MAINLOOP_COOL_LASERS
+    DEFINE  MAINLOOP_ECM
+    DEFINE  MAINLOOP_KEYBOARDSCAN
+;    DEFINE  MAINLOOP_DEMOSHIPS
+;   DEFINE  MAINLOOP_DEBUGMISSILE 1
+    DEFINE  MAINLOOP_INPUTHANDLER
+   ; DEFINE  MAINLOOP_EVENTHANDLER 1
+    DEFINE  MAINLOOP_RECHARGE 1
+ ;   DEFINE  MAINLOOP_LAUNCHMISSILE
+    DEFINE  MAINLOOP_UPDATEUNIVERSE 1
+    DEFINE  MAINLOOP_DUST_RENDER 1    
+    DEFINE  MAINLOOP_SUN_RENDER 1
+    DEFINE  MAINLOOP_PLANET_RENDER 1
+    DEFINE  MAINLOOP_MODEL_RENDER    1
+    DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
+    DEFINE  MAINLOOP_WARP_ENABLED 1
+
     ;DEFINE DEBUGCIRCLE1 1
     ;DEFINE DEBUGCIRCLE2 1 
     ;DEFINE DEBUGCIRCLE3 1 
@@ -524,8 +541,8 @@ DebugPlanetCode:        MMUSelectPlanet
                         ld      (P_BnKxlo),hl
                         ld      (P_BnKylo),hl
                         ld      a,127
-                        ld      (UBnKRotXCounter),a
-                        ld      (UBnKRotZCounter),a
+                        ld      (UBnkRotXCounter),a
+                        ld      (UBnkRotZCounter),a
                         break
 .PlanetDebugLoop:       MMUSelectPlanet
                         call    PlanetDraw
@@ -554,8 +571,8 @@ DebugPlanetCode:        MMUSelectPlanet
                         ld      (P_BnKxlo),hl
                         ld      (P_BnKylo),hl
                         ld      a,127
-                        ld      (UBnKRotXCounter),a
-                        ld      (UBnKRotZCounter),a
+                        ld      (UBnkRotXCounter),a
+                        ld      (UBnkRotZCounter),a
                         break
 .PlanetDebugLoop:       MMUSelectPlanet
                         call    PlanetDraw
@@ -698,7 +715,7 @@ DrawTestDataLine16:     DW      265,  1138,  128, -360
                                                  
 
 DrawClippedLineDebug:   ld      bc,8
-                        ld      de,UbnkPreClipX1
+                        ld      de,UBnkPreClipX1
                         ldir
                         call    ClipLine
                         ld      a,(UBnkNewY1)
@@ -835,7 +852,7 @@ InitialiseMainLoop:     call    InitMainLoop
 
 ;;;ProcessUnivShip:        call    CheckVisible               ; Will check for negative Z and skip (how do we deal with read and side views? perhaps minsky transformation handles that?)
 ;;;                        ret     c
-;;;                        ld      a,(UbnkDrawAsDot)
+;;;                        ld      a,(UBnkDrawAsDot)
 ;;;                        and     a
 ;;;                        jr      z,.CarryOnWithDraw
 ;;;.itsJustADot:           ld      bc,(UBnkNodeArray)          ; if its at dot range
@@ -899,7 +916,7 @@ TestQuit:               MacroIsKeyPressed c_Pressed_Quit
 currentDemoShip:        DB      13;$12 ; 13 - corirollis 
 
 
-GetStationVectorToWork: ld      hl,UBnKxlo
+GetStationVectorToWork: ld      hl,UBnkxlo
                         ld      de,varVector9ByteWork
                 IFDEF LOGDIVIDEDEBUG
                         DISPLAY "DEBUG: SKIPPING GetStationVectorToWork TO SAVE MEMORY FOR LOG DIVIDE DEBUG TEST"
@@ -998,36 +1015,36 @@ LaunchedFromStation:
 .BuiltStation:          call    ResetStationLaunch
                         IFDEF DEBUGMISSILETEST
 ;                            ld      a,0
-;                            ld      (UBnKRotXCounter),a             ; kill station roll
+;                            ld      (UBnkRotXCounter),a             ; kill station roll
 
 .TestMissileTarget:         ld      a,ShipID_Viper
                             call    SpawnShipTypeA                      ; call rather than jump, returns with a = slot number
                             ZeroA
-                            ld      (UBnKSpeed),a
+                            ld      (UBnkSpeed),a
                             ld      a,$80
-                            ld      (UBnKxsgn),a 
+                            ld      (UBnkxsgn),a 
                             ;ld      a,$80
                             ZeroA
-                            ld      (UBnKysgn),a 
+                            ld      (UBnkysgn),a 
                             ld      a,$80
                            ZeroA
-                            ld      (UBnKzsgn),a 
+                            ld      (UBnkzsgn),a 
                             ld      a,$60
                             ZeroA
-                            ld      (UBnKxlo),a 
+                            ld      (UBnkxlo),a 
                             ld      a,$10
                             ;ZeroA
-                            ld      (UBnKxhi),a 
+                            ld      (UBnkxhi),a 
                             ld      a,$60
                             ;ZeroA
-                            ld      (UBnKylo),a    
+                            ld      (UBnkylo),a    
                             ld      a,$1B
                             ;ZeroA
-                            ld      (UBnKyhi),a    
+                            ld      (UBnkyhi),a    
                             ZeroA                            
-                            ld      (UBnKzlo),a    
+                            ld      (UBnkzlo),a    
                             ld      a,$2B
-                            ld      (UBnKzhi),a    
+                            ld      (UBnkzhi),a    
                         ENDIF                    
 .NowInFlight:           ld      a,StateNormal
                         ld      (DockedFlag),a
@@ -1052,15 +1069,15 @@ InitialiseFrontView:    ld      a,(ScreenKeyFront+1)
                         INCLUDE "./GameEngine/ViewKeyTest.asm"
 ;----------------------------------------------------------------------------------------------------------------------------------                    
 SetInitialShipPosition: ld      hl,$0000
-                        ld      (UBnKxlo),hl
+                        ld      (UBnkxlo),hl
                         ld      hl,$0000
-                        ld      (UBnKylo),hl
+                        ld      (UBnkylo),hl
                         ld      hl,$03B4
-                        ld      (UBnKzlo),hl
+                        ld      (UBnkzlo),hl
                         xor     a
-                        ld      (UBnKxsgn),a
-                        ld      (UBnKysgn),a
-                        ld      (UBnKzsgn),a
+                        ld      (UBnkxsgn),a
+                        ld      (UBnkysgn),a
+                        ld      (UBnkzsgn),a
             DISPLAY "TODO:  call    Reset TODO"
                         call	InitialiseOrientation            ;#00;
                         ld      a,1
@@ -1072,10 +1089,10 @@ SetInitialShipPosition: ld      hl,$0000
 ; Checks to see if current ship swapped in is in our sights
 ; we don;t need to deal with planets or sun as they have their own memory bank
 ShipInSights:           ClearCarryFlag                          ; Carry clear no hit
-                        ReturnIfMemIsNegative UBnKzsgn
-                        ld      a,(UBnKexplDsp)                 ; get exploding flag and or with x and y high
-                        ld      hl,(UBnKxlo)                    ; do 16 bit fetch as we will often need both bytes
-                        ld      bc,(UBnKylo)                    ; .
+                        ReturnIfMemIsNegative UBnkzsgn
+                        ld      a,(UBnkexplDsp)                 ; get exploding flag and or with x and y high
+                        ld      hl,(UBnkxlo)                    ; do 16 bit fetch as we will often need both bytes
+                        ld      bc,(UBnkylo)                    ; .
                         or      h
                         or      b
                         ret     nz                              ; if exploding or x hi or y hi are set then its nto targetable

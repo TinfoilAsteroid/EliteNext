@@ -39,11 +39,11 @@ UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
                        ld      hl,TidyCounter
                        dec     (hl)
                        DISPLAY "TODO: SEE IF THIS IS AN ISSUE"
-                       call     z,TidyUbnK  ;TODO SEE IF THIS IS AN ISSUE"
+                       call     z,TidyUBnk  ;TODO SEE IF THIS IS AN ISSUE"
                        ; This shoudl be a call nz to tidy *****ret     nz
                        ld      a,16
                        ld      (TidyCounter),a
-                       ;call    TidyUbnK
+                       ;call    TidyUBnk
                        ; add AI in here too
                        ld       a,(ShipTypeAddr)
                                    DISPLAY "TODO: capture duff jumps"
@@ -78,23 +78,23 @@ CalculateAgression:     IFDEF   ALWAYSANGRY
                         jr      nz,.UltraHostile
                         ld      a,b
                         and     %11110000                               ; if it can can anger a fighter bay then generally more hostile as implies its a large ship
-                        ld      hl,UBnKMissilesLeft                     ; more missiles more agression
+                        ld      hl,UBnkMissilesLeft                     ; more missiles more agression
                         or      (hl)
                         ld      b,a                       
                         ld      a,(ShipNewBitsAddr)
                         and     %01001110                               ; We look at if its a bounty hunter, hostile already, pirate and cop
                         or      b
                         ld      b,a
-                        ld      a,(UBnKShipAggression)
+                        ld      a,(UBnkShipAggression)
                         JumpIfALTNusng 64,.NotAlreadyAgressive
                         ld      a,b
                         or      %10000000                               ; if its already at least 64 agressive then likley to stay so
                         ld      b,a
 .NotAlreadyAgressive:   ld      a,b
-                        ld      (UBnKShipAggression),a
+                        ld      (UBnkShipAggression),a
                         ret
 .UltraHostile:          ld      a,$FF
-                        ld      (UBnKShipAggression),a
+                        ld      (UBnkShipAggression),a
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; set angry if possible, if its an innocent then flag the space station to get angry
@@ -106,9 +106,9 @@ MakeHostile:            ld      a,(ShipNewBitsAddr)                     ; Check 
                         ld      a,(UBnkaiatkecm)                        ; get AI data
                         ReturnOnBitClear a, ShipAIEnabledBitNbr         ; if 0 then no AI attached so it can't get angry
                         ld      c,a                                     ; Copy to c in case we need it later
-                        SetMemToN UBnKAccel, 2                          ; set accelleration to 2 to speed up
+                        SetMemToN UBnkAccel, 2                          ; set accelleration to 2 to speed up
                         sla     a                                       ; set pitch to 4
-                        ld      (UBnKRotZCounter),a                     ; .
+                        ld      (UBnkRotZCounter),a                     ; .
                         ld      a,(ShipAIFlagsAddr)
                         ReturnIfBitMaskClear ShipCanAnger
 .SetNewbHostile:        call    SetShipHostile
@@ -122,9 +122,9 @@ MissileDidHitUs:        ret ; TODO
 PlayerHitByMissile:     MMUSelectLayer1
                         ld      a,L1ColourInkCyan
                         call    l1_set_border
-                        ld      a,(UBnKMissileBlastDamage)
+                        ld      a,(UBnkMissileBlastDamage)
                         ld      b,a                                     ; b = damage
-                        ld      a,(UBnKzsgn)
+                        ld      a,(UBnkzsgn)
                         and     $80
                         jr      nz,.HitRear
 .HitFront:              ld      a,(ForeShield)
@@ -146,7 +146,7 @@ MissileHitShipA:        MMUSelectLayer1
 ;----------------------------------------------------------------------------------------------------------------------------------
 SetStationHostile:      call    IsSpaceStationPresent                   ; only if present
                         ret     c
-                        ld      a,(UbnKShipUnivBankNbr)                     ; save current bank
+                        ld      a,(UBnkShipUnivBankNbr)                     ; save current bank
                         ld      iyh,a
                         MMUSelectUniverseN 0                            ; space station is always 0
                         call    SetShipHostile
@@ -157,12 +157,12 @@ SetStationHostile:      call    IsSpaceStationPresent                   ; only i
 ;----------------------------------------------------------------------------------------------------------------------------------
 CheckMissileBlastInit:  ZeroA
                         ld      (CurrentMissileCheck),a
-                        ld      hl,UBnKxlo                      ; Copy Blast Coordinates
+                        ld      hl,UBnkxlo                      ; Copy Blast Coordinates
                         ld      bc,12                           ; and Damage stats
                         ld      de,MissileXPos
                         ldir
                         ZeroA                                   ; we have processd enque request
-                        ld      (UBnKMissleHitToProcess),a      ; 
+                        ld      (UBnkMissleHitToProcess),a      ; 
                         call    CheckIfBlastHitUs               ; If we are in Range
                         call    c, MissileDidHitUs              ; Then we get hit
                         ret
@@ -199,29 +199,29 @@ CheckMissileBlastLoop:  ld      a,(CurrentMissileCheck)
                         ReturnIfSlotAEmpty
                         call    IsSpaceStationPresent               ; If its a station its imune to missiles
                         ret     c                                   ; if we have a special mission to kill a staion then its type won't be space station for game logic
-                        ld      a,(UBnKexplDsp)                     ; Don't explode a ship twice
+                        ld      a,(UBnkexplDsp)                     ; Don't explode a ship twice
                         and     ShipExploding                       ;
                         ReturnIfNotZero                             ;
                         ld      a,(CurrentMissileBlastRange)
                         ld      iyh,a                               ; iyh = missile blast depending on type
 .CheckRange:            ld      a,iyl                               ; now page in universe data
                         MMUSelectUniverseA      
-                        CheckPointRange UBnKxlo, UBnKxsgn, MissileXPos, MissileXSgn  ; its a square but its good enough
-                        CheckPointRange UBnKylo, UBnKysgn, MissileYPos, MissileYSgn
-                        CheckPointRange UBnKzlo, UBnKzsgn, MissileZPos, MissileZSgn
+                        CheckPointRange UBnkxlo, UBnkxsgn, MissileXPos, MissileXSgn  ; its a square but its good enough
+                        CheckPointRange UBnkylo, UBnkysgn, MissileYPos, MissileYSgn
+                        CheckPointRange UBnkzlo, UBnkzsgn, MissileZPos, MissileZSgn
                         call    ShipMissileBlast                    ; Ship hit by missile blast
                         ret                                         ; we are done
 ;...................................................................
-CheckIfBlastHitUs:      ld      a,(UBnKMissileBlastRange)
+CheckIfBlastHitUs:      ld      a,(UBnkMissileBlastRange)
                         ld      c,a
                         jp      MissileHitUsCheckPos
 ;...................................................................                        
-CheckIfMissileHitUs:    ld      a,(UBnKMissileDetonateRange)
+CheckIfMissileHitUs:    ld      a,(UBnkMissileDetonateRange)
                         ld      c,a
 ;...................................................................
-MissileHitUsCheckPos:   ld      hl, (UBnKxlo)
-                        ld      de, (UBnKylo)
-                        ld      bc, (UBnKzlo)
+MissileHitUsCheckPos:   ld      hl, (UBnkxlo)
+                        ld      de, (UBnkylo)
+                        ld      bc, (UBnkzlo)
                         ld      a,h
                         or      d
                         or      b
@@ -236,14 +236,14 @@ MissileHitUsCheckPos:   ld      hl, (UBnKxlo)
                         ReturnIfNotZero                             ; will return with carry clear if way far away
                         ld      a,l
                         ReturnIfAGTENusng    c                      ; return no carry if x far
-.CheckY:                ld      hl,(UBnKylo)
+.CheckY:                ld      hl,(UBnkylo)
                         ZeroA
                         or      l
                         ClearCarryFlag
                         ReturnIfNotZero                             ; will return with carry clear if way far away
                         ld      a,l
                         ReturnIfAGTENusng    c                      ; return no carry if y far
-.CheckZ:                ld      hl,(UBnKzlo)
+.CheckZ:                ld      hl,(UBnkzlo)
                         ZeroA
                         or      l
                         ClearCarryFlag
@@ -275,7 +275,7 @@ calcNPitch:             xor     SignOnly8Bit                    ; c = sign flipp
                         and     SignOnly8Bit                    ; .
                         ld      c,a                             ; . (varT in effect)
                         or      MISSILEMAXPITCH                 ; a = flipped sign max pitch
-                        ld      a,(UBnKRotZCounter)             ; b = abs (currentz pitch)
+                        ld      a,(UBnkRotZCounter)             ; b = abs (currentz pitch)
                         ret
                         
                         and     SignMask8Bit                    ; . which will initially be 0
@@ -288,22 +288,22 @@ calcNPitch:             xor     SignOnly8Bit                    ; c = sign flipp
                        ; ld      a,
                         ld      a,MISSILEMAXPITCH                         ;    z rot = z rot * dot product flipped sign
                         or      c                               ;    i.e. zrot = current magnitude but dot product sign flipped
-                        ld      (UBnKRotZCounter),a             ;    .
+                        ld      (UBnkRotZCounter),a             ;    .
                         ret                                     ; else (a LT current abs z)
 .calcNPitch2:           or      c                               ;     rot z = dot product with sign flipped
-                        ld      (UBnKRotZCounter),a             ;
+                        ld      (UBnkRotZCounter),a             ;
                         ret                                     ;
                         
-calcNRoll:              ld      a,(UBnKRotZCounter)
+calcNRoll:              ld      a,(UBnkRotZCounter)
                         and     SignOnly8Bit
                         xor     SignOnly8Bit                    ; flip sign of dot product
                         or      5
-                        ld      (UBnKRotXCounter),a
+                        ld      (UBnkRotXCounter),a
                         ret
                         
                         ld      c,a
                         or      MISSILEMAXPITCH   
-                        ld      a,(UBnKRotXCounter)
+                        ld      a,(UBnkRotXCounter)
                         ret
                         
                         
@@ -314,10 +314,10 @@ calcNRoll:              ld      a,(UBnKRotZCounter)
                         JumpIfALTNusng MISSILEMAXROLL+1, .calcNRoll2
                         ld      a,MISSILEMAXROLL
                         or      c
-                        ld      (UBnKRotXCounter),a
+                        ld      (UBnkRotXCounter),a
                         ret
 .calcNRoll2:            or      c                               ;     rot z = dot product with sign flipped
-                        ld      (UBnKRotXCounter),a
+                        ld      (UBnkRotXCounter),a
                         ret
 
 
@@ -446,26 +446,26 @@ XX12EquTacticsDotRoofv: call    CopyRotRoofToTacticsMat
 XX12EquTacticsDotSidev: call    CopyRotSideToTacticsMat
                         jp      XX12EquTacticsDotHL
 
-CopyToTargetVector:     ld      hl,UBnKxlo
+CopyToTargetVector:     ld      hl,UBnkxlo
                         ld      de,TacticsTargetX
                         ld      bc,9
                         ldir    
                         ret
 
-CopyPosToVector:        ld      hl,(UBnKxlo)
-                        ld      a,(UBnKxsgn)
+CopyPosToVector:        ld      hl,(UBnkxlo)
+                        ld      a,(UBnkxsgn)
                         ;xor     $80
                         ld      (TacticsVectorX),hl
                         ld      (TacticsVectorX+2),a
 
-                        ld      hl,(UBnKylo)
-                        ld      a,(UBnKysgn)
+                        ld      hl,(UBnkylo)
+                        ld      a,(UBnkysgn)
                         ;xor     $80
                         ld      (TacticsVectorY),hl
                         ld      (TacticsVectorY+2),a
 
-                        ld      hl,(UBnKzlo)
-                        ld      a,(UBnKzsgn)
+                        ld      hl,(UBnkzlo)
+                        ld      a,(UBnkzsgn)
                         ;xor     $80
                         ld      (TacticsVectorZ),hl
                         ld      (TacticsVectorZ+2),a
@@ -491,8 +491,8 @@ CalcTargetVector:       ld      de,(TacticsTargetX)                        ; get
                         ld      a,(TacticsTargetX+2)                       ; and flip sign so we have missile - target
                         FlipSignBitA
                         ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
-                        ld      hl,(UBnKxlo)                        ; get missile x
-                        ld      a,(UBnKxsgn)                        ; get missile x sign
+                        ld      hl,(UBnkxlo)                        ; get missile x
+                        ld      a,(UBnkxsgn)                        ; get missile x sign
                         ld      b,a
                         call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
                         ld      (TacticsVectorX),hl
@@ -501,8 +501,8 @@ CalcTargetVector:       ld      de,(TacticsTargetX)                        ; get
                         ld      a,(TacticsTargetY+2)
                         FlipSignBitA
                         ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
-                        ld      hl,(UBnKylo)                        ; get missile x
-                        ld      a,(UBnKysgn)                        ; get missile x sign
+                        ld      hl,(UBnkylo)                        ; get missile x
+                        ld      a,(UBnkysgn)                        ; get missile x sign
                         ld      b,a
                         call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
                         ld      (TacticsVectorY),hl
@@ -511,8 +511,8 @@ CalcTargetVector:       ld      de,(TacticsTargetX)                        ; get
                         ld      a,(TacticsTargetZ+2)
                         FlipSignBitA
                         ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
-                        ld      hl,(UBnKzlo)                        ; get missile x
-                        ld      a,(UBnKzsgn)                        ; get missile x sign
+                        ld      hl,(UBnkzlo)                        ; get missile x
+                        ld      a,(UBnkzsgn)                        ; get missile x sign
                         ld      b,a
                         call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
                         ld      (TacticsVectorZ),hl

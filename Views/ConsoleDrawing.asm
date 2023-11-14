@@ -1095,22 +1095,22 @@ UpdateScannerPlanet:    MMUSelectPlanet
 ; As the space station is always ship 0 then we can just use the scanner
                         
 ; This will go though all the universe ship data banks and plot, for now we will just work on one bank
-UpdateScannerShip:      ld      a,(UBnKexplDsp)             ; if bit 4 is clear then ship should not be drawn
+UpdateScannerShip:      ld      a,(UBnkexplDsp)             ; if bit 4 is clear then ship should not be drawn
                         bit     4,a                         ; .
                         ;DEBUG ret     z                           ; .
                         ld      a,(ShipTypeAddr)            ; if its a planet or sun, do not display
                         bit     7,a
                         ret     nz
 ; DEBUG Add in station types later                       
-.NotMissile:            ld      hl,(UBnKzlo)
-                        ld      de,(UBnKxlo)
-                        ld      bc,(UBnKylo)
+.NotMissile:            ld      hl,(UBnkzlo)
+                        ld      de,(UBnkxlo)
+                        ld      bc,(UBnkylo)
                         ld      a,h
                         or      d
                         or      b
                         and     %11000000
                         ret     nz                          ; if distance Hi > 64 on any ccord- off screen
-.MakeX2Compliment:      ld      a,(UBnKxsgn)
+.MakeX2Compliment:      ld      a,(UBnkxsgn)
                         bit     7,a
                         jr      z,.absXHi
                         NegD                                
@@ -1119,7 +1119,7 @@ UpdateScannerShip:      ld      a,(UBnKexplDsp)             ; if bit 4 is clear 
                         ld      ixh,a                       ; store adjusted X in ixh
 .ProcessZCoord:         srl     h
                         srl     h
-.MakeZ2Compliment:      ld      a,(UBnKzsgn)
+.MakeZ2Compliment:      ld      a,(UBnkzsgn)
                         bit     7,a
                         jr      z,.absZHi
                         NegH
@@ -1134,7 +1134,7 @@ UpdateScannerShip:      ld      a,(UBnKexplDsp)             ; if bit 4 is clear 
                         GetShipColorBright
                         MMUSelectLayer2  
                         jp      .NoStick
-.StickHasLength:        ld      a,(UBnKysgn)                ; if b  =  0 then no line
+.StickHasLength:        ld      a,(UBnkysgn)                ; if b  =  0 then no line
                         bit     7,a
                         jr      z,.absYHi
                         NegB

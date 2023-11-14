@@ -85,7 +85,7 @@ CargoType5Traingles     DB $00,$00*4, $01*4, $04*4
                     ;   DB $01,
                     ;   DB $01,
                     ;   DB $01,
-                        DB $06,$05*4, $06*4, $09*4 ; its we store UBNkNodeArray + this offset it will save one memroy ready
+                        DB $06,$05*4, $06*4, $09*4 ; its we store UBnkNodeArray + this offset it will save one memroy ready
                         DB $06,$06*4, $07*4, $09*4
                         DB $06,$07*4, $08*4, $09*4  
                         DB $FF ; Very important end of traingle list marker

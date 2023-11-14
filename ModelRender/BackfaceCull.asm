@@ -55,16 +55,16 @@ ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then 
                         ld      (varXX17),a                  ; XX17 = normal scale factor for current ship adjusted for camera
                         ret
 
-CheckVisible:           ld      a,(UBnKzsgn)                 ; Is the ship behind us
+CheckVisible:           ld      a,(UBnkzsgn)                 ; Is the ship behind us
 .CheckBehind:           and     SignOnly8Bit                 ; which means z sign is negative
                         jr      nz,.ShipNoDraw               ; .
-.CheckViewPort:         ld      hl,(UBnKzlo)                 ; now check to see if its within 90 degree arc
+.CheckViewPort:         ld      hl,(UBnkzlo)                 ; now check to see if its within 90 degree arc
                         ld      a,h
                         JumpIfAGTENusng ShipMaxDistance, .ShipNoDraw
-.CheckXAxis:            ld      de,(UBnKxlo)                 ; if abs x > abx z then its out side of view port
+.CheckXAxis:            ld      de,(UBnkxlo)                 ; if abs x > abx z then its out side of view port
                         call    compare16HLDE                
                         jr      c,.ShipNoDraw               ; ship is too far out on the X Axis
-.CheckYAxis:            ld      de,(UBnKylo)                ; if abs y > abx z then its out side of view port
+.CheckYAxis:            ld      de,(UBnkylo)                ; if abs y > abx z then its out side of view port
                         call    compare16HLDE
                         jr      c,.ShipNoDraw               ; ship is too far out on the X Axis
                         IFDEF   CHECKDOTSHIPDATA
@@ -113,7 +113,7 @@ CheckVisible:           ld      a,(UBnKzsgn)                 ; Is the ship behin
                                     DISPLAY "TODO:remove all teh processing of rotmat to load craft to camera as its already been done"
 CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;   
                        ; break                          
-                        call    CopyRotmatToTransMat        ; XX16 = UBNKRotMat    
+                        call    CopyRotmatToTransMat        ; XX16 = UBnkRotMat    
                         call    ScaleXX16Matrix197          ; scale rotation matrix in XX16
                         call    LoadCraftToCamera           ; XX18 = camera
                         ;call    CopyCameraToXX15Signed      ; Copy the camera to XX15 as signed 15 bit

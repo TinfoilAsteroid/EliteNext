@@ -9,13 +9,13 @@ MISSILEMAXDECEL         equ -3
 MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         ;ReturnOnBitClear a, ShipAIEnabledBitNbr 
                         IFDEF MISSILEDOHIT
-                            JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
+                            JumpIfMemTrue UBnkMissleHitToProcess, .ProcessMissileHit
                         ENDIF
 .CheckForECM:           JumpIfMemNotZero ECMCountDown,.ECMIsActive  ; If ECM is running then kill the missile
 .IsMissileHostile:      IsShipHostile                               ; is missle attacking us?
                         JumpIfZero .MissileTargetingShip            ; Missile is friendly then z is set else targetting us
-.MissileTargetingPlayer:ld      hl, (UBnKxlo)                       ; check if missile in range of us
-                        ld      a,(UBnKMissileDetonateRange)
+.MissileTargetingPlayer:ld      hl, (UBnkxlo)                       ; check if missile in range of us
+                        ld      a,(UBnkMissileDetonateRange)
                         ld      c,a                                 ; c holds detonation range
                         call    MissileHitUsCheckPos
 .MissileNotHitUsYet:    jp      nc, .UpdateTargetingUsPos
@@ -34,7 +34,7 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         IFDEF MISSILEDEBUG
                             ld  (TacticsMissileBank),a
                         ENDIF
-.SaveTargetBank:        ld      a,(UBnKMissileTarget)               ; target will be used a lot too
+.SaveTargetBank:        ld      a,(UBnkMissileTarget)               ; target will be used a lot too
                         add     a,BankUNIVDATA0                     ; pre calculate add to optimise
                         ld      iyl,a                               ; save target                        
                         IFDEF MISSILEDEBUG
@@ -53,8 +53,8 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
 .UpdateTargetingShipX:  IFDEF MISSILEBREAK
                             break
                         ENDIF
-                        ld      de,(UBnKxlo)                        ; get target ship X
-                        ld      a,(UBnKxsgn)                        ; and flip sign so we have missile - target
+                        ld      de,(UBnkxlo)                        ; get target ship X
+                        ld      a,(UBnkxsgn)                        ; and flip sign so we have missile - target
                         IFDEF MISSILEDEBUG
                             ld  (TacticsTargetX),de
                             ld  (TacticsTargetX+2),a
@@ -62,8 +62,8 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         FlipSignBitA
                         ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
                         SelectMissileBank
-                        ld      hl,(UBnKxlo)                        ; get missile x
-                        ld      a,(UBnKxsgn)                        ; get missile x sign
+                        ld      hl,(UBnkxlo)                        ; get missile x
+                        ld      a,(UBnkxsgn)                        ; get missile x sign
                         IFDEF MISSILEDEBUG
                             ld  (TacticsMissileX),hl
                             ld  (TacticsMissileX+2),a
@@ -73,8 +73,8 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         ld      (TacticsVectorX),hl
                         ld      (TacticsVectorX+2),a
 .UpdateTargetingShipY:  SelectTargetBank
-                        ld      de,(UBnKylo)                        ; get target ship X
-                        ld      a,(UBnKysgn)
+                        ld      de,(UBnkylo)                        ; get target ship X
+                        ld      a,(UBnkysgn)
                         IFDEF MISSILEDEBUG
                             ld  (TacticsTargetY),de
                             ld  (TacticsTargetY+2),a
@@ -82,8 +82,8 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         FlipSignBitA
                         ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
                         SelectMissileBank
-                        ld      hl,(UBnKylo)                        ; get missile x
-                        ld      a,(UBnKysgn)                        ; get missile x sign
+                        ld      hl,(UBnkylo)                        ; get missile x
+                        ld      a,(UBnkysgn)                        ; get missile x sign
                         IFDEF MISSILEDEBUG
                             ld  (TacticsMissileY),hl
                             ld  (TacticsMissileY+2),a
@@ -93,8 +93,8 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         ld      (TacticsVectorY),hl
                         ld      (TacticsVectorY+2),a
 .UpdateTargetingShipZ:  SelectTargetBank
-                        ld      de,(UBnKzlo)                        ; get target ship X
-                        ld      a,(UBnKzsgn)
+                        ld      de,(UBnkzlo)                        ; get target ship X
+                        ld      a,(UBnkzsgn)
                         IFDEF MISSILEDEBUG
                             ld  (TacticsTargetZ),de
                             ld  (TacticsTargetZ+2),a
@@ -102,8 +102,8 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         FlipSignBitA
                         ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
                         SelectMissileBank
-                        ld      hl,(UBnKzlo)                        ; get missile x
-                        ld      a,(UBnKzsgn)                        ; get missile x sign
+                        ld      hl,(UBnkzlo)                        ; get missile x
+                        ld      a,(UBnkzsgn)                        ; get missile x sign
                         IFDEF MISSILEDEBUG
                             ld  (TacticsMissileZ),hl
                             ld  (TacticsMissileZ+2),a
@@ -132,12 +132,12 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                             jp                  .FarAway
                         ENDIF
 ; If we get here its close enough to detonate
-.CloseMissileExplode:   ld      a,(UBnKMissileTarget) 
+.CloseMissileExplode:   ld      a,(UBnkMissileTarget) 
                         jp      MissileHitShipA
             DISPLAY "TODO: far away ** TODO need to set memory read write on page 0"
 .FarAway:               SelectTargetBank
-                        JumpIfMemFalse      UBnKECMFitted, .NoECM                   ; if target has ECM and enough energy to use it
-                        JumpIfMemLTNusng    UBnKEnergy,    ECMCounterMax, .NoECM    ; .
+                        JumpIfMemFalse      UBnkECMFitted, .NoECM                   ; if target has ECM and enough energy to use it
+                        JumpIfMemLTNusng    UBnkEnergy,    ECMCounterMax, .NoECM    ; .
                         JumpIfMemIsNotZero   ECMCountDown, .NoECM                ; . ECM is already active
 .TestIfUsingECM:        ld      a,(RandomSeed2)                                             ; if random < 16
                         JumpIfAGTENusng     16, .UpdateMissilePos                           ;   then fire ECM destroying missile
@@ -170,7 +170,7 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
 .ActivateNewExplosion:  jp  CheckMissileBlastInit               ; initialise
                         ; DUMMY RET get a free return by using jp
 .ECMIsActive:           call    UnivExplodeShip                 ; ECM detonates missile
-                        SetMemTrue  UBnKMissleHitToProcess      ; Enque an explosion
+                        SetMemTrue  UBnkMissleHitToProcess      ; Enque an explosion
                         jp      .ProcessMissileHit              ; lets see if we can enqueue now
                         ; DUMMY RET get a free return as activenewexplosion does jp to init with a free ret
 
@@ -198,14 +198,14 @@ SimplifiedShipPitchv3:  ;break
                         JumpIfAGTENusng 16, .skipPitchZero         ; if its > 16 then update pitch
                         ZeroA                                      ; else we zero pitch but
                         or      h                                  ; we need to retain the sign
-                        ld      (UBnKRotZCounter),a                ; .
+                        ld      (UBnkRotZCounter),a                ; .
                         IFDEF MISSILEDEBUG
                             ld  (TacticsRotZ),a
                         ENDIF
                         ret
 .skipPitchZero:         ld      a,2
                         or      h
-                        ld      (UBnKRotZCounter),a
+                        ld      (UBnkRotZCounter),a
                         IFDEF MISSILEDEBUG
                             ld  (TacticsRotZ),a
                         ENDIF
@@ -224,7 +224,7 @@ SimplifiedShipPitchv3:  ;break
 
 
                         
-SimplifiedShipRollv3:  ; ld      a,(UBnKRotXCounter)               ; get current roll
+SimplifiedShipRollv3:  ; ld      a,(UBnkRotXCounter)               ; get current roll
                        ; sla     a                                 ; * 2 to also abs
                        ; ReturnIfAGTENusng 32                      ; and so if >32 skip
                         call    XX12EquTacticsDotSidev             ; calculate side dot protuct
@@ -244,7 +244,7 @@ SimplifiedShipRollv3:  ; ld      a,(UBnKRotXCounter)               ; get current
                         JumpIfAGTENusng 16,.skipRollZero           ;
                         ZeroA                                      ; if its zoer then set rotx to zero
                         or      b
-                        ld      (UBnKRotXCounter),a
+                        ld      (UBnkRotXCounter),a
                         IFDEF MISSILEDEBUG
                             ld  (TacticsRotX),a
                         ENDIF
@@ -252,7 +252,7 @@ SimplifiedShipRollv3:  ; ld      a,(UBnKRotXCounter)               ; get current
 .skipRollZero:          ld      a,2
                         or      h
                         xor     b
-                        ld      (UBnKRotXCounter),a
+                        ld      (UBnkRotXCounter),a
                         IFDEF MISSILEDEBUG
                             ld  (TacticsRotX),a
                         ENDIF
@@ -266,20 +266,20 @@ SimplifiedShipSpeedv3:  ld      hl,(TacticsDotProduct1)
                         ld      a,l 
                         JumpIfALTNusng  22,.SlowDown                                  ; nose dot product < 
 .Accelerate:            ld      a,3                                 ; else
-                        ld      (UBnKAccel),a                       ;  accelleration = 3
+                        ld      (UBnkAccel),a                       ;  accelleration = 3
                         IFDEF MISSILEDEBUG
                             ld  (TacticsSpeed),a
                         ENDIF                        
                         ret                                         ;  .
 .SlowDown:              JumpIfALTNusng 18, .NoSpeedChange
 .Deccelerate:           ld      a,-2
-                        ld      (UBnKAccel),a
+                        ld      (UBnkAccel),a
                         IFDEF MISSILEDEBUG
                             ld  (TacticsSpeed),a
                         ENDIF
                         ret
 .NoSpeedChange:         ZeroA                                       ; else no change
-                        ld      (UBnKAccel),a
+                        ld      (UBnkAccel),a
                         IFDEF MISSILEDEBUG
                             ld  (TacticsSpeed),a
                         ENDIF
@@ -301,7 +301,7 @@ SimplifiedShipSpeedv3b:  call    GetDistance                         ;
                         ld      a,l                                 ; .
                         JumpIfALTNusng b, .DecelTest                ; .
 .Accelerate:            ld      a,3                                 ; else
-                        ld      (UBnKAccel),a                       ;  accelleration = 3
+                        ld      (UBnkAccel),a                       ;  accelleration = 3
                         IFDEF MISSILEDEBUG
                             ld  (TacticsSpeed),a
                         ENDIF                        
@@ -309,13 +309,13 @@ SimplifiedShipSpeedv3b:  call    GetDistance                         ;
 .DecelTest:             ld      a,l                                 ; if abs acelleration > 18
                         JumpIfAGTENusng 18 ,.Deccelerate             ;    decelerate by 2 
 .NoSpeedChange:         ZeroA                                       ; else no change
-                        ld      (UBnKAccel),a
+                        ld      (UBnkAccel),a
                         IFDEF MISSILEDEBUG
                             ld  (TacticsSpeed),a
                         ENDIF
                         ret
 .Deccelerate:           ld      a,-2
-                        ld      (UBnKAccel),a
+                        ld      (UBnkAccel),a
                         IFDEF MISSILEDEBUG
                             ld  (TacticsSpeed),a
                         ENDIF

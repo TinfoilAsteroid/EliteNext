@@ -187,51 +187,51 @@ Debug_LL28_6502:        ld      a,27        :ld     (Qvar),a
                 
                 
                 IFDEF DEBUG_LL145_6502
-Debug_LL145_6502:       ; ld  a,1      : ld  (UbnkLineArrayLen),a
-                        ; ld  hl,$0116 : ld  (UbnkLineArray),hl
-                        ; ld  hl,$004B : ld  (UbnkLineArray+2),hl
-                        ; ld  hl,$00F8 : ld  (UbnkLineArray+4),hl
-                        ; ld  hl,$002F : ld  (UbnkLineArray+6),hl
+Debug_LL145_6502:       ; ld  a,1      : ld  (UBnkLineArrayLen),a
+                        ; ld  hl,$0116 : ld  (UBnkLineArray),hl
+                        ; ld  hl,$004B : ld  (UBnkLineArray+2),hl
+                        ; ld  hl,$00F8 : ld  (UBnkLineArray+4),hl
+                        ; ld  hl,$002F : ld  (UBnkLineArray+6),hl
                         ; call    DrawLinesLateClipping : ;break
-                        ; ld  a,1      : ld  (UbnkLineArrayLen),a
-                        ; ld  hl,$0033 : ld  (UbnkLineArray),hl
-                        ; ld  hl,$0016 : ld  (UbnkLineArray+2),hl
-                        ; ld  hl,$001D : ld  (UbnkLineArray+4),hl
-                        ; ld  hl,$FFBE : ld  (UbnkLineArray+6),hl
+                        ; ld  a,1      : ld  (UBnkLineArrayLen),a
+                        ; ld  hl,$0033 : ld  (UBnkLineArray),hl
+                        ; ld  hl,$0016 : ld  (UBnkLineArray+2),hl
+                        ; ld  hl,$001D : ld  (UBnkLineArray+4),hl
+                        ; ld  hl,$FFBE : ld  (UBnkLineArray+6),hl
                         ; call    DrawLinesLateClipping : ;break
-                        ; ld  a,1      : ld  (UbnkLineArrayLen),a
-                        ; ld  hl,$0055 : ld  (UbnkLineArray),hl
-                        ; ld  hl,$FF83 : ld  (UbnkLineArray+2),hl
-                        ; ld  hl,$0033 : ld  (UbnkLineArray+4),hl
-                        ; ld  hl,$0016 : ld  (UbnkLineArray+6),hl
+                        ; ld  a,1      : ld  (UBnkLineArrayLen),a
+                        ; ld  hl,$0055 : ld  (UBnkLineArray),hl
+                        ; ld  hl,$FF83 : ld  (UBnkLineArray+2),hl
+                        ; ld  hl,$0033 : ld  (UBnkLineArray+4),hl
+                        ; ld  hl,$0016 : ld  (UBnkLineArray+6),hl
                         ; call    DrawLinesLateClipping :  ;break
                         
-                        ;ld  a,1      : ld  (UbnkLineArrayLen),a
-                        ;ld  hl,$00B3 : ld  (UbnkLineArray),hl
-                        ;ld  hl,$0054 : ld  (UbnkLineArray+2),hl
-                        ;ld  hl,$005d : ld  (UbnkLineArray+4),hl
-                        ;ld  hl,$ffd5 : ld  (UbnkLineArray+6),hl
+                        ;ld  a,1      : ld  (UBnkLineArrayLen),a
+                        ;ld  hl,$00B3 : ld  (UBnkLineArray),hl
+                        ;ld  hl,$0054 : ld  (UBnkLineArray+2),hl
+                        ;ld  hl,$005d : ld  (UBnkLineArray+4),hl
+                        ;ld  hl,$ffd5 : ld  (UBnkLineArray+6),hl
                         ;call    DrawLinesLateClipping :  ;break
                         ;
-                        ;ld  a,1      : ld  (UbnkLineArrayLen),a
-                        ;ld  hl,$005d : ld  (UbnkLineArray),hl
-                        ;ld  hl,$ffd5 : ld  (UbnkLineArray+2),hl
-                        ;ld  hl,$00b9 : ld  (UbnkLineArray+4),hl
-                        ;ld  hl,$0028 : ld  (UbnkLineArray+6),hl
+                        ;ld  a,1      : ld  (UBnkLineArrayLen),a
+                        ;ld  hl,$005d : ld  (UBnkLineArray),hl
+                        ;ld  hl,$ffd5 : ld  (UBnkLineArray+2),hl
+                        ;ld  hl,$00b9 : ld  (UBnkLineArray+4),hl
+                        ;ld  hl,$0028 : ld  (UBnkLineArray+6),hl
                         ;call    DrawLinesLateClipping :  ;break
 
-                        ld  a,1      : ld  (UbnkLineArrayLen),a
-                        ld  hl,$ffc7 : ld  (UbnkLineArray),hl
-                        ld  hl,$001a : ld  (UbnkLineArray+2),hl
-                        ld  hl,$005d : ld  (UbnkLineArray+4),hl
-                        ld  hl,$ffd5 : ld  (UbnkLineArray+6),hl
+                        ld  a,1      : ld  (UBnkLineArrayLen),a
+                        ld  hl,$ffc7 : ld  (UBnkLineArray),hl
+                        ld  hl,$001a : ld  (UBnkLineArray+2),hl
+                        ld  hl,$005d : ld  (UBnkLineArray+4),hl
+                        ld  hl,$ffd5 : ld  (UBnkLineArray+6),hl
                         call    DrawLinesLateClipping :  ;break
                        
-                        ;ld  a,1      : ld  (UbnkLineArrayLen),a
-                        ;ld  hl,$0089 : ld  (UbnkLineArray),hl
-                        ;ld  hl,$00e2 : ld  (UbnkLineArray+2),hl
-                        ;ld  hl,$fff3 : ld  (UbnkLineArray+4),hl
-                        ;ld  hl,$00b9 : ld  (UbnkLineArray+6),hl
+                        ;ld  a,1      : ld  (UBnkLineArrayLen),a
+                        ;ld  hl,$0089 : ld  (UBnkLineArray),hl
+                        ;ld  hl,$00e2 : ld  (UBnkLineArray+2),hl
+                        ;ld  hl,$fff3 : ld  (UBnkLineArray+4),hl
+                        ;ld  hl,$00b9 : ld  (UBnkLineArray+6),hl
                         ;call    DrawLinesLateClipping :  ;break
 
                         ret

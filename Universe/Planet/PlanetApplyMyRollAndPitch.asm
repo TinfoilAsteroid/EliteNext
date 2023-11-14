@@ -135,7 +135,7 @@ P_MVS5RotateAxis:       ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                         ld      (hl),d          ; copy result into nosev
                         ret
     
-ApplyPlanetPitchOnly:   ld      a,(UBnKRotZCounter)
+ApplyPlanetPitchOnly:   ld      a,(UBnkRotZCounter)
                         cp      $FF
 .PitchSAxes:            ld	    hl,P_BnKrotmatRoofvX; UBnkrotmatSidevY
                         ld	    (varAxis1),hl
@@ -154,7 +154,7 @@ ApplyPlanetPitchOnly:   ld      a,(UBnKRotZCounter)
                         call    P_MVS5RotateAxis
                         ret
     
-ApplyPlanetRollAndPitch:ld      a,(UBnKRotZCounter)
+ApplyPlanetRollAndPitch:ld      a,(UBnkRotZCounter)
                         cp      $FF
 .PitchSAxes:            ld	    hl,P_BnKrotmatRoofvX; UBnkrotmatSidevY
                         ld	    (varAxis1),hl

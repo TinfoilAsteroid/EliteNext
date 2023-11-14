@@ -5,14 +5,14 @@ CurrentShipUniv:        DB      0
 ;..................................................................................................................................                        
 ; if ship is destroyed or exploding then z flag is clear, else z flag is set
 IsShipDestroyedOrExploding: MACRO
-                            ld      a,(UBnKexplDsp)                                 ; is it destroyed
+                            ld      a,(UBnkexplDsp)                                 ; is it destroyed
                             and     %10100000                                       ; or exploding
                             ENDM
 
 JumpIfShipNotClose:         MACRO   NotCloseTarget
-.CheckIfClose:              ld      hl,(UBnKxlo)                                    ; chigh byte check or just too far away
-                            ld      de,(UBnKylo)                                    ; .
-                            ld      bc,(UBnKzlo)                                    ; .
+.CheckIfClose:              ld      hl,(UBnkxlo)                                    ; chigh byte check or just too far away
+                            ld      de,(UBnkylo)                                    ; .
+                            ld      bc,(UBnkzlo)                                    ; .
                             or      h                                               ; .
                             or      d                                               ; .
                             or      b                                               ; .
@@ -66,7 +66,7 @@ UpdateUniverseObjects:  xor     a
         ENDIF
                             DISPLAY "TODO: Make all 4 of these 1 call"
 .ProperUpdate:          call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
-                        ld      a,(UBnKRotZCounter)
+                        ld      a,(UBnkRotZCounter)
                         cp      0
                         call    ApplyShipRollAndPitch
                         call    ApplyShipSpeed
@@ -97,7 +97,7 @@ UpdateUniverseObjects:  xor     a
                         JumpIfANENusng  ShipTypeScoopable, .HaveCollided        ; then its a collision
 .ScoopsEquiped:         ld      a,(FuelScoop)                                   ; if there is no scoop then impact
                         JumpIfANENusng  EquipmentItemFitted, .HaveCollided      ; .
-.ScoopRegion:           ld      a,(UBnKysgn)                                    ; if the y axis is negative then we are OK
+.ScoopRegion:           ld      a,(UBnkysgn)                                    ; if the y axis is negative then we are OK
                         JumpIfAIsZero   .HaveCollided                           ; else its a collision
 .CollectedCargo:        call    ShipCargoType
 .DoWeHaveCapacity:      ld      d,a                                             ; save cargotype
@@ -108,7 +108,7 @@ UpdateUniverseObjects:  xor     a
                         jp      .PostCollisionTest
 ; ... Generic collision
 .HaveCollided:          JumpIfMemLTNusng DELTA, 5, .SmallBump
-.BigBump:               ld      a,(UBnKEnergy)                                  ; get energy level which gives us an approximate to size and health
+.BigBump:               ld      a,(UBnkEnergy)                                  ; get energy level which gives us an approximate to size and health
                         SetCarryFlag
                         rla                                                     ; divide by 2 but also bring in carry so its 128 + energy / 2
                         ld      b,a
@@ -120,7 +120,7 @@ UpdateUniverseObjects:  xor     a
                         call    DamageShip                                      ; dent target too  TODO make damge totally proportional to speed
                         jp      .ApplyDamage
 .ApplyDamage:           call    SetSpeedZero
-                        ld      a,(UBnKzsgn)                                    ; front or back
+                        ld      a,(UBnkzsgn)                                    ; front or back
                         and     $80
                         jr      nz,.HitRear
                         ld      a,(ForeShield)
@@ -141,7 +141,7 @@ UpdateUniverseObjects:  xor     a
 .CheckForPulse:         JumpIfMemZero CurrLaserPulseOnCount, .NoLaser
 .LaserDamage:           ld      a,(CurrLaserDamageOutput)
                         call    DamageShip
-                        ld      a,(UBnKexplDsp)                                 ; is it destroyed
+                        ld      a,(UBnkexplDsp)                                 ; is it destroyed
                         and     %10100000      
                         jp      nz,.ProcessedUniverseSlot                       ; can't lock on debris
 .NoLaser:   
@@ -173,31 +173,31 @@ UpdateUniverseObjects:  xor     a
                         jp      .DoneAICheck                                    ; ai if the ai slot to process = missile type
 ;..................................................................................................................................
 
-SaveUBNK:               DS 3*3
+SaveUBnk:               DS 3*3
 
 SavePosition:           push    hl,,de,,bc,,af
                         ld      a,(CurrentShipUniv)
                         cp      2
                         jr      nz,.DoneSave
                         ;break
-                        ld      hl, UBnKxlo
-                        ld      de, SaveUBNK
+                        ld      hl, UBnkxlo
+                        ld      de, SaveUBnk
                         ld      bc, 3*3
                         ldir
                         ld      a,0
-                        ld      (UBnKyhi)  ,a
-                        ld      (UBnKxhi)  ,a
-                        ld      (UBnKzhi)  ,a                        
-                        ld      (UBnKxsgn) ,a
-                        ld      (UBnKysgn) ,a
-                        ld      (UBnKzhi)  ,a
-                        ld      (UBnKzsgn) ,a
+                        ld      (UBnkyhi)  ,a
+                        ld      (UBnkxhi)  ,a
+                        ld      (UBnkzhi)  ,a                        
+                        ld      (UBnkxsgn) ,a
+                        ld      (UBnkysgn) ,a
+                        ld      (UBnkzhi)  ,a
+                        ld      (UBnkzsgn) ,a
                         ld      a, $5
-                        ld      (UBnKylo)  ,a
+                        ld      (UBnkylo)  ,a
                         ld      a, $5
-                        ld      (UBnKxlo)  ,a
+                        ld      (UBnkxlo)  ,a
                         ld      a, $6E
-                        ld      (UBnKzlo)  ,a
+                        ld      (UBnkzlo)  ,a
 .DoneSave:              pop     hl,,de,,bc,,af
                         ret
                         
@@ -206,8 +206,8 @@ RestorePosition:        push    hl,,de,,bc,,af
                         cp      2
                         jr      nz,.DoneSave
                         ;break
-                        ld      hl, SaveUBNK
-                        ld      de, UBnKxlo
+                        ld      hl, SaveUBnk
+                        ld      de, UBnkxlo
                         ld      bc, 3*3
                         ldir
 .DoneSave:              pop     hl,,de,,bc,,af
@@ -228,16 +228,16 @@ DrawForwardShips:       xor     a
 ;Debug set position     
               ;         ld      hl,$0000
               ;         ld      a,$00
-              ;         ld      (UBnKxlo),hl
-              ;         ld      (UBnKxsgn),a
+              ;         ld      (UBnkxlo),hl
+              ;         ld      (UBnkxsgn),a
               ;         ld      hl,$0148
               ;         ld      a,$00
-              ;         ld      (UBnKylo),hl
-              ;         ld      (UBnKysgn),a
+              ;         ld      (UBnkylo),hl
+              ;         ld      (UBnkysgn),a
               ;         ld      hl,$0149
               ;         ld      a,$00
-              ;         ld      (UBnKzlo),hl
-              ;         ld      (UBnKzsgn),a
+              ;         ld      (UBnkzlo),hl
+              ;         ld      (UBnkzsgn),a
               ;         ld      hl,$A558
               ;         ld      (UBnkrotmatSidevX),hl
               ;         ld      hl,$D8CE

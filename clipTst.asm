@@ -258,23 +258,23 @@ currentLine:            DB 0
 ; Repurposed XX15 when plotting lines
 ; Repurposed XX15 before calling clip routine
 UBnkX1                      equ XX15
-UBnKx1Lo                    equ XX15
-UBnKx1Hi                    equ XX15+1
+UBnkx1Lo                    equ XX15
+UBnkx1Hi                    equ XX15+1
 UBnkY1                      equ XX15+2
-UbnKy1Lo                    equ XX15+2
+UBnky1Lo                    equ XX15+2
 UBnkY1Hi                    equ XX15+3
 UBnkX2                      equ XX15+4
 UBnkX2Lo                    equ XX15+4
 UBnkX2Hi                    equ XX15+5
 ; Repurposed XX12 when plotting lines
 UBnkY2                      equ XX12+0
-UbnKy2Lo                    equ XX12+0
+UBnky2Lo                    equ XX12+0
 UBnkY2Hi                    equ XX12+1
 UBnkDeltaXLo                equ XX12+2
 UBnkDeltaXHi                equ XX12+3
 UBnkDeltaYLo                equ XX12+4
 UBnkDeltaYHi                equ XX12+5
-UbnkGradient                equ XX12+2
+UBnkGradient                equ XX12+2
 UBnkTemp1                   equ XX12+2
 UBnkTemp1Lo                 equ XX12+2
 UBnkTemp1Hi                 equ XX12+3
@@ -295,19 +295,19 @@ XX15                        equ UBnkXScaled
 XX15VecX                    equ XX15
 XX15VecY                    equ XX15+1
 XX15VecZ                    equ XX15+2
-UbnkXPoint                  equ XX15
-UbnkXPointLo                equ XX15+0
-UbnkXPointHi                equ XX15+1
-UbnkXPointSign              equ XX15+2
-UbnkYPoint                  equ XX15+3
-UbnkYPointLo                equ XX15+3
-UbnkYPointHi                equ XX15+4
-UbnkYPointSign              equ XX15+5
+UBnkXPoint                  equ XX15
+UBnkXPointLo                equ XX15+0
+UBnkXPointHi                equ XX15+1
+UBnkXPointSign              equ XX15+2
+UBnkYPoint                  equ XX15+3
+UBnkYPointLo                equ XX15+3
+UBnkYPointHi                equ XX15+4
+UBnkYPointSign              equ XX15+5
 ; Repurposed XX15 pre clip plines
-UbnkPreClipX1               equ XX15+0
-UbnkPreClipY1               equ XX15+2
-UbnkPreClipX2               equ XX15+4
-UbnkPreClipY2               equ XX15+6
+UBnkPreClipX1               equ XX15+0
+UBnkPreClipY1               equ XX15+2
+UBnkPreClipX2               equ XX15+4
+UBnkPreClipY2               equ XX15+6
 ; Repurposed XX15 post clip lines
 UBnkNewX1                   equ XX15+0
 UBnkNewY1                   equ XX15+1
@@ -341,7 +341,7 @@ XX12                        equ UBnkXX12xLo
 varXX12                     equ UBnkXX12xLo
 ; Post clipping the results are now 8 bit
 UBnkVisibility              DB  0               ; replaces general purpose xx4 in rendering
-;UbnKDrawAsDot               DB  0               ; if 0 then OK, if 1 then just draw dot of line heap
+;UBnkDrawAsDot               DB  0               ; if 0 then OK, if 1 then just draw dot of line heap
 UBnkProjectedY              DB  0
 UBnkProjectedX              DB  0
 UBnkProjected               equ UBnkProjectedY  ; resultant projected position
@@ -366,28 +366,28 @@ LineArraySize               equ LineListLen
 ;                                               X Coord Lo  Y Coord Lo   Z CoordLo  Sign Bits 7 6 5 for X Y Z Signs (set = negative)
 ; Line Array        -  4 bytes per eleement     0           1            2          3
 ;                                               X1          Y1           X2         Y2
-UbnkFaceVisArray            DS FaceArraySize            ; XX2 Up to 16 faces this may be normal list, each entry is controlled by bit 7, 1 visible, 0 hidden
+UBnkFaceVisArray            DS FaceArraySize            ; XX2 Up to 16 faces this may be normal list, each entry is controlled by bit 7, 1 visible, 0 hidden
 UBnkNodeArray               DS NodeArraySize * 4        ; XX3 Holds the points as an array, its an array not a heap
 UBnkNodeArray2              DS NodeArraySize * 4        ; XX3 Holds the points as an array, its an array not a heap
-UbnkLineArray               DS LineArraySize * 4        ; XX19 Holds the clipped line details
-UBnkLinesHeapMax            EQU $ - UbnkLineArray
-UbnkEdgeProcessedList DS EdgeHeapSize
+UBnkLineArray               DS LineArraySize * 4        ; XX19 Holds the clipped line details
+UBnkLinesHeapMax            EQU $ - UBnkLineArray
+UBnkEdgeProcessedList DS EdgeHeapSize
 ; Array current Lengths
-UbnkFaceVisArrayLen         DS 1
+UBnkFaceVisArrayLen         DS 1
 UBnkNodeArrayLen            DS 1
-UbnkLineArrayLen            DS 1                        ; total number of lines loaded to array 
-UbnkLineArrayBytes          DS 1                        ; total number of bytes loaded to array  = array len * 4
-XX20                        equ UbnkLineArrayLen
-varXX20                     equ UbnkLineArrayLen
+UBnkLineArrayLen            DS 1                        ; total number of lines loaded to array 
+UBnkLineArrayBytes          DS 1                        ; total number of bytes loaded to array  = array len * 4
+XX20                        equ UBnkLineArrayLen
+varXX20                     equ UBnkLineArrayLen
 
 
-UbnkEdgeHeapSize            DS 1
-UbnkEdgeHeapBytes           DS 1
+UBnkEdgeHeapSize            DS 1
+UBnkEdgeHeapBytes           DS 1
 UBnkLinesHeapLen            DS 1
-UbnKEdgeHeapCounter         DS 1
-UbnKEdgeRadius              DS 1
-UbnKEdgeShipType            DS 1
-UbnKEdgeExplosionType       DS 1
+UBnkEdgeHeapCounter         DS 1
+UBnkEdgeRadius              DS 1
+UBnkEdgeShipType            DS 1
+UBnkEdgeExplosionType       DS 1
 
 ;--------------------------------------------------------------------------------------------------------
 ; ---------------------------------------------------------------------------------------------------------------------------------    
@@ -398,10 +398,10 @@ ClearLine:                                  ; CLEAR LINEstr visited by EE31 when
                                                                            ; ObjectInFront:
 DrawLines:              ld	    a,$65 ; DEBUG
                         ld		iyl,a							; set ixl to colour (assuming we come in here with a = colour to draw)
-                        ld		a,(UbnkLineArrayLen)			; get number of lines
+                        ld		a,(UBnkLineArrayLen)			; get number of lines
                         ReturnIfAIsZero   						; No lines then bail out.
                         ld		iyh,a			                ; number of lines still to draw
-                        ld		hl,UbnkLineArray
+                        ld		hl,UBnkLineArray
 ;LL27:                                       ; counter Y, Draw clipped lines in XX19 ship lines heap
 DrawXX19ClippedLines:   ld      c,(hl)                          ; (XX19),Y c = varX1
                         inc     hl
@@ -468,10 +468,10 @@ DrawXX19ClippedLines:   ld      c,(hl)                          ; (XX19),Y c = v
 ;--------------------------------------------------------------------------------------------------------
 PLEDGECTR           DB          0
 
-PrepLines:              ldWriteZero UbnkLineArrayLen                    ; current line array index = 0
-                        ldWriteZero UbnkLineArrayBytes                  ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
+PrepLines:              ldWriteZero UBnkLineArrayLen                    ; current line array index = 0
+                        ldWriteZero UBnkLineArrayBytes                  ; UBnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
                         ldWriteZero PLEDGECTR
-                        ld          hl,UbnkLineArray
+                        ld          hl,UBnkLineArray
                         ld          (varU16),hl
 ;LL79--Visible edge--------------------------------------
 .PrepLoop:              ld          a,(PLEDGECTR)
@@ -494,7 +494,7 @@ PrepLines:              ldWriteZero UbnkLineArrayLen                    ; curren
                         ld          hl,UBnkNewX1
                         FourLDIInstrunctions
                         ld          (varU16),de                         ; update U16 with current address
-                        ld          hl,UbnkLineArrayLen                 ; we have loaded one line
+                        ld          hl,UBnkLineArrayLen                 ; we have loaded one line
                         inc         (hl)
                         ld          a,(hl)
                         JumpIfAGTENusng LineArraySize,CompletedLineGeneration   ; have we hit max lines for a model hop over jmp to Exit edge data loop
@@ -503,10 +503,10 @@ PrepLines:              ldWriteZero UbnkLineArrayLen                    ; curren
                         inc         (hl)                                ;
                         ld          a,(hl)                              ; current edge index ++
                         JumpIfANENusng LineListLen/4, .PrepLoop       ; compare with total number of points which is edges * 2
-CompletedLineGeneration:ld          a,(UbnkLineArrayLen)                ; UbnkLineArrayLen = nbr of lines loaded 
+CompletedLineGeneration:ld          a,(UBnkLineArrayLen)                ; UBnkLineArrayLen = nbr of lines loaded 
                         sla         a
                         sla         a                                   ; multiple by 4 to equal number of bytes
-                        ld          (UbnkLineArrayBytes),a              ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
+                        ld          (UBnkLineArrayBytes),a              ; UBnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
 ExitEdgeDataLoop:       ret
    
     SAVENEX OPEN "clipTst.nex", $8000 , $7F00

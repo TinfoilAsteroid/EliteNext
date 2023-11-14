@@ -1,15 +1,15 @@
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
 ;--NOTE POSTITION AND MATRIX are loaded by a single LDIR in cases so must be contiguous
 StartOfShipRuntimeData      EQU $
-UBnKxlo                     DB  0                       ; INWK+0
-UBnKxhi                     DB  0                       ; there are hi medium low as some times these are 24 bit
-UBnKxsgn                    DB  0                       ; INWK+2
-UBnKylo                     DB  0                       ; INWK+3 \ ylo
-UBnKyhi                     DB  0                       ; INWK+4 \ yHi
-UBnKysgn                    DB  0                       ; INWK +5
-UBnKzlo                     DB  0                       ; INWK +6
-UBnKzhi                     DB  0                       ; INWK +7
-UBnKzsgn                    DB  0                       ; INWK +8
+UBnkxlo                     DB  0                       ; INWK+0
+UBnkxhi                     DB  0                       ; there are hi medium low as some times these are 24 bit
+UBnkxsgn                    DB  0                       ; INWK+2
+UBnkylo                     DB  0                       ; INWK+3 \ ylo
+UBnkyhi                     DB  0                       ; INWK+4 \ yHi
+UBnkysgn                    DB  0                       ; INWK +5
+UBnkzlo                     DB  0                       ; INWK +6
+UBnkzhi                     DB  0                       ; INWK +7
+UBnkzsgn                    DB  0                       ; INWK +8
 ;-Rotation Matrix of Ship----------------------------------------------------------------------------------------------------------
 ; Rotation data is stored as lohi, but only 15 bits with 16th bit being  a sign bit. Note this is NOT 2'c compliment
 ; Note they seem to have to be after camera position not quite found why yet, can only assume it does an iy or ix indexed copy? Bu oddly does not affect space station.
@@ -27,50 +27,50 @@ UBnkrotmatNosevY            DW  0                       ; INWK +11
 UBnkrotmatNosevZ            DW  0                       ; INWK +13
 ; -- Note these must be here for initialise blast as it does a 12 byte ldir
 ; . Note missile explosion will have to have logic to cause linger if a blast is to be enqued
-UBnKMissileBlastRange:      DB  0                       ; copied in when setting up a missile
-UBnKMissileBlastDamage:     DB  0                       ; copied in when setting up a missile
-UBnKMissileDetonateRange:   DB  0                       ; copied in when setting up a missile, allows for proximity missiles
-UBnKMissileDetonateDamage:  DB  0                       ; copied in when setting up a missile
+UBnkMissileBlastRange:      DB  0                       ; copied in when setting up a missile
+UBnkMissileBlastDamage:     DB  0                       ; copied in when setting up a missile
+UBnkMissileDetonateRange:   DB  0                       ; copied in when setting up a missile, allows for proximity missiles
+UBnkMissileDetonateDamage:  DB  0                       ; copied in when setting up a missile
 ; -- Metadata for ship to help with bank managment
-UBnKStartOfRuntimeData:
-UBnKSlotNumber              DB  0
-UbnKShipUnivBankNbr         DB  0                       ; Present ship universe bank number
+UBnkStartOfRuntimeData:
+UBnkSlotNumber              DB  0
+UBnkShipUnivBankNbr         DB  0                       ; Present ship universe bank number
 UBnkShipModelBank           DB  0                       ; Bank nbr ship was from
-UBnKShipModelNbr            DB  0                       ; Ship Id with in the bank
-UBnKShipModelId             DB  0                       ; Absolute ship id
+UBnkShipModelNbr            DB  0                       ; Ship Id with in the bank
+UBnkShipModelId             DB  0                       ; Absolute ship id
 ; -- Ship AI data
-UBnKMissleHitToProcess      DB  0                       ; This is used for enquing missle blasts as we can only do one missile at a time, could make it multi but neeed to smooth CPU usage
-UBnKMissileTarget           DB  0                       ; This is the ship slot number for the target from 0 to n if the missile is not hostile to us, if the target is $FF then its us
-UBnKSpeed                   DB  0                       ; INWK +27
-UBnKAccel                   DB  0                       ; INWK +28
-UBnKRotXCounter             DB  0                       ; INWK +29
-UBnKRotZCounter             DB  0                       ; INWK +30
-UBnKRAT                     DB  0                       ; temporary for rotation magnitude or roll counter, for debugging state
-UBnKRAT2                    DB  0                       ; temporary for rotation threshold
-UBnKCNT                     DB  0                       ; temp for calculating roll and pitch
-UBnKCNT2                    DB  0                       ; roll threshold, max angle boynd ship will slow down
+UBnkMissleHitToProcess      DB  0                       ; This is used for enquing missle blasts as we can only do one missile at a time, could make it multi but neeed to smooth CPU usage
+UBnkMissileTarget           DB  0                       ; This is the ship slot number for the target from 0 to n if the missile is not hostile to us, if the target is $FF then its us
+UBnkSpeed                   DB  0                       ; INWK +27
+UBnkAccel                   DB  0                       ; INWK +28
+UBnkRotXCounter             DB  0                       ; INWK +29
+UBnkRotZCounter             DB  0                       ; INWK +30
+UBnkRAT                     DB  0                       ; temporary for rotation magnitude or roll counter, for debugging state
+UBnkRAT2                    DB  0                       ; temporary for rotation threshold
+UBnkCNT                     DB  0                       ; temp for calculating roll and pitch
+UBnkCNT2                    DB  0                       ; roll threshold, max angle boynd ship will slow down
 univRAT                     DB  0               ; 99
 univRAT2                    DB  0               ; 9A
 univRAT2Val                 DB  0               ; 9A
-UBnKexplDsp                 DB  0                       ; INWK +31 clear exploding/display state|missiles
+UBnkexplDsp                 DB  0                       ; INWK +31 clear exploding/display state|missiles
 UBnkDrawAllFaces            DB  0
-UBnKShipAggression          DB  0                       ; calculated agression factor
+UBnkShipAggression          DB  0                       ; calculated agression factor
 UBnkaiatkecm                DB  0                       ; INWK +32 ai_attack_univ_ecm i.e. AI type
-UBnKSpawnObject             DB  0
+UBnkSpawnObject             DB  0
 UBnkCam0yLo                 DB  0                       ; INWK +33 ????
 UBnkCam0yHi                 DB  0                       ; INWK +34?????
-UBnKEnergy                  DB  0                       ; INWK +35
-UBnKECMCountDown            DB  0                       ; counts down ECM usage if activated reducing energy too in update loop
-UBnKECMFitted               DB  0                       ; Does ship have ECM, true false
-UBnKLaserPower              DB  0                       ; Type of laser fitted
-UBnKMissilesLeft            DB  0
-UBnKFighterShipId           DB  0                       ; computed ship Id for any carriers
-UBnKFightersLeft            DB  0                       ; the number of ships left in hanger, 255 = infinite
-UBnKCloudCounter            DB  0                       ; cloud pixels
-UBnKCloudRadius             DB  0                       ; cloud pixels
-UBnKRuntimeSize             EQU $-UBnKStartOfRuntimeData
+UBnkEnergy                  DB  0                       ; INWK +35
+UBnkECMCountDown            DB  0                       ; counts down ECM usage if activated reducing energy too in update loop
+UBnkECMFitted               DB  0                       ; Does ship have ECM, true false
+UBnkLaserPower              DB  0                       ; Type of laser fitted
+UBnkMissilesLeft            DB  0
+UBnkFighterShipId           DB  0                       ; computed ship Id for any carriers
+UBnkFightersLeft            DB  0                       ; the number of ships left in hanger, 255 = infinite
+UBnkCloudCounter            DB  0                       ; cloud pixels
+UBnkCloudRadius             DB  0                       ; cloud pixels
+UBnkRuntimeSize             EQU $-UBnkStartOfRuntimeData
 ; Flags work as follows:
-; UBnKSpawnObject - signals on death to spawn cargo items
+; UBnkSpawnObject - signals on death to spawn cargo items
 ; 0 -                   Spawn Cargo 1
 ; 1 -                   Spawn Cargo 2
 ; 2 -                   Spawn Cargo 3
@@ -86,7 +86,7 @@ UBnKRuntimeSize             EQU $-UBnKStartOfRuntimeData
 ; 6 -                   Ship Visible = ShipOnScreen/NotCloaked (cleared or set by check visible or cloaking override)
 ; 5 -                   Ship is exploding if set, note if its a missile and one already equeued this will have to linger
 ;                       linger can be done by not erasing ship unit missile equeue handled
-; 4 -                   Ship marked as exploded, cleared once aknowledged then bit 5 takes over and UBnKCloudCounter
+; 4 -                   Ship marked as exploded, cleared once aknowledged then bit 5 takes over and UBnkCloudCounter
 ; 3 -                   Display state - Plot as a Dot
 ; 2 -                   Nbr of Missiles bit 2
 ; 1 -                   Nbr of Missiles bit 1

@@ -44,11 +44,11 @@ AttractModeInit:        MMUSelectLayer1
                         call    l2_flip_buffers
                         call    l2_cls     
                         MMUSelectConsoleBank
-.LoadConsole:           ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
+.LoadConsole:           ld          hl,ScreenL1Bottom       ; now the pointers are in UBnk its easy to read
                         ld          de,ConsoleImageData
                         ld          bc, ScreenL1BottomLen
                         call        memcopy_dma
-                        ld          hl,ScreenL1AttrBtm       ; now the pointers are in Ubnk its easy to read
+                        ld          hl,ScreenL1AttrBtm       ; now the pointers are in UBnk its easy to read
                         ld          de,ConsoleAttributes
                         ld          bc, ScreenL1AttrBtmLen
                         call        memcopy_dma
@@ -105,9 +105,9 @@ AttractModeUpdate:      ld      hl,(AttractTimer)
                         call    RandomXCounter
                         call    RandomYCounter
                         ld      a,(LocalXCounter)
-                        ld      (UBnKRotXCounter),a
+                        ld      (UBnkRotXCounter),a
                         ld      a,(LocalZCounter)
-                        ld      (UBnKRotZCounter),a
+                        ld      (UBnkRotZCounter),a
 .ClearScreen:           MMUSelectLayer2
                         call    l2_cls_upper_two_thirds
                         jp      .DoneIM2
@@ -135,10 +135,10 @@ AttractModeUpdate:      ld      hl,(AttractTimer)
                         jp      z,.DoneIM2
                         dec     a
                         ld      (AttractCounter),a
-                        ld      hl, (UBnKzlo)
+                        ld      hl, (UBnkzlo)
 .UpdatePos:             ld      de, $0008
                         sbc     hl,de
-                        ld      (UBnKzlo),hl                        
+                        ld      (UBnkzlo),hl                        
 .DoneIM2:               ld      a,(AttractStep)
                         inc     a
                         cp      3

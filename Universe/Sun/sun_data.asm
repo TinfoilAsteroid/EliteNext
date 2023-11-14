@@ -104,7 +104,7 @@ WarpSunFurther:         ld      hl,SBnKzsgn
                         ReturnIfAGTENusng $7F                   ; this is the hard limit else it woudl turn negative and flip to -0
                         inc     (hl)                           ; if its negative it will still increase as we will block insane values
                         ret
-; This uses UBNKNodeArray as the list
+; This uses UBnkNodeArray as the list
 ; the array is 256 * 2 bytes
 ; counter is current row y pos
 ; byte 1 is start x pos

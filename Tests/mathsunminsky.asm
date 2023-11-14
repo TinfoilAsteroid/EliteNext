@@ -226,7 +226,7 @@ SunAlphaMulX            DS 4
 SunAlphaMulY            DS 4
 SunBetaMulZ             DS 4
 SunK2                   DS 3
-UBnKxlo                 DS 4
+UBnkxlo                 DS 4
 
 
 SunApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitch, no calc needed

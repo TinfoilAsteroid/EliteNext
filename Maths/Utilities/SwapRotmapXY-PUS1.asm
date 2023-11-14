@@ -3,7 +3,7 @@ SwapRotmapXY:								;.PUS1	\ -> &546C \ swop rotmat x and z
 ; The sign logic looks totally wrong in original but may make sense in real world with RAT and RAT2
 pus1:	
 ; Get Xlo hi to BC Sign to ixh
-		ld		hl,UBnKxlo
+		ld		hl,UBnkxlo
 		ld 		a,(hl)							; save x Coord to BC
 		ld		c,a
 		inc		hl
@@ -35,8 +35,8 @@ pus1:
 		xor		h
 		ld		b,a								; now b holds IY Sign manuipulated and L holds IX Sign manuipulated
 ; Set values
-		ld 		(UbnKxlo),de					; write out Y to X
-		ld 		(UbnKylo),bc					; write out X to Y
+		ld 		(UBnkxlo),de					; write out Y to X
+		ld 		(UBnkylo),bc					; write out X to Y
 		ld		a,l								; write out Y sign to x sign  X was manipulated in B
-		ld		(UbnKxsgn),a
+		ld		(UBnkxsgn),a
 		ret
