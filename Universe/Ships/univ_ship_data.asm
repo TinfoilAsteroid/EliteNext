@@ -334,7 +334,6 @@ UnivSetEnemyMissile:    ld      hl,NewLaunchUBnKX               ; Copy launch sh
                         ld      (UBnKMissileBlastRange),a
                         ld      (UBnKMissileDetonateRange),a
                         ret
-
 ; --------------------------------------------------------------                        
 ; This sets the position of the current ship if its a player launched missile
 UnivSetPlayerMissile:   call    InitialisePlayerMissileOrientation  ; Copy in Player  facing
@@ -364,7 +363,6 @@ UnivSetPlayerMissile:   call    InitialisePlayerMissileOrientation  ; Copy in Pl
                         ld      (UBnkaiatkecm),a
                         ;break
                         call    ClearShipHostile                ; its a player missile
-                        
                         ret
 ; --------------------------------------------------------------
 ; this applies blast damage to ship
@@ -507,6 +505,10 @@ CalculateSpaceStationWarpPositon:
 UnivSpawnSpaceStationLaunched:
                         call    UnivSpawnSpaceStation
                         call    CopySpaceStationtoPlanetGlobal
+                        call    ResetStationLaunch
+                        ret
+                        DISPLAY "TODO:fall into SpaceStation Launch Position once startup fixed"
+                        DISPLAY "TODO: Fault is probably as maths for xyz is 16 bit and shoudl be 24"
 ; --------------------------------------------------------------
 SpaceStationLaunchPositon:
                         ld      hl,0

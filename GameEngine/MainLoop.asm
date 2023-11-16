@@ -280,7 +280,7 @@ WeHaveCompletedLaunch:  call    InitialiseLocalUniverse             ; intiailise
                         ld      iyh,0
                         ld      iyl,a
                         call    SpawnSpaceStation
-.BuiltStation:          call    ResetStationLaunch
+.BuiltStation:          call    UnivSpawnSpaceStationLaunched; replaced with the 0,0,-10000 version ResetStationLaunch
 .NowInFlight:           ld      a,StateNormal
                         ld      (DockedFlag),a
                         ForceTransition ScreenFront

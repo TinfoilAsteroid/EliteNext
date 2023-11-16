@@ -978,6 +978,7 @@ ScreenTransitionForced  DB $FF
 
 ;----------------------------------------------------------------------------------------------------------------------------------
                         DISPLAY "TODO: Check collision detection as currently can destroy space station"
+                        DISPLAY "TODO: Docking works but bouncing off is wrong for space station"
     
 InitialiseCommander:    ld      a,(ScreenCmdr+1)
                         jp      SetScreenA
