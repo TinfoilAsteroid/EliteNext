@@ -53,6 +53,7 @@ EXSDOSMMU1              equ MMU_SLOT_1_REGISTER
 SunMMU 		            equ MMU_SLOT_6_REGISTER
 PlanetMMU 		        equ MMU_SLOT_6_REGISTER
 UniverseMMU 		    equ MMU_SLOT_6_REGISTER
+SpaceStationMMU         equ MMU_SLOT_6_REGISTER
 ScreenBankMMU           equ MMU_SLOT_6_REGISTER
 MenuEquipSMMU           equ MMU_SLOT_6_REGISTER
 MenuShrChtMMU           equ MMU_SLOT_6_REGISTER

@@ -251,7 +251,11 @@ CalculatePlanetLaunchedPosition:
                         ld      iy,P_BnKzlo
                         call    AddAtIXtoAtIY24Signed
                         ret
-                 
+CopyPlanettoGlobal:     ld      hl,P_BnKxlo
+                        ld      de,ParentPlanetX
+                        ld      bc,3*3
+                        ldir
+                        ret                 
 ; --------------------------------------------------------------                        
 ; This sets current universe object to a planet,they use sign + 23 bit positions
 ; we need to have variable size and color
@@ -288,6 +292,7 @@ CreatePlanet:           call    ResetP_BnKData          ; Clear out planet block
                         srl     a                       ; 
                         ld      (P_Colour2Thickness),a                       
 .SetOrientation:        call    P_InitRotMat
+                        call    CopyPlanettoGlobal      ; Set up global position interface
                         ret
 
 CreatePlanetLaunched:   call    ResetP_BnKData
@@ -302,6 +307,7 @@ CreatePlanetLaunched:   call    ResetP_BnKData
                         ld      (P_BnKysgn),a
                         ld      (P_BnKzsgn),a
                         MaxUnivPitchAndRoll
+                        call    CopyPlanettoGlobal      ; Set up global position interface                        
                         ret
 ; NEED FINSIHGING
 

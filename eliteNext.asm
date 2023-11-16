@@ -977,75 +977,7 @@ ScreenTransitionForced  DB $FF
 
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-LaunchedFromStation:    
-                IFDEF DEBUGPLANET
-                        DISPLAY "In planet debug, removing Launched From Station to save memory"
-                ELSE
-                        call    InitialiseLocalUniverse
-                        MMUSelectSun
-                        call    CreateSunLaunched                   ; create the local sun and set position based on seed
-                        MMUSelectPlanet
-                        call    CreatePlanetLaunched
-                        call    ClearUnivSlotList                   ; slot list is clear to 0 is gauranteed next slot
-                        ld      a,CoriloisStation
-                        call    SpawnShipTypeA
-                ENDIF    
-;;.SpawnSpaceStation:     call    SetSlot0ToSpaceStation              ; set slot 1 to space station
-;;                        MMUSelectUniverseN 0                        ; Prep Target universe
-;;                        MMUSelectShipBank1                          ; Bank in the ship model code
-;;                        ld      iyh,0                               ; Zero ship runtime data
-;;                        ld      iyl,ShipTypeStation                 ; and mark as spece station
-;;                        call    UnivInitRuntime                     ; its always slot 0
-;;                        ld      a,CoriloisStation
-;;                        call    GetShipBankId             
-;;                        MMUSelectShipBankA                          ; Select the correct bank found
-;;                        ld      a,b                                 ; Select the correct ship
-;;                        call    CopyShipToUniverse
-.BuiltStation:          call    ResetStationLaunch
-                        IFDEF DEBUGMISSILETEST
-;                            ld      a,0
-;                            ld      (UBnKRotXCounter),a             ; kill station roll
-
-.TestMissileTarget:         ld      a,ShipID_Viper
-                            call    SpawnShipTypeA                      ; call rather than jump, returns with a = slot number
-                            ZeroA
-                            ld      (UBnKSpeed),a
-                            ld      a,$80
-                            ld      (UBnKxsgn),a 
-                            ;ld      a,$80
-                            ZeroA
-                            ld      (UBnKysgn),a 
-                            ld      a,$80
-                           ZeroA
-                            ld      (UBnKzsgn),a 
-                            ld      a,$60
-                            ZeroA
-                            ld      (UBnKxlo),a 
-                            ld      a,$10
-                            ;ZeroA
-                            ld      (UBnKxhi),a 
-                            ld      a,$60
-                            ;ZeroA
-                            ld      (UBnKylo),a    
-                            ld      a,$1B
-                            ;ZeroA
-                            ld      (UBnKyhi),a    
-                            ZeroA                            
-                            ld      (UBnKzlo),a    
-                            ld      a,$2B
-                            ld      (UBnKzhi),a    
-                        ENDIF                    
-.NowInFlight:           ld      a,StateNormal
-                        ld      (DockedFlag),a
-                        ForceTransition ScreenFront
-                        ld      a,$FF
-                        ld      (LAST_DELTA),a              ; force sound update in interrupt
-                        call    ResetPlayerShip
-                        IFDEF DEBUGMISSILETEST
-                            ld  a,1
-                            LockMissileToA  
-                        ENDIF
-                        ret
+                        DISPLAY "TODO: Check collision detection as currently can destroy space station"
     
 InitialiseCommander:    ld      a,(ScreenCmdr+1)
                         jp      SetScreenA

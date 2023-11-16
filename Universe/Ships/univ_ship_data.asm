@@ -428,6 +428,7 @@ CopySpaceStationtoPlanetGlobal:
                         ret  
 ; --------------------------------------------------------------
 ; generate space station type based on seed values
+; returns space station type in a
 UnivSelSpaceStationType:ld      a,(DisplayEcononmy)
                         ld      hl,(DisplayGovernment)          ; h = TekLevel, l = Government
                         ld      de,(DisplayPopulation)          ; d = productivity e = Population

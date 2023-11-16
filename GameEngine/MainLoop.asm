@@ -260,15 +260,34 @@ ScreenLoopBank:         ld      a,$0
                         MMUSelectScreenA
 ScreenLoopJP:           call    $0000
 LoopRepeatPoint:        ld      a,(DockedFlag)
+                        ; Could optimise this to a jp hl lookup table
 HandleLaunched:         JumpIfAEqNusng  StateCompletedLaunch,   WeHaveCompletedLaunch
                         JumpIfAEqNusng  StateInTransition,      WeAreInTransition
                         JumpIfAEqNusng  StateHJumping,          WeAreHJumping
                         JumpIfAEqNusng  StateHEntering,         WeAreHEntering
                         JumpIfAEqNusng  StateCompletedHJump,    WeHaveCompletedHJump
-                        
                         jp      DoubleBufferCheck
-WeHaveCompletedLaunch:  call    LaunchedFromStation
-                        jp      DoubleBufferCheck
+;-- Player launched from station, moved routines from eliteMext.asm to remove call and simplify code                        
+WeHaveCompletedLaunch:  call    InitialiseLocalUniverse             ; intiailise local bubble and set us as in flight
+.GenerateSun:           MMUSelectSun
+                        call    CreateSunLaunched                   ; create the local sun and set position based on seed
+.GeneratePlanet:        MMUSelectPlanet
+                        call    CreatePlanetLaunched
+                        call    ClearUnivSlotList                   ; slot list is clear to 0 is gauranteed next slot
+.GenerateSpaceStation:  ld      a,CoriloisStation
+                        MMUSelectSpaceStation                       ; Switch to space station (Universe bank 0)
+                        call    UnivSelSpaceStationType
+                        ld      iyh,0
+                        ld      iyl,a
+                        call    SpawnSpaceStation
+.BuiltStation:          call    ResetStationLaunch
+.NowInFlight:           ld      a,StateNormal
+                        ld      (DockedFlag),a
+                        ForceTransition ScreenFront
+                        ld      a,$FF
+                        ld      (LAST_DELTA),a                      ; force sound update in interrupt
+                        call    ResetPlayerShip
+                        jp      DoubleBufferCheck                   ; Then move through to the rest of the loop
 WeAreHJumping:          call    hyperspace_Lightning
                         jp      c,DoubleBufferCheck
                         ld      a,StateHEntering
@@ -278,6 +297,9 @@ WeAreHEntering:         ld      a,StateCompletedHJump
                         ld      (DockedFlag),a
                         jp      DoubleBufferCheck
 
+;--
+LaunchedFromStation:    
+                        ret
 ; laser duration goign below 0 for some reason
 ; if laser is on
 ;    if laser duration = master duration - do sfx
@@ -336,7 +358,7 @@ LaserBeamV2:            JumpIfMemFalse LaserBeamOn, .LaserIsOff                 
                         ret
 
 ;;called from LaunchedFromStation  & WeHaveCompletedHJump to re-seed the system
-
+;-- Get seed for galaxy system and copy into working vars for system and galaxy, correct post jump fuel, force to front view, set extra vessels to spawn to 0 and mark as undocked
 InitialiseLocalUniverse:ld      a,(Galaxy)                      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      hl,(TargetSystemX)
@@ -347,6 +369,7 @@ InitialiseLocalUniverse:ld      a,(Galaxy)                      ; DEBUG as galax
                         ForceTransition ScreenFront            ; This will also trigger stars 
                         ld      a,$00
                         ld      (ExtraVesselsCounter),a
+                        DISPLAY "TODO: Check callers as they may be doign this as a duplicate"
                         ld      (DockedFlag),a
                         call    GalaxyGenerateDesc             ; bc  holds new system to generate system
                         call    copy_working_to_system         ; and propogate copies of seeds
