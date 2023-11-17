@@ -103,9 +103,9 @@ ADDHLDESignedV4:        ld      a,h
 ; extension to AddBCHtoDELsigned
 ; takes ix as the address of the values to load into DEL
 ;       iy as the address of the values to load into BCH
-AddAtIXtoAtIY24Signed:  ld      d,(ix+0)            ; del = ix (sign hi lo)
+AddAtIXtoAtIY24Signed:  ld      l,(ix+0)            ; del = ix (sign hi lo)
                         ld      e,(ix+1)            ; .
-                        ld      l,(ix+2)            ; .
+                        ld      d,(ix+2)            ; .
                         ld      h,(iy+0)            ; bch = iy (sign, hi, lo)
                         ld      c,(iy+1)            ; .
                         ld      b,(iy+2)            ; .
@@ -120,9 +120,9 @@ AddAtIXtoAtIY24Signed:  ld      d,(ix+0)            ; del = ix (sign hi lo)
 ; takes ix as the address of the values to load into DEL
 ;       iy as the address of the values to load into BCH
 ; subtracts iy from ix putting result in ix
-SubAtIXtoAtIY24Signed:  ld      d,(ix+0)            ; del = ix (sign hi lo)
+SubAtIXtoAtIY24Signed:  ld      l,(ix+0)            ; del = ix (sign hi lo)
                         ld      e,(ix+1)            ; .
-                        ld      l,(ix+2)            ; .
+                        ld      d,(ix+2)            ; .
                         ld      h,(ix+0)            ; bch = -iy (sign, hi, lo)
                         ld      c,(ix+1)            ; .
                         ld      a,(ix+2)            ; .
@@ -140,9 +140,10 @@ SubAtIXtoAtIY24Signed:  ld      d,(ix+0)            ; del = ix (sign hi lo)
 ; takes ix as the address of the values to load into DEL
 ;       iy as the address of the values to load into BCH
 ; subtracts iy from ix leaving result in del
-SubDELequAtIXtMinusAtIY24Signed:  ld      d,(ix+0)            ; del = ix (sign hi lo)
+SubDELequAtIXtMinusAtIY24Signed:
+                        ld      l,(ix+0)            ; del = ix (sign hi lo)
                         ld      e,(ix+1)            ; .
-                        ld      l,(ix+2)            ; .
+                        ld      d,(ix+2)            ; .
                         ld      h,(ix+0)            ; bch = -iy (sign, hi, lo)
                         ld      c,(ix+1)            ; .
                         ld      a,(ix+2)            ; .
@@ -155,8 +156,12 @@ SubDELequAtIXtMinusAtIY24Signed:  ld      d,(ix+0)            ; del = ix (sign h
 
 
 ;tested mathstestsun2
+; DEL = DEL - BCH signed, uses BC, DE, HL, IY, A
+; Just flips sign on b then performs add
+SubBCHfromDELsigned:    ld      a,b
+                        xor     SignOnly8Bit
+                        ld      b,a
 ; DEL = DEL + BCH signed, uses BC, DE, HL, IY, A
-
 AddBCHtoDELsigned:      ld      a,b                 ; Are the values both the same sign?
                         xor     d                   ; .
                         and     SignOnly8Bit        ; .
@@ -320,4 +325,71 @@ CheckInCollisionRange:
 .NoCollision:           ClearCarryFlag              ; no collision in blast range
                         ret
 
+;------------------------------------------------------------------------------------------------
+; -- Checks if value at ix > iy and returns ix pointing to the correct value
+CompareAtIXtoIYABS:     ld      a,(iy+2)
+.CheckSignByte:         and     SignMask8Bit
+                        ld      b,a
+                        ld      a,(ix+2)
+                        and     SignMask8Bit
+                        JumpIfALTNusng b,.SwapIXIY
+.CheckHighByte:         ld      a,(ix+1)
+                        cp      (iy+1)
+                        JumpIfALTNusng b,.SwapIXIY
+.CheckLowByte:          ld      a,(ix+0)
+                        cp      (iy+0)
+                        JumpIfALTNusng b,.SwapIXIY
+                        ret
+.SwapIXIY               ld      ix,iy
+                        ret
 
+;------------------------------------------------------------------------------------------------
+; -- Manhattan distance
+; -- very quick distance calculation based on a cube
+; -- ix = pointer to vector of 3x3, iy = distance to check
+; simploy done by ABS (ix) 
+; returns z if outside box, nz if inside box
+ManhattanDistanceIXIY:  ld      l,(ix+0)            ; del = abs ix (sign hi lo)
+.checkX:                ld      e,(ix+1)            ; .
+                        ld      a,(ix+2)            ; .
+                        and     SignMask8Bit        ;
+                        ld      d,a                 ;
+                        ld      h,(iy+0)            ; bch = distiance to check
+                        ld      c,(iy+1)            ; .
+                        ld      a,(iy+2)            ; .
+                        xor     SignOnly8Bit        ; . this is where we flip sign to make add subtract
+                        ld      b,a                 ; .
+                        push    bc,,hl              ; save this for 2nd and 3rd test
+                        push    iy                  ; save iy as add function changes is
+                        call    AddBCHtoDELsigned   ; perform del += bch which as we flipped bch sign means (ix [210] -= iy [210])
+                        pop     iy                  ; get iy back
+                        ld      a,d
+                        and     SignOnly8Bit
+                        jp      z,.ClearUp          ; so if its positive then outside boundary
+.checkY:                pop     bc,,hl
+                        push    bc,,hl
+                        ld      l,(ix+3)            ; del = abs ix (sign hi lo)
+                        ld      e,(ix+4)            ; .
+                        ld      a,(ix+5)            ; .
+                        and     SignMask8Bit        ;
+                        ld      d,a                 ;
+                        push    iy                  ; save iy as add function changes is
+                        call    AddBCHtoDELsigned   ; perform del += bch which as we flipped bch sign means (ix [210] -= iy [210])
+                        pop     iy                  ; get iy back
+                        ld      a,d
+                        and     SignOnly8Bit
+                        jp      z,.ClearUp          ; so if its positive then outside boundary
+.checkZ:                pop     bc,,hl
+                        ld      l,(ix+6)            ; del = abs ix (sign hi lo)
+                        ld      e,(ix+7)            ; .
+                        ld      a,(ix+8)            ; .
+                        and     SignMask8Bit        ;
+                        ld      d,a                 ;
+                        push    iy                  ; save iy as add function changes is
+                        call    AddBCHtoDELsigned   ; perform del += bch which as we flipped bch sign means (ix [210] -= iy [210])
+                        pop     iy                  ; get iy back
+                        ld      a,d
+                        and     SignOnly8Bit
+                        ret
+.ClearUp:               pop     bc,,hl
+                        ret

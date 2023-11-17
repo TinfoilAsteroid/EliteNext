@@ -196,6 +196,18 @@ PlanetColour2Table:     DB       PlanetColour20DG, PlanetColour21MG, PlanetColou
                         DB       PlanetColour28MO, PlanetColour29LO, PlanetColour2ABO, PlanetColour2BDR
                         DB       PlanetColour2CMR, PlanetColour2DLR, PlanetColour2EMC, PlanetColour2FMP
 
+WarpPlanetByHL:         ld      b,h
+                        ld      c,l
+                        ld      h,0
+                        ld      de,(P_BnKzhi)
+                        ld      a,(P_BnKzlo)
+                        ld      l,a
+                        MMUSelectMathsBankedFns : call  SubBCHfromDELsigned
+                        ld      (P_BnKzhi),de
+                        ld      a,l
+                        ld      (P_BnKzlo),a
+                        ret
+
 ; PLANET
 WarpPlanetCloser:       ld      hl,P_BnKzsgn
 .PositiveAxis:          ld      a,(hl)

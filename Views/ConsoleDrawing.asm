@@ -1104,10 +1104,12 @@ UpdateScannerShip:      ld      a,(UBnKexplDsp)             ; if bit 4 is clear 
                         ret     nz
 ; DEBUG Add in station types later                       
 .NotMissile:            ld      a,(UBnKzsgn)                ; any high byte causes skip
-                        ld      b,(UBnKxsgn)                ; .
+                        ld      b,a
+                        ld      a,(UBnKxsgn)                ; .
+                        ld      c,a
+                        ld      a,(UBnKysgn)                ; .
                         or      b                           ; .
-                        ld      b,(UBnKysgn)                ; .
-                        or      b                           ; .
+                        or      c                           ; .
                         and     SignMask8Bit                ; so we are checking to see if very high byte is non zero
                         ret     nz
 .CheckLowAndMidByte:    ld      hl,(UBnKzlo)                ; Any distance > 64 causes skip

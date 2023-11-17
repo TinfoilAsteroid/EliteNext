@@ -285,7 +285,18 @@ JumpOffSet:             MACRO   Axis
 WarpOffset:             JumpOffSet  UBnKzhi                     ; we will simplify on just moving Z
                         ret
                         
-                        
+WarpUnivByHL:           ld      b,h
+                        ld      c,l
+                        ld      h,0
+                        ld      de,(UBnKzhi)
+                        ld      a,(UBnKzlo)
+                        ld      l,a
+                        MMUSelectMathsBankedFns : call  SubBCHfromDELsigned
+                        ld      (UBnKzhi),de
+                        ld      a,l
+                        ld      (UBnKzlo),a
+                        ret
+
 ; --------------------------------------------------------------                        
 ; update ship speed and pitch based on adjustments from AI Tactics
 UpdateSpeedAndPitch:    ld      a,(UBnKAccel)                   ; only apply non zero accelleration

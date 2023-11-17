@@ -5,7 +5,7 @@
 ;    DEFINE  MAINLOOP_DEMOSHIPS
 ;   DEFINE  MAINLOOP_DEBUGMISSILE 1
     DEFINE  MAINLOOP_INPUTHANDLER
-   ; DEFINE  MAINLOOP_EVENTHANDLER 1
+    ;DEFINE  MAINLOOP_EVENTHANDLER 1
     DEFINE  MAINLOOP_RECHARGE 1
  ;   DEFINE  MAINLOOP_LAUNCHMISSILE
     DEFINE  MAINLOOP_UPDATEUNIVERSE 1
@@ -93,77 +93,9 @@ TestAreWeDocked:        JumpIfMemNeNusng DockedFlag, StateNormal, UpdateLoop    
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
 ;.. First update Sun...............................................................................................................
-                IFDEF MAINLOOP_WARP_ENABLED
 ;... Warp or in system jump thsi moves everything by 1 on the high (sign) byte away or towards ship based on their z axis only
 ;... its not a true move in the right direction, more a z axis warp                
-ProcessWarp:            JumpIfMemFalse  WarpPressed, .NoWarp
-.WarpIsPressed:         SetMemFalse     WarpPressed                               ; clear and acknowlege
-                        JumpIfMemZero   WarpCooldown, .WarpDriveCool
-                        DISPLAY "TODO Need logic for in system jump drive malfunction"
-.JumpDriveHot:          DISPLAY "TODO call bong jump drive hot"
-                        DISPLAY "TODO flash jump drive status icon"
-                        jp      .NoWarp
-.WarpDriveCool:         JumpIfMemFalse    SpaceStationSafeZone, .NotInSpaceStationRange
-.MassLocked:            DISPLAY "TODO Mass locked by object call bong"
-                        DISPLAY "TODO message mass locked"
-                        DISPLAY "TODO make space station a body just like planet and sun"
-                        jp      .NoWarp
-.NotInSpaceStationRange:call    AreShipsPresent
-                        jr      nc,     .MassLocked
-.IsPlanetMassLocking:   MMUSelectPlanet                 ; is planet within 256 then mass locked
-                        ld      hl,(P_BnKzhi)
-                        ld      a,h                     ; if z sign is <> 0 then mass locked
-                        and     $7F                     ; h = abs zsign
-                        or      l                       ; to get to here a must be zero to or with l will give a quick result
-                        jp      z,     .MassLocked
-.IsSunMassLocking:      MMUSelectSun
-                        ld      hl,(SBnKzhi)
-                        ld      a,h                     ; if z sign is <> 0 then mass locked
-                        and     $7F                     ; h = abs zsign
-                        or      l                       ; to get to here a must be zero to or with l will give a quick result
-                        jp      z,     .MassLocked
-            IFDEF SIMPLEWARP
-                        ld      hl,(P_BnKzhi)           ; z hi,sign must be > 0 else we are mass locked so can't hit here
-                        DecHLSigned
-                        ld      (P_BnKzhi),hl
-                        ld      hl,(SBnKzhi)           ; z hi,sign must be > 0 else we are mass locked so can't hit here
-                        DecHLSigned
-                        ld      (SBnKzhi),hl
-            ELSE
-.NotCorrectFacing:      ;       call bong, align with body
-                        jp      .NoWarp
-.JumpToPlanetCheck:     ld      a,(P_BnKzhi)
-                        JumpIfAGTENusng  2, .PlanetRangeOK 
-                        ld      a,(P_BnKyhi)
-                        JumpIfAGTENusng  2, .PlanetRangeOK
-                        ld      a,(P_BnKxhi)
-                        JumpIfAGTENusng  2, .PlanetRangeOK
-                        jp      .MassLocked
-.PlanetRangeOK:         call    WarpPlanetCloser
-                        MMUSelectSun
-                        call    WarpSunFurther
-                        jp      .MoveJunk
-.JumpToSunCheck:        ld      a,(SBnKzsgn)
-                        ld      hl,SBnKxsgn
-                        or      (hl)
-                        ld      hl,SBnKysgn
-                        or      (hl)
-                        and     SignMask8Bit
-                        JumpIfAGTENusng  2, .SunRangeOK
-                        jp      .MassLocked
-.SunRangeOK:            call    WarpSunCloser
-                        MMUSelectPlanet
-                        call    WarpPlanetFurther
-            ENDIF
-.MoveJunk:              call    ClearJunk;  call    WarpJunk - as it will move sign bit hi then all junk will be lost
-                        ld      a,WarpCoolDownPeriod
-                        ld      (WarpCooldown),a
-                        MMUSelectLayer1
-                        call    WarpSFX             ; Do the visual SFX based on facing
-                        jp      .DoneWarp
-.NoWarp:                MMUSelectLayer1
-.DoneWarp:
-                ENDIF
+CheckForWarp:           CallIfMemTrue  WarpPressed, ProcessWarp
 UpdateShipsControl:     ld      a,0
                         and     a
                         IFDEF MAINLOOP_UPDATEUNIVERSE
@@ -440,10 +372,11 @@ LoopEventTriggered:     ; for now just do spawn
     DEFINE  SPAWN_TABLE_SELECT   1
     DEFINE  SPAWN_GENERATE_COUNT 1
     DEFINE  SPAWN_LOOP           1
-;    DEFINE  SPAWN_IGNORE         1
+   ; DEFINE  SPAWN_IGNORE         1
     
 
-SpawnEvent:             IFDEF   SPAWN_IGNORE
+SpawnEvent:             
+                       IFDEF   SPAWN_IGNORE
                             ret
                         ENDIF
                         call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
@@ -452,6 +385,7 @@ SpawnEvent:             IFDEF   SPAWN_IGNORE
                             SetMemFalse SpaceStationSafeZone                        
                         ENDIF
 .SpawnIsPossible:       ld      iyh,c                               ; save slot free in iyh
+                        ;break
                         call    SelectSpawnTable                    ; ix = correct row in spawn table
 .GetSpawnDetails:       call    SelectSpawnTableData                ; get table data, 
 .CheckIfInvalid:        ld      a,b                                 ; if b was 0

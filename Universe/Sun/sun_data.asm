@@ -90,6 +90,19 @@ ResetSBnKPosition:      ld      hl,SBnKxlo
                         inc     hl
                         djnz    .zeroLoop
                         ret
+
+WarpSunByHL:            ld      b,h
+                        ld      c,l
+                        ld      h,0
+                        ld      de,(SBnKzhi)
+                        ld      a,(SBnKzlo)
+                        ld      l,a
+                        MMUSelectMathsBankedFns : call  SubBCHfromDELsigned
+                        ld      (SBnKzhi),de
+                        ld      a,l
+                        ld      (SBnKzlo),a
+                        ret
+
                                                 
 ; Z Must be at least 2 and positve to warp                        
 WarpSunCloser:          ld      hl,SBnKzsgn
