@@ -220,16 +220,17 @@ CalculateSunWarpPositon:
 
 CalculateSunLaunchedPosition:
 .CalcXPosition:         MMUSelectMathsBankedFns
-                        ld      ix,ParentPlanetX
-                        ld      iy,SBnKxlo
-                        MMUSelectMathsBankedFns : call    AddAtIXtoAtIY24Signed
-.CalcYPosition:         ld      ix,ParentPlanetY
-                        ld      iy,SBnKylo
-                        MMUSelectMathsBankedFns : call    AddAtIXtoAtIY24Signed
-.CalcZPosition:         ld      ix,ParentPlanetZ
-                        ld      iy,SBnKzlo
-                        MMUSelectMathsBankedFns : call    AddAtIXtoAtIY24Signed
+                        ld      ix,SBnKxlo              ; Sun BnKxlo += ParentPlanetX
+                        ld      iy,ParentPlanetX        ; .
+                        call    AddAtIXtoAtIY24Signed   ; .
+.CalcYPosition:         ld      ix,SBnKylo              ; Sun BnKylo += ParentPlanetZ
+                        ld      iy,ParentPlanetY        ; .
+                        call    AddAtIXtoAtIY24Signed   ; .
+.CalcZPosition:         ld      ix,SBnKzlo              ; Sun BnKzlo += ParentPlanetZ
+                        ld      iy,ParentPlanetZ        ; .
+                        call    AddAtIXtoAtIY24Signed   ; .
                         ret
+
 ; --------------------------------------------------------------
 ; This sets current universe object to a star / sun, they use sign + 23 bit positions
 CreateSun:              call    ResetSBnKData

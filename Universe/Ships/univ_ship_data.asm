@@ -376,8 +376,7 @@ ShipMissileBlast:       ld      a,(CurrentMissileBlastDamage)
                         ret
 ; --------------------------------------------------------------                        
 ; This sets the ship as a shower of explosiondwd
-UnivExplodeShip:        break   
-                        ld      a,(UBnkaiatkecm)
+UnivExplodeShip:        ld      a,(UBnkaiatkecm)
                         or      ShipExploding | ShipKilled      ; Set Exlpoding flag and mark as just been killed
                         and     Bit7Clear                       ; Remove AI
                         ld      (UBnkaiatkecm),a
@@ -536,6 +535,7 @@ UnivSpawnSpaceStation:  ;    UnivSelSpaceStationType ; set a to type
                         ret                        
 ; --------------------------------------------------------------
 ; This sets the position of the current ship randomly, called after spawing
+; Spawns in withink 16 bit range so 24 bit friendly
 UnivSetSpawnPosition:   call    InitialiseOrientation
                         RandomUnivPitchAndRoll
                         call    doRandom                        ; set x lo and y lo to random

@@ -50,10 +50,7 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         jp      .ECMIsActive
 ;--- At this point we already have the target banked in ready for calculating vector
 ; Tactics vector = missile - target
-.UpdateTargetingShipX:  IFDEF MISSILEBREAK
-                            break
-                        ENDIF
-                        ld      de,(UBnKxlo)                        ; get target ship X
+.UpdateTargetingShipX:  ld      de,(UBnKxlo)                        ; get target ship X
                         ld      a,(UBnKxsgn)                        ; and flip sign so we have missile - target
                         IFDEF MISSILEDEBUG
                             ld  (TacticsTargetX),de

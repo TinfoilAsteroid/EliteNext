@@ -402,7 +402,6 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
 .FireNotPressed:        ReturnIfMemNotZero  CurrLaserBurstCount
                         ReturnIfMemNotZero  CurrLaserDuration
                         ReturnIfMemFalse    LaserBeamOn
-                        break
                         ldCopyByte          CurrLaserPulseRest, CurrentCooldown
                         SetMemFalse         LaserBeamOn
                         SetMemZero          CurrLaserBurstCount

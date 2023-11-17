@@ -101,21 +101,58 @@ ADDHLDESignedV4:        ld      a,h
                         ret 
  
 ; extension to AddBCHtoDELsigned
-; takes ix as the address of the values to load into BCH
-;       iy as the address of the values to load into DEL
-AddAtIXtoAtIY24Signed:  ld      h,(ix+0)
-                        ld      l,(ix+1)
-                        ld      b,(ix+2)
-                        ld      d,(iy+0)
-                        ld      e,(iy+1)
-                        ld      l,(iy+2)
-                        push    iy
-                        call    AddBCHtoDELsigned
-                        pop     iy
-                        ld      (iy+0),d
-                        ld      (iy+1),e
-                        ld      (iy+2),l
+; takes ix as the address of the values to load into DEL
+;       iy as the address of the values to load into BCH
+AddAtIXtoAtIY24Signed:  ld      d,(ix+0)            ; del = ix (sign hi lo)
+                        ld      e,(ix+1)            ; .
+                        ld      l,(ix+2)            ; .
+                        ld      h,(iy+0)            ; bch = iy (sign, hi, lo)
+                        ld      c,(iy+1)            ; .
+                        ld      b,(iy+2)            ; .
+                        push    iy                  ; save iy as add function changes is
+                        call    AddBCHtoDELsigned   ; Perform del += bch
+                        pop     iy                  ; get iy back
+                        ld      (ix+0),d            ; put result into (ix)
+                        ld      (ix+1),e            ; .
+                        ld      (ix+2),l            ; .
                         ret
+; extension to AddBCHtoDELsigned
+; takes ix as the address of the values to load into DEL
+;       iy as the address of the values to load into BCH
+; subtracts iy from ix putting result in ix
+SubAtIXtoAtIY24Signed:  ld      d,(ix+0)            ; del = ix (sign hi lo)
+                        ld      e,(ix+1)            ; .
+                        ld      l,(ix+2)            ; .
+                        ld      h,(ix+0)            ; bch = -iy (sign, hi, lo)
+                        ld      c,(ix+1)            ; .
+                        ld      a,(ix+2)            ; .
+                        xor     SignOnly8Bit        ; . this is where we flip sign to make add subtract
+                        ld      b,a                 ; .
+                        push    iy                  ; save iy as add function changes is
+                        call    AddBCHtoDELsigned   ; perform del += bch which as we flipped bch sign means (ix [210] -= iy [210])
+                        pop     iy                  ; get iy back
+                        ld      (ix+0),d            ; put result into (ix)
+                        ld      (ix+1),e            ; .
+                        ld      (ix+2),l            ; .
+                        ret
+
+; extension to AddBCHtoDELsigned
+; takes ix as the address of the values to load into DEL
+;       iy as the address of the values to load into BCH
+; subtracts iy from ix leaving result in del
+SubDELequAtIXtMinusAtIY24Signed:  ld      d,(ix+0)            ; del = ix (sign hi lo)
+                        ld      e,(ix+1)            ; .
+                        ld      l,(ix+2)            ; .
+                        ld      h,(ix+0)            ; bch = -iy (sign, hi, lo)
+                        ld      c,(ix+1)            ; .
+                        ld      a,(ix+2)            ; .
+                        xor     SignOnly8Bit        ; . this is where we flip sign to make add subtract
+                        ld      b,a                 ; .
+                        push    iy                  ; save iy as add function changes is
+                        call    AddBCHtoDELsigned   ; perform del += bch which as we flipped bch sign means (ix [210] -= iy [210])
+                        pop     iy                  ; get iy back
+                        ret
+
 
 ;tested mathstestsun2
 ; DEL = DEL + BCH signed, uses BC, DE, HL, IY, A
@@ -244,4 +281,43 @@ subHLDES15:             ld      a,h
                         or      h
                         ld      h,a                         ; set the previou sign value
                         ret
-        
+;------------------------------------------------------------------------------------------------
+;-- checks to see if a postition is in range of another, e.g. missile hit
+;-- ix = ship position    - pointer to xyz vector as 3 bytes per element
+;-- oy = misisle position - pointer to xyz vector as 3 bytes per element
+;-- sets carry if in blast range, else not carry
+;-- blast range will always be an 8 bit value
+CheckInCollisionRange:  
+.CheckXDistance:        call    SubDELequAtIXtMinusAtIY24Signed ; get distance between x coordinates
+                        ld      a,d                 ; check abs distance
+                        and     SignMask8Bit        ; if high bytes are set
+                        or      e                   ; then no hit
+                        jp      nz,.NoCollision     ; if high bytes are set no collision
+                        ld      a,l
+                        JumpIfAGTEMemusng  CurrentMissileBlastRange ,.NoCollision
+.CheckYDistance:        ld      bc,3                ; move ix and iy
+                        add     ix,bc               ; on 3 bytes
+                        add     iy,bc               ;
+                        call    SubDELequAtIXtMinusAtIY24Signed ; get distance between x coordinates
+                        ld      a,d                 ; check abs distance
+                        and     SignMask8Bit        ; if high bytes are set
+                        or      e                   ; then no hit
+                        jp      nz,.NoCollision     ; if high bytes are set no collision
+                        ld      a,l
+                        JumpIfAGTEMemusng  CurrentMissileBlastRange ,.NoCollision
+.CheckZDistance:        ld      bc,3                ; move ix and iy
+                        add     ix,bc               ; on 3 bytes
+                        add     iy,bc               ;
+                        call    SubDELequAtIXtMinusAtIY24Signed ; get distance between x coordinates
+                        ld      a,d                 ; check abs distance
+                        and     SignMask8Bit        ; if high bytes are set
+                        or      e                   ; then no hit
+                        jp      nz,.NoCollision     ; if high bytes are set no collision
+                        ld      a,l
+                        JumpIfAGTEMemusng  CurrentMissileBlastRange ,.NoCollision
+.CollisionDetected:     SetCarryFlag                ; collision in blast range
+                        ret
+.NoCollision:           ClearCarryFlag              ; no collision in blast range
+                        ret
+
+

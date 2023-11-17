@@ -279,8 +279,8 @@ WeHaveCompletedLaunch:  call    InitialiseLocalUniverse             ; intiailise
                         call    UnivSelSpaceStationType
                         ld      iyh,0
                         ld      iyl,a
-                        call    SpawnSpaceStation
-.BuiltStation:          call    UnivSpawnSpaceStationLaunched; replaced with the 0,0,-10000 version ResetStationLaunch
+                        call    SpawnSpaceStation                   ; Sets position that we have to overwrite in next step
+.BuiltStation:          call    UnivSpawnSpaceStationLaunched       ; replaced with the 0,0,-10000 version ResetStationLaunch
 .NowInFlight:           ld      a,StateNormal
                         ld      (DockedFlag),a
                         ForceTransition ScreenFront

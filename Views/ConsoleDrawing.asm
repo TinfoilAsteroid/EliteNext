@@ -1095,6 +1095,7 @@ UpdateScannerPlanet:    MMUSelectPlanet
 ; As the space station is always ship 0 then we can just use the scanner
                         
 ; This will go though all the universe ship data banks and plot, for now we will just work on one bank
+; Supports 24 bit xyz
 UpdateScannerShip:      ld      a,(UBnKexplDsp)             ; if bit 4 is clear then ship should not be drawn
                         bit     4,a                         ; .
                         ;DEBUG ret     z                           ; .
@@ -1102,13 +1103,20 @@ UpdateScannerShip:      ld      a,(UBnKexplDsp)             ; if bit 4 is clear 
                         bit     7,a
                         ret     nz
 ; DEBUG Add in station types later                       
-.NotMissile:            ld      hl,(UBnKzlo)
-                        ld      de,(UBnKxlo)
-                        ld      bc,(UBnKylo)
-                        ld      a,h
-                        or      d
-                        or      b
-                        and     %11000000
+.NotMissile:            ld      a,(UBnKzsgn)                ; any high byte causes skip
+                        ld      b,(UBnKxsgn)                ; .
+                        or      b                           ; .
+                        ld      b,(UBnKysgn)                ; .
+                        or      b                           ; .
+                        and     SignMask8Bit                ; so we are checking to see if very high byte is non zero
+                        ret     nz
+.CheckLowAndMidByte:    ld      hl,(UBnKzlo)                ; Any distance > 64 causes skip
+                        ld      de,(UBnKxlo)                ; 
+                        ld      bc,(UBnKylo)                ;
+                        ld      a,h                         ;
+                        or      d                           ;
+                        or      b                           ;
+                        and     %11000000                   ;
                         ret     nz                          ; if distance Hi > 64 on any ccord- off screen
 .MakeX2Compliment:      ld      a,(UBnKxsgn)
                         bit     7,a

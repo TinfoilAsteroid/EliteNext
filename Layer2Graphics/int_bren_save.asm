@@ -110,7 +110,7 @@ HLEquMidX:              ld      hl,(l2_X1)
                         ClearCarryFlag
                         sbc     hl,de
                         ld      (l2_DY),hl
-                        break
+                        ;break
                         call    ScaleDXDY
                         ld      hl,(ld_YMid)
                         ClearCarryFlag
@@ -129,7 +129,7 @@ HLEquMidX:              ld      hl,(l2_X1)
                         jp      .DoneCalc           ; .
 .LT255:                 ld      (ld_dxHi),bc        ; 
                         ld      (l2_dxRemainder),hl ; dxRemainder = DX-dXHi                    
-.CalcIntegerComponent:  break
+.CalcIntegerComponent:  ;break
                         ld      hl,(l2_dY2)         ; Integer component = dY2 * dXHi /256
                         ld      de,(ld_dxHi)        ; .
                         call    DEHLequDEmulHL      ; .

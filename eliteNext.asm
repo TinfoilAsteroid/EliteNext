@@ -234,7 +234,7 @@ TRIANGLEDIAGNOSTICS:   ;break
                        ;ld          ix,SaveArrayS2
                        ;ld          a,$FF
                        ;call        Layer2_Save_ClipY_Line ; Why was is very slow?
-;                        break
+;                        ;break
 ;                        ld          hl,100; x1 64 hl'
 ;                        ld          de,150; x2 96 de'
 ;                        ld          bc,120; x3 78 bc'
@@ -244,7 +244,7 @@ TRIANGLEDIAGNOSTICS:   ;break
 ;                        ld          bc,90  ;y3 5A bc
 ;                        MMUSelectLayer2
 ;                        call        l2_draw_fillclip_tri
-;TRIANGLEDIAGDONE:       break          0136 0153 FF81 FF98  310, 339  = -127, -104 dx 437, 443  (218 221)  91,117
+;TRIANGLEDIAGDONE:       ;break          0136 0153 FF81 FF98  310, 339  = -127, -104 dx 437, 443  (218 221)  91,117
                          ;break
                          MMUSelectUniverseN  0
                          MMUSelectLayer2
@@ -438,7 +438,7 @@ PlotTestData:  ; dw  281 ,   60, 252 ,   90  ; pass
                          DISPLAY "Not debugging clip code"            
             ENDIF
             IFDEF LOGDIVIDEDEBUG
-                        break
+                        ;break
                         MMUSelectMathsTables
                         ld      a,4
                         ld      (varQTEST),a
@@ -460,7 +460,7 @@ PlotTestData:  ; dw  281 ,   60, 252 ,   90  ; pass
                         ld      a,(varQTEST)
                         ld      (varQTEST),a
                         djnz    .LoopTest
-                        break
+                        ;break
                         
 varATEST    DB  0
 varQTEST    DB  0                        
@@ -470,7 +470,7 @@ varQTEST    DB  0
 outputbuffer DS 256    
             ENDIF
             IFDEF DEBUGCIRCLE1
-                        break
+                        ;break
                         ld      hl,128
                         ld      de, 64
                         ld      c,20
@@ -479,36 +479,36 @@ outputbuffer DS 256
                         call    l2_draw_clipped_circle_filled
             ENDIF
             IFDEF DEBUGCIRCLE2
-                        break
+                        ;break
                         ld      hl,128
                         ld      de, 64
                         ld      c,200
                         ld      b,$49
                         MMUSelectLayer2
                         call    l2_draw_clipped_circle_filled
-                        break
+                        ;break
             ENDIF
 
             IFDEF DEBUGCIRCLE3
-                        break
+                        ;break
                         ld      hl,128
                         ld      de, 64
                         ld      c,130
                         ld      b,$49
                         MMUSelectLayer2
                         call    l2_draw_clipped_circle_filled
-                        break
+                        ;break
             ENDIF
 
             IFDEF DEBUGCIRCLE4
-                        break
+                        ;break
                         ld      hl,320
                         ld      de, 128
                         ld      c,10
                         ld      b,$49
                         MMUSelectLayer2
                         call    l2_draw_clipped_circle_filled
-                        break
+                        ;break
             ENDIF            
             
             IFDEF DEBUGPLANET
@@ -526,7 +526,7 @@ DebugPlanetCode:        MMUSelectPlanet
                         ld      a,127
                         ld      (UBnKRotXCounter),a
                         ld      (UBnKRotZCounter),a
-                        break
+                        ;break
 .PlanetDebugLoop:       MMUSelectPlanet
                         call    PlanetDraw
                         call    ApplyPlanetRollAndPitch
@@ -535,7 +535,7 @@ DebugPlanetCode:        MMUSelectPlanet
                         
                         ;MMUSelectKeyboard
                         ;call        WaitForAnyKey 
-                        break                        
+                        ;break                        
                         MMUSelectLayer2
                         call		l2_cls
                         jp          .PlanetDebugLoop
@@ -556,7 +556,7 @@ DebugPlanetCode:        MMUSelectPlanet
                         ld      a,127
                         ld      (UBnKRotXCounter),a
                         ld      (UBnKRotZCounter),a
-                        break
+                        ;break
 .PlanetDebugLoop:       MMUSelectPlanet
                         call    PlanetDraw
                         call    ApplyPlanetRollAndPitch
@@ -565,7 +565,7 @@ DebugPlanetCode:        MMUSelectPlanet
                         
                         ;MMUSelectKeyboard
                         ;call        WaitForAnyKey 
-                        break                        
+                        ;break                        
                         MMUSelectLayer2
                         call		l2_cls
                         jp          .PlanetDebugLoop
@@ -745,7 +745,6 @@ StartAttractMode:       di                                          ; we are cha
                         call        AttractModeInit
                         ei
                         ;break
-                        break
                         call        AttractModeMain                 ; now drive attact mode keyboard scan
                         di                                          ; set up for main 
                         ld          hl,SoundInterrupt               ; sound handler
@@ -880,11 +879,6 @@ NeedAMessageQueue:
 ;DisplayCountDownNumber
 ;----------------------------------------------------------------------------------------------------------------------------------
 TestPauseMode:          ld      a,(GamePaused)
-                IFDEF LOGDIVIDEDEBUG
-                        DISPLAY "DEBUG: SKIPPING PAUSE MODE TO SAVE MEMORY FOR LOG DIVIDE DEBUG TEST"
-                        ret
-                ELSE
-
                         cp      0
                         jr      nz,.TestForResume
 .CheckViewMode:         ld      a,(ScreenIndex)                     ; we can only pause if not on screen view
@@ -899,7 +893,7 @@ TestPauseMode:          ld      a,(GamePaused)
 .ResumePressed:         xor     a             
                         ld      (GamePaused),a                      ; Resume pressed to reset pause state
                         ret
-                ENDIF
+
 TestQuit:               MacroIsKeyPressed c_Pressed_Quit
                         ret
 currentDemoShip:        DB      13;$12 ; 13 - corirollis 
@@ -907,19 +901,8 @@ currentDemoShip:        DB      13;$12 ; 13 - corirollis
 
 GetStationVectorToWork: ld      hl,UBnKxlo
                         ld      de,varVector9ByteWork
-                IFDEF LOGDIVIDEDEBUG
-                        DISPLAY "DEBUG: SKIPPING GetStationVectorToWork TO SAVE MEMORY FOR LOG DIVIDE DEBUG TEST"
-                        ret
-                ELSE
-                        ldi
-                        ldi
-                        ldi
-                        ldi
-                        ldi
-                        ldi
-                        ldi
-                        ldi
-                        ldi
+                        ld      bc,9
+                        ldir
 .CalcNormalToXX15:      ld      hl, (varVector9ByteWork)  ; X
                         ld      de, (varVector9ByteWork+3); Y
                         ld      bc, (varVector9ByteWork+6); Z
@@ -956,7 +939,6 @@ GetStationVectorToWork: ld      hl,UBnKxlo
                         ld      (XX15VecZ),a         ; note this is now a signed highbyte                        
                         call    normaliseXX1596S7 
                         ret                          ; will return with a holding Vector Z
-                ENDIF
 
 TidyCounter             DB  0
 
@@ -990,6 +972,7 @@ InitialiseFrontView:    ld      a,(ScreenKeyFront+1)
                         INCLUDE "./GameEngine/SetScreenA.asm"
                         INCLUDE "./GameEngine/ViewKeyTest.asm"
 ;----------------------------------------------------------------------------------------------------------------------------------                    
+; Set initial ship position as X,Y,Z 000,000,03B4
 SetInitialShipPosition: ld      hl,$0000
                         ld      (UBnKxlo),hl
                         ld      hl,$0000
@@ -1571,14 +1554,14 @@ UNIVDATABlock12     DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data M"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 84  ------------------------------------------------------------------------------------------------------------------------
+; Bank 83  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    SunBankAddr
                     PAGE    BankSunData
                     ORG	    SunBankAddr,BankSunData
                     INCLUDE "./Universe/Sun/sun_data.asm"
                     DISPLAY "Bank ",BankSunData," - Bytes free ",/D, $2000 - ($-SunBankAddr), " - BankSunData"
                     ASSERT $-SunBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 85  ------------------------------------------------------------------------------------------------------------------------
+; Bank 84  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    PlanetBankAddr
                     PAGE    BankPlanetData
                     ORG	    PlanetBankAddr,BankPlanetData

@@ -241,22 +241,22 @@ CalculatePlanetWarpPositon:
 
 CalculatePlanetLaunchedPosition:
 .CalcXPosition:         MMUSelectMathsBankedFns
-                        ld      ix,ParentPlanetX
-                        ld      iy,P_BnKxlo
-                        call    AddAtIXtoAtIY24Signed
-.CalcYPosition:         ld      ix,ParentPlanetY
-                        ld      iy,P_BnKylo
-                        call    AddAtIXtoAtIY24Signed
-.CalcZPosition:         ld      ix,ParentPlanetZ
-                        ld      iy,P_BnKzlo
-                        call    AddAtIXtoAtIY24Signed
+                        ld      ix,P_BnKxlo             ; P_BnKxlo += ParentPlanetX
+                        ld      iy,ParentPlanetX        ; .
+                        call    AddAtIXtoAtIY24Signed   ; .
+.CalcYPosition:         ld      ix,P_BnKylo             ; P_BnKylo += ParentPlanetZ
+                        ld      iy,ParentPlanetY        ; .
+                        call    AddAtIXtoAtIY24Signed   ; .
+.CalcZPosition:         ld      ix,P_BnKzlo             ; P_BnKzlo += ParentPlanetZ
+                        ld      iy,ParentPlanetZ        ; .
+                        call    AddAtIXtoAtIY24Signed   ; .
                         ret
+; --------------------------------------------------------------                                                
 CopyPlanettoGlobal:     ld      hl,P_BnKxlo
                         ld      de,ParentPlanetX
                         ld      bc,3*3
                         ldir
                         ret                 
-; --------------------------------------------------------------                        
 ; This sets current universe object to a planet,they use sign + 23 bit positions
 ; we need to have variable size and color
 CreatePlanet:           call    ResetP_BnKData          ; Clear out planet block
@@ -920,9 +920,7 @@ PlanetDraw:             IFDEF BLINEDEBUG
                                 ld      c,a
                                 ld      b,$FF
                                 MMUSelectLayer2
-                                break
                                 call    l2_draw_clipped_circle
-                                break
 .DebugMeridian1:                xor     a
                                 ld      (P_BnKCNT2),a
                                 ld      hl,(P_centreX)     :  call    TwosCompToLeadingSign : ld      (P_BnKCx),hl
@@ -932,11 +930,9 @@ PlanetDraw:             IFDEF BLINEDEBUG
                                 call    CalcNoseYDivNoseZ  :  call  P_BCmulRadius           : ld      (P_BnKUy),bc
                                 call    CalcRoofXDivRoofZ  :  call  P_BCmulRadius           : ld      (P_BnKVx),bc
                                 call    CalcRoofYDivRoofZ  :  call  P_BCmulRadius           : ld      (P_BnKVy),bc
-                                break
-                                
-                                break
+                               
                                 call    DrawMeridian
-                                break
+
 .DebugMeridian2:                xor     a
                                 ld      (P_BnKCNT2),a
                                 ld      hl,(P_centreX)     :  call    TwosCompToLeadingSign : ld      (P_BnKCx),hl
@@ -946,10 +942,9 @@ PlanetDraw:             IFDEF BLINEDEBUG
                                 call    CalcNoseYDivNoseZ  :  call  P_BCmulRadius           : ld      (P_BnKUy),bc
                                 call    CalcSideXDivSideZ  :  call  P_BCmulRadius           : ld      (P_BnKVx),bc
                                 call    CalcSideYDivSideZ  :  call  P_BCmulRadius           : ld      (P_BnKVy),bc                                
-                                break
+
                                 call    DrawMeridian
-                                break
-                                break
+
 
                                 
                         ENDIF
