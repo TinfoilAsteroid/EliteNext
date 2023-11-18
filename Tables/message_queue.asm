@@ -72,14 +72,14 @@ DisplayCurrentMessage:  ld      a,(MessageCount)
                         call    l1_print_at_wrap
                         ret
 
-HyperSpaceMessage:      MMUSelectLayer1
-.DisplayHyperCountDown: ld      de,Hyp_to
+HyperSpaceMessage:      MMUSelectLayer1                 ; We are using Layer 1
+.DisplayHyperCountDown: ld      de,Hyp_to               ; Sort out destination
                         ld      hl,name_expanded
                         ldCopyTextAtHLtoDE
 .DoneName:              xor     a
                         ld      (de),a
                         ld      (Hyp_message+31),a      ; max out at 32 characters
-.CentreJustify:         ld      hl,Hyp_message
+.CentreJustify:         ld      hl,Hyp_message          ; Center justify
                         HalfLengthHL
                         ld      hl,Hyp_centeredTarget
                         ldClearTextLoop 32
@@ -95,22 +95,22 @@ HyperSpaceMessage:      MMUSelectLayer1
                         ld      (hl),a                   ; clear counter digits
                         inc     hl                       ; clear counter digits
                         ld      (hl),a                   ; clear counter digits
-                        call    UpdateCountdownNumber
+                        call    UpdateCountdownNumber    ; Update count down
                         ld      hl,Hyp_charging
                         HalfLengthHL
-                        ld      hl,Hyp_centeredCharging
+                        ld      hl,Hyp_centeredCharging  
                         ldClearTextLoop 32
                         ex      de,hl
                         ld      hl,Hyp_charging
                         ldCopyTextAtHLtoDE
                         xor     a
                         ld      (Hyp_centeredEol2),a
-.UpdateHyperCountdown:  ld      hl,(InnerHyperCount)
-                        dec     l
-                        jr      nz,.decHyperInnerOnly
-                        dec     h
-                        jp      m,.HyperCountDone
-.resetHyperInner:       ld      l,$0B
+.UpdateHyperCountdown:  ld      hl,(InnerHyperCount)    ; Update inner loop of counter
+                        dec     l                       ;
+                        jr      nz,.decHyperInnerOnly   ; if its only inner loop updated the no display update
+                        dec     h                       ; if its outer loop counter
+                        jp      m,.HyperCountDone       ; abort once complete
+.resetHyperInner:       ld      l,$0B                   ; else display
                         push    hl
                         ld      d,12
                         ld      a,L1ColourPaperBlack | L1ColourInkYellow

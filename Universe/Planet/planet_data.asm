@@ -76,7 +76,7 @@ P_BnKDataBlock:
                         ;INCLUDE "./Universe/Planet/PlanetRotationMatrixVars.asm"
                         ;INCLUDE "./Universe/Planet/PlanetAIRuntimeData.asm"
                             UnivPosVarsMacro P
-                            UnivRotationVarsMacro P
+                        ; ; Not needed as we don't rotate planets and suns    UnivRotationVarsMacro P
 
                         ;INCLUDE "./Universe/Planet/PlanetXX16Vars.asm"
                         ;INCLUDE "./Universe/Planet/PlanetXX25Vars.asm"
@@ -103,7 +103,8 @@ P_BnK_Data_len               EQU $ - P_BnKDataBlock
                             ClippingCodeLL120Macro P
                             ClippingCodeLL122Macro P
                             ClippingCodeLL145Macro P
-                            InitialiseUniverseObjMacro P
+                            ; Not needed as we don't do rotation matrices for planets
+                            ;InitialiseUniverseObjMacro P
 
 ; --------------------------------------------------------------
 ; clear out the planet data block
@@ -122,27 +123,28 @@ ResetP_BnKPosition:     ld      hl,P_BnKxlo
                         ret
 ; --------------------------------------------------------------
 ; Normalise planet vectors
-P_NormaliseRotMat:      ld      hl,P_BnkTransmatNosevZ+1   ; initialise loop
-                        ld      c,ConstNorm                 ; c = Q = norm = 197
-                        ld      a,c
-                        ld      (varQ),a                    ; set up varQ
-                        ld      b,9                         ; total of 9 elements to transform
-.LL21Loop:              ld      d,(hl)
-                        dec     hl
-                        ld      e,(hl)                      ; de = hilo now   hl now = pointer to low byte
-                        ShiftDELeft1                        ; De = DE * 2
-                        ld      a,d                         ; a = hi byte after shifting
-                        push	hl
-                        push	bc
-                        call    Norm256mulAdivQ
-                        ;===call    RequAmul256divC				; R = (2(hi).0)/ConstNorm - LL28 Optimised BFRDIV R=A*256/Q = delta_y / delta_x Use Y/X grad. as not steep
-                        ld      a,c                         ; BFRDIV returns R also in l reg
-                        pop		bc
-                        pop		hl							; bc gets wrecked by BFRDIV
-                        ld      (hl),a                      ; write low result to low byte so zlo = (zhl *2)/197, we keep hi byte in tact as we need the sign bit
-                        dec     hl                          ; now hl = hi byte of pre val e.g z->y->x
-                        djnz    .LL21Loop                    ; loop from 2zLo through to 0xLo
-                        ret
+; Not needed as we don't rotate planets and suns
+;P_NormaliseRotMat:      ld      hl,P_BnkTransmatNosevZ+1   ; initialise loop
+;                        ld      c,ConstNorm                 ; c = Q = norm = 197
+;                        ld      a,c
+;                        ld      (varQ),a                    ; set up varQ
+;                        ld      b,9                         ; total of 9 elements to transform
+;.LL21Loop:              ld      d,(hl)
+;                        dec     hl
+;                        ld      e,(hl)                      ; de = hilo now   hl now = pointer to low byte
+;                        ShiftDELeft1                        ; De = DE * 2
+;                        ld      a,d                         ; a = hi byte after shifting
+;                        push	hl
+;                        push	bc
+;                        call    Norm256mulAdivQ
+;                        ;===call    RequAmul256divC				; R = (2(hi).0)/ConstNorm - LL28 Optimised BFRDIV R=A*256/Q = delta_y / delta_x Use Y/X grad. as not steep
+;                        ld      a,c                         ; BFRDIV returns R also in l reg
+;                        pop		bc
+;                        pop		hl							; bc gets wrecked by BFRDIV
+;                        ld      (hl),a                      ; write low result to low byte so zlo = (zhl *2)/197, we keep hi byte in tact as we need the sign bit
+;                        dec     hl                          ; now hl = hi byte of pre val e.g z->y->x
+;                        djnz    .LL21Loop                    ; loop from 2zLo through to 0xLo
+;                        ret
 
                         
 ; This uses UBNKNodeArray as the list
@@ -276,7 +278,7 @@ CreatePlanet:           call    ResetP_BnKData          ; Clear out planet block
                         and     %00000010               ; Set A = 128 or 130 depending on bit 1 of the system's tech level
                         or      %10000000
                         ld      (P_BnKShipType),a       ; and load to ship type (synomous with planet type)
-                        MaxUnivPitchAndRoll
+                        ; PLanets don't have pitch and roll MaxUnivPitchAndRoll
                         ld      a,(WorkingSeeds+1)      ; a= bits 1 and 0 of working seed1 + 3 + carry
                         and     %00000011               ; .
                         adc     3                       ; we also lauch planet side so its infront of us
@@ -303,7 +305,7 @@ CreatePlanet:           call    ResetP_BnKData          ; Clear out planet block
                         and     %00000111               ; atmosphere can be 0 to  3 pixels thick
                         srl     a                       ; 
                         ld      (P_Colour2Thickness),a                       
-.SetOrientation:        call    P_InitRotMat
+.SetOrientation:        ; Not needed as we don't do planet rotation call    P_InitRotMat
                         call    CopyPlanettoGlobal      ; Set up global position interface
                         ret
 
@@ -318,7 +320,7 @@ CreatePlanetLaunched:   call    ResetP_BnKData
                         ld      (P_BnKxsgn),a
                         ld      (P_BnKysgn),a
                         ld      (P_BnKzsgn),a
-                        MaxUnivPitchAndRoll
+                        ; PLanets don't have pitch and roll MaxUnivPitchAndRoll
                         call    CopyPlanettoGlobal      ; Set up global position interface                        
                         ret
 ; NEED FINSIHGING
@@ -599,7 +601,7 @@ PlanetProcessVertex:    ld      b,a                         ; save sign/high byt
                         and     $80
                         jp      z,.ProcessXPositive
 .ProcessXNegative:      macronegate16hl
-.ProcessXPositive:      ld      de,128
+.ProcessXPositive:      ld      de,ScreenCenterX
                         ClearCarryFlag
                         adc     hl,de                       ; now X position is CenterX+ (X / Z) in 2's c
                         ld      de,hl                       ; set de to | hl for +/- 1024 check
@@ -612,7 +614,7 @@ PlanetProcessVertex:    ld      b,a                         ; save sign/high byt
                         and     $80
                         jp      z,.ProcessYPositive
 .ProcessYNegative:      macronegate16hl
-.ProcessYPositive:      ld      de,64                       ; set hl to center Y and de to 2s'c Y/Z
+.ProcessYPositive:      ld      de,ScreenCenterY            ; set hl to center Y and de to 2s'c Y/Z
                         ex      de,hl
                         ClearCarryFlag
                         sbc     hl,de                       ; now HL  position is CenterY - (Y / Z) in 2's c
@@ -711,134 +713,138 @@ PlanetUpdateAndRender:  call    PlanetApplyMyRollAndPitch    ; not needed for so
 ; 
 ; (PLS4)
 ; CNT2 =  = arctan(-nosev_z_hi / side_z_hi) / 4,  if nosev_z_hi >= 0 add PI
-CalcNoseSideArcTanPI:   ld      a, (P_BnKrotmatNosevZ + 1)   ; P = - nosevz hi
-                        xor     $80
-                        ld      (varP),a
-                        ld      a, (P_BnKrotmatSidevZ + 1)
-                        jp      CalcArcTanPiPA
-;  CNT2 =  = arctan(-nosev_z_hi / roofv_z_hi) / 4,  if nosev_z_hi >= 0 add PI
-CalcNoseRoofArcTanPI:   ld      a, (P_BnKrotmatNosevZ + 1)   ; P = - nosevz hi
-                        xor     $80
-                        ld      (varP),a
-                        ld      a, (P_BnKrotmatRoofvZ + 1)
-; CNT2 = arctan(P / A) / 4  
-CalcArcTanPiPA:         ld      (varQ),a                    ; STA Q                  \ Set Q = A
-                        call    ARCTAN                      ; A = arctan(P / Q)
-                        ld      c,a                         ; save a
-                        ld      a,(P_BnKrotmatNosevZ+1)
-                        and     $80
-                        ld      a,c                         ; restore a as it doesn't affect flags doing an ld
-                        jp      m,.SkipFlipSign             ; If nosev_z_hi is negativeleave the angle in A as a positive
-; Adds 128 to the result (rather than makes it negative)
-.FlipSign:              xor     $80                         ; If we get here then nosev_z_hi is positive, so flip bit 7 of the angle in A, which is the same as adding 128
-.SkipFlipSign:          srl     a                           ; Set CNT2 = A / 4
-                        srl     a                           ; .
-                        ld      (P_BnKCNT2),a                ; .
-                        ret                         
+; Not needed as we don't rotate planets and suns
+;CalcNoseSideArcTanPI:   ld      a, (P_BnKrotmatNosevZ + 1)   ; P = - nosevz hi
+;                        xor     $80
+;                        ld      (varP),a
+;                        ld      a, (P_BnKrotmatSidevZ + 1)
+;                        jp      CalcArcTanPiPA
+;;  CNT2 =  = arctan(-nosev_z_hi / roofv_z_hi) / 4,  if nosev_z_hi >= 0 add PI
+;CalcNoseRoofArcTanPI:   ld      a, (P_BnKrotmatNosevZ + 1)   ; P = - nosevz hi
+;                        xor     $80
+;                        ld      (varP),a
+;                        ld      a, (P_BnKrotmatRoofvZ + 1)
+;; CNT2 = arctan(P / A) / 4  
+;CalcArcTanPiPA:         ld      (varQ),a                    ; STA Q                  \ Set Q = A
+;                        call    ARCTAN                      ; A = arctan(P / Q)
+;                        ld      c,a                         ; save a
+;                        ld      a,(P_BnKrotmatNosevZ+1)
+;                        and     $80
+;                        ld      a,c                         ; restore a as it doesn't affect flags doing an ld
+;                        jp      m,.SkipFlipSign             ; If nosev_z_hi is negativeleave the angle in A as a positive
+;; Adds 128 to the result (rather than makes it negative)
+;.FlipSign:              xor     $80                         ; If we get here then nosev_z_hi is positive, so flip bit 7 of the angle in A, which is the same as adding 128
+;.SkipFlipSign:          srl     a                           ; Set CNT2 = A / 4
+;                        srl     a                           ; .
+;                        ld      (P_BnKCNT2),a                ; .
+;                        ret                         
                         
 ; (PSL1)                     
 ; XX16 K2) = nosev_x / z   
-CalcNoseXDivNoseZ:      ld      hl,(P_BnKrotmatNosevX)
-                        ld      de,(P_BnKrotmatNosevZ)
-                        jp      CalcRotMatDivide
-CalcNoseYDivNoseZ:      ld      hl,(P_BnKrotmatNosevY)
-                        ld      de,(P_BnKrotmatNosevZ)
-                        jp      CalcRotMatDivide 
-CalcRoofXDivRoofZ:      ld      hl,(P_BnKrotmatRoofvX)
-                        ld      de,(P_BnKrotmatRoofvZ)
-                        jp      CalcRotMatDivide 
-CalcRoofYDivRoofZ:      ld      hl,(P_BnKrotmatRoofvY)
-                        ld      de,(P_BnKrotmatRoofvZ)
-                        jp      CalcRotMatDivide 
-CalcSideXDivSideZ:      ld      hl,(P_BnKrotmatSidevX)
-                        ld      de,(P_BnKrotmatSidevZ)
-                        jp      CalcRotMatDivide 
-CalcSideYDivSideZ:      ld      hl,(P_BnKrotmatSidevY)
-                        ld      de,(P_BnKrotmatSidevZ)
+; Not needed as we don't rotate planets and suns
+;CalcNoseXDivNoseZ:      ld      hl,(P_BnKrotmatNosevX)
+;                        ld      de,(P_BnKrotmatNosevZ)
+;                        jp      CalcRotMatDivide
+;CalcNoseYDivNoseZ:      ld      hl,(P_BnKrotmatNosevY)
+;                        ld      de,(P_BnKrotmatNosevZ)
+;                        jp      CalcRotMatDivide 
+;CalcRoofXDivRoofZ:      ld      hl,(P_BnKrotmatRoofvX)
+;                        ld      de,(P_BnKrotmatRoofvZ)
+;                        jp      CalcRotMatDivide 
+;CalcRoofYDivRoofZ:      ld      hl,(P_BnKrotmatRoofvY)
+;                        ld      de,(P_BnKrotmatRoofvZ)
+;                        jp      CalcRotMatDivide 
+;CalcSideXDivSideZ:      ld      hl,(P_BnKrotmatSidevX)
+;                        ld      de,(P_BnKrotmatSidevZ)
+;                        jp      CalcRotMatDivide 
+;CalcSideYDivSideZ:      ld      hl,(P_BnKrotmatSidevY)
+;                        ld      de,(P_BnKrotmatSidevZ)
 ; (PLS1) (Y A) = nosev_x / z where B = Y (also stores in regY), K+3 = sign of calculation             
 ; stores result in BC now as well
 ; does not do increment of X as its not needed when directly loading verticies of rotation
-CalcRotMatDivide:
-.LoadDEtoQRS:           ld      a,e                         ; Q
-                        ld      (varQ),a                    ;
-                        ld      a,d                         ;
-                        and     $7F                         ;
-                        ld      (varR),a                    ;
-                        ld      a,d                         ;
-                        and     $80                         ;
-                        ld      (varS),a                    ;
-.LoadHLtoP012:          ld      a,l                         ; set A P+1 P to (signnoseX) (|noseX|)
-                        ld      (varP),a                    ; set P to nosevX lo
-                        ld      a,h                         ; set P_1 to |nosevX hi|
-                        ld      b,h                         ; .
-                        and     $7F                         ; .
-                        ld      (varP+1),a                  ; .
-                        ld      a,b                         ; set a to sign nosevX
-                        and     $80
-                        ld      (varP+2),a
-                        call    DVID3B                      ; call DVI3B2 variane where z is in de as 16 bit and needs expanding to 32
-                        ld      a,(varK+1)                  ; get second byte into b
-                        ld      b,a                         ; and also check to see if its
-                        and     a                           ; zero
-                        ld      a,(varK)
-                        ld      c,a                         ; so now BC = result too
-                        jp      z,.Skip254
-.Force254Result:        ld      a,254                       ; if 2nd byte is non zero set a to 254 as our max 1 byte value to return
-                        ld      c,a
-.Skip254:               push    af
-                        ld      a,c                         ; if a is 0 then force sign to be +ve
-                        and     a
-                        jp      nz,.DoNotForceSign
-.ForceSignPositive:     ld      (regY),a
-                        ld      b,a
-                        pop     af
-                        ret
-.DoNotForceSign:        ld      a,(varK+3)                  ; set b to sign (which was Y in 6502)
-                        ld      (regY),a
-                        ld      b,a                         ; bc also is result as c was a copy of a
-                        pop     af                          ; so c doesn't need to be pushed to stack
-                        ret
+; Not needed as we don't rotate planets and suns
+;CalcRotMatDivide:
+;.LoadDEtoQRS:           ld      a,e                         ; Q
+;                        ld      (varQ),a                    ;
+;                        ld      a,d                         ;
+;                        and     $7F                         ;
+;                        ld      (varR),a                    ;
+;                        ld      a,d                         ;
+;                        and     $80                         ;
+;                        ld      (varS),a                    ;
+;.LoadHLtoP012:          ld      a,l                         ; set A P+1 P to (signnoseX) (|noseX|)
+;                        ld      (varP),a                    ; set P to nosevX lo
+;                        ld      a,h                         ; set P_1 to |nosevX hi|
+;                        ld      b,h                         ; .
+;                        and     $7F                         ; .
+;                        ld      (varP+1),a                  ; .
+;                        ld      a,b                         ; set a to sign nosevX
+;                        and     $80
+;                        ld      (varP+2),a
+;                        call    DVID3B                      ; call DVI3B2 variane where z is in de as 16 bit and needs expanding to 32
+;                        ld      a,(varK+1)                  ; get second byte into b
+;                        ld      b,a                         ; and also check to see if its
+;                        and     a                           ; zero
+;                        ld      a,(varK)
+;                        ld      c,a                         ; so now BC = result too
+;                        jp      z,.Skip254
+;.Force254Result:        ld      a,254                       ; if 2nd byte is non zero set a to 254 as our max 1 byte value to return
+;                        ld      c,a
+;.Skip254:               push    af
+;                        ld      a,c                         ; if a is 0 then force sign to be +ve
+;                        and     a
+;                        jp      nz,.DoNotForceSign
+;.ForceSignPositive:     ld      (regY),a
+;                        ld      b,a
+;                        pop     af
+;                        ret
+;.DoNotForceSign:        ld      a,(varK+3)                  ; set b to sign (which was Y in 6502)
+;                        ld      (regY),a
+;                        ld      b,a                         ; bc also is result as c was a copy of a
+;                        pop     af                          ; so c doesn't need to be pushed to stack
+;                        ret
                         
 ; (PLS3)
 ;  (Y A P) = 222 * roofv_x / z to give the x-coordinate of the crater offset 
-Cacl222MulRoofXDivRoofZ:ld      hl,(P_BnKrotmatRoofvX)
-                        ld      de,(P_BnKrotmatRoofvZ)
-                        jp      Calc222MulHLDivDE
-; (Y A P) = 222 * roofv_y / z to give the x-coordinate of the crater offset 
-Cacl222MulRoofYDivRoofZ:ld      hl,(P_BnKrotmatRoofvY)
-                        ld      de,(P_BnKrotmatRoofvZ)
-; Optimise, move result at the end into HL instead of YA (we can ignore P)                        
-Calc222MulHLDivDE:      call    CalcRotMatDivide            ; calculate (Y A) = nosev_x(orY) / z
-                        ld      d,a                         ; P = |roofv_x / z|
-                        ld      e,222                       ; LDA #222               \ Set Q = 222, the offset to the crater
-                        ; Not needed                        ; STA Q
-                        ; Not needed                        ; STX U                  \ Store the vector index X in U for retrieval after the  call to MULTU
-                        mul     de                          ; call MULTU (unsigned multiply) de = 222 * |roofv_x / z|
-                        ld      a,(varK+3)                  ; LDY K+3                \ If the sign of the result in K+3 is positive, skip to
-                        and     a
-                        jp      p,.PL12                     ; BPL PL12               \ PL12 to return with Y = 0
-                        ld      a,$FF                       ; LDY #&FF               \ Set Y = &FF to be a negative high byte
-                        ld      (regY),a                    ; .
-                        ld      b,a                         ; .
-                        macronegate16de                     ; Otherwise the result should be negative, so negate    
-                        ld      a,e                         ; now we have Y A P (with Y in b also)
-                        ld      (varP),a                    ; .
-                        ld      a,d                         ; .
-                        and     a
-                        jp      z,.ForcePositive            ; if A is 0, special case to make +ve
-                        ret                                 ; RTS                    \ Return from the subroutine
-.ForcePositive:         ZeroA                               ; set regY and b to 0
-                        ld      (regY),a
-                        ld      b,a
-                        ld      a,d                         ; get d back into a again
-                        ret
-.PL12:                  ZeroA                               ; set Y A P to be 0 D E from mul
-                        ld      b,a
-                        ld      (regY),a
-                        ld      a,e
-                        ld      (varP),a
-                        ld      a,d
-                        ret
+; Not needed as we don't rotate planets and suns
+;Cacl222MulRoofXDivRoofZ:ld      hl,(P_BnKrotmatRoofvX)
+;                        ld      de,(P_BnKrotmatRoofvZ)
+;                        jp      Calc222MulHLDivDE
+;; (Y A P) = 222 * roofv_y / z to give the x-coordinate of the crater offset 
+;Cacl222MulRoofYDivRoofZ:ld      hl,(P_BnKrotmatRoofvY)
+;                        ld      de,(P_BnKrotmatRoofvZ)
+;; Optimise, move result at the end into HL instead of YA (we can ignore P)                        
+;Calc222MulHLDivDE:      call    CalcRotMatDivide            ; calculate (Y A) = nosev_x(orY) / z
+;                        ld      d,a                         ; P = |roofv_x / z|
+;                        ld      e,222                       ; LDA #222               \ Set Q = 222, the offset to the crater
+;                        ; Not needed                        ; STA Q
+;                        ; Not needed                        ; STX U                  \ Store the vector index X in U for retrieval after the  call to MULTU
+;                        mul     de                          ; call MULTU (unsigned multiply) de = 222 * |roofv_x / z|
+;                        ld      a,(varK+3)                  ; LDY K+3                \ If the sign of the result in K+3 is positive, skip to
+;                        and     a
+;                        jp      p,.PL12                     ; BPL PL12               \ PL12 to return with Y = 0
+;                        ld      a,$FF                       ; LDY #&FF               \ Set Y = &FF to be a negative high byte
+;                        ld      (regY),a                    ; .
+;                        ld      b,a                         ; .
+;                        macronegate16de                     ; Otherwise the result should be negative, so negate    
+;                        ld      a,e                         ; now we have Y A P (with Y in b also)
+;                        ld      (varP),a                    ; .
+;                        ld      a,d                         ; .
+;                        and     a
+;                        jp      z,.ForcePositive            ; if A is 0, special case to make +ve
+;                        ret                                 ; RTS                    \ Return from the subroutine
+;.ForcePositive:         ZeroA                               ; set regY and b to 0
+;                        ld      (regY),a
+;                        ld      b,a
+;                        ld      a,d                         ; get d back into a again
+;                        ret
+;.PL12:                  ZeroA                               ; set Y A P to be 0 D E from mul
+;                        ld      b,a
+;                        ld      (regY),a
+;                        ld      a,e
+;                        ld      (varP),a
+;                        ld      a,d
+;                        ret
                         
 
 ; K3(1 0) = (Y A) + K3(1 0) = 222 * roofv_x / z + x-coordinate of planet centre

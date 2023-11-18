@@ -134,62 +134,63 @@ P_MVS5RotateAxis:       ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                         inc     hl
                         ld      (hl),d          ; copy result into nosev
                         ret
-    
-ApplyPlanetPitchOnly:   ld      a,(UBnKRotZCounter)
-                        cp      $FF
-.PitchSAxes:            ld	    hl,P_BnKrotmatRoofvX; UBnkrotmatSidevY
-                        ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatNosevX; UBnkrotmatSidevZ	
-                        ld	    (varAxis2),hl
-                        call    P_MVS5RotateAxis
-.PitchRAxes:            ld	    hl,P_BnKrotmatRoofvY	
-                        ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatNosevY;UBnkrotmatRoofvZ	
-                        ld	    (varAxis2),hl
-                        call    P_MVS5RotateAxis
-.PitchNAxes:            ld	    hl,P_BnKrotmatRoofvZ; UBnkrotmatNosevY	
-                        ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatNosevZ	
-                        ld	    (varAxis2),hl
-                        call    P_MVS5RotateAxis
-                        ret
-    
-ApplyPlanetRollAndPitch:ld      a,(UBnKRotZCounter)
-                        cp      $FF
-.PitchSAxes:            ld	    hl,P_BnKrotmatRoofvX; UBnkrotmatSidevY
-                        ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatNosevX; UBnkrotmatSidevZ	
-                        ld	    (varAxis2),hl
-                        call    P_MVS5RotateAxis
-.PitchRAxes:            ld	    hl,P_BnKrotmatRoofvY	
-                        ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatNosevY;UBnkrotmatRoofvZ	
-                        ld	    (varAxis2),hl
-                        call    P_MVS5RotateAxis
-.PitchNAxes:            ld	    hl,P_BnKrotmatRoofvZ; UBnkrotmatNosevY	
-                        ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatNosevZ	
-                        ld	    (varAxis2),hl
-                        call    P_MVS5RotateAxis
-ApplyPlanetRollOnly:
-.ProcessRoll:           ld      a,(P_BnKRotXCounter)
-                        cp      $FF
-.RollSAxis:           	ld	    hl,P_BnKrotmatRoofvX; UBnkrotmatSidevX	
-                        ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatSidevX; UBnkrotmatSidevY
-                        ld	    (varAxis2),hl
-                        call    P_MVS5RotateAxis
-.RollRAxis:             ld	    hl,P_BnKrotmatRoofvY; UBnkrotmatRoofvX	
-                        ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatSidevY; UBnkrotmatRoofvY	
-                        ld	    (varAxis2),hl
-                        call    P_MVS5RotateAxis
-.RollNAxis:             ld	    hl,P_BnKrotmatRoofvZ; UBnkrotmatNosevX
-                        ld	    (varAxis1),hl
-                        ld	    hl,P_BnKrotmatSidevZ; UBnkrotmatNosevY	
-                        ld	    (varAxis2),hl
-                        call    P_MVS5RotateAxis
-                        ret
+; Planets don't have pitch and roll so not needed    
+;ApplyPlanetPitchOnly:   ld      a,(UBnKRotZCounter)
+;                        cp      $FF
+;.PitchSAxes:            ld	    hl,P_BnKrotmatRoofvX; UBnkrotmatSidevY
+;                        ld	    (varAxis1),hl
+;                        ld	    hl,P_BnKrotmatNosevX; UBnkrotmatSidevZ	
+;                        ld	    (varAxis2),hl
+;                        call    P_MVS5RotateAxis
+;.PitchRAxes:            ld	    hl,P_BnKrotmatRoofvY	
+;                        ld	    (varAxis1),hl
+;                        ld	    hl,P_BnKrotmatNosevY;UBnkrotmatRoofvZ	
+;                        ld	    (varAxis2),hl
+;                        call    P_MVS5RotateAxis
+;.PitchNAxes:            ld	    hl,P_BnKrotmatRoofvZ; UBnkrotmatNosevY	
+;                        ld	    (varAxis1),hl
+;                        ld	    hl,P_BnKrotmatNosevZ	
+;                        ld	    (varAxis2),hl
+;                        call    P_MVS5RotateAxis
+;                        ret
+; Planets don't have pitch and roll so not needed       
+;ApplyPlanetRollAndPitch:ld      a,(UBnKRotZCounter)
+;                        cp      $FF
+;.PitchSAxes:            ld	    hl,P_BnKrotmatRoofvX; UBnkrotmatSidevY
+;                        ld	    (varAxis1),hl
+;                        ld	    hl,P_BnKrotmatNosevX; UBnkrotmatSidevZ	
+;                        ld	    (varAxis2),hl
+;                        call    P_MVS5RotateAxis
+;.PitchRAxes:            ld	    hl,P_BnKrotmatRoofvY	
+;                        ld	    (varAxis1),hl
+;                        ld	    hl,P_BnKrotmatNosevY;UBnkrotmatRoofvZ	
+;                        ld	    (varAxis2),hl
+;                        call    P_MVS5RotateAxis
+;.PitchNAxes:            ld	    hl,P_BnKrotmatRoofvZ; UBnkrotmatNosevY	
+;                        ld	    (varAxis1),hl
+;                        ld	    hl,P_BnKrotmatNosevZ	
+;                        ld	    (varAxis2),hl
+;                        call    P_MVS5RotateAxis
+; Planets don't have pitch and roll so not needed    
+;ApplyPlanetRollOnly:
+;.ProcessRoll:           ld      a,(P_BnKRotXCounter)
+;                        cp      $FF
+;.RollSAxis:           	ld	    hl,P_BnKrotmatRoofvX; UBnkrotmatSidevX	
+;                        ld	    (varAxis1),hl
+;                        ld	    hl,P_BnKrotmatSidevX; UBnkrotmatSidevY
+;                        ld	    (varAxis2),hl
+;                        call    P_MVS5RotateAxis
+;.RollRAxis:             ld	    hl,P_BnKrotmatRoofvY; UBnkrotmatRoofvX	
+;                        ld	    (varAxis1),hl
+;                        ld	    hl,P_BnKrotmatSidevY; UBnkrotmatRoofvY	
+;                        ld	    (varAxis2),hl
+;                        call    P_MVS5RotateAxis
+;.RollNAxis:             ld	    hl,P_BnKrotmatRoofvZ; UBnkrotmatNosevX
+;                        ld	    (varAxis1),hl
+;                        ld	    hl,P_BnKrotmatSidevZ; UBnkrotmatNosevY	
+;                        ld	    (varAxis2),hl
+;                        call    P_MVS5RotateAxis
+;                        ret
 
 
 PlanetApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitch, no calc needed

@@ -36,7 +36,7 @@ IYEquRowN:              MACRO   rowValue                        ; set up iy as t
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
 SBnKDataBlock:
                         INCLUDE "./Universe/Sun/SunPosVars.asm"
-                        INCLUDE "./Universe/Sun/SunRotationMatrixVars.asm"
+; Not needed as we don't rotate planets and suns                        INCLUDE "./Universe/Sun/SunRotationMatrixVars.asm"
                         INCLUDE "./Universe/Sun/SunAIRuntimeData.asm"
 
 

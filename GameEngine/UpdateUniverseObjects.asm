@@ -43,6 +43,7 @@ JumpIfNotDockingCheck:      MACRO   NotDocking
                             ENDM
 
 ;..................................................................................................................................                        
+; Replacement for MVEIT routine
 UpdateUniverseObjects:  xor     a
                         ld      (SelectedUniverseSlot),a
 .UpdateUniverseLoop:    ld      d,a                                             ; d is unaffected by GetTypeInSlotA
@@ -53,6 +54,7 @@ UpdateUniverseObjects:  xor     a
                         ld      iyl,a                                           ; save type into iyl for later
 .UniverseObjectFound:   ld      a,d                                             ; Get back Universe slot as we want it
                         MMUSelectUniverseA                                      ; and we apply roll and pitch
+;-- EVERY ITERATIONS TIDY UP A SINGLE UNIVERSE ITEM., NEED A VAR TO HOLD CURRENT TIDY SLOT
         IFDEF   CLIPDEBUG
 .DEBUG:                     ld      a,(SelectedUniverseSlot)
                             cp      0
