@@ -21,16 +21,26 @@
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Sun version of pitch and roll is a 24 bit calculation 1 bit sign + 23 bit value
 ; Need to write a test routine for roll and pitchs
+; Minsky Roll       Minsky Pitch
+;  y -= alpha * x    y -= beta * z          
+;  x += alpha * y    z += beta * y
+; or once combined
+;   1. K2 = y - alpha * x
+;   2. z = z + beta * K2
+;   3. y = K2 - beta * z
+;   4. x = x + alpha * y
+
 SunAlphaMulX            DS 4
 SunAlphaMulY            DS 4
 SunBetaMulZ             DS 4
 SunK2                   DS 3
 
 SunApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
-                        ld      hl,BETA
-                        or      (hl)
-                        and     SignMask8Bit
-                        jp      z,.NoRotation
+                        ld      hl,BETA                     ; .
+                        or      (hl)                        ; .
+                        and     SignMask8Bit                ; .
+                        jp      z,.NoRotation               ;  .
+;-- Calculate K2 = y - alpha * x by calculating y + (-alpha * x)
 .CalcAlphaMulX:         ld      a,(ALPHA)                   ; get roll magnitude
                         xor     SignOnly8Bit                ; d = -alpha (Q value)
                         ld      d,a                         ; .
@@ -56,6 +66,7 @@ SunApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitch, 
                         ld      a,l                         ; K2  = DEA = DEL = y - (alpha * x)
                         ld      (SunK2),a                   ; we also need to save l for teh beta k2 calc
                         ld      (SunK2+1),de                ; 
+;-- Calculate z = z + beta * K2                        
 .CalcBetaMulK2:         ex      de,hl                       ; HLE == DEA
                         ld      e,a                         ; .
                         ld      a,(BETA)                    ; D = BETA
@@ -68,6 +79,7 @@ SunApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitch, 
                         ld      (SBnKzhi),de                ; z = resuklt
                         ld      a,l                         ; .
                         ld      (SBnKzlo),a                 ; .
+;-- y = K2 - beta * z
 .CalcBetaZ:             ld      a,(BETA)
                         xor     SignOnly8Bit                ; d = -beta (Q value)
                         ld      d,a                         ; .
@@ -106,6 +118,7 @@ SunApplyMyRollAndPitch: ld      a,(ALPHA)                   ; no roll or pitch, 
                         ld      (SunAlphaMulY+2),a
                         ld      a,d
                         ld      (SunAlphaMulY+3),a                                             
+;-- x = x + alpha * y
 .CalcxPLusAlphaY:       ld      bc,de                        ; BCH = Y sgn, hi, lo, we loose the C from result Deal with sign in byte 4
                         ld      h,l                         ; .
                         ld      de,(SBnKxhi)                ; DEL = Y

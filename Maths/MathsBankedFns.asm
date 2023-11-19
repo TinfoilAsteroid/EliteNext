@@ -112,10 +112,22 @@ AddAtIXtoAtIY24Signed:  ld      l,(ix+0)            ; del = ix (sign hi lo)
                         push    iy                  ; save iy as add function changes is
                         call    AddBCHtoDELsigned   ; Perform del += bch
                         pop     iy                  ; get iy back
-                        ld      (ix+0),d            ; put result into (ix)
+                        ld      (ix+0),l            ; put result into (ix)
                         ld      (ix+1),e            ; .
-                        ld      (ix+2),l            ; .
+                        ld      (ix+2),d            ; .
                         ret
+                        
+AddDELequAtIXPlusIY24Signed:   
+                        ld      l,(ix+0)            ; del = ix (sign hi lo)
+                        ld      e,(ix+1)            ; .
+                        ld      d,(ix+2)            ; .
+                        ld      h,(iy+0)            ; bch = iy (sign, hi, lo)
+                        ld      c,(iy+1)            ; .
+                        ld      b,(iy+2)            ; .
+                        push    iy                  ; save iy as add function changes is
+                        call    AddBCHtoDELsigned   ; Perform del += bch
+                        pop     iy                  ; get iy back
+                        ret                   
 ; extension to AddBCHtoDELsigned
 ; takes ix as the address of the values to load into DEL
 ;       iy as the address of the values to load into BCH
@@ -123,30 +135,30 @@ AddAtIXtoAtIY24Signed:  ld      l,(ix+0)            ; del = ix (sign hi lo)
 SubAtIXtoAtIY24Signed:  ld      l,(ix+0)            ; del = ix (sign hi lo)
                         ld      e,(ix+1)            ; .
                         ld      d,(ix+2)            ; .
-                        ld      h,(ix+0)            ; bch = -iy (sign, hi, lo)
-                        ld      c,(ix+1)            ; .
-                        ld      a,(ix+2)            ; .
+                        ld      h,(iy+0)            ; bch = -iy (sign, hi, lo)
+                        ld      c,(iy+1)            ; .
+                        ld      a,(iy+2)            ; .
                         xor     SignOnly8Bit        ; . this is where we flip sign to make add subtract
                         ld      b,a                 ; .
                         push    iy                  ; save iy as add function changes is
                         call    AddBCHtoDELsigned   ; perform del += bch which as we flipped bch sign means (ix [210] -= iy [210])
                         pop     iy                  ; get iy back
-                        ld      (ix+0),d            ; put result into (ix)
+                        ld      (ix+0),l            ; put result into (ix)
                         ld      (ix+1),e            ; .
-                        ld      (ix+2),l            ; .
+                        ld      (ix+2),d            ; .
                         ret
 
 ; extension to AddBCHtoDELsigned
 ; takes ix as the address of the values to load into DEL
 ;       iy as the address of the values to load into BCH
 ; subtracts iy from ix leaving result in del
-SubDELequAtIXtMinusAtIY24Signed:
+SubDELequAtIXMinusAtIY24Signed:
                         ld      l,(ix+0)            ; del = ix (sign hi lo)
                         ld      e,(ix+1)            ; .
                         ld      d,(ix+2)            ; .
-                        ld      h,(ix+0)            ; bch = -iy (sign, hi, lo)
-                        ld      c,(ix+1)            ; .
-                        ld      a,(ix+2)            ; .
+                        ld      h,(iy+0)            ; bch = -iy (sign, hi, lo)
+                        ld      c,(iy+1)            ; .
+                        ld      a,(iy+2)            ; .
                         xor     SignOnly8Bit        ; . this is where we flip sign to make add subtract
                         ld      b,a                 ; .
                         push    iy                  ; save iy as add function changes is
@@ -293,7 +305,7 @@ subHLDES15:             ld      a,h
 ;-- sets carry if in blast range, else not carry
 ;-- blast range will always be an 8 bit value
 CheckInCollisionRange:  
-.CheckXDistance:        call    SubDELequAtIXtMinusAtIY24Signed ; get distance between x coordinates
+.CheckXDistance:        call    SubDELequAtIXMinusAtIY24Signed ; get distance between x coordinates
                         ld      a,d                 ; check abs distance
                         and     SignMask8Bit        ; if high bytes are set
                         or      e                   ; then no hit
@@ -303,7 +315,7 @@ CheckInCollisionRange:
 .CheckYDistance:        ld      bc,3                ; move ix and iy
                         add     ix,bc               ; on 3 bytes
                         add     iy,bc               ;
-                        call    SubDELequAtIXtMinusAtIY24Signed ; get distance between x coordinates
+                        call    SubDELequAtIXMinusAtIY24Signed ; get distance between x coordinates
                         ld      a,d                 ; check abs distance
                         and     SignMask8Bit        ; if high bytes are set
                         or      e                   ; then no hit
@@ -313,7 +325,7 @@ CheckInCollisionRange:
 .CheckZDistance:        ld      bc,3                ; move ix and iy
                         add     ix,bc               ; on 3 bytes
                         add     iy,bc               ;
-                        call    SubDELequAtIXtMinusAtIY24Signed ; get distance between x coordinates
+                        call    SubDELequAtIXMinusAtIY24Signed ; get distance between x coordinates
                         ld      a,d                 ; check abs distance
                         and     SignMask8Bit        ; if high bytes are set
                         or      e                   ; then no hit
