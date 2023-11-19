@@ -5,7 +5,7 @@
 ;    DEFINE  MAINLOOP_DEMOSHIPS
 ;   DEFINE  MAINLOOP_DEBUGMISSILE 1
     DEFINE  MAINLOOP_INPUTHANDLER
-    ;DEFINE  MAINLOOP_EVENTHANDLER 1
+    DEFINE  MAINLOOP_EVENTHANDLER 1
     DEFINE  MAINLOOP_RECHARGE 1
  ;   DEFINE  MAINLOOP_LAUNCHMISSILE
     DEFINE  MAINLOOP_UPDATEUNIVERSE 1
@@ -13,7 +13,7 @@
     DEFINE  MAINLOOP_SUN_RENDER 1
     DEFINE  MAINLOOP_PLANET_RENDER 1
     DEFINE  MAINLOOP_MODEL_RENDER    1
-    DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
+   ; DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
     DEFINE  MAINLOOP_WARP_ENABLED 1
 
 ;.................................................................................................................................    
@@ -372,15 +372,11 @@ LoopEventTriggered:     ; for now just do spawn
     DEFINE  SPAWN_TABLE_SELECT   1
     DEFINE  SPAWN_GENERATE_COUNT 1
     DEFINE  SPAWN_LOOP           1
-   ; DEFINE  SPAWN_IGNORE         1
     
 
-SpawnEvent:             
-                       IFDEF   SPAWN_IGNORE
-                            ret
-                        ENDIF
-                        call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
+SpawnEvent:             call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
                         ret     c                                   ; then may as well just skip routine
+                        ; This if def allows spawning inside space station safe zone
                         IFDEF   MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE
                             SetMemFalse SpaceStationSafeZone                        
                         ENDIF

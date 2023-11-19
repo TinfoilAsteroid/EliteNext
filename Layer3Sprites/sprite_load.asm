@@ -8,6 +8,7 @@ Filename                DB "NESpr"
 FileNbr                 DB "00"
 Extension:              DB ".dat",0
 
+SpriteCount             EQU     34
 
 FileNbrA:               ld      a,(FileNumber)
                         swapnib
@@ -26,7 +27,7 @@ load_pattern_files:     ld          bc,SPRITE_SLOT_PORT             ; select pat
                         out         (c),a
                         ld          a,$01
                         ld          (FileNumber),a
-                        ld          b,29
+                        ld          b,SpriteCount
 .ReadLoop:              push        bc
                         call        FileNbrA
                         call        load_a_pattern

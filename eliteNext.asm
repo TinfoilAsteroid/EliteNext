@@ -1,3 +1,31 @@
+                DISPLAY "MASTER TODO LIST"
+                DISPLAY "----------------"
+                DISPLAY "TODO: Optimisation"
+                DISPLAY "TODO: Review spawn logic for crash"
+                DISPLAY "TODO: Add space station safe boundary indicator"
+                DISPLAY "TODO: Move compases to border"
+                DISPLAY "TODO: Optimise apply my to planets and sun to consider if 24 bit can be doen using 16 bit if sgn is just a sign bit"
+                DISPLAY "TODO: Verify post hyper space"
+                DISPLAY "TODO: Why no count down text sometimes"
+                DISPLAY "TODO: Galaxy drive jump"
+                DISPLAY "TODO: Different missile types"
+                DISPLAY "TODO: Log divide maths"
+                DISPLAY "TODO: Optimise for solid fill"
+                DISPLAY "TODO: Load and save commander logic"
+                DISPLAY "TODO: chars and displays into 80 column mode"
+                DISPLAY "TODO: Mission coding"
+                DISPLAY "TODO: Improve laser code"
+                DISPLAY "TODO: Improve chart cursor code"
+                DISPLAY "TODO: Test joystick"
+                DISPLAY "TODO: Test exetended keys"
+                DISPLAY "TODO: Line drawing colour improvement"
+                DISPLAY "TODO: Remove meridian code"
+                DISPLAY "TODO: Sound FXs"
+                DISPLAY "TODO: Jump stop bong noise"
+                DISPLAY "TODO: Switch radar range"
+                
+
+
     DEVICE ZXSPECTRUMNEXT
     SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
     DEFINE  DOUBLEBUFFER 1
@@ -487,7 +515,6 @@ TidyCounter             DB  0
             INCLUDE "./debugMatrices.asm"
 
 
-            DISPLAY "TODO: Optimisation"
 ; Need this table to handle differnet events 
 ; 1-main loop update - just general updates specfic to that screen that are not galaxy or stars, e.g. update heat, console
 ; cursor key, joystick press
