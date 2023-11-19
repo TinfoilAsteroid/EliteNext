@@ -4972,9 +4972,9 @@
   38+ 62E8 DD 21 16 C0                          ld      ix,SBnKzlo                              ; now we point IX at sun
   39+ 62EC CD FA 01                             call    CompareAtIXtoIYABS                      ; we know we have Mths BankdFns in bank zero, on return IY holds the shorter of the two distances
   40+ 62EF              ; After compare c means that we have done a swap and on
-  41+ 62EF FD 66 02                             ld      h,(iy+2)                                ; load HL with the position high bytes as we won't warp if less than 256 (well 1023 in reality)
-  42+ 62F2 7C                                   ld      a,h
-  43+ 62F3 E6 7F                                and     SignMask8Bit                            ; we want abs of distnace
+  41+ 62EF FD 7E 02                             ld      a,(iy+2)                                ; load HL with the position high bytes as we won't warp if less than 256 (well 1023 in reality)
+  42+ 62F2 E6 7F                                and     SignMask8Bit                            ; we want abs of distnace
+  43+ 62F4 67                                   ld      h,a
   44+ 62F5 A7                                   and     a                                       ; if its zero then we are not doing a big jump
   45+ 62F6 C2 01 63                             jp      nz,.DoBigWarp                           ; .
   46+ 62F9 FD 6E 01     .DoSmallWarp:           ld      l,(iy+1)                                ; if we got here the l must hold a value of interest and h must hold 0

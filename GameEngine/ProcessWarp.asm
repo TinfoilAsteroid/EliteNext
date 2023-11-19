@@ -38,9 +38,9 @@ ProcessWarp:            SetMemFalse     WarpPressed                     ; clear 
                         ld      ix,SBnKzlo                              ; now we point IX at sun
                         call    CompareAtIXtoIYABS                      ; we know we have Mths BankdFns in bank zero, on return IY holds the shorter of the two distances
 ; After compare c means that we have done a swap and on 
-                        ld      h,(iy+2)                                ; load HL with the position high bytes as we won't warp if less than 256 (well 1023 in reality)
-                        ld      a,h
+                        ld      a,(iy+2)                                ; load HL with the position high bytes as we won't warp if less than 256 (well 1023 in reality)
                         and     SignMask8Bit                            ; we want abs of distnace
+                        ld      h,a
                         and     a                                       ; if its zero then we are not doing a big jump
                         jp      nz,.DoBigWarp                           ; .
 .DoSmallWarp:           ld      l,(iy+1)                                ; if we got here the l must hold a value of interest and h must hold 0
