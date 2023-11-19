@@ -46,6 +46,21 @@ missile_sprite2                     equ missile_sprite1  +1          ; 36
 missile_sprite3                     equ missile_sprite2  +1          ; 37
 missile_sprite4                     equ missile_sprite3  +1          ; 38
 
+suncompass_sprite1                  equ missile_sprite4  +1
+suncompass_sprite2                  equ suncompass_sprite2  +1
+suncompass_sprite3                  equ suncompass_sprite3  +1
+suncompass_sprite4                  equ suncompass_sprite4  +1
+
+planetcompass_sprite1               equ suncompass_sprite4  +1
+planetcompass_sprite2               equ planetcompass_sprite2  +1
+planetcompass_sprite3               equ planetcompass_sprite3  +1
+planetcompass_sprite4               equ planetcompass_sprite4  +1
+
+stationcompass_sprite1              equ planetcompass_sprite4  +1
+stationcompass_sprite2              equ stationcompass_sprite2  +1
+stationcompass_sprite3              equ stationcompass_sprite3  +1
+stationcompass_sprite4              equ stationcompass_sprite4  +1
+
 glactic_pattern_1					equ 0
 glactic_hyper_pattern_1             equ 2
 local_present_cursor                equ 4
@@ -57,17 +72,25 @@ laser_pattern_2                     equ 13
 laser_pattern_3                     equ 14
 laser_pattern_4                     equ 15
 laser_pattern_5                     equ 16
+compass_sun_infront                 equ 17
+compass_sun_behind                  equ 18
+compass_planet_infront              equ 19
+compass_planet_behind               equ 20
+compass_station_infront             equ 21
+compass_station_behind              equ 22
 targetting_pattern                  equ 23
 lock_pattern                        equ 24
 ecm_pattern                         equ 25
 missile_ready_pattern               equ 26
 missile_armed_pattern               equ 27
 missile_locked_pattern              equ 28
+compass_topleft_pattern             equ 29
+compass_topright_pattern            equ 30
+compass_bottomleft_pattern          equ 31
+compass_bottomright_pattern         equ 32
+mass_locked_pattern                 equ 33
+space_station_safe_zone_pattern     equ 34
 
-compass_sun_infront                 equ 17
-compass_sun_behind                  equ 18
-compass_station_infront             equ 19
-compass_station_behind              equ 20
 spritecursoroffset					equ 17
 spriteborderoffset                  equ 32
 
@@ -246,6 +269,33 @@ sprite_local_hyper_cursor:  ld		d,local_hyper_sprite
                             ld		e,local_hyper_pattern
                             call	sprite_big
                             ret	
+
+; ">sprite_galactic_cursor BC = rowcol"    
+        DISPLAY "TODO : Compass positions, correct offsets for indicators, add in hide/show"
+sprite_sun_compass:         ld		d,suncompass_sprite1
+                            ld		e,0
+                            ld		a,b
+                            add		a,galactic_chart_y_offset
+                            ld		b,a	
+                            call	sprite_big
+                            ret
+
+sprite_planet_compass:      ld		d,planetcompass_sprite1
+                            ld		e,0
+                            ld		a,b
+                            add		a,galactic_chart_y_offset
+                            ld		b,a	
+                            call	sprite_big
+                            ret	
+
+sprite_station_compass:     ld		d,stationcompass_sprite1
+                            ld		e,0
+                            ld		a,b
+                            add		a,galactic_chart_y_offset
+                            ld		b,a	
+                            call	sprite_big
+                            ret	
+
 
 compass_offset              equ 2
 ScannerX                    equ 128
