@@ -338,7 +338,8 @@ CheckInCollisionRange:
                         ret
 
 ;------------------------------------------------------------------------------------------------
-; -- Checks if value at ix > iy and returns ix pointing to the correct value
+; -- Checks if 24 bit value at ix > iy and returns ix pointing to the correct value
+; -- Sets carryflag if a swap occured as part of the Jump If A LessThan check
 CompareAtIXtoIYABS:     ld      a,(iy+2)
 .CheckSignByte:         and     SignMask8Bit
                         ld      b,a
@@ -352,7 +353,10 @@ CompareAtIXtoIYABS:     ld      a,(iy+2)
                         cp      (iy+0)
                         JumpIfALTNusng b,.SwapIXIY
                         ret
-.SwapIXIY               ld      ix,iy
+.SwapIXIY               push    ix                  ; swap over ix and iy
+                        push    iy                  ; this means that ix is always larger of two or ix if they are the same value
+                        pop     ix                  ; iy is a smaller of the two values, or untouched in the same value
+                        pop     iy                  ; Thsi means we can do a compare and pick which one we preferr after, carry says if swap occured if we need that
                         ret
 
 ;------------------------------------------------------------------------------------------------

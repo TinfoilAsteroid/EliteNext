@@ -59,6 +59,15 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         ld      hl,BET1                     ; and pitch
                         or      (hl)
                         jp      z,.NoRotation               ; if both zero then don't compute
+; If the xsgn,ysng or zsng are not 0 or $80 then we use 24 bit routines
+; else we can just continue to use 16 bit                        
+.CheckFor24Bit:         ld      a,(UBnKxsgn)
+                        ld      hl,UBnKysgn
+                        or      (hl)
+                        ld      hl,UBnKzsgn
+                        or      (hl)
+                        and     $7F
+                        jp      nz,ApplyMyRollAndPitch24Bit
                         ;break
 ; P[210] = x * alph (we use P[2]P[1] later as result/256
                         ld      e,a                         ; e = roll magnitude
@@ -117,7 +126,7 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         sbc     hl,de                       ; (y_hi y_lo) = K2(2 1) - P(2 1)
                         jr      nc,.MV44                    ; if there was no over flow carry on
                         NegHL
-                        ld      a,(UBnKysgn)                ; flip sign bit TODO, we may have to remove xor as planets and suns are sign + 23 bit xpos
+                        ld      a,(UBnKysgn)                ; flip sign bit TODO, we may have to remove xor as planets and Univs are sign + 23 bit xpos
                         xor     SignOnly8Bit
                         ld      (UBnKysgn),a                
 ; by here we have (y_sign y_hi y_lo) = K2(2 1) - P(2 1) = K2 - beta * z
@@ -136,7 +145,7 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         ld      (UBnKxsgn),a                ; save resutl stright into X pos
                         ld      (UBnKxlo),hl                
                         ;break
-                        ; if its not a sun then apply to local orientation
+                        ; if its not a Univ then apply to local orientation
                         ApplyMyRollToVector ALPHA, UBnkrotmatNosevX, UBnkrotmatNosevY   ; ApplyMyRollToNosev:
                         ApplyMyRollToVector ALPHA, UBnkrotmatSidevX, UBnkrotmatSidevY   ; ApplyMyRollToSidev:
                         ApplyMyRollToVector ALPHA, UBnkrotmatRoofvX, UBnkrotmatRoofvY   ; ApplyMyRollToRoofv:
@@ -154,3 +163,133 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         ld      (UBnKzlo),hl                ; write back to zpos
                         ld      (UBnKzsgn),a                ;
                         ret
+
+;----------------------------------------------------------------------------------------------------------------------------------
+; 24 bit version of pitch and roll is a 24 bit calculation 1 bit sign + 23 bit value
+; Need to write a test routine for roll and pitchs
+; Minsky Roll       Minsky Pitch
+;  y -= alpha * x    y -= beta * z          
+;  x += alpha * y    z += beta * y
+; or once combined
+;   1. K2 = y - alpha * x
+;   2. z = z + beta * K2
+;   3. y = K2 - beta * z
+;   4. x = x + alpha * y
+;----------------------------------------------------------------------------------------------------------------------------------
+; Based on non optimised version of Planet pitch and roll is a 24 bit calculation 1 bit sign + 23 bit value
+; Now at least rolls the correct direction
+UnivAlphaMulX               DB $00,$00, $00, $00
+UnivAlphaMulY               DB $00,$00, $00, $00
+UnivAlphaMulZ               DB $00,$00, $00, $00
+UnivBetaMulZ                DB $00,$00, $00, $00
+UnivBetaMulY                DB $00,$00, $00, $00
+UnivK2                      DS 3
+
+ApplyMyRollAndPitch24Bit: 	ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
+.CheckForRoll:              and		a
+							call	nz,Univ_Roll
+.CheckForPitch:				ld		a,(BETA)
+							and		a
+							call	nz,Univ_Pitch
+.ApplySpeed:            	ld      a,(DELTA)                   ; BCH = - Delta
+							ReturnIfAIsZero
+							ld      c,0                         ;
+							ld      h,a                         ; 
+							ld      b,$80                       ;
+							ld      de,(UBnKzhi)                ; DEL = z position
+							ld      a,(UBnKzlo)                 ; .
+							ld      l,a                         ; .
+							call    AddBCHtoDELsigned           ; update speed
+							ld      (UBnKzhi),DE                ; write back to zpos
+							ld      a,l
+							ld      (UBnKzlo),a                ;
+							ret
+; Performs minsky rotation
+; Joystick left          Joystick right
+; ---------------------  ---------------------
+; x :=  x      + y / 64  x :=  x -  y / 64  so rather than /64  is z * alpha / 256
+; y :=  y      - x /64   y :=  y +  x / 64     
+;
+; Joystick down          Joystick up
+; ---------------------  ---------------------
+; y :=  y      + z / 64  y :=  y - z / 64
+; z :=  z      - y / 64  z :=  z + y / 64      
+; 
+; get z, multiply by alpha, pick top 3 bytes with sign
+; get x, multiply by alpha, pick top 3 bytes with sign
+; if alpha +ve subtract x = x - z adj, z =z + x adj , else x += z adj z -= z adj 
+Univ_Roll:				    ld      a,(ALPHA)                   ; get roll value
+							and 	$7F
+							ld      d,a                         ; .
+							ld      a,(UBnKylo)                ; HLE = x sgn, hi, lo
+							ld      e,a                         ; .
+							ld      hl,(UBnKyhi)               ; .
+							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+							ld		a,l
+							ld		(UnivAlphaMulY),a			; save result
+							ld		(UnivAlphaMulY+1),de		; save result
+							ld      a,(ALPHA)                   ; get roll value
+							and 	$7F
+							ld      d,a                         ; .
+							ld      a,(UBnKxlo)                ; HLE = x sgn, hi, lo
+							ld      e,a                         ; .
+							ld      hl,(UBnKxhi)               ; .
+							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+							ld		a,l
+							ld		(UnivAlphaMulX),a			; save result
+							ld		(UnivAlphaMulX+1),de		; save result							
+							ld		a,(ALPHA)
+							and		$80
+							jp		z,.RollingRight
+.RollingLeft:				ld		ix,UBnKxlo
+							ld		iy,UnivAlphaMulY
+							call	AddAtIXtoAtIY24Signed
+							ld		ix,UBnKylo
+							ld		iy,UnivAlphaMulX
+							call	SubAtIXtoAtIY24Signed
+							ret
+.RollingRight:				ld		ix,UBnKxlo
+							ld		iy,UnivAlphaMulY
+							call	SubAtIXtoAtIY24Signed
+							ld		ix,UBnKylo
+							ld		iy,UnivAlphaMulX
+							call	AddAtIXtoAtIY24Signed
+							ret
+
+Univ_Pitch:				    ld      a,(BETA)                   ; get roll value
+							and 	$7F
+							ld      d,a                         ; .
+							ld      a,(UBnKylo)                ; HLE = x sgn, hi, lo
+							ld      e,a                         ; .
+							ld      hl,(UBnKyhi)               ; .
+							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+							ld		a,l
+							ld		(UnivBetaMulY),a			; save result
+							ld		(UnivBetaMulY+1),de		; save result
+							ld      a,(BETA)                   ; get roll value
+							and 	$7F
+							ld      d,a                         ; .
+							ld      a,(UBnKzlo)                ; HLE = x sgn, hi, lo
+							ld      e,a                         ; .
+							ld      hl,(UBnKzhi)               ; .
+							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+							ld		a,l
+							ld		(UnivBetaMulZ),a			; save result
+							ld		(UnivBetaMulZ+1),de		; save result							
+							ld		a,(BETA)
+							and		$80
+							jp		z,.Climbing
+.Diving:					ld		ix,UBnKylo
+							ld		iy,UnivBetaMulZ
+							call	AddAtIXtoAtIY24Signed
+							ld		ix,UBnKzlo
+							ld		iy,UnivBetaMulY
+							call	SubAtIXtoAtIY24Signed
+							ret
+.Climbing:		     		ld		ix,UBnKylo
+							ld		iy,UnivBetaMulZ
+							call	SubAtIXtoAtIY24Signed
+							ld		ix,UBnKzlo
+							ld		iy,UnivBetaMulY
+							call	AddAtIXtoAtIY24Signed	
+							ret                        
