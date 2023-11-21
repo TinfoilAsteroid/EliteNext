@@ -67,6 +67,9 @@ draw_front_view:        MMUSelectLayer1
                         call    sprite_missile_4
                         call    sprite_ecm_hide
                         call    sprite_missile_all_hide
+                        call    sprite_sun_compass
+                        call    sprite_planet_compass
+                        call    sprite_station_compass
                        ; call    sprite_laser_show
                         MMUSelectConsoleBank
                         ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read

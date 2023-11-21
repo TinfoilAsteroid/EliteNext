@@ -270,8 +270,13 @@ UpdateConsole:          IFDEF   MISSILEDIAGNOSTICS
                         srl     a               
                         ld      bc,AShieldStart
                         ld      d,a
-                        call    DrawColourCodedBar  
-.SpriteDraw:            MMUSelectSpriteBank                        
+                        call    DrawColourCodedBar                          
+.SpriteDraw:            MMUSelectSpriteBank          
+                        
+.DrawCompases:          call    show_sprite_sun_compass
+                        call    show_sprite_planet_compass
+                        call    show_sprite_station_compass
+
 .DrawECM:               ld      a,(ECMCountDown)   
                         JumpIfAIsZero   .HideECM                                                 
 .ShowECM:               call    show_ecm_sprite                                                 

@@ -47,19 +47,19 @@ missile_sprite3                     equ missile_sprite2  +1          ; 37
 missile_sprite4                     equ missile_sprite3  +1          ; 38
 
 suncompass_sprite1                  equ missile_sprite4  +1
-suncompass_sprite2                  equ suncompass_sprite2  +1
-suncompass_sprite3                  equ suncompass_sprite3  +1
-suncompass_sprite4                  equ suncompass_sprite4  +1
+suncompass_sprite2                  equ suncompass_sprite1  +1
+suncompass_sprite3                  equ suncompass_sprite2  +1
+suncompass_sprite4                  equ suncompass_sprite3  +1
 
 planetcompass_sprite1               equ suncompass_sprite4  +1
-planetcompass_sprite2               equ planetcompass_sprite2  +1
-planetcompass_sprite3               equ planetcompass_sprite3  +1
-planetcompass_sprite4               equ planetcompass_sprite4  +1
+planetcompass_sprite2               equ planetcompass_sprite1  +1
+planetcompass_sprite3               equ planetcompass_sprite2  +1
+planetcompass_sprite4               equ planetcompass_sprite3  +1
 
 stationcompass_sprite1              equ planetcompass_sprite4  +1
-stationcompass_sprite2              equ stationcompass_sprite2  +1
-stationcompass_sprite3              equ stationcompass_sprite3  +1
-stationcompass_sprite4              equ stationcompass_sprite4  +1
+stationcompass_sprite2              equ stationcompass_sprite1  +1
+stationcompass_sprite3              equ stationcompass_sprite2  +1
+stationcompass_sprite4              equ stationcompass_sprite3  +1
 
 glactic_pattern_1					equ 0
 glactic_hyper_pattern_1             equ 2
@@ -133,61 +133,103 @@ sprite_big:
 .BigSprite1:                pop		af
                             inc		a
                             push	af
-                            nextreg		SPRITE_PORT_INDEX_REGISTER,a
-                            ld		a,16
-                            nextreg		SPRITE_PORT_ATTR0_REGISTER,a	; lower x
-                            xor 	a
-                            nextreg		SPRITE_PORT_ATTR1_REGISTER,a	; lower y
-                            nextreg		SPRITE_PORT_ATTR2_REGISTER,a	; relative setup
-                            ld		a,%11000001							; relative and 4 bytes of data, pattern 1
-                            nextreg		SPRITE_PORT_ATTR3_REGISTER,a
+                                                  nextreg	SPRITE_PORT_INDEX_REGISTER,a
+                            ld		a,16        : nextreg   SPRITE_PORT_ATTR0_REGISTER,a	; lower x
+                            xor 	a           : nextreg   SPRITE_PORT_ATTR1_REGISTER,a	; lower y
+                                                  nextreg   SPRITE_PORT_ATTR2_REGISTER,a	; relative setup
+                            ld		a,%11000001	:
+                            nextreg		SPRITE_PORT_ATTR3_REGISTER,a					; relative and 4 bytes of data, pattern 1
                             ld		a,%01000001							; big unified composite
                             nextreg	SPRITE_PORT_ATTR4_REGISTER,a		; visible 5 bytes pattern e
 .BigSprite2:                pop		af
-                            inc		a
-                            nextreg		SPRITE_PORT_INDEX_REGISTER,a
-                            xor		a
-                            nextreg		SPRITE_PORT_ATTR0_REGISTER,a	; lower x
-                            ld		a,16
-                            nextreg		SPRITE_PORT_ATTR1_REGISTER,a	; lower y
-                            xor		a
-                            nextreg		SPRITE_PORT_ATTR2_REGISTER,a	; relative setup
-                            ld		a,%11000010							; relative and 4 bytes of data, pattern 2
-                            nextreg		SPRITE_PORT_ATTR3_REGISTER,a
-                            ld		a,%01000001							; big unified composite
-                            nextreg	SPRITE_PORT_ATTR4_REGISTER,a		; visible 5 bytes pattern e
+                            inc		a           : nextreg   SPRITE_PORT_INDEX_REGISTER,a
+                            xor		a           : nextreg   SPRITE_PORT_ATTR0_REGISTER,a	; lower x
+                            ld		a,16        : nextreg   SPRITE_PORT_ATTR1_REGISTER,a	; lower y
+                            xor		a           : nextreg   SPRITE_PORT_ATTR2_REGISTER,a	; relative setup
+                            ld		a,%11000010	: nextreg   SPRITE_PORT_ATTR3_REGISTER,a	; relative and 4 bytes of data, pattern 2
+                            ld		a,%01000001	: nextreg   SPRITE_PORT_ATTR4_REGISTER,a	; visible 5 bytes pattern e 					; big unified composite
                             ret	
+
+; Creates a 32x32 sprite based on first sprite number and pattern, then goes:
+;    Spr,   pattern     spr+1, pattern+1
+;    Spr+1, pattern+2   spr+3, pattern+3
+; " sprite_big BC = row, hl= col D = sprite nbr , E= , pattern"
+; note, BC and HL must be in correct range else they will mess up other byte's attributes, not masked for speed
+; note this is based on full screen sprites including writing to border
+sprite_4x4:                 
+.SetAnchor:	                ld		a,d         : nextreg   SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
+;-- X position bits 1 to 8 ---------------------------------------------
+                            ld		a,l         : nextreg   SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+;-- Y position bits 1 to 8 ---------------------------------------------
+                            ld      a,c         : nextreg   SPRITE_PORT_ATTR1_REGISTER,a		; Set up lower y cc
+;-- Set MSB of X coordinate for anchor ---------------------------------
+                            ld      a,h         : nextreg   SPRITE_PORT_ATTR2_REGISTER,a		; MSB of X position
+;-- Make visible, its an anchor and we have a 5th byte
+                            ld      a,e                                 ; prep upper 2 bits as we will 
+                            or      %11000000                           ; use them for all unified sprites too
+                            ld      e,a                                 ; a now holds value to use for anchor
+                            nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern e
+;-- write out msb of y in h must be bit 0 only
+                            ld      a,b                                 ; get down MSB from b
+                            or      %00100000							; its going to be a unified "Big sprite" to uses rotations & scaling from anchor
+                            nextreg	SPRITE_PORT_ATTR4_REGISTER,a		; visible 5 bytes pattern e
+;-- now process unified sprites
+.TopRightRelative:          inc     d
+                            ld      a,d         : nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id + 1
+                            ld      a,16        : nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+                            ZeroA               : nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; Set up lower y cc
+                                                : nextreg   SPRITE_PORT_ATTR2_REGISTER,a        ; clear MSB of X
+                            ld      a,%1100001  : nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible, 5 bytes pattern is achor + 1
+                            ld      a,%0100001  : nextreg	SPRITE_PORT_ATTR4_REGISTER,a        ; pattern is relative and relative pattern 
+.BottomLeftRelative:        inc     d
+                            ld      a,d         : nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id + 1
+                            ZeroA               : nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+                            ld      a,16        : nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; Set up lower y cc
+                            ZeroA               : nextreg   SPRITE_PORT_ATTR2_REGISTER,a        ; clear MSB of X
+                            ld      a,%1100010  : nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible, 5 bytes pattern is achor + 2
+                            ld      a,%0100001  : nextreg	SPRITE_PORT_ATTR4_REGISTER,a        ; pattern is relative and relative pattern 
+.BottomRightRelative:       inc     d
+                            inc     e
+                            ld      a,d         : nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id + 1
+                            ld      a,16        : nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+                            ld      a,16        : nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; Set up lower y cc
+                            ZeroA               : nextreg   SPRITE_PORT_ATTR2_REGISTER,a        ; clear MSB of X
+                            ld      a,%1100011  : nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible, 5 bytes pattern is achor + 3
+                            ld      a,%0100001  : nextreg	SPRITE_PORT_ATTR4_REGISTER,a        ; pattern is relative and relative pattern 
+                            ret	
+
 	
 ; for a sinle sprite within 256x192 area    
-sprite_single:          ld		a,d                                 ; a = sprite nbr, bug fix?
-                        push    de
-                        nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
+sprite_single:              ld		a,d                                 ; a = sprite nbr, bug fix?
+                            push    de
+                            nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
 ; write out X position bits 1 to 8
-                        ld		a,c                                 ; a = column (c)
-                        ld      hl,spriteborderoffset
-                        add		hl,a                                ; hl = full x position
-                        ex		de,hl								; de = full x position
-                        ld		a,e
-                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+                            ld		a,c                                 ; a = column (c)
+                            ld      hl,spriteborderoffset
+                            add		hl,a                                ; hl = full x position
+                            ex		de,hl								; de = full x position
+                            ld		a,e
+                            nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
 ; write out Y position bits 1 to 8
-                        ld		a,b                                 ; a = row
-                        ld      hl,spriteborderoffset
-                        add		hl,a
-                        ld		a,l                                 ; hl = full y position
-                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                            ld		a,b                                 ; a = row
+                            ld      hl,spriteborderoffset
+                            add		hl,a
+                            ld		a,l                                 ; hl = full y position
+                            nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
 ; write out MSB of X as its an anchor  
-                        ld		a,d									; de = MSB of X (hl bit 0)
-                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; lower y
+                            ld		a,d									; de = MSB of X (hl bit 0)
+                            nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; lower y
 ; write out sprite pattern
-                        pop     de
-                        ld		a,e
-                        or		%10000000							; 
-                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern e
+                            pop     de
+                            ld		a,e
+                            or		%10000000							; 
+                            nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern e
 ; write out extended attribute
-                        ld      a,%00000000                         ; its a single sprite
-                        or      h
-                        nextreg	SPRITE_PORT_ATTR4_REGISTER,a
-                        ret
+                            ld      a,%00000000                         ; its a single sprite
+                            or      h
+                            nextreg	SPRITE_PORT_ATTR4_REGISTER,a
+                            ret
+;-----------------------------------------------------------------------
 ; ">sprite_galactic_cursor BC = rowcol"    
 sprite_galactic_cursor:     ld		d,galactic_cursor_sprite
                             ld		e,0
@@ -196,7 +238,7 @@ sprite_galactic_cursor:     ld		d,galactic_cursor_sprite
                             ld		b,a	
                             call	sprite_big
                             ret
-	
+;-----------------------------------------------------------------------	
 ; "> sprite_galactic_hyper_cursorBC = rowcol"
 sprite_galactic_hyper_cursor:ld		a,b
                             add		a,galactic_chart_hyper_offset
@@ -205,8 +247,7 @@ sprite_galactic_hyper_cursor:ld		a,b
                             ld		e,3
                             call	sprite_single ; sprite_big:
                             ret
-     
-                            
+;-----------------------------------------------------------------------
 ; moves hyperspace cursor to target system x position
 sprite_ghc_move:            ld		a,galactic_hyper_sprite
                             nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
@@ -232,8 +273,7 @@ sprite_ghc_move:            ld		a,galactic_hyper_sprite
                             or		d									; MSB Y
                             nextreg	SPRITE_PORT_ATTR4_REGISTER,a		; visible 5 bytes pattern e
                             ret
-
-
+;-----------------------------------------------------------------------
 sprite_lhc_move:            ld		a,local_hyper_sprite
                             nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
 ; write out X position bits 1 to 8
@@ -257,44 +297,25 @@ sprite_lhc_move:            ld		a,local_hyper_sprite
                             or		d									; MSB Y
                             nextreg	SPRITE_PORT_ATTR4_REGISTER,a		; visible 5 bytes pattern e
                             ret
-
+;-----------------------------------------------------------------------
 ; "sprite_local_cursor BC = rowcol"
 sprite_local_cursor:        ld		d,local_cursor_sprite
                             ld		e,local_present_cursor
                             call	sprite_big
                             ret
-
+;-----------------------------------------------------------------------
 ; "sprite_local_hyper_cursor BC = rowcol"
 sprite_local_hyper_cursor:  ld		d,local_hyper_sprite
                             ld		e,local_hyper_pattern
                             call	sprite_big
                             ret	
-
-; ">sprite_galactic_cursor BC = rowcol"    
-        DISPLAY "TODO : Compass positions, correct offsets for indicators, add in hide/show"
-sprite_sun_compass:         ld		d,suncompass_sprite1
-                            ld		e,0
-                            ld		a,b
-                            add		a,galactic_chart_y_offset
-                            ld		b,a	
-                            call	sprite_big
-                            ret
-
-sprite_planet_compass:      ld		d,planetcompass_sprite1
-                            ld		e,0
-                            ld		a,b
-                            add		a,galactic_chart_y_offset
-                            ld		b,a	
-                            call	sprite_big
-                            ret	
-
-sprite_station_compass:     ld		d,stationcompass_sprite1
-                            ld		e,0
-                            ld		a,b
-                            add		a,galactic_chart_y_offset
-                            ld		b,a	
-                            call	sprite_big
-                            ret	
+;-----------------------------------------------------------------------
+SunCompassTLX               equ 0
+PlanetCompassTLX            equ 0
+StationCompassTLX           equ 0
+SunCompassTLY               equ 10
+PlanetCompassTLY            equ 70
+StationCompassTLY           equ 130
 
 
 compass_offset              equ 2
@@ -304,6 +325,29 @@ SunScanCenterX              equ 92
 SunScanCenterY              equ 171 
 PlanetScanCenterX           equ 229
 PlanetScanCenterY           equ 171
+
+;-----------------------------------------------------------------------
+; ">sprite_galactic_cursor BC = rowcol"    
+        DISPLAY "TODO : Compass positions, correct offsets for indicators, add in hide/show"
+; " sprite_big BC = row, hl= col D = sprite nbr , E= , pattern"
+        
+sprite_sun_compass:         ld		de,suncompass_sprite1*256 + compass_topleft_pattern
+                            ld		bc,SunCompassTLY
+                            ld      hl,SunCompassTLX
+                            call	sprite_4x4
+                            ret
+;-----------------------------------------------------------------------
+sprite_planet_compass:      ld		de,planetcompass_sprite1*256 + compass_topleft_pattern
+                            ld		bc,PlanetCompassTLY
+                            ld      hl,PlanetCompassTLX
+                            call	sprite_4x4
+                            ret	
+;-----------------------------------------------------------------------
+sprite_station_compass:     ld		de,stationcompass_sprite1*256 + compass_topleft_pattern
+                            ld		bc,StationCompassTLY
+                            ld      hl,StationCompassTLX
+                            call	sprite_4x4
+                            ret	
 
 
 ; Put on compas based on bc = Y X position offset from compass center    
@@ -493,7 +537,18 @@ show_compass_station_infront: ShowSprite  compass_station, compass_station_infro
                          ret
 
 show_compass_station_behind:  ShowSprite  compass_station, compass_station_behind
-                         ret
+                            ret
+;-----------------------------------------------------------------------                        
+show_sprite_sun_compass:    ShowSprite  suncompass_sprite1, compass_topleft_pattern
+                            ret
+;-----------------------------------------------------------------------
+show_sprite_planet_compass: ShowSprite  planetcompass_sprite1, compass_topleft_pattern
+                            ret	
+;-----------------------------------------------------------------------
+show_sprite_station_compass:ShowSprite  stationcompass_sprite1, compass_topleft_pattern
+                            ret	
+;-----------------------------------------------------------------------                            
+;-----------------------------------------------------------------------
     
 sprite_laser:           LeftLaser  0,0,laser_sprite1 ,laser_pattern_1
                         LeftLaser  2,0,laser_sprite2 ,laser_pattern_2
@@ -644,6 +699,9 @@ sprite_laser_hide:      HideSprite laser_sprite1
     
 sprite_compass_hide:    HideSprite compass_sun
                         HideSprite compass_station
+                        HideSprite  suncompass_sprite1
+                        HideSprite  planetcompass_sprite1
+                        HideSprite  stationcompass_sprite1
                         ret
 
 sprite_cls_cursors:     call	sprite_galactic_hide	
