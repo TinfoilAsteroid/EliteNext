@@ -217,9 +217,8 @@ JumpIfALTNusng:         MACRO value, target
 
 JumpIfALTNsigned:       MACRO   value, target
                         cp      value
-                        jp      s,.SignSet
+                        jp      m,.SignSet
 .SignClear:             jp      pe,target       ; Sign (0), P/V (1)                        
-                        jp		c,target
                         jp      .CheckComplete  ; Sign (1), P/V (0)
 .SignSet:               jp      po,target     
 .CheckComplete:                   
@@ -240,9 +239,8 @@ JumpIfMemLTMemusng:     MACRO mem, value, target
 ;-- ------------------------------------------------------------
 JumpIfAGTENsigned       MACRO   value, target
                         cp      value
-                        jp      s,.SignSet
+                        jp      m,.SignSet
 .SignClear:             jp      po,target       ; Sign (0), P/V (0)
-                        jp		c,target
                         jp      .CheckComplete  ; Sign (1), P/V (1)
 .SignSet:               jp      pe,target     
 .CheckComplete:                   

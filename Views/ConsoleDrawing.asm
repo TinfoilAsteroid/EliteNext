@@ -747,18 +747,19 @@ UpdateCompassSun:       MMUSelectSun
 
 ; takes B = Y and C = X, limits to +/-16 in each direction
 LimitCompassBC:         ld      a,b
-                        JumpIfALTNsigned -16, .ClampBNeg16
-                        JumpIfAGTENsigned 17, .ClampBPos16
-.ClampBNeg16:           ld      b,-16
+                        JumpIfALTNsigned -14, .ClampBNeg16
+                        JumpIfAGTENsigned 15, .ClampBPos16
                         jp      .CheckCReg
-.ClampBPos16:           ld      b,16
+.ClampBNeg16:           ld      b,-14
+                        jp      .CheckCReg
+.ClampBPos16:           ld      b,14
 .CheckCReg:             ld      a,c
-                        JumpIfALTNsigned -16, .ClampCNeg16
-                        JumpIfAGTENsigned 17, .ClampCPos16
+                        JumpIfALTNsigned -14, .ClampCNeg16
+                        JumpIfAGTENsigned 15, .ClampCPos16
                         ret
-.ClampCNeg16:           ld      c,-16
+.ClampCNeg16:           ld      c,-14
                         ret
-.ClampCPos16:           ld      c,16
+.ClampCPos16:           ld      c,14
                         ret
 
 UpdateCompassPlanet:    MMUSelectPlanet
