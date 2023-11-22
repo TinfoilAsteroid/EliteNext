@@ -328,7 +328,7 @@ PlanetCompassTLY            equ 70
 StationCompassTLY           equ 130
 
 
-compass_offset              equ 0
+compass_offset              equ 2
 ScannerX                    equ StationCompassTLX + 17
 ScannerY                    equ StationCompassTLY + 17
 SunScanCenterX              equ SunCompassTLX + 17
@@ -394,12 +394,12 @@ stationCompassData:         db      stationcompass_sprite1, StationCompassTLX,  
 compass_sun_move:       ld		a,compass_sun
                         nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
 ; write out X position bits 1 to 8
-                        ld      a, SunScanCenterX
+                        ld      a, SunScanCenterX - compass_offset ; adjust offset for effective centre of sprite
                         add     a,c
                         DISPLAY "TODO - Add min max on X and Y"
                         nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
 ; write out Y position bits 1 to 8
-                        ld      a, SunScanCenterY
+                        ld      a, SunScanCenterY - compass_offset ; adjust offset for effective centre of sprite
                         sub     b
                         nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                         ret    
@@ -408,11 +408,11 @@ compass_sun_move:       ld		a,compass_sun
 compass_station_move:   ld		a,compass_station
                         nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
 ; write out X position bits 1 to 8
-                        ld      a, PlanetScanCenterX
+                        ld      a, PlanetScanCenterX - compass_offset ; adjust offset for effective centre of sprite
                         add     a,c
                         nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
 ; write out Y position bits 1 to 8
-                        ld      a, PlanetScanCenterY
+                        ld      a, PlanetScanCenterY - compass_offset ; adjust offset for effective centre of sprite
                         sub     b
                         nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                         ret    

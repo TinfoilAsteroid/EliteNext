@@ -734,6 +734,7 @@ UpdateCompassSun:       MMUSelectSun
                         neg                                 ;
 .DoneNormY:             ld      b,a                         ; result from Y
                         ld      c,ixh                       ; x = saved X
+                        call    LimitCompassBC
 .SetSprite:             MMUSelectSpriteBank
                         call    compass_sun_move
                         ld      a,(SBnKzsgn)
@@ -744,6 +745,21 @@ UpdateCompassSun:       MMUSelectSun
 .SunBehind:             call    show_compass_sun_behind                        
                         ret
 
+; takes B = Y and C = X, limits to +/-16 in each direction
+LimitCompassBC:         ld      a,b
+                        JumpIfALTNsigned -16, .ClampBNeg16
+                        JumpIfAGTENsigned 17, .ClampBPos16
+.ClampBNeg16:           ld      b,-16
+                        jp      .CheckCReg
+.ClampBPos16:           ld      b,16
+.CheckCReg:             ld      a,c
+                        JumpIfALTNsigned -16, .ClampCNeg16
+                        JumpIfAGTENsigned 17, .ClampCPos16
+                        ret
+.ClampCNeg16:           ld      c,-16
+                        ret
+.ClampCPos16:           ld      c,16
+                        ret
 
 UpdateCompassPlanet:    MMUSelectPlanet
                         call    ScalePlanetPos              ; get as 7 bit signed
@@ -803,6 +819,7 @@ UpdateCompassPlanet:    MMUSelectPlanet
 .DoneNormY:             ld      b,a                         ; result from Y
                         ld      c,ixh                       ; x = saved X
 .SetSprite:             MMUSelectSpriteBank
+                        call    LimitCompassBC
                         call    compass_station_move
                         ld      a,(P_BnKzsgn)
                         bit     7,a
