@@ -37,7 +37,8 @@ laser_sprite14                      equ	laser_sprite13   +1          ; 27
 laser_sprite15                      equ	laser_sprite14   +1          ; 28
 laser_sprite16                      equ laser_sprite15   +1          ; 29
 compass_sun                         equ laser_sprite16   +1          ; 30
-compass_station                     equ compass_sun      +1          ; 31
+compass_planet                      equ compass_sun      +1          ; 31
+compass_station                     equ compass_planet   +1          ; 31
 targetting_sprite1                  equ compass_station  +1          ; 32
 targetting_sprite2                  equ targetting_sprite1   +1      ; 33
 ECM_sprite                          equ targetting_sprite2   +1      ; 34
@@ -324,8 +325,8 @@ SunCompassTLX               equ 0
 PlanetCompassTLX            equ 0
 StationCompassTLX           equ 0
 SunCompassTLY               equ 10
-PlanetCompassTLY            equ 70
-StationCompassTLY           equ 130
+PlanetCompassTLY            equ 60
+StationCompassTLY           equ 110
 
 
 compass_offset              equ 2
@@ -335,59 +336,73 @@ SunScanCenterX              equ SunCompassTLX + 17
 SunScanCenterY              equ SunCompassTLY + 17
 PlanetScanCenterX           equ PlanetCompassTLX + 17
 PlanetScanCenterY           equ PlanetCompassTLY + 17
+StationScanCenterX          equ StationCompassTLX + 17
+StationScanCenterY          equ StationCompassTLY + 17
 
 ;-----------------------------------------------------------------------
 ; ">sprite_galactic_cursor BC = rowcol"    
         DISPLAY "TODO : Compass positions, correct offsets for indicators, add in hide/show"
 ; " sprite_big BC = row, hl= col D = sprite nbr , E= , pattern"
-        
-sprite_sun_compass:         ld		hl,sunCompassData
+sprite_sun_compass:         ld		hl,sunCompositeData
                             ld      b,4
                             ld      a,(hl)      : nextreg   SPRITE_PORT_INDEX_REGISTER,a              : inc hl
 .Loop:                      ld      a,(hl)      : nextreg   SPRITE_PORT_ATTR0_REGISTER,a              : inc hl
                             ld      a,(hl)      : nextreg   SPRITE_PORT_ATTR1_REGISTER,a              : inc hl
                             ld      a,(hl)      : nextreg   SPRITE_PORT_ATTR2_REGISTER,a              : inc hl
-                            ld      a,(hl)      : nextreg   SPRITE_PORT_MIRROR_ATTRIBUTE_3_WITH_INC,a : inc hl
+                            ld      a,(hl)      : nextreg   SPRITE_PORT_ATTR3_REGISTER,a              : inc hl
+                            ld      a,(hl)      : nextreg   SPRITE_PORT_MIRROR_ATTRIBUTE_4_WITH_INC,a : inc hl
                             djnz    .Loop
                             ret
 sunCompassData:             db      suncompass_sprite1, SunCompassTLX,     SunCompassTLY,      %00000000 , $80 | compass_sun_pattern
                             db                          SunCompassTLX +17, SunCompassTLY,      %00001000 , $80 | compass_sun_pattern
                             db                          SunCompassTLX,     SunCompassTLY + 17, %00000100 , $80 | compass_sun_pattern
                             db                          SunCompassTLX +17, SunCompassTLY + 17, %00001100 , $80 | compass_sun_pattern
-
-
+sunCompositeData:           db      suncompass_sprite1, SunCompassTLX,     SunCompassTLY,      %00000000 , $81 | compass_sun_pattern , %00000000
+                            db                          SunCompassTLX +17, SunCompassTLY,      %00001000 , $81                       , %01000001
+                            db                          SunCompassTLX,     SunCompassTLY + 17, %00000100 , $81                       , %01000001
+                            db                          SunCompassTLX +17, SunCompassTLY + 17, %00001100 , $81                       , %01000001
                             
 ;-----------------------------------------------------------------------
-sprite_planet_compass:      ld		hl,planetCompassData
+sprite_planet_compass:      ld		hl,planetCompositeData
                             ld      b,4
                             ld      a,(hl)      : nextreg   SPRITE_PORT_INDEX_REGISTER,a              : inc hl
 .Loop:                      ld      a,(hl)      : nextreg   SPRITE_PORT_ATTR0_REGISTER,a              : inc hl
                             ld      a,(hl)      : nextreg   SPRITE_PORT_ATTR1_REGISTER,a              : inc hl
                             ld      a,(hl)      : nextreg   SPRITE_PORT_ATTR2_REGISTER,a              : inc hl
-                            ld      a,(hl)      : nextreg   SPRITE_PORT_MIRROR_ATTRIBUTE_3_WITH_INC,a : inc hl
+                            ld      a,(hl)      : nextreg   SPRITE_PORT_ATTR3_REGISTER,a              : inc hl
+                            ld      a,(hl)      : nextreg   SPRITE_PORT_MIRROR_ATTRIBUTE_4_WITH_INC,a : inc hl
                             djnz    .Loop
                             ret
 planetCompassData:          db      planetcompass_sprite1, PlanetCompassTLX,     PlanetCompassTLY,      %00000000 , $80 | compass_planet_pattern
                             db                             PlanetCompassTLX +17, PlanetCompassTLY,      %00001000 , $80 | compass_planet_pattern
                             db                             PlanetCompassTLX,     PlanetCompassTLY + 17, %00000100 , $80 | compass_planet_pattern
                             db                             PlanetCompassTLX +17, PlanetCompassTLY + 17, %00001100 , $80 | compass_planet_pattern
+planetCompositeData:        db      planetcompass_sprite1, PlanetCompassTLX,     PlanetCompassTLY,      %00000000 , $81 | compass_planet_pattern , %00000000
+                            db                             PlanetCompassTLX +17, PlanetCompassTLY,      %00001000 , $81                          , %01000001
+                            db                             PlanetCompassTLX,     PlanetCompassTLY + 17, %00000100 , $81                          , %01000001
+                            db                             PlanetCompassTLX +17, PlanetCompassTLY + 17, %00001100 , $81                          , %01000001
 
 ;-----------------------------------------------------------------------
 
-sprite_station_compass:     ld		hl,stationCompassData
+sprite_station_compass:     ld		hl,stationCompositeData
                             ld      b,4
                             ld      a,(hl)      : nextreg   SPRITE_PORT_INDEX_REGISTER,a              : inc hl
 .Loop:                      ld      a,(hl)      : nextreg   SPRITE_PORT_ATTR0_REGISTER,a              : inc hl
                             ld      a,(hl)      : nextreg   SPRITE_PORT_ATTR1_REGISTER,a              : inc hl
                             ld      a,(hl)      : nextreg   SPRITE_PORT_ATTR2_REGISTER,a              : inc hl
-                            ld      a,(hl)      : nextreg   SPRITE_PORT_MIRROR_ATTRIBUTE_3_WITH_INC,a : inc hl
+                            ld      a,(hl)      : nextreg   SPRITE_PORT_ATTR3_REGISTER,a              : inc hl
+                            ld      a,(hl)      : nextreg   SPRITE_PORT_MIRROR_ATTRIBUTE_4_WITH_INC,a : inc hl
                             djnz    .Loop
                             ret
 stationCompassData:         db      stationcompass_sprite1, StationCompassTLX,     StationCompassTLY,      %00000000 , $80 | compass_station_pattern
                             db                              StationCompassTLX +17, StationCompassTLY,      %00001000 , $80 | compass_station_pattern
                             db                              StationCompassTLX,     StationCompassTLY + 17, %00000100 , $80 | compass_station_pattern
                             db                              StationCompassTLX +17, StationCompassTLY + 17, %00001100 , $80 | compass_station_pattern
-
+stationCompositeData:       db      stationcompass_sprite1, StationCompassTLX,     StationCompassTLY,      %00000000 , $81 | compass_station_pattern , %00000000
+                            db                              StationCompassTLX +17, StationCompassTLY,      %00001000 , $81                           , %01000001
+                            db                              StationCompassTLX,     StationCompassTLY + 17, %00000100 , $81                           , %01000001
+                            db                              StationCompassTLX +17, StationCompassTLY + 17, %00001100 , $81                           , %01000001
+ 
 
 
 ; Put on compas based on bc = Y X position offset from compass center    
@@ -405,7 +420,7 @@ compass_sun_move:       ld		a,compass_sun
                         ret    
 
 ; Put on compas based on bc = Y X position offset from compass center    
-compass_station_move:   ld		a,compass_station
+compass_planet_move:    ld		a,compass_planet
                         nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
 ; write out X position bits 1 to 8
                         ld      a, PlanetScanCenterX - compass_offset ; adjust offset for effective centre of sprite
@@ -413,6 +428,20 @@ compass_station_move:   ld		a,compass_station
                         nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
 ; write out Y position bits 1 to 8
                         ld      a, PlanetScanCenterY - compass_offset ; adjust offset for effective centre of sprite
+                        sub     b
+                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+                        ret    
+                        
+                        
+; Put on compas based on bc = Y X position offset from compass center    
+compass_station_move:   ld		a,compass_station
+                        nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
+; write out X position bits 1 to 8
+                        ld      a, StationScanCenterX - compass_offset ; adjust offset for effective centre of sprite
+                        add     a,c
+                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+; write out Y position bits 1 to 8
+                        ld      a, StationScanCenterY - compass_offset ; adjust offset for effective centre of sprite
                         sub     b
                         nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
                         ret    
@@ -574,10 +603,15 @@ show_compass_sun_infront:ShowSprite  compass_sun, compass_sun_infront
 show_compass_sun_behind: ShowSprite  compass_sun, compass_sun_behind
                          ret
 
-show_compass_station_infront: ShowSprite  compass_station, compass_station_infront
+show_compass_station_infront: ShowSprite  compass_station, compass_planet_infront
                          ret
 
-show_compass_station_behind:  ShowSprite  compass_station, compass_station_behind
+show_compass_station_behind:  ShowSprite  compass_station, compass_planet_infront
+                            ret
+show_compass_planet_infront: ShowSprite  compass_planet, compass_planet_infront
+                         ret
+
+show_compass_planet_behind:  ShowSprite  compass_planet, compass_planet_behind
                             ret
 ;-----------------------------------------------------------------------                        
 show_sprite_sun_compass:    ShowSprite  suncompass_sprite1, compass_sun_pattern
@@ -748,10 +782,11 @@ sprite_laser_hide:      HideSprite laser_sprite1
                         ret
     
 sprite_compass_hide:    HideSprite compass_sun
+                        HideSprite compass_planet
                         HideSprite compass_station
-                        HideSprite  suncompass_sprite1
-                        HideSprite  planetcompass_sprite1
-                        HideSprite  stationcompass_sprite1
+                        HideSprite suncompass_sprite1
+                        HideSprite planetcompass_sprite1
+                        HideSprite stationcompass_sprite1
                         ret
 
 sprite_cls_cursors:     call	sprite_galactic_hide	
