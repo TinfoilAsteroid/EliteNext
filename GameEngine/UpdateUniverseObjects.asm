@@ -285,7 +285,7 @@ DrawForwardShips:       xor     a
                         call    UpdateCompassPlanet
                         call    UpdateScannerPlanet
                         MMUSelectSpaceStation
-                        call    UpdateCompassSpaceStation
+                        call    UpdateCompassStation
                         ret
 .DrawStationCompass:
 

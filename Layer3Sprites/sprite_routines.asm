@@ -603,10 +603,10 @@ show_compass_sun_infront:ShowSprite  compass_sun, compass_sun_infront
 show_compass_sun_behind: ShowSprite  compass_sun, compass_sun_behind
                          ret
 
-show_compass_station_infront: ShowSprite  compass_station, compass_planet_infront
+show_compass_station_infront: ShowSprite  compass_station, compass_station_infront
                          ret
 
-show_compass_station_behind:  ShowSprite  compass_station, compass_planet_infront
+show_compass_station_behind:  ShowSprite  compass_station, compass_station_behind
                             ret
 show_compass_planet_infront: ShowSprite  compass_planet, compass_planet_infront
                          ret
