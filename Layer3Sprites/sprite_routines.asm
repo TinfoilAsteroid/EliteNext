@@ -327,11 +327,13 @@ StationCompassTLX           equ 0
 SunCompassTLY               equ 10
 PlanetCompassTLY            equ 60
 StationCompassTLY           equ 110
+RadarCentreX                equ 128
+RadarCentreY                equ 171
 
 
 compass_offset              equ 2
-ScannerX                    equ StationCompassTLX + 17
-ScannerY                    equ StationCompassTLY + 17
+ScannerX                    equ RadarCentreX
+ScannerY                    equ RadarCentreY
 SunScanCenterX              equ SunCompassTLX + 17
 SunScanCenterY              equ SunCompassTLY + 17
 PlanetScanCenterX           equ PlanetCompassTLX + 17

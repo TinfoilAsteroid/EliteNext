@@ -275,6 +275,7 @@ DrawForwardShips:       xor     a
                         CallIfMemTrue ConsoleRedrawFlag,UpdateScannerShip ; Always update ship positions                        
 .ProcessedDrawShip:     ld      a,(CurrentShipUniv)
                         inc     a
+                        DISPLAY "TO DO - Add all ships back to radar"
                         ;   DEBUGGING SHIPS RENDERING
                         ;   JumpIfALTNusng   UniverseSlotListSize, .DrawShipLoop
 .DrawSunCompass:        MMUSelectSun

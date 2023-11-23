@@ -5705,68 +5705,69 @@
  275+ 668B CC A4 74    >                        call    z, UpdateScannerShip
  276+ 668E 3A 78 64     .ProcessedDrawShip:     ld      a,(CurrentShipUniv)
  277+ 6691 3C                                   inc     a
- 278+ 6692                                      ;   DEBUGGING SHIPS RENDERING
- 279+ 6692                                      ;   JumpIfALTNusng   UniverseSlotListSize, .DrawShipLoop
- 280+ 6692              .DrawSunCompass:        MMUSelectSun
- 280+ 6692 ED 91 56 53 >                     nextreg SunMMU,            BankSunData
- 281+ 6696 CD 8A 70                             call    UpdateCompassSun                ; Always update the sun position
- 282+ 6699 CD 22 73                             call    UpdateScannerSun                ; Always attempt to put the sun on the scanner
- 283+ 669C              .CheckPlanetCompass:    ;JumpIfMemFalse SpaceStationSafeZone, .DrawStationCompass
- 284+ 669C              .DrawPlanetCompass:     MMUSelectPlanet
- 284+ 669C ED 91 56 54 >                     nextreg PlanetMMU,         BankPlanetData
- 285+ 66A0 CD 59 71                             call    UpdateCompassPlanet
- 286+ 66A3 CD E3 73                             call    UpdateScannerPlanet
- 287+ 66A6                                      MMUSelectSpaceStation
- 287+ 66A6 ED 91 56 46 >                     nextreg SpaceStationMMU,         BankSpaceStationData
- 288+ 66AA CD DD 71                             call    UpdateCompassStation
- 289+ 66AD C9                                   ret
- 290+ 66AE              .DrawStationCompass:
- 291+ 66AE
- 292+ 66AE C9                                   ret
- 293+ 66AF
+ 278+ 6692                                      DISPLAY "TO DO - Add all ships back to radar"
+ 279+ 6692                                      ;   DEBUGGING SHIPS RENDERING
+ 280+ 6692                                      ;   JumpIfALTNusng   UniverseSlotListSize, .DrawShipLoop
+ 281+ 6692              .DrawSunCompass:        MMUSelectSun
+ 281+ 6692 ED 91 56 53 >                     nextreg SunMMU,            BankSunData
+ 282+ 6696 CD 8A 70                             call    UpdateCompassSun                ; Always update the sun position
+ 283+ 6699 CD 22 73                             call    UpdateScannerSun                ; Always attempt to put the sun on the scanner
+ 284+ 669C              .CheckPlanetCompass:    ;JumpIfMemFalse SpaceStationSafeZone, .DrawStationCompass
+ 285+ 669C              .DrawPlanetCompass:     MMUSelectPlanet
+ 285+ 669C ED 91 56 54 >                     nextreg PlanetMMU,         BankPlanetData
+ 286+ 66A0 CD 59 71                             call    UpdateCompassPlanet
+ 287+ 66A3 CD E3 73                             call    UpdateScannerPlanet
+ 288+ 66A6                                      MMUSelectSpaceStation
+ 288+ 66A6 ED 91 56 46 >                     nextreg SpaceStationMMU,         BankSpaceStationData
+ 289+ 66AA CD DD 71                             call    UpdateCompassStation
+ 290+ 66AD C9                                   ret
+ 291+ 66AE              .DrawStationCompass:
+ 292+ 66AE
+ 293+ 66AE C9                                   ret
  294+ 66AF
- 295+ 66AF              ;..................................................................................................................................
- 296+ 66AF
- 297+ 66AF              TestForNextShip:        MacroIsKeyPressed c_Pressed_Quit
- 297+ 66AF 3E 46       >                        ld      a,c_Pressed_Quit
- 297+ 66B1             >                        MMUSelectKeyboard
- 297+ 66B1 ED 91 57 65 >                     nextreg KeyboardMMU,       BankKeyboard
- 297+ 66B5 CD A2 E1    >                        call    is_key_pressed
- 298+ 66B8 C0                                   ret     nz
- 299+ 66B9 3A 43 68                             ld      a,(currentDemoShip)
- 300+ 66BC 3C                                   inc     a
- 301+ 66BD FE 2C                                cp      44
- 302+ 66BF 20 01                                jr      nz,.TestOK
- 303+ 66C1 AF                                   xor     a
- 304+ 66C2 32 43 68     .TestOK:                ld      (currentDemoShip),a
- 305+ 66C5 CD F0 83                             call    ClearUnivSlotList
- 306+ 66C8 3A 43 68                             ld      a,(currentDemoShip)
- 307+ 66CB 47                                   ld      b,a
- 308+ 66CC AF                                   xor     a
- 309+ 66CD CD 07 84                             call    SetSlotAToTypeB
- 310+ 66D0 F5                                   push    af
- 311+ 66D1                                      MMUSelectUniverseN 2
- 311+ 66D1 ED 91 56 48 >                     nextreg UniverseMMU,       BankUNIVDATA0+2
- 312+ 66D5                                      SetSlotAToUnivClass
- 312+ 66D5 08          >                        ex      af,af'
- 312+ 66D6 3A 0D C4    >                        ld      a,(ShipTypeAddr)
- 312+ 66D9 47          >                        ld      b,a
- 312+ 66DA 08          >                        ex      af,af'
- 312+ 66DB CD 0E 84    >                        call    SetSlotAToClassB
- 313+ 66DE F1                                   pop     af
- 314+ 66DF CD 2C C6                             call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
- 315+ 66E2 3A 43 68                             ld      a,(currentDemoShip)
- 316+ 66E5                                      MMUSelectShipBank1
- 316+ 66E5 ED 91 57 3B >					 nextreg ShipModelMMU,	    BankShipModels1
- 317+ 66E9 CD 0F E0                             call    GetShipBankId
- 318+ 66EC                                      MMUSelectShipBankA
- 318+ 66EC ED 92 57    >					 nextreg ShipModelMMU,	    a
- 319+ 66EF 78                                   ld      a,b
- 320+ 66F0 CD 6A E0                             call    CopyShipToUniverse
- 321+ 66F3 CD 66 6B                             call    SetInitialShipPosition
- 322+ 66F6 CD 9E 68                             call    DEBUGSETNODES
- 323+ 66F9 C9                                   ret
- 324+ 66FA
+ 295+ 66AF
+ 296+ 66AF              ;..................................................................................................................................
+ 297+ 66AF
+ 298+ 66AF              TestForNextShip:        MacroIsKeyPressed c_Pressed_Quit
+ 298+ 66AF 3E 46       >                        ld      a,c_Pressed_Quit
+ 298+ 66B1             >                        MMUSelectKeyboard
+ 298+ 66B1 ED 91 57 65 >                     nextreg KeyboardMMU,       BankKeyboard
+ 298+ 66B5 CD A2 E1    >                        call    is_key_pressed
+ 299+ 66B8 C0                                   ret     nz
+ 300+ 66B9 3A 43 68                             ld      a,(currentDemoShip)
+ 301+ 66BC 3C                                   inc     a
+ 302+ 66BD FE 2C                                cp      44
+ 303+ 66BF 20 01                                jr      nz,.TestOK
+ 304+ 66C1 AF                                   xor     a
+ 305+ 66C2 32 43 68     .TestOK:                ld      (currentDemoShip),a
+ 306+ 66C5 CD F0 83                             call    ClearUnivSlotList
+ 307+ 66C8 3A 43 68                             ld      a,(currentDemoShip)
+ 308+ 66CB 47                                   ld      b,a
+ 309+ 66CC AF                                   xor     a
+ 310+ 66CD CD 07 84                             call    SetSlotAToTypeB
+ 311+ 66D0 F5                                   push    af
+ 312+ 66D1                                      MMUSelectUniverseN 2
+ 312+ 66D1 ED 91 56 48 >                     nextreg UniverseMMU,       BankUNIVDATA0+2
+ 313+ 66D5                                      SetSlotAToUnivClass
+ 313+ 66D5 08          >                        ex      af,af'
+ 313+ 66D6 3A 0D C4    >                        ld      a,(ShipTypeAddr)
+ 313+ 66D9 47          >                        ld      b,a
+ 313+ 66DA 08          >                        ex      af,af'
+ 313+ 66DB CD 0E 84    >                        call    SetSlotAToClassB
+ 314+ 66DE F1                                   pop     af
+ 315+ 66DF CD 2C C6                             call    ResetUBnkData                         ; call the routine in the paged in bank, each universe bank will hold a code copy local to it
+ 316+ 66E2 3A 43 68                             ld      a,(currentDemoShip)
+ 317+ 66E5                                      MMUSelectShipBank1
+ 317+ 66E5 ED 91 57 3B >					 nextreg ShipModelMMU,	    BankShipModels1
+ 318+ 66E9 CD 0F E0                             call    GetShipBankId
+ 319+ 66EC                                      MMUSelectShipBankA
+ 319+ 66EC ED 92 57    >					 nextreg ShipModelMMU,	    a
+ 320+ 66EF 78                                   ld      a,b
+ 321+ 66F0 CD 6A E0                             call    CopyShipToUniverse
+ 322+ 66F3 CD 66 6B                             call    SetInitialShipPosition
+ 323+ 66F6 CD 9E 68                             call    DEBUGSETNODES
+ 324+ 66F9 C9                                   ret
+ 325+ 66FA
 # file closed: ./GameEngine/UpdateUniverseObjects.asm
  396  66FA              ;..................................................................................................................................
  397  66FA              ;; TODODrawForwardSun:         MMUSelectSun
@@ -7640,7 +7641,7 @@
  963+ 72BB ED 44       >                    neg
  963+ 72BD 57          >                    ld      d,a
  964+ 72BE 7A           .absXHi:                ld      a,d
- 965+ 72BF C6 11                                add     ScannerX
+ 965+ 72BF C6 80                                add     ScannerX
  966+ 72C1 DD 67                                ld      ixh,a                       ; store adjusted X in ixh
  967+ 72C3 CB 3C        .ProcessZCoord:         srl     h
  968+ 72C5 CB 3C                                srl     h
@@ -7651,7 +7652,7 @@
  972+ 72CE 7C          >                    ld      a,h
  972+ 72CF ED 44       >                    neg
  972+ 72D1 67          >                    ld      h,a
- 973+ 72D2 3E 7F        .absZHi:                ld      a,ScannerY
+ 973+ 72D2 3E AB        .absZHi:                ld      a,ScannerY
  974+ 72D4 94                                   sub     h
  975+ 72D5 FD 67                                ld      iyh,a                       ; make iyh adjusted Z = row on screen
  976+ 72D7 CB 38        .ProcessStickLength:    srl     b                           ; divide b by 2
@@ -7744,7 +7745,7 @@
 1029+ 737C ED 44       >                    neg
 1029+ 737E 57          >                    ld      d,a
 1030+ 737F 7A           .absXHi:                ld      a,d
-1031+ 7380 C6 11                                add     ScannerX
+1031+ 7380 C6 80                                add     ScannerX
 1032+ 7382 DD 67                                ld      ixh,a                       ; store adjusted X in ixh
 1033+ 7384 CB 3C        .ProcessZCoord:         srl     h
 1034+ 7386 CB 3C                                srl     h
@@ -7755,7 +7756,7 @@
 1038+ 738F 7C          >                    ld      a,h
 1038+ 7390 ED 44       >                    neg
 1038+ 7392 67          >                    ld      h,a
-1039+ 7393 3E 7F        .absZHi:                ld      a,ScannerY
+1039+ 7393 3E AB        .absZHi:                ld      a,ScannerY
 1040+ 7395 94                                   sub     h
 1041+ 7396 FD 67                                ld      iyh,a                       ; make iyh adjusted Z = row on screen
 1042+ 7398 CB 38        .ProcessStickLength:    srl     b                           ; divide b by 2
@@ -7849,7 +7850,7 @@
 1096+ 743D ED 44       >                    neg
 1096+ 743F 57          >                    ld      d,a
 1097+ 7440 7A           .absXHi:                ld      a,d
-1098+ 7441 C6 11                                add     ScannerX
+1098+ 7441 C6 80                                add     ScannerX
 1099+ 7443 DD 67                                ld      ixh,a                       ; store adjusted X in ixh
 1100+ 7445 CB 3C        .ProcessZCoord:         srl     h
 1101+ 7447 CB 3C                                srl     h
@@ -7860,7 +7861,7 @@
 1105+ 7450 7C          >                    ld      a,h
 1105+ 7451 ED 44       >                    neg
 1105+ 7453 67          >                    ld      h,a
-1106+ 7454 3E 7F        .absZHi:                ld      a,ScannerY
+1106+ 7454 3E AB        .absZHi:                ld      a,ScannerY
 1107+ 7456 94                                   sub     h
 1108+ 7457 FD 67                                ld      iyh,a                       ; make iyh adjusted Z = row on screen
 1109+ 7459 CB 38        .ProcessStickLength:    srl     b                           ; divide b by 2
@@ -7940,7 +7941,7 @@
 1174+ 74D8 ED 44       >                    neg
 1174+ 74DA 57          >                    ld      d,a
 1175+ 74DB 7A           .absXHi:                ld      a,d
-1176+ 74DC C6 11                                add     ScannerX
+1176+ 74DC C6 80                                add     ScannerX
 1177+ 74DE DD 67                                ld      ixh,a                       ; store adjusted X in ixh
 1178+ 74E0 CB 3C        .ProcessZCoord:         srl     h
 1179+ 74E2 CB 3C                                srl     h
@@ -7951,7 +7952,7 @@
 1183+ 74EB 7C          >                    ld      a,h
 1183+ 74EC ED 44       >                    neg
 1183+ 74EE 67          >                    ld      h,a
-1184+ 74EF 3E 7F        .absZHi:                ld      a,ScannerY
+1184+ 74EF 3E AB        .absZHi:                ld      a,ScannerY
 1185+ 74F1 94                                   sub     h
 1186+ 74F2 FD 67                                ld      iyh,a                       ; make iyh adjusted Z = row on screen
 1187+ 74F4 CB 38        .ProcessStickLength:    srl     b                           ; divide b by 2
@@ -35318,981 +35319,983 @@
  327+ E177              SunCompassTLY               equ 10
  328+ E177              PlanetCompassTLY            equ 60
  329+ E177              StationCompassTLY           equ 110
- 330+ E177
- 331+ E177
- 332+ E177              compass_offset              equ 2
- 333+ E177              ScannerX                    equ StationCompassTLX + 17
- 334+ E177              ScannerY                    equ StationCompassTLY + 17
- 335+ E177              SunScanCenterX              equ SunCompassTLX + 17
- 336+ E177              SunScanCenterY              equ SunCompassTLY + 17
- 337+ E177              PlanetScanCenterX           equ PlanetCompassTLX + 17
- 338+ E177              PlanetScanCenterY           equ PlanetCompassTLY + 17
- 339+ E177              StationScanCenterX          equ StationCompassTLX + 17
- 340+ E177              StationScanCenterY          equ StationCompassTLY + 17
- 341+ E177
- 342+ E177              ;-----------------------------------------------------------------------
- 343+ E177              ; ">sprite_galactic_cursor BC = rowcol"
- 344+ E177                      DISPLAY "TODO : Compass positions, correct offsets for indicators, add in hide/show"
- 345+ E177              ; " sprite_big BC = row, hl= col D = sprite nbr , E= , pattern"
- 346+ E177 21 AE E1     sprite_sun_compass:         ld		hl,sunCompositeData
- 347+ E17A 06 04                                    ld      b,4
- 348+ E17C 7E                                       ld      a,(hl)
- 348+ E17D ED 92 34       nextreg   SPRITE_PORT_INDEX_REGISTER,a
- 348+ E180 23             inc hl
- 349+ E181 7E           .Loop:                      ld      a,(hl)
- 349+ E182 ED 92 35       nextreg   SPRITE_PORT_ATTR0_REGISTER,a
- 349+ E185 23             inc hl
- 350+ E186 7E                                       ld      a,(hl)
- 350+ E187 ED 92 36       nextreg   SPRITE_PORT_ATTR1_REGISTER,a
- 350+ E18A 23             inc hl
- 351+ E18B 7E                                       ld      a,(hl)
- 351+ E18C ED 92 37       nextreg   SPRITE_PORT_ATTR2_REGISTER,a
- 351+ E18F 23             inc hl
- 352+ E190 7E                                       ld      a,(hl)
- 352+ E191 ED 92 38       nextreg   SPRITE_PORT_ATTR3_REGISTER,a
- 352+ E194 23             inc hl
- 353+ E195 7E                                       ld      a,(hl)
- 353+ E196 ED 92 79       nextreg   SPRITE_PORT_MIRROR_ATTRIBUTE_4_WITH_INC,a
- 353+ E199 23             inc hl
- 354+ E19A 10 E5                                    djnz    .Loop
- 355+ E19C C9                                       ret
- 356+ E19D 2A 00 0A 00  sunCompassData:             db      suncompass_sprite1, SunCompassTLX,     SunCompassTLY,      %00000000 , $80 | compass_sun_pattern
- 356+ E1A1 9D
- 357+ E1A2 11 0A 08 9D                              db                          SunCompassTLX +17, SunCompassTLY,      %00001000 , $80 | compass_sun_pattern
- 358+ E1A6 00 1B 04 9D                              db                          SunCompassTLX,     SunCompassTLY + 17, %00000100 , $80 | compass_sun_pattern
- 359+ E1AA 11 1B 0C 9D                              db                          SunCompassTLX +17, SunCompassTLY + 17, %00001100 , $80 | compass_sun_pattern
- 360+ E1AE 2A 00 0A 00  sunCompositeData:           db      suncompass_sprite1, SunCompassTLX,     SunCompassTLY,      %00000000 , $81 | compass_sun_pattern , %00000000
- 360+ E1B2 9D 00
- 361+ E1B4 11 0A 08 81                              db                          SunCompassTLX +17, SunCompassTLY,      %00001000 , $81                       , %01000001
- 361+ E1B8 41
- 362+ E1B9 00 1B 04 81                              db                          SunCompassTLX,     SunCompassTLY + 17, %00000100 , $81                       , %01000001
- 362+ E1BD 41
- 363+ E1BE 11 1B 0C 81                              db                          SunCompassTLX +17, SunCompassTLY + 17, %00001100 , $81                       , %01000001
- 363+ E1C2 41
- 364+ E1C3
- 365+ E1C3              ;-----------------------------------------------------------------------
- 366+ E1C3 21 FA E1     sprite_planet_compass:      ld		hl,planetCompositeData
- 367+ E1C6 06 04                                    ld      b,4
- 368+ E1C8 7E                                       ld      a,(hl)
- 368+ E1C9 ED 92 34       nextreg   SPRITE_PORT_INDEX_REGISTER,a
- 368+ E1CC 23             inc hl
- 369+ E1CD 7E           .Loop:                      ld      a,(hl)
- 369+ E1CE ED 92 35       nextreg   SPRITE_PORT_ATTR0_REGISTER,a
- 369+ E1D1 23             inc hl
- 370+ E1D2 7E                                       ld      a,(hl)
- 370+ E1D3 ED 92 36       nextreg   SPRITE_PORT_ATTR1_REGISTER,a
- 370+ E1D6 23             inc hl
- 371+ E1D7 7E                                       ld      a,(hl)
- 371+ E1D8 ED 92 37       nextreg   SPRITE_PORT_ATTR2_REGISTER,a
- 371+ E1DB 23             inc hl
- 372+ E1DC 7E                                       ld      a,(hl)
- 372+ E1DD ED 92 38       nextreg   SPRITE_PORT_ATTR3_REGISTER,a
- 372+ E1E0 23             inc hl
- 373+ E1E1 7E                                       ld      a,(hl)
- 373+ E1E2 ED 92 79       nextreg   SPRITE_PORT_MIRROR_ATTRIBUTE_4_WITH_INC,a
- 373+ E1E5 23             inc hl
- 374+ E1E6 10 E5                                    djnz    .Loop
- 375+ E1E8 C9                                       ret
- 376+ E1E9 2E 00 3C 00  planetCompassData:          db      planetcompass_sprite1, PlanetCompassTLX,     PlanetCompassTLY,      %00000000 , $80 | compass_planet_pattern
- 376+ E1ED 9E
- 377+ E1EE 11 3C 08 9E                              db                             PlanetCompassTLX +17, PlanetCompassTLY,      %00001000 , $80 | compass_planet_pattern
- 378+ E1F2 00 4D 04 9E                              db                             PlanetCompassTLX,     PlanetCompassTLY + 17, %00000100 , $80 | compass_planet_pattern
- 379+ E1F6 11 4D 0C 9E                              db                             PlanetCompassTLX +17, PlanetCompassTLY + 17, %00001100 , $80 | compass_planet_pattern
- 380+ E1FA 2E 00 3C 00  planetCompositeData:        db      planetcompass_sprite1, PlanetCompassTLX,     PlanetCompassTLY,      %00000000 , $81 | compass_planet_pattern , %00000000
- 380+ E1FE 9F 00
- 381+ E200 11 3C 08 81                              db                             PlanetCompassTLX +17, PlanetCompassTLY,      %00001000 , $81                          , %01000001
- 381+ E204 41
- 382+ E205 00 4D 04 81                              db                             PlanetCompassTLX,     PlanetCompassTLY + 17, %00000100 , $81                          , %01000001
- 382+ E209 41
- 383+ E20A 11 4D 0C 81                              db                             PlanetCompassTLX +17, PlanetCompassTLY + 17, %00001100 , $81                          , %01000001
- 383+ E20E 41
- 384+ E20F
- 385+ E20F              ;-----------------------------------------------------------------------
+ 330+ E177              RadarCentreX                equ 128
+ 331+ E177              RadarCentreY                equ 171
+ 332+ E177
+ 333+ E177
+ 334+ E177              compass_offset              equ 2
+ 335+ E177              ScannerX                    equ RadarCentreX
+ 336+ E177              ScannerY                    equ RadarCentreY
+ 337+ E177              SunScanCenterX              equ SunCompassTLX + 17
+ 338+ E177              SunScanCenterY              equ SunCompassTLY + 17
+ 339+ E177              PlanetScanCenterX           equ PlanetCompassTLX + 17
+ 340+ E177              PlanetScanCenterY           equ PlanetCompassTLY + 17
+ 341+ E177              StationScanCenterX          equ StationCompassTLX + 17
+ 342+ E177              StationScanCenterY          equ StationCompassTLY + 17
+ 343+ E177
+ 344+ E177              ;-----------------------------------------------------------------------
+ 345+ E177              ; ">sprite_galactic_cursor BC = rowcol"
+ 346+ E177                      DISPLAY "TODO : Compass positions, correct offsets for indicators, add in hide/show"
+ 347+ E177              ; " sprite_big BC = row, hl= col D = sprite nbr , E= , pattern"
+ 348+ E177 21 AE E1     sprite_sun_compass:         ld		hl,sunCompositeData
+ 349+ E17A 06 04                                    ld      b,4
+ 350+ E17C 7E                                       ld      a,(hl)
+ 350+ E17D ED 92 34       nextreg   SPRITE_PORT_INDEX_REGISTER,a
+ 350+ E180 23             inc hl
+ 351+ E181 7E           .Loop:                      ld      a,(hl)
+ 351+ E182 ED 92 35       nextreg   SPRITE_PORT_ATTR0_REGISTER,a
+ 351+ E185 23             inc hl
+ 352+ E186 7E                                       ld      a,(hl)
+ 352+ E187 ED 92 36       nextreg   SPRITE_PORT_ATTR1_REGISTER,a
+ 352+ E18A 23             inc hl
+ 353+ E18B 7E                                       ld      a,(hl)
+ 353+ E18C ED 92 37       nextreg   SPRITE_PORT_ATTR2_REGISTER,a
+ 353+ E18F 23             inc hl
+ 354+ E190 7E                                       ld      a,(hl)
+ 354+ E191 ED 92 38       nextreg   SPRITE_PORT_ATTR3_REGISTER,a
+ 354+ E194 23             inc hl
+ 355+ E195 7E                                       ld      a,(hl)
+ 355+ E196 ED 92 79       nextreg   SPRITE_PORT_MIRROR_ATTRIBUTE_4_WITH_INC,a
+ 355+ E199 23             inc hl
+ 356+ E19A 10 E5                                    djnz    .Loop
+ 357+ E19C C9                                       ret
+ 358+ E19D 2A 00 0A 00  sunCompassData:             db      suncompass_sprite1, SunCompassTLX,     SunCompassTLY,      %00000000 , $80 | compass_sun_pattern
+ 358+ E1A1 9D
+ 359+ E1A2 11 0A 08 9D                              db                          SunCompassTLX +17, SunCompassTLY,      %00001000 , $80 | compass_sun_pattern
+ 360+ E1A6 00 1B 04 9D                              db                          SunCompassTLX,     SunCompassTLY + 17, %00000100 , $80 | compass_sun_pattern
+ 361+ E1AA 11 1B 0C 9D                              db                          SunCompassTLX +17, SunCompassTLY + 17, %00001100 , $80 | compass_sun_pattern
+ 362+ E1AE 2A 00 0A 00  sunCompositeData:           db      suncompass_sprite1, SunCompassTLX,     SunCompassTLY,      %00000000 , $81 | compass_sun_pattern , %00000000
+ 362+ E1B2 9D 00
+ 363+ E1B4 11 0A 08 81                              db                          SunCompassTLX +17, SunCompassTLY,      %00001000 , $81                       , %01000001
+ 363+ E1B8 41
+ 364+ E1B9 00 1B 04 81                              db                          SunCompassTLX,     SunCompassTLY + 17, %00000100 , $81                       , %01000001
+ 364+ E1BD 41
+ 365+ E1BE 11 1B 0C 81                              db                          SunCompassTLX +17, SunCompassTLY + 17, %00001100 , $81                       , %01000001
+ 365+ E1C2 41
+ 366+ E1C3
+ 367+ E1C3              ;-----------------------------------------------------------------------
+ 368+ E1C3 21 FA E1     sprite_planet_compass:      ld		hl,planetCompositeData
+ 369+ E1C6 06 04                                    ld      b,4
+ 370+ E1C8 7E                                       ld      a,(hl)
+ 370+ E1C9 ED 92 34       nextreg   SPRITE_PORT_INDEX_REGISTER,a
+ 370+ E1CC 23             inc hl
+ 371+ E1CD 7E           .Loop:                      ld      a,(hl)
+ 371+ E1CE ED 92 35       nextreg   SPRITE_PORT_ATTR0_REGISTER,a
+ 371+ E1D1 23             inc hl
+ 372+ E1D2 7E                                       ld      a,(hl)
+ 372+ E1D3 ED 92 36       nextreg   SPRITE_PORT_ATTR1_REGISTER,a
+ 372+ E1D6 23             inc hl
+ 373+ E1D7 7E                                       ld      a,(hl)
+ 373+ E1D8 ED 92 37       nextreg   SPRITE_PORT_ATTR2_REGISTER,a
+ 373+ E1DB 23             inc hl
+ 374+ E1DC 7E                                       ld      a,(hl)
+ 374+ E1DD ED 92 38       nextreg   SPRITE_PORT_ATTR3_REGISTER,a
+ 374+ E1E0 23             inc hl
+ 375+ E1E1 7E                                       ld      a,(hl)
+ 375+ E1E2 ED 92 79       nextreg   SPRITE_PORT_MIRROR_ATTRIBUTE_4_WITH_INC,a
+ 375+ E1E5 23             inc hl
+ 376+ E1E6 10 E5                                    djnz    .Loop
+ 377+ E1E8 C9                                       ret
+ 378+ E1E9 2E 00 3C 00  planetCompassData:          db      planetcompass_sprite1, PlanetCompassTLX,     PlanetCompassTLY,      %00000000 , $80 | compass_planet_pattern
+ 378+ E1ED 9E
+ 379+ E1EE 11 3C 08 9E                              db                             PlanetCompassTLX +17, PlanetCompassTLY,      %00001000 , $80 | compass_planet_pattern
+ 380+ E1F2 00 4D 04 9E                              db                             PlanetCompassTLX,     PlanetCompassTLY + 17, %00000100 , $80 | compass_planet_pattern
+ 381+ E1F6 11 4D 0C 9E                              db                             PlanetCompassTLX +17, PlanetCompassTLY + 17, %00001100 , $80 | compass_planet_pattern
+ 382+ E1FA 2E 00 3C 00  planetCompositeData:        db      planetcompass_sprite1, PlanetCompassTLX,     PlanetCompassTLY,      %00000000 , $81 | compass_planet_pattern , %00000000
+ 382+ E1FE 9F 00
+ 383+ E200 11 3C 08 81                              db                             PlanetCompassTLX +17, PlanetCompassTLY,      %00001000 , $81                          , %01000001
+ 383+ E204 41
+ 384+ E205 00 4D 04 81                              db                             PlanetCompassTLX,     PlanetCompassTLY + 17, %00000100 , $81                          , %01000001
+ 384+ E209 41
+ 385+ E20A 11 4D 0C 81                              db                             PlanetCompassTLX +17, PlanetCompassTLY + 17, %00001100 , $81                          , %01000001
+ 385+ E20E 41
  386+ E20F
- 387+ E20F 21 46 E2     sprite_station_compass:     ld		hl,stationCompositeData
- 388+ E212 06 04                                    ld      b,4
- 389+ E214 7E                                       ld      a,(hl)
- 389+ E215 ED 92 34       nextreg   SPRITE_PORT_INDEX_REGISTER,a
- 389+ E218 23             inc hl
- 390+ E219 7E           .Loop:                      ld      a,(hl)
- 390+ E21A ED 92 35       nextreg   SPRITE_PORT_ATTR0_REGISTER,a
- 390+ E21D 23             inc hl
- 391+ E21E 7E                                       ld      a,(hl)
- 391+ E21F ED 92 36       nextreg   SPRITE_PORT_ATTR1_REGISTER,a
- 391+ E222 23             inc hl
- 392+ E223 7E                                       ld      a,(hl)
- 392+ E224 ED 92 37       nextreg   SPRITE_PORT_ATTR2_REGISTER,a
- 392+ E227 23             inc hl
- 393+ E228 7E                                       ld      a,(hl)
- 393+ E229 ED 92 38       nextreg   SPRITE_PORT_ATTR3_REGISTER,a
- 393+ E22C 23             inc hl
- 394+ E22D 7E                                       ld      a,(hl)
- 394+ E22E ED 92 79       nextreg   SPRITE_PORT_MIRROR_ATTRIBUTE_4_WITH_INC,a
- 394+ E231 23             inc hl
- 395+ E232 10 E5                                    djnz    .Loop
- 396+ E234 C9                                       ret
- 397+ E235 32 00 6E 00  stationCompassData:         db      stationcompass_sprite1, StationCompassTLX,     StationCompassTLY,      %00000000 , $80 | compass_station_pattern
- 397+ E239 9F
- 398+ E23A 11 6E 08 9F                              db                              StationCompassTLX +17, StationCompassTLY,      %00001000 , $80 | compass_station_pattern
- 399+ E23E 00 7F 04 9F                              db                              StationCompassTLX,     StationCompassTLY + 17, %00000100 , $80 | compass_station_pattern
- 400+ E242 11 7F 0C 9F                              db                              StationCompassTLX +17, StationCompassTLY + 17, %00001100 , $80 | compass_station_pattern
- 401+ E246 32 00 6E 00  stationCompositeData:       db      stationcompass_sprite1, StationCompassTLX,     StationCompassTLY,      %00000000 , $81 | compass_station_pattern , %00000000
- 401+ E24A 9F 00
- 402+ E24C 11 6E 08 81                              db                              StationCompassTLX +17, StationCompassTLY,      %00001000 , $81                           , %01000001
- 402+ E250 41
- 403+ E251 00 7F 04 81                              db                              StationCompassTLX,     StationCompassTLY + 17, %00000100 , $81                           , %01000001
- 403+ E255 41
- 404+ E256 11 7F 0C 81                              db                              StationCompassTLX +17, StationCompassTLY + 17, %00001100 , $81                           , %01000001
- 404+ E25A 41
- 405+ E25B
- 406+ E25B
+ 387+ E20F              ;-----------------------------------------------------------------------
+ 388+ E20F
+ 389+ E20F 21 46 E2     sprite_station_compass:     ld		hl,stationCompositeData
+ 390+ E212 06 04                                    ld      b,4
+ 391+ E214 7E                                       ld      a,(hl)
+ 391+ E215 ED 92 34       nextreg   SPRITE_PORT_INDEX_REGISTER,a
+ 391+ E218 23             inc hl
+ 392+ E219 7E           .Loop:                      ld      a,(hl)
+ 392+ E21A ED 92 35       nextreg   SPRITE_PORT_ATTR0_REGISTER,a
+ 392+ E21D 23             inc hl
+ 393+ E21E 7E                                       ld      a,(hl)
+ 393+ E21F ED 92 36       nextreg   SPRITE_PORT_ATTR1_REGISTER,a
+ 393+ E222 23             inc hl
+ 394+ E223 7E                                       ld      a,(hl)
+ 394+ E224 ED 92 37       nextreg   SPRITE_PORT_ATTR2_REGISTER,a
+ 394+ E227 23             inc hl
+ 395+ E228 7E                                       ld      a,(hl)
+ 395+ E229 ED 92 38       nextreg   SPRITE_PORT_ATTR3_REGISTER,a
+ 395+ E22C 23             inc hl
+ 396+ E22D 7E                                       ld      a,(hl)
+ 396+ E22E ED 92 79       nextreg   SPRITE_PORT_MIRROR_ATTRIBUTE_4_WITH_INC,a
+ 396+ E231 23             inc hl
+ 397+ E232 10 E5                                    djnz    .Loop
+ 398+ E234 C9                                       ret
+ 399+ E235 32 00 6E 00  stationCompassData:         db      stationcompass_sprite1, StationCompassTLX,     StationCompassTLY,      %00000000 , $80 | compass_station_pattern
+ 399+ E239 9F
+ 400+ E23A 11 6E 08 9F                              db                              StationCompassTLX +17, StationCompassTLY,      %00001000 , $80 | compass_station_pattern
+ 401+ E23E 00 7F 04 9F                              db                              StationCompassTLX,     StationCompassTLY + 17, %00000100 , $80 | compass_station_pattern
+ 402+ E242 11 7F 0C 9F                              db                              StationCompassTLX +17, StationCompassTLY + 17, %00001100 , $80 | compass_station_pattern
+ 403+ E246 32 00 6E 00  stationCompositeData:       db      stationcompass_sprite1, StationCompassTLX,     StationCompassTLY,      %00000000 , $81 | compass_station_pattern , %00000000
+ 403+ E24A 9F 00
+ 404+ E24C 11 6E 08 81                              db                              StationCompassTLX +17, StationCompassTLY,      %00001000 , $81                           , %01000001
+ 404+ E250 41
+ 405+ E251 00 7F 04 81                              db                              StationCompassTLX,     StationCompassTLY + 17, %00000100 , $81                           , %01000001
+ 405+ E255 41
+ 406+ E256 11 7F 0C 81                              db                              StationCompassTLX +17, StationCompassTLY + 17, %00001100 , $81                           , %01000001
+ 406+ E25A 41
  407+ E25B
- 408+ E25B              ; Put on compas based on bc = Y X position offset from compass center
- 409+ E25B 3E 20        compass_sun_move:       ld		a,compass_sun
- 410+ E25D ED 92 34                             nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
- 411+ E260              ; write out X position bits 1 to 8
- 412+ E260 3E 0F                                ld      a, SunScanCenterX - compass_offset ; adjust offset for effective centre of sprite
- 413+ E262 81                                   add     a,c
- 414+ E263                                      DISPLAY "TODO - Add min max on X and Y"
- 415+ E263 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
- 416+ E266              ; write out Y position bits 1 to 8
- 417+ E266 3E 19                                ld      a, SunScanCenterY - compass_offset ; adjust offset for effective centre of sprite
- 418+ E268 90                                   sub     b
- 419+ E269 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 420+ E26C C9                                   ret
- 421+ E26D
- 422+ E26D              ; Put on compas based on bc = Y X position offset from compass center
- 423+ E26D 3E 21        compass_planet_move:    ld		a,compass_planet
- 424+ E26F ED 92 34                             nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
- 425+ E272              ; write out X position bits 1 to 8
- 426+ E272 3E 0F                                ld      a, PlanetScanCenterX - compass_offset ; adjust offset for effective centre of sprite
- 427+ E274 81                                   add     a,c
- 428+ E275 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
- 429+ E278              ; write out Y position bits 1 to 8
- 430+ E278 3E 4B                                ld      a, PlanetScanCenterY - compass_offset ; adjust offset for effective centre of sprite
- 431+ E27A 90                                   sub     b
- 432+ E27B ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 433+ E27E C9                                   ret
- 434+ E27F
- 435+ E27F
- 436+ E27F              ; Put on compas based on bc = Y X position offset from compass center
- 437+ E27F 3E 22        compass_station_move:   ld		a,compass_station
- 438+ E281 ED 92 34                             nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
- 439+ E284              ; write out X position bits 1 to 8
- 440+ E284 3E 0F                                ld      a, StationScanCenterX - compass_offset ; adjust offset for effective centre of sprite
- 441+ E286 81                                   add     a,c
- 442+ E287 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
- 443+ E28A              ; write out Y position bits 1 to 8
- 444+ E28A 3E 7D                                ld      a, StationScanCenterY - compass_offset ; adjust offset for effective centre of sprite
- 445+ E28C 90                                   sub     b
- 446+ E28D ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 447+ E290 C9                                   ret
- 448+ E291
- 449+ E291              ReticuleCentreX         EQU (256/2)+32 -1
- 450+ E291              ReticuleCentreY         EQU (192/2)+32 -1
- 451+ E291              ReticuleOffset          EQU 8
- 452+ E291
- 453+ E291              TargetetingCentreX1     EQU ReticuleCentreX -32
- 454+ E291              TargetetingCentreX2     EQU ReticuleCentreX +16
- 455+ E291              TargetetingCentreY      EQU ReticuleCentreY -7
- 456+ E291
- 457+ E291              sprite_missile_x        EQU 2+32
- 458+ E291              sprite_missile_y        EQU 192-8+32
- 459+ E291
- 460+ E291              sprite_ecm_x            EQU (6*8) +2 +32
- 461+ E291              sprite_ecm_y            EQU 192-15+32
- 462+ E291
- 463+ E291 3E 25        sprite_ECM:             ld      a,ECM_sprite
- 464+ E293 ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a
- 465+ E296 3E 52                                ld      a,sprite_ecm_x
- 466+ E298 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a
- 467+ E29B 3E D1                                ld		a,sprite_ecm_y
- 468+ E29D ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 469+ E2A0 3E 99                                ld      a,ecm_pattern | %10000000
- 470+ E2A2 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
- 471+ E2A5 C9                                   ret
- 472+ E2A6
- 473+ E2A6 ED 92 34     sprite_missile_ready:   nextreg SPRITE_PORT_INDEX_REGISTER,a
- 474+ E2A9 79                                   ld      a,c
- 475+ E2AA ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a
- 476+ E2AD 3E D8                                ld		a,sprite_missile_y
- 477+ E2AF ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 478+ E2B2 3E 9A                                ld      a,missile_ready_pattern | %10000000
- 479+ E2B4 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
- 480+ E2B7 C9                                   ret
- 481+ E2B8
- 482+ E2B8 3E 26        sprite_missile_1:       ld      a,missile_sprite1
- 483+ E2BA 0E 22                                ld      c,sprite_missile_x
- 484+ E2BC C3 A6 E2                             jp      sprite_missile_ready
- 485+ E2BF
- 486+ E2BF 3E 27        sprite_missile_2:       ld      a,missile_sprite2
- 487+ E2C1 0E 31                                ld      c,sprite_missile_x+15
- 488+ E2C3 C3 A6 E2                             jp      sprite_missile_ready
- 489+ E2C6
- 490+ E2C6 3E 28        sprite_missile_3:       ld      a,missile_sprite3
- 491+ E2C8 0E 3B                                ld      c,sprite_missile_x+25
- 492+ E2CA C3 A6 E2                             jp      sprite_missile_ready
- 493+ E2CD
- 494+ E2CD 3E 29        sprite_missile_4:       ld      a,missile_sprite4
- 495+ E2CF 0E 45                                ld      c,sprite_missile_x +35
- 496+ E2D1 C3 A6 E2                             jp      sprite_missile_ready
- 497+ E2D4
- 498+ E2D4
+ 408+ E25B
+ 409+ E25B
+ 410+ E25B              ; Put on compas based on bc = Y X position offset from compass center
+ 411+ E25B 3E 20        compass_sun_move:       ld		a,compass_sun
+ 412+ E25D ED 92 34                             nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
+ 413+ E260              ; write out X position bits 1 to 8
+ 414+ E260 3E 0F                                ld      a, SunScanCenterX - compass_offset ; adjust offset for effective centre of sprite
+ 415+ E262 81                                   add     a,c
+ 416+ E263                                      DISPLAY "TODO - Add min max on X and Y"
+ 417+ E263 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+ 418+ E266              ; write out Y position bits 1 to 8
+ 419+ E266 3E 19                                ld      a, SunScanCenterY - compass_offset ; adjust offset for effective centre of sprite
+ 420+ E268 90                                   sub     b
+ 421+ E269 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 422+ E26C C9                                   ret
+ 423+ E26D
+ 424+ E26D              ; Put on compas based on bc = Y X position offset from compass center
+ 425+ E26D 3E 21        compass_planet_move:    ld		a,compass_planet
+ 426+ E26F ED 92 34                             nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
+ 427+ E272              ; write out X position bits 1 to 8
+ 428+ E272 3E 0F                                ld      a, PlanetScanCenterX - compass_offset ; adjust offset for effective centre of sprite
+ 429+ E274 81                                   add     a,c
+ 430+ E275 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+ 431+ E278              ; write out Y position bits 1 to 8
+ 432+ E278 3E 4B                                ld      a, PlanetScanCenterY - compass_offset ; adjust offset for effective centre of sprite
+ 433+ E27A 90                                   sub     b
+ 434+ E27B ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 435+ E27E C9                                   ret
+ 436+ E27F
+ 437+ E27F
+ 438+ E27F              ; Put on compas based on bc = Y X position offset from compass center
+ 439+ E27F 3E 22        compass_station_move:   ld		a,compass_station
+ 440+ E281 ED 92 34                             nextreg	SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
+ 441+ E284              ; write out X position bits 1 to 8
+ 442+ E284 3E 0F                                ld      a, StationScanCenterX - compass_offset ; adjust offset for effective centre of sprite
+ 443+ E286 81                                   add     a,c
+ 444+ E287 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
+ 445+ E28A              ; write out Y position bits 1 to 8
+ 446+ E28A 3E 7D                                ld      a, StationScanCenterY - compass_offset ; adjust offset for effective centre of sprite
+ 447+ E28C 90                                   sub     b
+ 448+ E28D ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 449+ E290 C9                                   ret
+ 450+ E291
+ 451+ E291              ReticuleCentreX         EQU (256/2)+32 -1
+ 452+ E291              ReticuleCentreY         EQU (192/2)+32 -1
+ 453+ E291              ReticuleOffset          EQU 8
+ 454+ E291
+ 455+ E291              TargetetingCentreX1     EQU ReticuleCentreX -32
+ 456+ E291              TargetetingCentreX2     EQU ReticuleCentreX +16
+ 457+ E291              TargetetingCentreY      EQU ReticuleCentreY -7
+ 458+ E291
+ 459+ E291              sprite_missile_x        EQU 2+32
+ 460+ E291              sprite_missile_y        EQU 192-8+32
+ 461+ E291
+ 462+ E291              sprite_ecm_x            EQU (6*8) +2 +32
+ 463+ E291              sprite_ecm_y            EQU 192-15+32
+ 464+ E291
+ 465+ E291 3E 25        sprite_ECM:             ld      a,ECM_sprite
+ 466+ E293 ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 467+ E296 3E 52                                ld      a,sprite_ecm_x
+ 468+ E298 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a
+ 469+ E29B 3E D1                                ld		a,sprite_ecm_y
+ 470+ E29D ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 471+ E2A0 3E 99                                ld      a,ecm_pattern | %10000000
+ 472+ E2A2 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+ 473+ E2A5 C9                                   ret
+ 474+ E2A6
+ 475+ E2A6 ED 92 34     sprite_missile_ready:   nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 476+ E2A9 79                                   ld      a,c
+ 477+ E2AA ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a
+ 478+ E2AD 3E D8                                ld		a,sprite_missile_y
+ 479+ E2AF ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 480+ E2B2 3E 9A                                ld      a,missile_ready_pattern | %10000000
+ 481+ E2B4 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+ 482+ E2B7 C9                                   ret
+ 483+ E2B8
+ 484+ E2B8 3E 26        sprite_missile_1:       ld      a,missile_sprite1
+ 485+ E2BA 0E 22                                ld      c,sprite_missile_x
+ 486+ E2BC C3 A6 E2                             jp      sprite_missile_ready
+ 487+ E2BF
+ 488+ E2BF 3E 27        sprite_missile_2:       ld      a,missile_sprite2
+ 489+ E2C1 0E 31                                ld      c,sprite_missile_x+15
+ 490+ E2C3 C3 A6 E2                             jp      sprite_missile_ready
+ 491+ E2C6
+ 492+ E2C6 3E 28        sprite_missile_3:       ld      a,missile_sprite3
+ 493+ E2C8 0E 3B                                ld      c,sprite_missile_x+25
+ 494+ E2CA C3 A6 E2                             jp      sprite_missile_ready
+ 495+ E2CD
+ 496+ E2CD 3E 29        sprite_missile_4:       ld      a,missile_sprite4
+ 497+ E2CF 0E 45                                ld      c,sprite_missile_x +35
+ 498+ E2D1 C3 A6 E2                             jp      sprite_missile_ready
  499+ E2D4
- 500+ E2D4 3E 0C        sprite_reticule:        ld      a,reticlule_sprite1                 ; LEFT ARM
- 501+ E2D6 ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 502+ E2D9 3E 87                                ld      a,ReticuleCentreX -16 - ReticuleOffset
- 503+ E2DB ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 504+ E2DE 3E 7F                                ld		a,ReticuleCentreY
- 505+ E2E0 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 506+ E2E3 AF                                   xor     a
- 507+ E2E4 ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 508+ E2E7 3E 8B                                ld      a,reticule_pattern_2 | %10000000
- 509+ E2E9 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
- 510+ E2EC 3E 0D        .rightReticule          ld      a,reticlule_sprite2                 ; RIGHT ARM
- 511+ E2EE ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 512+ E2F1 3E A7                                ld      a,ReticuleCentreX + ReticuleOffset
- 513+ E2F3 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 514+ E2F6 3E 7F                                ld		a,ReticuleCentreY
- 515+ E2F8 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 516+ E2FB 3E 08                                ld      a,%00001000
- 517+ E2FD ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring horizontal
- 518+ E300 3E 8B                                ld      a,reticule_pattern_2 | %10000000
- 519+ E302 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
- 520+ E305 3E 0E        .topReticule            ld      a,reticlule_sprite3
- 521+ E307 ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 522+ E30A 3E 9F                                ld      a,ReticuleCentreX
- 523+ E30C ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 524+ E30F 3E 67                                ld		a,ReticuleCentreY-16 - ReticuleOffset
- 525+ E311 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 526+ E314 AF                                   xor     a
- 527+ E315 ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 528+ E318 3E 8A                                ld      a,reticule_pattern_1 | %10000000
- 529+ E31A ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
- 530+ E31D 3E 0F        .bottomReticule         ld      a,reticlule_sprite4
- 531+ E31F ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 532+ E322 3E 9F                                ld      a,ReticuleCentreX
- 533+ E324 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 534+ E327 3E 87                                ld		a,ReticuleCentreY + ReticuleOffset
- 535+ E329 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 536+ E32C 3E 04                                ld      a,%00000100
- 537+ E32E ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring vertical
- 538+ E331 3E 8A                                ld      a,reticule_pattern_1 | %10000000
- 539+ E333 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
- 540+ E336 C9                                   ret
- 541+ E337
- 542+ E337              laserbasex              equ 6
- 543+ E337              laserbasey              equ 14
- 544+ E337
- 545+ E337              ShowSprite              MACRO   spritenbr, patternnbr
- 546+ E337 ~                                    ld      a, spritenbr
- 547+ E337 ~                                    nextreg SPRITE_PORT_INDEX_REGISTER,a
- 548+ E337 ~                                    ld      a,patternnbr | %10000000
- 549+ E337 ~                                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 550+ E337                                      ENDM
- 551+ E337
- 552+ E337              LeftLaser:              MACRO   xoffset, yoffset, spriteL, patternL
- 553+ E337 ~                                    ld      a, spriteL
- 554+ E337 ~                                    nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 555+ E337 ~                                    ld      a,((laserbasex + xoffset) *8) + 32
- 556+ E337 ~                                    nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 557+ E337 ~                                    ld		a,((laserbasey -yoffset) * 8) + 32 -1
- 558+ E337 ~                                    nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 559+ E337 ~                                    xor     a
- 560+ E337 ~                                    nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 561+ E337 ~                                    ld      a, patternL | %00000000             ; hidden by default
- 562+ E337 ~                                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 563+ E337                                      ENDM
- 564+ E337
- 565+ E337              RightLaser:             MACRO   xoffset, yoffset, spriteL, patternL
- 566+ E337 ~                                    ld      a, spriteL
- 567+ E337 ~                                    nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 568+ E337 ~                                    ld      a,(((30-laserbasex) - xoffset) *8) + 32 -2
- 569+ E337 ~                                    nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 570+ E337 ~                                    ld		a,((laserbasey -yoffset) * 8) + 32 -1
- 571+ E337 ~                                    nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 572+ E337 ~                                    ld      a,%00001000
- 573+ E337 ~                                    nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 574+ E337 ~                                    ld      a, patternL | %00000000             ; hidden by default
- 575+ E337 ~                                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 576+ E337                                      ENDM
- 577+ E337
- 578+ E337              show_ecm_sprite:        ShowSprite  ECM_sprite, ecm_pattern
- 578+ E337 3E 25       >                        ld      a, ECM_sprite
- 578+ E339 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 578+ E33C 3E 99       >                        ld      a,ecm_pattern | %10000000
- 578+ E33E ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 579+ E341 C9                                   ret
- 580+ E342
- 581+ E342              show_missile_1_ready:   ShowSprite  missile_sprite1, missile_ready_pattern
- 581+ E342 3E 26       >                        ld      a, missile_sprite1
- 581+ E344 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 581+ E347 3E 9A       >                        ld      a,missile_ready_pattern | %10000000
- 581+ E349 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 582+ E34C C9                                   ret
- 583+ E34D
- 584+ E34D              show_missile_2_ready:   ShowSprite  missile_sprite2, missile_ready_pattern
- 584+ E34D 3E 27       >                        ld      a, missile_sprite2
- 584+ E34F ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 584+ E352 3E 9A       >                        ld      a,missile_ready_pattern | %10000000
- 584+ E354 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 585+ E357 C9                                   ret
- 586+ E358
- 587+ E358              show_missile_3_ready:   ShowSprite  missile_sprite3, missile_ready_pattern
- 587+ E358 3E 28       >                        ld      a, missile_sprite3
- 587+ E35A ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 587+ E35D 3E 9A       >                        ld      a,missile_ready_pattern | %10000000
- 587+ E35F ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 588+ E362 C9                                   ret
- 589+ E363
- 590+ E363              show_missile_4_ready:   ShowSprite  missile_sprite4, missile_ready_pattern
- 590+ E363 3E 29       >                        ld      a, missile_sprite4
- 590+ E365 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 590+ E368 3E 9A       >                        ld      a,missile_ready_pattern | %10000000
- 590+ E36A ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 591+ E36D C9                                   ret
- 592+ E36E
- 593+ E36E              show_missile_1_armed:   ShowSprite  missile_sprite1, missile_armed_pattern
- 593+ E36E 3E 26       >                        ld      a, missile_sprite1
- 593+ E370 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 593+ E373 3E 9B       >                        ld      a,missile_armed_pattern | %10000000
- 593+ E375 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 594+ E378 C9                                   ret
- 595+ E379
- 596+ E379              show_missile_1_locked:  ShowSprite  missile_sprite1, missile_locked_pattern
- 596+ E379 3E 26       >                        ld      a, missile_sprite1
- 596+ E37B ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 596+ E37E 3E 9C       >                        ld      a,missile_locked_pattern | %10000000
- 596+ E380 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 597+ E383 C9                                   ret
- 598+ E384
- 599+ E384
- 600+ E384              show_compass_sun_infront:ShowSprite  compass_sun, compass_sun_infront
- 600+ E384 3E 20       >                        ld      a, compass_sun
- 600+ E386 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 600+ E389 3E 91       >                        ld      a,compass_sun_infront | %10000000
- 600+ E38B ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 601+ E38E C9                                    ret
- 602+ E38F
- 603+ E38F              show_compass_sun_behind: ShowSprite  compass_sun, compass_sun_behind
- 603+ E38F 3E 20       >                        ld      a, compass_sun
- 603+ E391 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 603+ E394 3E 92       >                        ld      a,compass_sun_behind | %10000000
- 603+ E396 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 604+ E399 C9                                    ret
- 605+ E39A
- 606+ E39A              show_compass_station_infront: ShowSprite  compass_station, compass_station_infront
- 606+ E39A 3E 22       >                        ld      a, compass_station
- 606+ E39C ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 606+ E39F 3E 95       >                        ld      a,compass_station_infront | %10000000
- 606+ E3A1 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 607+ E3A4 C9                                    ret
- 608+ E3A5
- 609+ E3A5              show_compass_station_behind:  ShowSprite  compass_station, compass_station_behind
- 609+ E3A5 3E 22       >                        ld      a, compass_station
- 609+ E3A7 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 609+ E3AA 3E 96       >                        ld      a,compass_station_behind | %10000000
- 609+ E3AC ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 610+ E3AF C9                                       ret
- 611+ E3B0              show_compass_planet_infront: ShowSprite  compass_planet, compass_planet_infront
- 611+ E3B0 3E 21       >                        ld      a, compass_planet
- 611+ E3B2 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 611+ E3B5 3E 93       >                        ld      a,compass_planet_infront | %10000000
- 611+ E3B7 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 612+ E3BA C9                                    ret
- 613+ E3BB
- 614+ E3BB              show_compass_planet_behind:  ShowSprite  compass_planet, compass_planet_behind
- 614+ E3BB 3E 21       >                        ld      a, compass_planet
- 614+ E3BD ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 614+ E3C0 3E 94       >                        ld      a,compass_planet_behind | %10000000
- 614+ E3C2 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 615+ E3C5 C9                                       ret
- 616+ E3C6              ;-----------------------------------------------------------------------
- 617+ E3C6              show_sprite_sun_compass:    ShowSprite  suncompass_sprite1, compass_sun_pattern
- 617+ E3C6 3E 2A       >                        ld      a, suncompass_sprite1
- 617+ E3C8 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 617+ E3CB 3E 9D       >                        ld      a,compass_sun_pattern | %10000000
- 617+ E3CD ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 618+ E3D0                                          ShowSprite  suncompass_sprite2, compass_sun_pattern
- 618+ E3D0 3E 2B       >                        ld      a, suncompass_sprite2
- 618+ E3D2 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 618+ E3D5 3E 9D       >                        ld      a,compass_sun_pattern | %10000000
- 618+ E3D7 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 619+ E3DA                                          ShowSprite  suncompass_sprite3, compass_sun_pattern
- 619+ E3DA 3E 2C       >                        ld      a, suncompass_sprite3
- 619+ E3DC ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 619+ E3DF 3E 9D       >                        ld      a,compass_sun_pattern | %10000000
- 619+ E3E1 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 620+ E3E4                                          ShowSprite  suncompass_sprite4, compass_sun_pattern
- 620+ E3E4 3E 2D       >                        ld      a, suncompass_sprite4
- 620+ E3E6 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 620+ E3E9 3E 9D       >                        ld      a,compass_sun_pattern | %10000000
- 620+ E3EB ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 621+ E3EE C9                                       ret
- 622+ E3EF              ;-----------------------------------------------------------------------
- 623+ E3EF              show_sprite_planet_compass: ShowSprite  planetcompass_sprite1, compass_planet_pattern
- 623+ E3EF 3E 2E       >                        ld      a, planetcompass_sprite1
- 623+ E3F1 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 623+ E3F4 3E 9E       >                        ld      a,compass_planet_pattern | %10000000
- 623+ E3F6 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 624+ E3F9                                          ShowSprite  planetcompass_sprite2, compass_planet_pattern
- 624+ E3F9 3E 2F       >                        ld      a, planetcompass_sprite2
- 624+ E3FB ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 624+ E3FE 3E 9E       >                        ld      a,compass_planet_pattern | %10000000
- 624+ E400 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 625+ E403                                          ShowSprite  planetcompass_sprite3, compass_planet_pattern
- 625+ E403 3E 30       >                        ld      a, planetcompass_sprite3
- 625+ E405 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 625+ E408 3E 9E       >                        ld      a,compass_planet_pattern | %10000000
- 625+ E40A ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 626+ E40D                                          ShowSprite  planetcompass_sprite4, compass_planet_pattern
- 626+ E40D 3E 31       >                        ld      a, planetcompass_sprite4
- 626+ E40F ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 626+ E412 3E 9E       >                        ld      a,compass_planet_pattern | %10000000
- 626+ E414 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 627+ E417 C9                                       ret
- 628+ E418              ;-----------------------------------------------------------------------
- 629+ E418              show_sprite_station_compass:ShowSprite  stationcompass_sprite1, compass_station_pattern
- 629+ E418 3E 32       >                        ld      a, stationcompass_sprite1
- 629+ E41A ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 629+ E41D 3E 9F       >                        ld      a,compass_station_pattern | %10000000
- 629+ E41F ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 630+ E422                                          ShowSprite  stationcompass_sprite2, compass_station_pattern
- 630+ E422 3E 33       >                        ld      a, stationcompass_sprite2
- 630+ E424 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 630+ E427 3E 9F       >                        ld      a,compass_station_pattern | %10000000
- 630+ E429 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 631+ E42C                                          ShowSprite  stationcompass_sprite3, compass_station_pattern
- 631+ E42C 3E 34       >                        ld      a, stationcompass_sprite3
- 631+ E42E ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 631+ E431 3E 9F       >                        ld      a,compass_station_pattern | %10000000
- 631+ E433 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 632+ E436                                          ShowSprite  stationcompass_sprite4, compass_station_pattern
- 632+ E436 3E 35       >                        ld      a, stationcompass_sprite4
- 632+ E438 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 632+ E43B 3E 9F       >                        ld      a,compass_station_pattern | %10000000
- 632+ E43D ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 633+ E440 C9                                       ret
- 634+ E441              ;-----------------------------------------------------------------------
- 635+ E441              ;-----------------------------------------------------------------------
- 636+ E441
- 637+ E441              sprite_laser:           LeftLaser  0,0,laser_sprite1 ,laser_pattern_1
- 637+ E441 3E 10       >                        ld      a, laser_sprite1
- 637+ E443 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 637+ E446 3E 50       >                        ld      a,((laserbasex + 0) *8) + 32
- 637+ E448 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 637+ E44B 3E 8F       >                        ld		a,((laserbasey -0) * 8) + 32 -1
- 637+ E44D ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 637+ E450 AF          >                        xor     a
- 637+ E451 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 637+ E454 3E 0C       >                        ld      a, laser_pattern_1 | %00000000             ; hidden by default
- 637+ E456 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 638+ E459                                      LeftLaser  2,0,laser_sprite2 ,laser_pattern_2
- 638+ E459 3E 11       >                        ld      a, laser_sprite2
- 638+ E45B ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 638+ E45E 3E 60       >                        ld      a,((laserbasex + 2) *8) + 32
- 638+ E460 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 638+ E463 3E 8F       >                        ld		a,((laserbasey -0) * 8) + 32 -1
- 638+ E465 ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 638+ E468 AF          >                        xor     a
- 638+ E469 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 638+ E46C 3E 0D       >                        ld      a, laser_pattern_2 | %00000000             ; hidden by default
- 638+ E46E ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 639+ E471                                      LeftLaser  4,1,laser_sprite3 ,laser_pattern_3
- 639+ E471 3E 12       >                        ld      a, laser_sprite3
- 639+ E473 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 639+ E476 3E 70       >                        ld      a,((laserbasex + 4) *8) + 32
- 639+ E478 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 639+ E47B 3E 87       >                        ld		a,((laserbasey -1) * 8) + 32 -1
- 639+ E47D ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 639+ E480 AF          >                        xor     a
- 639+ E481 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 639+ E484 3E 0E       >                        ld      a, laser_pattern_3 | %00000000             ; hidden by default
- 639+ E486 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 640+ E489                                      LeftLaser  6,1,laser_sprite4 ,laser_pattern_4
- 640+ E489 3E 13       >                        ld      a, laser_sprite4
- 640+ E48B ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 640+ E48E 3E 80       >                        ld      a,((laserbasex + 6) *8) + 32
- 640+ E490 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 640+ E493 3E 87       >                        ld		a,((laserbasey -1) * 8) + 32 -1
- 640+ E495 ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 640+ E498 AF          >                        xor     a
- 640+ E499 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 640+ E49C 3E 0F       >                        ld      a, laser_pattern_4 | %00000000             ; hidden by default
- 640+ E49E ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 641+ E4A1                                      LeftLaser  8,2,laser_sprite5 ,laser_pattern_5
- 641+ E4A1 3E 14       >                        ld      a, laser_sprite5
- 641+ E4A3 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 641+ E4A6 3E 90       >                        ld      a,((laserbasex + 8) *8) + 32
- 641+ E4A8 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 641+ E4AB 3E 7F       >                        ld		a,((laserbasey -2) * 8) + 32 -1
- 641+ E4AD ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 641+ E4B0 AF          >                        xor     a
- 641+ E4B1 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 641+ E4B4 3E 10       >                        ld      a, laser_pattern_5 | %00000000             ; hidden by default
- 641+ E4B6 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 642+ E4B9                                      RightLaser 0,0,laser_sprite9 ,laser_pattern_1
- 642+ E4B9 3E 18       >                        ld      a, laser_sprite9
- 642+ E4BB ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 642+ E4BE 3E DE       >                        ld      a,(((30-laserbasex) - 0) *8) + 32 -2
- 642+ E4C0 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 642+ E4C3 3E 8F       >                        ld		a,((laserbasey -0) * 8) + 32 -1
- 642+ E4C5 ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 642+ E4C8 3E 08       >                        ld      a,%00001000
- 642+ E4CA ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 642+ E4CD 3E 0C       >                        ld      a, laser_pattern_1 | %00000000             ; hidden by default
- 642+ E4CF ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 643+ E4D2                                      RightLaser 2,0,laser_sprite10,laser_pattern_2
- 643+ E4D2 3E 19       >                        ld      a, laser_sprite10
- 643+ E4D4 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 643+ E4D7 3E CE       >                        ld      a,(((30-laserbasex) - 2) *8) + 32 -2
- 643+ E4D9 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 643+ E4DC 3E 8F       >                        ld		a,((laserbasey -0) * 8) + 32 -1
- 643+ E4DE ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 643+ E4E1 3E 08       >                        ld      a,%00001000
- 643+ E4E3 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 643+ E4E6 3E 0D       >                        ld      a, laser_pattern_2 | %00000000             ; hidden by default
- 643+ E4E8 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 644+ E4EB                                      RightLaser 4,1,laser_sprite11,laser_pattern_3
- 644+ E4EB 3E 1A       >                        ld      a, laser_sprite11
- 644+ E4ED ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 644+ E4F0 3E BE       >                        ld      a,(((30-laserbasex) - 4) *8) + 32 -2
- 644+ E4F2 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 644+ E4F5 3E 87       >                        ld		a,((laserbasey -1) * 8) + 32 -1
- 644+ E4F7 ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 644+ E4FA 3E 08       >                        ld      a,%00001000
- 644+ E4FC ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 644+ E4FF 3E 0E       >                        ld      a, laser_pattern_3 | %00000000             ; hidden by default
- 644+ E501 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 645+ E504                                      RightLaser 6,1,laser_sprite12,laser_pattern_4
- 645+ E504 3E 1B       >                        ld      a, laser_sprite12
- 645+ E506 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 645+ E509 3E AE       >                        ld      a,(((30-laserbasex) - 6) *8) + 32 -2
- 645+ E50B ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 645+ E50E 3E 87       >                        ld		a,((laserbasey -1) * 8) + 32 -1
- 645+ E510 ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 645+ E513 3E 08       >                        ld      a,%00001000
- 645+ E515 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 645+ E518 3E 0F       >                        ld      a, laser_pattern_4 | %00000000             ; hidden by default
- 645+ E51A ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 646+ E51D                                      RightLaser 8,2,laser_sprite13,laser_pattern_5
- 646+ E51D 3E 1C       >                        ld      a, laser_sprite13
- 646+ E51F ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 646+ E522 3E 9E       >                        ld      a,(((30-laserbasex) - 8) *8) + 32 -2
- 646+ E524 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 646+ E527 3E 7F       >                        ld		a,((laserbasey -2) * 8) + 32 -1
- 646+ E529 ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 646+ E52C 3E 08       >                        ld      a,%00001000
- 646+ E52E ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 646+ E531 3E 10       >                        ld      a, laser_pattern_5 | %00000000             ; hidden by default
- 646+ E533 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 647+ E536 C9                                   ret
- 648+ E537                                      ; Need simple show updates just to update the show attribute
- 649+ E537
- 650+ E537              sprite_laser_show:      ShowSprite laser_sprite1 ,laser_pattern_1
- 650+ E537 3E 10       >                        ld      a, laser_sprite1
- 650+ E539 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 650+ E53C 3E 8C       >                        ld      a,laser_pattern_1 | %10000000
- 650+ E53E ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 651+ E541                                      ShowSprite laser_sprite2 ,laser_pattern_2
- 651+ E541 3E 11       >                        ld      a, laser_sprite2
- 651+ E543 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 651+ E546 3E 8D       >                        ld      a,laser_pattern_2 | %10000000
- 651+ E548 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 652+ E54B                                      ShowSprite laser_sprite3 ,laser_pattern_3
- 652+ E54B 3E 12       >                        ld      a, laser_sprite3
- 652+ E54D ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 652+ E550 3E 8E       >                        ld      a,laser_pattern_3 | %10000000
- 652+ E552 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 653+ E555                                      ShowSprite laser_sprite4 ,laser_pattern_4
- 653+ E555 3E 13       >                        ld      a, laser_sprite4
- 653+ E557 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 653+ E55A 3E 8F       >                        ld      a,laser_pattern_4 | %10000000
- 653+ E55C ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 654+ E55F                                      ShowSprite laser_sprite5 ,laser_pattern_5
- 654+ E55F 3E 14       >                        ld      a, laser_sprite5
- 654+ E561 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 654+ E564 3E 90       >                        ld      a,laser_pattern_5 | %10000000
- 654+ E566 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 655+ E569                                      ShowSprite laser_sprite9 ,laser_pattern_1
- 655+ E569 3E 18       >                        ld      a, laser_sprite9
- 655+ E56B ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 655+ E56E 3E 8C       >                        ld      a,laser_pattern_1 | %10000000
- 655+ E570 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 656+ E573                                      ShowSprite laser_sprite10,laser_pattern_2
- 656+ E573 3E 19       >                        ld      a, laser_sprite10
- 656+ E575 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 656+ E578 3E 8D       >                        ld      a,laser_pattern_2 | %10000000
- 656+ E57A ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 657+ E57D                                      ShowSprite laser_sprite11,laser_pattern_3
- 657+ E57D 3E 1A       >                        ld      a, laser_sprite11
- 657+ E57F ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 657+ E582 3E 8E       >                        ld      a,laser_pattern_3 | %10000000
- 657+ E584 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 658+ E587                                      ShowSprite laser_sprite12,laser_pattern_4
- 658+ E587 3E 1B       >                        ld      a, laser_sprite12
- 658+ E589 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 658+ E58C 3E 8F       >                        ld      a,laser_pattern_4 | %10000000
- 658+ E58E ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 659+ E591                                      ShowSprite laser_sprite13,laser_pattern_5
- 659+ E591 3E 1C       >                        ld      a, laser_sprite13
- 659+ E593 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 659+ E596 3E 90       >                        ld      a,laser_pattern_5 | %10000000
- 659+ E598 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 660+ E59B C9                                   ret
- 661+ E59C
- 662+ E59C              sprite_galactic_hide:   HideSprite galactic_cursor_sprite
- 662+ E59C ED 91 34 00 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_cursor_sprite
- 662+ E5A0 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 663+ E5A4                                      HideSprite galactic_cursor_sprite1
- 663+ E5A4 ED 91 34 01 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_cursor_sprite1
- 663+ E5A8 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 664+ E5AC                                      HideSprite galactic_cursor_sprite2
- 664+ E5AC ED 91 34 03 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_cursor_sprite2
- 664+ E5B0 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 665+ E5B4 C9                                   ret
- 666+ E5B5
- 667+ E5B5              sprite_galactic_hyper_hide:
- 668+ E5B5                                      HideSprite galactic_hyper_sprite
- 668+ E5B5 ED 91 34 04 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_hyper_sprite
- 668+ E5B9 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 669+ E5BD                                       ;nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_hyper_sprite1
- 670+ E5BD              ;                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 671+ E5BD              ;                        nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_hyper_sprite2
+ 500+ E2D4
+ 501+ E2D4
+ 502+ E2D4 3E 0C        sprite_reticule:        ld      a,reticlule_sprite1                 ; LEFT ARM
+ 503+ E2D6 ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 504+ E2D9 3E 87                                ld      a,ReticuleCentreX -16 - ReticuleOffset
+ 505+ E2DB ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 506+ E2DE 3E 7F                                ld		a,ReticuleCentreY
+ 507+ E2E0 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 508+ E2E3 AF                                   xor     a
+ 509+ E2E4 ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 510+ E2E7 3E 8B                                ld      a,reticule_pattern_2 | %10000000
+ 511+ E2E9 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+ 512+ E2EC 3E 0D        .rightReticule          ld      a,reticlule_sprite2                 ; RIGHT ARM
+ 513+ E2EE ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 514+ E2F1 3E A7                                ld      a,ReticuleCentreX + ReticuleOffset
+ 515+ E2F3 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 516+ E2F6 3E 7F                                ld		a,ReticuleCentreY
+ 517+ E2F8 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 518+ E2FB 3E 08                                ld      a,%00001000
+ 519+ E2FD ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring horizontal
+ 520+ E300 3E 8B                                ld      a,reticule_pattern_2 | %10000000
+ 521+ E302 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+ 522+ E305 3E 0E        .topReticule            ld      a,reticlule_sprite3
+ 523+ E307 ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 524+ E30A 3E 9F                                ld      a,ReticuleCentreX
+ 525+ E30C ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 526+ E30F 3E 67                                ld		a,ReticuleCentreY-16 - ReticuleOffset
+ 527+ E311 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 528+ E314 AF                                   xor     a
+ 529+ E315 ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 530+ E318 3E 8A                                ld      a,reticule_pattern_1 | %10000000
+ 531+ E31A ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+ 532+ E31D 3E 0F        .bottomReticule         ld      a,reticlule_sprite4
+ 533+ E31F ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 534+ E322 3E 9F                                ld      a,ReticuleCentreX
+ 535+ E324 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 536+ E327 3E 87                                ld		a,ReticuleCentreY + ReticuleOffset
+ 537+ E329 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 538+ E32C 3E 04                                ld      a,%00000100
+ 539+ E32E ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring vertical
+ 540+ E331 3E 8A                                ld      a,reticule_pattern_1 | %10000000
+ 541+ E333 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+ 542+ E336 C9                                   ret
+ 543+ E337
+ 544+ E337              laserbasex              equ 6
+ 545+ E337              laserbasey              equ 14
+ 546+ E337
+ 547+ E337              ShowSprite              MACRO   spritenbr, patternnbr
+ 548+ E337 ~                                    ld      a, spritenbr
+ 549+ E337 ~                                    nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 550+ E337 ~                                    ld      a,patternnbr | %10000000
+ 551+ E337 ~                                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 552+ E337                                      ENDM
+ 553+ E337
+ 554+ E337              LeftLaser:              MACRO   xoffset, yoffset, spriteL, patternL
+ 555+ E337 ~                                    ld      a, spriteL
+ 556+ E337 ~                                    nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 557+ E337 ~                                    ld      a,((laserbasex + xoffset) *8) + 32
+ 558+ E337 ~                                    nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 559+ E337 ~                                    ld		a,((laserbasey -yoffset) * 8) + 32 -1
+ 560+ E337 ~                                    nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 561+ E337 ~                                    xor     a
+ 562+ E337 ~                                    nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 563+ E337 ~                                    ld      a, patternL | %00000000             ; hidden by default
+ 564+ E337 ~                                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 565+ E337                                      ENDM
+ 566+ E337
+ 567+ E337              RightLaser:             MACRO   xoffset, yoffset, spriteL, patternL
+ 568+ E337 ~                                    ld      a, spriteL
+ 569+ E337 ~                                    nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 570+ E337 ~                                    ld      a,(((30-laserbasex) - xoffset) *8) + 32 -2
+ 571+ E337 ~                                    nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 572+ E337 ~                                    ld		a,((laserbasey -yoffset) * 8) + 32 -1
+ 573+ E337 ~                                    nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 574+ E337 ~                                    ld      a,%00001000
+ 575+ E337 ~                                    nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 576+ E337 ~                                    ld      a, patternL | %00000000             ; hidden by default
+ 577+ E337 ~                                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 578+ E337                                      ENDM
+ 579+ E337
+ 580+ E337              show_ecm_sprite:        ShowSprite  ECM_sprite, ecm_pattern
+ 580+ E337 3E 25       >                        ld      a, ECM_sprite
+ 580+ E339 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 580+ E33C 3E 99       >                        ld      a,ecm_pattern | %10000000
+ 580+ E33E ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 581+ E341 C9                                   ret
+ 582+ E342
+ 583+ E342              show_missile_1_ready:   ShowSprite  missile_sprite1, missile_ready_pattern
+ 583+ E342 3E 26       >                        ld      a, missile_sprite1
+ 583+ E344 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 583+ E347 3E 9A       >                        ld      a,missile_ready_pattern | %10000000
+ 583+ E349 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 584+ E34C C9                                   ret
+ 585+ E34D
+ 586+ E34D              show_missile_2_ready:   ShowSprite  missile_sprite2, missile_ready_pattern
+ 586+ E34D 3E 27       >                        ld      a, missile_sprite2
+ 586+ E34F ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 586+ E352 3E 9A       >                        ld      a,missile_ready_pattern | %10000000
+ 586+ E354 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 587+ E357 C9                                   ret
+ 588+ E358
+ 589+ E358              show_missile_3_ready:   ShowSprite  missile_sprite3, missile_ready_pattern
+ 589+ E358 3E 28       >                        ld      a, missile_sprite3
+ 589+ E35A ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 589+ E35D 3E 9A       >                        ld      a,missile_ready_pattern | %10000000
+ 589+ E35F ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 590+ E362 C9                                   ret
+ 591+ E363
+ 592+ E363              show_missile_4_ready:   ShowSprite  missile_sprite4, missile_ready_pattern
+ 592+ E363 3E 29       >                        ld      a, missile_sprite4
+ 592+ E365 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 592+ E368 3E 9A       >                        ld      a,missile_ready_pattern | %10000000
+ 592+ E36A ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 593+ E36D C9                                   ret
+ 594+ E36E
+ 595+ E36E              show_missile_1_armed:   ShowSprite  missile_sprite1, missile_armed_pattern
+ 595+ E36E 3E 26       >                        ld      a, missile_sprite1
+ 595+ E370 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 595+ E373 3E 9B       >                        ld      a,missile_armed_pattern | %10000000
+ 595+ E375 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 596+ E378 C9                                   ret
+ 597+ E379
+ 598+ E379              show_missile_1_locked:  ShowSprite  missile_sprite1, missile_locked_pattern
+ 598+ E379 3E 26       >                        ld      a, missile_sprite1
+ 598+ E37B ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 598+ E37E 3E 9C       >                        ld      a,missile_locked_pattern | %10000000
+ 598+ E380 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 599+ E383 C9                                   ret
+ 600+ E384
+ 601+ E384
+ 602+ E384              show_compass_sun_infront:ShowSprite  compass_sun, compass_sun_infront
+ 602+ E384 3E 20       >                        ld      a, compass_sun
+ 602+ E386 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 602+ E389 3E 91       >                        ld      a,compass_sun_infront | %10000000
+ 602+ E38B ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 603+ E38E C9                                    ret
+ 604+ E38F
+ 605+ E38F              show_compass_sun_behind: ShowSprite  compass_sun, compass_sun_behind
+ 605+ E38F 3E 20       >                        ld      a, compass_sun
+ 605+ E391 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 605+ E394 3E 92       >                        ld      a,compass_sun_behind | %10000000
+ 605+ E396 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 606+ E399 C9                                    ret
+ 607+ E39A
+ 608+ E39A              show_compass_station_infront: ShowSprite  compass_station, compass_station_infront
+ 608+ E39A 3E 22       >                        ld      a, compass_station
+ 608+ E39C ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 608+ E39F 3E 95       >                        ld      a,compass_station_infront | %10000000
+ 608+ E3A1 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 609+ E3A4 C9                                    ret
+ 610+ E3A5
+ 611+ E3A5              show_compass_station_behind:  ShowSprite  compass_station, compass_station_behind
+ 611+ E3A5 3E 22       >                        ld      a, compass_station
+ 611+ E3A7 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 611+ E3AA 3E 96       >                        ld      a,compass_station_behind | %10000000
+ 611+ E3AC ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 612+ E3AF C9                                       ret
+ 613+ E3B0              show_compass_planet_infront: ShowSprite  compass_planet, compass_planet_infront
+ 613+ E3B0 3E 21       >                        ld      a, compass_planet
+ 613+ E3B2 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 613+ E3B5 3E 93       >                        ld      a,compass_planet_infront | %10000000
+ 613+ E3B7 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 614+ E3BA C9                                    ret
+ 615+ E3BB
+ 616+ E3BB              show_compass_planet_behind:  ShowSprite  compass_planet, compass_planet_behind
+ 616+ E3BB 3E 21       >                        ld      a, compass_planet
+ 616+ E3BD ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 616+ E3C0 3E 94       >                        ld      a,compass_planet_behind | %10000000
+ 616+ E3C2 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 617+ E3C5 C9                                       ret
+ 618+ E3C6              ;-----------------------------------------------------------------------
+ 619+ E3C6              show_sprite_sun_compass:    ShowSprite  suncompass_sprite1, compass_sun_pattern
+ 619+ E3C6 3E 2A       >                        ld      a, suncompass_sprite1
+ 619+ E3C8 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 619+ E3CB 3E 9D       >                        ld      a,compass_sun_pattern | %10000000
+ 619+ E3CD ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 620+ E3D0                                          ShowSprite  suncompass_sprite2, compass_sun_pattern
+ 620+ E3D0 3E 2B       >                        ld      a, suncompass_sprite2
+ 620+ E3D2 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 620+ E3D5 3E 9D       >                        ld      a,compass_sun_pattern | %10000000
+ 620+ E3D7 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 621+ E3DA                                          ShowSprite  suncompass_sprite3, compass_sun_pattern
+ 621+ E3DA 3E 2C       >                        ld      a, suncompass_sprite3
+ 621+ E3DC ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 621+ E3DF 3E 9D       >                        ld      a,compass_sun_pattern | %10000000
+ 621+ E3E1 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 622+ E3E4                                          ShowSprite  suncompass_sprite4, compass_sun_pattern
+ 622+ E3E4 3E 2D       >                        ld      a, suncompass_sprite4
+ 622+ E3E6 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 622+ E3E9 3E 9D       >                        ld      a,compass_sun_pattern | %10000000
+ 622+ E3EB ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 623+ E3EE C9                                       ret
+ 624+ E3EF              ;-----------------------------------------------------------------------
+ 625+ E3EF              show_sprite_planet_compass: ShowSprite  planetcompass_sprite1, compass_planet_pattern
+ 625+ E3EF 3E 2E       >                        ld      a, planetcompass_sprite1
+ 625+ E3F1 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 625+ E3F4 3E 9E       >                        ld      a,compass_planet_pattern | %10000000
+ 625+ E3F6 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 626+ E3F9                                          ShowSprite  planetcompass_sprite2, compass_planet_pattern
+ 626+ E3F9 3E 2F       >                        ld      a, planetcompass_sprite2
+ 626+ E3FB ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 626+ E3FE 3E 9E       >                        ld      a,compass_planet_pattern | %10000000
+ 626+ E400 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 627+ E403                                          ShowSprite  planetcompass_sprite3, compass_planet_pattern
+ 627+ E403 3E 30       >                        ld      a, planetcompass_sprite3
+ 627+ E405 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 627+ E408 3E 9E       >                        ld      a,compass_planet_pattern | %10000000
+ 627+ E40A ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 628+ E40D                                          ShowSprite  planetcompass_sprite4, compass_planet_pattern
+ 628+ E40D 3E 31       >                        ld      a, planetcompass_sprite4
+ 628+ E40F ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 628+ E412 3E 9E       >                        ld      a,compass_planet_pattern | %10000000
+ 628+ E414 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 629+ E417 C9                                       ret
+ 630+ E418              ;-----------------------------------------------------------------------
+ 631+ E418              show_sprite_station_compass:ShowSprite  stationcompass_sprite1, compass_station_pattern
+ 631+ E418 3E 32       >                        ld      a, stationcompass_sprite1
+ 631+ E41A ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 631+ E41D 3E 9F       >                        ld      a,compass_station_pattern | %10000000
+ 631+ E41F ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 632+ E422                                          ShowSprite  stationcompass_sprite2, compass_station_pattern
+ 632+ E422 3E 33       >                        ld      a, stationcompass_sprite2
+ 632+ E424 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 632+ E427 3E 9F       >                        ld      a,compass_station_pattern | %10000000
+ 632+ E429 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 633+ E42C                                          ShowSprite  stationcompass_sprite3, compass_station_pattern
+ 633+ E42C 3E 34       >                        ld      a, stationcompass_sprite3
+ 633+ E42E ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 633+ E431 3E 9F       >                        ld      a,compass_station_pattern | %10000000
+ 633+ E433 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 634+ E436                                          ShowSprite  stationcompass_sprite4, compass_station_pattern
+ 634+ E436 3E 35       >                        ld      a, stationcompass_sprite4
+ 634+ E438 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 634+ E43B 3E 9F       >                        ld      a,compass_station_pattern | %10000000
+ 634+ E43D ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 635+ E440 C9                                       ret
+ 636+ E441              ;-----------------------------------------------------------------------
+ 637+ E441              ;-----------------------------------------------------------------------
+ 638+ E441
+ 639+ E441              sprite_laser:           LeftLaser  0,0,laser_sprite1 ,laser_pattern_1
+ 639+ E441 3E 10       >                        ld      a, laser_sprite1
+ 639+ E443 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 639+ E446 3E 50       >                        ld      a,((laserbasex + 0) *8) + 32
+ 639+ E448 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 639+ E44B 3E 8F       >                        ld		a,((laserbasey -0) * 8) + 32 -1
+ 639+ E44D ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 639+ E450 AF          >                        xor     a
+ 639+ E451 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 639+ E454 3E 0C       >                        ld      a, laser_pattern_1 | %00000000             ; hidden by default
+ 639+ E456 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 640+ E459                                      LeftLaser  2,0,laser_sprite2 ,laser_pattern_2
+ 640+ E459 3E 11       >                        ld      a, laser_sprite2
+ 640+ E45B ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 640+ E45E 3E 60       >                        ld      a,((laserbasex + 2) *8) + 32
+ 640+ E460 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 640+ E463 3E 8F       >                        ld		a,((laserbasey -0) * 8) + 32 -1
+ 640+ E465 ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 640+ E468 AF          >                        xor     a
+ 640+ E469 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 640+ E46C 3E 0D       >                        ld      a, laser_pattern_2 | %00000000             ; hidden by default
+ 640+ E46E ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 641+ E471                                      LeftLaser  4,1,laser_sprite3 ,laser_pattern_3
+ 641+ E471 3E 12       >                        ld      a, laser_sprite3
+ 641+ E473 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 641+ E476 3E 70       >                        ld      a,((laserbasex + 4) *8) + 32
+ 641+ E478 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 641+ E47B 3E 87       >                        ld		a,((laserbasey -1) * 8) + 32 -1
+ 641+ E47D ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 641+ E480 AF          >                        xor     a
+ 641+ E481 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 641+ E484 3E 0E       >                        ld      a, laser_pattern_3 | %00000000             ; hidden by default
+ 641+ E486 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 642+ E489                                      LeftLaser  6,1,laser_sprite4 ,laser_pattern_4
+ 642+ E489 3E 13       >                        ld      a, laser_sprite4
+ 642+ E48B ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 642+ E48E 3E 80       >                        ld      a,((laserbasex + 6) *8) + 32
+ 642+ E490 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 642+ E493 3E 87       >                        ld		a,((laserbasey -1) * 8) + 32 -1
+ 642+ E495 ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 642+ E498 AF          >                        xor     a
+ 642+ E499 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 642+ E49C 3E 0F       >                        ld      a, laser_pattern_4 | %00000000             ; hidden by default
+ 642+ E49E ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 643+ E4A1                                      LeftLaser  8,2,laser_sprite5 ,laser_pattern_5
+ 643+ E4A1 3E 14       >                        ld      a, laser_sprite5
+ 643+ E4A3 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 643+ E4A6 3E 90       >                        ld      a,((laserbasex + 8) *8) + 32
+ 643+ E4A8 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 643+ E4AB 3E 7F       >                        ld		a,((laserbasey -2) * 8) + 32 -1
+ 643+ E4AD ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 643+ E4B0 AF          >                        xor     a
+ 643+ E4B1 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 643+ E4B4 3E 10       >                        ld      a, laser_pattern_5 | %00000000             ; hidden by default
+ 643+ E4B6 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 644+ E4B9                                      RightLaser 0,0,laser_sprite9 ,laser_pattern_1
+ 644+ E4B9 3E 18       >                        ld      a, laser_sprite9
+ 644+ E4BB ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 644+ E4BE 3E DE       >                        ld      a,(((30-laserbasex) - 0) *8) + 32 -2
+ 644+ E4C0 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 644+ E4C3 3E 8F       >                        ld		a,((laserbasey -0) * 8) + 32 -1
+ 644+ E4C5 ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 644+ E4C8 3E 08       >                        ld      a,%00001000
+ 644+ E4CA ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 644+ E4CD 3E 0C       >                        ld      a, laser_pattern_1 | %00000000             ; hidden by default
+ 644+ E4CF ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 645+ E4D2                                      RightLaser 2,0,laser_sprite10,laser_pattern_2
+ 645+ E4D2 3E 19       >                        ld      a, laser_sprite10
+ 645+ E4D4 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 645+ E4D7 3E CE       >                        ld      a,(((30-laserbasex) - 2) *8) + 32 -2
+ 645+ E4D9 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 645+ E4DC 3E 8F       >                        ld		a,((laserbasey -0) * 8) + 32 -1
+ 645+ E4DE ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 645+ E4E1 3E 08       >                        ld      a,%00001000
+ 645+ E4E3 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 645+ E4E6 3E 0D       >                        ld      a, laser_pattern_2 | %00000000             ; hidden by default
+ 645+ E4E8 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 646+ E4EB                                      RightLaser 4,1,laser_sprite11,laser_pattern_3
+ 646+ E4EB 3E 1A       >                        ld      a, laser_sprite11
+ 646+ E4ED ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 646+ E4F0 3E BE       >                        ld      a,(((30-laserbasex) - 4) *8) + 32 -2
+ 646+ E4F2 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 646+ E4F5 3E 87       >                        ld		a,((laserbasey -1) * 8) + 32 -1
+ 646+ E4F7 ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 646+ E4FA 3E 08       >                        ld      a,%00001000
+ 646+ E4FC ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 646+ E4FF 3E 0E       >                        ld      a, laser_pattern_3 | %00000000             ; hidden by default
+ 646+ E501 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 647+ E504                                      RightLaser 6,1,laser_sprite12,laser_pattern_4
+ 647+ E504 3E 1B       >                        ld      a, laser_sprite12
+ 647+ E506 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 647+ E509 3E AE       >                        ld      a,(((30-laserbasex) - 6) *8) + 32 -2
+ 647+ E50B ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 647+ E50E 3E 87       >                        ld		a,((laserbasey -1) * 8) + 32 -1
+ 647+ E510 ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 647+ E513 3E 08       >                        ld      a,%00001000
+ 647+ E515 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 647+ E518 3E 0F       >                        ld      a, laser_pattern_4 | %00000000             ; hidden by default
+ 647+ E51A ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 648+ E51D                                      RightLaser 8,2,laser_sprite13,laser_pattern_5
+ 648+ E51D 3E 1C       >                        ld      a, laser_sprite13
+ 648+ E51F ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 648+ E522 3E 9E       >                        ld      a,(((30-laserbasex) - 8) *8) + 32 -2
+ 648+ E524 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 648+ E527 3E 7F       >                        ld		a,((laserbasey -2) * 8) + 32 -1
+ 648+ E529 ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 648+ E52C 3E 08       >                        ld      a,%00001000
+ 648+ E52E ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 648+ E531 3E 10       >                        ld      a, laser_pattern_5 | %00000000             ; hidden by default
+ 648+ E533 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 649+ E536 C9                                   ret
+ 650+ E537                                      ; Need simple show updates just to update the show attribute
+ 651+ E537
+ 652+ E537              sprite_laser_show:      ShowSprite laser_sprite1 ,laser_pattern_1
+ 652+ E537 3E 10       >                        ld      a, laser_sprite1
+ 652+ E539 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 652+ E53C 3E 8C       >                        ld      a,laser_pattern_1 | %10000000
+ 652+ E53E ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 653+ E541                                      ShowSprite laser_sprite2 ,laser_pattern_2
+ 653+ E541 3E 11       >                        ld      a, laser_sprite2
+ 653+ E543 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 653+ E546 3E 8D       >                        ld      a,laser_pattern_2 | %10000000
+ 653+ E548 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 654+ E54B                                      ShowSprite laser_sprite3 ,laser_pattern_3
+ 654+ E54B 3E 12       >                        ld      a, laser_sprite3
+ 654+ E54D ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 654+ E550 3E 8E       >                        ld      a,laser_pattern_3 | %10000000
+ 654+ E552 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 655+ E555                                      ShowSprite laser_sprite4 ,laser_pattern_4
+ 655+ E555 3E 13       >                        ld      a, laser_sprite4
+ 655+ E557 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 655+ E55A 3E 8F       >                        ld      a,laser_pattern_4 | %10000000
+ 655+ E55C ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 656+ E55F                                      ShowSprite laser_sprite5 ,laser_pattern_5
+ 656+ E55F 3E 14       >                        ld      a, laser_sprite5
+ 656+ E561 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 656+ E564 3E 90       >                        ld      a,laser_pattern_5 | %10000000
+ 656+ E566 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 657+ E569                                      ShowSprite laser_sprite9 ,laser_pattern_1
+ 657+ E569 3E 18       >                        ld      a, laser_sprite9
+ 657+ E56B ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 657+ E56E 3E 8C       >                        ld      a,laser_pattern_1 | %10000000
+ 657+ E570 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 658+ E573                                      ShowSprite laser_sprite10,laser_pattern_2
+ 658+ E573 3E 19       >                        ld      a, laser_sprite10
+ 658+ E575 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 658+ E578 3E 8D       >                        ld      a,laser_pattern_2 | %10000000
+ 658+ E57A ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 659+ E57D                                      ShowSprite laser_sprite11,laser_pattern_3
+ 659+ E57D 3E 1A       >                        ld      a, laser_sprite11
+ 659+ E57F ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 659+ E582 3E 8E       >                        ld      a,laser_pattern_3 | %10000000
+ 659+ E584 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 660+ E587                                      ShowSprite laser_sprite12,laser_pattern_4
+ 660+ E587 3E 1B       >                        ld      a, laser_sprite12
+ 660+ E589 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 660+ E58C 3E 8F       >                        ld      a,laser_pattern_4 | %10000000
+ 660+ E58E ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 661+ E591                                      ShowSprite laser_sprite13,laser_pattern_5
+ 661+ E591 3E 1C       >                        ld      a, laser_sprite13
+ 661+ E593 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 661+ E596 3E 90       >                        ld      a,laser_pattern_5 | %10000000
+ 661+ E598 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 662+ E59B C9                                   ret
+ 663+ E59C
+ 664+ E59C              sprite_galactic_hide:   HideSprite galactic_cursor_sprite
+ 664+ E59C ED 91 34 00 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_cursor_sprite
+ 664+ E5A0 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 665+ E5A4                                      HideSprite galactic_cursor_sprite1
+ 665+ E5A4 ED 91 34 01 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_cursor_sprite1
+ 665+ E5A8 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 666+ E5AC                                      HideSprite galactic_cursor_sprite2
+ 666+ E5AC ED 91 34 03 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_cursor_sprite2
+ 666+ E5B0 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 667+ E5B4 C9                                   ret
+ 668+ E5B5
+ 669+ E5B5              sprite_galactic_hyper_hide:
+ 670+ E5B5                                      HideSprite galactic_hyper_sprite
+ 670+ E5B5 ED 91 34 04 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_hyper_sprite
+ 670+ E5B9 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 671+ E5BD                                       ;nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_hyper_sprite1
  672+ E5BD              ;                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 673+ E5BD C9                                   ret
- 674+ E5BE
- 675+ E5BE              sprite_local_hide:      HideSprite local_cursor_sprite
- 675+ E5BE ED 91 34 05 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,local_cursor_sprite
- 675+ E5C2 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 676+ E5C6                                      HideSprite local_cursor_sprite1
- 676+ E5C6 ED 91 34 06 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,local_cursor_sprite1
- 676+ E5CA ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 677+ E5CE                                      HideSprite local_cursor_sprite2
- 677+ E5CE ED 91 34 07 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,local_cursor_sprite2
- 677+ E5D2 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 678+ E5D6 C9                                   ret
- 679+ E5D7
- 680+ E5D7              sprite_local_hyper_hide:HideSprite local_hyper_sprite
- 680+ E5D7 ED 91 34 08 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,local_hyper_sprite
- 680+ E5DB ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 681+ E5DF                                      HideSprite local_hyper_sprite1
- 681+ E5DF ED 91 34 09 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,local_hyper_sprite1
- 681+ E5E3 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 682+ E5E7                                      HideSprite local_hyper_sprite2
- 682+ E5E7 ED 91 34 0B >                            nextreg		SPRITE_PORT_INDEX_REGISTER,local_hyper_sprite2
- 682+ E5EB ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 683+ E5EF C9                                   ret
- 684+ E5F0
- 685+ E5F0              sprite_reticule_hide:   HideSprite reticlule_sprite1
- 685+ E5F0 ED 91 34 0C >                            nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite1
- 685+ E5F4 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 686+ E5F8                                      HideSprite reticlule_sprite2
- 686+ E5F8 ED 91 34 0D >                            nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite2
- 686+ E5FC ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 687+ E600                                      HideSprite reticlule_sprite3
- 687+ E600 ED 91 34 0E >                            nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite3
- 687+ E604 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 688+ E608                                      HideSprite reticlule_sprite4
- 688+ E608 ED 91 34 0F >                            nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite4
- 688+ E60C ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 689+ E610 C9                                   ret
- 690+ E611
- 691+ E611              sprite_ecm_hide:        HideSprite ECM_sprite
- 691+ E611 ED 91 34 25 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,ECM_sprite
- 691+ E615 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 692+ E619 C9                                   ret
- 693+ E61A
- 694+ E61A              sprite_missile_1_hide:  HideSprite missile_sprite1
- 694+ E61A ED 91 34 26 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,missile_sprite1
- 694+ E61E ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 695+ E622 C9                                   ret
- 696+ E623
- 697+ E623              sprite_missile_2_hide:  HideSprite missile_sprite2
- 697+ E623 ED 91 34 27 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,missile_sprite2
- 697+ E627 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 698+ E62B C9                                   ret
- 699+ E62C
- 700+ E62C              sprite_missile_3_hide:  HideSprite missile_sprite3
- 700+ E62C ED 91 34 28 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,missile_sprite3
- 700+ E630 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 701+ E634 C9                                   ret
- 702+ E635
- 703+ E635              sprite_missile_4_hide:  HideSprite missile_sprite4
- 703+ E635 ED 91 34 29 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,missile_sprite4
- 703+ E639 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 704+ E63D C9                                   ret
- 705+ E63E
- 706+ E63E CD 1A E6     sprite_missile_all_hide:call  sprite_missile_1_hide
- 707+ E641 CD 23 E6                             call  sprite_missile_2_hide
- 708+ E644 CD 2C E6                             call  sprite_missile_3_hide
- 709+ E647 CD 35 E6                             call  sprite_missile_4_hide
- 710+ E64A C9                                   ret
- 711+ E64B
- 712+ E64B 3E 23        sprite_targetting:      ld      a,targetting_sprite1                 ; LEFT ARM
- 713+ E64D ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 714+ E650 3E 7F                                ld      a,TargetetingCentreX1
- 715+ E652 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 716+ E655 3E 78                                ld		a,TargetetingCentreY
- 717+ E657 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 718+ E65A AF                                   xor     a
- 719+ E65B ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 720+ E65E 3E 97                                ld      a,targetting_pattern | %10000000
- 721+ E660 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
- 722+ E663 3E 24        .right:                 ld      a,targetting_sprite2                ; RIGHT ARM
- 723+ E665 ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 724+ E668 3E AF                                ld      a,TargetetingCentreX2
- 725+ E66A ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 726+ E66D 3E 78                                ld		a,TargetetingCentreY
- 727+ E66F ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 728+ E672 3E 08                                ld      a,%00001000
- 729+ E674 ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring horizontal
- 730+ E677 3E 97                                ld      a,targetting_pattern | %10000000
- 731+ E679 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
- 732+ E67C C9                                   ret
- 733+ E67D
- 734+ E67D 3E 23        sprite_lock:            ld      a,targetting_sprite1                 ; LEFT ARM
- 735+ E67F ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 736+ E682 3E 7F                                ld      a,TargetetingCentreX1
- 737+ E684 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 738+ E687 3E 78                                ld		a,TargetetingCentreY
- 739+ E689 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 740+ E68C AF                                   xor     a
- 741+ E68D ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
- 742+ E690 3E 98                                ld      a,lock_pattern | %10000000
- 743+ E692 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
- 744+ E695 3E 24        .right:                 ld      a,targetting_sprite2                 ; RIGHT ARM
- 745+ E697 ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
- 746+ E69A 3E AF                                ld      a,TargetetingCentreX2
- 747+ E69C ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
- 748+ E69F 3E 78                                ld		a,TargetetingCentreY
- 749+ E6A1 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
- 750+ E6A4 3E 08                                ld      a,%00001000
- 751+ E6A6 ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring horizontal
- 752+ E6A9 3E 98                                ld      a,lock_pattern | %10000000
- 753+ E6AB ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
- 754+ E6AE C9                                   ret
- 755+ E6AF
- 756+ E6AF
+ 673+ E5BD              ;                        nextreg		SPRITE_PORT_INDEX_REGISTER,galactic_hyper_sprite2
+ 674+ E5BD              ;                        nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 675+ E5BD C9                                   ret
+ 676+ E5BE
+ 677+ E5BE              sprite_local_hide:      HideSprite local_cursor_sprite
+ 677+ E5BE ED 91 34 05 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,local_cursor_sprite
+ 677+ E5C2 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 678+ E5C6                                      HideSprite local_cursor_sprite1
+ 678+ E5C6 ED 91 34 06 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,local_cursor_sprite1
+ 678+ E5CA ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 679+ E5CE                                      HideSprite local_cursor_sprite2
+ 679+ E5CE ED 91 34 07 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,local_cursor_sprite2
+ 679+ E5D2 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 680+ E5D6 C9                                   ret
+ 681+ E5D7
+ 682+ E5D7              sprite_local_hyper_hide:HideSprite local_hyper_sprite
+ 682+ E5D7 ED 91 34 08 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,local_hyper_sprite
+ 682+ E5DB ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 683+ E5DF                                      HideSprite local_hyper_sprite1
+ 683+ E5DF ED 91 34 09 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,local_hyper_sprite1
+ 683+ E5E3 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 684+ E5E7                                      HideSprite local_hyper_sprite2
+ 684+ E5E7 ED 91 34 0B >                            nextreg		SPRITE_PORT_INDEX_REGISTER,local_hyper_sprite2
+ 684+ E5EB ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 685+ E5EF C9                                   ret
+ 686+ E5F0
+ 687+ E5F0              sprite_reticule_hide:   HideSprite reticlule_sprite1
+ 687+ E5F0 ED 91 34 0C >                            nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite1
+ 687+ E5F4 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 688+ E5F8                                      HideSprite reticlule_sprite2
+ 688+ E5F8 ED 91 34 0D >                            nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite2
+ 688+ E5FC ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 689+ E600                                      HideSprite reticlule_sprite3
+ 689+ E600 ED 91 34 0E >                            nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite3
+ 689+ E604 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 690+ E608                                      HideSprite reticlule_sprite4
+ 690+ E608 ED 91 34 0F >                            nextreg		SPRITE_PORT_INDEX_REGISTER,reticlule_sprite4
+ 690+ E60C ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 691+ E610 C9                                   ret
+ 692+ E611
+ 693+ E611              sprite_ecm_hide:        HideSprite ECM_sprite
+ 693+ E611 ED 91 34 25 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,ECM_sprite
+ 693+ E615 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 694+ E619 C9                                   ret
+ 695+ E61A
+ 696+ E61A              sprite_missile_1_hide:  HideSprite missile_sprite1
+ 696+ E61A ED 91 34 26 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,missile_sprite1
+ 696+ E61E ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 697+ E622 C9                                   ret
+ 698+ E623
+ 699+ E623              sprite_missile_2_hide:  HideSprite missile_sprite2
+ 699+ E623 ED 91 34 27 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,missile_sprite2
+ 699+ E627 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 700+ E62B C9                                   ret
+ 701+ E62C
+ 702+ E62C              sprite_missile_3_hide:  HideSprite missile_sprite3
+ 702+ E62C ED 91 34 28 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,missile_sprite3
+ 702+ E630 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 703+ E634 C9                                   ret
+ 704+ E635
+ 705+ E635              sprite_missile_4_hide:  HideSprite missile_sprite4
+ 705+ E635 ED 91 34 29 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,missile_sprite4
+ 705+ E639 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 706+ E63D C9                                   ret
+ 707+ E63E
+ 708+ E63E CD 1A E6     sprite_missile_all_hide:call  sprite_missile_1_hide
+ 709+ E641 CD 23 E6                             call  sprite_missile_2_hide
+ 710+ E644 CD 2C E6                             call  sprite_missile_3_hide
+ 711+ E647 CD 35 E6                             call  sprite_missile_4_hide
+ 712+ E64A C9                                   ret
+ 713+ E64B
+ 714+ E64B 3E 23        sprite_targetting:      ld      a,targetting_sprite1                 ; LEFT ARM
+ 715+ E64D ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 716+ E650 3E 7F                                ld      a,TargetetingCentreX1
+ 717+ E652 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 718+ E655 3E 78                                ld		a,TargetetingCentreY
+ 719+ E657 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 720+ E65A AF                                   xor     a
+ 721+ E65B ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 722+ E65E 3E 97                                ld      a,targetting_pattern | %10000000
+ 723+ E660 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+ 724+ E663 3E 24        .right:                 ld      a,targetting_sprite2                ; RIGHT ARM
+ 725+ E665 ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 726+ E668 3E AF                                ld      a,TargetetingCentreX2
+ 727+ E66A ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 728+ E66D 3E 78                                ld		a,TargetetingCentreY
+ 729+ E66F ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 730+ E672 3E 08                                ld      a,%00001000
+ 731+ E674 ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring horizontal
+ 732+ E677 3E 97                                ld      a,targetting_pattern | %10000000
+ 733+ E679 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+ 734+ E67C C9                                   ret
+ 735+ E67D
+ 736+ E67D 3E 23        sprite_lock:            ld      a,targetting_sprite1                 ; LEFT ARM
+ 737+ E67F ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 738+ E682 3E 7F                                ld      a,TargetetingCentreX1
+ 739+ E684 ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 740+ E687 3E 78                                ld		a,TargetetingCentreY
+ 741+ E689 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 742+ E68C AF                                   xor     a
+ 743+ E68D ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2
+ 744+ E690 3E 98                                ld      a,lock_pattern | %10000000
+ 745+ E692 ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+ 746+ E695 3E 24        .right:                 ld      a,targetting_sprite2                 ; RIGHT ARM
+ 747+ E697 ED 92 34                             nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
+ 748+ E69A 3E AF                                ld      a,TargetetingCentreX2
+ 749+ E69C ED 92 35                             nextreg	SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x pos as 136 (104 + 32 border)
+ 750+ E69F 3E 78                                ld		a,TargetetingCentreY
+ 751+ E6A1 ED 92 36                             nextreg	SPRITE_PORT_ATTR1_REGISTER,a		; lower y coord on screen
+ 752+ E6A4 3E 08                                ld      a,%00001000
+ 753+ E6A6 ED 92 37                             nextreg	SPRITE_PORT_ATTR2_REGISTER,a		; attribute 2 including mirroring horizontal
+ 754+ E6A9 3E 98                                ld      a,lock_pattern | %10000000
+ 755+ E6AB ED 92 38                             nextreg	SPRITE_PORT_ATTR3_REGISTER,a		; visible 5 bytes pattern left reticule
+ 756+ E6AE C9                                   ret
  757+ E6AF
- 758+ E6AF              sprite_targetting_hide: HideSprite targetting_sprite1
- 758+ E6AF ED 91 34 23 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,targetting_sprite1
- 758+ E6B3 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 759+ E6B7                                      HideSprite targetting_sprite2
- 759+ E6B7 ED 91 34 24 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,targetting_sprite2
- 759+ E6BB ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 760+ E6BF C9                                   ret
- 761+ E6C0
- 762+ E6C0              sprite_targetting_show: ShowSprite targetting_sprite1, targetting_pattern
- 762+ E6C0 3E 23       >                        ld      a, targetting_sprite1
- 762+ E6C2 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 762+ E6C5 3E 97       >                        ld      a,targetting_pattern | %10000000
- 762+ E6C7 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 763+ E6CA                                      ShowSprite targetting_sprite2, targetting_pattern
- 763+ E6CA 3E 24       >                        ld      a, targetting_sprite2
- 763+ E6CC ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 763+ E6CF 3E 97       >                        ld      a,targetting_pattern | %10000000
- 763+ E6D1 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 764+ E6D4 C9                                   ret
- 765+ E6D5
- 766+ E6D5              sprite_laser_hide:      HideSprite laser_sprite1
- 766+ E6D5 ED 91 34 10 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite1
- 766+ E6D9 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 767+ E6DD                                      HideSprite laser_sprite2
- 767+ E6DD ED 91 34 11 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite2
- 767+ E6E1 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 768+ E6E5                                      HideSprite laser_sprite3
- 768+ E6E5 ED 91 34 12 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite3
- 768+ E6E9 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 769+ E6ED                                      HideSprite laser_sprite4
- 769+ E6ED ED 91 34 13 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite4
- 769+ E6F1 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 770+ E6F5                                      HideSprite laser_sprite5
- 770+ E6F5 ED 91 34 14 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite5
- 770+ E6F9 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 771+ E6FD                                      HideSprite laser_sprite6
- 771+ E6FD ED 91 34 15 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite6
- 771+ E701 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 772+ E705                                      HideSprite laser_sprite7
- 772+ E705 ED 91 34 16 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite7
- 772+ E709 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 773+ E70D                                      HideSprite laser_sprite8
- 773+ E70D ED 91 34 17 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite8
- 773+ E711 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 774+ E715                                      HideSprite laser_sprite9
- 774+ E715 ED 91 34 18 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite9
- 774+ E719 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 775+ E71D                                      HideSprite laser_sprite10
- 775+ E71D ED 91 34 19 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite10
- 775+ E721 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 776+ E725                                      HideSprite laser_sprite11
- 776+ E725 ED 91 34 1A >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite11
- 776+ E729 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 777+ E72D                                      HideSprite laser_sprite12
- 777+ E72D ED 91 34 1B >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite12
- 777+ E731 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 778+ E735                                      HideSprite laser_sprite13
- 778+ E735 ED 91 34 1C >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite13
- 778+ E739 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 779+ E73D                                      HideSprite laser_sprite14
- 779+ E73D ED 91 34 1D >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite14
- 779+ E741 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 780+ E745                                      HideSprite laser_sprite15
- 780+ E745 ED 91 34 1E >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite15
- 780+ E749 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 781+ E74D                                      HideSprite laser_sprite16
- 781+ E74D ED 91 34 1F >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite16
- 781+ E751 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 782+ E755 C9                                   ret
- 783+ E756
- 784+ E756              sprite_compass_hide:    HideSprite compass_sun
- 784+ E756 ED 91 34 20 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,compass_sun
- 784+ E75A ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 785+ E75E                                      HideSprite compass_planet
- 785+ E75E ED 91 34 21 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,compass_planet
- 785+ E762 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 786+ E766                                      HideSprite compass_station
- 786+ E766 ED 91 34 22 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,compass_station
- 786+ E76A ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 787+ E76E                                      HideSprite suncompass_sprite1
- 787+ E76E ED 91 34 2A >                            nextreg		SPRITE_PORT_INDEX_REGISTER,suncompass_sprite1
- 787+ E772 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 788+ E776                                      HideSprite planetcompass_sprite1
- 788+ E776 ED 91 34 2E >                            nextreg		SPRITE_PORT_INDEX_REGISTER,planetcompass_sprite1
- 788+ E77A ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 789+ E77E                                      HideSprite stationcompass_sprite1
- 789+ E77E ED 91 34 32 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,stationcompass_sprite1
- 789+ E782 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 790+ E786 C9                                   ret
- 791+ E787
- 792+ E787 CD 9C E5     sprite_cls_cursors:     call	sprite_galactic_hide
- 793+ E78A CD B5 E5                             call	sprite_galactic_hyper_hide
- 794+ E78D CD BE E5                             call	sprite_local_hide
- 795+ E790 CD D7 E5                             call	sprite_local_hyper_hide
- 796+ E793 CD F0 E5                             call    sprite_reticule_hide
- 797+ E796 CD D5 E6                             call    sprite_laser_hide
- 798+ E799 CD 56 E7                             call    sprite_compass_hide
- 799+ E79C CD AF E6                             call    sprite_targetting_hide
- 800+ E79F CD 3E E6                             call    sprite_missile_all_hide
- 801+ E7A2 C9                                   ret
- 802+ E7A3
- 803+ E7A3 CD 87 E7     sprite_cls_all:         call    sprite_cls_cursors
- 804+ E7A6 CD 11 E6                             call    sprite_ecm_hide
- 805+ E7A9 CD 3E E6                             call    sprite_missile_all_hide
- 806+ E7AC C9                                   ret
- 807+ E7AD
- 808+ E7AD CD 87 E7     init_sprites:           call		sprite_cls_cursors
- 809+ E7B0 ED 91 15 43                          nextreg 	SPRITE_LAYERS_SYSTEM_REGISTER,%01000011
- 810+ E7B4 C9                                   ret
- 811+ E7B5
- 812+ E7B5
- 813+ E7B5              select_sprite_a:        MACRO
- 814+ E7B5 ~                                    nextreg SPRITE_PORT_INDEX_REGISTER,a
- 815+ E7B5                                      ENDM
- 816+ E7B5
- 817+ E7B5              set_sprite_x_low_a:     MACRO
- 818+ E7B5 ~                                    nextreg	SPRITE_PORT_ATTR0_REGISTER,a
- 819+ E7B5                                      ENDM
- 820+ E7B5
- 821+ E7B5              set_sprite_y_low_a:     MACRO
- 822+ E7B5 ~                                    nextreg	SPRITE_PORT_ATTR1_REGISTER,a
- 823+ E7B5                                      ENDM
- 824+ E7B5
- 825+ E7B5              set_sprite_x_msb_anc:   MACRO
- 826+ E7B5 ~                                    nextreg	SPRITE_PORT_ATTR2_REGISTER,a
- 827+ E7B5                                      ENDM
- 828+ E7B5
- 829+ E7B5              set_sprite_pat_a:       MACRO
- 830+ E7B5 ~                                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 831+ E7B5                                      ENDM
- 832+ E7B5
- 833+ E7B5              set_sprite_pat_a_nx:    MACRO
- 834+ E7B5 ~                                    and     %10111111
- 835+ E7B5 ~                                    set_sprite_pat_a
- 836+ E7B5                                      ENDM
- 837+ E7B5
- 838+ E7B5              set_sprite_pat_a_vis:   MACRO
- 839+ E7B5 ~                                    or      %10000000
- 840+ E7B5 ~                                    set_sprite_pat_a
- 841+ E7B5                                      ENDM
- 842+ E7B5
- 843+ E7B5              set_sprite_hidden:      MACRO
- 844+ E7B5 ~                                    xor     a
- 845+ E7B5 ~                                    set_sprite_pat_a
- 846+ E7B5                                      ENDM
- 847+ E7B5
- 848+ E7B5              set_sprite_pas_a_vis_nx:MACRO
- 849+ E7B5 ~                                    or      %10000000
- 850+ E7B5 ~                                    set_sprite_pat_a_nx
- 851+ E7B5                                      ENDM
- 852+ E7B5
- 853+ E7B5              set_sprite_extended_a:  MACRO
- 854+ E7B5 ~                                    nextreg	SPRITE_PORT_ATTR4_REGISTER,a
- 855+ E7B5                                      ENDM
- 856+ E7B5
- 857+ E7B5 20           diag_x_pos:             DB 32
- 858+ E7B6 40           diag_y_pos:             DB 64
- 859+ E7B7 00           diag_sprite_nbr:        DB 0
- 860+ E7B8
- 861+ E7B8 06 40        sprite_diagnostic_clear:ld      b,64
- 862+ E7BA 0E 00                                ld      c,0
- 863+ E7BC 79           .HideLoop:              ld      a,c
- 864+ E7BD                                      HideSprite a
- 864+ E7BD ED 92 34    >                            nextreg		SPRITE_PORT_INDEX_REGISTER,a
- 864+ E7C0 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
- 865+ E7C4 0C                                   inc     c
- 866+ E7C5 10 F5                                djnz    .HideLoop
- 867+ E7C7 C9                                   ret
- 868+ E7C8
- 869+ E7C8 3E 80        sprite_diagnostic:      ld      a,$80
- 870+ E7CA 32 B7 E7                             ld      (diag_sprite_nbr),a
- 871+ E7CD 3E 40                                ld      a,64
- 872+ E7CF 32 B6 E7                             ld      (diag_y_pos),a
- 873+ E7D2 DD 01                                break
- 874+ E7D4 AF           .sprite_newline:        xor a
- 875+ E7D5 32 B5 E7                             ld      (diag_x_pos),a
- 876+ E7D8 3A B7 E7     .sprite_loop:           ld      a,(diag_sprite_nbr)
- 876+ E7DB E6 7F          and $7F
- 876+ E7DD                 select_sprite_a
- 876+ E7DD ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
- 877+ E7E0 3A B5 E7                             ld      a,(diag_x_pos)
- 877+ E7E3                set_sprite_x_low_a
- 877+ E7E3 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a
- 878+ E7E6 C6 10                                add     a,16
- 879+ E7E8 32 B5 E7                             ld      (diag_x_pos),a
- 880+ E7EB 3A B6 E7                             ld      a,(diag_y_pos)
- 880+ E7EE                set_sprite_y_low_a
- 880+ E7EE ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a
- 881+ E7F1 3E 00                                ld      a,0
- 881+ E7F3                set_sprite_x_msb_anc
- 881+ E7F3 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a
- 882+ E7F6 3A B7 E7                             ld      a,(diag_sprite_nbr)
- 882+ E7F9                set_sprite_pat_a
- 882+ E7F9 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
- 883+ E7FC 3C                                   inc     a
- 884+ E7FD 32 B7 E7                             ld      (diag_sprite_nbr),a
- 885+ E800 E6 7F                                and     $7F
- 886+ E802                                      JumpIfALTNusng  35,.cont
- 886+ E802 FE 23       >                        cp      35
- 886+ E804 DA 14 E8    >                        jp		c, .cont
- 887+ E807 11 1D 36     .drawBig:               ld      de,diagnostic_sprite*256 + compass_sun_pattern
- 888+ E80A 01 96 00                             ld      bc,150
- 889+ E80D 21 96 00                             ld      hl,150
- 890+ E810 CD 65 E0                             call    sprite_4x4
- 891+ E813
- 892+ E813 C9                                   ret
- 893+ E814 3A B5 E7     .cont:                  ld      a,(diag_x_pos)
- 894+ E817                                      JumpIfALTNusng 200,.sprite_loop
- 894+ E817 FE C8       >                        cp      200
- 894+ E819 DA D8 E7    >                        jp		c, .sprite_loop
- 895+ E81C 3A B6 E7                             ld      a,(diag_y_pos)
- 896+ E81F C6 14                                add     a,20
- 897+ E821 32 B6 E7                             ld      (diag_y_pos),a
- 898+ E824 18 AE                                jr      .sprite_newline
- 899+ E826 C9                                   ret
- 900+ E827
- 901+ E827
+ 758+ E6AF
+ 759+ E6AF
+ 760+ E6AF              sprite_targetting_hide: HideSprite targetting_sprite1
+ 760+ E6AF ED 91 34 23 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,targetting_sprite1
+ 760+ E6B3 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 761+ E6B7                                      HideSprite targetting_sprite2
+ 761+ E6B7 ED 91 34 24 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,targetting_sprite2
+ 761+ E6BB ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 762+ E6BF C9                                   ret
+ 763+ E6C0
+ 764+ E6C0              sprite_targetting_show: ShowSprite targetting_sprite1, targetting_pattern
+ 764+ E6C0 3E 23       >                        ld      a, targetting_sprite1
+ 764+ E6C2 ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 764+ E6C5 3E 97       >                        ld      a,targetting_pattern | %10000000
+ 764+ E6C7 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 765+ E6CA                                      ShowSprite targetting_sprite2, targetting_pattern
+ 765+ E6CA 3E 24       >                        ld      a, targetting_sprite2
+ 765+ E6CC ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 765+ E6CF 3E 97       >                        ld      a,targetting_pattern | %10000000
+ 765+ E6D1 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 766+ E6D4 C9                                   ret
+ 767+ E6D5
+ 768+ E6D5              sprite_laser_hide:      HideSprite laser_sprite1
+ 768+ E6D5 ED 91 34 10 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite1
+ 768+ E6D9 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 769+ E6DD                                      HideSprite laser_sprite2
+ 769+ E6DD ED 91 34 11 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite2
+ 769+ E6E1 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 770+ E6E5                                      HideSprite laser_sprite3
+ 770+ E6E5 ED 91 34 12 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite3
+ 770+ E6E9 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 771+ E6ED                                      HideSprite laser_sprite4
+ 771+ E6ED ED 91 34 13 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite4
+ 771+ E6F1 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 772+ E6F5                                      HideSprite laser_sprite5
+ 772+ E6F5 ED 91 34 14 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite5
+ 772+ E6F9 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 773+ E6FD                                      HideSprite laser_sprite6
+ 773+ E6FD ED 91 34 15 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite6
+ 773+ E701 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 774+ E705                                      HideSprite laser_sprite7
+ 774+ E705 ED 91 34 16 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite7
+ 774+ E709 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 775+ E70D                                      HideSprite laser_sprite8
+ 775+ E70D ED 91 34 17 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite8
+ 775+ E711 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 776+ E715                                      HideSprite laser_sprite9
+ 776+ E715 ED 91 34 18 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite9
+ 776+ E719 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 777+ E71D                                      HideSprite laser_sprite10
+ 777+ E71D ED 91 34 19 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite10
+ 777+ E721 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 778+ E725                                      HideSprite laser_sprite11
+ 778+ E725 ED 91 34 1A >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite11
+ 778+ E729 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 779+ E72D                                      HideSprite laser_sprite12
+ 779+ E72D ED 91 34 1B >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite12
+ 779+ E731 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 780+ E735                                      HideSprite laser_sprite13
+ 780+ E735 ED 91 34 1C >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite13
+ 780+ E739 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 781+ E73D                                      HideSprite laser_sprite14
+ 781+ E73D ED 91 34 1D >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite14
+ 781+ E741 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 782+ E745                                      HideSprite laser_sprite15
+ 782+ E745 ED 91 34 1E >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite15
+ 782+ E749 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 783+ E74D                                      HideSprite laser_sprite16
+ 783+ E74D ED 91 34 1F >                            nextreg		SPRITE_PORT_INDEX_REGISTER,laser_sprite16
+ 783+ E751 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 784+ E755 C9                                   ret
+ 785+ E756
+ 786+ E756              sprite_compass_hide:    HideSprite compass_sun
+ 786+ E756 ED 91 34 20 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,compass_sun
+ 786+ E75A ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 787+ E75E                                      HideSprite compass_planet
+ 787+ E75E ED 91 34 21 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,compass_planet
+ 787+ E762 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 788+ E766                                      HideSprite compass_station
+ 788+ E766 ED 91 34 22 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,compass_station
+ 788+ E76A ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 789+ E76E                                      HideSprite suncompass_sprite1
+ 789+ E76E ED 91 34 2A >                            nextreg		SPRITE_PORT_INDEX_REGISTER,suncompass_sprite1
+ 789+ E772 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 790+ E776                                      HideSprite planetcompass_sprite1
+ 790+ E776 ED 91 34 2E >                            nextreg		SPRITE_PORT_INDEX_REGISTER,planetcompass_sprite1
+ 790+ E77A ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 791+ E77E                                      HideSprite stationcompass_sprite1
+ 791+ E77E ED 91 34 32 >                            nextreg		SPRITE_PORT_INDEX_REGISTER,stationcompass_sprite1
+ 791+ E782 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 792+ E786 C9                                   ret
+ 793+ E787
+ 794+ E787 CD 9C E5     sprite_cls_cursors:     call	sprite_galactic_hide
+ 795+ E78A CD B5 E5                             call	sprite_galactic_hyper_hide
+ 796+ E78D CD BE E5                             call	sprite_local_hide
+ 797+ E790 CD D7 E5                             call	sprite_local_hyper_hide
+ 798+ E793 CD F0 E5                             call    sprite_reticule_hide
+ 799+ E796 CD D5 E6                             call    sprite_laser_hide
+ 800+ E799 CD 56 E7                             call    sprite_compass_hide
+ 801+ E79C CD AF E6                             call    sprite_targetting_hide
+ 802+ E79F CD 3E E6                             call    sprite_missile_all_hide
+ 803+ E7A2 C9                                   ret
+ 804+ E7A3
+ 805+ E7A3 CD 87 E7     sprite_cls_all:         call    sprite_cls_cursors
+ 806+ E7A6 CD 11 E6                             call    sprite_ecm_hide
+ 807+ E7A9 CD 3E E6                             call    sprite_missile_all_hide
+ 808+ E7AC C9                                   ret
+ 809+ E7AD
+ 810+ E7AD CD 87 E7     init_sprites:           call		sprite_cls_cursors
+ 811+ E7B0 ED 91 15 43                          nextreg 	SPRITE_LAYERS_SYSTEM_REGISTER,%01000011
+ 812+ E7B4 C9                                   ret
+ 813+ E7B5
+ 814+ E7B5
+ 815+ E7B5              select_sprite_a:        MACRO
+ 816+ E7B5 ~                                    nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 817+ E7B5                                      ENDM
+ 818+ E7B5
+ 819+ E7B5              set_sprite_x_low_a:     MACRO
+ 820+ E7B5 ~                                    nextreg	SPRITE_PORT_ATTR0_REGISTER,a
+ 821+ E7B5                                      ENDM
+ 822+ E7B5
+ 823+ E7B5              set_sprite_y_low_a:     MACRO
+ 824+ E7B5 ~                                    nextreg	SPRITE_PORT_ATTR1_REGISTER,a
+ 825+ E7B5                                      ENDM
+ 826+ E7B5
+ 827+ E7B5              set_sprite_x_msb_anc:   MACRO
+ 828+ E7B5 ~                                    nextreg	SPRITE_PORT_ATTR2_REGISTER,a
+ 829+ E7B5                                      ENDM
+ 830+ E7B5
+ 831+ E7B5              set_sprite_pat_a:       MACRO
+ 832+ E7B5 ~                                    nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 833+ E7B5                                      ENDM
+ 834+ E7B5
+ 835+ E7B5              set_sprite_pat_a_nx:    MACRO
+ 836+ E7B5 ~                                    and     %10111111
+ 837+ E7B5 ~                                    set_sprite_pat_a
+ 838+ E7B5                                      ENDM
+ 839+ E7B5
+ 840+ E7B5              set_sprite_pat_a_vis:   MACRO
+ 841+ E7B5 ~                                    or      %10000000
+ 842+ E7B5 ~                                    set_sprite_pat_a
+ 843+ E7B5                                      ENDM
+ 844+ E7B5
+ 845+ E7B5              set_sprite_hidden:      MACRO
+ 846+ E7B5 ~                                    xor     a
+ 847+ E7B5 ~                                    set_sprite_pat_a
+ 848+ E7B5                                      ENDM
+ 849+ E7B5
+ 850+ E7B5              set_sprite_pas_a_vis_nx:MACRO
+ 851+ E7B5 ~                                    or      %10000000
+ 852+ E7B5 ~                                    set_sprite_pat_a_nx
+ 853+ E7B5                                      ENDM
+ 854+ E7B5
+ 855+ E7B5              set_sprite_extended_a:  MACRO
+ 856+ E7B5 ~                                    nextreg	SPRITE_PORT_ATTR4_REGISTER,a
+ 857+ E7B5                                      ENDM
+ 858+ E7B5
+ 859+ E7B5 20           diag_x_pos:             DB 32
+ 860+ E7B6 40           diag_y_pos:             DB 64
+ 861+ E7B7 00           diag_sprite_nbr:        DB 0
+ 862+ E7B8
+ 863+ E7B8 06 40        sprite_diagnostic_clear:ld      b,64
+ 864+ E7BA 0E 00                                ld      c,0
+ 865+ E7BC 79           .HideLoop:              ld      a,c
+ 866+ E7BD                                      HideSprite a
+ 866+ E7BD ED 92 34    >                            nextreg		SPRITE_PORT_INDEX_REGISTER,a
+ 866+ E7C0 ED 91 38 00 >                            nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
+ 867+ E7C4 0C                                   inc     c
+ 868+ E7C5 10 F5                                djnz    .HideLoop
+ 869+ E7C7 C9                                   ret
+ 870+ E7C8
+ 871+ E7C8 3E 80        sprite_diagnostic:      ld      a,$80
+ 872+ E7CA 32 B7 E7                             ld      (diag_sprite_nbr),a
+ 873+ E7CD 3E 40                                ld      a,64
+ 874+ E7CF 32 B6 E7                             ld      (diag_y_pos),a
+ 875+ E7D2 DD 01                                break
+ 876+ E7D4 AF           .sprite_newline:        xor a
+ 877+ E7D5 32 B5 E7                             ld      (diag_x_pos),a
+ 878+ E7D8 3A B7 E7     .sprite_loop:           ld      a,(diag_sprite_nbr)
+ 878+ E7DB E6 7F          and $7F
+ 878+ E7DD                 select_sprite_a
+ 878+ E7DD ED 92 34    >                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+ 879+ E7E0 3A B5 E7                             ld      a,(diag_x_pos)
+ 879+ E7E3                set_sprite_x_low_a
+ 879+ E7E3 ED 92 35    >                        nextreg	SPRITE_PORT_ATTR0_REGISTER,a
+ 880+ E7E6 C6 10                                add     a,16
+ 881+ E7E8 32 B5 E7                             ld      (diag_x_pos),a
+ 882+ E7EB 3A B6 E7                             ld      a,(diag_y_pos)
+ 882+ E7EE                set_sprite_y_low_a
+ 882+ E7EE ED 92 36    >                        nextreg	SPRITE_PORT_ATTR1_REGISTER,a
+ 883+ E7F1 3E 00                                ld      a,0
+ 883+ E7F3                set_sprite_x_msb_anc
+ 883+ E7F3 ED 92 37    >                        nextreg	SPRITE_PORT_ATTR2_REGISTER,a
+ 884+ E7F6 3A B7 E7                             ld      a,(diag_sprite_nbr)
+ 884+ E7F9                set_sprite_pat_a
+ 884+ E7F9 ED 92 38    >                        nextreg	SPRITE_PORT_ATTR3_REGISTER,a
+ 885+ E7FC 3C                                   inc     a
+ 886+ E7FD 32 B7 E7                             ld      (diag_sprite_nbr),a
+ 887+ E800 E6 7F                                and     $7F
+ 888+ E802                                      JumpIfALTNusng  35,.cont
+ 888+ E802 FE 23       >                        cp      35
+ 888+ E804 DA 14 E8    >                        jp		c, .cont
+ 889+ E807 11 1D 36     .drawBig:               ld      de,diagnostic_sprite*256 + compass_sun_pattern
+ 890+ E80A 01 96 00                             ld      bc,150
+ 891+ E80D 21 96 00                             ld      hl,150
+ 892+ E810 CD 65 E0                             call    sprite_4x4
+ 893+ E813
+ 894+ E813 C9                                   ret
+ 895+ E814 3A B5 E7     .cont:                  ld      a,(diag_x_pos)
+ 896+ E817                                      JumpIfALTNusng 200,.sprite_loop
+ 896+ E817 FE C8       >                        cp      200
+ 896+ E819 DA D8 E7    >                        jp		c, .sprite_loop
+ 897+ E81C 3A B6 E7                             ld      a,(diag_y_pos)
+ 898+ E81F C6 14                                add     a,20
+ 899+ E821 32 B6 E7                             ld      (diag_y_pos),a
+ 900+ E824 18 AE                                jr      .sprite_newline
+ 901+ E826 C9                                   ret
  902+ E827
+ 903+ E827
+ 904+ E827
 # file closed: ./Layer3Sprites/sprite_routines.asm
  983  E827                                  INCLUDE "./Layer3Sprites/sprite_load.asm"
 # file opened: ./Layer3Sprites/sprite_load.asm
