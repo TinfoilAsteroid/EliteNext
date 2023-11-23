@@ -22,7 +22,8 @@
                 DISPLAY "TODO: Remove meridian code"
                 DISPLAY "TODO: Sound FXs"
                 DISPLAY "TODO: Jump stop bong noise"
-                DISPLAY "TODO: Switch radar range"
+                DISPLAY "TODO: Switch radar range functionality"
+                DISPLAY "TODO: Clean up console and remove compasses"
                 
 
 

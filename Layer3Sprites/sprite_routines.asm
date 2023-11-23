@@ -330,7 +330,6 @@ StationCompassTLY           equ 110
 RadarCentreX                equ 128
 RadarCentreY                equ 171
 
-
 compass_offset              equ 2
 ScannerX                    equ RadarCentreX
 ScannerY                    equ RadarCentreY
