@@ -162,7 +162,7 @@ sprite_big:
 sprite_4x4:                 ld      a,e                                                         ; prep upper 2 bits as we will 
                             or      %11000000                                                   ; Enable visible and 5th byte
                             ld      e,a                                                         ; a now holds value to use for anchor
-                            break
+                            ;break
 .SetAnchor:	                ld		a,d         : nextreg   SPRITE_PORT_INDEX_REGISTER,a		; set up sprite id
                             ld		a,l         : nextreg   SPRITE_PORT_ATTR0_REGISTER,a		; Set up lower x cc
                             ld      a,c         : nextreg   SPRITE_PORT_ATTR1_REGISTER,a		; Set up lower y cc
@@ -871,7 +871,7 @@ sprite_diagnostic:      ld      a,$80
                         ld      (diag_sprite_nbr),a
                         ld      a,64
                         ld      (diag_y_pos),a
-                        break
+                        ;break
 .sprite_newline:        xor a
                         ld      (diag_x_pos),a
 .sprite_loop:           ld      a,(diag_sprite_nbr) : and $7F:  select_sprite_a

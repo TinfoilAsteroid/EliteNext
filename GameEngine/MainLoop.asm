@@ -366,20 +366,22 @@ WarpRoutineAddr:        call    0000
 ;--- Would be difficult
 ;--- load the table to work from. This then leaves all teh logic configurable
 LoopEventTriggered:     ; for now just do spawn
-                        jp      SpawnEvent
-                        ; implicit ret from jp
+                        call        SpawnEvent
+                        ret ; implicit ret from jp to be added later
+                        
 
     DEFINE  SPAWN_TABLE_SELECT   1
     DEFINE  SPAWN_GENERATE_COUNT 1
     DEFINE  SPAWN_LOOP           1
     
-
+;--- Handle spawn event --------------------------------------------
 SpawnEvent:             call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
                         ret     c                                   ; then may as well just skip routine
                         ; This if def allows spawning inside space station safe zone
                         IFDEF   MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE
                             SetMemFalse SpaceStationSafeZone                        
                         ENDIF
+;-- A slot is free for a spawn to occur so select a spawn table and data
 .SpawnIsPossible:       ld      iyh,c                               ; save slot free in iyh
                         ;break
                         call    SelectSpawnTable                    ; ix = correct row in spawn table

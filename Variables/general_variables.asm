@@ -1,6 +1,16 @@
     IFNDEF LASER_V2
     DEFINE  LASER_V2    1
     ENDIF
+; Debugging data
+failureDiag DS  10              ; 10 bytes to log data before a failure
+
+LogFailure:     MACRO messageAddress
+                ld      hl,messageAddress
+                ld      de,failureDiag
+                ld      bc,10
+                ldir
+                ENDM
+                
 
 varAxis1	DW 	0				; address of first axis in a rotation action
 varAxis2	DW	0				; address of 2nd axis in a roation action

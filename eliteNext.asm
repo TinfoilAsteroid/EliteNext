@@ -1,5 +1,6 @@
+                DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
                 DISPLAY "MASTER TODO LIST"
-                DISPLAY "----------------"
+                DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
                 DISPLAY "TODO: Optimisation"
                 DISPLAY "TODO: Review spawn logic for crash"
                 DISPLAY "TODO: Add space station safe boundary indicator"
@@ -23,7 +24,10 @@
                 DISPLAY "TODO: Sound FXs"
                 DISPLAY "TODO: Jump stop bong noise"
                 DISPLAY "TODO: Switch radar range functionality"
-                DISPLAY "TODO: Clean up console and remove compasses"
+                DISPLAY "TODO: Add in damage status displays"
+                DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
+                DISPLAY "DONE: Clean up console and remove compasses"
+                DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
                 
 
 
