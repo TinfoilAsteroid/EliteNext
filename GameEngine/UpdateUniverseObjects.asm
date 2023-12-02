@@ -109,7 +109,8 @@ UpdateUniverseObjects:  xor     a
 .NoRoom:                ClearSlotMem    SelectedUniverseSlot                    ; we only need to clear slot list as univ ship is now junk
                         jp      .PostCollisionTest
 ; ... Generic collision
-.HaveCollided:          JumpIfMemLTNusng DELTA, 5, .SmallBump
+.HaveCollided:          break
+                        JumpIfMemLTNusng DELTA, 5, .SmallBump
 .BigBump:               ld      a,(UBnKEnergy)                                  ; get energy level which gives us an approximate to size and health
                         SetCarryFlag
                         rla                                                     ; divide by 2 but also bring in carry so its 128 + energy / 2

@@ -151,7 +151,7 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         ;break
                         ;call    ORTHOGALISE
 .NormaliseDirection:    IFDEF MISSILEBREAK
-                            break
+                            ;break
                         ENDIF
                         call    NormalizeTactics                    ; Normalise vector down to 7 bit + sign byte (.TA19->TAS2)
                         IFDEF TACTICSDEBUG

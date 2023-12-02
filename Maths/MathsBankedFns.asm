@@ -1,4 +1,7 @@
-         
+
+SubDEfromHLSigned:      ld      a,d
+                        xor     $80
+                        ld      d,a
 ; Adds DE to HL, in form S15 result will also be S15 rather than 2's C                
 AddDEtoHLSigned:        ld      a,h                         ; extract h sign to b
                         and     $80                         ; hl = abs (hl)
@@ -408,4 +411,24 @@ ManhattanDistanceIXIY:  ld      l,(ix+0)            ; del = abs ix (sign hi lo)
                         and     SignOnly8Bit
                         ret
 .ClearUp:               pop     bc,,hl
+                        ret
+                       
+
+; Note vectors are 2 byte lead sign, angle is 8 bit lead sign
+ApplyMyAngleAToIXIY:    ;break
+                        push    af                          ; save angle
+; Calculate Angle * vector /256, i.e take angle and mutiple by high byte of vector
+.processVector1:        ld      e,a                         ; e = angle
+                        ld      d,(ix+1)                    ; d = vector 1 / 256
+                        call    mulDbyESigned               ; calcualte DE = Vector * angle /256
+                        ld      hl,(iy+0)                   ; hl = vector 2
+                        call    SubDEfromHLSigned           ; hl = vector 2 - (vector 1 * angle / 256)
+                        ld      (iy+0),hl                   ; .
+.processVector2:        pop     af
+                        ld      e,a                         ; e = angle
+                        ld      d,(iy+1)                    ; d = vector 2 / 256
+                        call    mulDbyESigned               ; de = vector 2 * angle /256
+                        ld      hl,(ix+0)                   ; hl = vector 1
+                        call    AddDEtoHLSigned             ; hl = hl + de
+                        ld      (ix+0),hl                   ; .
                         ret

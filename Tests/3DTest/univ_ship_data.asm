@@ -19,34 +19,19 @@ StartOfUnivPad:     DS 2
 StartOfUnivM:       DB 0
 StartOfUnivT        DB 0
 StartOfUnivName     DS 16
-; NOTE we can cheat and pre allocate segs just using a DS for now
-
-;   \ -> & 565D \ See ship data files chosen and loaded after flight code starts running.
-; Universe map substibute for INWK
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
-                       INCLUDE "./Universe/Ships/AIRuntimeData.asm"
-; moved to runtime asm
-;                        INCLUDE "./Universe/Ships/ShipPosVars.asm"
-;                        INCLUDE "./Universe/Ships/RotationMatrixVars.asm"
- 
-; Orientation Matrix [nosev x y z ] nose vector ( forward) 19 to 26
-;                    [roofv x y z ] roof vector (up)
-;                    [sidev x y z ] side vector (right)
-;;rotXCounter                 equ UBnkrotXCounter         ; INWK +29
-;;rotZCounter                 equ UBnkrotZCounter         ; INWK +30UBnkDrawCam0xLo   DB  0               ; XX18+0
-
-
-                        INCLUDE "./Universe/Ships/XX16Vars.asm"
-                        INCLUDE "./Universe/Ships/XX25Vars.asm"
-                        INCLUDE "./Universe/Ships/XX18Vars.asm"
+                       INCLUDE "../../Universe/Ships/AIRuntimeData.asm"
+                        INCLUDE "../../Universe/Ships/XX16Vars.asm"
+                        INCLUDE "../../Universe/Ships/XX25Vars.asm"
+                        INCLUDE "../../Universe/Ships/XX18Vars.asm"
 
 ; Used to make 16 bit reads a little cleaner in source code
 UbnkZPoint                  DS  3
 UbnkZPointLo                equ UbnkZPoint
 UbnkZPointHi                equ UbnkZPoint+1
 UbnkZPointSign              equ UbnkZPoint+2
-                        INCLUDE "./Universe/Ships/XX15Vars.asm"
-                        INCLUDE "./Universe/Ships/XX12Vars.asm"
+                        INCLUDE "../../Universe/Ships/XX15Vars.asm"
+                        INCLUDE "../../Universe/Ships/XX12Vars.asm"
 
 
 ; Post clipping the results are now 8 bit
@@ -240,32 +225,6 @@ ResetUbnkPosition:      ld      hl,UBnKxlo
                         djnz    .zeroLoop
                         ret
 
-FireECM:                ld      a,ECMCounterMax                 ; set ECM time
-                        ld      (UBnKECMCountDown),a            ;
-                        ld      a,(ECMCountDown)
-                        ReturnIfALTNusng ECMCounterMax
-                        ld      a,ECMCounterMax
-                        ld      (ECMCountDown),a
-                        ret
-
-RechargeEnergy:         ld      a,(UBnKEnergy)
-                        ReturnIfAGTEMemusng EnergyAddr
-                        inc     a
-                        ld      (UBnKEnergy),a
-                        ret
-; A ship normally needs enough energy to fire ECM but if its shot then
-; it may be too low, in which case the ECM does a saftey shutdown and returns 1 energy
-; plus a 50% chance it will blow the ECM up
-UpdateECM:              ld      a,(UBnKECMCountDown)
-                        ReturnIfAIsZero
-                        dec     a
-                        ld      (UBnKECMCountDown),a
-                        ld      hl,UBnKEnergy
-                        dec     (hl)
-                        ret     p
-.ExhaustedEnergy:       call    UnivExplodeShip                 ; if it ran out of energy it was as it was also shot or collided as it checks in advance. Main ECM loop will continue as a compromise as multiple ships can fire ECM simultaneously
-                        ret
-                        
 ;-- This takes an Axis and subtracts 1, handles leading sign and boundary of 0 going negative
 JumpOffSet:             MACRO   Axis
                         ld      hl,(Axis)
@@ -318,89 +277,12 @@ UpdateSpeedAndPitch:    ld      a,(UBnKAccel)                   ; only apply non
 .SkipAccelleration:     ; handle roll and pitch rates                     
                         ret
 
-UnivSetEnemyMissile:    ld      hl,NewLaunchUBnKX               ; Copy launch ship matrix
-                        ld      de,UBnKxlo                      ; 
-                        ld      bc,NewLaunchDataBlockSize       ; positon + 3 rows of 3 bytes
-                        ldir                                    ; 
-.SetUpSpeed:            ld      a,3                             ; set accelleration
-                        ld      (UBnKAccel),a                   ;
-                        ZeroA
-                        ld      (UBnKRotXCounter),a
-                        ld      (UBnKRotZCounter),a
-                        ld      a,3                             ; these are max roll and pitch rates for later
-                        ld      (UBnKRAT),a
-                        inc     a
-                        ld      (UBnKRAT2),a
-                        ld      a,22
-                        ld      (UBnKCNT2),a
-                        MaxUnivSpeed                            ; and immediatley full speed (for now at least) TODO
-                        SetMemFalse UBnKMissleHitToProcess
-                        ld      a,ShipAIEnabled
-                        ld      (UBnkaiatkecm),a
-                        call    SetShipHostile
-.SetupPayload:          ld      a,150
-                        ld      (UBnKMissileBlastDamage),a
-                        ld      (UBnKMissileDetonateDamage),a
-                        ld      a,5
-                        ld      (UBnKMissileBlastRange),a
-                        ld      (UBnKMissileDetonateRange),a
-                        ret
-; --------------------------------------------------------------                        
-; This sets the position of the current ship if its a player launched missile
-UnivSetPlayerMissile:   call    InitialisePlayerMissileOrientation  ; Copy in Player  facing
-                        call    ResetUbnkPosition               ; home position
-                        ld      a,MissileDropHeight             ; the missile launches from underneath
-                        ld      (UBnKylo),a                     ; so its -ve drop height
-                        IFDEF DEBUGMISSILELAUNCH
-                            ld      a,$20       ; DEBUG
-                            ld      (UBnKzlo),a
-                        ENDIF
-                        ld      a,$80                           ;
-                        ld      (UBnKysgn),a                    ;
-                        ld      a,3                             ; set accelleration
-                        ld      (UBnKAccel),a                   ;
-                        ZeroA
-                        ld      (UBnKRotXCounter),a
-                        ld      (UBnKRotZCounter),a
-                        ld      a,3                             ; these are max roll and pitch rates for later
-                        ld      (UBnKRAT),a
-                        inc     a
-                        ld      (UBnKRAT2),a
-                        ld      a,22
-                        ld      (UBnKCNT2),a
-                        MaxUnivSpeed                            ; and immediatley full speed (for now at least) TODO
-                        SetMemFalse UBnKMissleHitToProcess
-                        ld      a,ShipAIEnabled
-                        ld      (UBnkaiatkecm),a
-                        ;break
-                        call    ClearShipHostile                ; its a player missile
-                        ret
-; --------------------------------------------------------------
-; this applies blast damage to ship
-ShipMissileBlast:       ld      a,(CurrentMissileBlastDamage)
-                        ld      b,a
-                        ld      a,(UBnKEnergy)                   ; Reduce Energy
-                        sub     b
-                        jp      UnivExplodeShip
-                        jr      UnivExplodeShip
-                        ld      (UBnKEnergy),a
-                        ret
-; --------------------------------------------------------------                        
-; This sets the ship as a shower of explosiondwd
-UnivExplodeShip:        ld      a,(UBnkaiatkecm)
-                        or      ShipExploding | ShipKilled      ; Set Exlpoding flag and mark as just been killed
-                        and     Bit7Clear                       ; Remove AI
-                        ld      (UBnkaiatkecm),a
-                        xor     a
-                        ld      (UBnKEnergy),a
-                        ;TODO
-                        ret
 
 UnivSetDemoPostion:     call    UnivSetSpawnPosition
                         ld      a,%10000001                     ; AI Enabled has 1 missile
                         ld      (UBnkaiatkecm),a                ; set hostinle, no AI, has ECM
                         ld      (ShipNewBitsAddr),a             ; initialise new bits logic
-                        ld      a,$FF
+                        ld      a,0
                         ld      (UBnKRotZCounter),a             ; no pitch
                         ld      (UBnKRotXCounter),a             ; set roll to maxi on station
                         ZeroA
@@ -419,131 +301,6 @@ UnivSetDemoPostion:     call    UnivSetSpawnPosition
 .SkipFurther            ld      (UBnKzlo),hl
                         ret
     DISPLAY "Tracing 1", $
-    
-; --------------------------------------------------------------
-CopyPlanetGlobaltoSpaceStation:
-                        ld      hl,ParentPlanetX
-                        ld      de,UBnKxlo
-                        ld      bc,3*3
-                        ldir
-                        ret
-; --------------------------------------------------------------
-CopySpaceStationtoPlanetGlobal:
-                        ld      hl,UBnKxlo
-                        ld      de,ParentPlanetX
-                        ld      bc,3*3
-                        ldir
-                        ret  
-; --------------------------------------------------------------
-; generate space station type based on seed values
-; returns space station type in a
-UnivSelSpaceStationType:ld      a,(DisplayEcononmy)
-                        ld      hl,(DisplayGovernment)          ; h = TekLevel, l = Government
-                        ld      de,(DisplayPopulation)          ; d = productivity e = Population
-                        ; so its economdy + government - TekLevel + productivity - population %00000001
-                        add     a,l
-                        sbc     a,h
-                        add     a,d
-                        sbc     a,e
-                        and     $01
-                        ld      hl,MasterStations               ; in main memory
-                        add     hl,a
-                        ld      a,(hl)
-                        ret                        
-; --------------------------------------------------------------
-CalculateSpaceStationWarpPositon:
-.CalcZPosition:         ld      a,(WorkingSeeds+1)      ; seed d & 7 
-                        and     %00000111               ; .
-                        add     a,7                     ; + 7
-                        sra     a                       ; / 2
-.SetZPosition:          ld      (UBnKzsgn),a            ; << 16 (i.e. load into z sign byte
-                        ld      hl, $0000               ; now set z hi and lo
-                        ld      (UBnKzlo),hl            ;
-.CalcXandYPosition:     ld      a,(WorkingSeeds+5)      ; seed f & 3
-                        and     %00000011               ; .
-                        add     a,3                     ; + 3
-                        ld      b,a
-                        ld      a,(WorkingSeeds+4)      ; get low bit of seed e
-                        and     %00000001
-                        rra                             ; roll bit 0 into bit 7
-                        or      b                       ; now calc is f & 3 * -1 if seed e is odd
-.SetXandYPosition:      ld      (UBnKxsgn),a            ; set into x and y sign byte
-                        ld      (UBnKysgn),a            ; .
-                        ld      a,b                     ; we want just seed f & 3 here
-                        ld      (UBnKxhi),a             ; set into x and y high byte
-                        ld      (UBnKyhi),a             ; .
-                        ZeroA
-                        ld      (UBnKxlo),a
-                        ld      (UBnKylo),a                        
-.CaclculateSpaceStationOffset:
-.CalculateOffset:       ld      a,(WorkingSeeds+2)
-                        and     %00000011
-                        ld      c,a
-                        ld      a,(WorkingSeeds)
-                        and     %00000001
-                        rla     
-                        ld      b,a
-                        ld      h,c
-                        ld      c,0
-.TransposeX:            push    bc,,hl
-                        ld      de,(UBnKxhi)
-                        ld      a,(UBnKxsgn)
-                        ld      l,a
-                        MMUSelectMathsBankedFns : call        AddBCHtoDELsigned
-                        ld      (UBnKxhi),de
-                        ld      a,l
-                        ld      (UBnKxsgn),a
-.TransposeY:            pop     bc,,hl
-                        push    bc,,hl
-                        ld      de,(UBnKyhi)
-                        ld      a,(UBnKysgn)
-                        ld      l,a
-                        MMUSelectMathsBankedFns : call        AddBCHtoDELsigned
-                        ld      (UBnKyhi),de
-                        ld      a,l
-                        ld      (UBnKysgn),a
-.TransposeZ:            pop     bc,,hl
-                        ld      de,(UBnKzhi)
-                        ld      a,(UBnKzsgn)
-                        ld      l,a
-                        MMUSelectMathsBankedFns : call        AddBCHtoDELsigned
-                        ld      (UBnKzhi),de
-                        ld      a,l
-                        ld      (UBnKzsgn),a
-                        ret
-; --------------------------------------------------------------
-UnivSpawnSpaceStationLaunched:
-                        call    UnivSpawnSpaceStation
-                        call    CopySpaceStationtoPlanetGlobal
-                        call    ResetStationLaunch
-                        ret
-                        DISPLAY "TODO:fall into SpaceStation Launch Position once startup fixed"
-                        DISPLAY "TODO: Fault is probably as maths for xyz is 16 bit and shoudl be 24"
-; --------------------------------------------------------------
-SpaceStationLaunchPositon:
-                        ld      hl,0
-                        ZeroA
-                        ld      (UBnKxlo),hl
-                        ld      (UBnKxsgn),a
-                        ld      (UBnKylo),hl
-                        ld      (UBnKysgn),a
-                        ld      a,$81
-                        ld      (UBnKzlo),hl
-                        ld      (UBnKzsgn),a
-                        ret                 
-; --------------------------------------------------------------
-UnivSpawnSpaceStation:  ;    UnivSelSpaceStationType ; set a to type
-                        ;ld      c,13                    ; c to slot 13 which is space station
-                        ;call    SpawnShipTypeASlotC     ; load inito universe slot
-.CalculatePosition:     call    CopyPlanetGlobaltoSpaceStation
-.CalcOrbitOffset:       call    CalculateSpaceStationWarpPositon
-                        call    InitialiseOrientation
-.SetRollCounters:       ZeroUnivPitch
-                        InfiniteRoll
-.SetOrientation:        FlipSignMem UBnkrotmatNosevX+1;  as its 0 flipping will make no difference
-                        FlipSignMem UBnkrotmatNosevY+1;  as its 0 flipping will make no difference
-                        FlipSignMem UBnkrotmatNosevZ+1
-                        ret                        
 ; --------------------------------------------------------------
 ; This sets the position of the current ship randomly, called after spawing
 ; Spawns in withink 16 bit range so 24 bit friendly
@@ -582,73 +339,8 @@ UnivSetSpawnPosition:   call    InitialiseOrientation
                         and     SignOnly8Bit
                         ld      (UBnKzsgn),a
                         ret
-                        
-; --------------------------------------------------------------                        
-; This sets the cargo type or carryflag set for not cargo
-; Later this will be done via a loadable lookup table
-ShipCargoType:          ld      a,(ShipTypeAddr)
-                        JumpIfAEqNusng ShipID_CargoType5, .CargoCanister
-.IsItThargon:           JumpIfAEqNusng ShipID_Thargon,    .Thargon
-.IsItAlloy:             JumpIfAEqNusng ShipID_Plate,      .Plate
-.IsItSplinter:          JumpIfAEqNusng ShipID_Splinter,   .Splinter
-.IsItEscapePod:         JumpIfAEqNusng ShipID_Escape_Pod, .EscapePod
-.CargoCanister:         call    doRandom
-                        and     15                      ; Limit stock from Food to Platinum
-                        ret
-.Thargon:               ld      a,AlienItemsIndex                        
-                        ret
-.Plate:                 ld      a,AlloysIndex
-                        ret
-.Splinter:              ld      a,MineralsIndex
-                        ret
-.EscapePod:             ld      a,SlavesIndex
-                        ret
-        IFDEF DEBUG_SHIP_MOVEMENT
-FixStationPos:          ld      hl, DebugPos
-                        ld      de, UBnKxlo
-                        ld      bc,9
-                        ldir
-                        ld      hl,DebugRotMat
-                        ld      de, UBnkrotmatSidevX
-                        ld      bc,6*3
-                        ldir
-                        ret
-        ENDIF
-        IFDEF DEBUG_SHIP_MOVEMENT
-DebugPos:               DB $00,$00,$00,$92,$01,$00,$7E,$04,$00                        
-DebugRotMat:            DB $37,$88,$9A,$DC,$1B,$F7
-DebugRotMat1:           DB $DF,$6D,$2A,$07,$C1,$83
-DebugRotMat2:           DB $00,$80,$4A,$9B,$AA,$D8                     
-        ENDIF
-
-; --------------------------------------------------------------                        
-; This sets current univrse object to space station
-ResetStationLaunch:     ld  a,%10000001                         ; Has AI and 1 Missile
-                        ld  (UBnkaiatkecm),a                    ; set hostinle, no AI, has ECM
-                        xor a
-                        ld      (UBnKRotZCounter),a             ; no pitch
-                        ld      (ShipNewBitsAddr),a             ; initialise new bits logic
-                        ld      a,$FF
-                        ld      (UBnKRotXCounter),a             ; set roll to maxi on station
-.SetPosBehindUs:        ld      hl,$0000
-                        ld      (UBnKxlo),hl
-                        ld      hl,$0000
-                        ld      (UBnKylo),hl
-                        ld      hl,$01B0                            ; so its a negative distance behind
-                        ld      (UBnKzlo),hl
-                        xor     a
-                        ld      (UBnKxsgn),a
-                        ld      (UBnKysgn),a
-                        ld      a,$80
-                        ld      (UBnKzsgn),a
-.SetOrientation:        call    LaunchedOrientation             ; set initial facing
-                        ret
     ;Input: BC = Dividend, DE = Divisor, HL = 0
 ;Output: BC = Quotient, HL = Remainder
-
-
-
-FighterTypeMapping:     DB ShipID_Worm, ShipID_Sidewinder, ShipID_Viper, ShipID_Thargon
 
 ; Initialiase data, iyh must equal slot number
 ;                   iyl must be ship type
@@ -656,85 +348,20 @@ FighterTypeMapping:     DB ShipID_Worm, ShipID_Sidewinder, ShipID_Viper, ShipID_
 UnivInitRuntime:        ld      bc,UBnKRuntimeSize
                         ld      hl,UBnKStartOfRuntimeData
                         ZeroA
-                        ld      (UBnKECMCountDown),a
 .InitLoop:              ld      (hl),a
                         inc     hl
                         djnz    .InitLoop            
-.SetEnergy:             ldCopyByte EnergyAddr, UBnKEnergy
-.SetBankData:           ld      a,iyh
-                        ld      (UBnKSlotNumber),a
-                        add     a,BankUNIVDATA0
-                        ld      (UbnKShipUnivBankNbr),a
-                        ld      a,iyl
-                        ld      (UBnKShipModelId),a
-                        call    GetShipBankId                ; this will mostly be debugging info
-                        ld      (UBnkShipModelBank),a        ; this will mostly be debugging info
-                        ld      a,b                          ; this will mostly be debugging info
-                        ld      (UBnKShipModelNbr),a         ; this will mostly be debugging info
-.SetUpMissileCount:     ld      a,(LaserAddr)                ; get laser and missile details
-                        and     ShipMissileCount
-                        ld      c,a
-                        ld      a,(RandomSeed1)              ; missile flag limit
-                        and     c                            ; .
-                        ld      (UBnKMissilesLeft),a
-.SetupLaserType         ld      a,(LaserAddr)
-                        and     ShipLaserPower
-                        swapnib
-                        ld      (UBnKLaserPower),a
-.SetUpFighterBays:      ld      a,(ShipAIFlagsAddr)
-                        ld      c,a
-                        and     ShipFighterBaySize
-                        JumpIfANENusng ShipFighterBaySizeInf, .LimitedBay
-                        ld      a,$FF                       ; force unlimited ships
-.LimitedBay:            swapnib                             ; as its bits 6 to 4 and we have removed bit 7 we can cheat with a swapnib
-                        ld      (UBnKFightersLeft),a
-.SetUpFighterType:      ld      a,c                         ; get back AI flags
-                        and     ShipFighterType             ; fighter type is bits 2 and 3
-                        rr      a                           ; so get them down to 0 and 1
-                        rr      a                           ;
-                        ld      hl,FighterTypeMapping       ; then use the lookup table
-                        add     hl,a                        ; for the respective ship id
-                        ld      a,(hl)                      ; we work on this for optimisation
-                        ld      (UBnKFighterShipId),a       ; ship data holds index to this table
-.SetUpECM:              ld      a,(ShipECMFittedChanceAddr) ; Now handle ECM
-                        ld      b,a
-.FetchLatestRandom:     ld      a,(RandomSeed3)              
-                        JumpIfALTNusng b, .ECMFitted
-.ECMNotFitted:          SetMemFalse UBnKECMFitted
-                        jp      .DoneECM
-.ECMFitted:             SetMemTrue  UBnKECMFitted
-.DoneECM:               ; TODO set up laser power
                         ret
     DISPLAY "Tracing 2", $
     
-                        include "Universe/Ships/InitialiseOrientation.asm"
+                        include "../../Universe/Ships/InitialiseOrientation.asm"
 
-;----------------------------------------------------------------------------------------------------------------------------------
-;OrientateVertex:
-;                      [ sidev_x sidev_y sidev_z ]   [ x ]
-;  projected [x y z] = [ roofv_x roofv_y roofv_z ] . [ y ]
-;                      [ nosev_x nosev_y nosev_z ]   [ z ]
-;
-
-;----------------------------------------------------------------------------------------------------------------------------------
-;TransposeVertex:
-;                      [ sidev_x roofv_x nosev_x ]   [ x ]
-;  projected [x y z] = [ sidev_y roofv_y nosev_y ] . [ y ]
-;                      [ sidev_z roofv_z nosev_z ]   [ z ]
-; VectorToVertex:
-;                     [ sidev_x roofv_x nosev_x ]   [ x ]   [ x ]
-;  vector to vertex = [ sidev_y roofv_y nosev_y ] . [ y ] + [ y ]
-;                     [ sidev_z roofv_z nosev_z ]   [ z ]   [ z ]
-;INPUTS:    bhl = dividend  cde = divisor where b and c are sign bytes
-;OUTPUTS:   cahl = quotient cde = divisor
 ;--------------------------------------------------------------------------------------------------------
-                        ;include "./ModelRender/EraseOldLines-EE51.asm"
- ; OBSOLETE                       include "./ModelRender/TrimToScreenGrad-LL118.asm"
-                        include "./ModelRender/CLIP-LL145.asm"
+                        INCLUDE "../../ModelRender/CLIP-LL145.asm"
 ;--------------------------------------------------------------------------------------------------------
-                        include "./Universe/Ships/CopyRotmatToTransMat.asm"
-                        include "./Universe/Ships/TransposeXX12ByShipToXX15.asm"
-                        include "./Maths/Utilities/ScaleNodeTo8Bit.asm"
+                        INCLUDE "../../Universe/Ships/CopyRotmatToTransMat.asm"
+                        INCLUDE "../../Universe/Ships/TransposeXX12ByShipToXX15.asm"
+                        INCLUDE "../../Maths/Utilities/ScaleNodeTo8Bit.asm"
 
 ;--------------------------------------------------------------------------------------------------------
 SetFaceAVisible:        ld      hl,UbnkFaceVisArray
@@ -772,46 +399,11 @@ SetAllFacesHiddenLoop:  ld      (hl),a
                         inc     hl
                         djnz    SetAllFacesHiddenLoop
                         ret
-
-;;;;X = normal scale
-;;;;ZtempHi = zhi
-;;;;......................................................
-;;;; if ztemp hi <> 0                                   ::Scale Object Distance
-;;;;  Loop                                              ::LL90
-;;;;     inc X
-;;;;     divide X, Y & ZtempHiLo by 2
-;;;;  Until ZtempHi = 0
-;;;;......................................................
-;-LL21---------------------------------------------------------------------------------------------------
-    DISPLAY "Tracing 3", $
-
-                        include "Universe/Ships/NormaliseTransMat.asm"
-;;;                        include "Universe/Ships/NormaliseXX15.asm"
-;-LL91---------------------------------------------------------------------------------------------------
-
-; Now we have
-;   * XX18(2 1 0) = (x_sign x_hi x_lo)
-;   * XX18(5 4 3) = (y_sign y_hi y_lo)
-;   * XX18(8 7 6) = (z_sign z_hi z_lo)
-;
 ;--------------------------------------------------------------------------------------------------------
-                        include "Universe/Ships/InverseXX16.asm"
+                        include "../../Universe/Ships/NormaliseTransMat.asm"
 ;--------------------------------------------------------------------------------------------------------
+                        include "../../Universe/Ships/InverseXX16.asm"
 ;--------------------------------------------------------------------------------------------------------
-;   XX12(1 0) = [x y z] . sidev  = (dot_sidev_sign dot_sidev_lo)  = dot_sidev
-;   XX12(3 2) = [x y z] . roofv  = (dot_roofv_sign dot_roofv_lo)  = dot_roofv
-;   XX12(5 4) = [x y z] . nosev  = (dot_nosev_sign dot_nosev_lo)  = dot_nosev
-; Returns
-;
-;   XX12(1 0)            The dot product of [x y z] vector with the sidev (or _x)
-;                        vector, with the sign in XX12+1 and magnitude in XX12
-;
-;   XX12(3 2)            The dot product of [x y z] vector with the roofv (or _y)
-;                        vector, with the sign in XX12+3 and magnitude in XX12+2
-;
-;   XX12(5 4)            The dot product of [x y z] vector with the nosev (or _z)
-;                        vector, with the sign in XX12+5 and magnitude in XX12+4
-; TESTEDOK
 XX12DotOneRow:
 XX12CalcX:              N0equN1byN2div256 varT, (hl), (UBnkXScaled)       ; T = (hl) * regXX15fx /256 
                         inc     hl                                  ; move to sign byte
@@ -862,107 +454,29 @@ XX12EquXX15DotProductXX16:
                         ld      (UBnkXX12zSign),a
                         ret
 ;--------------------------------------------------------------------------------------------------------
-                        include "./Universe/Ships/CopyXX12ScaledToXX18.asm"
-                        include "./Universe/Ships/CopyXX12toXX15.asm"
-                        include "./Universe/Ships/CopyXX18toXX15.asm"
-                        include "./Universe/Ships/CopyXX18ScaledToXX15.asm"
-                        include "./Universe/Ships/CopyXX12ToScaled.asm"
+                        INCLUDE "../../Universe/Ships/CopyXX12ScaledToXX18.asm"
+                        INCLUDE "../../Universe/Ships/CopyXX12toXX15.asm"
+                        INCLUDE "../../Universe/Ships/CopyXX18toXX15.asm"
+                        INCLUDE "../../Universe/Ships/CopyXX18ScaledToXX15.asm"
+                        INCLUDE "../../Universe/Ships/CopyXX12ToScaled.asm"
 ;--------------------------------------------------------------------------------------------------------
-                        include "./Maths/Utilities/DotProductXX12XX15.asm"
+                        INCLUDE "../../Maths/Utilities/DotProductXX12XX15.asm"
 ;--------------------------------------------------------------------------------------------------------
 ; scale Normal. IXL is xReg and A is loaded with XX17 holds the scale factor to apply
 ; Not Used in code      include "Universe/Ships/ScaleNormal.asm"
 ;--------------------------------------------------------------------------------------------------------
-                        include "./Universe/Ships/ScaleObjectDistance.asm"
+                        INCLUDE "../../Universe/Ships/ScaleObjectDistance.asm"
 ;--------------------------------------------------------------------------------------------------------
 
 ; Backface cull        
 ; is the angle between the ship -> camera vector and the normal of the face as long as both are unit vectors soo we can check that normal z > 0
 ; normal vector = cross product of ship ccordinates 
 ;
-                        include "./Universe/Ships/CopyFaceToXX15.asm"
-                        include "./Universe/Ships/CopyFaceToXX12.asm"
+                        INCLUDE "../../Universe/Ships/CopyFaceToXX15.asm"
+                        INCLUDE "../../Universe/Ships/CopyFaceToXX12.asm"
 ;--------------------------------------------------------------
-; Original loginc in EE29 (LL9 4 of 12)
-; Enters with XX4 = z distnace scaled to 1 .. 31
-; get number of faces * 4      FaceCntX4
-; return if no faces
-; get Face Normal scale factor FaceScale (XX17)
-; get ship pos z hi     (XX18)
-; While Z hi <> 0
-;    FaceScale = FaceScale + 1           (XX17)
-;    Ship pos y = ship pos y / 2         (XX18)
-;    ship pos x = ship pos x / 2         (XX18)
-;    ship pos z = ship pos z / 2         (XX18)
-; Loop
-; Copy Ship Pos (XX18) to Scaled         (XX15)
-; Get Dot Product of Scaled (XX15) and XX16 (pre inverted) into XX12
-; Copy XX12 into XX18
-; For each face
-;     Get Face sign and visibility distance byte 
-;     if normal visibility range  < XX4
-;        Get Face data into XX12
-;        if FaceScale (XX17) >= 4                           
-;            Copy Ship Pos (XX18) to scaled (XX15)                                                                  ::LL143
-;        else
-;           Copy FaceScale scaled to X  (XX17)
-;LabelOverflowLoop:
-;           Copy FaceData (XX12) to Scaled (XX15)                                                                   ::LL92
-;           While X >= 0
-;              X--                                                                                                  ::LL93
-;              if  x >= 0
-;                  XX15x = XX15x / 2
-;                  XX15y = XX15y / 2
-;                  XX15y = XX15y / 2
-;           loop 
-;           AddZ = FaceData (XX12)z +  ShipPos (XX18)z                                                              ::LL94
-;           if A > 256 (i.e. was overflow)
-;               ShipPos (XX18)x,y & z = ShipPos(XX18)x,y & z / 2 (Divide each component by 2)
-;               X = 1
-;               Goto LabelOverflowLoop
-;           else
-;              Scaled (XX15) Z = AddZ
-;           endif
-;           AddX = FaceData (XX12)x +  ShipPos (XX18)x
-;           if A > 256 (i.e. was overflow)
-;               ShipPos (XX18)x,y & z = ShipPos(XX18)x,y & z / 2 (Divide each component by 2)
-;               X = 1
-;               Goto LabelOverflowLoop
-;           else
-;              Scaled (XX15) X = AddX
-;           endif
-;           AddY = FaceData (XX12)y +  ShipPos (XX18)y
-;           if A > 256 (i.e. was overflow)
-;               ShipPos (XX18)x,y & z = ShipPos(XX18)x,y & z / 2 (Divide each component by 2)
-;               X = 1
-;               Goto LabelOverflowLoop
-;           else
-;              Scaled (XX15) Y = AddY
-;           endif
-;        endif
-;        calculate dot product XX12.XX15  (XX15x * XX12x /256 + XX15y * XX12y /256 + XX15z * XX12z /256)        ::LL89
-;        if dot product < 0
-;           set face visible
-;        else
-;           set face invisible
-;        end if
-;     else
-;       Set FaceVisibility to true
-;     end if
-; Next Face     
-
-;line of sight vector = [x y z] + face normal vector
-
-;               [ [x y z] . sidev + normal_x ]   [ normal_x ]
-;  visibility = [ [x y z] . roofv + normal_y ] . [ normal_y ]
-;               [ [x y z] . nosev + normal_z ]   [ normal_z ]
-;
 ;--------------------------------------------------------------
-; line of sight (eye outwards dot face normal vector < 0
-; So lin eof sight = vector from 0,0,0 to ship pos, now we need to consider teh ship's facing
-; now if we add teh veector for teh normal(times magnitude)) to teh ship position we have the true center of the face
-; now we can calcualt teh dot product of this caulated vector and teh normal which if < 0 is goot. this means we use rot mat not inverted rotmat.
-    include "./ModelRender/BackfaceCull.asm"
+                        INCLUDE "../../ModelRender/BackfaceCull.asm"
 ;--LL52 to LL55-----------------------------------------------------------------------------------------------------------------                    
 
 TransposeXX12NodeToXX15:
@@ -1329,35 +843,11 @@ EyeStoreYPoint:                                    ; also from LL62, XX3 node he
     ld          (iy+2),e                            ; Update Y Point
     ld          (iy+3),d                            ; Update Y Point
     ret
-    
-    
-    
-; Pitch and roll are 2 phases
-; 1 - we apply our pitch and roll to the ship position
-;       x -> x + alpha * (y - alpha * x)
-;       y -> y - alpha * x - beta * z
-;       z -> z + beta * (y - alpha * x - beta * z)
-; which can be simplified as:
-;       1. K2 = y - alpha * x
-;       2. z = z + beta * K2
-;       3. y = K2 - beta * z
-;       4. x = x + alpha * y
-; 2 - we apply our patch and roll to the ship orientation
-;      Roll calculations:
-;      
-;        nosev_y = nosev_y - alpha * nosev_x_hi
-;        nosev_x = nosev_x + alpha * nosev_y_hi
-;      Pitch calculations:
-;      
-;        nosev_y = nosev_y - beta * nosev_z_hi
-;        nosev_z = nosev_z + beta * nosev_y_hi
-
-
 ; ---------------------------------------------------------------------------------------------------------------------------------    
-            INCLUDE "./Universe/Ships/ApplyMyRollAndPitch.asm"
-            INCLUDE "./Universe/Ships/ApplyShipRollAndPitch.asm"
-            INCLUDE "./Universe/Ships/ApplyShipSpeed.asm"
-            INCLUDE "./ModelRender/DrawLines.asm"
+            INCLUDE "../../Universe/Ships/ApplyMyRollAndPitch.asm"
+            INCLUDE "../../Universe/Ships/ApplyShipRollAndPitch.asm"
+            INCLUDE "../../Universe/Ships/ApplyShipSpeed.asm"
+            INCLUDE "../../ModelRender/DrawLines.asm"
 ; ---------------------------------------------------------------------------------------------------------------------------------    
 
 ; DIot seem to lawyas have Y = 0???
@@ -1471,298 +961,131 @@ ReadyForNextPoint:      push    iy                                  ; copy scree
                         ret                                         
 ; ...........................................................
 ProcessShip:            call    CheckVisible                ; checks for z -ve and outside view frustrum, sets up flags for next bit
-.IsItADot:              ld      a,(UBnkaiatkecm)
-                        and     ShipIsVisible | ShipIsDot | ShipExploding  ; first off set if we can draw or need to update explosion
-                        ret     z                           ; if none of these flags are set we can fast exit
-                        JumpOnABitSet ShipExplodingBitNbr, .ExplodingCloud; we always do the cloud processing even if invisible
 ;............................................................  
 .DetermineDrawType:     ReturnOnBitClear    a, ShipIsVisibleBitNbr          ; if its not visible exit early
-                        JumpOnABitClear ShipIsDotBitNbr, .CarryOnWithDraw   ; if not dot do normal draw
-;............................................................  
-.itsJustADot:           call    ProcessDot
-                        SetMemBitN  UBnkaiatkecm , ShipIsDotBitNbr ; set is a dot flag
-                        ld      bc,(UBnkNodeArray)          ; if its at dot range get X
-                        ld      de,(UBnkNodeArray+2)        ; and Y
-                        ld      a,b                         ; if high byte components are not 0 then off screen
-                        or      d                           ;
-                        ret     nz                          ;
-                        ld      a,e
-                        and     %10000000                   ; check to see if Y > 128
-                        ret     nz
-                        ld      b,e                         ; now b = y and c = x
-                        ld      a,L2ColourWHITE_1           ; just draw a pixel
-                        ld      a,224
-                        MMUSelectLayer2                     ; then go to update radar
-                        call    ShipPixel                   ; 
-                        ret
 ;............................................................  
 .CarryOnWithDraw:       call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
                        ; break
-                    IFDEF PLOTPOINTSONLY 
-                        ld      a,$F6
-                        ld      (line_gfx_colour),a  
-                        call    PlotAllNodes
-                    ELSE
                         ld      a,$E3
                         ld      (line_gfx_colour),a  
                         call    CullV2
                         call    PrepLines                       ; With late clipping this just moves the data to the line array which is now x2 size
                         call    DrawLinesLateClipping
-                    ENDIF
-                    IFDEF OVERLAYNODES
-                        ld      a,$CF
-                        ld      (line_gfx_colour),a  
-                        call    PlotAllNodes
-                    ENDIF
-                    IFDEF FLIPBUFFERSTEST
-                        DISPLAY "Univ_ship_data flip buffer test Enabled"
-                        call   l2_flip_buffers
-                        call   l2_flip_buffers
-                    ELSE
-                        DISPLAY "Univ_ship_data flip buffer test Disabled"
-                    ENDIF
                         ret 
-;............................................................  
-.ExplodingCloud:        break
-                        call    ProcessNodes
-                        ClearMemBitN  UBnkaiatkecm, ShipKilledBitNbr ; acknowledge ship exploding
-.UpdateCloudCounter:    ld      a,(UBnKCloudCounter)        ; counter += 4 until > 255
-                        add     4                           ; we do this early as we now have logic for
-                        jp      c,.FinishedExplosion        ; display or not later
-                        ld      (UBnKCloudCounter),a        ; .
-.SkipHiddenShip:        ReturnOnMemBitClear  UBnkaiatkecm , ShipIsVisibleBitNbr
-.IsShipADot:            JumpOnABitSet ShipIsDotBitNbr, .itsJustADot ; if its dot distance then explosion is a dot, TODO later we will do as a coloured dot
-.CalculateZ:            ld      hl,(UBnKzlo)                ; al = hl = z
-                        ld      a,h                         ; .
-                        JumpIfALTNusng 32,.CalcFromZ        ; if its >= 32 then set a to FE and we are done
-                        ld      h,$FE                       ; .
-                        jp      .DoneZDist                  ; .
-.CalcFromZ:             ShiftHLLeft1                        ; else
-                        ShiftHLLeft1                        ; hl = hl * 2
-                        SetCarryFlag                        ; h = h * 3 rolling in lower bit
-                        rl  h                               ; 
-.DoneZDist:             ld      b,0                         ; bc = cloud z distance calculateed
-                        ld      c,h                         ; .
-.CalcCloudRadius:       ld      a,(UBnKCloudCounter)        ; de = cloud counter * 256
-        IFDEF LOGMATHS
-                        MMUSelectMathsTables
-                        ld      b,h
-                        call    AEquAmul256DivBLog
-                        ld      d,a
-                        MMUSelectROM0
-        ELSE
-                        ld      d,a                         ;
-                        ld      e,0                         ;
-                        call    DEequDEDivBC                ; de = cloud counter * 256 / z distance
-                        ld      a,d                         ; if radius >= 28
-        ENDIF
-                        JumpIfALTNusng  28,.SetCloudRadius  ; then set raidus in d to $FE
-.MaxCloudRadius:        ld      d,$FE                       ;
-                        jp      .SizedUpCloud               ;
-.SetCloudRadius:        ShiftDELeft1                        ; de = 8 * de
-                        ShiftDELeft1                        ; .
-                        ShiftDELeft1                        ; .
-.SizedUpCloud:          ld      a,d                         ; cloudradius = a = d or (cloudcounter * 8 / 256)
-                        ld      (UBnKCloudRadius),a         ; .
-                        ld      ixh,a                       ; ixh = a = calculated cloud radius
-.CalcSubParticleColour: ld      a,(UBnKCloudCounter)        ; colur fades away
-                        swapnib                             ; divive by 16
-                        and     $0F                         ; mask off upper bytes
-                        sra     a                           ; divide by 32
-                        ld      hl,DebrisColourTable
-                        add     hl,a
-                        ld      a,(hl)
-                        ld      iyl,a                       ; iyl = pixel colours
-.CalcSubParticleCount:  ld      a,(UBnKCloudCounter)        ; cloud counter = abs (cloud counter) in effect if > 127 then shrinks it
-                        ABSa2c                              ; a = abs a
-.ParticlePositive:      sra a                               ; iyh = (a /8) 
-                        sra a                               ; .
-                        sra a                               ; .
-                        or  1                               ; bit 0 set so minimum 1
-.DoneSubParticleCount:  ld      ixl,a                       ; ixl = nbr particles per vertex
-.ForEachVertex:         ld      a,(VertexCountAddr)         ; load vertex count into b
-                        ld      b,a                         ; .
-                        ld      hl,UBnkNodeArray            ; hl = list of vertices
-.ExplosionVertLoop:     push    bc,,hl                      ; save vertex counter in b and pointer to verticles in hl
-                            ld      ixl,b                   ; save counter
-                            ld      c,(hl)                  ; get vertex into bc and de
-                            inc     hl                      ; .
-                            ld      b,(hl)                  ; .
-                            inc     hl                      ; .
-                            ld      e,(hl)                  ; .
-                            inc     hl                      ; .
-                            ld      d,(hl)                  ; now hl is done with and we can use it 
-.LoopSubParticles:          ld      a,ixl                   ; iyh = loop iterator for nbr of particles per vertex
-                            ld      iyh,a                   ; 
-                            ;break
-.ProcessAParticle:          push    de,,bc                  ; save y then x coordinates
-                                ex      de,hl               ; hl = de (Y)
-                                ld      d,ixh               ; d = cloud radius
-                                call    HLEquARandCloud     ; vertex = vertex +/- (random * projected cloud side /256)
-                                ld      a,h                 ; if off screen skip
-                                JumpIfAIsNotZero  .NextIteration
-                                ex      de,hl               ; de = result for y which was put into hl
-                                pop     hl                  ; get x back from bc on stack
-                                push    hl                  ; put bc (which is now in hl) back on the stack
-                                push    de                  ; save de
-                                ld      d,ixh               ; d = cloud radius
-                                call    HLEquARandCloud     ; vertex = vertex +/- (random * projected cloud side /256)
-                                pop     de                  ; get de back doing pop here clears stack up
-                                ld      a,h                 ; if high byte has a value then off screen
-                                JumpIfAIsNotZero .NextIteration ; 
-                                ld      b,e                 ; bc = y x of pixel from e and c regs
-                                ld      c,l                 ; iyl already has colour
-                                MMUSelectLayer2             ; plot it with debris code as this can chop y > 128
-                                call    DebrisPixel         ; .
-.NextIteration:             pop    de,,bc                   ; ready for next iteration, get back y and x coordinates
-                            dec    iyh                      ; one partcile done
-                            jr      nz,.ProcessAParticle    ; until all done
-.NextVert:              pop     bc,,hl                      ; recover loop counter and source pointer
-                        ld      a,4                         ; move to next vertex group
-                        add     hl,a                        ;
-                        djnz    .ExplosionVertLoop          ;         
-                        ret
-.FinishedExplosion:     ;break
-                        ld      a,(UBnKSlotNumber)          ; get slot number
-                        call    ClearSlotA                  ; gauranted to be in main memory as non bankables
-                        ClearMemBitN UBnkaiatkecm, ShipExplodingBitNbr
-                        ret
 
-
-DebrisColourTable:      DB L2ColourYELLOW_1, L2ColourYELLOW_2, L2ColourYELLOW_3, L2ColourYELLOW_4, L2ColourYELLOW_5, L2ColourYELLOW_6, L2ColourYELLOW_7,L2ColourGREY_4
-                        ; set flags and signal to remove from slot list        
-
-; Hl = HlL +/- (Random * projected cloud size)
-; In - d = z distance, hl = vert hi lo
-; Out hl = adjusted distance
-; uses registers hl, de
-HLEquARandCloud:        push    hl                          ; random number geneator upsets hl register
-                        call    doRandom                    ; a= random * 2
-                        pop     hl
-                        rla                                 ;
-                        jr      c,.Negative                 ; if buit 7 went into carry
-.Positive:              ld  e,a
-                        mul
-                        ld  e,d
-                        ld  d,0
-                        ClearCarryFlag
-                        adc     hl,de                       ; hl = hl + a
-                        ret
-.Negative:              ld  e,a
-                        mul
-                        ld  e,d
-                        ld  d,0
-                        ClearCarryFlag
-                        sbc     hl,de                       ; hl = hl + a
-                        ret
-
-GetExperiencePoints:    ; TODO calculate experience points
-                        ; TODO mission updates check
-                        ret
-
-; ......................................................   
-KillShip:               ld      a,(ShipTypeAddr)            ; we can't destroy stations in a collision
-                        cp      ShipTypeStation             ; for destructable one we will have a special type of ship
-                        ret     z
-                        ld      a,(UBnkaiatkecm)            ; remove AI, mark killed, mark exploding
-                        or      ShipExploding | ShipKilled  ; .
-                        and     ShipAIDisabled              ; .
-                        ld      (UBnkaiatkecm),a            ; .
-                        SetMemToN   UBnKexplDsp, ShipExplosionDuration ; set debris cloud timer, also usered in main to remove from slots
-                        ldWriteZero UBnKEnergy              ; Zero ship energy
-                        ld      (UBnKCloudRadius),a
-                        ld      a,18
-                        ld      (UBnKCloudCounter),a        ; Zero cloud
-                        ; TODO logic to spawn cargo/plates goes here
-                        ret
-                        
-; in a = damage                        
-DamageShip:             ld      b,a                         ; b = a = damage comming in
-                        ld      a,(ShipTypeAddr)            ; we can't destroy stations in a collision
-                        cp      ShipTypeStation             ; for destructable one we will have a special type of ship
-                        ret     z
-                        ld      a,(UBnKEnergy)              ; get current energy level
-                        ClearCarryFlag
-                        sbc     a,b                         ; subtract damage
-.Overkilled:            jp      nc,.DoneDamage              ; if no carry then its not gone negative
-                        call    KillShip                    ; else kill it
-                        ret
-.DoneDamage:            ld      (UBnKEnergy),a
-                        ret
-; need recovery for energy too
-; Shall we have a "jolt ship off course routine for when it gets hit by a blast or collision)                        
-                        
-;-LL49-----------------------------------------------------------------------------------------------------------------------------
-;  Entering Here we have the following:
-;  XX15(1 0) = vertex x-coordinate but sign not populated
-;  XX15(3 2) = vertex y-coordinate but sign not populated
-;  XX15(5 4) = vertex z-coordinate but sign not populated
-;
-;  XX16(  1 0)sidev_x   (3 2)roofv_x   (5 4)nosev_x
-;  XX16(  7 6)sidev_y   (9 8)roofv_y (11 10)nosev_y
-;  XX16(13 12)sidev_z (15 14)roofv_z (17 16)nosev_z
+    ;INCLUDE "../../Universe/Ships/PrepLines.asm"
 ;--------------------------------------------------------------------------------------------------------
-AddLaserBeamLine:
-; this code is a bag of shit and needs re-writing
-GetGunVertexNode:
-        ld          a,(GunVertexAddr)                   ; Hull byte#6, gun vertex*4 (XX0),Y
-        ld          hl,UBnkNodeArray                    ; list of lines to read
-        add         hl,a                                ; HL = address of GunVertexOnNodeArray
-        ld          iyl,0
-MoveX1PointToXX15:
-        ld          c,(hl)                              ; 
-        inc         hl
-        ld          b,(hl)                              ; bc = x1 of gun vertex
-        inc         hl
-        ld          (UBnkX1),bc
-        inc         c
-        ret         z                                   ; was c 255?
-        inc         b
-        ret         z                                   ; was c 255?
-MoveY1PointToXX15:
-        ld          c,(hl)                              ; 
-        inc         hl
-        ld          b,(hl)                              ; bc = y1 of gun vertex
-        inc         hl
-        ld          (UBnkY1),bc
-SetX2PointToXX15:
-        ld          bc,0                                ; set X2 to 0
-        ld          (UBnkX2),bc
-        ld          a,(UBnKzlo)
-        ld          c,a
-SetY2PointToXX15:
-        ld          (UBnkY2),bc                         ; set Y2to 0
-        ld          a,(UBnKxsgn)
-        JumpOnBitClear a,7,LL74SkipDec
-LL74DecX2:
-        ld          a,$FF
-        ld          (UBnkX2Lo),a                        ; rather than dec (hl) just load with 255 as it will always be that at this code point
-LL74SkipDec:        
-        call        ClipLineV3                            ; LL145 \ clip test on XX15 XX12 vector, returns carry 
-        jr          c,CalculateNewLines
-;        jr          c,CalculateNewLines                 ; LL170 clip returned carry set so not visibile if carry set skip the rest (laser not firing)
-; Here we are usign hl to replace VarU as index        
-        ld          hl,(varU16)
-        ld          a,(UBnKx1Lo)
-        ld          (hl),a
-        inc         hl
-        ld          a,(UbnKy1Lo)
-        ld          (hl),a
-        inc         hl
-        ld          a,(UBnkX2Lo)
-        ld          (hl),a
-        inc         hl
-        ld          a,(UbnKy2Lo)
-        ld          (hl),a
-        inc         iyl                                 ; iyl holds as a counter to iterations
-        inc         hl
-        inc         iyl                                 ; ready for next byte
-        ld          (varU16),hl
+        DISPLAY "Tracing 8", $
+
+    INCLUDE "../../ModelRender/getVertexNodeAtAToX1Y1.asm"
+    
+        DISPLAY "Tracing 9", $
+
+    INCLUDE "../../ModelRender/getVertexNodeAtAToX2Y2.asm"
+        DISPLAY "Tracing 10", $
+
+    INCLUDE "../../ModelRender/GetFaceAtA.asm"
+        DISPLAY "Tracing 11", $
+
+;--------------------------------------------------------------------------------------------------------
+; LL72 Goes through each edge in to determine if they are on a visible face, if so load start and end to line array as clipped lines
+ ;   DEFINE NOBACKFACECULL 1
+PLEDGECTR           DB          0
+
+PrepLines:
+InitialiseLineRead:  
+        ;break
+        ldWriteZero UbnkLineArrayLen                    ; current line array index = 0
+        ld          (UbnkLineArrayBytes),a              ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
+        ld          (PLEDGECTR),a
+        ld          a,(EdgeCountAddr)
+        ld          ixh,a                               ; ixh = XX17 = Total number of edges to traverse
+        ld          iyl,0                               ; ixl = current edge index
+        ld          hl,UbnkLineArray                    ; head of array
+        ld          (varU16),hl                         ; store current line array pointer un varU16
+        ldCopyByte  EdgeCountAddr, XX17                 ; XX17  = total number of edges to traverse edge counter
+        ld          a,(UBnKexplDsp)                     ; get explosion status
+        JumpOnBitClear a,6,CalculateNewLines            ; LL170 bit6 of display state clear (laser not firing) \ Calculate new lines
+        and         $BF                                 ; else laser is firing, clear bit6.
+        ld          (UBnKexplDsp),a                     ; INWK+31
+;   TODO commentedout as teh subroutine is a mess   call        AddLaserBeamLine                    ; add laser beam line to draw list
+; NOw we can calculate hull after including laser line        
+CalculateNewLines:
+LL170:                                                  ;(laser not firing) \ Calculate new lines   \ their comment
+CheckEdgesForVisibility:        
+        ld          hl,UBnkHullEdges
+        ; TODO change heap to 3 separate arrays and break them down during copy of ship hull data
+        ld          (varV),hl                           ; V \ is pointer to where edges data start
+        ld          a,(LineX4Addr)
+        ld          b,a                                 ; nbr of bytes of edge data
+LL75Loop:                                               ; count Visible edges
+IsEdgeInVisibilityRange:
+        ld          hl,(varV)
+        push        hl
+        pop         iy
+        ld          a,(LastNormalVisible)               ; XX4 is visibility range
+        ld          d,a                                 ; d holds copy of XX4
+; Get Edge Byte 0
+        ld          a,(IY+0)                            ; edge data byte#0 is visibility distance
+        JumpIfALTNusng d,LL78EdgeNotVisible             ; XX4   \ visibility LLx78 edge not visible
+EdgeMayBeVisibile:
+; Get Edge Byte 1
+IsFace1Visibile:                                        ; edges have 2 faces to test
+        ld          a,(IY+1)                            ; (V),Y \ edge data byte#1 bits 0 to 3 face 1 4 to 7 face 2
+        ld          c,a                                 ;  c = a copy of byte 1
+        and         $0F                                 ;
+        GetFaceAtA
+;       jp  VisibileEdge; DEBUG BODGE TEST TODO
+        JumpIfAIsNotZero VisibileEdge                     ; LL70 visible edge
+IsFace2Visibile:
+        ld          a,c                                 ; restore byte 1 from c register
+        swapnib                                         ; 
+        and         $0F                                 ; swap high byte into low byte
+        push        hl
+        GetFaceAtA
+        pop         hl
+        JumpIfAIsZero LL78EdgeNotVisible                ; edge not visible
+VisibileEdge:                                           ; Now we need to node id from bytes 2 - start and 3 - end
+;LL79--Visible edge--------------------------------------
+; Get Edge Byte 2
+        ld          a,(IY+2)                            ; get Node id
+        ld          de,UBnkX1
+        call        getVertexNodeAtAToDE; getVertexNodeAtAToX1Y1              ; get the points X1Y1 from node
+        ld          a,(IY+3)
+        ld          de,UBnkX2
+        call        getVertexNodeAtAToDE; getVertexNodeAtAToX2Y2              ; get the points X2Y2 from node
+LL80:                                                   ; ll80 \ Shove visible edge onto XX19 ship lines heap counter U
+        ld          de,(varU16)                         ; clipped edges heap address
+        ld          hl,UbnkPreClipX1
+        FourLDIInstrunctions
+        FourLDIInstrunctions
+        ld          (varU16),de                         ; update U16 with current address
+        ld          hl,UbnkLineArrayLen                 ; we have loaded one line
+        inc         (hl)
+        ld          a,(hl)
+        JumpIfAGTENusng LineArraySize,CompletedLineGeneration   ; have we hit max lines for a model hop over jmp to Exit edge data loop
+; If we hit here we skip the write of line arryay u16
+LL78EdgeNotVisible:                                     ; also arrive here if Edge not visible, loop next data edge.
+LL78:
+        ld          hl,(varV)                           ; varV is current edge address
+        ld          a,4
+        add         hl,a
+        ld          (varV),hl
+        ld          hl,PLEDGECTR                        ;
+        inc         (hl)                                ;
+        ld          a,(hl)                              ; current edge index ++
+        JumpIfANEMemusng XX17,LL75Loop                  ; compare with total number of edges
+CompletedLineGeneration:        
+LL81:
+LL81SHPPT:                                              ; SHPPT ship is a point arrives here with Acc=2, bottom entry in heap
+        ld          a,(UbnkLineArrayLen)                ; UbnkLineArrayLen = nbr of lines loaded 
+        sla         a
+        sla         a                                   ; multiple by 4 to equal number of bytes
+        sla         a                           ; multiple by 8 to equal number of bytes
+        ld          (UbnkLineArrayBytes),a              ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
+ExitEdgeDataLoop:
         ret
-
-    DISPLAY "Tracing 7", $
-
-    INCLUDE "Universe/Ships/PrepLines.asm"
+            
 
     DISPLAY "Tracing XX", $
 

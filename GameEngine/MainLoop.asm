@@ -375,7 +375,9 @@ LoopEventTriggered:     ; for now just do spawn
     DEFINE  SPAWN_LOOP           1
     
 ;--- Handle spawn event --------------------------------------------
-SpawnEvent:             call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
+SpawnEvent:             ret
+                        DISPLAY "TODO: Disabled spawing for diagnostics"
+                        call    FindNextFreeSlotInC                 ; set c= slot number, if we cant find a slot                   Stack     > 0
                         ret     c                                   ; then may as well just skip routine
                         ; This if def allows spawning inside space station safe zone
                         IFDEF   MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE
@@ -384,27 +386,29 @@ SpawnEvent:             call    FindNextFreeSlotInC                 ; c= slot nu
 ;-- A slot is free for a spawn to occur so select a spawn table and data
 .SpawnIsPossible:       ld      iyh,c                               ; save slot free in iyh
                         ;break
-                        call    SelectSpawnTable                    ; ix = correct row in spawn table
-.GetSpawnDetails:       call    SelectSpawnTableData                ; get table data, 
+                        call    SelectSpawnTable                    ; ix = correct row in spawn table, indexed on the random value found on FreeSpaceSpawnTableLow
+.GetSpawnDetails:       call    SelectSpawnTableData                ; get table data, b = max ships to spawm de rank table address, hl = address of spawn handler code                       
 .CheckIfInvalid:        ld      a,b                                 ; if b was 0
                         or      a                                   ; then its an invalid
                         ret     z                                   ; ship or just not to spawn
-.SetNbrToSpawn:         push    hl,,bc                              ; b will be set to the
+.SetNbrToSpawn:         push    hl,,bc                              ; b will be set to the                                      Stack + 2 > 2
                         call    doRandom                            ; actual number to spawn
-                        pop     bc                                  ; a is not really needed now as de and hl hold
+                        pop     bc                                  ; a is not really needed now as de and hl hold              Stack - 1 > 1
                         and     b                                   ; addresses for table and handler code
                         or      1                                   ; at least 1 
                         ld      b,a                                 ; so b = the number to spawn
-                        pop     hl                                  ; get back address of spawn handler
+                        pop     hl                                  ; get back address of spawn handler                         Stack - 1 > 0
+
 ; b = nbr to spawn, hl = handler for spawn, de = lookup table of ship type to spawn                        
-.SpawnLoop:             push    bc,,de,,hl                          ; save loop counter lookup table and handler
+.SpawnLoop:             push    bc,,de,,hl                          ; save loop counter lookup table and handler                Stack +3  > 3
                         ex      de,hl                               ; hl = lookup spawn type table, de = handler for spawn
                         call    SelectSpawnType                     ; a = shipId to Spawn
                         call    .SpawnAShipTypeA                    ; if we get a carry then stop spawning
-                        pop     bc,,de,,hl                          ; get back values
+                        pop     bc,,de,,hl                          ; get back values                                           Stack -3  > 0
                         djnz    .SpawnLoop                          ; repeat until B = 0
                         ret                                         ; we are done
 .SpawnAShipTypeA        ex      de,hl                               ; hl= handler to spawn, a = ship to spawn
+                        ;break
                         jp      hl                                  ; we call this so we can do a dynamic jp
                         ; implicit ret from jp                      ; SpawnShipTypeA handles free slot tests etc
 

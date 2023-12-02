@@ -10,6 +10,7 @@ SpawnShipTypeA:         ;break
                         ret     c                                   ; if carry flag was set then no spare slots
                         ld      iyh,c                               ; preserve slot number for now
 ; Entry point where iyl = space station type, iyh = bank 0
+                       ;break
 SpawnSpaceStation:      MMUSelectShipBank1                          ; select bank 1
                         ld      a,iyh                               ; A = slot number
                         ld      b,iyl                               ; b = ship type

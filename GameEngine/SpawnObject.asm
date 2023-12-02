@@ -1,6 +1,7 @@
 
 SpawnStationHandler:            call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
+                                ; extra code goes here
                                 ret
 
 SpawnHermitHandler:             call    SpawnShipTypeA
@@ -23,7 +24,7 @@ SpawnTypeJunkHandler:           push    af
                                 ret     c                                   ; abort if failed
                                 ret 
                                 
-SpawnTypeCopHandler:            call    SpawnShipTypeA
+SpawnTypeCopHandler:            ;call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ; Cops will be non hostile if there are no other ones in area
                                 ; if there are, then check out cargo and fist to evalutate
@@ -32,16 +33,18 @@ SpawnTypeCopHandler:            call    SpawnShipTypeA
                                 ;                                            travelling to station
                                 ;                                            travelling to sun
                                 ret
-SpawnTypeTraderHandler:         call    SpawnShipTypeA
+SpawnTypeTraderHandler:         ;call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ; 50/50 goign to planet or sun
                                 ;                main loop AI determines if our FIST status will force a jump
                                 ret
+                                
 SpawnTypeNonTraderHandler:      call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ; 50/50 goign to planet or sun
                                 ; if FIST is high then 10% chance will auto go hostile
                                 ret
+                                
 SpawnTypePirateHandler:         call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ; set random position
@@ -74,10 +77,10 @@ SpawnTypeDoNotSpawnHandler:    ret
 
 
 
-SpawnHostileCop:        ld      a,ShipID_Viper
-                        call    SpawnShipTypeA                      ; call rather than jump
-                        call    SetShipHostile                      ; as we have correct universe banked in now
-                        ret
+SpawnHostileCop:                ld      a,ShipID_Viper
+                                call    SpawnShipTypeA                      ; call rather than jump
+                                call    SetShipHostile                      ; as we have correct universe banked in now
+                                ret
             DISPLAY "TODO: SPAWN TRADER"
 SpawnTrader:       ; TODO
 
@@ -93,21 +96,20 @@ SpawnTrader:       ; TODO
 
 
 ; input IX = table for spawn data
-; output A  = table type
-;        b = maximum to spawn
+; output b = maximum to spawn
 ;        de = spawn table address
 ;        hl = spawn handler address
-SelectSpawnTableData:   ld      a,(ix+1*SpawnTableSize)             ; Table Type
-                        ld      hl,SpawnTypeHandlers                ; hl = the location in spawn table for the call address for setting up a spawn
-                        add     hl,a                                ; of type A
-                        add     hl,a                                ; 
-                        ld      a,(hl)
-                        inc     hl
-                        ld      h,(hl)
+SelectSpawnTableData:   ld      a,(ix+1*SpawnTableSize)             ; Table Type, e.g. SpawnTypeTrader being an off set (SpaceStatoin = 0, Trader = 4 etc)
+                        ld      hl,SpawnTypeHandlers                ; hl = the location in spawn hanlder routine look up table for the call address for setting up a spawn
+                        add     hl,a                                ; adjust for 2 * A to get the address of the respective spawn hanlder routine
+                        add     hl,a                                ; .
+                        ld      a,(hl)                              ; then get the address from that table into HL
+                        inc     hl                                  ; .
+                        ld      h,(hl)                              ; .
                         ld      l,a                                 ; hl now is proper address
-                        ld      b,(ix+2*SpawnTableSize)             ; Nbr to Spawn
-                        ld      e,(ix+3*SpawnTableSize)             ; Spawn Table Addr Low
-                        ld      d,(ix+4*SpawnTableSize)             ; Spawn Table Addr Hi
+                        ld      b,(ix+2*SpawnTableSize)             ; Get Nbr of objects to  Spawn
+                        ld      e,(ix+3*SpawnTableSize)             ; Spawn Rank Table Addr Low
+                        ld      d,(ix+4*SpawnTableSize)             ; Spawn Rank Table Addr Hi
                         ret
 
 ; Output IX = pointer to correct row in table

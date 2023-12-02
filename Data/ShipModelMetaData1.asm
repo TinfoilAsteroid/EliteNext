@@ -88,11 +88,9 @@ ShipModelSizeTable1:     DW AdderLen                                ;00 $00
                         include "Data/ships/Anaconda.asm"
                         include "Data/ships/Asp_Mk_2.asm"
                         include "Data/ships/Boa.asm"
-
                         include "Data/ships/CargoType5.asm"
                         include "Data/ships/Boulder.asm"
                         include "Data/ships/Asteroid.asm"
-
                         include "Data/ships/Bushmaster.asm"
                         include "Data/ships/Chameleon.asm"
                         include "Data/ships/CobraMk3.asm"

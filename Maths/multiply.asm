@@ -29,7 +29,25 @@ AequDmulEdiv256usgn:    mul     de
                         ret
 
     
-
+; muliptiply S7d ny S7e signed
+; used A and B registers
+; result in DE
+mulDbyESigned:          ld      a,d
+                        xor     e
+                        and     SignOnly8Bit
+                        ld      b,a
+                        ld      a,d
+                        and     SignMask8Bit
+                        ld      d,a
+                        ld      a,e
+                        and     SignMask8Bit
+                        ld      e,a
+                        mul     de
+                        ld      a,d
+                        or      b
+                        ld      d,a
+                        ret
+                       
 
 
 MacroDEEquQmulASigned:  MACRO
@@ -224,6 +242,47 @@ mulDEbyHL:              push    bc
                         pop     bc
                         ret
 
+; multiplication of 16-bit numbers by 8-bit product
+; enter : de = 16-bit multiplicand
+;          l = 8-bit multiplicand
+; exit  : hl = 16-bit product
+;         carry reset
+; maths is 
+;        hl = y , de= x
+;        hl = xhi,ylo + (yhigh * xlow)
+;        hl = yhih & xlo + x
+;
+;
+; uses  : af, bc, de, hl	
+mulDEbyLSigned:         push    bc,,hl,,de
+                        ld a,d                      ; a = xh
+                        ld d,0                      ; d = yh = 0
+                        ld h,a                      ; h = xh
+                        ld c,e                      ; c = xl
+                        ld b,l                      ; b = yl
+;                        mul                         ; yh * xl which will always be 0
+                        ex de,hl                    ; de = xh yl
+                        mul                         ; xh * yl
+                        ex de,hl                    ; hl = xh * yl
+;                        add hl,de                   ; add cross products
+                        ld e,c                      ; de = yl xl
+                        ld d,b                      ; .
+                        mul                         ; yl * xl
+                        ld a,l                      ; cross products lsb
+                        add a,d                     ; add to msb final
+                        ld h,a
+                        ld l,e                      ; hl = final
+                        xor a                       ; reset carry
+                        pop     bc                  ; get de for sign
+                        ld      a,b
+                        pop     bc                  ; get hl for sign
+                        xor     b
+                        and     $80                 ; so we now have the sign bit
+                        or      h                   ; so set the sign
+                        ld      h,a                 ; .
+                        pop     bc                  ; clear up stack
+                        ret
+
 
 ; CHL = multiplicand D = multiplier
 ; DCHL = CHL * D
@@ -296,7 +355,9 @@ mulHLbyDE2sc:           ld      a,d
                         ret     z
                         
 
-
+; Mulitply HLE by D leading Sign
+; used IY A BC
+; result it loaded to DELC
 mulHLEbyDSigned:        ld      a,d                 ; get sign from d
                         xor     h                   ; xor with h to get resultant sign
                         and     SignOnly8Bit        ; .

@@ -112,7 +112,7 @@ CheckVisible:           ld      a,(UBnKzsgn)                 ; Is the ship behin
                         
                                     DISPLAY "TODO:remove all teh processing of rotmat to load craft to camera as its already been done"
 CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;   
-                       ; break                          
+                        ;break                          
                         call    CopyRotmatToTransMat        ; XX16 = UBNKRotMat    
                         call    ScaleXX16Matrix197          ; scale rotation matrix in XX16
                         call    LoadCraftToCamera           ; XX18 = camera

@@ -61,6 +61,8 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         jp      z,.NoRotation               ; if both zero then don't compute
 ; If the xsgn,ysng or zsng are not 0 or $80 then we use 24 bit routines
 ; else we can just continue to use 16 bit                        
+                       ;jp      ApplyMyRollAndPitch24Bit
+
 .CheckFor24Bit:         ld      a,(UBnKxsgn)
                         ld      hl,UBnKysgn
                         or      (hl)
@@ -70,7 +72,7 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         jp      nz,ApplyMyRollAndPitch24Bit
                         ;break
 ; P[210] = x * alph (we use P[2]P[1] later as result/256
-                        ld      e,a                         ; e = roll magnitude
+.Not24BitCalcs:         ld      e,a                         ; e = roll magnitude
                         ld      hl,(UBnKxlo)                ; hl = ship x pos
                         call    AHLequHLmulE                ; MULTU2-2 AHL = UbnkXlo * Alp1 both unsigned
                         ld      (varPhi2),a                 ; set P[2] to high byte to help with ./256
@@ -144,14 +146,10 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         call    APPequXPosPlusAPP           ; MVT6 Set (A P+2 P+1) = (x_sign x_hi x_lo) + (A P+2 P+1) = x + y * alpha / 256   
                         ld      (UBnKxsgn),a                ; save resutl stright into X pos
                         ld      (UBnKxlo),hl                
-                        ;break
+                        break
+                        call    ApplyMyRollToOrientation
+                        call    ApplyMyPitchToOrientation
                         ; if its not a Univ then apply to local orientation
-                        ApplyMyRollToVector ALPHA, UBnkrotmatNosevX, UBnkrotmatNosevY   ; ApplyMyRollToNosev:
-                        ApplyMyRollToVector ALPHA, UBnkrotmatSidevX, UBnkrotmatSidevY   ; ApplyMyRollToSidev:
-                        ApplyMyRollToVector ALPHA, UBnkrotmatRoofvX, UBnkrotmatRoofvY   ; ApplyMyRollToRoofv:
-                        ApplyMyRollToVector BETA, UBnkrotmatNosevZ, UBnkrotmatNosevY    ; ApplyMyPitchToNosev:
-                        ApplyMyRollToVector BETA, UBnkrotmatSidevZ, UBnkrotmatSidevY    ; ApplyMyPitchToSidev:    
-                        ApplyMyRollToVector BETA, UBnkrotmatRoofvZ, UBnkrotmatRoofvY    ; ApplyMyPitchToRoofv:    
 .NoRotation:            ld      a,(DELTA)                   ; get speed
                         ld      d,0
                         ld      e,a                         ; de = speed in low byte
@@ -164,6 +162,18 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         ld      (UBnKzsgn),a                ;
                         ret
 
+               DISPLAY "TODO: Looks like pitch is always being applied as positive"
+ApplyMyRollToOrientation:MMUSelectMathsBankedFns
+                        ld      a,(ALPHA) : ld ix,UBnkrotmatNosevX : ld iy,UBnkrotmatNosevY : call ApplyMyAngleAToIXIY ; ApplyMyRollToNosev:
+                        ld      a,(ALPHA) : ld ix,UBnkrotmatSidevX : ld iy,UBnkrotmatSidevY : call ApplyMyAngleAToIXIY ; ApplyMyRollToSidev:
+                        ld      a,(ALPHA) : ld ix,UBnkrotmatRoofvX : ld iy,UBnkrotmatRoofvY : call ApplyMyAngleAToIXIY ; ApplyMyRollToRoofv:
+                        ret
+
+ApplyMyPitchToOrientation:
+                        ld      a,(BETA)  : ld ix,UBnkrotmatNosevZ : ld iy,UBnkrotmatNosevY : call ApplyMyAngleAToIXIY ; ApplyMyPitchToNosev:
+                        ld      a,(BETA)  : ld ix,UBnkrotmatSidevZ : ld iy,UBnkrotmatSidevY : call ApplyMyAngleAToIXIY ; ApplyMyPitchToSidev:
+                        ld      a,(BETA)  : ld ix,UBnkrotmatRoofvZ : ld iy,UBnkrotmatRoofvY : call ApplyMyAngleAToIXIY ; ApplyMyPitchToRoofv:
+                        ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; 24 bit version of pitch and roll is a 24 bit calculation 1 bit sign + 23 bit value
 ; Need to write a test routine for roll and pitchs
@@ -218,12 +228,20 @@ ApplyMyRollAndPitch24Bit: 	ld      a,(ALPHA)                   ; no roll or pitc
 ; get z, multiply by alpha, pick top 3 bytes with sign
 ; get x, multiply by alpha, pick top 3 bytes with sign
 ; if alpha +ve subtract x = x - z adj, z =z + x adj , else x += z adj z -= z adj 
+; so we can assume 24 bit maths and just do 16 bit multiply of say HL = nosev x [sgn][hi] and de = [0][alpha] by calling AHLequHLmulE
+; for roll
+; nosev_y = nosev_y - alpha * nosev_x_hi
+; nosev_x = nosev_x + alpha * nosev_y_hi
+; and for pitch
+; nosev_y = nosev_y - beta * nosev_z_hi
+; nosev_z = nosev_z + beta * nosev_y_hi
+
 Univ_Roll:				    ld      a,(ALPHA)                   ; get roll value
 							and 	$7F
 							ld      d,a                         ; .
-							ld      a,(UBnKylo)                ; HLE = x sgn, hi, lo
+							ld      a,(UBnKylo)                 ; HLE = x sgn, hi, lo
 							ld      e,a                         ; .
-							ld      hl,(UBnKyhi)               ; .
+							ld      hl,(UBnKyhi)                ; .
 							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 							ld		a,l
 							ld		(UnivAlphaMulY),a			; save result
@@ -238,7 +256,7 @@ Univ_Roll:				    ld      a,(ALPHA)                   ; get roll value
 							ld		a,l
 							ld		(UnivAlphaMulX),a			; save result
 							ld		(UnivAlphaMulX+1),de		; save result							
-							ld		a,(ALPHA)
+							ld		a,(ALPHA)                   ; get sign for alpha to determine left or right
 							and		$80
 							jp		z,.RollingRight
 .RollingLeft:				ld		ix,UBnKxlo
@@ -247,6 +265,7 @@ Univ_Roll:				    ld      a,(ALPHA)                   ; get roll value
 							ld		ix,UBnKylo
 							ld		iy,UnivAlphaMulX
 							call	SubAtIXtoAtIY24Signed
+.ApplyRollToLeft:           call    ApplyMyRollToOrientation                            
 							ret
 .RollingRight:				ld		ix,UBnKxlo
 							ld		iy,UnivAlphaMulY
@@ -254,29 +273,30 @@ Univ_Roll:				    ld      a,(ALPHA)                   ; get roll value
 							ld		ix,UBnKylo
 							ld		iy,UnivAlphaMulX
 							call	AddAtIXtoAtIY24Signed
+.ApplyRollToRight:          call    ApplyMyRollToOrientation                            
 							ret
 
-Univ_Pitch:				    ld      a,(BETA)                   ; get roll value
+Univ_Pitch:				    ld      a,(BETA)                    ; get roll value
 							and 	$7F
 							ld      d,a                         ; .
-							ld      a,(UBnKylo)                ; HLE = x sgn, hi, lo
+							ld      a,(UBnKylo)                 ; HLE = x sgn, hi, lo
 							ld      e,a                         ; .
-							ld      hl,(UBnKyhi)               ; .
+							ld      hl,(UBnKyhi)                ; .
 							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 							ld		a,l
 							ld		(UnivBetaMulY),a			; save result
-							ld		(UnivBetaMulY+1),de		; save result
-							ld      a,(BETA)                   ; get roll value
+							ld		(UnivBetaMulY+1),de		    ; save result
+							ld      a,(BETA)                    ; get roll value
 							and 	$7F
 							ld      d,a                         ; .
-							ld      a,(UBnKzlo)                ; HLE = x sgn, hi, lo
+							ld      a,(UBnKzlo)                 ; HLE = x sgn, hi, lo
 							ld      e,a                         ; .
-							ld      hl,(UBnKzhi)               ; .
+							ld      hl,(UBnKzhi)                ; .
 							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 							ld		a,l
 							ld		(UnivBetaMulZ),a			; save result
-							ld		(UnivBetaMulZ+1),de		; save result							
-							ld		a,(BETA)
+							ld		(UnivBetaMulZ+1),de		    ; save result							
+							ld		a,(BETA)                    ; get sign of angle to determine dive or climb
 							and		$80
 							jp		z,.Climbing
 .Diving:					ld		ix,UBnKylo
@@ -285,11 +305,13 @@ Univ_Pitch:				    ld      a,(BETA)                   ; get roll value
 							ld		ix,UBnKzlo
 							ld		iy,UnivBetaMulY
 							call	SubAtIXtoAtIY24Signed
+.ApplyPitchToDive:          call    ApplyMyPitchToOrientation                            
 							ret
 .Climbing:		     		ld		ix,UBnKylo
 							ld		iy,UnivBetaMulZ
 							call	SubAtIXtoAtIY24Signed
 							ld		ix,UBnKzlo
 							ld		iy,UnivBetaMulY
-							call	AddAtIXtoAtIY24Signed	
+							call	AddAtIXtoAtIY24Signed
+.ApplyPitchToClimb:         call    ApplyMyPitchToOrientation
 							ret                        
