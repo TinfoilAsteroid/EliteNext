@@ -283,6 +283,24 @@ mulDEbyLSigned:         push    bc,,hl,,de
                         pop     bc                  ; clear up stack
                         ret
 
+    DISPLAY "TODO: TEST"
+mulDEbyHLSigned:        ld  a,d                     ; de = abs de
+                        ld  b,a                     ;
+                        and     $7F                 ; .
+                        ld  d,a                     ; .
+                        ld  a,h                     ; hl = abs hl
+                        ld  c,a                     ; .
+                        and     $7F                 ; . 
+                        ld      h,a                 ; .
+                        ld      a,c                 ; ixl = target sign of de * hl
+                        xor     d                   ;
+                        and     $80                 ;
+                        ld      ixl,a               ;
+                        call    mulDEbyHL           ; calculate ABS(DE) * ABS(HL)
+                        ld      a,h                 ; recover sign bit
+                        or      ixl
+                        ld      h,a
+                        ret
 
 ; CHL = multiplicand D = multiplier
 ; DCHL = CHL * D

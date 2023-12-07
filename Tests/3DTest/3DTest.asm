@@ -90,6 +90,42 @@ InitialiseMainLoop:     call        ClearUnivSlotList
                         ZeroA
                         ld          (JSTX),a
                         ld          (JSTY),a
+TestNormalise:          MMUSelectMathsBankedFns
+
+                        ld          ix,TestVec1
+                        call        NormaliseIXVector
+                        ld          ix,TestVec2
+                        call        NormaliseIXVector
+                        ld          ix,TestVec3
+                        call        NormaliseIXVector
+                        ld          ix,TestVec4
+                        call        NormaliseIXVector
+                        ld          ix,TestVec5
+                        call        NormaliseIXVector
+                        ld          ix,TestVec6
+                        call        NormaliseIXVector
+.SpinKeyboard:          break
+                        jp          TestTidy
+TestVec1:               DW  $6000, $0000, $0000, $0, $0, $0, $0, $0
+TestVec2:               DW  $3000, $2000, $0000, $0, $0, $0, $0, $0
+TestVec3:               DW  $0000, $0000, $E000, $0, $0, $0, $0, $0
+TestVec4:               DW  $6000, $6000, $0000, $0, $0, $0, $0, $0
+TestVec5:               DW  $0000, $0000, $1000, $0, $0, $0, $0, $0
+TestVec6:               DW  $3450, $2450, $3E00, $0, $0, $0, $0, $0
+                        
+                        
+TestTidy:               MMUSelectMathsBankedFns
+                        MMUSelectUniverseN 0
+                       ;call        TidyVectorsIX
+.SpinKeyboard:          MMUSelectKeyboard
+                        call        scan_keyboard
+                        ld          a,VK_Q
+                        call        is_vkey_pressed
+                        jp          nz,MainLoop
+                        ld          a,VK_N
+                        call        is_vkey_pressed
+                        jp          nz,TestTidy
+                        jp          .SpinKeyboard
 ;..................................................................................................................................
 MainLoop:	            MMUSelectMathsBankedFns                                         ; make sure we are in maths routines in case a save paged out
                         call    doRandom                                                ; redo the seeds every frame

@@ -27,8 +27,49 @@
 ;inwkarray			equ		INWK+10
 
 
-
-
+; Performs (vectorelment1 * vectorelment2 + vectorelment3 * vectorelment4) / vectorelment5
+; hl = vectoreelment1 de = vectorelement2
+; hl' = vectoreelment3 de' = vectorelement4
+; bc' = vectorelement5
+;TidyCalc:       call    mulDEbyHLSigned
+;                push    hl
+;                exx
+;                call    mulDEbyHLSigned
+;                pop     de
+;                call    AddDEtoHLSigned
+;                call    HLDivBCSigned
+;                ret
+;                
+;
+;; orthonormalise vector for UBnK ship vector uses IX IT
+;TidyVectorsIX:  ld      a,(UBnkrotmatNosevX+1)  ; hl = nosev_x * roofv_x
+;                ld      d,a                     ; .
+;                ld      a,(UBnkrotmatRoofvY+1)  ; .
+;                ld      e,a                     ; .
+;                call    mulDbyESigned           ; .
+;                ex      hl,de                   ; .
+;                ld      a,(UBnkrotmatNosevY+1)  ; de = nosev_y * roofv_y
+;                ld      d,a                     ; .
+;                ld      a,(UBnkrotmatRoofvZ+1)  ; .
+;                ld      e,a                     ; .
+;                call    mulDbyESigned           ; .
+;                call    AddDEtoHLSigned         ; HL = HL + DE
+;                ld      (UBnkrotmatNosevZ+1)
+;                cp      0
+;                jp      nz,.CalcRoofZ
+;.MaxedRoofZ:    ld      de,$E000                ; if was divide by zero make it -1
+;                ld      (UBnkrotmatRoofvZ),de
+;                jp      .NormaliseStep
+;.CalcRoofZ:                     
+;                
+;                
+;                 roofv_z = -(nosev_x * roofv_x + nosev_y * roofv_y) / nosev_z
+;                 Normalise roofv
+;                 sidev_x = (nosev_z * roofv_y - nosev_y * roofv_z) / 96
+;                 sidev_y = (nosev_x * roofv_z - nosev_z * roofv_x) / 96
+;                 sidev_z = (nosev_y * roofv_x - nosev_x * roofv_y) / 96
+;                 Zero all the low bytes
+;                 
 ; Divide that sets value to FFFF if divide by 0 unless main value is 0, then 0
 
 ; (P+1 A) = (A P) / Q 

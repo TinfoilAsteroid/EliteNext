@@ -195,12 +195,15 @@ UnivBetaMulZ                DB $00,$00, $00, $00
 UnivBetaMulY                DB $00,$00, $00, $00
 UnivK2                      DS 3
 
-ApplyMyRollAndPitch24Bit: 	ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
-.CheckForRoll:              and		a
-							call	nz,Univ_Roll
-.CheckForPitch:				ld		a,(BETA)
-							and		a
-							call	nz,Univ_Pitch
+ApplyMyRollAndPitch24Bit: 	 ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
+                             ld     hl,BETA
+                             or     (hl)
+                             call   nz, Univ_Roll_And_Pitch
+;.CheckForRoll:              and		a
+;							call	nz,Univ_Roll
+;.CheckForPitch:				ld		a,(BETA)
+;							and		a
+;							call	nz,Univ_Pitch
 .ApplySpeed:            	ld      a,(DELTA)                   ; BCH = - Delta
 							ReturnIfAIsZero
 							ld      c,0                         ;
@@ -235,83 +238,120 @@ ApplyMyRollAndPitch24Bit: 	ld      a,(ALPHA)                   ; no roll or pitc
 ; and for pitch
 ; nosev_y = nosev_y - beta * nosev_z_hi
 ; nosev_z = nosev_z + beta * nosev_y_hi
+;  1. K2 = y - alpha * x
+;   2. z = z + beta * K2
+;   3. y = K2 - beta * z
+;   4. x = x + alpha * y
+;   
+;   1a. K [3 2 1 0] = -alpha * (x sign hi lo)
+;   1b. K [3 2 1]   = y sign hi lo + K [321] (in effect y minus (alpha * x / 256)
+;   1c. K2 [3 2 1]  = k [3 2 1 ]
+;   2a. K[3 2 1 0]  = k2 [3 2 1] * beta
+;   2b. z sign hi lo += K[3 2 1] ( in effect z += (beta * K2)/256
+;   3a. K [3 2 1 0] = z sign hi lo * -beta
+;   3b. y sign hi lo = K2 [3 2 1] - K [3 2 1] ( in effect K2 - (beta * z) /256
+;   
+;   4. x = x + alpha * y
 
-Univ_Roll:				    ld      a,(ALPHA)                   ; get roll value
-							and 	$7F
-							ld      d,a                         ; .
-							ld      a,(UBnKylo)                 ; HLE = x sgn, hi, lo
+
+
+;-- Q = - ALPHA            
+;-- A P[1 0] = xsign xhi xlo
+;-- call K[3 2 1 0] = A P[1 0] * Q which means  K(3 2 1) = (A P+1 P) * Q / 256 = x * -alpha / 256 = - alpha * x / 256
+;-- call K[3 2 1] = ysign hi lo + K[3 2 1] (= y - alpha * x / 256)
+;-- K2 [3 2 1 ] = K [ 3 2 1 ]
+;-- A P [1 0]   = K [3 2 1]
+;-- Q = BETA 
+;-- K[3 2 1 0] = A P[1 0] * Q
+;-- K3[3 2 1] = z sign hi lo + K[3 2 1]
+;-- A P [1 0] = -K [3 2 1]
+;-- z sign hi lo = K[3 2 1]
+;-- K[3 2 1 0] = A P[1 0] * Q
+;-- T = K[3] sign bit     
+;-- A = K[3] sign bit xor K2[3]
+;-- if positive A yhi lo - = K [3 2 1 0] + K2[3 2 1 0] so A yhi ylo = K + K2 /256 as we abandon low byte
+;-- if negative A yhi lo = (K - k2 )/256
+;-- A = A xor T   
+;-- y sign = A 
+;-- Q = alpha
+;-- A P(1 0) = y sign hi lo
+;-- K[3 2 1 0 ] A P[1 0] * Q
+;-- x sign hi lo = K[3 2 1] = xsign hi lo * K[3 2 1]
+
+K2      DS  3
+
+Univ_Roll_And_Pitch:	    ld      a,(ALPHA)                   ; get roll value
+;** 1. K2 = y - alpha * x **************************************
+;-- DEL = alpha * (x sign hi lo) /256
+							ld      d,a                         ; d = alpha
+							ld      a,(UBnKxlo)                 ; HLE = x sgn, hi, lo
 							ld      e,a                         ; .
-							ld      hl,(UBnKyhi)                ; .
-							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
-							ld		a,l
-							ld		(UnivAlphaMulY),a			; save result
-							ld		(UnivAlphaMulY+1),de		; save result
-							ld      a,(ALPHA)                   ; get roll value
-							and 	$7F
-							ld      d,a                         ; .
-							ld      a,(UBnKxlo)                ; HLE = x sgn, hi, lo
+							ld      hl,(UBnKxhi)                ; hl = UBnKchi sgn
+							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * alpha / 256 
+;-- DEL = K2 = y - alpha * x
+                            ld      bc,de                       ; transfer to BCH for now
+                            ld      h,l
+                            ld      de,(UBnKyhi)
+                            ld      a,(UBnKylo)
+                            ld      l,a
+                            call    SubBCHfromDELsigned                
+                            ld      (K2+1),de
+                            ld      a,l
+                            ld      (K2),a
+;** 2. z = z + beta * K2 ***************************************
+;-- HLE = DEL ..................................................
+                            ex      de,hl                       ; will set hl to de and e to l in one go
+;-- DELC = beta * HLE, i.e. beta * K2
+                            ld      a,(BETA)
+                            ld      d,a
+                            call    mulHLEbyDSigned             ; DELC = beta * K2
+;-- DEL = z + DEL, i.e. z + Beta * K2 /256
+                            ld      bc,(UBnKzhi)                ; BCH = z
+                            ld      a,(UBnKzlo)                 ; .
+                            ld      h,a                         ; .
+                            call    AddBCHtoDELsigned           ; DEL =z + (beta * K2)/256
+                            ld      (UBnKzhi),de                ; and save to Z
+                            ld      a,l                         ; .
+                            ld      (UBnKzlo),a                 ; .
+;** 3. y = K2 - beta * z ***************************************
+;-- DEL = beta * z / 256    
+                            ld      a,(BETA)                    ; get pitch value
+							ld      d,a                         ; d = pitch
+							ld      a,(UBnKzlo)                 ; HLE = z sgn, hi, lo
 							ld      e,a                         ; .
-							ld      hl,(UBnKxhi)               ; .
-							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
-							ld		a,l
-							ld		(UnivAlphaMulX),a			; save result
-							ld		(UnivAlphaMulX+1),de		; save result							
-							ld		a,(ALPHA)                   ; get sign for alpha to determine left or right
-							and		$80
-							jp		z,.RollingRight
-.RollingLeft:				ld		ix,UBnKxlo
-							ld		iy,UnivAlphaMulY
-							call	AddAtIXtoAtIY24Signed
-							ld		ix,UBnKylo
-							ld		iy,UnivAlphaMulX
-							call	SubAtIXtoAtIY24Signed
-.ApplyRollToLeft:           call    ApplyMyRollToOrientation                            
-							ret
-.RollingRight:				ld		ix,UBnKxlo
-							ld		iy,UnivAlphaMulY
-							call	SubAtIXtoAtIY24Signed
-							ld		ix,UBnKylo
-							ld		iy,UnivAlphaMulX
-							call	AddAtIXtoAtIY24Signed
+							ld      hl,(UBnKzhi)                ; hl = UBnKchi sgn
+							call    mulHLEbyDSigned             ; DELC = z * beta, so DEL = z * beta / 256 
+;-- BCH = DEL ..................................................
+                            ld      bc,de                       ; transfer to BCH for now
+                            ld      h,l
+;-- y = DEL = K2 - beta * z = DEL - BCH
+                            ld      de,(K2+1)                   ; del = K2
+                            ld      a,(K2)                      ; .
+                            ld      l,a                         ; .
+                            call    SubBCHfromDELsigned         ; .    
+                            ld      (UBnKyhi),de                ; and save to y
+                            ld      a,l                         ; .
+                            ld      (UBnKylo),a                 ; .
+;** 4. x = x + alpha * y ***************************************                            
+;-- DEL = alpha * y
+                            ld      a,(ALPHA)                   ; get roll value
+;-- DEL = alpha * (y sign hi lo) /256
+							ld      d,a                         ; d = alpha
+							ld      a,(UBnKylo)                 ; HLE = y sgn, hi, lo
+							ld      e,a                         ; .
+							ld      hl,(UBnKyhi)                ; hl = UBnKyhi sgn
+							call    mulHLEbyDSigned             ; DELC = y * alpha, so DEL = Y * alpha / 256 
+;-- DEL = x + alpha * y
+                            ld      bc,de                       ; transfer to BCH for now
+                            ld      h,l                         ; .
+                            ld      de,(UBnKxhi)                ; del = x
+                            ld      a,(UBnKxlo)                 ; .
+                            ld      l,a                         ; .
+                            call    AddBCHtoDELsigned           ; del = del + bch = x + alpha * y    
+                            ld      (UBnKxhi),de                ; and save to x
+                            ld      a,l                         ; .
+                            ld      (UBnKxlo),a                 ; .
 .ApplyRollToRight:          call    ApplyMyRollToOrientation                            
-							ret
-
-Univ_Pitch:				    ld      a,(BETA)                    ; get roll value
-							and 	$7F
-							ld      d,a                         ; .
-							ld      a,(UBnKylo)                 ; HLE = x sgn, hi, lo
-							ld      e,a                         ; .
-							ld      hl,(UBnKyhi)                ; .
-							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
-							ld		a,l
-							ld		(UnivBetaMulY),a			; save result
-							ld		(UnivBetaMulY+1),de		    ; save result
-							ld      a,(BETA)                    ; get roll value
-							and 	$7F
-							ld      d,a                         ; .
-							ld      a,(UBnKzlo)                 ; HLE = x sgn, hi, lo
-							ld      e,a                         ; .
-							ld      hl,(UBnKzhi)                ; .
-							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
-							ld		a,l
-							ld		(UnivBetaMulZ),a			; save result
-							ld		(UnivBetaMulZ+1),de		    ; save result							
-							ld		a,(BETA)                    ; get sign of angle to determine dive or climb
-							and		$80
-							jp		z,.Climbing
-.Diving:					ld		ix,UBnKylo
-							ld		iy,UnivBetaMulZ
-							call	AddAtIXtoAtIY24Signed
-							ld		ix,UBnKzlo
-							ld		iy,UnivBetaMulY
-							call	SubAtIXtoAtIY24Signed
-.ApplyPitchToDive:          call    ApplyMyPitchToOrientation                            
-							ret
-.Climbing:		     		ld		ix,UBnKylo
-							ld		iy,UnivBetaMulZ
-							call	SubAtIXtoAtIY24Signed
-							ld		ix,UBnKzlo
-							ld		iy,UnivBetaMulY
-							call	AddAtIXtoAtIY24Signed
 .ApplyPitchToClimb:         call    ApplyMyPitchToOrientation
+                            call    TIDY ; doesn't work
 							ret                        
