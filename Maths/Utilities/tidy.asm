@@ -26,6 +26,7 @@
 ;
 ;inwkarray			equ		INWK+10
 
+    IFDEF USE_NORMALISE_IX
 
 ; d = vector 1 e = vector 2 h = vector3 l = vector 4 b = vector 5
 ; performs (d*e + h*l) / b and puts the result in de where e is 0
@@ -78,7 +79,8 @@ TidySide:       call    mulDbyESigned           ; de = vector 1 * vector 2
                 ret
 
 ;; orthonormalise vector for UBnK ship vector uses IX IT
-TidyVectorsIX:  ld      ix,UBnkrotmatNosevX
+TidyVectorsIX:  break
+                ld      ix,UBnkrotmatNosevX
                 call    NormaliseIXVector       ; initially we normalise the nose vector
 .CheckNoseXSize:ld      a,(UBnkrotmatNosevX+1)  ; a = nose x
                 and     %00110000                ; if bits 7 and 6 are clear the work with nosey
@@ -191,6 +193,7 @@ TidyVectorsIX:  ld      ix,UBnkrotmatNosevX
                 call    TidySide
                 ld      (UBnkrotmatSidevZ),de   ; write sidevX
                 ret
+    ELSE                
 ;                 
 ; Divide that sets value to FFFF if divide by 0 unless main value is 0, then 0
 
@@ -642,3 +645,4 @@ Tidy1RZ:										; roofv_z´ = -(nosev_x´ * roofv_x + nosev_y´ * roofv_y) / n
 		and		$80
 		or		b
 		ret
+    ENDIF
