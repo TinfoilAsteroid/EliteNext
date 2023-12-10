@@ -146,7 +146,7 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         call    APPequXPosPlusAPP           ; MVT6 Set (A P+2 P+1) = (x_sign x_hi x_lo) + (A P+2 P+1) = x + y * alpha / 256   
                         ld      (UBnKxsgn),a                ; save resutl stright into X pos
                         ld      (UBnKxlo),hl                
-                        break
+                        ;break
                         call    ApplyMyRollToOrientation
                         call    ApplyMyPitchToOrientation
                         ; if its not a Univ then apply to local orientation
@@ -195,7 +195,7 @@ UnivBetaMulZ                DB $00,$00, $00, $00
 UnivBetaMulY                DB $00,$00, $00, $00
 UnivK2                      DS 3
 
-ApplyMyRollAndPitch24Bit: 	 ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
+ApplyMyRollAndPitch24Bit: 	 ld     a,(ALPHA)                   ; no roll or pitch, no calc needed
                              ld     hl,BETA
                              or     (hl)
                              call   nz, Univ_Roll_And_Pitch
@@ -351,7 +351,7 @@ Univ_Roll_And_Pitch:	    ld      a,(ALPHA)                   ; get roll value
                             ld      (UBnKxhi),de                ; and save to x
                             ld      a,l                         ; .
                             ld      (UBnKxlo),a                 ; .
-.ApplyRollToRight:          call    ApplyMyRollToOrientation                            
+.ApplyRollToRight:          ;call    ApplyMyRollToOrientation                            
 .ApplyPitchToClimb:         call    ApplyMyPitchToOrientation
-                            call    TIDY ; doesn't work
+                          ;  call    TidyVectorsIX ; doesn't work
 							ret                        

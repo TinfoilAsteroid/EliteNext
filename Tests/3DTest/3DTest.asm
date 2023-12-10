@@ -5,6 +5,8 @@
     DEVICE ZXSPECTRUMNEXT
     SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
 
+
+    DEFINE  SHIP_DRAW_FULL_SCREEN 1
  CSPECTMAP 3DTest.map
  OPT --zxnext=cspect --syntax=a --reversepop
 ;-- Key Definitions                        
@@ -90,8 +92,8 @@ InitialiseMainLoop:     call        ClearUnivSlotList
                         ZeroA
                         ld          (JSTX),a
                         ld          (JSTY),a
+                        jp          MainLoop
 TestNormalise:          MMUSelectMathsBankedFns
-
                         ld          ix,TestVec1
                         call        NormaliseIXVector
                         ld          ix,TestVec2
@@ -112,21 +114,35 @@ TestVec3:               DW  $0000, $0000, $E000, $0, $0, $0, $0, $0
 TestVec4:               DW  $6000, $6000, $0000, $0, $0, $0, $0, $0
 TestVec5:               DW  $0000, $0000, $1000, $0, $0, $0, $0, $0
 TestVec6:               DW  $3450, $2450, $3E00, $0, $0, $0, $0, $0
-                        
-                        
 TestTidy:               MMUSelectMathsBankedFns
                         MMUSelectUniverseN 0
-                       ;call        TidyVectorsIX
-.SpinKeyboard:          MMUSelectKeyboard
-                        call        scan_keyboard
-                        ld          a,VK_Q
-                        call        is_vkey_pressed
-                        jp          nz,MainLoop
-                        ld          a,VK_N
-                        call        is_vkey_pressed
-                        jp          nz,TestTidy
-                        jp          .SpinKeyboard
-;..................................................................................................................................
+                        ld          hl,TestMatrix1: ld de, UBnkrotmatSidevX : ld bc, 2 * 9 : ldir
+                        call        TidyVectorsIX
+                        break
+                        ld          hl,TestMatrix2: ld de, UBnkrotmatSidevX : ld bc, 2 * 9 : ldir
+                        call        TidyVectorsIX
+                        break
+                        ld          hl,TestMatrix3: ld de, UBnkrotmatSidevX : ld bc, 2 * 9 : ldir
+                        call        TidyVectorsIX
+                        break
+                        ld          hl,TestMatrix4: ld de, UBnkrotmatSidevX : ld bc, 2 * 9 : ldir
+                        call        TidyVectorsIX
+                        break
+                        ld          hl,TestMatrix5: ld de, UBnkrotmatSidevX : ld bc, 2 * 9 : ldir
+                        call        TidyVectorsIX
+                        break
+                        ld          hl,TestMatrix6: ld de, UBnkrotmatSidevX : ld bc, 2 * 9 : ldir
+                        call        TidyVectorsIX
+                        break
+                        jp          MainLoop
+                        ;   SIDEV                ROOFV                NOSEV
+TestMatrix1:            DW  $0000, $0000, $E000, $0000, $6000, $0000, $6000, $0000, $0000 
+TestMatrix2:            DW  $0000, $0000, $E000, $0000, $5EEC, $0000, $6000, $0000, $0000 
+TestMatrix3:            DW  $0000, $0000, $E000, $0000, $5EEC, $0000, $3000, $3000, $3000 
+TestMatrix4:            DW  $0000, $0000, $E000, $0000, $6000, $0000, $5000, $0000, $0000 
+TestMatrix5:            DW  $0000, $0000, $E000, $0000, $5500, $0000, $6000, $0000, $0000 
+TestMatrix6:            DW  $0000, $0000, $E100, $0000, $6000, $0000, $6000, $0000, $0000 
+;...................................................................................................................................
 MainLoop:	            MMUSelectMathsBankedFns                                         ; make sure we are in maths routines in case a save paged out
                         call    doRandom                                                ; redo the seeds every frame
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
@@ -155,7 +171,10 @@ InputBlockerCheck:      MMUSelectKeyboard
                         ld      a,VK_N
                         call    is_vkey_pressed
                         call    z, SelectShip
-    
+; Tidy and Normalise Vector    
+                        ld      a,VK_V
+                        call    is_vkey_pressed
+                        call    z, TidyVectorsIX
 ; Ship Pitch and Roll T/G ship pitch, F/H ship roll   U/J Ship Thrust
                         MMUSelectKeyboard
                         ld      a,VK_T
@@ -283,13 +302,13 @@ PressedPitchMinus:      MMUSelectUniverseN 0
                         ret
 
 PressedRollPlus:        MMUSelectUniverseN 0
-                        ld      a,20
+                        ld      a,60
                         ld      (JSTX),a
                         call    draw_front_calc_alpha
                         ret
 
 PressedRollMinus:       MMUSelectUniverseN 0
-                        ld      a,-20
+                        ld      a,-60
                         ld      (JSTX),a
                         call    draw_front_calc_alpha
                         ret                        
@@ -349,7 +368,8 @@ UpdateUniverseObjects:  xor     a
                         call    GetTypeAtSlotA
                         xor     a
                         MMUSelectUniverseA                                      ; and we apply roll and pitch
-.ProperUpdate:          call    ApplyMyRollAndPitch24Bit                             ; todo , make all 4 of these 1 call
+.ProperUpdate:          call    ApplyMyRollAndPitchTest
+;call    ApplyMyRollAndPitch24Bit                             ; todo , make all 4 of these 1 call
                         ld      a,(UBnKRotZCounter)
                         cp      0
                         call    ApplyShipRollAndPitch
@@ -363,6 +383,122 @@ UpdateUniverseObjects:  xor     a
                         call    draw_front_calc_alpha
                         call    draw_front_calc_beta                        
                         ret
+;..................................................................................................................................
+ApplyMyRollAndPitchTest:ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
+.CheckForRoll:          and		a
+						call	nz,Test_Roll
+.CheckForPitch:			ld		a,(BETA)
+						and		a
+						call	nz,Test_Pitch
+.ApplySpeed:            ld      a,(DELTA)                   ; BCH = - Delta
+						ReturnIfAIsZero
+						ld      c,0                         ;
+						ld      h,a                         ; 
+						ld      b,$80                       ;
+						ld      de,(UBnKzhi)                ; DEL = z position
+						ld      a,(UBnKzlo)                 ; .
+						ld      l,a                         ; .
+						call    AddBCHtoDELsigned           ; update speed
+						ld      (UBnKzhi),DE                ; write back to zpos
+						ld      a,l
+						ld      (UBnKzlo),a                ;
+                        ld      a,(ALPHA)
+                        ld      hl,BETA
+                        or      (hl)
+                        ret     z
+                        ld      ix,UBnkrotmatSidevX
+                        call    ApplyRollAndPitchToIX
+                        ld      ix,UBnkrotmatRoofvX
+                        call    ApplyRollAndPitchToIX
+                        ld      ix,UBnkrotmatNosevX
+                        call    ApplyRollAndPitchToIX
+                        ret
+
+;----------------------------------------------------------------------------------------------------------------------------------
+; Planet version of pitch and roll is a 24 bit calculation 1 bit sign + 23 bit value
+; Need to write a test routine for roll and pitchs
+TestAlphaMulX            DB $00,$00, $00, $00
+TestAlphaMulY            DB $00,$00, $00, $00
+TestAlphaMulZ            DB $00,$00, $00, $00
+TestBetaMulZ             DB $00,$00, $00, $00
+TestBetaMulY             DB $00,$00, $00, $00
+TestK2                   DS 3
+                        
+Test_Roll:				ld      a,(ALPHA)                   ; get roll value
+						and 	$7F
+						ld      d,a                         ; .
+						ld      a,(UBnKylo)                ; HLE = x sgn, hi, lo
+						ld      e,a                         ; .
+						ld      hl,(UBnKyhi)               ; .
+						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						ld		a,l
+						ld		(TestAlphaMulY),a			; save result
+						ld		(TestAlphaMulY+1),de		; save result
+						ld      a,(ALPHA)                   ; get roll value
+						and 	$7F
+						ld      d,a                         ; .
+						ld      a,(UBnKxlo)                ; HLE = x sgn, hi, lo
+						ld      e,a                         ; .
+						ld      hl,(UBnKxhi)               ; .
+						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						ld		a,l
+						ld		(TestAlphaMulX),a			; save result
+						ld		(TestAlphaMulX+1),de		; save result							
+						ld		a,(ALPHA)
+						and		$80
+						jp		z,.RollingRight
+.RollingLeft:			ld		ix,UBnKxlo
+						ld		iy,TestAlphaMulY
+						call	AddAtIXtoAtIY24Signed
+						ld		ix,UBnKylo
+						ld		iy,TestAlphaMulX
+						call	SubAtIXtoAtIY24Signed
+						ret
+.RollingRight:			ld		ix,UBnKxlo
+						ld		iy,TestAlphaMulY
+						call	SubAtIXtoAtIY24Signed
+						ld		ix,UBnKylo
+						ld		iy,TestAlphaMulX
+						call	AddAtIXtoAtIY24Signed
+						ret
+
+Test_Pitch:				ld      a,(BETA)                   ; get roll value
+						and 	$7F
+						ld      d,a                         ; .
+						ld      a,(UBnKylo)                ; HLE = x sgn, hi, lo
+						ld      e,a                         ; .
+						ld      hl,(UBnKyhi)               ; .
+						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						ld		a,l
+						ld		(TestBetaMulY),a			; save result
+						ld		(TestBetaMulY+1),de		; save result
+						ld      a,(BETA)                   ; get roll value
+						and 	$7F
+						ld      d,a                         ; .
+						ld      a,(UBnKzlo)                ; HLE = x sgn, hi, lo
+						ld      e,a                         ; .
+						ld      hl,(UBnKzhi)               ; .
+						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						ld		a,l
+						ld		(TestBetaMulZ),a			; save result
+						ld		(TestBetaMulZ+1),de		; save result							
+						ld		a,(BETA)
+						and		$80
+						jp		z,.Climbing
+.Diving:				ld		ix,UBnKylo
+						ld		iy,TestBetaMulZ
+						call	AddAtIXtoAtIY24Signed
+						ld		ix,UBnKzlo
+						ld		iy,TestBetaMulY
+						call	SubAtIXtoAtIY24Signed
+						ret
+.Climbing:		     	ld		ix,UBnKylo
+						ld		iy,TestBetaMulZ
+						call	SubAtIXtoAtIY24Signed
+						ld		ix,UBnKzlo
+						ld		iy,TestBetaMulY
+						call	AddAtIXtoAtIY24Signed	
+						ret                        
 ;..................................................................................................................................
 
 Plus10:                 DB 10,0,0

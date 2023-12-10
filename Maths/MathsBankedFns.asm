@@ -432,3 +432,48 @@ ApplyMyAngleAToIXIY:    ;break
                         call    AddDEtoHLSigned             ; hl = hl + de
                         ld      (ix+0),hl                   ; .
                         ret
+           
+; Applies Roll Alpha and Pitch Beta to vector at IX
+ApplyRollAndPitchToIX:  
+;-- y Vector = y - alpha * nosev_x_hi
+                        ld      e,(ix+1)                    ; e = X component hi
+                        ld      a,(ALPHA)                   ; alpha S7
+                        ld      d,a
+                        call    mulDbyESigned               ; d = X Vector * alpha / 256
+                        ld      l,(ix+2)                    ; hl = Y Vector component
+                        ld      h,(ix+3)                    ;
+                        call    SubDEfromHLSigned           ; hl = Y - (alpha * nosev x hi)
+                        ld      (ix+2),l
+                        ld      (ix+3),h
+;-- x Vector = x Vector + alpha * y_hi
+                        ld      e,(ix+3)                    ; e = y component hi
+                        ld      a,(ALPHA)                   ; alpha S7
+                        ld      d,a
+                        call    mulDbyESigned               ; d = y Vector * alpha / 256
+                        ld      l,(ix+2)                    ; hl = x Vector component
+                        ld      h,(ix+3)                    ;
+                        call    AddDEtoHLSigned             ; hl = x + (alpha * nosev x hi)
+                        ld      (ix+0),l
+                        ld      (ix+1),h
+;-- nosev_y = nosev_y - beta * nosev_z_hi
+                        ld      e,(ix+5)                    ; e = z component hi
+                        ld      a,(BETA)                    ; beta S7
+                        ld      d,a
+                        call    mulDbyESigned               ; d = Z Vector * beta / 256
+                        ld      l,(ix+2)                    ; hl = y Vector component
+                        ld      h,(ix+3)                    ;
+                        call    SubDEfromHLSigned           ; hl = Y - (beta * nosev z hi)
+                        ld      (ix+2),l
+                        ld      (ix+3),h
+;-- nosev_z = nosev_z + beta * nosev_y_hi
+                        ld      e,(ix+3)                    ; e = y component hi
+                        ld      a,(BETA)                    ; beta S7
+                        ld      d,a
+                        call    mulDbyESigned               ; d = y Vector * beta / 256
+                        ld      l,(ix+4)                    ; hl = z Vector component
+                        ld      h,(ix+5)                    ;
+                        call    AddDEtoHLSigned             ; hl = z + (beta * nosev z hi)
+                        ld      (ix+4),l
+                        ld      (ix+5),h
+                        ret
+                        

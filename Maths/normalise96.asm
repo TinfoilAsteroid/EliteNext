@@ -22,19 +22,19 @@ NormaliseIXVector:      ld		a,(ix+1)			; Vector X high
 .n96SQRT:               call	asm_sqrt			; hl = sqrt de
 .n96NORMX:              ld		a,(ix+1)            
                         ld		d,l					; Q(i.e. l) => D, later we can just pop into de
-                        call	AequAdivDmul967Bit	; does not use HL so we can retain it
+                        call	AequAdivDmul96Q8    ; does not use HL so we can retain it
                         ld		b,a				    ; Sort out restoring sign bit
                         ld      c,0                 ; .
                         ld		(ix+0),bc           ; .
 .n96NORMY:              ld		a,(ix+3)            
                         ld		d,l					; Q(i.e. l) => D, later we can just pop into de
-                        call	AequAdivDmul967Bit	; does not use HL so we can retain it
+                        call	AequAdivDmul96Q8	; does not use HL so we can retain it
                         ld		b,a				    ; Sort out restoring sign bit
                         ld      c,0                 ; .
                         ld		(ix+2),bc           ; .
 .n96NORMZ:              ld		a,(ix+5)            
                         ld		d,l					; Q(i.e. l) => D, later we can just pop into de
-                        call	AequAdivDmul967Bit	; does not use HL so we can retain it
+                        call	AequAdivDmul96Q8 	; does not use HL so we can retain it
                         ld		b,a				    ; Sort out restoring sign bit
                         ld      c,0                 ; .
                         ld		(ix+4),bc           ; .
