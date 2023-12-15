@@ -7,6 +7,8 @@
 
 
     DEFINE  SHIP_DRAW_FULL_SCREEN 1
+    DEFINE  USE_NORMALISE_IX
+    DEFINE  INTERRUPS_DISABLE 1
  CSPECTMAP 3DTest.map
  OPT --zxnext=cspect --syntax=a --reversepop
 ;-- Key Definitions                        
@@ -92,7 +94,7 @@ InitialiseMainLoop:     call        ClearUnivSlotList
                         ZeroA
                         ld          (JSTX),a
                         ld          (JSTY),a
-                        jp          MainLoop
+                        jp          TestOrientRandP
 TestNormalise:          MMUSelectMathsBankedFns
                         ld          ix,TestVec1
                         call        NormaliseIXVector
@@ -142,7 +144,37 @@ TestMatrix3:            DW  $0000, $0000, $E000, $0000, $5EEC, $0000, $3000, $30
 TestMatrix4:            DW  $0000, $0000, $E000, $0000, $6000, $0000, $5000, $0000, $0000 
 TestMatrix5:            DW  $0000, $0000, $E000, $0000, $5500, $0000, $6000, $0000, $0000 
 TestMatrix6:            DW  $0000, $0000, $E100, $0000, $6000, $0000, $6000, $0000, $0000 
+TestOrientRandP:        ld      a,$60
+                        ld      (ALPHA),a
+                        ld      (BETA),a
+                        ld      ix,TestVector1
+                        ld      b,6
+.TestLoop:              push    ix,,bc
+                        break
+                        MMUSelectMathsBankedFns
+                        call    ApplyRollAndPitchToIX
+                        pop     ix,,bc
+                        ld      hl,ix
+                        ld      a,6
+                        add     hl,a
+                        ld      ix,hl
+                        djnz    .TestLoop
+                        jp      InitMainLoop
+; y Vector = y - alpha * x_hi 
+; x Vector = x + alpha * y_hi
+; y Vector = y - beta * z_hi
+; z Vector = z + beta * y_hi
+TestVector1:            DW  $0000, $0000, $E000 
+TestVector2:            DW  $0000, $0000, $0000
+TestVector3:            DW  $6000, $0000, $0000
+TestVector4:            DW  $0000, $E000, $0000
+TestVector5:            DW  $0000, $5EEC, $0000
+TestVector6:            DW  $6000, $0000, $0000 
+                        
 ;...................................................................................................................................
+InitMainLoop:           ZeroA
+                        ld      (ALPHA),a
+                        ld      (BETA),a
 MainLoop:	            MMUSelectMathsBankedFns                                         ; make sure we are in maths routines in case a save paged out
                         call    doRandom                                                ; redo the seeds every frame
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
@@ -384,15 +416,19 @@ UpdateUniverseObjects:  xor     a
                         call    draw_front_calc_beta                        
                         ret
 ;..................................................................................................................................
-ApplyMyRollAndPitchTest:ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
+ApplyMyRollAndPitchTest:;break
+                        ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
 .CheckForRoll:          and		a
 						call	nz,Test_Roll
 .CheckForPitch:			ld		a,(BETA)
 						and		a
 						call	nz,Test_Pitch
+                        ret
 .ApplySpeed:            ld      a,(DELTA)                   ; BCH = - Delta
-						ReturnIfAIsZero
-						ld      c,0                         ;
+                        and     a
+                        jp      z,.ApplyOrientation
+						;ReturnIfAIsZero
+                        ld      c,0                         ;
 						ld      h,a                         ; 
 						ld      b,$80                       ;
 						ld      de,(UBnKzhi)                ; DEL = z position
@@ -402,7 +438,7 @@ ApplyMyRollAndPitchTest:ld      a,(ALPHA)                   ; no roll or pitch, 
 						ld      (UBnKzhi),DE                ; write back to zpos
 						ld      a,l
 						ld      (UBnKzlo),a                ;
-                        ld      a,(ALPHA)
+.ApplyOrientation:      ld      a,(ALPHA)
                         ld      hl,BETA
                         or      (hl)
                         ret     z
@@ -591,11 +627,14 @@ SetInitialShipPosition: ld      hl,$0000
                         ld      (DELTA4),hl
                         ret    
 
+            DISPLAY "../../Maths/Utilities/XX12EquNodeDotOrientation.asm"
             include "../../Maths/Utilities/XX12EquNodeDotOrientation.asm"
+            DISPLAY "../../ModelRender/CopyXX12ToXX15.asm"
             include "../../ModelRender/CopyXX12ToXX15.asm"	
+            DISPLAY "../../Maths/Utilities/ScaleXX16Matrix197.asm"
             include "../../Maths/Utilities/ScaleXX16Matrix197.asm"
 		    
-            include "../../Universe/StarDust/StarRoutines.asm"
+            ;nclude "../../Universe/StarDust/StarRoutines.asm"
             
             INCLUDE	"../../Hardware/memfill_dma.asm"
             INCLUDE	"../../Hardware/memcopy_dma.asm"
@@ -642,6 +681,7 @@ XX12PVarSign3		DB 0
     INCLUDE "../../Maths/Utilities/RSequQmulA-MULT12.asm"
     include "../../Universe/Ships/CopyRotMattoXX15.asm"
     include "../../Universe/Ships/CopyXX15toRotMat.asm"
+    DISPLAY "../../Maths/Utilities/tidy.asm"
     INCLUDE "../../Maths/Utilities/tidy.asm"
     INCLUDE "../../Maths/Utilities/LL28AequAmul256DivD.asm"    
     INCLUDE "../../Maths/Utilities/XAequMinusXAPplusRSdiv96-TIS1.asm"

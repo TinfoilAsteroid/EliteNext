@@ -110,9 +110,7 @@ NormalAI:               ;ld      a,(ShipAIEnabled)
                         jr      z, .NoEscapePod
                         ld      a,(RandomSeed2)
                         JumpIfALTNusng 230,.NoEscapePod         ;if random >= 230 
-                        ld      a,(UBnkaiatkecm)                ;  disable ship AI hostily and ECM
-                        and     ShipAIDisabled                  ;  .
-                        ld      (UBnkaiatkecm),a                ;  .
+                        call    UnivClearAI                     ;  disable ship AI hostily and ECM
                         ;ZeroA                                   ;  .
                         ld      (UBnKECMFitted),a               ;  .
 .LaunchEscapePod:       ;break                        

@@ -36,17 +36,19 @@ ShipAiJumpTableMax:   EQU ($ - ShipAIJumpTable)/2
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Main entry point to tactics. Every time it will do a a tidy and the do AI logic
 UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
-                       ld      hl,TidyCounter
-                       dec     (hl)
-                       DISPLAY "TODO: SEE IF THIS IS AN ISSUE"
-                    IFDEF USE_NORMALISE_IX
-                       call     z,TidyVectorsIX
-                    ELSE
-                       call     z,TidyUbnK  ;TODO SEE IF THIS IS AN ISSUE"
-                    ENDIF
+                  ;    break
+                  ;    ld       a,(TidyCounter)
+                  ;    ld       hl,
+                  ;     ld      hl,TidyCounter
+                  ;    dec     (hl)
+                  ; IFDEF USE_NORMALISE_IX
+                  ;    call     z,TidyVectorsIX
+                  ; ELSE
+                  ;    call     z,TidyUbnK  ;TODO SEE IF THIS IS AN ISSUE"
+                  ; ENDIF
                        ; This shoudl be a call nz to tidy *****ret     nz
-                       ld      a,16
-                       ld      (TidyCounter),a
+                      ; ld      a,16
+                      ; ld      (TidyCounter),a
                        ;call    TidyUbnK
                        ; add AI in here too
                        ld       a,(ShipTypeAddr)
@@ -107,8 +109,8 @@ MakeHostile:            ld      a,(ShipNewBitsAddr)                     ; Check 
                         JumpIfMemEqNusng ShipTypeAddr, ShipTypeStation, .SetNewbHostile
 .ItsNotAStation:        and     ShipIsBystander                         ; check if space station present if its a bystander
                         call    nz, SetStationHostile                   ; Set Space Station if present, Angry
-                        ld      a,(UBnkaiatkecm)                        ; get AI data
-                        ReturnOnBitClear a, ShipAIEnabledBitNbr         ; if 0 then no AI attached so it can't get angry
+                        IsAIEnabled                                     ; get AI data
+                        ret     z                                       ; if 0 then no AI attached so it can't get angry
                         ld      c,a                                     ; Copy to c in case we need it later
                         SetMemToN UBnKAccel, 2                          ; set accelleration to 2 to speed up
                         sla     a                                       ; set pitch to 4

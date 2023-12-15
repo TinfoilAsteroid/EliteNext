@@ -13,6 +13,8 @@ UBnK24BitBetaMulZ       DB $00,$00, $00, $00
 UBnK24BitBetaMulY       DB $00,$00, $00, $00
 UBnK24BitK2             DS 3
     
+PitchBlock              DB  1
+
 ApplyMyRollAndPitch:    ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
 .CheckForRoll:          and		a
 						call	nz,UBnKRoll_24Bit
@@ -20,7 +22,9 @@ ApplyMyRollAndPitch:    ld      a,(ALPHA)                   ; no roll or pitch, 
 						and		a
 						call	nz,UBnKPitch_24Bit
 .ApplySpeed:            ld      a,(DELTA)                   ; BCH = - Delta
-						ReturnIfAIsZero
+                        and     a
+                        jp      z,.ApplyOrientation
+						;ReturnIfAIsZero
 						ld      c,0                         ;
 						ld      h,a                         ; 
 						ld      b,$80                       ;
@@ -30,13 +34,36 @@ ApplyMyRollAndPitch:    ld      a,(ALPHA)                   ; no roll or pitch, 
 						call    AddBCHtoDELsigned           ; update speed
 						ld      (UBnKzhi),DE                ; write back to zpos
 						ld      a,l
-						ld      (UBnKzlo),a                ;
-                        ld      a,(ALPHA)
+                        ld      (UBnKzlo),a                ;
+.ApplyOrientation:      ld      a,(ALPHA)
                         ld      hl,BETA
                         or      (hl)
                         ret     z
-                        ld      ix,UBnkrotmatSidevX
+                        ld      a,(PitchBlock)
+                        and     a
+                        ret     z
+                        ;break
+PitchBreak:             ld      ix,UBnkrotmatSidevX
+DebugAlert1:            ld      a,(ix+1)
+                        ld      d,(ix+3)
+                        ld      e,(ix+5)
+                        or     d
+                        or     e
+                        and     $7F
+                        jp      nz,.NoBreak
+                        break
+.NoBreak                        
+
                         call    ApplyRollAndPitchToIX
+DebugAlert2:             ld      a,(ix+1)
+                        ld      d,(ix+3)
+                        ld      e,(ix+5)
+                        or     d
+                        or     e
+                        and     $7F
+                        jp      nz,.NoBreak
+                        break
+.NoBreak                        
                         ld      ix,UBnkrotmatRoofvX
                         call    ApplyRollAndPitchToIX
                         ld      ix,UBnkrotmatNosevX

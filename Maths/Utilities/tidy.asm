@@ -79,8 +79,8 @@ TidySide:       call    mulDbyESigned           ; de = vector 1 * vector 2
                 ret
 
 ;; orthonormalise vector for UBnK ship vector uses IX IT
-TidyVectorsIX:  break
-                ld      ix,UBnkrotmatNosevX
+    DISPLAY "TidyVectorsIX"
+TidyVectorsIX:  ld      ix,UBnkrotmatNosevX
                 call    NormaliseIXVector       ; initially we normalise the nose vector
 .CheckNoseXSize:ld      a,(UBnkrotmatNosevX+1)  ; a = nose x
                 and     %00110000                ; if bits 7 and 6 are clear the work with nosey
@@ -192,6 +192,15 @@ TidyVectorsIX:  break
                 ld      l,a                     
                 call    TidySide
                 ld      (UBnkrotmatSidevZ),de   ; write sidevX
+            IFDEF ROUND_ROLL_AND_PITCH
+.ClearLowBytes: ld      hl,UBnkrotmatSidevX
+                ZeroA
+                ld      b,9
+.WriteLoop:     ld      (hl),a
+                inc     hl
+                inc     hl
+                djnz    .WriteLoop
+            ENDIF
                 ret
     ELSE                
 ;                 

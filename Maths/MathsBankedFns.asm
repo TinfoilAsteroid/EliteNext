@@ -443,16 +443,19 @@ ApplyRollAndPitchToIX:
                         ld      l,(ix+2)                    ; hl = Y Vector component
                         ld      h,(ix+3)                    ;
                         call    SubDEfromHLSigned           ; hl = Y - (alpha * nosev x hi)
-                        ld      (ix+2),l
+                        ld      (ix+2),l                    ; dont round Y up yet
                         ld      (ix+3),h
 ;-- x Vector = x Vector + alpha * y_hi
                         ld      e,(ix+3)                    ; e = y component hi
                         ld      a,(ALPHA)                   ; alpha S7
                         ld      d,a
                         call    mulDbyESigned               ; d = y Vector * alpha / 256
-                        ld      l,(ix+2)                    ; hl = x Vector component
-                        ld      h,(ix+3)                    ;
+                        ld      l,(ix+0)                    ; hl = x Vector component
+                        ld      h,(ix+1)                    ;
                         call    AddDEtoHLSigned             ; hl = x + (alpha * nosev x hi)
+                    IFDEF ROUND_ROLL_AND_PITCH
+                        ld      l,0                         ; round up x
+                    ENDIF
                         ld      (ix+0),l
                         ld      (ix+1),h
 ;-- nosev_y = nosev_y - beta * nosev_z_hi
@@ -463,6 +466,9 @@ ApplyRollAndPitchToIX:
                         ld      l,(ix+2)                    ; hl = y Vector component
                         ld      h,(ix+3)                    ;
                         call    SubDEfromHLSigned           ; hl = Y - (beta * nosev z hi)
+                    IFDEF ROUND_ROLL_AND_PITCH
+                        ld      l,0                         ; round up Y
+                    ENDIF
                         ld      (ix+2),l
                         ld      (ix+3),h
 ;-- nosev_z = nosev_z + beta * nosev_y_hi
@@ -473,6 +479,9 @@ ApplyRollAndPitchToIX:
                         ld      l,(ix+4)                    ; hl = z Vector component
                         ld      h,(ix+5)                    ;
                         call    AddDEtoHLSigned             ; hl = z + (beta * nosev z hi)
+                    IFDEF ROUND_ROLL_AND_PITCH
+                        ld      l,0                         ; round up zwd
+                    ENDIF
                         ld      (ix+4),l
                         ld      (ix+5),h
                         ret

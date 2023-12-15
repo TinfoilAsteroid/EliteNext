@@ -4,7 +4,6 @@
                 DISPLAY "TODO: Optimisation"
                 DISPLAY "TODO: Review spawn logic for crash"
                 DISPLAY "TODO: Add space station safe boundary indicator"
-                DISPLAY "TODO: Move compases to border"
                 DISPLAY "TODO: Optimise apply my to planets and sun to consider if 24 bit can be doen using 16 bit if sgn is just a sign bit"
                 DISPLAY "TODO: Verify post hyper space"
                 DISPLAY "TODO: Why no count down text sometimes"
@@ -25,8 +24,15 @@
                 DISPLAY "TODO: Jump stop bong noise"
                 DISPLAY "TODO: Switch radar range functionality"
                 DISPLAY "TODO: Add in damage status displays"
+                DISPLAY "TODO: Bug random dissapearance of ship in front view after time"
+                DISPLAY "TODO: Bug random flattening of ship in front view after time"
+                DISPLAY "TODO: Bug random exploising of station in front view after time, seems to affect short distance out"
                 DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
                 DISPLAY "DONE: Clean up console and remove compasses"
+                DISPLAY "DONE: Re-Write of Tidy"
+                DISPLAY "DONE: Apply my Roll and Pitch to 24 bit"
+                DISPLAY "DONE: Move compases to border"
+                DISPLAY "DONE: Removed test harness code and moved to Test folder"
                 DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
                 
 
@@ -36,8 +42,10 @@
     DEFINE  DOUBLEBUFFER 1
     DEFINE  LATECLIPPING 1
     DEFINE  SIMPLEWARP   1
-    DEFINE  USE_NORMALISE_IX 1
-    DEFINE  USE_24BIT_ROLL_AND_PITCH 1
+    DEFINE  USE_NORMALISE_IX 1          ; use the replacemtn normaliseix (now should be always used)
+    DEFINE  USE_24BIT_ROLL_AND_PITCH 1  ; Use 24 bit maths always
+    ;DEFINE  ROUND_ROLL_AND_PITCH    1  ; Forces rouding of rotmat matricies to 8 bit
+    ;DEFINE  FORCE_TIDY 1               ; Forces call to Tidy every iteration
     ;DEFINE DEBUGCIRCLE1 1
     ;DEFINE DEBUGCIRCLE2 1 
     ;DEFINE DEBUGCIRCLE3 1 
@@ -240,62 +248,14 @@ EliteNextStartup:       di
                         call        WaitForAnyKey                      
                         MMUSelectSpriteBank
                         call        sprite_diagnostic_clear                     
-TidyDEBUG:              ld          a,16
-                        ld          (TidyCounter),a
+;TidyCounterInitialise:  ld          a,TidyInterval
+;                        ld          (TidyCounter),a
 TestText:               xor			a
                         ld      (JSTX),a
 DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks su n
                         SetBorder   $06
-TRIANGLEDIAGNOSTICS:   ;break
-                       ;ld          c,10
-                       ;ld          e,20
-                       ;ld          l,120
-                       ;MMUSelectLayer2
-                       ;call        l2_draw_horz_saved
-                       ;break
-                       ;ld          c,20
-                       ;ld          e,120
-                       ;ld          l,20
-                       ;call        l2_draw_horz_saved
-                       ;break
-                       ;ld          hl,120
-                       ;call        l2_drawHorzClipY
-                       ;break
-                       ;ld          hl,30
-                       ;ld          de,50
-                       ;exx
-                       ;ld          hl,40
-                       ;ld          de,60
-                       ;ld          ix,SaveArrayS2
-                       ;ld          a,$FF
-                       ;call        Layer2_Save_ClipY_Line ; Why was is very slow?
-;                        ;break
-;                        ld          hl,100; x1 64 hl'
-;                        ld          de,150; x2 96 de'
-;                        ld          bc,120; x3 78 bc'
-;                        exx
-;                        ld          hl,50  ;y1 32 hl
-;                        ld          de,75  ;y2 4B de
-;                        ld          bc,90  ;y3 5A bc
-;                        MMUSelectLayer2
-;                        call        l2_draw_fillclip_tri
-;TRIANGLEDIAGDONE:       ;break          0136 0153 FF81 FF98  310, 339  = -127, -104 dx 437, 443  (218 221)  91,117
-                         ;break
-                         MMUSelectUniverseN  0
-                         MMUSelectLayer2
-
-
-
-
-
-
-;.ClearLayer2Buffers:    DoubleBufferIfPossible
-;                        DoubleBufferIfPossible
-; Set up all 8 galaxies, 7later this will be pre built and loaded into memory from files            
-                
-                IFDEF LOGDIVIDEDEBUG
-                   DISPLAY "DEBUG: SKIPPING INIT TO SAVE MEMORY FOR LOG DIVIDE DEBUG TEST"
-                ELSE
+                        MMUSelectUniverseN  0
+                        MMUSelectLayer2
                         SetBorder   $07
 InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
                         ;break
@@ -307,11 +267,10 @@ InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
                         MMUSelectLayer1
                         call		l1_cls
                         SetBorder   $00
-                ENDIF
-                IFDEF SKIPATTRACT
+                    IFDEF SKIPATTRACT
                         DISPLAY "INITGALAXIES SKIP ATTRACT"
                         jp DefaultCommander
-                ELSE
+                    ELSE
                         DISPLAY "INITGALAXIES ATTRACT ENABLED"
 StartAttractMode:       di                                          ; we are changing interrupts
                         MMUSelectSound
@@ -327,14 +286,9 @@ StartAttractMode:       di                                          ; we are cha
                         ld          (IM2SoundHandler+1),hl
                         MMUSelectSound
                         call        InitAudio                       ; jsut re-init all audio for now rather than sound off
-                        IFDEF MAIN_INTERRUPTENABLE
-                            DISPLAY "Main Interrupt Enabled"
-                            ei 
-                        ELSE
-                            DISPLAY "Main Interrupt Disabled"
-                        ENDIF
+                        ei 
                         JumpIfAIsZero  SkipDefaultCommander
-                ENDIF
+                    ENDIF
 DefaultCommander:       MMUSelectCommander
                         call		defaultCommander
                         jp          InitialiseMainLoop:
@@ -400,43 +354,6 @@ InitialiseMainLoop:     call    InitMainLoop
                         INCLUDE "./GameEngine/DamagePlayer.asm"
 ;..Update Universe Objects.........................................................................................................
                         INCLUDE "./GameEngine/UpdateUniverseObjects.asm"
-;..................................................................................................................................                        
-;; TODODrawForwardSun:         MMUSelectSun
-;; TODO                        ld      a,(SunKShipType)
-;; TODO.ProcessBody:           cp      129
-;; TODO                        jr      nz,.ProcessPlanet
-;; TODO.ProcessSun:            call    ProcessSun
-;; TODO
-;; TODOProcessSun:             call    CheckSunDistance
-;; TODO
-;; TODO                        ret
-;; TODO.ProcessPlanet:         call    ProcessPlanet
-;; TODO                        ret                        
-;..................................................................................................................................                        
- 
-
-;;;ProcessUnivShip:        call    CheckVisible               ; Will check for negative Z and skip (how do we deal with read and side views? perhaps minsky transformation handles that?)
-;;;                        ret     c
-;;;                        ld      a,(UbnkDrawAsDot)
-;;;                        and     a
-;;;                        jr      z,.CarryOnWithDraw
-;;;.itsJustADot:           ld      bc,(UBnkNodeArray)          ; if its at dot range
-;;;                        ld      a,$FF                       ; just draw a pixel
-;;;                        MMUSelectLayer2                     ; then go to update radar
-;;;                        call    l2_plot_pixel               ; 
-;;;                        ClearCarryFlag
-;;;                        ret
-;;;.ProcessShipNodes:      call    ProcessShip
-;;;
-;;;call    ProcessNodes ; it hink here we need the star and planet special cases
-;;;.DrawShip:              call    CullV2				        ; culling but over aggressive backface assumes all 0 up front TOFIX
-;;;                        call    PrepLines                   ; LL72, process lines and clip, ciorrectly processing face visibility now
-;;;                        ld      a,(CurrentShipUniv)
-;;;                        MMUSelectUniverseA
-;;;                        call   DrawLines
-;;;                        ClearCarryFlag
-;;;                        ret                        
-
 ;----------------------------------------------------------------------------------------------------------------------------------
 InitialiseMessage       DB "Intialising",0
 LoadingSpritesMessage   DB "LoadingSprites",0
@@ -444,16 +361,9 @@ InitialisingGalaxies    DB "IntiailisingGalaxies",0
 LoadCounter             DB 0
 SpriteProgress          DB "*",0
 ;----------------------------------------------------------------------------------------------------------------------------------
-
 NeedAMessageQueue:
-
 ;..................................................................................................................................
                         INCLUDE "./GameEngine/HyperSpaceTimers.asm"
-
-
-
-;DisplayTargetAndRange
-;DisplayCountDownNumber
 ;----------------------------------------------------------------------------------------------------------------------------------
 TestPauseMode:          ld      a,(GamePaused)
                         cp      0
@@ -471,8 +381,6 @@ TestPauseMode:          ld      a,(GamePaused)
                         ld      (GamePaused),a                      ; Resume pressed to reset pause state
                         ret
 
-TestQuit:               MacroIsKeyPressed c_Pressed_Quit
-                        ret
 currentDemoShip:        DB      13;$12 ; 13 - corirollis 
 
 
@@ -517,7 +425,7 @@ GetStationVectorToWork: ld      hl,UBnKxlo
                         call    normaliseXX1596S7 
                         ret                          ; will return with a holding Vector Z
 
-TidyCounter             DB  0
+;TidyCounter             DB  0
 
             INCLUDE "./debugMatrices.asm"
 
@@ -590,8 +498,6 @@ ShipInSights:           ClearCarryFlag                          ; Carry clear no
                         ret                                     ; if its < area then its a hit and carry is set, we will not work on = 
 .EdgeHit:               SetCarryFlag                            ; its an edge hit then we need to set carry
                         ret
-                        
-
             INCLUDE "./Views/ConsoleDrawing.asm"
             INCLUDE "./Tables/message_queue.asm"
             INCLUDE "./Tables/LaserStatsTable.asm"
@@ -620,9 +526,6 @@ SeedGalaxy0Loop:        push    ix
                         ld		(XSAV),a
                         jr      nz,SeedGalaxy0Loop
                         ret
-
-
-
             
     ;include "./ModelRender/testdrawing.asm"
     IFDEF SKIPATTRACT
@@ -633,16 +536,8 @@ SeedGalaxy0Loop:        push    ix
 
     include "./Maths/Utilities/XX12EquNodeDotOrientation.asm"
     include "./ModelRender/CopyXX12ToXX15.asm"	
-    ;;DEFUNCTinclude "./ModelRender/CopyXX15ToXX12.asm"
     include "./Maths/Utilities/ScaleXX16Matrix197.asm"
-		    
     include "./Universe/StarDust/StarRoutines.asm"
-;    include "Universe/move_object-MVEIT.asm"
-;    include "./ModelRender/draw_object.asm"
-;    include "./ModelRender/draw_ship_point.asm"
-;    include "./ModelRender/drawforwards-LL17.asm"
-;    include "./ModelRender/drawforwards-LL17.asm"
-    
     INCLUDE	"./Hardware/memfill_dma.asm"
     INCLUDE	"./Hardware/memcopy_dma.asm"
 XX12PVarQ			DW 0
@@ -666,8 +561,6 @@ XX12PVarSign3		DB 0
     INCLUDE "./Tables/name_digrams.asm"
 ;INCLUDE "Tables/inwk_table.asm" This is no longer needed as we will write to univer object bank
 ; Include all maths libraries to test assembly   
-    ;INCLUDE "./Maths/asm_add.asm"
-    ;INCLUDE "./Maths/asm_subtract.asm"
     INCLUDE "./Maths/Utilities/AddDEToCash.asm"
     INCLUDE "./Maths/DIVD3B2.asm"
     INCLUDE "./Maths/multiply.asm"
@@ -686,11 +579,9 @@ XX12PVarSign3		DB 0
     INCLUDE "./Maths/Utilities/AequAdivQmul96-TIS2.asm"
     INCLUDE "./Maths/Utilities/AequAmulQdiv256-FMLTU.asm"
     INCLUDE "./Maths/Utilities/PRequSpeedDivZZdiv8-DV42-DV42IYH.asm"
-;    INCLUDE "./Maths/Utilities/AequDmulEdiv256usgn-DEFMUTL.asm" Moved to general multiply code
 
     INCLUDE "./Maths/Utilities/APequQmulA-MULT1.asm"
     INCLUDE "./Maths/Utilities/badd_ll38.asm"
-;;DEFUNCT    INCLUDE "./Maths/Utilities/moveship4-MVS4.asm"
 
     INCLUDE "./Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
     INCLUDE "./Maths/Utilities/RequAdivQ-LL61.asm"
@@ -708,7 +599,7 @@ XX12PVarSign3		DB 0
     INCLUDE "./Menus/common_menu.asm"
 MainNonBankedCodeEnd:
     DISPLAY "Main Non Banked Code Ends at ",$
-
+;-- END OF MAIN NON BANKED CODE ---------------------------------------------------------
     org $B000
     DISPLAY "Vector Table Starts at ",$
 VectorTable:            

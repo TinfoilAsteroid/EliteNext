@@ -240,7 +240,8 @@ ResetUbnkPosition:      ld      hl,UBnKxlo
                         djnz    .zeroLoop
                         ret
 
-FireECM:                ld      a,ECMCounterMax                 ; set ECM time
+FireECM:                break
+                        ld      a,ECMCounterMax                 ; set ECM time
                         ld      (UBnKECMCountDown),a            ;
                         ld      a,(ECMCountDown)
                         ReturnIfALTNusng ECMCounterMax
@@ -335,8 +336,7 @@ UnivSetEnemyMissile:    ld      hl,NewLaunchUBnKX               ; Copy launch sh
                         ld      (UBnKCNT2),a
                         MaxUnivSpeed                            ; and immediatley full speed (for now at least) TODO
                         SetMemFalse UBnKMissleHitToProcess
-                        ld      a,ShipAIEnabled
-                        ld      (UBnkaiatkecm),a
+                        call    UnivSetAIOnly
                         call    SetShipHostile
 .SetupPayload:          ld      a,150
                         ld      (UBnKMissileBlastDamage),a
@@ -385,9 +385,55 @@ ShipMissileBlast:       ld      a,(CurrentMissileBlastDamage)
                         jr      UnivExplodeShip
                         ld      (UBnKEnergy),a
                         ret
+; --------------------------------------------------------------
+; this applies AI flag and resets all other bits
+UnivSetAIOnly:          ld      a,ShipAIEnabled
+                        ld      (UBnkaiatkecm),a
+                        ret
 ; --------------------------------------------------------------                        
-; This sets the ship as a shower of explosiondwd
-UnivExplodeShip:        ld      a,(UBnkaiatkecm)
+; Sets visibile and not a dot
+UnivVisible:            ld      a,(UBnkaiatkecm)                ;  disable ship AI hostily and ECM
+                        or      ShipIsVisible
+                        ld      (UBnkaiatkecm),a                ;  .
+                        ret
+; --------------------------------------------------------------                        
+; Sets invisibile
+UnivInvisible:          ClearMemBitN  UBnkaiatkecm  , ShipIsVisibleBitNbr ; Assume its hidden
+                        ret
+; --------------------------------------------------------------                        
+; Clears ship killed bit to acknowled its happened
+UnivAcknowledExploding: ld      hl, UBnkaiatkecm                                     
+                        res     ShipKilledBitNbr,(hl)
+                        ret
+; --------------------------------------------------------------                        
+; Clears ship exploding bit
+UnivFinishedExplosion:  ld      hl, UBnkaiatkecm                                     
+                        res     ShipExplodingBitNbr,(hl)
+                        ret
+; --------------------------------------------------------------                        
+; Sets visibile and not a dot
+UnivVisibleNonDot:      ld      a,(UBnkaiatkecm)                ;  disable ship AI hostily and ECM
+                        or      ShipIsVisible
+                        and     ShipIsNotDot  
+                        ld      (UBnkaiatkecm),a                ;  .
+                        ret
+; --------------------------------------------------------------                        
+; Sets visibile and  a dot
+UnivVisibleDot:         ld      a,(UBnkaiatkecm)                ;  disable ship AI hostily and ECM
+                        or      ShipIsVisible | ShipIsDot
+                        ld      (UBnkaiatkecm),a                ;  .
+                        ret
+; --------------------------------------------------------------                        
+; Removes AI Bit from ship
+UnivClearAI:            ld      a,(UBnkaiatkecm)                ;  disable ship AI hostily and ECM
+                        and     ShipAIDisabled                  ;  .
+                        ld      (UBnkaiatkecm),a                ;  .
+                        ret
+
+; --------------------------------------------------------------                        
+; This sets the ship as a shower of explosiondwd, flags as killed and removes AI
+UnivExplodeShip:        break
+                        ld      a,(UBnkaiatkecm)
                         or      ShipExploding | ShipKilled      ; Set Exlpoding flag and mark as just been killed
                         and     Bit7Clear                       ; Remove AI
                         ld      (UBnkaiatkecm),a
@@ -772,7 +818,18 @@ SetAllFacesHiddenLoop:  ld      (hl),a
                         inc     hl
                         djnz    SetAllFacesHiddenLoop
                         ret
-
+;---------------------------------------------------------------------------------------------------------
+TidyRotation:       IFNDEF FORCE_TIDY    
+                        ld      a,(UBnkTidyCounter)         ; loops every 16 iterations
+                        dec     a                           ; and call is determined 
+                        and     %00001111                   ; by if the counter
+                        ld      (UBnkTidyCounter),a         ; matches teh slot number
+                        ld      hl,UBnKSlotNumber           ; of course this is then 16 slots max
+                        cp      (hl)
+                        ret     nz                          ; when counter matches slot number tidy stops it doing all tidies on same iteration
+                    ENDIF
+                        call    TidyVectorsIX
+                        ret
 ;;;;X = normal scale
 ;;;;ZtempHi = zhi
 ;;;;......................................................
@@ -1480,7 +1537,7 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
                         JumpOnABitClear ShipIsDotBitNbr, .CarryOnWithDraw   ; if not dot do normal draw
 ;............................................................  
 .itsJustADot:           call    ProcessDot
-                        SetMemBitN  UBnkaiatkecm , ShipIsDotBitNbr ; set is a dot flag
+                        call    UnivVisibleNonDot           ; set is a dot flag
                         ld      bc,(UBnkNodeArray)          ; if its at dot range get X
                         ld      de,(UBnkNodeArray+2)        ; and Y
                         ld      a,b                         ; if high byte components are not 0 then off screen
@@ -1525,7 +1582,7 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
 ;............................................................  
 .ExplodingCloud:        break
                         call    ProcessNodes
-                        ClearMemBitN  UBnkaiatkecm, ShipKilledBitNbr ; acknowledge ship exploding
+                        call    UnivAcknowledExploding      ; acknowledge ship exploding
 .UpdateCloudCounter:    ld      a,(UBnKCloudCounter)        ; counter += 4 until > 255
                         add     4                           ; we do this early as we now have logic for
                         jp      c,.FinishedExplosion        ; display or not later
@@ -1625,7 +1682,7 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
 .FinishedExplosion:     ;break
                         ld      a,(UBnKSlotNumber)          ; get slot number
                         call    ClearSlotA                  ; gauranted to be in main memory as non bankables
-                        ClearMemBitN UBnkaiatkecm, ShipExplodingBitNbr
+                        call    UnivFinishedExplosion       ;
                         ret
 
 
@@ -1664,10 +1721,7 @@ GetExperiencePoints:    ; TODO calculate experience points
 KillShip:               ld      a,(ShipTypeAddr)            ; we can't destroy stations in a collision
                         cp      ShipTypeStation             ; for destructable one we will have a special type of ship
                         ret     z
-                        ld      a,(UBnkaiatkecm)            ; remove AI, mark killed, mark exploding
-                        or      ShipExploding | ShipKilled  ; .
-                        and     ShipAIDisabled              ; .
-                        ld      (UBnkaiatkecm),a            ; .
+                        call    UnivExplodeShip             ; remove AI, mark killed, mark exploding
                         SetMemToN   UBnKexplDsp, ShipExplosionDuration ; set debris cloud timer, also usered in main to remove from slots
                         ldWriteZero UBnKEnergy              ; Zero ship energy
                         ld      (UBnKCloudRadius),a

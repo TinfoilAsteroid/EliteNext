@@ -13,6 +13,7 @@ UBnKzsgn                    DB  0                       ; INWK +8
 ;-Rotation Matrix of Ship----------------------------------------------------------------------------------------------------------
 ; Rotation data is stored as lohi, but only 15 bits with 16th bit being  a sign bit. Note this is NOT 2'c compliment
 ; Note they seem to have to be after camera position not quite found why yet, can only assume it does an iy or ix indexed copy? Bu oddly does not affect space station.
+UBnkTidyCounter             DB  0                       ; every 16 iterations the rotation matrix is normalised
 UBnkrotmatSidevX            DW  0                       ; INWK +21
 UBnkrotmatSidev             equ UBnkrotmatSidevX
 UBnkrotmatSidevY            DW  0                       ; INWK +23

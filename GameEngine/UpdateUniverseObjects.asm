@@ -67,9 +67,11 @@ UpdateUniverseObjects:  xor     a
                             jp      .CheckExploding
         ENDIF
                             DISPLAY "TODO: Make all 4 of these 1 call"
-.ProperUpdate:          call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
+.ProperUpdate:          call    TidyRotation                                    ; determine if its tidy time
+                        call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
                         ld      a,(UBnKRotZCounter)
-                        cp      0
+                        cp      0 ; WHY? 
+                        DISPLAY "TODO CHECK WHY ROGUE CP 0"
                         call    ApplyShipRollAndPitch
                         call    ApplyShipSpeed
                         call    UpdateSpeedAndPitch                             ; update based on rates of speed roll and pitch accelleration/decelleration
@@ -172,7 +174,11 @@ UpdateUniverseObjects:  xor     a
                         SetMemFalse    SetStationHostileFlag
                         ret
 .UpdateMissile:         ;break
-                        call    UpdateShip                                      ; we do it this way top avoid double calling
+;.CheckForTidy:          ld      a,(TidyCounter)
+;                        ld      hl,SelectedUniverseSlot
+;                        cp      (hl)
+;                        call    z,TidyVectorsIX
+.UpdateShipTactics:     call    UpdateShip                                      ; we do it this way top avoid double calling
                         jp      .DoneAICheck                                    ; ai if the ai slot to process = missile type
 ;..................................................................................................................................
 

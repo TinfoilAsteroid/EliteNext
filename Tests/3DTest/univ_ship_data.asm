@@ -209,7 +209,23 @@ ClearShipHostile:       ld      a,(ShipNewBitsAddr)
                         ld      (ShipNewBitsAddr),a
                         ret
 
-                        
+                        ; --------------------------------------------------------------                        
+; Sets visibile and not a dot
+UnivVisibleNonDot:      ld      a,(UBnkaiatkecm)                ;  disable ship AI hostily and ECM
+                        or      ShipIsVisible
+                        and     ShipIsNotDot  
+                        ld      (UBnkaiatkecm),a                ;  .
+                        ret
+; --------------------------------------------------------------                        
+; Sets visibile and  a dot
+UnivVisibleDot:         ld      a,(UBnkaiatkecm)                ;  disable ship AI hostily and ECM
+                        or      ShipIsVisible | ShipIsDot
+                        ld      (UBnkaiatkecm),a                ;  .
+                        ret
+; --------------------------------------------------------------                        
+; Sets invisibile
+UnivInvisible:          ClearMemBitN  UBnkaiatkecm  , ShipIsVisibleBitNbr ; Assume its hidden
+                        ret
 ; --------------------------------------------------------------
 ResetUBnkData:          ld      hl,StartOfUniv
                         ld      de,UBnk_Data_len

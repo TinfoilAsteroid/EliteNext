@@ -43,9 +43,8 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
 .IsMissleTargetGone:    JumpIfSlotAEmpty    .ECMIsActive            ; if the target was blown up then detonate
 ;... Note we don't have to check for impact as we already have a loop doing that
 .SelectTargetShip:      SelectTargetBank
-.IsShipExploding:       ld      a,(UBnkaiatkecm)                    ; check exploding status
-                        and     ShipExploding                       ; as if exploding then the missile will also explode
-                        jr      z,.UpdateTargetingShipX
+.IsShipExploding:       IsShipExploding                             ; check exploding status
+                        jr      z,.UpdateTargetingShipX             ; as if exploding then the missile will also explode
 .ShipIsExploding:       SelectMissileBank                           ; get missile back into memory
                         jp      .ECMIsActive
 ;--- At this point we already have the target banked in ready for calculating vector
