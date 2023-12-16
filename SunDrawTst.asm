@@ -126,7 +126,7 @@ SunLoop:                MMUSelectLayer2
     INCLUDE "./Tables/name_digrams.asm"
     INCLUDE "./Maths/addhldesigned.asm"
     INCLUDE "./Maths/asm_add.asm"
-    INCLUDE "./Maths/Utilities/AddDEToCash.asm"
+    INCLUDE "./Maths/asm_AddDEToCash.asm"
     INCLUDE "./Maths/DIVD3B2.asm"
     INCLUDE "./Maths/multiply.asm"
     INCLUDE "./Maths/asm_square.asm"

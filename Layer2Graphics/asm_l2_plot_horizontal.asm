@@ -10,8 +10,6 @@ l2_horz_lenhi           DB 0
 l2_horz_target          DB $00, $00
                         DB DMA_LOAD, DMA_ENABLE			   
 l2_horz_cmd_len	        EQU $ - l2_horz_line
-
-
 ; "l2_draw_horz_dma"
 ; "plot at bc for length d colour e using dma, assumes bank already selected"  
 l2_draw_horz_dma:       ld		a,e                                               ; T=4      ;
