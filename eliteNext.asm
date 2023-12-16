@@ -583,14 +583,14 @@ XX12PVarSign3		DB 0
     INCLUDE "./Maths/Utilities/APequQmulA-MULT1.asm"
     INCLUDE "./Maths/Utilities/badd_ll38.asm"
 
-    INCLUDE "./Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
+    ;INCLUDE "./Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
     INCLUDE "./Maths/Utilities/RequAdivQ-LL61.asm"
-    INCLUDE "./Maths/Utilities/RSequQmulA-MULT12.asm"
+    ;INCLUDE "./Maths/Utilities/RSequQmulA-MULT12.asm"
 
     include "./Universe/Ships/CopyRotMattoXX15.asm"
     include "./Universe/Ships/CopyXX15toRotMat.asm"
     INCLUDE "./Maths/asm_tidy.asm"
-    INCLUDE "./Maths/Utilities/LL28AequAmul256DivD.asm"    
+    ;INCLUDE "./Maths/Utilities/LL28AequAmul256DivD.asm"    
     ;INCLUDE "./Maths/Utilities/XAequMinusXAPplusRSdiv96-TIS1.asm"
 
     INCLUDE "./GameEngine/Tactics.asm"

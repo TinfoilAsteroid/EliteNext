@@ -53,7 +53,7 @@ ARCTAN:                 ld      a,(varP)                    ; LDA P             
                         sbc     a,b
                         ret                                 ; RTS                    \ Return from the subroutine
 ; This routine fetches arctan(A / Q) from the ACT table, so A will be set to an integer in the range 0 to 31 that represents an angle from 0 to 45 degrees (or 0 to \ PI / 4 radians)
-ARS1:                   call    LL28Amul256DivQ_6502        ; JSR LL28               \ Call LL28 to calculate: R = 256 * A / Q
+ARS1:                   call    Amul256DivQ                 ; JSR LL28               \ Call LL28 to calculate: R = 256 * A / Q
                         ld      a,(varR)                    ; LDA R                  \ Set X = R / 8
                         srl     a                           ; LSR A                  \       = 32 * A / Q
                         srl     a                           ; LSR A                  \ 
