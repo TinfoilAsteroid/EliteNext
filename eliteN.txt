@@ -15268,666 +15268,184 @@
   29+ 9E04 C9                   ret
   30+ 9E05
 # file closed: ./Universe/Ships/CopyXX15toRotMat.asm
- 592  9E05                  INCLUDE "./Maths/Utilities/tidy.asm"
-# file opened: ./Maths/Utilities/tidy.asm
-   1+ 9E05              ;rotmap0xLo: DB	0				; INWK +9
-   2+ 9E05              ;rotmap0xHi: DB	0				; INWK +10
-   3+ 9E05              ;rotmat0yLo: DB	0				; INWK +11
-   4+ 9E05              ;rotmat0yHi: DB	0				; INWK +12
-   5+ 9E05              ;rotmat0zLo:	DB 	0				; INWK +13
-   6+ 9E05              ;rotmat0zHi:	DB 	0				; INWK +14
-   7+ 9E05              ;rotmap1xLo: DB	0				; INWK +15
-   8+ 9E05              ;rotmap1xHi:	DB	0				; INWK +16
-   9+ 9E05              ;rotmat1yLo:	DB	0				; INWK +17
-  10+ 9E05              ;rotmat1yHi:	DB	0				; INWK +18
-  11+ 9E05              ;rotmat1zLo:	DB	0				; INWK +19
-  12+ 9E05              ;rotmat1zHi:	DB	0				; INWK +20
-  13+ 9E05              ;rotmat2xLo: DB	0				; INWK +21
-  14+ 9E05              ;rotmat2xHi:	DB	0				; INWK +22
-  15+ 9E05              ;rotmat2yLo:	DB	0				; INWK +23
-  16+ 9E05              ;rotmat2yHi:	DB	0				; INWK +24
-  17+ 9E05              ;rotmat2zLo:	DB	0				; INWK +25
-  18+ 9E05              ;rotmat2zHi:	DB	0				; INWK +26
-  19+ 9E05              ;
-  20+ 9E05              ;rotmatFx	equ	rotmat0xHi
-  21+ 9E05              ;rotmatFy	equ	rotmat0yHi
-  22+ 9E05              ;rotmatFz	equ	rotmat0zHi
-  23+ 9E05              ;rotmatUx	equ	rotmat1xHi
-  24+ 9E05              ;rotmatUy	equ	rotmat1yHi
-  25+ 9E05              ;rotmatUz	equ	rotmat1zHi
-  26+ 9E05              ;
-  27+ 9E05              ;inwkarray			equ		INWK+10
-  28+ 9E05
-  29+ 9E05                  IFDEF USE_NORMALISE_IX
-  30+ 9E05
-  31+ 9E05              ; d = vector 1 e = vector 2 h = vector3 l = vector 4 b = vector 5
-  32+ 9E05              ; performs (d*e + h*l) / b and puts the result in de where e is 0
-  33+ 9E05 C5           TidyCalc:       push    bc
-  34+ 9E06 CD A9 90                     call    mulDbyESigned           ; de = vector 1 * vector 2
-  35+ 9E09 EB                           ex      hl,de                   ; get hl into de and save result of de
-  36+ 9E0A CD A9 90                     call    mulDbyESigned           ; de = vector 2 * vector 3
-  37+ 9E0D CD 04 00                     call    AddDEtoHLSigned         ; BC = HL = HL + DE
-  38+ 9E10 D1                           pop     de                      ; DE = BC saved from earlier
-  39+ 9E11 7C                           ld      a,h                     ; check for result 0
-  40+ 9E12 B5                           or      l                       ; .
-  41+ 9E13 CA 34 9E                     jp      z,.ZeroResult           ; .
-  42+ 9E16 44 4D                        ld      bc,hl                   ; .
-  43+ 9E18 7A                           ld      a,d                     ; check for divide by zero
-  44+ 9E19 A7                           and     a                       ; .
-  45+ 9E1A CA 2B 9E                     jp      z,.MaxedResult          ; .
-  46+ 9E1D 5A                           ld      e,d                     ; now de = 0b (i.e. b register not hex value)
-  47+ 9E1E 16 00                        ld      d,0                     ;
-  48+ 9E20 CD 07 97                     call    Floor_DivQSigned        ; TO BE TESTED should do BC = BC / DE
-  49+ 9E23 78                           ld      a,b                     ; sign bit from b
-  50+ 9E24 E6 80                        and     $80                     ; .
-  51+ 9E26 B1                           or      c                       ; bring in the value
-  52+ 9E27 57                           ld      d,a                     ; de = c0 (i.e. c register not hex value)
-  53+ 9E28 1E 00                        ld      e,0                     ; .
-  54+ 9E2A C9                           ret
-  55+ 9E2B 78           .MaxedResult:   ld      a,b                     ; make result signed unity (i.e. 1 or 96 in our case)
-  56+ 9E2C EE 80                        xor     $80
-  57+ 9E2E F6 60                        or      $60
-  58+ 9E30 57                           ld      d,a
-  59+ 9E31 1E 00                        ld      e,0
-  60+ 9E33 C9                           ret
-  61+ 9E34 11 00 00     .ZeroResult:    ld      de,0
-  62+ 9E37 C9                           ret
-  63+ 9E38              ; as per tidy calc except
-  64+ 9E38              ; d = vector 1 e = vector 2 h = vector3 l = vector 4
-  65+ 9E38              ; performs (d*e - h*l) / 96 and puts the result in de where e is 0
-  66+ 9E38
-  67+ 9E38 CD A9 90     TidySide:       call    mulDbyESigned           ; de = vector 1 * vector 2
-  68+ 9E3B EB                           ex      de,hl                   ; get hl = vector 1 * vector 2
-  69+ 9E3C CD A9 90                     call    mulDbyESigned           ; de = vector 2 * vector 3
-  70+ 9E3F CD 00 00                     call    SubDEfromHLSigned       ; BC = HL = HL - DE
-  71+ 9E42 44 4D                        ld      bc,hl                   ; .
-  72+ 9E44 11 60 00                     ld      de,$60                  ; now de = 96
-  73+ 9E47 CD 07 97                     call    Floor_DivQSigned        ; TO BE TESTED should do BC = BC / DE
-  74+ 9E4A 78                           ld      a,b                     ; sign bit from b
-  75+ 9E4B E6 80                        and     $80                     ; .
-  76+ 9E4D B1                           or      c                       ; bring in the value
-  77+ 9E4E 57                           ld      d,a                     ; de = c0 (i.e. c register not hex value)
-  78+ 9E4F 1E 00                        ld      e,0                     ; .
-  79+ 9E51 C9                           ret
-  80+ 9E52
-  81+ 9E52              ;; orthonormalise vector for UBnK ship vector uses IX IT
-  82+ 9E52                  DISPLAY "TidyVectorsIX"
-  83+ 9E52 DD 21 36 C0  TidyVectorsIX:  ld      ix,UBnkrotmatNosevX
-  84+ 9E56 CD 9C 99                     call    NormaliseIXVector       ; initially we normalise the nose vector
-  85+ 9E59 3A 37 C0     .CheckNoseXSize:ld      a,(UBnkrotmatNosevX+1)  ; a = nose x
-  86+ 9E5C E6 30                        and     %00110000                ; if bits 7 and 6 are clear the work with nosey
-  87+ 9E5E CA 92 9E                     jp      z, .NoseXSmall
-  88+ 9E61              ;-- When nosex is large ------------------------  roofv_x =-(nosev_y * roofv_y + nosev_z * roofv_z) / nosev_x
-  89+ 9E61 3A 39 C0     .NoseXLarge:    ld      a,(UBnkrotmatNosevY+1)  ; a = nose x
-  90+ 9E64 57                           ld      d,a
-  91+ 9E65 3A 33 C0                     ld      a,(UBnkrotmatRoofvY+1)  ; hl = nosev_y * roofv_y
-  92+ 9E68 5F                           ld      e,a                     ; we already have d so only need roofY
-  93+ 9E69 3A 3B C0                     ld      a,(UBnkrotmatNosevZ+1)  ; de = nosev_z * roofv_z
-  94+ 9E6C 67                           ld      h,a                     ; .
-  95+ 9E6D 3A 35 C0                     ld      a,(UBnkrotmatRoofvZ+1)  ; .
-  96+ 9E70 6F                           ld      l,a                     ; .
-  97+ 9E71 3A 37 C0                     ld      a,(UBnkrotmatNosevX+1)
-  98+ 9E74 47                           ld      b,a
-  99+ 9E75 CD 05 9E                     call    TidyCalc
- 100+ 9E78 7A                           ld      a,d
- 101+ 9E79 B3                           or      e
- 102+ 9E7A CA 81 9E                     jp      z,.NoRoofXFlip
- 103+ 9E7D 3E 80                        ld      a,$80                   ; flip sign bit if not zero
- 104+ 9E7F AA                           xor     d
- 105+ 9E80 57                           ld      d,a
- 106+ 9E81 ED 53 30 C0  .NoRoofXFlip:   ld      (UBnkrotmatRoofvX),de   ; write roofvx
- 107+ 9E85 C3 ED 9E                     jp      .NormaliseRoofv
- 108+ 9E88 11 00 E0     .MaxedRoofX:    ld      de,$E000                ; TEST if sign is correct for all of these if was divide by zero make it -1
- 109+ 9E8B ED 53 30 C0                  ld      (UBnkrotmatRoofvX),de   ; write roofvx
- 110+ 9E8F C3 ED 9E                     jp      .NormaliseRoofv
- 111+ 9E92              ;-- When noseX is small ------------------------ determine if we are doign roofz or roof y
- 112+ 9E92 3A 38 C0     .NoseXSmall:    ld      a,(UBnkrotmatNosevY)
- 113+ 9E95 E6 60                        and     %01100000
- 114+ 9E97 CA C5 9E                     jp      z,.NoseYSmall
- 115+ 9E9A              ;-- When noseY is large ------------------------ roofv_z = -(nosev_x * roofv_x + nosev_y * roofv_y) / nosev_z
- 116+ 9E9A 3A 37 C0     .NoseYLarge:    ld      a,(UBnkrotmatNosevX+1)
- 117+ 9E9D 57                           ld      d,a
- 118+ 9E9E 3A 31 C0                     ld      a,(UBnkrotmatRoofvX+1)
- 119+ 9EA1 5F                           ld      e,a
- 120+ 9EA2 3A 39 C0                     ld      a,(UBnkrotmatNosevY+1)
- 121+ 9EA5 67                           ld      h,a
- 122+ 9EA6 3A 33 C0                     ld      a,(UBnkrotmatRoofvY+1)
- 123+ 9EA9 6F                           ld      l,a
- 124+ 9EAA 3A 3B C0                     ld      a,(UBnkrotmatNosevZ+1)
- 125+ 9EAD 47                           ld      b,a
- 126+ 9EAE CD 05 9E                     call    TidyCalc
- 127+ 9EB1 7A                           ld      a,d
- 128+ 9EB2 B3                           or      e
- 129+ 9EB3 CA BE 9E                     jp      z,.NoRoofZFlip
- 130+ 9EB6 3E 80                        ld      a,$80                   ; flip sign bit if not zero
- 131+ 9EB8 AA                           xor     d
- 132+ 9EB9 57                           ld      d,a
- 133+ 9EBA 3E 80                        ld      a,$80                   ; flip sign bit
- 134+ 9EBC AA                           xor     d
- 135+ 9EBD 57                           ld      d,a
- 136+ 9EBE ED 53 34 C0  .NoRoofZFlip:   ld      (UBnkrotmatRoofvZ),de   ; write roofvz
- 137+ 9EC2 C3 ED 9E                     jp      .NormaliseRoofv
- 138+ 9EC5              ;-- When noseY is large ------------------------ roofv_y = -(nosev_x * roofv_x + nosev_z * roofv_z) / nosev_y
- 139+ 9EC5 3A 37 C0     .NoseYSmall:    ld      a,(UBnkrotmatNosevX+1)
- 140+ 9EC8 57                           ld      d,a
- 141+ 9EC9 3A 31 C0                     ld      a,(UBnkrotmatRoofvX+1)
- 142+ 9ECC 5F                           ld      e,a
- 143+ 9ECD 3A 3B C0                     ld      a,(UBnkrotmatNosevZ+1)
- 144+ 9ED0 67                           ld      h,a
- 145+ 9ED1 3A 35 C0                     ld      a,(UBnkrotmatRoofvZ+1)
- 146+ 9ED4 6F                           ld      l,a
- 147+ 9ED5 3A 39 C0                     ld      a,(UBnkrotmatNosevY+1)
- 148+ 9ED8 47                           ld      b,a
- 149+ 9ED9 CD 05 9E                     call    TidyCalc
- 150+ 9EDC 7A                           ld      a,d
- 151+ 9EDD B3                           or      e
- 152+ 9EDE CA E9 9E                     jp      z,.NoRoofYFlip
- 153+ 9EE1 3E 80                        ld      a,$80                   ; flip sign bit if not zero
- 154+ 9EE3 AA                           xor     d
- 155+ 9EE4 57                           ld      d,a
- 156+ 9EE5 3E 80                        ld      a,$80                   ; flip sign bit
- 157+ 9EE7 AA                           xor     d
- 158+ 9EE8 57                           ld      d,a
- 159+ 9EE9 ED 53 32 C0  .NoRoofYFlip:   ld      (UBnkrotmatRoofvY),de   ; write roofvy
- 160+ 9EED DD 21 30 C0  .NormaliseRoofv:ld      ix,UBnkrotmatRoofvX     ; now normalise roofv
- 161+ 9EF1 CD 9C 99                     call    NormaliseIXVector
- 162+ 9EF4              ; -- sidev_x = (nosev_z * roofv_y - nosev_y * roofv_z) / 96
- 163+ 9EF4 3A 3B C0     .CalcSidevX:    ld      a,(UBnkrotmatNosevZ+1)
- 164+ 9EF7 57                           ld      d,a
- 165+ 9EF8 3A 33 C0                     ld      a,(UBnkrotmatRoofvY+1)
- 166+ 9EFB 5F                           ld      e,a
- 167+ 9EFC 3A 39 C0                     ld      a,(UBnkrotmatNosevY+1)
- 168+ 9EFF 67                           ld      h,a
- 169+ 9F00 3A 35 C0                     ld      a,(UBnkrotmatRoofvZ+1)
- 170+ 9F03 6F                           ld      l,a
- 171+ 9F04 CD 38 9E                     call    TidySide
- 172+ 9F07 ED 53 2A C0                  ld      (UBnkrotmatSidevX),de   ; write sidevX
- 173+ 9F0B              ; -- sidev_y = (nosev_x * roofv_z - nosev_z * roofv_x) / 96
- 174+ 9F0B 3A 37 C0     .CalcSidevY:    ld      a,(UBnkrotmatNosevX+1)
- 175+ 9F0E 57                           ld      d,a
- 176+ 9F0F 3A 35 C0                     ld      a,(UBnkrotmatRoofvZ+1)
- 177+ 9F12 5F                           ld      e,a
- 178+ 9F13 3A 3B C0                     ld      a,(UBnkrotmatNosevZ+1)
- 179+ 9F16 67                           ld      h,a
- 180+ 9F17 3A 31 C0                     ld      a,(UBnkrotmatRoofvX+1)
- 181+ 9F1A 6F                           ld      l,a
- 182+ 9F1B CD 38 9E                     call    TidySide
- 183+ 9F1E ED 53 2C C0                  ld      (UBnkrotmatSidevY),de   ; write sidevX
- 184+ 9F22              ; -- sidev_z = (nosev_y * roofv_x - nosev_x * roofv_y) / 96
- 185+ 9F22 3A 39 C0     .CalcSidevZ:    ld      a,(UBnkrotmatNosevY+1)
- 186+ 9F25 57                           ld      d,a
- 187+ 9F26 3A 31 C0                     ld      a,(UBnkrotmatRoofvX+1)
- 188+ 9F29 5F                           ld      e,a
- 189+ 9F2A 3A 37 C0                     ld      a,(UBnkrotmatNosevX+1)
- 190+ 9F2D 67                           ld      h,a
- 191+ 9F2E 3A 33 C0                     ld      a,(UBnkrotmatRoofvY+1)
- 192+ 9F31 6F                           ld      l,a
- 193+ 9F32 CD 38 9E                     call    TidySide
- 194+ 9F35 ED 53 2E C0                  ld      (UBnkrotmatSidevZ),de   ; write sidevX
- 195+ 9F39                          IFDEF ROUND_ROLL_AND_PITCH
- 196+ 9F39 ~            .ClearLowBytes: ld      hl,UBnkrotmatSidevX
- 197+ 9F39 ~                            ZeroA
- 198+ 9F39 ~                            ld      b,9
- 199+ 9F39 ~            .WriteLoop:     ld      (hl),a
- 200+ 9F39 ~                            inc     hl
- 201+ 9F39 ~                            inc     hl
- 202+ 9F39 ~                            djnz    .WriteLoop
- 203+ 9F39                          ENDIF
- 204+ 9F39 C9                           ret
- 205+ 9F3A                  ELSE
- 206+ 9F3A ~            ;
- 207+ 9F3A ~            ; Divide that sets value to FFFF if divide by 0 unless main value is 0, then 0
- 208+ 9F3A ~
- 209+ 9F3A ~            ; (P+1 A) = (A P) / Q
- 210+ 9F3A ~            ;  B A    = (A P) / Q
- 211+ 9F3A ~            ; TESTED OK
- 212+ 9F3A ~
- 213+ 9F3A ~
- 214+ 9F3A ~            NormalizeXX15:          ld      hl, (XX15VecX)              ; h= VecX, l = VecY
- 215+ 9F3A ~                                    ld      a,  (XX15VecZ)              ; a = VecZ, d we don't care
- 216+ 9F3A ~            .ABSZ:                  and     SignMask8Bit
- 217+ 9F3A ~                                    ld      iyh,a                       ; iyh = abs z
- 218+ 9F3A ~            .ZSquared:              ld      d,a
- 219+ 9F3A ~                                    ld      e,a
- 220+ 9F3A ~                                    mul     de
- 221+ 9F3A ~                                    ld      bc,de                       ; bc = z squared
- 222+ 9F3A ~            .ABSX:                  ld      a,l
- 223+ 9F3A ~            .XSquared:              and     SignMask8Bit
- 224+ 9F3A ~                                    ld      ixh,a                       ; ixh = abs x
- 225+ 9F3A ~                                    ld      d,a
- 226+ 9F3A ~                                    ld      e,a
- 227+ 9F3A ~                                    mul     de
- 228+ 9F3A ~                                    ex      de,hl                       ; hl = x squared
- 229+ 9F3A ~            .ABSY:                  ld      a,d                         ; as h was swapped into d
- 230+ 9F3A ~                                    and     SignMask8Bit
- 231+ 9F3A ~                                    ld      ixl,a                       ; ixl = abs y
- 232+ 9F3A ~            .YSquared:              ld      e,a
- 233+ 9F3A ~                                    ld      d,a
- 234+ 9F3A ~                                    mul     de                          ; de = y squared
- 235+ 9F3A ~                                    add     hl,de                       ; hl = hl + de + bc
- 236+ 9F3A ~                                    add     hl,bc                       ;
- 237+ 9F3A ~                                    ex      de,hl
- 238+ 9F3A ~                                    call    asm_sqrt                    ; d = iyl =hl = sqrt (de) = sqrt (x ^ 2 + y ^ 2 + z ^ 2)
- 239+ 9F3A ~                                    ld      d,l
- 240+ 9F3A ~                                    ld      iyl,d
- 241+ 9F3A ~            .NormaliseX:            ld      a,ixh                       ; normalise x
- 242+ 9F3A ~                                    call    AequAdivDmul96Q8
- 243+ 9F3A ~                                    DISPLAY "TODO: ERROR if D is > 127 then it thinkgs its -ve number and falls appart"
- 244+ 9F3A ~                                   ;TODO : Need a divison routine where D is unsigned as its sqare rooted so will always be positive
- 245+ 9F3A ~                                    ld      d,a
- 246+ 9F3A ~                                    ld      a,(XX15VecX)
- 247+ 9F3A ~                                    and     SignOnly8Bit
- 248+ 9F3A ~                                    or      d
- 249+ 9F3A ~                                    ld      (XX15VecX),a
- 250+ 9F3A ~            .NormaliseY:            ld      a,ixl                       ; normalise y
- 251+ 9F3A ~                                    ld      d,l
- 252+ 9F3A ~                                    call    AequAdivDmul96Q8
- 253+ 9F3A ~                                    ld      d,a
- 254+ 9F3A ~                                    ld      a,(XX15VecY)
- 255+ 9F3A ~                                    and     SignOnly8Bit
- 256+ 9F3A ~                                    or      d
- 257+ 9F3A ~                                    ld      (XX15VecY),a
- 258+ 9F3A ~            .NormaliseZ:            ld      a,iyh                       ; normalise z
- 259+ 9F3A ~                                    ld      d,l
- 260+ 9F3A ~                                    call    AequAdivDmul96Q8
- 261+ 9F3A ~                                    ld      d,a
- 262+ 9F3A ~                                    ld      a,(XX15VecZ)
- 263+ 9F3A ~                                    and     SignOnly8Bit
- 264+ 9F3A ~                                    or      d
- 265+ 9F3A ~                                    ld      (XX15VecZ),a
- 266+ 9F3A ~                                    ret
- 267+ 9F3A ~
- 268+ 9F3A ~            TidyNormaliseNoseV:     MACRO
- 269+ 9F3A ~                                    call	CopyRotMatNoseVtoXX15	    ; copy over matrix row 3 (Nosev)
- 270+ 9F3A ~                                    call	NormalizeXX15			    ; normalise z hi, its really TIS3 and write back to matrix
- 271+ 9F3A ~                                    call	CopyXX15toRotMatNoseV       ; .
- 272+ 9F3A ~                                    ENDM
- 273+ 9F3A ~            TidyNormaliseRoofV:     MACRO
- 274+ 9F3A ~                                    call	CopyRotMatRoofVtoXX15
- 275+ 9F3A ~                                    call	NormalizeXX15			; normalise z hi, its really TIS3
- 276+ 9F3A ~                                    call	CopyXX15toRotMatRoofV
- 277+ 9F3A ~                                    ENDM
- 278+ 9F3A ~
- 279+ 9F3A ~
- 280+ 9F3A ~            TidyUbnK:               ;break
- 281+ 9F3A ~                                    TidyNormaliseNoseV
- 282+ 9F3A ~                                    ld      a,(UBnkrotmatNosevX+1)      ; Now check and see which vector elemetn we are going to
- 283+ 9F3A ~                                    and     %01100000                   ; if X is not small then we go straigth to roofx
- 284+ 9F3A ~                                    jp      nz,.ProcessRoofX            ; .
- 285+ 9F3A ~            .TidyXIsSmall:          ld      a,(UBnkrotmatNosevY+1)      ; Else we test Y on to using
- 286+ 9F3A ~                                    and     %01100000                   ; if Y is not small we process roofz
- 287+ 9F3A ~                                    jr      nz,.ProcessRoofZ            ; .
- 288+ 9F3A ~            ;...roofv_y´ = -(nosev_x´ * roofv_x + nosev_z´ * roofv_z) / nosev_y´
- 289+ 9F3A ~            .ProcessRoofY:          ld		a,(UBnkrotmatNosevX+1)
- 290+ 9F3A ~                                    ld		(varQ),a					; q = nosev_y
- 291+ 9F3A ~                                    ld		a,(UBnkrotmatRoofvX+1)	    ;roov z
- 292+ 9F3A ~                                    call	RSequQmulA
- 293+ 9F3A ~                                    ld		a,(UBnkrotmatNosevZ+1)		; nosev z
- 294+ 9F3A ~                                    ld		(varQ),a					; b = regX for now
- 295+ 9F3A ~                                    ld		a,(UBnkrotmatRoofvZ+1)	    ; roofv y
- 296+ 9F3A ~                                    call	madDEequQmulAaddRS
- 297+ 9F3A ~                                    ld      a,d                         ; flip sign bit
- 298+ 9F3A ~                                    xor     SignOnly8Bit
- 299+ 9F3A ~                                    ld      d,a
- 300+ 9F3A ~                                    ld      a,(UBnkrotmatNosevY+1)
- 301+ 9F3A ~                                    ld      (varQ),a
- 302+ 9F3A ~            .YTest0Div:             ld      a,d
- 303+ 9F3A ~                                    and     $7F
- 304+ 9F3A ~                                    or      e
- 305+ 9F3A ~                                    cp      0
- 306+ 9F3A ~                                    jr      nz,.SkipYZeroTest
- 307+ 9F3A ~                                    ZeroA
- 308+ 9F3A ~                                    jp      .SetRoofZ
- 309+ 9F3A ~            .YTestDiv0:             cp      0
- 310+ 9F3A ~                                    jr      nz,.SkipYZeroTest
- 311+ 9F3A ~            .YDivideByZero:         ld      a,96
- 312+ 9F3A ~                                    or      d
- 313+ 9F3A ~                                    jp      .SetRoofZ
- 314+ 9F3A ~            .SkipYZeroTest:         ld      a,e
- 315+ 9F3A ~                                    ld      (varP),a
- 316+ 9F3A ~                                    ld      a,d
- 317+ 9F3A ~                                    call    DVIDT
- 318+ 9F3A ~                                    ld      a,b
- 319+ 9F3A ~            .SetRoofY:              ld      (UBnkrotmatRoofvY+1),a
- 320+ 9F3A ~                                    jp      .DoneRoof
- 321+ 9F3A ~            ;...roofv_z´ = -(nosev_x´ * roofv_x + nosev_y´ * roofv_y) / nosev_z´
- 322+ 9F3A ~            .ProcessRoofZ:          ld		a,(UBnkrotmatNosevX+1)      ; Failing that we default to Z
- 323+ 9F3A ~                                    ld		(varQ),a				    ; q = nosev_y
- 324+ 9F3A ~                                    ld		a,(UBnkrotmatRoofvX+1)	    ;roov z
- 325+ 9F3A ~                                    call	RSequQmulA
- 326+ 9F3A ~                                    ld		a,(UBnkrotmatNosevY+1)	    ; nosev z
- 327+ 9F3A ~                                    ld		(varQ),a				    ; b = regX for now
- 328+ 9F3A ~                                    ld		a,(UBnkrotmatRoofvY+1)	    ; roofv y
- 329+ 9F3A ~                                    call	madDEequQmulAaddRS
- 330+ 9F3A ~                                    ld      a,d                         ; flip sign bit
- 331+ 9F3A ~                                    xor     SignOnly8Bit
- 332+ 9F3A ~                                    ld      d,a
- 333+ 9F3A ~                                    ld      a,(UBnkrotmatNosevZ+1)
- 334+ 9F3A ~                                    ld      (varQ),a
- 335+ 9F3A ~            .ZTest0Div:             ld      a,d
- 336+ 9F3A ~                                    and     $7F
- 337+ 9F3A ~                                    or      e
- 338+ 9F3A ~                                    cp      0
- 339+ 9F3A ~                                    jr      nz,.SkipZZeroTest
- 340+ 9F3A ~                                    ZeroA
- 341+ 9F3A ~                                    jp      .SetRoofZ
- 342+ 9F3A ~            .ZTestDiv0:             cp      0
- 343+ 9F3A ~                                    jr      nz,.SkipZZeroTest
- 344+ 9F3A ~            .ZDivideByZero:         ld      a,96
- 345+ 9F3A ~                                    or      d
- 346+ 9F3A ~                                    jp      .SetRoofZ
- 347+ 9F3A ~            .SkipZZeroTest:         ld      a,e
- 348+ 9F3A ~                                    ld      (varP),a
- 349+ 9F3A ~                                    ld      a,d
- 350+ 9F3A ~                                    call    DVIDT
- 351+ 9F3A ~                                    ld      a,b
- 352+ 9F3A ~            .SetRoofZ:              ld      (UBnkrotmatRoofvZ+1),a
- 353+ 9F3A ~                                    jp      .DoneRoof
- 354+ 9F3A ~            ;...roofv_x´ = -(nosev_y´ * roofv_y + nosev_z´ * roofv_z) / nosev_x´
- 355+ 9F3A ~            .ProcessRoofX:          ld		a,(UBnkrotmatNosevY+1)      ; so we set Q to Nose Y
- 356+ 9F3A ~                                    ld		(varQ),a					; q = nosev_y
- 357+ 9F3A ~                                    ld		a,(UBnkrotmatRoofvY+1)	    ; A = roofv Y
- 358+ 9F3A ~                                    call	RSequQmulA                  ; RS = NoseY & RoofY
- 359+ 9F3A ~                                    ld		a,(UBnkrotmatNosevZ+1)		; nosev z
- 360+ 9F3A ~                                    ld		(varQ),a					; b = regX for now
- 361+ 9F3A ~                                    ld		a,(UBnkrotmatRoofvZ+1)	    ; roofv y
- 362+ 9F3A ~                                    call	madDEequQmulAaddRS
- 363+ 9F3A ~                                    ld      a,d                         ; flip sign bit
- 364+ 9F3A ~                                    xor     SignOnly8Bit
- 365+ 9F3A ~                                    ld      d,a
- 366+ 9F3A ~                                    ld      a,(UBnkrotmatNosevX+1)
- 367+ 9F3A ~                                    ld      (varQ),a
- 368+ 9F3A ~            .XTest0Div:             ld      a,d
- 369+ 9F3A ~                                    and     $7F
- 370+ 9F3A ~                                    or      e
- 371+ 9F3A ~                                    cp      0
- 372+ 9F3A ~                                    jr      nz,.SkipXZeroTest
- 373+ 9F3A ~                                    ZeroA
- 374+ 9F3A ~                                    jp      .SetRoofZ
- 375+ 9F3A ~            .XTestDiv0:             cp      0
- 376+ 9F3A ~                                    jr      nz,.SkipXZeroTest
- 377+ 9F3A ~            .XDivideByZero:         ld      a,96
- 378+ 9F3A ~                                    or      d
- 379+ 9F3A ~                                    jp      .SetRoofX
- 380+ 9F3A ~            .SkipXZeroTest:         ld      a,e
- 381+ 9F3A ~                                    ld      (varP),a
- 382+ 9F3A ~                                    ld      a,d
- 383+ 9F3A ~                                    call    DVIDT
- 384+ 9F3A ~                                    ld      a,b
- 385+ 9F3A ~            .SetRoofX:              ld      (UBnkrotmatRoofvX+1),a
- 386+ 9F3A ~            .DoneRoof:              TidyNormaliseRoofV
- 387+ 9F3A ~            ;...sidex = ((nosez * roofy) - nosey * roofz) / 96
- 388+ 9F3A ~            .DoSidevX:              ld		a,(UBnkrotmatNosevZ+1)      ;  -(-nosev_z * roofv_y + nosev_y * roofv_z) / 96
- 389+ 9F3A ~                                    xor     SignOnly8Bit
- 390+ 9F3A ~                                    ld		(varQ),a					; q = nosev_y
- 391+ 9F3A ~                                    ld		a,(UBnkrotmatRoofvY+1)	     ;roov z
- 392+ 9F3A ~                                    call	RSequQmulA
- 393+ 9F3A ~                                    ld		a,(UBnkrotmatNosevY+1)		; nosev z
- 394+ 9F3A ~                                    ld		(varQ),a							; b = regX for now
- 395+ 9F3A ~                                    ld		a,(UBnkrotmatRoofvZ+1)	    ; roofv y
- 396+ 9F3A ~                                    call	madDEequQmulAaddRS
- 397+ 9F3A ~                                    call    BAequDEdiv96
- 398+ 9F3A ~                                    ld      a,b
- 399+ 9F3A ~                                    ld      (UBnkrotmatSidevX+1),a
- 400+ 9F3A ~            ;...sidey = ((nosex * roofz) - nosez * roofx) / 96
- 401+ 9F3A ~            .DoSidevY:              ld		a,(UBnkrotmatNosevX+1)      ; -(-nosev_x * roofv_z - nosev_z * roofv_x) / 96
- 402+ 9F3A ~                                    xor     SignOnly8Bit
- 403+ 9F3A ~                                    ld		(varQ),a					; q = nosev_y
- 404+ 9F3A ~                                    ld		a,(UBnkrotmatRoofvZ+1)	    ; roov z
- 405+ 9F3A ~                                    call	RSequQmulA                  ; rs = nosex * roofz
- 406+ 9F3A ~                                    ld		a,(UBnkrotmatNosevZ+1)		; nosev z
- 407+ 9F3A ~                                    ld		(varQ),a					; b = regX for now
- 408+ 9F3A ~                                    ld		a,(UBnkrotmatRoofvZ+1)	    ; roofv y
- 409+ 9F3A ~                                    call	madDEequQmulAaddRS          ; DE = noseyz* roofz +
- 410+ 9F3A ~                                    call    BAequDEdiv96
- 411+ 9F3A ~                                    ld      a,b
- 412+ 9F3A ~                                    ld      (UBnkrotmatSidevY+1),a         ;-(-nosev_y * roofv_x + nosev_x * roofv_y) / 96
- 413+ 9F3A ~            ;...sidez = ((nosey * roofx) - nosex * roofy) / 96
- 414+ 9F3A ~            .DoSidevZ:              ld		a,(UBnkrotmatNosevY+1)      ;
- 415+ 9F3A ~                                    xor     SignOnly8Bit
- 416+ 9F3A ~                                    ld		(varQ),a					; q = nosev_y
- 417+ 9F3A ~                                    ld		a,(UBnkrotmatRoofvZ+1)	     ;roov z
- 418+ 9F3A ~                                    call	RSequQmulA
- 419+ 9F3A ~                                    ld		a,(UBnkrotmatNosevX+1)		; nosev z
- 420+ 9F3A ~                                    ld		(varQ),a							; b = regX for now
- 421+ 9F3A ~                                    ld		a,(UBnkrotmatRoofvY+1)	    ; roofv y
- 422+ 9F3A ~                                    call	madDEequQmulAaddRS
- 423+ 9F3A ~                                    call    BAequDEdiv96
- 424+ 9F3A ~                                    ld      a,b
- 425+ 9F3A ~                                    ld      (UBnkrotmatSidevZ+1),a
- 426+ 9F3A ~                                    ZeroA
- 427+ 9F3A ~                                    ld      (UBnkrotmatSidevX),a
- 428+ 9F3A ~                                    ld      (UBnkrotmatSidevY),a
- 429+ 9F3A ~                                    ld      (UBnkrotmatSidevZ),a
- 430+ 9F3A ~                                    ret
- 431+ 9F3A ~
- 432+ 9F3A ~
- 433+ 9F3A ~            TidySub1:									;.TIS1	\ -> &293B  \ Tidy subroutine 1  X.A =  (-X*A  + (R.S))/96
- 434+ 9F3A ~            		; b = regX on entry
- 435+ 9F3A ~            TIS1Prep:									;.TIS1	\ -> &293B  \ Tidy subroutine 1 using B register = X
- 436+ 9F3A ~            		ex		af,af'
- 437+ 9F3A ~            		ld		a,b
- 438+ 9F3A ~            		ld		(varQ),a
- 439+ 9F3A ~            		ex		af,af'
- 440+ 9F3A ~            		xor		$80							;	 flip sign of Acc
- 441+ 9F3A ~            		call	madXAequQmulAaddRS			; \ MAD \ multiply and add (X,A) =  -X*A  + (R,S)
- 442+ 9F3A ~            ; USES 				A BC E
- 443+ 9F3A ~            ; DOES NOT USE		D HL
- 444+ 9F3A ~            Tis1Div96:							   		; .DVID96	\ Their comment A=A/96: answer is A*255/96
- 445+ 9F3A ~            		ld		c,a							; Store sign bit in  ct (we use e reg for that)
- 446+ 9F3A ~            		and		SignOnly8Bit						; ..
- 447+ 9F3A ~            		ld		e,a							; ..
- 448+ 9F3A ~            		ld		a,c							; a = high byte again with sign bit cleared
- 449+ 9F3A ~            		and		SignMask8Bit							; ..
- 450+ 9F3A ~            		ld		b,$FE						; slide counter T1
- 451+ 9F3A ~            TIS1RollTLoop								; roll T1  clamp Acc to #96 for rotation matrix unity
- 452+ 9F3A ~            		sla		a
- 453+ 9F3A ~            		JumpIfALTNusng $60, TIS1SkipSub
- 454+ 9F3A ~            		sbc		a,$60							; subtract 96
- 455+ 9F3A ~            		scf
- 456+ 9F3A ~            		rl		b							;  T1
- 457+ 9F3A ~            		jr		c,TIS1RollTLoop
- 458+ 9F3A ~            TIS1KIPCont:
- 459+ 9F3A ~            		ld		a,b							;   T1
- 460+ 9F3A ~            		or		e							;   restore T sign
- 461+ 9F3A ~            		ret
- 462+ 9F3A ~            TIS1SkipSub:
- 463+ 9F3A ~            	or			a
- 464+ 9F3A ~            	rl			b							; T rolled left to push bit out the end
- 465+ 9F3A ~            	jr			c,TIS1RollTLoop				; if we still have not hit the empty marker continue
- 466+ 9F3A ~            	jp			TIS1KIPCont
- 467+ 9F3A ~
- 468+ 9F3A ~            ;.TIDY	\ -> &4679 \ Orthogonalize rotation matrix that uses 0x60 as unity returns INWK(16,18,20) = INWK(12*18+14*20, 10*16+14*20, 10*16+12*18) / INWK(10,12,14)
- 469+ 9F3A ~            ; Ux,Uy,Uz = -(FyUy+FzUz, FxUx+FzUz, FxUx+FyUy)/ Fx,Fy,Fz
- 470+ 9F3A ~
- 471+ 9F3A ~
- 472+ 9F3A ~
- 473+ 9F3A ~
- 474+ 9F3A ~                        DISPLAY "TODO: look at note on TODO"
- 475+ 9F3A ~            TidyRotYSmall:
- 476+ 9F3A ~            		call	CalcRoofvZ
- 477+ 9F3A ~            		ld		(UBnkrotmatRoofvZ+1),a			; set roofvy hi?? Says roofz TODO
- 478+ 9F3A ~            		jp		NormaliseRoofV
- 479+ 9F3A ~
- 480+ 9F3A ~            TidyRotXSmall:
- 481+ 9F3A ~            		xor		a
- 482+ 9F3A ~            		ld		b,a
- 483+ 9F3A ~            		ld		a,(UBnkrotmatNosevY+1)			; nosev_y
- 484+ 9F3A ~            		and		%01100000
- 485+ 9F3A ~            		jp		z,TidyRotYSmall
- 486+ 9F3A ~            		ld		a,(UBnkrotmatNosevZ+1)			; nosev z
- 487+ 9F3A ~            		ld		b,a							; b = regX for now
- 488+ 9F3A ~            		ld		a,(UBnkrotmatRoofvY+1)			; roofv y
- 489+ 9F3A ~            		call	CalcRoofvY					; Set (roofvy= (nosev_x * roofv_x + nosev_z * roofv_z) / nosev_y, Q -= nosev_z
- 490+ 9F3A ~            		ld		(UBnkrotmatRoofvY+1),a			; set roofvy hi
- 491+ 9F3A ~            		jp		NormaliseRoofV
- 492+ 9F3A ~            ; TIDY is broken
- 493+ 9F3A ~
- 494+ 9F3A ~
- 495+ 9F3A ~            TIDY:
- 496+ 9F3A ~
- 497+ 9F3A ~            ORTHOGALISE:
- 498+ 9F3A ~            ;-- NormaliseNosev
- 499+ 9F3A ~            		call	CopyRotMatNoseVtoXX15
- 500+ 9F3A ~            		call	normaliseXX1596S7			; normalise z hi, its really TIS3
- 501+ 9F3A ~            		call	CopyXX15toRotMatNoseV
- 502+ 9F3A ~            .CheckNXSmall:
- 503+ 9F3A ~            		ld		a,(UBnkrotmatNosevX+1)
- 504+ 9F3A ~            		and		%01100000					; check top two magnitude bits
- 505+ 9F3A ~            		jp		z,TidyRotXSmall
- 506+ 9F3A ~            .RotXIsBig:
- 507+ 9F3A ~                    call	CalcRoofvX
- 508+ 9F3A ~            		ld		(UBnkrotmatRoofvX+1),a    	; set roofvx hi
- 509+ 9F3A ~            NormaliseRoofV:
- 510+ 9F3A ~            		call	CopyRotMatRoofVtoXX15		; xx15 = roofv
- 511+ 9F3A ~            		call	normaliseXX1596S7			; normalise roof
- 512+ 9F3A ~            ;calc sidev x
- 513+ 9F3A ~            		call	CopyXX15toRotMatRoofV		; get back normalised version
- 514+ 9F3A ~            		ld		a,(UBnkrotmatNosevX+1)
- 515+ 9F3A ~            		ld		(varQ),a					; q = nosev_y
- 516+ 9F3A ~            		ld		a,(UBnkrotmatRoofvZ+1)	     ;roov z
- 517+ 9F3A ~            		call	RSequQmulA
- 518+ 9F3A ~            		ld		a,(UBnkrotmatNosevZ+1)		; nosev z
- 519+ 9F3A ~            		ld		b,a							; b = regX for now
- 520+ 9F3A ~            		ld		a,(UBnkrotmatRoofvY+1)	    ; roofv y
- 521+ 9F3A ~            		call	TidySub1					; Set (A ?)= (-nosev_z * roofv_y + nosev_y * roofv_z) / 96, Q -= nosev_z
- 522+ 9F3A ~                    JumpIfAIsZero NormSideXNoNeg
- 523+ 9F3A ~            		xor		$80							; flip a to get -sidev_x
- 524+ 9F3A ~            NormSideXNoNeg:
- 525+ 9F3A ~            		ld		(UBnkrotmatSidevX+1),a
- 526+ 9F3A ~            ;calc sidev y
- 527+ 9F3A ~            		ld		a,(UBnkrotmatNosevZ+1)			; nosev z
- 528+ 9F3A ~            		ld		(varQ),a
- 529+ 9F3A ~            		ld		a,(UBnkrotmatRoofvX+1)			; roofv x
- 530+ 9F3A ~            		call	RSequQmulA
- 531+ 9F3A ~            		ld		a,(UBnkrotmatNosevX+1)			        ; nosev x
- 532+ 9F3A ~            		ld		b,a							; b = regX for now
- 533+ 9F3A ~            		ld		a,(UBnkrotmatRoofvZ+1)			; roofv z
- 534+ 9F3A ~            		call	TidySub1					; Set (A ?)= (-nosev_z * roofv_y + nosev_y * roofv_z) / 96, Q -= nosev_z
- 535+ 9F3A ~                    JumpIfAIsZero NormSideYNoNeg
- 536+ 9F3A ~            		xor		$80							; flip a to get -sidev_y
- 537+ 9F3A ~            NormSideYNoNeg:
- 538+ 9F3A ~            		ld		(UBnkrotmatNosevY+1),a
- 539+ 9F3A ~            ;calc sidev z
- 540+ 9F3A ~            		ld		a,(UBnkrotmatNosevX+1)			; nosev x
- 541+ 9F3A ~            		ld		(varQ),a
- 542+ 9F3A ~            		ld		a,(UBnkrotmatRoofvY+1)			; roofv y
- 543+ 9F3A ~            		call	RSequQmulA
- 544+ 9F3A ~            		ld		a,(UBnkrotmatNosevY+1)			; nosev y
- 545+ 9F3A ~            		ld		b,a							; b = regX for now
- 546+ 9F3A ~            		ld		a,(UBnkrotmatRoofvX+1)			; roofv x
- 547+ 9F3A ~            		call	TidySub1					; Set (A ?)= (-nosev_z * roofv_y + nosev_y * roofv_z) / 96, Q -= nosev_z
- 548+ 9F3A ~                    JumpIfAIsZero NormSideZNoNeg
- 549+ 9F3A ~            		xor		$80							; flip a to get -sidev_y
- 550+ 9F3A ~            NormSideZNoNeg:
- 551+ 9F3A ~            		ld		(UBnkrotmatSidevY+1),a ;TODO SHoudl this be Y??
- 552+ 9F3A ~            .ClearLoBytes:
- 553+ 9F3A ~            		ld		hl,UBnkrotmatNosevX
- 554+ 9F3A ~            		ld		b,9
- 555+ 9F3A ~                    xor     a
- 556+ 9F3A ~            .ClearLoLoop:
- 557+ 9F3A ~            		ld		(hl),a						; zero out lo bytes
- 558+ 9F3A ~            		inc		hl
- 559+ 9F3A ~            		inc		hl
- 560+ 9F3A ~            		djnz	.ClearLoLoop
- 561+ 9F3A ~            		call	CopyRotMatSideVtoXX15		; xx15 = roofv
- 562+ 9F3A ~            		call	normaliseXX1596S7			; normalise roof
- 563+ 9F3A ~            ;calc sidev x
- 564+ 9F3A ~            		call	CopyXX15toRotMatSideV		; get back normalised version
- 565+ 9F3A ~
- 566+ 9F3A ~            		ret
- 567+ 9F3A ~
- 568+ 9F3A ~
- 569+ 9F3A ~            CalcRoofvX:
- 570+ 9F3A ~            Tidy1RX:										; roofv_x´ = -(nosev_y´ * roofv_y + nosev_z´ * roofv_z) / nosev_x´
- 571+ 9F3A ~            		ldCopyByte UBnkrotmatNosevZ+1,varQ
- 572+ 9F3A ~            		ld		a,(UBnkrotmatRoofvZ+1)
- 573+ 9F3A ~            		call	RSequQmulA						; rs = nosez hi * roofz hi
- 574+ 9F3A ~            		ldCopyByte UBnkrotmatNosevY+1,varQ
- 575+ 9F3A ~            		ld		a,(UBnkrotmatRoofvY+1)
- 576+ 9F3A ~            		call	madXAequQmulAaddRS				; DE = nosey hi * roofy hi + rs
- 577+ 9F3A ~            		ld		a,d
- 578+ 9F3A ~            		and 	$80
- 579+ 9F3A ~            		ld		iyh,a
- 580+ 9F3A ~            ;DEBUG		ld		c,a
- 581+ 9F3A ~            		ld		a,(UBnkrotmatNosevX+1)					; get nosev x sign
- 582+ 9F3A ~            		ld		c,a								; temp save
- 583+ 9F3A ~            		and		$80
- 584+ 9F3A ~            		xor		iyh								; flip from saved multiply sign result
- 585+ 9F3A ~            		ld		iyh,a							; save nosesev sign to iyh
- 586+ 9F3A ~            		ld		a,c								; recover a
- 587+ 9F3A ~            		and		$7F								; a is unsigned nosev x
- 588+ 9F3A ~            		ld		b,d
- 589+ 9F3A ~            		ld		c,e								; bc = nosev_y´ * roofv_y + nosev_z´ * roofv_z
- 590+ 9F3A ~            		ld		d,a								; de = nosev x hi
- 591+ 9F3A ~            		ld		e,0
- 592+ 9F3A ~            		call	BC_Div_DE
- 593+ 9F3A ~            		ld		a,iyh							; get back sign from nosevx
- 594+ 9F3A ~            		xor		$80								; flip sign
- 595+ 9F3A ~            		and		$80								; keep sign bit only
- 596+ 9F3A ~            		or		b
- 597+ 9F3A ~            		ret
- 598+ 9F3A ~
- 599+ 9F3A ~
- 600+ 9F3A ~            CalcRoofvY:
- 601+ 9F3A ~            Tidy1RY:										; roofv_y´ = -(nosev_x´ * roofv_x + nosev_z´ * roofv_z) / nosev_y´
- 602+ 9F3A ~            		ldCopyByte UBnkrotmatNosevZ+1,varQ				;                  A        Q              RS
- 603+ 9F3A ~            		ld		a,(UBnkrotmatRoofvZ+1)
- 604+ 9F3A ~            		call	RSequQmulA
- 605+ 9F3A ~            		ldCopyByte UBnkrotmatNosevX+1,varQ
- 606+ 9F3A ~            		ld		a,(UBnkrotmatRoofvX+1)
- 607+ 9F3A ~            		call	madXAequQmulAaddRS
- 608+ 9F3A ~            		ld		a,d
- 609+ 9F3A ~            		and 	$80
- 610+ 9F3A ~            		ld		iyh,a
- 611+ 9F3A ~            		ld		a,(UBnkrotmatNosevY+1)					; get nosev x sign
- 612+ 9F3A ~            		ld		c,a								; temp save
- 613+ 9F3A ~            		and		$80
- 614+ 9F3A ~            		xor		iyh								; flip from saved multiply sign result
- 615+ 9F3A ~            		ld		iyh,a							; save nosesev sign to iyh
- 616+ 9F3A ~            		ld		a,c								; recover a
- 617+ 9F3A ~            		and		$7F								; a is unsigned nosev x
- 618+ 9F3A ~            		ld		b,d
- 619+ 9F3A ~            		ld		c,e								; bc = nosev_y´ * roofv_y + nosev_z´ * roofv_z
- 620+ 9F3A ~            		ld		d,a								; de = nosev x hi
- 621+ 9F3A ~            		ld		e,0
- 622+ 9F3A ~            		call	BC_Div_DE
- 623+ 9F3A ~            		ld		a,iyh
- 624+ 9F3A ~            		xor		$80
- 625+ 9F3A ~            		and		$80
- 626+ 9F3A ~            		or		b
- 627+ 9F3A ~            		ret
- 628+ 9F3A ~
- 629+ 9F3A ~            CalcRoofvZ:
- 630+ 9F3A ~            Tidy1RZ:										; roofv_z´ = -(nosev_x´ * roofv_x + nosev_y´ * roofv_y) / nosev_z´
- 631+ 9F3A ~            		ldCopyByte UBnkrotmatNosevY+1,varQ
- 632+ 9F3A ~            		ld		a,(UBnkrotmatRoofvY+1)
- 633+ 9F3A ~            		call	RSequQmulA						; rs = NOSEy * ROOFy
- 634+ 9F3A ~            		ldCopyByte UBnkrotmatNosevX+1,varQ
- 635+ 9F3A ~            		ld		a,(UBnkrotmatRoofvX+1)
- 636+ 9F3A ~            		call	madXAequQmulAaddRS				; de (A,ixl) = NOSEx * ROOFx + RS
- 637+ 9F3A ~            		ld		a,d
- 638+ 9F3A ~            		and 	$80
- 639+ 9F3A ~            		ld		iyh,a
- 640+ 9F3A ~            		ld		a,(UBnkrotmatNosevZ+1)					; get nosev x sign
- 641+ 9F3A ~            		ld		c,a								; temp save
- 642+ 9F3A ~            		and		$80
- 643+ 9F3A ~            		xor		iyh								; flip from saved multiply sign result
- 644+ 9F3A ~            		ld		iyh,a							; save nosesev sign to iyh
- 645+ 9F3A ~            		ld		a,c								; recover a
- 646+ 9F3A ~            		and		$7F								; a is unsigned nosev x
- 647+ 9F3A ~            		ld		b,d
- 648+ 9F3A ~            		ld		c,e								; bc = nosev_y´ * roofv_y + nosev_z´ * roofv_z
- 649+ 9F3A ~            		ld		d,a								; de = nosev x hi
- 650+ 9F3A ~            		ld		e,0
- 651+ 9F3A ~            		call	BC_Div_DE
- 652+ 9F3A ~            		ld		a,iyh
- 653+ 9F3A ~            		xor		$80
- 654+ 9F3A ~            		and		$80
- 655+ 9F3A ~            		or		b
- 656+ 9F3A ~            		ret
- 657+ 9F3A                  ENDIF
-# file closed: ./Maths/Utilities/tidy.asm
+ 592  9E05                  INCLUDE "./Maths/asm_tidy.asm"
+# file opened: ./Maths/asm_tidy.asm
+   1+ 9E05              ; d = vector 1 e = vector 2 h = vector3 l = vector 4 b = vector 5
+   2+ 9E05              ; performs (d*e + h*l) / b and puts the result in de where e is 0
+   3+ 9E05 C5           TidyCalc:       push    bc
+   4+ 9E06 CD A9 90                     call    mulDbyESigned           ; de = vector 1 * vector 2
+   5+ 9E09 EB                           ex      hl,de                   ; get hl into de and save result of de
+   6+ 9E0A CD A9 90                     call    mulDbyESigned           ; de = vector 2 * vector 3
+   7+ 9E0D CD 04 00                     call    AddDEtoHLSigned         ; BC = HL = HL + DE
+   8+ 9E10 D1                           pop     de                      ; DE = BC saved from earlier
+   9+ 9E11 7C                           ld      a,h                     ; check for result 0
+  10+ 9E12 B5                           or      l                       ; .
+  11+ 9E13 CA 34 9E                     jp      z,.ZeroResult           ; .
+  12+ 9E16 44 4D                        ld      bc,hl                   ; .
+  13+ 9E18 7A                           ld      a,d                     ; check for divide by zero
+  14+ 9E19 A7                           and     a                       ; .
+  15+ 9E1A CA 2B 9E                     jp      z,.MaxedResult          ; .
+  16+ 9E1D 5A                           ld      e,d                     ; now de = 0b (i.e. b register not hex value)
+  17+ 9E1E 16 00                        ld      d,0                     ;
+  18+ 9E20 CD 07 97                     call    Floor_DivQSigned        ; TO BE TESTED should do BC = BC / DE
+  19+ 9E23 78                           ld      a,b                     ; sign bit from b
+  20+ 9E24 E6 80                        and     $80                     ; .
+  21+ 9E26 B1                           or      c                       ; bring in the value
+  22+ 9E27 57                           ld      d,a                     ; de = c0 (i.e. c register not hex value)
+  23+ 9E28 1E 00                        ld      e,0                     ; .
+  24+ 9E2A C9                           ret
+  25+ 9E2B 78           .MaxedResult:   ld      a,b                     ; make result signed unity (i.e. 1 or 96 in our case)
+  26+ 9E2C EE 80                        xor     $80
+  27+ 9E2E F6 60                        or      $60
+  28+ 9E30 57                           ld      d,a
+  29+ 9E31 1E 00                        ld      e,0
+  30+ 9E33 C9                           ret
+  31+ 9E34 11 00 00     .ZeroResult:    ld      de,0
+  32+ 9E37 C9                           ret
+  33+ 9E38              ; as per tidy calc except
+  34+ 9E38              ; d = vector 1 e = vector 2 h = vector3 l = vector 4
+  35+ 9E38              ; performs (d*e - h*l) / 96 and puts the result in de where e is 0
+  36+ 9E38
+  37+ 9E38 CD A9 90     TidySide:       call    mulDbyESigned           ; de = vector 1 * vector 2
+  38+ 9E3B EB                           ex      de,hl                   ; get hl = vector 1 * vector 2
+  39+ 9E3C CD A9 90                     call    mulDbyESigned           ; de = vector 2 * vector 3
+  40+ 9E3F CD 00 00                     call    SubDEfromHLSigned       ; BC = HL = HL - DE
+  41+ 9E42 44 4D                        ld      bc,hl                   ; .
+  42+ 9E44 11 60 00                     ld      de,$60                  ; now de = 96
+  43+ 9E47 CD 07 97                     call    Floor_DivQSigned        ; TO BE TESTED should do BC = BC / DE
+  44+ 9E4A 78                           ld      a,b                     ; sign bit from b
+  45+ 9E4B E6 80                        and     $80                     ; .
+  46+ 9E4D B1                           or      c                       ; bring in the value
+  47+ 9E4E 57                           ld      d,a                     ; de = c0 (i.e. c register not hex value)
+  48+ 9E4F 1E 00                        ld      e,0                     ; .
+  49+ 9E51 C9                           ret
+  50+ 9E52
+  51+ 9E52              ;; orthonormalise vector for UBnK ship vector uses IX IT
+  52+ 9E52                  DISPLAY "TidyVectorsIX"
+  53+ 9E52 DD 21 36 C0  TidyVectorsIX:  ld      ix,UBnkrotmatNosevX
+  54+ 9E56 CD 9C 99                     call    NormaliseIXVector       ; initially we normalise the nose vector
+  55+ 9E59 3A 37 C0     .CheckNoseXSize:ld      a,(UBnkrotmatNosevX+1)  ; a = nose x
+  56+ 9E5C E6 30                        and     %00110000                ; if bits 7 and 6 are clear the work with nosey
+  57+ 9E5E CA 92 9E                     jp      z, .NoseXSmall
+  58+ 9E61              ;-- When nosex is large ------------------------  roofv_x =-(nosev_y * roofv_y + nosev_z * roofv_z) / nosev_x
+  59+ 9E61 3A 39 C0     .NoseXLarge:    ld      a,(UBnkrotmatNosevY+1)  ; a = nose x
+  60+ 9E64 57                           ld      d,a
+  61+ 9E65 3A 33 C0                     ld      a,(UBnkrotmatRoofvY+1)  ; hl = nosev_y * roofv_y
+  62+ 9E68 5F                           ld      e,a                     ; we already have d so only need roofY
+  63+ 9E69 3A 3B C0                     ld      a,(UBnkrotmatNosevZ+1)  ; de = nosev_z * roofv_z
+  64+ 9E6C 67                           ld      h,a                     ; .
+  65+ 9E6D 3A 35 C0                     ld      a,(UBnkrotmatRoofvZ+1)  ; .
+  66+ 9E70 6F                           ld      l,a                     ; .
+  67+ 9E71 3A 37 C0                     ld      a,(UBnkrotmatNosevX+1)
+  68+ 9E74 47                           ld      b,a
+  69+ 9E75 CD 05 9E                     call    TidyCalc
+  70+ 9E78 7A                           ld      a,d
+  71+ 9E79 B3                           or      e
+  72+ 9E7A CA 81 9E                     jp      z,.NoRoofXFlip
+  73+ 9E7D 3E 80                        ld      a,$80                   ; flip sign bit if not zero
+  74+ 9E7F AA                           xor     d
+  75+ 9E80 57                           ld      d,a
+  76+ 9E81 ED 53 30 C0  .NoRoofXFlip:   ld      (UBnkrotmatRoofvX),de   ; write roofvx
+  77+ 9E85 C3 ED 9E                     jp      .NormaliseRoofv
+  78+ 9E88 11 00 E0     .MaxedRoofX:    ld      de,$E000                ; TEST if sign is correct for all of these if was divide by zero make it -1
+  79+ 9E8B ED 53 30 C0                  ld      (UBnkrotmatRoofvX),de   ; write roofvx
+  80+ 9E8F C3 ED 9E                     jp      .NormaliseRoofv
+  81+ 9E92              ;-- When noseX is small ------------------------ determine if we are doign roofz or roof y
+  82+ 9E92 3A 38 C0     .NoseXSmall:    ld      a,(UBnkrotmatNosevY)
+  83+ 9E95 E6 60                        and     %01100000
+  84+ 9E97 CA C5 9E                     jp      z,.NoseYSmall
+  85+ 9E9A              ;-- When noseY is large ------------------------ roofv_z = -(nosev_x * roofv_x + nosev_y * roofv_y) / nosev_z
+  86+ 9E9A 3A 37 C0     .NoseYLarge:    ld      a,(UBnkrotmatNosevX+1)
+  87+ 9E9D 57                           ld      d,a
+  88+ 9E9E 3A 31 C0                     ld      a,(UBnkrotmatRoofvX+1)
+  89+ 9EA1 5F                           ld      e,a
+  90+ 9EA2 3A 39 C0                     ld      a,(UBnkrotmatNosevY+1)
+  91+ 9EA5 67                           ld      h,a
+  92+ 9EA6 3A 33 C0                     ld      a,(UBnkrotmatRoofvY+1)
+  93+ 9EA9 6F                           ld      l,a
+  94+ 9EAA 3A 3B C0                     ld      a,(UBnkrotmatNosevZ+1)
+  95+ 9EAD 47                           ld      b,a
+  96+ 9EAE CD 05 9E                     call    TidyCalc
+  97+ 9EB1 7A                           ld      a,d
+  98+ 9EB2 B3                           or      e
+  99+ 9EB3 CA BE 9E                     jp      z,.NoRoofZFlip
+ 100+ 9EB6 3E 80                        ld      a,$80                   ; flip sign bit if not zero
+ 101+ 9EB8 AA                           xor     d
+ 102+ 9EB9 57                           ld      d,a
+ 103+ 9EBA 3E 80                        ld      a,$80                   ; flip sign bit
+ 104+ 9EBC AA                           xor     d
+ 105+ 9EBD 57                           ld      d,a
+ 106+ 9EBE ED 53 34 C0  .NoRoofZFlip:   ld      (UBnkrotmatRoofvZ),de   ; write roofvz
+ 107+ 9EC2 C3 ED 9E                     jp      .NormaliseRoofv
+ 108+ 9EC5              ;-- When noseY is large ------------------------ roofv_y = -(nosev_x * roofv_x + nosev_z * roofv_z) / nosev_y
+ 109+ 9EC5 3A 37 C0     .NoseYSmall:    ld      a,(UBnkrotmatNosevX+1)
+ 110+ 9EC8 57                           ld      d,a
+ 111+ 9EC9 3A 31 C0                     ld      a,(UBnkrotmatRoofvX+1)
+ 112+ 9ECC 5F                           ld      e,a
+ 113+ 9ECD 3A 3B C0                     ld      a,(UBnkrotmatNosevZ+1)
+ 114+ 9ED0 67                           ld      h,a
+ 115+ 9ED1 3A 35 C0                     ld      a,(UBnkrotmatRoofvZ+1)
+ 116+ 9ED4 6F                           ld      l,a
+ 117+ 9ED5 3A 39 C0                     ld      a,(UBnkrotmatNosevY+1)
+ 118+ 9ED8 47                           ld      b,a
+ 119+ 9ED9 CD 05 9E                     call    TidyCalc
+ 120+ 9EDC 7A                           ld      a,d
+ 121+ 9EDD B3                           or      e
+ 122+ 9EDE CA E9 9E                     jp      z,.NoRoofYFlip
+ 123+ 9EE1 3E 80                        ld      a,$80                   ; flip sign bit if not zero
+ 124+ 9EE3 AA                           xor     d
+ 125+ 9EE4 57                           ld      d,a
+ 126+ 9EE5 3E 80                        ld      a,$80                   ; flip sign bit
+ 127+ 9EE7 AA                           xor     d
+ 128+ 9EE8 57                           ld      d,a
+ 129+ 9EE9 ED 53 32 C0  .NoRoofYFlip:   ld      (UBnkrotmatRoofvY),de   ; write roofvy
+ 130+ 9EED DD 21 30 C0  .NormaliseRoofv:ld      ix,UBnkrotmatRoofvX     ; now normalise roofv
+ 131+ 9EF1 CD 9C 99                     call    NormaliseIXVector
+ 132+ 9EF4              ; -- sidev_x = (nosev_z * roofv_y - nosev_y * roofv_z) / 96
+ 133+ 9EF4 3A 3B C0     .CalcSidevX:    ld      a,(UBnkrotmatNosevZ+1)
+ 134+ 9EF7 57                           ld      d,a
+ 135+ 9EF8 3A 33 C0                     ld      a,(UBnkrotmatRoofvY+1)
+ 136+ 9EFB 5F                           ld      e,a
+ 137+ 9EFC 3A 39 C0                     ld      a,(UBnkrotmatNosevY+1)
+ 138+ 9EFF 67                           ld      h,a
+ 139+ 9F00 3A 35 C0                     ld      a,(UBnkrotmatRoofvZ+1)
+ 140+ 9F03 6F                           ld      l,a
+ 141+ 9F04 CD 38 9E                     call    TidySide
+ 142+ 9F07 ED 53 2A C0                  ld      (UBnkrotmatSidevX),de   ; write sidevX
+ 143+ 9F0B              ; -- sidev_y = (nosev_x * roofv_z - nosev_z * roofv_x) / 96
+ 144+ 9F0B 3A 37 C0     .CalcSidevY:    ld      a,(UBnkrotmatNosevX+1)
+ 145+ 9F0E 57                           ld      d,a
+ 146+ 9F0F 3A 35 C0                     ld      a,(UBnkrotmatRoofvZ+1)
+ 147+ 9F12 5F                           ld      e,a
+ 148+ 9F13 3A 3B C0                     ld      a,(UBnkrotmatNosevZ+1)
+ 149+ 9F16 67                           ld      h,a
+ 150+ 9F17 3A 31 C0                     ld      a,(UBnkrotmatRoofvX+1)
+ 151+ 9F1A 6F                           ld      l,a
+ 152+ 9F1B CD 38 9E                     call    TidySide
+ 153+ 9F1E ED 53 2C C0                  ld      (UBnkrotmatSidevY),de   ; write sidevX
+ 154+ 9F22              ; -- sidev_z = (nosev_y * roofv_x - nosev_x * roofv_y) / 96
+ 155+ 9F22 3A 39 C0     .CalcSidevZ:    ld      a,(UBnkrotmatNosevY+1)
+ 156+ 9F25 57                           ld      d,a
+ 157+ 9F26 3A 31 C0                     ld      a,(UBnkrotmatRoofvX+1)
+ 158+ 9F29 5F                           ld      e,a
+ 159+ 9F2A 3A 37 C0                     ld      a,(UBnkrotmatNosevX+1)
+ 160+ 9F2D 67                           ld      h,a
+ 161+ 9F2E 3A 33 C0                     ld      a,(UBnkrotmatRoofvY+1)
+ 162+ 9F31 6F                           ld      l,a
+ 163+ 9F32 CD 38 9E                     call    TidySide
+ 164+ 9F35 ED 53 2E C0                  ld      (UBnkrotmatSidevZ),de   ; write sidevX
+ 165+ 9F39                          IFDEF ROUND_ROLL_AND_PITCH
+ 166+ 9F39 ~            .ClearLowBytes: ld      hl,UBnkrotmatSidevX
+ 167+ 9F39 ~                            ZeroA
+ 168+ 9F39 ~                            ld      b,9
+ 169+ 9F39 ~            .WriteLoop:     ld      (hl),a
+ 170+ 9F39 ~                            inc     hl
+ 171+ 9F39 ~                            inc     hl
+ 172+ 9F39 ~                            djnz    .WriteLoop
+ 173+ 9F39                          ENDIF
+ 174+ 9F39 C9                           ret
+ 175+ 9F3A
+# file closed: ./Maths/asm_tidy.asm
  593  9F3A                  INCLUDE "./Maths/Utilities/LL28AequAmul256DivD.asm"
 # file opened: ./Maths/Utilities/LL28AequAmul256DivD.asm
    1+ 9F3A
