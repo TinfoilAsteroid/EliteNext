@@ -562,9 +562,9 @@ XX12PVarSign3		DB 0
     INCLUDE "./Tables/name_digrams.asm"
 ;INCLUDE "Tables/inwk_table.asm" This is no longer needed as we will write to univer object bank
 ; Include all maths libraries to test assembly   
-    INCLUDE "./Maths/Utilities/AddDEToCash.asm"
+    INCLUDE "./Maths/asm_AddDEToCash.asm"
     INCLUDE "./Maths/DIVD3B2.asm"
-    INCLUDE "./Maths/multiply.asm"
+    INCLUDE "./Maths/asm_multiply.asm"
     INCLUDE "./Maths/asm_square.asm"
     INCLUDE "./Maths/asm_sine.asm"
     INCLUDE "./Maths/asm_sqrt.asm"
@@ -577,22 +577,22 @@ XX12PVarSign3		DB 0
     INCLUDE "./Maths/compare16.asm"
     INCLUDE "./Maths/normalise96.asm"
     INCLUDE "./Maths/binary_to_decimal.asm"
-    INCLUDE "./Maths/Utilities/AequAdivQmul96-TIS2.asm"
+    INCLUDE "./Maths/asm_AequAdivQmul96.asm"
     INCLUDE "./Maths/Utilities/AequAmulQdiv256-FMLTU.asm"
-    INCLUDE "./Maths/Utilities/PRequSpeedDivZZdiv8-DV42-DV42IYH.asm"
+    ;INCLUDE "./Maths/Utilities/PRequSpeedDivZZdiv8-DV42-DV42IYH.asm"
 
     INCLUDE "./Maths/Utilities/APequQmulA-MULT1.asm"
     INCLUDE "./Maths/Utilities/badd_ll38.asm"
 
-    INCLUDE "./Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
-    INCLUDE "./Maths/Utilities/RequAdivQ-LL61.asm"
-    INCLUDE "./Maths/Utilities/RSequQmulA-MULT12.asm"
+    ;INCLUDE "./Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
+    ;INCLUDE "./Maths/Utilities/RequAdivQ-LL61.asm"
+    ;INCLUDE "./Maths/Utilities/RSequQmulA-MULT12.asm"
 
     include "./Universe/Ships/CopyRotMattoXX15.asm"
     include "./Universe/Ships/CopyXX15toRotMat.asm"
-    INCLUDE "./Maths/Utilities/tidy.asm"
-    INCLUDE "./Maths/Utilities/LL28AequAmul256DivD.asm"    
-    INCLUDE "./Maths/Utilities/XAequMinusXAPplusRSdiv96-TIS1.asm"
+    INCLUDE "./Maths/asm_tidy.asm"
+    ;INCLUDE "./Maths/Utilities/LL28AequAmul256DivD.asm"    
+    ;INCLUDE "./Maths/Utilities/XAequMinusXAPplusRSdiv96-TIS1.asm"
 
     INCLUDE "./GameEngine/Tactics.asm"
     INCLUDE "./Hardware/drive_access.asm"

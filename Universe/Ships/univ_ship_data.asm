@@ -149,46 +149,45 @@ OrthagCountdown             DB  12
 UBnkShipCopy                equ UBnkHullVerticies               ; Buffer for copy of ship data, for speed will copy to a local memory block, Cobra is around 400 bytes on creation of a new ship so should be plenty
 UBnk_Data_len               EQU $ - StartOfUniv
 
-
+; --------------------------------------------------------------
 ZeroUnivPitch:          MACRO
                         xor     a
                         ld      (UBnKRotZCounter),a
                         ENDM
-
+; --------------------------------------------------------------
 ZeroUnivRoll:           MACRO
                         xor     a
                         ld      (UBnKRotXCounter),a
                         ENDM
-
+; --------------------------------------------------------------
 ZeroUnivPitchAndRoll:   MACRO
                         xor     a
                         ld      (UBnKRotXCounter),a
                         ld      (UBnKRotZCounter),a
                         ENDM
-
-
+; --------------------------------------------------------------
 MaxUnivPitchAndRoll:    MACRO
                         ld      a,127
                         ld      (UBnKRotXCounter),a
                         ld      (UBnKRotZCounter),a
                         ENDM                   
-
+; --------------------------------------------------------------
 InfinitePitch:          MACRO
                         ld      a,$FF
                         ld      (UBnKRotZCounter),a
                         ENDM   
-
+; --------------------------------------------------------------
 InfiniteRoll:           MACRO
                         ld      a,$FF
                         ld      (UBnKRotXCounter),a
                         ENDM   
-
+; --------------------------------------------------------------
 InfinitePitchAndRoll:    MACRO
                         ld      a,$FF
                         ld      (UBnKRotXCounter),a
                         ld      (UBnKRotZCounter),a
                         ENDM   
-                        
+; --------------------------------------------------------------
 RandomUnivPitchAndRoll: MACRO
                         call    doRandom
                         or      %01101111
@@ -197,34 +196,32 @@ RandomUnivPitchAndRoll: MACRO
                         or      %01101111
                         ld      (UBnKRotZCounter),a
                         ENDM
-
+; --------------------------------------------------------------
 RandomUnivSpeed:        MACRO
                         call    doRandom
                         and     31
                         ld      (UBnKSpeed),a
                         ENDM
-                        
+; --------------------------------------------------------------
 MaxUnivSpeed:           MACRO
                         ld      a,31
                         ld      (UBnKSpeed),a
                         ENDM
-                        
+; --------------------------------------------------------------
 ZeroUnivAccelleration:  MACRO
                         xor     a
                         ld      (UBnKAccel),a
                         ENDM
-
+; --------------------------------------------------------------
 SetShipHostile:         ld      a,(ShipNewBitsAddr)
                         or      ShipIsHostile 
                         ld      (ShipNewBitsAddr),a
                         ret
-
+; --------------------------------------------------------------
 ClearShipHostile:       ld      a,(ShipNewBitsAddr)
                         and     ShipNotHostile 
                         ld      (ShipNewBitsAddr),a
                         ret
-
-                        
 ; --------------------------------------------------------------
 ResetUBnkData:          ld      hl,StartOfUniv
                         ld      de,UBnk_Data_len
@@ -239,7 +236,7 @@ ResetUbnkPosition:      ld      hl,UBnKxlo
                         inc     hl
                         djnz    .zeroLoop
                         ret
-
+; --------------------------------------------------------------
 FireECM:                break
                         ld      a,ECMCounterMax                 ; set ECM time
                         ld      (UBnKECMCountDown),a            ;
@@ -248,12 +245,13 @@ FireECM:                break
                         ld      a,ECMCounterMax
                         ld      (ECMCountDown),a
                         ret
-
+; --------------------------------------------------------------
 RechargeEnergy:         ld      a,(UBnKEnergy)
                         ReturnIfAGTEMemusng EnergyAddr
                         inc     a
                         ld      (UBnKEnergy),a
                         ret
+; --------------------------------------------------------------
 ; A ship normally needs enough energy to fire ECM but if its shot then
 ; it may be too low, in which case the ECM does a saftey shutdown and returns 1 energy
 ; plus a 50% chance it will blow the ECM up
@@ -266,7 +264,6 @@ UpdateECM:              ld      a,(UBnKECMCountDown)
                         ret     p
 .ExhaustedEnergy:       call    UnivExplodeShip                 ; if it ran out of energy it was as it was also shot or collided as it checks in advance. Main ECM loop will continue as a compromise as multiple ships can fire ECM simultaneously
                         ret
-                        
 ;-- This takes an Axis and subtracts 1, handles leading sign and boundary of 0 going negative
 JumpOffSet:             MACRO   Axis
                         ld      hl,(Axis)
@@ -281,11 +278,10 @@ JumpOffSet:             MACRO   Axis
 .MovingNegative:        ld      hl,$8001                        ; -1
 .Done                   ld      (Axis),hl
                         ENDM
-                        
-                        
+; --------------------------------------------------------------
 WarpOffset:             JumpOffSet  UBnKzhi                     ; we will simplify on just moving Z
                         ret
-                        
+; --------------------------------------------------------------
 WarpUnivByHL:           ld      b,h
                         ld      c,l
                         ld      h,0
@@ -297,7 +293,6 @@ WarpUnivByHL:           ld      b,h
                         ld      a,l
                         ld      (UBnKzlo),a
                         ret
-
 ; --------------------------------------------------------------                        
 ; update ship speed and pitch based on adjustments from AI Tactics
 UpdateSpeedAndPitch:    ld      a,(UBnKAccel)                   ; only apply non zero accelleration
@@ -318,7 +313,7 @@ UpdateSpeedAndPitch:    ld      a,(UBnKAccel)                   ; only apply non
                         ld      (UBnKAccel),a                   ; for next AI update
 .SkipAccelleration:     ; handle roll and pitch rates                     
                         ret
-
+; --------------------------------------------------------------
 UnivSetEnemyMissile:    ld      hl,NewLaunchUBnKX               ; Copy launch ship matrix
                         ld      de,UBnKxlo                      ; 
                         ld      bc,NewLaunchDataBlockSize       ; positon + 3 rows of 3 bytes
@@ -441,7 +436,7 @@ UnivExplodeShip:        break
                         ld      (UBnKEnergy),a
                         ;TODO
                         ret
-
+; --------------------------------------------------------------
 UnivSetDemoPostion:     call    UnivSetSpawnPosition
                         ld      a,%10000001                     ; AI Enabled has 1 missile
                         ld      (UBnkaiatkecm),a                ; set hostinle, no AI, has ECM
@@ -464,8 +459,6 @@ UnivSetDemoPostion:     call    UnivSetSpawnPosition
                         ld      h,a
 .SkipFurther            ld      (UBnKzlo),hl
                         ret
-    DISPLAY "Tracing 1", $
-    
 ; --------------------------------------------------------------
 CopyPlanetGlobaltoSpaceStation:
                         ld      hl,ParentPlanetX
@@ -691,9 +684,7 @@ ResetStationLaunch:     ld  a,%10000001                         ; Has AI and 1 M
                         ret
     ;Input: BC = Dividend, DE = Divisor, HL = 0
 ;Output: BC = Quotient, HL = Remainder
-
-
-
+; --------------------------------------------------------------
 FighterTypeMapping:     DB ShipID_Worm, ShipID_Sidewinder, ShipID_Viper, ShipID_Thargon
 
 ; Initialiase data, iyh must equal slot number
@@ -754,7 +745,6 @@ UnivInitRuntime:        ld      bc,UBnKRuntimeSize
     DISPLAY "Tracing 2", $
     
                         include "Universe/Ships/InitialiseOrientation.asm"
-
 ;----------------------------------------------------------------------------------------------------------------------------------
 ;OrientateVertex:
 ;                      [ sidev_x sidev_y sidev_z ]   [ x ]
@@ -1174,7 +1164,7 @@ ProjectNodeToScreen:
         ld          hl,varQ
         cp          (hl)                                ; Q
         JumpIfALTusng DoSmallAngle                      ; LL69 if xdist < zdist hop over jmp to small x angle
-        call        RequAdivQ                           ; LL61  \ visit up  R = A/Q = x/z
+        call        RequAmul256divQ;RequAdivQ                           ; LL61  \ visit up  R = A/Q = x/z
         jp          SkipSmallAngle                      ; LL65  \ hop over small xangle
 DoSmallAngle:                                           ; small x angle
 LL69:
@@ -1228,7 +1218,7 @@ ProcessYPoint:
         cp          (hl)                                ; Q
         JumpIfALTusng SmallYHop                         ; if ydist < zdist hop to small yangle
 SmallYPoint:        
-        call        RequAdivQ                           ; LL61  \ else visit up R = A/Q = y/z
+        call        RequAmul256divQ;RequAdivQ                           ; LL61  \ else visit up R = A/Q = y/z
         jp          SkipYScale                          ; LL68 hop over small y yangle
 SmallYHop:
 LL67:                                                   ; Arrive from LL66 above if XX15+3 < Q \ small yangle
@@ -1269,33 +1259,31 @@ LL50:                                                   ; also from LL62, XX3 no
 ;;;     Byte 1 = Y magnitide with origin at middle of ship      
 ;;;     Byte 2 = Z magnitide with origin at middle of ship          
 ;;;     Byte 3 = Sign Bits of Vertex 7=X 6=Y 5 = Z 4 - 0 = visibility beyond which vertix is not shown
-CopyNodeToXX15:
-        ldCopyByte  hl, UBnkXScaled                     ; Load into XX15                                                                     Byte 0;;;     XX15 xlo   = byte 0
-        inc         hl
-        ldCopyByte  hl, UBnkYScaled                     ; Load into XX15                                                                     Byte 0;;;     XX15 xlo   = byte 0
-        inc         hl
-        ldCopyByte  hl, UBnkZScaled                     ; Load into XX15                                                                     Byte 0;;;     XX15 xlo   = byte 0
-        inc         hl
-PopulateXX15SignBits: 
+CopyNodeToXX15:             ldCopyByte  hl, UBnkXScaled                     ; Load into XX15                                                                     Byte 0;;;     XX15 xlo   = byte 0
+                            inc         hl
+                            ldCopyByte  hl, UBnkYScaled                     ; Load into XX15                                                                     Byte 0;;;     XX15 xlo   = byte 0
+                            inc         hl
+                            ldCopyByte  hl, UBnkZScaled                     ; Load into XX15                                                                     Byte 0;;;     XX15 xlo   = byte 0
+                            inc         hl
 ; Simplfied for debugging, needs optimising back to original DEBUG TODO
-        ld          a,(hl)
-        ld          c,a                                 ; copy sign and visibility to c
-        ld          b,a
-        and         $80                                 ; keep high 3 bits
-        ld          (UBnkXScaledSign),a                 ; Copy Sign Bits                                                            ;;;     
-        ld          a,b
-        and         $40
-        sla         a                                   ; Copy Sign Bits                                                            ;;;     
-        ld          (UBnkYScaledSign),a                 ; Copy Sign Bits                                                            ;;;     
-        ld          a,b
-        and         $20
-        sla         a                                   ; Copy Sign Bits                                                            ;;;     
-        sla         a                                   ; Copy Sign Bits                                                            ;;;     
-        ld          (UBnkZScaledSign),a                 ; Copy Sign Bits                                                            ;;;     
-        ld          a,c                                 ; returns a with visibility sign byte
-        and         $1F                                 ; visibility is held in bits 0 to 4                                                              ;;;     A = XX15 Signs AND &1F (to get lower 5 visibility)
-        ld          (varT),a                            ; and store in varT as its needed later
-        ret
+.PopulateXX15SignBits:      ld          a,(hl)
+                            ld          c,a                                 ; copy sign and visibility to c
+                            ld          b,a
+                            and         $80                                 ; keep high 3 bits
+                            ld          (UBnkXScaledSign),a                 ; Copy Sign Bits                                                            ;;;     
+                            ld          a,b
+                            and         $40
+                            sla         a                                   ; Copy Sign Bits                                                            ;;;     
+                            ld          (UBnkYScaledSign),a                 ; Copy Sign Bits                                                            ;;;     
+                            ld          a,b
+                            and         $20
+                            sla         a                                   ; Copy Sign Bits                                                            ;;;     
+                            sla         a                                   ; Copy Sign Bits                                                            ;;;     
+                            ld          (UBnkZScaledSign),a                 ; Copy Sign Bits                                                            ;;;     
+                            ld          a,c                                 ; returns a with visibility sign byte
+                            and         $1F                                 ; visibility is held in bits 0 to 4                                                              ;;;     A = XX15 Signs AND &1F (to get lower 5 visibility)
+                            ld          (varT),a                            ; and store in varT as its needed later
+                            ret
 
 ;;;     Byte 4 = High 4 bits Face 2 Index Low 4 bits = Face 1 Index
 ;;;     Byte 5 = High 4 bits Face 4 Index Low 4 bits = Face 3 Index
