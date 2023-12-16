@@ -97,6 +97,14 @@ MMUSelectUnivBankA:  MACRO
 MMUSelectUniverseN:  MACRO value
                      nextreg UniverseMMU,       BankUNIVDATA0+value
                      ENDM
+
+MMUSelectSpaceStation: MACRO
+                     nextreg SpaceStationMMU,         BankSpaceStationData
+                     ENDM
+
+MMUSelectMathsBankedFns   MACRO
+                     nextreg MathsBankedFnsMMU, BankMathsBankedFns
+                     ENDM
                      
 MMUSelectGalaxyA:    MACRO
                      nextreg GalaxyDataMMU,     a

@@ -43,6 +43,7 @@ JumpIfNotDockingCheck:      MACRO   NotDocking
                             ENDM
 
 ;..................................................................................................................................                        
+; Replacement for MVEIT routine
 UpdateUniverseObjects:  xor     a
                         ld      (SelectedUniverseSlot),a
 .UpdateUniverseLoop:    ld      d,a                                             ; d is unaffected by GetTypeInSlotA
@@ -53,6 +54,7 @@ UpdateUniverseObjects:  xor     a
                         ld      iyl,a                                           ; save type into iyl for later
 .UniverseObjectFound:   ld      a,d                                             ; Get back Universe slot as we want it
                         MMUSelectUniverseA                                      ; and we apply roll and pitch
+;-- EVERY ITERATIONS TIDY UP A SINGLE UNIVERSE ITEM., NEED A VAR TO HOLD CURRENT TIDY SLOT
         IFDEF   CLIPDEBUG
 .DEBUG:                     ld      a,(SelectedUniverseSlot)
                             cp      0
@@ -65,9 +67,11 @@ UpdateUniverseObjects:  xor     a
                             jp      .CheckExploding
         ENDIF
                             DISPLAY "TODO: Make all 4 of these 1 call"
-.ProperUpdate:          call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
+.ProperUpdate:          call    TidyRotation                                    ; determine if its tidy time
+                        call    ApplyMyRollAndPitch                             ; todo , make all 4 of these 1 call
                         ld      a,(UBnKRotZCounter)
-                        cp      0
+                        cp      0 ; WHY? 
+                        DISPLAY "TODO CHECK WHY ROGUE CP 0"
                         call    ApplyShipRollAndPitch
                         call    ApplyShipSpeed
                         call    UpdateSpeedAndPitch                             ; update based on rates of speed roll and pitch accelleration/decelleration
@@ -107,7 +111,8 @@ UpdateUniverseObjects:  xor     a
 .NoRoom:                ClearSlotMem    SelectedUniverseSlot                    ; we only need to clear slot list as univ ship is now junk
                         jp      .PostCollisionTest
 ; ... Generic collision
-.HaveCollided:          JumpIfMemLTNusng DELTA, 5, .SmallBump
+.HaveCollided:          break
+                        JumpIfMemLTNusng DELTA, 5, .SmallBump
 .BigBump:               ld      a,(UBnKEnergy)                                  ; get energy level which gives us an approximate to size and health
                         SetCarryFlag
                         rla                                                     ; divide by 2 but also bring in carry so its 128 + energy / 2
@@ -169,7 +174,11 @@ UpdateUniverseObjects:  xor     a
                         SetMemFalse    SetStationHostileFlag
                         ret
 .UpdateMissile:         ;break
-                        call    UpdateShip                                      ; we do it this way top avoid double calling
+;.CheckForTidy:          ld      a,(TidyCounter)
+;                        ld      hl,SelectedUniverseSlot
+;                        cp      (hl)
+;                        call    z,TidyVectorsIX
+.UpdateShipTactics:     call    UpdateShip                                      ; we do it this way top avoid double calling
                         jp      .DoneAICheck                                    ; ai if the ai slot to process = missile type
 ;..................................................................................................................................
 
@@ -225,40 +234,7 @@ DrawForwardShips:       xor     a
                         IFDEF ROTATIONDEBUG
                             call    SavePosition
                         ENDIF
-;Debug set position     
-              ;         ld      hl,$0000
-              ;         ld      a,$00
-              ;         ld      (UBnKxlo),hl
-              ;         ld      (UBnKxsgn),a
-              ;         ld      hl,$0148
-              ;         ld      a,$00
-              ;         ld      (UBnKylo),hl
-              ;         ld      (UBnKysgn),a
-              ;         ld      hl,$0149
-              ;         ld      a,$00
-              ;         ld      (UBnKzlo),hl
-              ;         ld      (UBnKzsgn),a
-              ;         ld      hl,$A558
-              ;         ld      (UBnkrotmatSidevX),hl
-              ;         ld      hl,$D8CE
-              ;         ld      (UBnkrotmatSidevY),hl
-              ;         ld      hl,$0000
-              ;         ld      (UBnkrotmatSidevZ),hl
-              ;         ld      hl,$58CE
-              ;         ld      (UBnkrotmatRoofvX),hl
-              ;         ld      hl,$A558
-              ;         ld      (UBnkrotmatRoofvY),hl
-              ;         ld      hl,$0000
-              ;         ld      (UBnkrotmatRoofvZ),hl
-              ;         ld      hl,$8000
-              ;         ld      (UBnkrotmatNosevX),hl
-              ;         ld      hl,$8000
-              ;         ld      (UBnkrotmatNosevY),hl
-              ;         ld      hl,$6000
-              ;         ld      (UBnkrotmatNosevZ),hl
-                        
-                        
-                                    DISPLAY "TODO: Tune this"
+                                     DISPLAY "TODO: Tune this"
 .ProcessUnivShip:       call    ProcessShip          ; The whole explosion logic is now encapsulated in process ship ;TODO TUNE THIS   ;; call    ProcessUnivShip
 ; Debris still appears on radar                        
                         IFDEF ROTATIONDEBUG
@@ -273,8 +249,9 @@ DrawForwardShips:       xor     a
                         CallIfMemTrue ConsoleRedrawFlag,UpdateScannerShip ; Always update ship positions                        
 .ProcessedDrawShip:     ld      a,(CurrentShipUniv)
                         inc     a
+                        DISPLAY "TO DO - Add all ships back to radar"
                         ;   DEBUGGING SHIPS RENDERING
-                        ;   JumpIfALTNusng   UniverseSlotListSize, .DrawShipLoop
+                        JumpIfALTNusng   UniverseSlotListSize, .DrawShipLoop
 .DrawSunCompass:        MMUSelectSun
                         call    UpdateCompassSun                ; Always update the sun position
                         call    UpdateScannerSun                ; Always attempt to put the sun on the scanner 
@@ -282,6 +259,8 @@ DrawForwardShips:       xor     a
 .DrawPlanetCompass:     MMUSelectPlanet
                         call    UpdateCompassPlanet
                         call    UpdateScannerPlanet
+                        MMUSelectSpaceStation
+                        call    UpdateCompassStation
                         ret
 .DrawStationCompass:
 

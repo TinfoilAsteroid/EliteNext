@@ -24,6 +24,7 @@ MenuSystemAddr          equ $c000
 ViewFrontAddr           equ $c000
 SunBankAddr             equ $c000
 PlanetBankAddr          equ $c000
+SpaceStationBankAddr    equ $c000
 UniverseBankAddr	    equ $c000
 LaunchShipAddr          equ $c000
 membank7 			    equ $e000
@@ -41,15 +42,18 @@ ConsoleImageAddr        equ $e000
 GalaxyDataAddr          equ $e000
 SoundAddr               equ $e000
 KeyboardAddr            equ $e000
+MathsBankedFnsAddr      equ $0000
 
 EXSDOSMMU0              equ MMU_SLOT_0_REGISTER
 MathsTablesMMU          equ MMU_SLOT_0_REGISTER
+MathsBankedFnsMMU       equ MMU_SLOT_0_REGISTER
 ShipReadMMU             equ MMU_SLOT_0_REGISTER
 DMACpySourceMMU		    equ	MMU_SLOT_0_REGISTER
 EXSDOSMMU1              equ MMU_SLOT_1_REGISTER
 SunMMU 		            equ MMU_SLOT_6_REGISTER
 PlanetMMU 		        equ MMU_SLOT_6_REGISTER
 UniverseMMU 		    equ MMU_SLOT_6_REGISTER
+SpaceStationMMU         equ MMU_SLOT_6_REGISTER
 ScreenBankMMU           equ MMU_SLOT_6_REGISTER
 MenuEquipSMMU           equ MMU_SLOT_6_REGISTER
 MenuShrChtMMU           equ MMU_SLOT_6_REGISTER
@@ -96,6 +100,7 @@ BankShipModels3         equ 68
 BankShipModels4         equ 69
 
 BankUNIVDATA0           equ 70
+BankSpaceStationData    equ 70
 BankUNIVDATA1           equ 71
 BankUNIVDATA2           equ 72
 BankUNIVDATA3           equ 73
@@ -123,6 +128,7 @@ BankGalaxyData7         equ 98
 BankMathsTables         equ 99
 BankSound               equ 100
 BankKeyboard            equ 101
+BankMathsBankedFns      equ 102
 
 BankROM                 equ 255
 

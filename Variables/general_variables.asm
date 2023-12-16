@@ -1,6 +1,16 @@
     IFNDEF LASER_V2
     DEFINE  LASER_V2    1
     ENDIF
+; Debugging data
+failureDiag DS  10              ; 10 bytes to log data before a failure
+
+LogFailure:     MACRO messageAddress
+                ld      hl,messageAddress
+                ld      de,failureDiag
+                ld      bc,10
+                ldir
+                ENDM
+                
 
 varAxis1	DW 	0				; address of first axis in a rotation action
 varAxis2	DW	0				; address of 2nd axis in a roation action
@@ -49,8 +59,10 @@ SChi					DB 0				; 08
 varP					DB 0 				; 10	XX16+7
 varPhi					DB 0 				; 11	XX16+8
 varPhi2					DB 0 				; 12	XX16+9
+varPhiSign              DB 0
 varPp1                  equ varPhi
 varPp2                  equ varPhi2
+varPp3                  equ varPhiSign
 UnivPointerLo			DB	0				; 20		INF                 XX0+2
 UnivPointerHi			DB	0				; 21      INF+1               XX0+3
 UnivPointer				equ	UnivPointerLo     
@@ -79,7 +91,7 @@ ECMCountDown            DB  0
 ECMLoopB                DB  0
 JSTX                    DW  0               ;           Joystick analog value
 ALPHA					DB	0				; 8D        Alpha with bit 7 sign
-ALP1					DB 	0				; 31		ALP1	Roll magnitude Also Apha
+ALP1					DB 	0				; 31		ALP1	ABS Alpha
 ALP2					DB  0				; 32		ALP2	Roll Sign
 ALP2FLIP				DB  0				; 33		ALP2	negated roll sign
 ALP1MAXR                DB  31               ;   Maximum roll, added becuase we may allow different ship types
@@ -266,6 +278,9 @@ DisplayPopulation		DW	0				; 03BB \ QQ6  \ population*10
 DisplayProductivity		DW	0				; 03BD \ QQ7   \ productivity*10
 Distance          		DW	0				; 03BE \ QQ8 distince in 0.1LY units
 DisplayRadius			DW	0
+ParentPlanetX           DS  3               ; used when spawining space station to determine origin
+ParentPlanetY           DS  3               ;
+ParentPlanetZ           DS  3               ;
 ; --- Used in creation of sun and planet ------------------------------------------------------------------------------------------------
 PlanetXPos              DS  1
 PlanetYPos              DS  1

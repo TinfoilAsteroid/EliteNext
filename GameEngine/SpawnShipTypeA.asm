@@ -9,7 +9,9 @@ SpawnShipTypeA:         ;break
                         call    FindNextFreeSlotInC                 ; c = slot number to use
                         ret     c                                   ; if carry flag was set then no spare slots
                         ld      iyh,c                               ; preserve slot number for now
-                        MMUSelectShipBank1                          ; select bank 1
+; Entry point where iyl = space station type, iyh = bank 0
+                       ;break
+SpawnSpaceStation:      MMUSelectShipBank1                          ; select bank 1
                         ld      a,iyh                               ; A = slot number
                         ld      b,iyl                               ; b = ship type
                         call    SetSlotAToTypeB                     ; Allocate slot as used

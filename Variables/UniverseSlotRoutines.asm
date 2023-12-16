@@ -107,7 +107,6 @@ WarpJunk:               ld      hl,UniverseSlotType+1
                         MMUSelectUniverseA
                         call    WarpOffset
                         jp      .DoneIteration
-                        
 
 AreShipsPresent:        ld      hl,UniverseSlotType+1
                         ld      b,UniverseSlotListSize -1      ; ignore space station

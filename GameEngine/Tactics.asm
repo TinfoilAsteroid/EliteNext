@@ -36,13 +36,19 @@ ShipAiJumpTableMax:   EQU ($ - ShipAIJumpTable)/2
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Main entry point to tactics. Every time it will do a a tidy and the do AI logic
 UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
-                       ld      hl,TidyCounter
-                       dec     (hl)
-                       DISPLAY "TODO: SEE IF THIS IS AN ISSUE"
-                       call     z,TidyUbnK  ;TODO SEE IF THIS IS AN ISSUE"
+                  ;    break
+                  ;    ld       a,(TidyCounter)
+                  ;    ld       hl,
+                  ;     ld      hl,TidyCounter
+                  ;    dec     (hl)
+                  ; IFDEF USE_NORMALISE_IX
+                  ;    call     z,TidyVectorsIX
+                  ; ELSE
+                  ;    call     z,TidyUbnK  ;TODO SEE IF THIS IS AN ISSUE"
+                  ; ENDIF
                        ; This shoudl be a call nz to tidy *****ret     nz
-                       ld      a,16
-                       ld      (TidyCounter),a
+                      ; ld      a,16
+                      ; ld      (TidyCounter),a
                        ;call    TidyUbnK
                        ; add AI in here too
                        ld       a,(ShipTypeAddr)
@@ -103,8 +109,8 @@ MakeHostile:            ld      a,(ShipNewBitsAddr)                     ; Check 
                         JumpIfMemEqNusng ShipTypeAddr, ShipTypeStation, .SetNewbHostile
 .ItsNotAStation:        and     ShipIsBystander                         ; check if space station present if its a bystander
                         call    nz, SetStationHostile                   ; Set Space Station if present, Angry
-                        ld      a,(UBnkaiatkecm)                        ; get AI data
-                        ReturnOnBitClear a, ShipAIEnabledBitNbr         ; if 0 then no AI attached so it can't get angry
+                        IsAIEnabled                                     ; get AI data
+                        ret     z                                       ; if 0 then no AI attached so it can't get angry
                         ld      c,a                                     ; Copy to c in case we need it later
                         SetMemToN UBnKAccel, 2                          ; set accelleration to 2 to speed up
                         sla     a                                       ; set pitch to 4
@@ -168,27 +174,28 @@ CheckMissileBlastInit:  ZeroA
                         ret
                         
 ;----------------------------------------------------------------------------------------------------------------------------------
-CheckPointRange:        MACRO   ShipPos, ShipSign, MissilePos, MissileSign
-                        ld      a,(MissilePos)                      ; check X Coord
-                        ld      hl,(ShipSign)
-                        xor     (hl)
-                        and     SignOnly8Bit
-                        ld      hl,(ShipPos)
-                        ld      de,(MissilePos)
-                        jr      z,.SignsDiffernt
-.XSame:                 and     a
-                        sbc     hl,de                               ; distance = Ship X - Missile X
-                        JumpIfPositive      .CheckDiff              ; if result was -ve 
-                        NegHL
-                        jp      .CheckDiff
-.SignsDiffernt:         add     hl,de
-                        ReturnIfNegative                            ; if we overflowed then return
-.CheckDiff:             ld      a,h                                 ; if we have an h outside blast raidus
-                        ReturnIfANotZero
-                        ld      a,l
-                        and     a
-                        ReturnIfAGTEMemusng   CurrentMissileBlastRange
-                        ENDM
+; Check to see if missile is in range
+;;ReadyfordeletionposttestCheckPointRange:        MACRO   ShipPos, ShipSign, MissilePos, MissileSign
+;;Readyfordeletionposttest                        ld      a,(MissilePos)                      ; check X Coord
+;;Readyfordeletionposttest                        ld      hl,(ShipSign)
+;;Readyfordeletionposttest                        xor     (hl)
+;;Readyfordeletionposttest                        and     SignOnly8Bit
+;;Readyfordeletionposttest                        ld      hl,(ShipPos)
+;;Readyfordeletionposttest                        ld      de,(MissilePos)
+;;Readyfordeletionposttest                        jr      z,.SignsDiffernt
+;;Readyfordeletionposttest.XSame:                 and     a
+;;Readyfordeletionposttest                        sbc     hl,de                               ; distance = Ship X - Missile X
+;;Readyfordeletionposttest                        JumpIfPositive      .CheckDiff              ; if result was -ve 
+;;Readyfordeletionposttest                        NegHL
+;;Readyfordeletionposttest                        jp      .CheckDiff
+;;Readyfordeletionposttest.SignsDiffernt:         add     hl,de
+;;Readyfordeletionposttest                        ReturnIfNegative                            ; if we overflowed then return
+;;Readyfordeletionposttest.CheckDiff:             ld      a,h                                 ; if we have an h outside blast raidus
+;;Readyfordeletionposttest                        ReturnIfANotZero
+;;Readyfordeletionposttest                        ld      a,l
+;;Readyfordeletionposttest                        and     a
+;;Readyfordeletionposttest                        ReturnIfAGTEMemusng   CurrentMissileBlastRange
+;;Readyfordeletionposttest                        ENDM
 ;...................................................................                        
 ; We only do one test per loop for spreading the load of work                        
 CheckMissileBlastLoop:  ld      a,(CurrentMissileCheck)
@@ -206,9 +213,13 @@ CheckMissileBlastLoop:  ld      a,(CurrentMissileCheck)
                         ld      iyh,a                               ; iyh = missile blast depending on type
 .CheckRange:            ld      a,iyl                               ; now page in universe data
                         MMUSelectUniverseA      
-                        CheckPointRange UBnKxlo, UBnKxsgn, MissileXPos, MissileXSgn  ; its a square but its good enough
-                        CheckPointRange UBnKylo, UBnKysgn, MissileYPos, MissileYSgn
-                        CheckPointRange UBnKzlo, UBnKzsgn, MissileZPos, MissileZSgn
+                        ld      ix,UBnKxlo
+                        ld      iy,MissileXPos
+                        MMUSelectMathsBankedFns : call CheckInCollisionRange
+                        ;CheckPointRange UBnKxlo, UBnKxsgn, MissileXPos, MissileXSgn  ; its a square but its good enough
+                        ;CheckPointRange UBnKylo, UBnKysgn, MissileYPos, MissileYSgn
+                        ;CheckPointRange UBnKzlo, UBnKzsgn, MissileZPos, MissileZSgn
+                        ret     nc                                  ; no collision means no carry
                         call    ShipMissileBlast                    ; Ship hit by missile blast
                         ret                                         ; we are done
 ;...................................................................
@@ -219,15 +230,15 @@ CheckIfBlastHitUs:      ld      a,(UBnKMissileBlastRange)
 CheckIfMissileHitUs:    ld      a,(UBnKMissileDetonateRange)
                         ld      c,a
 ;...................................................................
-MissileHitUsCheckPos:   ld      hl, (UBnKxlo)
-                        ld      de, (UBnKylo)
-                        ld      bc, (UBnKzlo)
+MissileHitUsCheckPos:   ld      hl, (UBnKxlo)                       ; to check for us collision
+                        ld      de, (UBnKylo)                       ; we can cheat as a missile will only ever be
+                        ld      bc, (UBnKzlo)                       ; 16 bit + sign bit in sign byte
                         ld      a,h
                         or      d
                         or      b
-                        ClearCarryFlag
+.PrepForNoHit:          ClearCarryFlag
                         ReturnIfNotZero
-                        SetCarryFlag
+.PrepForHit:            SetCarryFlag
                         ret
                         
                         ZeroA
@@ -452,19 +463,20 @@ CopyToTargetVector:     ld      hl,UBnKxlo
                         ldir    
                         ret
 
+; Copies 24 bit XYZ Vector to tactics vectors
 CopyPosToVector:        ld      hl,(UBnKxlo)
                         ld      a,(UBnKxsgn)
                         ;xor     $80
                         ld      (TacticsVectorX),hl
                         ld      (TacticsVectorX+2),a
 
-                        ld      hl,(UBnKylo)
+.CopyY24Bit:            ld      hl,(UBnKylo)
                         ld      a,(UBnKysgn)
                         ;xor     $80
                         ld      (TacticsVectorY),hl
                         ld      (TacticsVectorY+2),a
 
-                        ld      hl,(UBnKzlo)
+.CopyZ24Bit:            ld      hl,(UBnKzlo)
                         ld      a,(UBnKzsgn)
                         ;xor     $80
                         ld      (TacticsVectorZ),hl

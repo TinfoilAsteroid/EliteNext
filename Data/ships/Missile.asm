@@ -25,6 +25,9 @@ Missile:	            DB $00                     ; Number of cargo canisters rele
                         DW $0000                            ; no solid data
                         DB $00                              ; no solid data
                         
+;; Modifications for solid:
+;; Need a list of triangles, triangle are linked to faces
+;; so on the verticies we can have an additional link on faces to triangle nbr, we also have to draw in z furthest sequenvce
 
 ;;;     Byte 0 = X magnitide with origin at middle of ship
 ;;;		Byte 1 = Y magnitide with origin at middle of ship		

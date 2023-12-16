@@ -10,14 +10,13 @@ DEBUGLOGSUMMARY equ 1
 
 
                         ORG     $8000
-                        break
 .OpenOutputFile:        ;call    GetDefaultDrive
                         ld      ix, Filename
                         ld      b, FA_OVERWRITE
                         ld      a,$01
                         ld      (FileNumber),a
                         ld      hl,Sprite1
-                        ld      b,29
+                        ld      b,38
 .WriteLoop:             push    bc,,hl
                         call    WriteFile
                         ld      a,(FileNumber)
@@ -28,7 +27,6 @@ DEBUGLOGSUMMARY equ 1
                         ld      de,256
                         add     hl,de
                         djnz    .WriteLoop
-                        break
 .Done:                  jp      .Done                        
                         
                         

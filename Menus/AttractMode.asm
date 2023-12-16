@@ -83,7 +83,8 @@ AttractModeMain:        MMUSelectKeyboard
 ; alternate interrupts, one clears back buffer, one processes ship, one draws ship
 AttractStep             DB      0
 
-AttractModeUpdate:      ld      hl,(AttractTimer)
+AttractModeUpdate:      MMUSelectMathsBankedFns                                 ; Need to set it on entering post interrupt to make sure we are in bank 0
+                        ld      hl,(AttractTimer)
                         dec     hl
                         ld      (AttractTimer),hl
                         ld      a,h

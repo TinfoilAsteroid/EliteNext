@@ -23,17 +23,17 @@ CalcLaunchOffset:       ld      hl,UBnKxlo
                         ld      a,b
                         xor     $80
                         ld      b,a
-.AddSpeedToX:           AddSpeedToVert NewLaunchUBnKX
+.AddSpeedToX:           AddSpeedToVert  NewLaunchUBnKX          ; 24 bit maths
 .ApplyToY:              SpeedMulAxis    iyl, UBnkrotmatRoofvY     
                         ld      a,b
                         xor     $80
                         ld      b,a
-.AddSpeedToY:           AddSpeedToVert NewLaunchUBnKY
+.AddSpeedToY:           AddSpeedToVert NewLaunchUBnKY           ; 24 bit maths
 .ApplyToZ:              SpeedMulAxis    iyl, UBnkrotmatRoofvZ
                         ld      a,b
                         xor     $80
                         ld      b,a
-.AddSpeedToZ:           AddSpeedToVert NewLaunchUBnKZ
+.AddSpeedToZ:           AddSpeedToVert NewLaunchUBnKZ           ; 24 bit maths
                         ret
 
                         
@@ -110,9 +110,7 @@ NormalAI:               ;ld      a,(ShipAIEnabled)
                         jr      z, .NoEscapePod
                         ld      a,(RandomSeed2)
                         JumpIfALTNusng 230,.NoEscapePod         ;if random >= 230 
-                        ld      a,(UBnkaiatkecm)                ;  disable ship AI hostily and ECM
-                        and     ShipAIDisabled                  ;  .
-                        ld      (UBnkaiatkecm),a                ;  .
+                        call    UnivClearAI                     ;  disable ship AI hostily and ECM
                         ;ZeroA                                   ;  .
                         ld      (UBnKECMFitted),a               ;  .
 .LaunchEscapePod:       ;break                        

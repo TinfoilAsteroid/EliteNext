@@ -43,17 +43,13 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
 .IsMissleTargetGone:    JumpIfSlotAEmpty    .ECMIsActive            ; if the target was blown up then detonate
 ;... Note we don't have to check for impact as we already have a loop doing that
 .SelectTargetShip:      SelectTargetBank
-.IsShipExploding:       ld      a,(UBnkaiatkecm)                    ; check exploding status
-                        and     ShipExploding                       ; as if exploding then the missile will also explode
-                        jr      z,.UpdateTargetingShipX
+.IsShipExploding:       IsShipExploding                             ; check exploding status
+                        jr      z,.UpdateTargetingShipX             ; as if exploding then the missile will also explode
 .ShipIsExploding:       SelectMissileBank                           ; get missile back into memory
                         jp      .ECMIsActive
 ;--- At this point we already have the target banked in ready for calculating vector
 ; Tactics vector = missile - target
-.UpdateTargetingShipX:  IFDEF MISSILEBREAK
-                            break
-                        ENDIF
-                        ld      de,(UBnKxlo)                        ; get target ship X
+.UpdateTargetingShipX:  ld      de,(UBnKxlo)                        ; get target ship X
                         ld      a,(UBnKxsgn)                        ; and flip sign so we have missile - target
                         IFDEF MISSILEDEBUG
                             ld  (TacticsTargetX),de
@@ -154,7 +150,7 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         ;break
                         ;call    ORTHOGALISE
 .NormaliseDirection:    IFDEF MISSILEBREAK
-                            break
+                            ;break
                         ENDIF
                         call    NormalizeTactics                    ; Normalise vector down to 7 bit + sign byte (.TA19->TAS2)
                         IFDEF TACTICSDEBUG

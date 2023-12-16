@@ -5,7 +5,148 @@
 ; 3. y = K2 - beta * z
 ; 4. x = x + alpha * y
 
+    IFDEF USE_24BIT_ROLL_AND_PITCH
+UBnK24BitAlphaMulX      DB $00,$00, $00, $00
+UBnK24BitAlphaMulY      DB $00,$00, $00, $00
+UBnK24BitAlphaMulZ      DB $00,$00, $00, $00
+UBnK24BitBetaMulZ       DB $00,$00, $00, $00
+UBnK24BitBetaMulY       DB $00,$00, $00, $00
+UBnK24BitK2             DS 3
+    
+PitchBlock              DB  1
 
+ApplyMyRollAndPitch:    ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
+.CheckForRoll:          and		a
+						call	nz,UBnKRoll_24Bit
+.CheckForPitch:			ld		a,(BETA)
+						and		a
+						call	nz,UBnKPitch_24Bit
+.ApplySpeed:            ld      a,(DELTA)                   ; BCH = - Delta
+                        and     a
+                        jp      z,.ApplyOrientation
+						;ReturnIfAIsZero
+						ld      c,0                         ;
+						ld      h,a                         ; 
+						ld      b,$80                       ;
+						ld      de,(UBnKzhi)                ; DEL = z position
+						ld      a,(UBnKzlo)                 ; .
+						ld      l,a                         ; .
+						call    AddBCHtoDELsigned           ; update speed
+						ld      (UBnKzhi),DE                ; write back to zpos
+						ld      a,l
+                        ld      (UBnKzlo),a                ;
+.ApplyOrientation:      ld      a,(ALPHA)
+                        ld      hl,BETA
+                        or      (hl)
+                        ret     z
+                        ld      a,(PitchBlock)
+                        and     a
+                        ret     z
+                        ;break
+PitchBreak:             ld      ix,UBnkrotmatSidevX
+DebugAlert1:            ld      a,(ix+1)
+                        ld      d,(ix+3)
+                        ld      e,(ix+5)
+                        or     d
+                        or     e
+                        and     $7F
+                        jp      nz,.NoBreak
+                        break
+.NoBreak                        
+
+                        call    ApplyRollAndPitchToIX
+DebugAlert2:             ld      a,(ix+1)
+                        ld      d,(ix+3)
+                        ld      e,(ix+5)
+                        or     d
+                        or     e
+                        and     $7F
+                        jp      nz,.NoBreak
+                        break
+.NoBreak                        
+                        ld      ix,UBnkrotmatRoofvX
+                        call    ApplyRollAndPitchToIX
+                        ld      ix,UBnkrotmatNosevX
+                        call    ApplyRollAndPitchToIX
+                        ret
+
+UBnKRoll_24Bit:			ld      a,(ALPHA)                   ; get roll value
+						and 	$7F
+						ld      d,a                         ; .
+						ld      a,(UBnKylo)                ; HLE = x sgn, hi, lo
+						ld      e,a                         ; .
+						ld      hl,(UBnKyhi)               ; .
+						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						ld		a,l
+						ld		(UBnK24BitAlphaMulY),a			; save result
+						ld		(UBnK24BitAlphaMulY+1),de		; save result
+						ld      a,(ALPHA)                   ; get roll value
+						and 	$7F
+						ld      d,a                         ; .
+						ld      a,(UBnKxlo)                ; HLE = x sgn, hi, lo
+						ld      e,a                         ; .
+						ld      hl,(UBnKxhi)               ; .
+						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						ld		a,l
+						ld		(UBnK24BitAlphaMulX),a			; save result
+						ld		(UBnK24BitAlphaMulX+1),de		; save result							
+						ld		a,(ALPHA)
+						and		$80
+						jp		z,.RollingRight
+.RollingLeft:			ld		ix,UBnKxlo
+						ld		iy,UBnK24BitAlphaMulY
+						call	AddAtIXtoAtIY24Signed
+						ld		ix,UBnKylo
+						ld		iy,UBnK24BitAlphaMulX
+						call	SubAtIXtoAtIY24Signed
+						ret
+.RollingRight:			ld		ix,UBnKxlo
+						ld		iy,UBnK24BitAlphaMulY
+						call	SubAtIXtoAtIY24Signed
+						ld		ix,UBnKylo
+						ld		iy,UBnK24BitAlphaMulX
+						call	AddAtIXtoAtIY24Signed
+						ret
+
+UBnKPitch_24Bit:		ld      a,(BETA)                   ; get roll value
+						and 	$7F
+						ld      d,a                         ; .
+						ld      a,(UBnKylo)                ; HLE = x sgn, hi, lo
+						ld      e,a                         ; .
+						ld      hl,(UBnKyhi)               ; .
+						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						ld		a,l
+						ld		(UBnK24BitBetaMulY),a			; save result
+						ld		(UBnK24BitBetaMulY+1),de		; save result
+						ld      a,(BETA)                   ; get roll value
+						and 	$7F
+						ld      d,a                         ; .
+						ld      a,(UBnKzlo)                ; HLE = x sgn, hi, lo
+						ld      e,a                         ; .
+						ld      hl,(UBnKzhi)               ; .
+						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						ld		a,l
+						ld		(UBnK24BitBetaMulZ),a			; save result
+						ld		(UBnK24BitBetaMulZ+1),de		; save result							
+						ld		a,(BETA)
+						and		$80
+						jp		z,.Climbing
+.Diving:				ld		ix,UBnKylo
+						ld		iy,UBnK24BitBetaMulZ
+						call	AddAtIXtoAtIY24Signed
+						ld		ix,UBnKzlo
+						ld		iy,UBnK24BitBetaMulY
+						call	SubAtIXtoAtIY24Signed
+						ret
+.Climbing:		     	ld		ix,UBnKylo
+						ld		iy,UBnK24BitBetaMulZ
+						call	SubAtIXtoAtIY24Signed
+						ld		ix,UBnKzlo
+						ld		iy,UBnK24BitBetaMulY
+						call	AddAtIXtoAtIY24Signed	
+						ret            
+    
+    ELSE
 APPequPosPlusAPP:       MACRO    Position, PositionSign
                         push    bc
                         ld      c,a                         ; save original value of a into c
@@ -59,9 +200,20 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         ld      hl,BET1                     ; and pitch
                         or      (hl)
                         jp      z,.NoRotation               ; if both zero then don't compute
+; If the xsgn,ysng or zsng are not 0 or $80 then we use 24 bit routines
+; else we can just continue to use 16 bit                        
+                       ;jp      ApplyMyRollAndPitch24Bit
+
+.CheckFor24Bit:         ld      a,(UBnKxsgn)
+                        ld      hl,UBnKysgn
+                        or      (hl)
+                        ld      hl,UBnKzsgn
+                        or      (hl)
+                        and     $7F
+                        jp      nz,ApplyMyRollAndPitch24Bit
                         ;break
 ; P[210] = x * alph (we use P[2]P[1] later as result/256
-                        ld      e,a                         ; e = roll magnitude
+.Not24BitCalcs:         ld      e,a                         ; e = roll magnitude
                         ld      hl,(UBnKxlo)                ; hl = ship x pos
                         call    AHLequHLmulE                ; MULTU2-2 AHL = UbnkXlo * Alp1 both unsigned
                         ld      (varPhi2),a                 ; set P[2] to high byte to help with ./256
@@ -117,7 +269,7 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         sbc     hl,de                       ; (y_hi y_lo) = K2(2 1) - P(2 1)
                         jr      nc,.MV44                    ; if there was no over flow carry on
                         NegHL
-                        ld      a,(UBnKysgn)                ; flip sign bit TODO, we may have to remove xor as planets and suns are sign + 23 bit xpos
+                        ld      a,(UBnKysgn)                ; flip sign bit TODO, we may have to remove xor as planets and Univs are sign + 23 bit xpos
                         xor     SignOnly8Bit
                         ld      (UBnKysgn),a                
 ; by here we have (y_sign y_hi y_lo) = K2(2 1) - P(2 1) = K2 - beta * z
@@ -136,13 +288,9 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         ld      (UBnKxsgn),a                ; save resutl stright into X pos
                         ld      (UBnKxlo),hl                
                         ;break
-                        ; if its not a sun then apply to local orientation
-                        ApplyMyRollToVector ALPHA, UBnkrotmatNosevX, UBnkrotmatNosevY   ; ApplyMyRollToNosev:
-                        ApplyMyRollToVector ALPHA, UBnkrotmatSidevX, UBnkrotmatSidevY   ; ApplyMyRollToSidev:
-                        ApplyMyRollToVector ALPHA, UBnkrotmatRoofvX, UBnkrotmatRoofvY   ; ApplyMyRollToRoofv:
-                        ApplyMyRollToVector BETA, UBnkrotmatNosevZ, UBnkrotmatNosevY    ; ApplyMyPitchToNosev:
-                        ApplyMyRollToVector BETA, UBnkrotmatSidevZ, UBnkrotmatSidevY    ; ApplyMyPitchToSidev:    
-                        ApplyMyRollToVector BETA, UBnkrotmatRoofvZ, UBnkrotmatRoofvY    ; ApplyMyPitchToRoofv:    
+                        call    ApplyMyRollToOrientation
+                        call    ApplyMyPitchToOrientation
+                        ; if its not a Univ then apply to local orientation
 .NoRotation:            ld      a,(DELTA)                   ; get speed
                         ld      d,0
                         ld      e,a                         ; de = speed in low byte
@@ -154,3 +302,200 @@ ApplyMyRollAndPitch:    ld      a,(ALP1)                    ; get roll magnitude
                         ld      (UBnKzlo),hl                ; write back to zpos
                         ld      (UBnKzsgn),a                ;
                         ret
+
+               DISPLAY "TODO: Looks like pitch is always being applied as positive"
+ApplyMyRollToOrientation:MMUSelectMathsBankedFns
+                        ld      a,(ALPHA) : ld ix,UBnkrotmatNosevX : ld iy,UBnkrotmatNosevY : call ApplyMyAngleAToIXIY ; ApplyMyRollToNosev:
+                        ld      a,(ALPHA) : ld ix,UBnkrotmatSidevX : ld iy,UBnkrotmatSidevY : call ApplyMyAngleAToIXIY ; ApplyMyRollToSidev:
+                        ld      a,(ALPHA) : ld ix,UBnkrotmatRoofvX : ld iy,UBnkrotmatRoofvY : call ApplyMyAngleAToIXIY ; ApplyMyRollToRoofv:
+                        ret
+
+ApplyMyPitchToOrientation:
+                        ld      a,(BETA)  : ld ix,UBnkrotmatNosevZ : ld iy,UBnkrotmatNosevY : call ApplyMyAngleAToIXIY ; ApplyMyPitchToNosev:
+                        ld      a,(BETA)  : ld ix,UBnkrotmatSidevZ : ld iy,UBnkrotmatSidevY : call ApplyMyAngleAToIXIY ; ApplyMyPitchToSidev:
+                        ld      a,(BETA)  : ld ix,UBnkrotmatRoofvZ : ld iy,UBnkrotmatRoofvY : call ApplyMyAngleAToIXIY ; ApplyMyPitchToRoofv:
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+; 24 bit version of pitch and roll is a 24 bit calculation 1 bit sign + 23 bit value
+; Need to write a test routine for roll and pitchs
+; Minsky Roll       Minsky Pitch
+;  y -= alpha * x    y -= beta * z          
+;  x += alpha * y    z += beta * y
+; or once combined
+;   1. K2 = y - alpha * x
+;   2. z = z + beta * K2
+;   3. y = K2 - beta * z
+;   4. x = x + alpha * y
+;----------------------------------------------------------------------------------------------------------------------------------
+; Based on non optimised version of Planet pitch and roll is a 24 bit calculation 1 bit sign + 23 bit value
+; Now at least rolls the correct direction
+UnivAlphaMulX               DB $00,$00, $00, $00
+UnivAlphaMulY               DB $00,$00, $00, $00
+UnivAlphaMulZ               DB $00,$00, $00, $00
+UnivBetaMulZ                DB $00,$00, $00, $00
+UnivBetaMulY                DB $00,$00, $00, $00
+UnivK2                      DS 3
+
+ApplyMyRollAndPitch24Bit: 	 ld     a,(ALPHA)                   ; no roll or pitch, no calc needed
+                             ld     hl,BETA
+                             or     (hl)
+                             call   nz, Univ_Roll_And_Pitch
+;.CheckForRoll:              and		a
+;							call	nz,Univ_Roll
+;.CheckForPitch:				ld		a,(BETA)
+;							and		a
+;							call	nz,Univ_Pitch
+.ApplySpeed:            	ld      a,(DELTA)                   ; BCH = - Delta
+							ReturnIfAIsZero
+							ld      c,0                         ;
+							ld      h,a                         ; 
+							ld      b,$80                       ;
+							ld      de,(UBnKzhi)                ; DEL = z position
+							ld      a,(UBnKzlo)                 ; .
+							ld      l,a                         ; .
+							call    AddBCHtoDELsigned           ; update speed
+							ld      (UBnKzhi),DE                ; write back to zpos
+							ld      a,l
+							ld      (UBnKzlo),a                ;
+							ret
+                            
+; Performs minsky rotation
+; Joystick left          Joystick right
+; ---------------------  ---------------------
+; x :=  x      + y / 64  x :=  x -  y / 64  so rather than /64  is z * alpha / 256
+; y :=  y      - x /64   y :=  y +  x / 64     
+;
+; Joystick down          Joystick up
+; ---------------------  ---------------------
+; y :=  y      + z / 64  y :=  y - z / 64
+; z :=  z      - y / 64  z :=  z + y / 64      
+; 
+; get z, multiply by alpha, pick top 3 bytes with sign
+; get x, multiply by alpha, pick top 3 bytes with sign
+; if alpha +ve subtract x = x - z adj, z =z + x adj , else x += z adj z -= z adj 
+; so we can assume 24 bit maths and just do 16 bit multiply of say HL = nosev x [sgn][hi] and de = [0][alpha] by calling AHLequHLmulE
+; for roll
+; nosev_y = nosev_y - alpha * nosev_x_hi
+; nosev_x = nosev_x + alpha * nosev_y_hi
+; and for pitch
+; nosev_y = nosev_y - beta * nosev_z_hi
+; nosev_z = nosev_z + beta * nosev_y_hi
+;  1. K2 = y - alpha * x
+;   2. z = z + beta * K2
+;   3. y = K2 - beta * z
+;   4. x = x + alpha * y
+;   
+;   1a. K [3 2 1 0] = -alpha * (x sign hi lo)
+;   1b. K [3 2 1]   = y sign hi lo + K [321] (in effect y minus (alpha * x / 256)
+;   1c. K2 [3 2 1]  = k [3 2 1 ]
+;   2a. K[3 2 1 0]  = k2 [3 2 1] * beta
+;   2b. z sign hi lo += K[3 2 1] ( in effect z += (beta * K2)/256
+;   3a. K [3 2 1 0] = z sign hi lo * -beta
+;   3b. y sign hi lo = K2 [3 2 1] - K [3 2 1] ( in effect K2 - (beta * z) /256
+;   
+;   4. x = x + alpha * y
+
+
+
+;-- Q = - ALPHA            
+;-- A P[1 0] = xsign xhi xlo
+;-- call K[3 2 1 0] = A P[1 0] * Q which means  K(3 2 1) = (A P+1 P) * Q / 256 = x * -alpha / 256 = - alpha * x / 256
+;-- call K[3 2 1] = ysign hi lo + K[3 2 1] (= y - alpha * x / 256)
+;-- K2 [3 2 1 ] = K [ 3 2 1 ]
+;-- A P [1 0]   = K [3 2 1]
+;-- Q = BETA 
+;-- K[3 2 1 0] = A P[1 0] * Q
+;-- K3[3 2 1] = z sign hi lo + K[3 2 1]
+;-- A P [1 0] = -K [3 2 1]
+;-- z sign hi lo = K[3 2 1]
+;-- K[3 2 1 0] = A P[1 0] * Q
+;-- T = K[3] sign bit     
+;-- A = K[3] sign bit xor K2[3]
+;-- if positive A yhi lo - = K [3 2 1 0] + K2[3 2 1 0] so A yhi ylo = K + K2 /256 as we abandon low byte
+;-- if negative A yhi lo = (K - k2 )/256
+;-- A = A xor T   
+;-- y sign = A 
+;-- Q = alpha
+;-- A P(1 0) = y sign hi lo
+;-- K[3 2 1 0 ] A P[1 0] * Q
+;-- x sign hi lo = K[3 2 1] = xsign hi lo * K[3 2 1]
+
+K2      DS  3
+
+Univ_Roll_And_Pitch:	    ld      a,(ALPHA)                   ; get roll value
+;** 1. K2 = y - alpha * x **************************************
+;-- DEL = alpha * (x sign hi lo) /256
+							ld      d,a                         ; d = alpha
+							ld      a,(UBnKxlo)                 ; HLE = x sgn, hi, lo
+							ld      e,a                         ; .
+							ld      hl,(UBnKxhi)                ; hl = UBnKchi sgn
+							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * alpha / 256 
+;-- DEL = K2 = y - alpha * x
+                            ld      bc,de                       ; transfer to BCH for now
+                            ld      h,l
+                            ld      de,(UBnKyhi)
+                            ld      a,(UBnKylo)
+                            ld      l,a
+                            call    SubBCHfromDELsigned                
+                            ld      (K2+1),de
+                            ld      a,l
+                            ld      (K2),a
+;** 2. z = z + beta * K2 ***************************************
+;-- HLE = DEL ..................................................
+                            ex      de,hl                       ; will set hl to de and e to l in one go
+;-- DELC = beta * HLE, i.e. beta * K2
+                            ld      a,(BETA)
+                            ld      d,a
+                            call    mulHLEbyDSigned             ; DELC = beta * K2
+;-- DEL = z + DEL, i.e. z + Beta * K2 /256
+                            ld      bc,(UBnKzhi)                ; BCH = z
+                            ld      a,(UBnKzlo)                 ; .
+                            ld      h,a                         ; .
+                            call    AddBCHtoDELsigned           ; DEL =z + (beta * K2)/256
+                            ld      (UBnKzhi),de                ; and save to Z
+                            ld      a,l                         ; .
+                            ld      (UBnKzlo),a                 ; .
+;** 3. y = K2 - beta * z ***************************************
+;-- DEL = beta * z / 256    
+                            ld      a,(BETA)                    ; get pitch value
+							ld      d,a                         ; d = pitch
+							ld      a,(UBnKzlo)                 ; HLE = z sgn, hi, lo
+							ld      e,a                         ; .
+							ld      hl,(UBnKzhi)                ; hl = UBnKchi sgn
+							call    mulHLEbyDSigned             ; DELC = z * beta, so DEL = z * beta / 256 
+;-- BCH = DEL ..................................................
+                            ld      bc,de                       ; transfer to BCH for now
+                            ld      h,l
+;-- y = DEL = K2 - beta * z = DEL - BCH
+                            ld      de,(K2+1)                   ; del = K2
+                            ld      a,(K2)                      ; .
+                            ld      l,a                         ; .
+                            call    SubBCHfromDELsigned         ; .    
+                            ld      (UBnKyhi),de                ; and save to y
+                            ld      a,l                         ; .
+                            ld      (UBnKylo),a                 ; .
+;** 4. x = x + alpha * y ***************************************                            
+;-- DEL = alpha * y
+                            ld      a,(ALPHA)                   ; get roll value
+;-- DEL = alpha * (y sign hi lo) /256
+							ld      d,a                         ; d = alpha
+							ld      a,(UBnKylo)                 ; HLE = y sgn, hi, lo
+							ld      e,a                         ; .
+							ld      hl,(UBnKyhi)                ; hl = UBnKyhi sgn
+							call    mulHLEbyDSigned             ; DELC = y * alpha, so DEL = Y * alpha / 256 
+;-- DEL = x + alpha * y
+                            ld      bc,de                       ; transfer to BCH for now
+                            ld      h,l                         ; .
+                            ld      de,(UBnKxhi)                ; del = x
+                            ld      a,(UBnKxlo)                 ; .
+                            ld      l,a                         ; .
+                            call    AddBCHtoDELsigned           ; del = del + bch = x + alpha * y    
+                            ld      (UBnKxhi),de                ; and save to x
+                            ld      a,l                         ; .
+                            ld      (UBnKxlo),a                 ; .
+.ApplyRollToRight:          ;call    ApplyMyRollToOrientation                            
+.ApplyPitchToClimb:         call    ApplyMyPitchToOrientation
+                          ;  call    TidyVectorsIX ; doesn't work
+							ret        
+    ENDIF
+                                

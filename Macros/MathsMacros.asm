@@ -226,7 +226,7 @@ SpeedMulAxis:           MACRO   speedreg, axis
                         ld      c,0;ld      d,0
                         ENDM
 
-
+; Adds speed (8 bit) to vertex (24 bit signed)
 AddSpeedToVert:         MACRO   vertex
                         ld      de,(vertex+1)
                         ld      a,(vertex)

@@ -505,6 +505,23 @@ GetKeyStateAddressHL:   MACRO
 ;;;;;;                        ret
 
 ; Gets the current keystate of the c_Pressed Key in a register    
+get_vkey_a_state:       ld      hl,Keys
+                        add     hl,a
+                        ld      a,(hl)
+                        ret
+
+is_vkey_held:           ld      hl,Keys
+                        add     hl,a
+                        ld      a,(hl)
+                        and     Bit1Only
+                        ret
+
+is_vkey_pressed:        ld      hl,Keys
+                        add     hl,a
+                        ld      a,(hl)
+                        cp      1 
+                        ret
+
 get_key_a_state:        GetKeyStateAddressHL                    ; reads a mapped key and sets a to key staus, e.g. 0 1 or >=2 DOES NOT SCAN KEYBOARD
                         ld      a,(hl)                          ; a = keystate
                         ret

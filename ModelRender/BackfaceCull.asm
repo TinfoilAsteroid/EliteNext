@@ -71,10 +71,7 @@ CheckVisible:           ld      a,(UBnKzsgn)                 ; Is the ship behin
 .CheckDotV2:                ld      a,(DotAddr)
                             JumpIfAGTENusng h, .DrawFull
                             jp      .ShipIsADot
-.DrawFull:                  ld      a,(UBnkaiatkecm)            ; its visible but a dot
-                            or      ShipIsVisible               ; Visible and not a dot
-                            and     ShipIsNotDot                ;
-                            ld      (UBnkaiatkecm),a            ;
+.DrawFull:                  call    UnivVisibleNonDot           ;
                             ClearCarryFlag
                             ret
                         ELSE
@@ -92,27 +89,22 @@ CheckVisible:           ld      a,(UBnKzsgn)                 ; Is the ship behin
                             srl     a
                             srl     a
                             ld      (UBnkDrawAllFaces),a        ; XX4 = "all faces" distance
-                            ld      a,(UBnkaiatkecm)            ; its visible but a dot
-                            or      ShipIsVisible               ; Visible and not a dot
-                            and     ShipIsNotDot                ;
-                            ld      (UBnkaiatkecm),a            ;
+                            call    UnivVisibleNonDot               ;
                             ClearCarryFlag
                             ret
                         ENDIF
-.ShipNoDraw:            ClearMemBitN  UBnkaiatkecm  , ShipIsVisibleBitNbr ; Assume its hidden
+.ShipNoDraw:            call    UnivInvisible
                         ret
-.ShipIsADot:            ld      a,(UBnkaiatkecm)            ; its visible but a dot
-                        IFDEF DEBUGDRAWDISTANCE
-                            or      ShipIsVisible   ; 
+.ShipIsADot:            IFDEF DEBUGDRAWDISTANCE
+                            call    UnivVisible  ; 
                         ELSE
-                            or      ShipIsVisible | ShipIsDot   ; 
+                            call    UnivVisibleDot
                         ENDIF
-                        ld      (UBnkaiatkecm),a            ; 
                         ret
                         
                                     DISPLAY "TODO:remove all teh processing of rotmat to load craft to camera as its already been done"
 CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;   
-                       ; break                          
+                        ;break                          
                         call    CopyRotmatToTransMat        ; XX16 = UBNKRotMat    
                         call    ScaleXX16Matrix197          ; scale rotation matrix in XX16
                         call    LoadCraftToCamera           ; XX18 = camera

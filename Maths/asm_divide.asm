@@ -574,10 +574,31 @@ BC_Div_DE:              xor a
                         rla
                         ld c,a
                         ret	
+Floor_DivQSigned:       ld      a,b             ; save resultant sign
+                        xor     d               ;
+                        and     $80             ;
+                        ld      ixh,a           ;
+                        ld      a,b
+                        and     $7F
+                        ld      b,a
+                        ld      a,d
+                        and     $7F
+                        ld      d,a
+                        call    Floor_DivQ
+                        ld      a,b
+                        or      ixh
+                        ld      b,a
+                        ret
+                        
+                        
+                            
 ; BC = BC / DE
 ; HL = BC % DE
 ; if HL > 0 BC -= 1
-Floor_DivQ:             ld      a,d
+Floor_DivQ:             ld      a,b
+                        or      c
+                        jr      z, .divide0By   ; if bc is zero just return as result will be zero
+                        ld      a,d
                         or      e
                         jr      z, .divideBy0
                         push    de
@@ -603,8 +624,8 @@ Floor_DivQ:             ld      a,d
                         ClearCarryFlag          ;      r += b
                         adc     hl,de           ;      .
                         ret
-
-
+.divide0By:             ld      hl,0            ; hl = 0, bc is already 0
+                        ret      
 .divideBy0:             ld      hl,0
                         ld      bc,1
                         ret      
@@ -642,6 +663,7 @@ l_div_0:                ld      hl,0            ;clear remainder
                         rl      de              ;left shift dividend + quotient carry
                         ex      de,hl           ;dividend<>remainder
                         ret
+
 
 
  

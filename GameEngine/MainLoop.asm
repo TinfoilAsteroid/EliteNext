@@ -5,7 +5,7 @@
 ;    DEFINE  MAINLOOP_DEMOSHIPS
 ;   DEFINE  MAINLOOP_DEBUGMISSILE 1
     DEFINE  MAINLOOP_INPUTHANDLER
-   ; DEFINE  MAINLOOP_EVENTHANDLER 1
+    DEFINE  MAINLOOP_EVENTHANDLER 1
     DEFINE  MAINLOOP_RECHARGE 1
  ;   DEFINE  MAINLOOP_LAUNCHMISSILE
     DEFINE  MAINLOOP_UPDATEUNIVERSE 1
@@ -13,11 +13,12 @@
     DEFINE  MAINLOOP_SUN_RENDER 1
     DEFINE  MAINLOOP_PLANET_RENDER 1
     DEFINE  MAINLOOP_MODEL_RENDER    1
-    DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
+   ; DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
     DEFINE  MAINLOOP_WARP_ENABLED 1
 
 ;.................................................................................................................................    
-MainLoop:	            call    doRandom                                                ; redo the seeds every frame
+MainLoop:	    MMUSelectMathsBankedFns                                         ; make sure we are in maths routines in case a save paged out
+                call    doRandom                                                ; redo the seeds every frame
                 IFDEF LASER_V2
                         call    LaserBeamV2
                 ELSE
@@ -92,77 +93,9 @@ TestAreWeDocked:        JumpIfMemNeNusng DockedFlag, StateNormal, UpdateLoop    
 ;.. If we get here then we are in game running mode regardless of which screen we are on, so update AI.............................
 ;.. we do one universe slot each loop update ......................................................................................
 ;.. First update Sun...............................................................................................................
-                IFDEF MAINLOOP_WARP_ENABLED
 ;... Warp or in system jump thsi moves everything by 1 on the high (sign) byte away or towards ship based on their z axis only
 ;... its not a true move in the right direction, more a z axis warp                
-ProcessWarp:            JumpIfMemFalse  WarpPressed, .NoWarp
-.WarpIsPressed:         SetMemFalse     WarpPressed                               ; clear and acknowlege
-                        JumpIfMemZero   WarpCooldown, .WarpDriveCool
-                        DISPLAY "TODO Need logic for in system jump drive malfunction"
-.JumpDriveHot:          DISPLAY "TODO call bong jump drive hot"
-                        DISPLAY "TODO flash jump drive status icon"
-                        jp      .NoWarp
-.WarpDriveCool:         JumpIfMemFalse    SpaceStationSafeZone, .NotInSpaceStationRange
-.MassLocked:            DISPLAY "TODO Mass locked by object call bong"
-                        DISPLAY "TODO message mass locked"
-                        DISPLAY "TODO make space station a body just like planet and sun"
-                        jp      .NoWarp
-.NotInSpaceStationRange:call    AreShipsPresent
-                        jr      nc,     .MassLocked
-.IsPlanetMassLocking:   MMUSelectPlanet                 ; is planet within 256 then mass locked
-                        ld      hl,(P_BnKzhi)
-                        ld      a,h                     ; if z sign is <> 0 then mass locked
-                        and     $7F                     ; h = abs zsign
-                        or      l                       ; to get to here a must be zero to or with l will give a quick result
-                        jp      z,     .MassLocked
-.IsSunMassLocking:      MMUSelectSun
-                        ld      hl,(SBnKzhi)
-                        ld      a,h                     ; if z sign is <> 0 then mass locked
-                        and     $7F                     ; h = abs zsign
-                        or      l                       ; to get to here a must be zero to or with l will give a quick result
-                        jp      z,     .MassLocked
-            IFDEF SIMPLEWARP
-                        ld      hl,(P_BnKzhi)           ; z hi,sign must be > 0 else we are mass locked so can't hit here
-                        DecHLSigned
-                        ld      (P_BnKzhi),hl
-                        ld      hl,(SBnKzhi)           ; z hi,sign must be > 0 else we are mass locked so can't hit here
-                        DecHLSigned
-                        ld      (SBnKzhi),hl
-            ELSE
-.NotCorrectFacing:      ;       call bong, align with body
-                        jp      .NoWarp
-.JumpToPlanetCheck:     ld      a,(P_BnKzhi)
-                        JumpIfAGTENusng  2, .PlanetRangeOK 
-                        ld      a,(P_BnKyhi)
-                        JumpIfAGTENusng  2, .PlanetRangeOK
-                        ld      a,(P_BnKxhi)
-                        JumpIfAGTENusng  2, .PlanetRangeOK
-                        jp      .MassLocked
-.PlanetRangeOK:         call    WarpPlanetCloser
-                        MMUSelectSun
-                        call    WarpSunFurther
-                        jp      .MoveJunk
-.JumpToSunCheck:        ld      a,(SBnKzsgn)
-                        ld      hl,SBnKxsgn
-                        or      (hl)
-                        ld      hl,SBnKysgn
-                        or      (hl)
-                        and     SignMask8Bit
-                        JumpIfAGTENusng  2, .SunRangeOK
-                        jp      .MassLocked
-.SunRangeOK:            call    WarpSunCloser
-                        MMUSelectPlanet
-                        call    WarpPlanetFurther
-            ENDIF
-.MoveJunk:              call    ClearJunk;  call    WarpJunk - as it will move sign bit hi then all junk will be lost
-                        ld      a,WarpCoolDownPeriod
-                        ld      (WarpCooldown),a
-                        MMUSelectLayer1
-                        call    WarpSFX             ; Do the visual SFX based on facing
-                        jp      .DoneWarp
-.NoWarp:                MMUSelectLayer1
-.DoneWarp:
-                ENDIF
+CheckForWarp:           CallIfMemTrue  WarpPressed, ProcessWarp
 UpdateShipsControl:     ld      a,0
                         and     a
                         IFDEF MAINLOOP_UPDATEUNIVERSE
@@ -259,15 +192,34 @@ ScreenLoopBank:         ld      a,$0
                         MMUSelectScreenA
 ScreenLoopJP:           call    $0000
 LoopRepeatPoint:        ld      a,(DockedFlag)
+                        ; Could optimise this to a jp hl lookup table
 HandleLaunched:         JumpIfAEqNusng  StateCompletedLaunch,   WeHaveCompletedLaunch
                         JumpIfAEqNusng  StateInTransition,      WeAreInTransition
                         JumpIfAEqNusng  StateHJumping,          WeAreHJumping
                         JumpIfAEqNusng  StateHEntering,         WeAreHEntering
                         JumpIfAEqNusng  StateCompletedHJump,    WeHaveCompletedHJump
-                        
                         jp      DoubleBufferCheck
-WeHaveCompletedLaunch:  call    LaunchedFromStation
-                        jp      DoubleBufferCheck
+;-- Player launched from station, moved routines from eliteMext.asm to remove call and simplify code                        
+WeHaveCompletedLaunch:  call    InitialiseLocalUniverse             ; intiailise local bubble and set us as in flight
+.GenerateSun:           MMUSelectSun
+                        call    CreateSunLaunched                   ; create the local sun and set position based on seed
+.GeneratePlanet:        MMUSelectPlanet
+                        call    CreatePlanetLaunched
+                        call    ClearUnivSlotList                   ; slot list is clear to 0 is gauranteed next slot
+.GenerateSpaceStation:  ld      a,CoriloisStation
+                        MMUSelectSpaceStation                       ; Switch to space station (Universe bank 0)
+                        call    UnivSelSpaceStationType
+                        ld      iyh,0
+                        ld      iyl,a
+                        call    SpawnSpaceStation                   ; Sets position that we have to overwrite in next step
+.BuiltStation:          call    UnivSpawnSpaceStationLaunched       ; replaced with the 0,0,-10000 version ResetStationLaunch
+.NowInFlight:           ld      a,StateNormal
+                        ld      (DockedFlag),a
+                        ForceTransition ScreenFront
+                        ld      a,$FF
+                        ld      (LAST_DELTA),a                      ; force sound update in interrupt
+                        call    ResetPlayerShip
+                        jp      DoubleBufferCheck                   ; Then move through to the rest of the loop
 WeAreHJumping:          call    hyperspace_Lightning
                         jp      c,DoubleBufferCheck
                         ld      a,StateHEntering
@@ -277,6 +229,9 @@ WeAreHEntering:         ld      a,StateCompletedHJump
                         ld      (DockedFlag),a
                         jp      DoubleBufferCheck
 
+;--
+LaunchedFromStation:    
+                        ret
 ; laser duration goign below 0 for some reason
 ; if laser is on
 ;    if laser duration = master duration - do sfx
@@ -335,7 +290,7 @@ LaserBeamV2:            JumpIfMemFalse LaserBeamOn, .LaserIsOff                 
                         ret
 
 ;;called from LaunchedFromStation  & WeHaveCompletedHJump to re-seed the system
-
+;-- Get seed for galaxy system and copy into working vars for system and galaxy, correct post jump fuel, force to front view, set extra vessels to spawn to 0 and mark as undocked
 InitialiseLocalUniverse:ld      a,(Galaxy)                      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      hl,(TargetSystemX)
@@ -346,6 +301,7 @@ InitialiseLocalUniverse:ld      a,(Galaxy)                      ; DEBUG as galax
                         ForceTransition ScreenFront            ; This will also trigger stars 
                         ld      a,$00
                         ld      (ExtraVesselsCounter),a
+                        DISPLAY "TODO: Check callers as they may be doign this as a duplicate"
                         ld      (DockedFlag),a
                         call    GalaxyGenerateDesc             ; bc  holds new system to generate system
                         call    copy_working_to_system         ; and propogate copies of seeds
@@ -410,45 +366,49 @@ WarpRoutineAddr:        call    0000
 ;--- Would be difficult
 ;--- load the table to work from. This then leaves all teh logic configurable
 LoopEventTriggered:     ; for now just do spawn
-                        jp      SpawnEvent
-                        ; implicit ret from jp
+                        call        SpawnEvent
+                        ret ; implicit ret from jp to be added later
+                        
 
     DEFINE  SPAWN_TABLE_SELECT   1
     DEFINE  SPAWN_GENERATE_COUNT 1
     DEFINE  SPAWN_LOOP           1
-;    DEFINE  SPAWN_IGNORE         1
     
-
-SpawnEvent:             IFDEF   SPAWN_IGNORE
-                            ret
-                        ENDIF
-                        call    FindNextFreeSlotInC                 ; c= slot number, if we cant find a slot
+;--- Handle spawn event --------------------------------------------
+SpawnEvent:             ret
+                        DISPLAY "TODO: Disabled spawing for diagnostics"
+                        call    FindNextFreeSlotInC                 ; set c= slot number, if we cant find a slot                   Stack     > 0
                         ret     c                                   ; then may as well just skip routine
+                        ; This if def allows spawning inside space station safe zone
                         IFDEF   MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE
                             SetMemFalse SpaceStationSafeZone                        
                         ENDIF
+;-- A slot is free for a spawn to occur so select a spawn table and data
 .SpawnIsPossible:       ld      iyh,c                               ; save slot free in iyh
-                        call    SelectSpawnTable                    ; ix = correct row in spawn table
-.GetSpawnDetails:       call    SelectSpawnTableData                ; get table data, 
+                        ;break
+                        call    SelectSpawnTable                    ; ix = correct row in spawn table, indexed on the random value found on FreeSpaceSpawnTableLow
+.GetSpawnDetails:       call    SelectSpawnTableData                ; get table data, b = max ships to spawm de rank table address, hl = address of spawn handler code                       
 .CheckIfInvalid:        ld      a,b                                 ; if b was 0
                         or      a                                   ; then its an invalid
                         ret     z                                   ; ship or just not to spawn
-.SetNbrToSpawn:         push    hl,,bc                              ; b will be set to the
+.SetNbrToSpawn:         push    hl,,bc                              ; b will be set to the                                      Stack + 2 > 2
                         call    doRandom                            ; actual number to spawn
-                        pop     bc                                  ; a is not really needed now as de and hl hold
+                        pop     bc                                  ; a is not really needed now as de and hl hold              Stack - 1 > 1
                         and     b                                   ; addresses for table and handler code
                         or      1                                   ; at least 1 
                         ld      b,a                                 ; so b = the number to spawn
-                        pop     hl                                  ; get back address of spawn handler
+                        pop     hl                                  ; get back address of spawn handler                         Stack - 1 > 0
+
 ; b = nbr to spawn, hl = handler for spawn, de = lookup table of ship type to spawn                        
-.SpawnLoop:             push    bc,,de,,hl                          ; save loop counter lookup table and handler
+.SpawnLoop:             push    bc,,de,,hl                          ; save loop counter lookup table and handler                Stack +3  > 3
                         ex      de,hl                               ; hl = lookup spawn type table, de = handler for spawn
                         call    SelectSpawnType                     ; a = shipId to Spawn
                         call    .SpawnAShipTypeA                    ; if we get a carry then stop spawning
-                        pop     bc,,de,,hl                          ; get back values
+                        pop     bc,,de,,hl                          ; get back values                                           Stack -3  > 0
                         djnz    .SpawnLoop                          ; repeat until B = 0
                         ret                                         ; we are done
 .SpawnAShipTypeA        ex      de,hl                               ; hl= handler to spawn, a = ship to spawn
+                        ;break
                         jp      hl                                  ; we call this so we can do a dynamic jp
                         ; implicit ret from jp                      ; SpawnShipTypeA handles free slot tests etc
 

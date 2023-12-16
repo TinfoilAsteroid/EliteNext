@@ -132,13 +132,6 @@ JumpIfAGTEMemusng:      MACRO mem,target
                         cp      (hl)
                         jp		nc,target
                         ENDM
-
-JumpIfALTMemusng:       MACRO mem,target
-                        ld      hl,mem
-                        cp      (hl)
-                        jp		c,target
-                        ENDM
-
 JumpIfMemGTENusng:      MACRO mem, value, target
                         ld     a,(mem)
                         cp     value
@@ -193,6 +186,26 @@ JumpIfANotFalse:        MACRO target
                         jp      nz, target
                         ENDM
 
+;-- Less than Macros -------------------------------------------
+JumpIfALTMemHLusng:     MACRO target
+                        cp    (hl)
+                        jp	  c,target
+                        ENDM
+
+JumpIfRegLTE:           MACRO   reg, value, target
+                        ld      a,reg
+                        cp      value
+                        jp	    z,target
+                        jp		c, target     
+                        ENDM
+
+JumpIfALTMemusng:       MACRO mem,target
+                        ld      hl,mem
+                        cp      (hl)
+                        jp		c,target
+                        ENDM
+
+
 JumpIfALTusng:          MACRO target
                         jp		c,target
                         ENDM
@@ -200,6 +213,15 @@ JumpIfALTusng:          MACRO target
 JumpIfALTNusng:         MACRO value, target
                         cp      value
                         jp		c, target
+                        ENDM
+
+JumpIfALTNsigned:       MACRO   value, target
+                        cp      value
+                        jp      m,.SignSet
+.SignClear:             jp      pe,target       ; Sign (0), P/V (1)                        
+                        jp      .CheckComplete  ; Sign (1), P/V (0)
+.SignSet:               jp      po,target     
+.CheckComplete:                   
                         ENDM
 
 JumpIfMemLTNusng:       MACRO mem, value, target
@@ -213,6 +235,15 @@ JumpIfMemLTMemusng:     MACRO mem, value, target
                         ld    hl,value
                         cp    (hl)
                         jp	  c,target
+                        ENDM
+;-- ------------------------------------------------------------
+JumpIfAGTENsigned       MACRO   value, target
+                        cp      value
+                        jp      m,.SignSet
+.SignClear:             jp      po,target       ; Sign (0), P/V (0)
+                        jp      .CheckComplete  ; Sign (1), P/V (1)
+.SignSet:               jp      pe,target     
+.CheckComplete:                   
                         ENDM
 
 JumpIfMemEqNusng:       MACRO mem,value,target
@@ -239,11 +270,6 @@ JumpIfMemNotZero:       MACRO mem,target
                         jp  nz,target
                         ENDM
                         
-JumpIfALTMemHLusng:     MACRO target
-                        cp    (hl)
-                        jp	  c,target
-                        ENDM
-
 JumpIfANENusng:         MACRO value, target
                         cp     value
                         jp      nz,target
@@ -276,12 +302,6 @@ JumpIfRegIsNotZero:     MACRO   reg, target
                         jp	    nz,target
                         ENDM
 
-JumpIfRegLTE:           MACRO   reg, value, target
-                        ld      a,reg
-                        cp      value
-                        jp	    z,target
-                        jp		c, target     
-                        ENDM
 
 JumpIfAIsNotZero:       MACRO target
                         and     a

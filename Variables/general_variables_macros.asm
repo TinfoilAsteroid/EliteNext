@@ -161,6 +161,11 @@ IsShipExploding:        MACRO
                         and     ShipExploding                              
                         ENDM
 
+IsAIEnabled:            MACRO
+                        ld      hl, UBnkaiatkecm
+                        bit 	ShipAIEnabledBitNbr,(hl)
+                        ENDM
+
 UpdateLaserOnCounter:   MACRO
                         ld      a,(CurrLaserPulseOnCount)
                         and     a

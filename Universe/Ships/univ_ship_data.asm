@@ -149,11 +149,23 @@ OrthagCountdown             DB  12
 UBnkShipCopy                equ UBnkHullVerticies               ; Buffer for copy of ship data, for speed will copy to a local memory block, Cobra is around 400 bytes on creation of a new ship so should be plenty
 UBnk_Data_len               EQU $ - StartOfUniv
 
+
+ZeroUnivPitch:          MACRO
+                        xor     a
+                        ld      (UBnKRotZCounter),a
+                        ENDM
+
+ZeroUnivRoll:           MACRO
+                        xor     a
+                        ld      (UBnKRotXCounter),a
+                        ENDM
+
 ZeroUnivPitchAndRoll:   MACRO
                         xor     a
                         ld      (UBnKRotXCounter),a
                         ld      (UBnKRotZCounter),a
                         ENDM
+
 
 MaxUnivPitchAndRoll:    MACRO
                         ld      a,127
@@ -161,6 +173,22 @@ MaxUnivPitchAndRoll:    MACRO
                         ld      (UBnKRotZCounter),a
                         ENDM                   
 
+InfinitePitch:          MACRO
+                        ld      a,$FF
+                        ld      (UBnKRotZCounter),a
+                        ENDM   
+
+InfiniteRoll:           MACRO
+                        ld      a,$FF
+                        ld      (UBnKRotXCounter),a
+                        ENDM   
+
+InfinitePitchAndRoll:    MACRO
+                        ld      a,$FF
+                        ld      (UBnKRotXCounter),a
+                        ld      (UBnKRotZCounter),a
+                        ENDM   
+                        
 RandomUnivPitchAndRoll: MACRO
                         call    doRandom
                         or      %01101111
@@ -212,7 +240,8 @@ ResetUbnkPosition:      ld      hl,UBnKxlo
                         djnz    .zeroLoop
                         ret
 
-FireECM:                ld      a,ECMCounterMax                 ; set ECM time
+FireECM:                break
+                        ld      a,ECMCounterMax                 ; set ECM time
                         ld      (UBnKECMCountDown),a            ;
                         ld      a,(ECMCountDown)
                         ReturnIfALTNusng ECMCounterMax
@@ -257,7 +286,18 @@ JumpOffSet:             MACRO   Axis
 WarpOffset:             JumpOffSet  UBnKzhi                     ; we will simplify on just moving Z
                         ret
                         
-                        
+WarpUnivByHL:           ld      b,h
+                        ld      c,l
+                        ld      h,0
+                        ld      de,(UBnKzhi)
+                        ld      a,(UBnKzlo)
+                        ld      l,a
+                        MMUSelectMathsBankedFns : call  SubBCHfromDELsigned
+                        ld      (UBnKzhi),de
+                        ld      a,l
+                        ld      (UBnKzlo),a
+                        ret
+
 ; --------------------------------------------------------------                        
 ; update ship speed and pitch based on adjustments from AI Tactics
 UpdateSpeedAndPitch:    ld      a,(UBnKAccel)                   ; only apply non zero accelleration
@@ -296,8 +336,7 @@ UnivSetEnemyMissile:    ld      hl,NewLaunchUBnKX               ; Copy launch sh
                         ld      (UBnKCNT2),a
                         MaxUnivSpeed                            ; and immediatley full speed (for now at least) TODO
                         SetMemFalse UBnKMissleHitToProcess
-                        ld      a,ShipAIEnabled
-                        ld      (UBnkaiatkecm),a
+                        call    UnivSetAIOnly
                         call    SetShipHostile
 .SetupPayload:          ld      a,150
                         ld      (UBnKMissileBlastDamage),a
@@ -306,7 +345,6 @@ UnivSetEnemyMissile:    ld      hl,NewLaunchUBnKX               ; Copy launch sh
                         ld      (UBnKMissileBlastRange),a
                         ld      (UBnKMissileDetonateRange),a
                         ret
-
 ; --------------------------------------------------------------                        
 ; This sets the position of the current ship if its a player launched missile
 UnivSetPlayerMissile:   call    InitialisePlayerMissileOrientation  ; Copy in Player  facing
@@ -336,7 +374,6 @@ UnivSetPlayerMissile:   call    InitialisePlayerMissileOrientation  ; Copy in Pl
                         ld      (UBnkaiatkecm),a
                         ;break
                         call    ClearShipHostile                ; its a player missile
-                        
                         ret
 ; --------------------------------------------------------------
 ; this applies blast damage to ship
@@ -348,9 +385,54 @@ ShipMissileBlast:       ld      a,(CurrentMissileBlastDamage)
                         jr      UnivExplodeShip
                         ld      (UBnKEnergy),a
                         ret
+; --------------------------------------------------------------
+; this applies AI flag and resets all other bits
+UnivSetAIOnly:          ld      a,ShipAIEnabled
+                        ld      (UBnkaiatkecm),a
+                        ret
 ; --------------------------------------------------------------                        
-; This sets the ship as a shower of explosiondwd
-UnivExplodeShip:        break   
+; Sets visibile and not a dot
+UnivVisible:            ld      a,(UBnkaiatkecm)                ;  disable ship AI hostily and ECM
+                        or      ShipIsVisible
+                        ld      (UBnkaiatkecm),a                ;  .
+                        ret
+; --------------------------------------------------------------                        
+; Sets invisibile
+UnivInvisible:          ClearMemBitN  UBnkaiatkecm  , ShipIsVisibleBitNbr ; Assume its hidden
+                        ret
+; --------------------------------------------------------------                        
+; Clears ship killed bit to acknowled its happened
+UnivAcknowledExploding: ld      hl, UBnkaiatkecm                                     
+                        res     ShipKilledBitNbr,(hl)
+                        ret
+; --------------------------------------------------------------                        
+; Clears ship exploding bit
+UnivFinishedExplosion:  ld      hl, UBnkaiatkecm                                     
+                        res     ShipExplodingBitNbr,(hl)
+                        ret
+; --------------------------------------------------------------                        
+; Sets visibile and not a dot
+UnivVisibleNonDot:      ld      a,(UBnkaiatkecm)                ;  disable ship AI hostily and ECM
+                        or      ShipIsVisible
+                        and     ShipIsNotDot  
+                        ld      (UBnkaiatkecm),a                ;  .
+                        ret
+; --------------------------------------------------------------                        
+; Sets visibile and  a dot
+UnivVisibleDot:         ld      a,(UBnkaiatkecm)                ;  disable ship AI hostily and ECM
+                        or      ShipIsVisible | ShipIsDot
+                        ld      (UBnkaiatkecm),a                ;  .
+                        ret
+; --------------------------------------------------------------                        
+; Removes AI Bit from ship
+UnivClearAI:            ld      a,(UBnkaiatkecm)                ;  disable ship AI hostily and ECM
+                        and     ShipAIDisabled                  ;  .
+                        ld      (UBnkaiatkecm),a                ;  .
+                        ret
+
+; --------------------------------------------------------------                        
+; This sets the ship as a shower of explosiondwd, flags as killed and removes AI
+UnivExplodeShip:        break
                         ld      a,(UBnkaiatkecm)
                         or      ShipExploding | ShipKilled      ; Set Exlpoding flag and mark as just been killed
                         and     Bit7Clear                       ; Remove AI
@@ -383,8 +465,134 @@ UnivSetDemoPostion:     call    UnivSetSpawnPosition
 .SkipFurther            ld      (UBnKzlo),hl
                         ret
     DISPLAY "Tracing 1", $
+    
+; --------------------------------------------------------------
+CopyPlanetGlobaltoSpaceStation:
+                        ld      hl,ParentPlanetX
+                        ld      de,UBnKxlo
+                        ld      bc,3*3
+                        ldir
+                        ret
+; --------------------------------------------------------------
+CopySpaceStationtoPlanetGlobal:
+                        ld      hl,UBnKxlo
+                        ld      de,ParentPlanetX
+                        ld      bc,3*3
+                        ldir
+                        ret  
+; --------------------------------------------------------------
+; generate space station type based on seed values
+; returns space station type in a
+UnivSelSpaceStationType:ld      a,(DisplayEcononmy)
+                        ld      hl,(DisplayGovernment)          ; h = TekLevel, l = Government
+                        ld      de,(DisplayPopulation)          ; d = productivity e = Population
+                        ; so its economdy + government - TekLevel + productivity - population %00000001
+                        add     a,l
+                        sbc     a,h
+                        add     a,d
+                        sbc     a,e
+                        and     $01
+                        ld      hl,MasterStations               ; in main memory
+                        add     hl,a
+                        ld      a,(hl)
+                        ret                        
+; --------------------------------------------------------------
+CalculateSpaceStationWarpPositon:
+.CalcZPosition:         ld      a,(WorkingSeeds+1)      ; seed d & 7 
+                        and     %00000111               ; .
+                        add     a,7                     ; + 7
+                        sra     a                       ; / 2
+.SetZPosition:          ld      (UBnKzsgn),a            ; << 16 (i.e. load into z sign byte
+                        ld      hl, $0000               ; now set z hi and lo
+                        ld      (UBnKzlo),hl            ;
+.CalcXandYPosition:     ld      a,(WorkingSeeds+5)      ; seed f & 3
+                        and     %00000011               ; .
+                        add     a,3                     ; + 3
+                        ld      b,a
+                        ld      a,(WorkingSeeds+4)      ; get low bit of seed e
+                        and     %00000001
+                        rra                             ; roll bit 0 into bit 7
+                        or      b                       ; now calc is f & 3 * -1 if seed e is odd
+.SetXandYPosition:      ld      (UBnKxsgn),a            ; set into x and y sign byte
+                        ld      (UBnKysgn),a            ; .
+                        ld      a,b                     ; we want just seed f & 3 here
+                        ld      (UBnKxhi),a             ; set into x and y high byte
+                        ld      (UBnKyhi),a             ; .
+                        ZeroA
+                        ld      (UBnKxlo),a
+                        ld      (UBnKylo),a                        
+.CaclculateSpaceStationOffset:
+.CalculateOffset:       ld      a,(WorkingSeeds+2)
+                        and     %00000011
+                        ld      c,a
+                        ld      a,(WorkingSeeds)
+                        and     %00000001
+                        rla     
+                        ld      b,a
+                        ld      h,c
+                        ld      c,0
+.TransposeX:            push    bc,,hl
+                        ld      de,(UBnKxhi)
+                        ld      a,(UBnKxsgn)
+                        ld      l,a
+                        MMUSelectMathsBankedFns : call        AddBCHtoDELsigned
+                        ld      (UBnKxhi),de
+                        ld      a,l
+                        ld      (UBnKxsgn),a
+.TransposeY:            pop     bc,,hl
+                        push    bc,,hl
+                        ld      de,(UBnKyhi)
+                        ld      a,(UBnKysgn)
+                        ld      l,a
+                        MMUSelectMathsBankedFns : call        AddBCHtoDELsigned
+                        ld      (UBnKyhi),de
+                        ld      a,l
+                        ld      (UBnKysgn),a
+.TransposeZ:            pop     bc,,hl
+                        ld      de,(UBnKzhi)
+                        ld      a,(UBnKzsgn)
+                        ld      l,a
+                        MMUSelectMathsBankedFns : call        AddBCHtoDELsigned
+                        ld      (UBnKzhi),de
+                        ld      a,l
+                        ld      (UBnKzsgn),a
+                        ret
+; --------------------------------------------------------------
+UnivSpawnSpaceStationLaunched:
+                        call    UnivSpawnSpaceStation
+                        call    CopySpaceStationtoPlanetGlobal
+                        call    ResetStationLaunch
+                        ret
+                        DISPLAY "TODO:fall into SpaceStation Launch Position once startup fixed"
+                        DISPLAY "TODO: Fault is probably as maths for xyz is 16 bit and shoudl be 24"
+; --------------------------------------------------------------
+SpaceStationLaunchPositon:
+                        ld      hl,0
+                        ZeroA
+                        ld      (UBnKxlo),hl
+                        ld      (UBnKxsgn),a
+                        ld      (UBnKylo),hl
+                        ld      (UBnKysgn),a
+                        ld      a,$81
+                        ld      (UBnKzlo),hl
+                        ld      (UBnKzsgn),a
+                        ret                 
+; --------------------------------------------------------------
+UnivSpawnSpaceStation:  ;    UnivSelSpaceStationType ; set a to type
+                        ;ld      c,13                    ; c to slot 13 which is space station
+                        ;call    SpawnShipTypeASlotC     ; load inito universe slot
+.CalculatePosition:     call    CopyPlanetGlobaltoSpaceStation
+.CalcOrbitOffset:       call    CalculateSpaceStationWarpPositon
+                        call    InitialiseOrientation
+.SetRollCounters:       ZeroUnivPitch
+                        InfiniteRoll
+.SetOrientation:        FlipSignMem UBnkrotmatNosevX+1;  as its 0 flipping will make no difference
+                        FlipSignMem UBnkrotmatNosevY+1;  as its 0 flipping will make no difference
+                        FlipSignMem UBnkrotmatNosevZ+1
+                        ret                        
 ; --------------------------------------------------------------
 ; This sets the position of the current ship randomly, called after spawing
+; Spawns in withink 16 bit range so 24 bit friendly
 UnivSetSpawnPosition:   call    InitialiseOrientation
                         RandomUnivPitchAndRoll
                         call    doRandom                        ; set x lo and y lo to random
@@ -610,7 +818,18 @@ SetAllFacesHiddenLoop:  ld      (hl),a
                         inc     hl
                         djnz    SetAllFacesHiddenLoop
                         ret
-
+;---------------------------------------------------------------------------------------------------------
+TidyRotation:       IFNDEF FORCE_TIDY    
+                        ld      a,(UBnkTidyCounter)         ; loops every 16 iterations
+                        dec     a                           ; and call is determined 
+                        and     %00001111                   ; by if the counter
+                        ld      (UBnkTidyCounter),a         ; matches teh slot number
+                        ld      hl,UBnKSlotNumber           ; of course this is then 16 slots max
+                        cp      (hl)
+                        ret     nz                          ; when counter matches slot number tidy stops it doing all tidies on same iteration
+                    ENDIF
+                        call    TidyVectorsIX
+                        ret
 ;;;;X = normal scale
 ;;;;ZtempHi = zhi
 ;;;;......................................................
@@ -1318,7 +1537,7 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
                         JumpOnABitClear ShipIsDotBitNbr, .CarryOnWithDraw   ; if not dot do normal draw
 ;............................................................  
 .itsJustADot:           call    ProcessDot
-                        SetMemBitN  UBnkaiatkecm , ShipIsDotBitNbr ; set is a dot flag
+                        call    UnivVisibleNonDot           ; set is a dot flag
                         ld      bc,(UBnkNodeArray)          ; if its at dot range get X
                         ld      de,(UBnkNodeArray+2)        ; and Y
                         ld      a,b                         ; if high byte components are not 0 then off screen
@@ -1361,8 +1580,9 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
                     ENDIF
                         ret 
 ;............................................................  
-.ExplodingCloud:        call    ProcessNodes
-                        ClearMemBitN  UBnkaiatkecm, ShipKilledBitNbr ; acknowledge ship exploding
+.ExplodingCloud:        break
+                        call    ProcessNodes
+                        call    UnivAcknowledExploding      ; acknowledge ship exploding
 .UpdateCloudCounter:    ld      a,(UBnKCloudCounter)        ; counter += 4 until > 255
                         add     4                           ; we do this early as we now have logic for
                         jp      c,.FinishedExplosion        ; display or not later
@@ -1462,7 +1682,7 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
 .FinishedExplosion:     ;break
                         ld      a,(UBnKSlotNumber)          ; get slot number
                         call    ClearSlotA                  ; gauranted to be in main memory as non bankables
-                        ClearMemBitN UBnkaiatkecm, ShipExplodingBitNbr
+                        call    UnivFinishedExplosion       ;
                         ret
 
 
@@ -1501,10 +1721,7 @@ GetExperiencePoints:    ; TODO calculate experience points
 KillShip:               ld      a,(ShipTypeAddr)            ; we can't destroy stations in a collision
                         cp      ShipTypeStation             ; for destructable one we will have a special type of ship
                         ret     z
-                        ld      a,(UBnkaiatkecm)            ; remove AI, mark killed, mark exploding
-                        or      ShipExploding | ShipKilled  ; .
-                        and     ShipAIDisabled              ; .
-                        ld      (UBnkaiatkecm),a            ; .
+                        call    UnivExplodeShip             ; remove AI, mark killed, mark exploding
                         SetMemToN   UBnKexplDsp, ShipExplosionDuration ; set debris cloud timer, also usered in main to remove from slots
                         ldWriteZero UBnKEnergy              ; Zero ship energy
                         ld      (UBnKCloudRadius),a

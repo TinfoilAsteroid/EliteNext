@@ -29,6 +29,8 @@ OpCodeCCF           equ $3F
 OpCodeAndA          equ $A7
 OpCodeClearCarryFlag equ OpCodeAndA
 
+TidyInterval        equ 16
+
 ;Text Tokens
 EliteToken			equ $1E			; Token ID for text messsage ---- E L I T E ----
 BrabenBellToken 	equ $0D
