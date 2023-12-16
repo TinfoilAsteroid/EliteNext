@@ -43,10 +43,10 @@
   42  0000                  DEFINE  DOUBLEBUFFER 1
   43  0000                  DEFINE  LATECLIPPING 1
   44  0000                  DEFINE  SIMPLEWARP   1
-  45  0000                  DEFINE  USE_NORMALISE_IX 1
-  46  0000                  DEFINE  USE_24BIT_ROLL_AND_PITCH 1
-  47  0000                  ;DEFINE  ROUND_ROLL_AND_PITCH    1
-  48  0000                  ;DEFINE  FORCE_TIDY 1
+  45  0000                  DEFINE  USE_NORMALISE_IX 1          ; use the replacemtn normaliseix (now should be always used)
+  46  0000                  DEFINE  USE_24BIT_ROLL_AND_PITCH 1  ; Use 24 bit maths always
+  47  0000                  ;DEFINE  ROUND_ROLL_AND_PITCH    1  ; Forces rouding of rotmat matricies to 8 bit
+  48  0000                  ;DEFINE  FORCE_TIDY 1               ; Forces call to Tidy every iteration
   49  0000                  ;DEFINE DEBUGCIRCLE1 1
   50  0000                  ;DEFINE DEBUGCIRCLE2 1
   51  0000                  ;DEFINE DEBUGCIRCLE3 1
