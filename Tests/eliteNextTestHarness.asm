@@ -668,7 +668,7 @@ XX12PVarSign3		DB 0
 ; Include all maths libraries to test assembly   
     ;INCLUDE "./Maths/asm_add.asm"
     ;INCLUDE "./Maths/asm_subtract.asm"
-    INCLUDE "./Maths/Utilities/AddDEToCash.asm"
+    INCLUDE "./Maths/asm_AddDEToCash.asm"
     INCLUDE "./Maths/DIVD3B2.asm"
     INCLUDE "./Maths/multiply.asm"
     INCLUDE "./Maths/asm_square.asm"

@@ -489,30 +489,30 @@ ScaleSunTo8Bit:			ld			bc,(SBnKZScaled)
 
 
  ; TESTEDOK
-SXX12DotOneRow:
-SXX12CalcX:              N0equN1byN2div256 varT, (hl), (SBnKXScaled)       ; T = (hl) * regSunXX15fx /256 
-                        inc     hl                                  ; move to sign byte
-SXX12CalcXSign:          AequN1xorN2 SBnKXScaledSign,(hl)             ;
-                        ld      (varS),a                            ; Set S to the sign of x_sign * sidev_x
-                        inc     hl
-SXX12CalcY:              N0equN1byN2div256 varQ, (hl),(SBnKYScaled)       ; Q = XX16 * SunXX15 /256 using varQ to hold regSunXX15fx
-                        ldCopyByte varT,varR                        ; R = T =  |sidev_x| * x_lo / 256
-                        inc     hl
-                        AequN1xorN2 SBnKYScaledSign,(hl)             ; Set A to the sign of y_sign * sidev_y
-; (S)A = |sidev_x| * x_lo / 256  = |sidev_x| * x_lo + |sidev_y| * y_lo
-SSTequSRplusAQ           push    hl
-                        call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA) \ 1byte add (subtract)
-                        pop     hl
-                        ld      (varT),a                            ; T = |sidev_x| * x_lo + |sidev_y| * y_lo
-                        inc     hl
-SXX12CalcZ:              N0equN1byN2div256 varQ,(hl),(SBnKZScaled)       ; Q = |sidev_z| * z_lo / 256
-                        ldCopyByte varT,varR                        ; R = |sidev_x| * x_lo + |sidev_y| * y_lo
-                        inc     hl
-                        AequN1xorN2 SBnKZScaledSign,(hl)             ; A = sign of z_sign * sidev_z
-; (S)A= |sidev_x| * x_lo + |sidev_y| * y_lo + |sidev_z| * z_lo        
-                        call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA)   \ 1byte add (subtract)
-; Now we exit with A = result S = Sign        
-                        ret
+;SXX12DotOneRow:
+;SXX12CalcX:              N0equN1byN2div256 varT, (hl), (SBnKXScaled)       ; T = (hl) * regSunXX15fx /256 
+;                        inc     hl                                  ; move to sign byte
+;SXX12CalcXSign:          AequN1xorN2 SBnKXScaledSign,(hl)             ;
+;                        ld      (varS),a                            ; Set S to the sign of x_sign * sidev_x
+;                        inc     hl
+;SXX12CalcY:              N0equN1byN2div256 varQ, (hl),(SBnKYScaled)       ; Q = XX16 * SunXX15 /256 using varQ to hold regSunXX15fx
+;                        ldCopyByte varT,varR                        ; R = T =  |sidev_x| * x_lo / 256
+;                        inc     hl
+;                        AequN1xorN2 SBnKYScaledSign,(hl)             ; Set A to the sign of y_sign * sidev_y
+;; (S)A = |sidev_x| * x_lo / 256  = |sidev_x| * x_lo + |sidev_y| * y_lo
+;SSTequSRplusAQ           push    hl
+;                        call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA) \ 1byte add (subtract)
+;                        pop     hl
+;                        ld      (varT),a                            ; T = |sidev_x| * x_lo + |sidev_y| * y_lo
+;                        inc     hl
+;SXX12CalcZ:              N0equN1byN2div256 varQ,(hl),(SBnKZScaled)       ; Q = |sidev_z| * z_lo / 256
+;                        ldCopyByte varT,varR                        ; R = |sidev_x| * x_lo + |sidev_y| * y_lo
+;                        inc     hl
+;                        AequN1xorN2 SBnKZScaledSign,(hl)             ; A = sign of z_sign * sidev_z
+;; (S)A= |sidev_x| * x_lo + |sidev_y| * y_lo + |sidev_z| * z_lo        
+;                        call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA)   \ 1byte add (subtract)
+;; Now we exit with A = result S = Sign        
+;                        ret
 
 
 
