@@ -584,7 +584,7 @@ XX12PVarSign3		DB 0
     INCLUDE "./Maths/Utilities/badd_ll38.asm"
 
     ;INCLUDE "./Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
-    INCLUDE "./Maths/Utilities/RequAdivQ-LL61.asm"
+    ;INCLUDE "./Maths/Utilities/RequAdivQ-LL61.asm"
     ;INCLUDE "./Maths/Utilities/RSequQmulA-MULT12.asm"
 
     include "./Universe/Ships/CopyRotMattoXX15.asm"
