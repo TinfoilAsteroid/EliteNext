@@ -46,6 +46,7 @@
     DEFINE  USE_24BIT_ROLL_AND_PITCH 1  ; Use 24 bit maths always
     ;DEFINE  ROUND_ROLL_AND_PITCH    1  ; Forces rouding of rotmat matricies to 8 bit
     ;DEFINE  FORCE_TIDY 1               ; Forces call to Tidy every iteration
+    DEFINE  BYPASS_TIDY 1
     ;DEFINE DEBUGCIRCLE1 1
     ;DEFINE DEBUGCIRCLE2 1 
     ;DEFINE DEBUGCIRCLE3 1 

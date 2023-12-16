@@ -32,7 +32,6 @@ DrawLines:              ld	a,$65 ; DEBUG
                         jr	nz, .DrawLinesLoop
                         ret                                     ; --- Wireframe end  \ LL118-1
 
-
 DrawLinesLateClipping:  ld	a,$65 ; DEBUG
                         ld    iyl,a					      ; set ixl to colour (assuming we come in here with a = colour to draw)
                         ld	a,(UbnkLineArrayLen)			; get number of lines
@@ -50,7 +49,7 @@ LateDrawLinesLoop:      ld    de,x1
                         //call  l2_draw_elite_line
                         call    l2_draw_6502_line
                         jp      c,LateNoLineToDraw
-                        
+                        DISPLAY "TODO - Optimise fetching direct from XX1510 rather than using x1 to y2 as an interface"
 PreLate:                push    hl,,bc,,de,,iy
                         ld      a,(x1)
                         ld      c,a
@@ -63,13 +62,13 @@ PreLate:                push    hl,,bc,,de,,iy
                         ; bc = y0,x0 de=y1,x1,a=color)
                         ld	    a, $D5 ; colour
 ReadyToDraw:            MMUSelectLayer2
-CheckHorz:              ld      a,b
-                        cp      d
-                        jp      nz,.ItsNotHorizontal
-.ItsHorizontal:         call    l2_drawHorzClip
-                        jp      DrawnLine
-.ItsNotHorizontal:      ld      a,c
-                        or      e
+.CheckHorz:             ld      a,b                      ; Are y1 and y2 the same?
+                        cp      d                        ; .
+                        jp      nz,.ItsNotHorizontal     ; .
+.ItsHorizontal:         call    l2_drawHorzClip          ; if so its a horizontal line
+                        jp      DrawnLine                ; done draw
+.ItsNotHorizontal:      ld      a,c                      ; Are x1 and x2 the same?
+                        cp      e
                         jp      nz,LateLine
 .ItsVertical:           call    l2_drawVertClip
                         jp      DrawnLine

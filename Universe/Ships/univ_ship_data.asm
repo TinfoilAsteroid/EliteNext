@@ -819,6 +819,8 @@ SetAllFacesHiddenLoop:  ld      (hl),a
                         djnz    SetAllFacesHiddenLoop
                         ret
 ;---------------------------------------------------------------------------------------------------------
+;-- 
+    DISPLAY "TODO: Change to a tidy that checks for normal accuracy first"
 TidyRotation:       IFNDEF FORCE_TIDY    
                         ld      a,(UBnkTidyCounter)         ; loops every 16 iterations
                         dec     a                           ; and call is determined 
@@ -828,7 +830,9 @@ TidyRotation:       IFNDEF FORCE_TIDY
                         cp      (hl)
                         ret     nz                          ; when counter matches slot number tidy stops it doing all tidies on same iteration
                     ENDIF
+                    IFNDEF BYPASS_TIDY
                         call    TidyVectorsIX
+                    ENDIF
                         ret
 ;;;;X = normal scale
 ;;;;ZtempHi = zhi

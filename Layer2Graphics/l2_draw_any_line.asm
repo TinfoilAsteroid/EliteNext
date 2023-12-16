@@ -61,7 +61,7 @@ l2_drawVertClip:        ld      hl,(y1)
                         ld      e,$BF
                         jp      l2_draw_vert_line_to                ; ">bc = row col d = to position, e = color"
 
-
+            DISPLAY "TODO: May be able to optimise as x1 and x2 should already be 8 bit"
 l2_drawHorzClip:        ld      hl,(x1)
                         ld      de,(x2)
                         call    CompareHLDESgn
@@ -1280,12 +1280,12 @@ l2_draw_6502_line:      ld      hl,x1                           ; copy from curr
                         ldir        
                         call    LL145_6502                      ; perform 6502 version
                         ret     c                               ; returns if carry is set as its a no draw
-.CopyBackResults:       ld      hl,0
+.CopyBackResults:       ld      hl,0                            ; Clear out high bytes
                         ld      (x1),hl
                         ld      (y1),hl
                         ld      (x2),hl
                         ld      (y2),hl
-                        ld      a,(XX1510)
+                        ld      a,(XX1510)                      ; write low bytes with actual values to plot from XX1510
                         ld      (x1),a
                         ld      c,a
                         ld      a,(XX1510+1)
@@ -1306,6 +1306,7 @@ l2_draw_6502_line:      ld      hl,x1                           ; copy from curr
 result                  dw      0
 ;    swap = 0;
 ;    if (y1 > y2)
+;    draws line from x1,y1 to x2,y2 memory locations in colour held in a
 l2_draw_elite_line:     ld      hl,(y1)                         ; if (y1 > y2)
                         ld      de,(y2)                         ; .
                         call    CompareHLDESgn                  ; .
