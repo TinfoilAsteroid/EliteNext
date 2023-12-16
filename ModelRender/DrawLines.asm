@@ -62,11 +62,19 @@ PreLate:                push    hl,,bc,,de,,iy
                         ld      d,a
                         ; bc = y0,x0 de=y1,x1,a=color)
                         ld	    a, $D5 ; colour
-                        MMUSelectLayer2
-LateLine:               call    l2_draw_elite_line; l2_draw_diagonal
-                        pop     hl,,bc,,de,,iy
-                        
-                        
+ReadyToDraw:            MMUSelectLayer2
+CheckHorz:              ld      a,b
+                        cp      d
+                        jp      nz,.ItsNotHorizontal
+.ItsHorizontal:         call    l2_drawHorzClip
+                        jp      DrawnLine
+.ItsNotHorizontal:      ld      a,c
+                        or      e
+                        jp      nz,LateLine
+.ItsVertical:           call    l2_drawVertClip
+                        jp      DrawnLine
+LateLine:               call    l2_draw_elite_line; l2_draw_diagonal ** NOTE DOESNT DO HORZ OR VERT
+DrawnLine:              pop     hl,,bc,,de,,iy
 LateNoLineToDraw:       pop   hl,,iy
                         dec   iyh
                         jr	nz, LateDrawLinesLoop

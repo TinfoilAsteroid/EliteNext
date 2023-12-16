@@ -9,7 +9,6 @@ Debug_LL122_6502:       ld      hl, 20      :ld      (SRvarPair),hl
                         ld      hl, 20      :ld      (SRvarPair),hl
                         ld      a,  230     :ld      (Qvar),a
                         call    LL122_6502  ; -17                               >> PASS
-                        break
                         ret
                 ENDIF
 

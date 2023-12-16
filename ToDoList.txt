@@ -1,5 +1,7 @@
+Done
+-----------------------------------------------------------------------------------------------------------
 Planet
-
+    
     First check if planet fully fits on screen by any measure (K Radus pixel K3 - X, Kr4 = Y - 2 byte S15)
             A = K + K3
             if A = negative then right edge off left of screen, return "whole off screen)
@@ -72,6 +74,8 @@ CircleLoop: do
 
 ----------------------------------------
 
+TODO 
+-----------------------------------------------------------------------------------------------------------
 Laser Logic
 
 Need a special case if a ship flies away from plant and sun to just stop updaing their position to avoid being lost in space or wrapping around

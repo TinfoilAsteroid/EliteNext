@@ -283,8 +283,7 @@ DeltaXgteDeltaY:        ErrorEquStepMinusDelta delta_y_step, delta_x ; this also
                         dec     (hl)                    ;           .
 .Calc1NotZero:          
 ;                       if sign_x == -1
-.Y2LTE127:              break
-                        IsMemNegative8JumpFalse sign_x, .SignXNotNegative ; just check if its negative
+.Y2LTE127:              IsMemNegative8JumpFalse sign_x, .SignXNotNegative ; just check if its negative
 ;                       ... xpos = - xpos
 .SignXNegative:         ld      hl,(x_pos)              ;       x_pos = -x_pos
                         NegHL                           ;       .
@@ -644,7 +643,6 @@ l2_draw_fillclip_tri:   push    hl
                         ld      de,bc                   ;                                       T  8
                         ld      ix,SaveArrayS1          ; SaveArrayS1                           T 14
                         ld      a,$FF                   ; and Longest is True                   T  7
-                        break                                                                   
                         call    Layer2_Save_ClipY_Line  ; hl'hl = x1y1 de'de = x3y3             
 .LineP1toP2Save:        ld      hl,(saveP2X)            ;                                       T 20
                         ld      de,(saveP3X)            ;                                       T 20
@@ -653,7 +651,6 @@ l2_draw_fillclip_tri:   push    hl
                         ld      de,(saveP3Y)            ;                                       T 20
                         ld      ix,SaveArrayS2          ; SaveArrayS2                           T 14
                         ZeroA                           ;                                       T  4
-                        break
                         call    Layer2_Save_ClipY_Line  ; hl'hl = x1y1 de'de = x2y2             T
                         ld      hl,(saveP1X)            ;                                       T 20
                         ld      de,(saveP2X)            ;                                       T 20
@@ -662,7 +659,6 @@ l2_draw_fillclip_tri:   push    hl
                         ld      de,(saveP2Y)            ;                                       T 20
                         ld      ix,SaveArrayS2          ; SaveArrayS2                           T 14
                         ZeroA                           ;                                       T  4
-                        break
                         call    Layer2_Save_ClipY_Line  ; hl'hl = x1y1 de'de = x2y2             T
 .LineP2toP3Save:        ld      hl,(saveP2X)            ;                                       T 20
                         ld      de,(saveP3X)            ;                                       T 20
@@ -671,7 +667,6 @@ l2_draw_fillclip_tri:   push    hl
                         ld      de,(saveP3Y)            ;                                       T 20
                         ld      ix,SaveArrayS2          ; SaveArrayS2                           T 14
                         ZeroA                           ;                                       T  4
-                        break
                         call    Layer2_Save_ClipY_Line  ; hl'hl = x1y1 de'de = x2y2
 .PrepareForLoop:        ld      hl,(endy)               ; bc = number of iterations
                         ld      de,(starty)             ; de = starting y coordinate

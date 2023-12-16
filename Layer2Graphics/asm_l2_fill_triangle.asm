@@ -101,7 +101,6 @@ l2_fillAnyTriangle:     ld      a,b
 .SplitTriangleInTwo:    push	hl,,de,,bc                      ; save for now. bc is already X0Y0
                         ex      de,hl                           ; quick load of de with X2Y2
                         ld		a,1
-                        break
                         call	l2_draw_diagonal_save           ;now we don't know if x? is going to be > x1 or no
 .CheckX1:               pop     bc
                         pop     de
@@ -115,7 +114,6 @@ l2_fillAnyTriangle:     ld      a,b
                         ld      h,d                             ; h = y common whch is y1
                         ld      d,e                             ; d = x1
                         ld      e,a                             ; e = x2
-                        break
                         call    l2_fillBottomFlatTriangle       ;>l2_fillBottomFlatTriangle BC y0x0 DE x1x2, H YCommon, L Colour"
                         pop     hl,,de,,bc,,af
                         ld      bc,hl                           ; bc = common bottom x2y2
@@ -143,8 +141,7 @@ l2_fillAnyTriangle:     ld      a,b
 
 ;; ">l2_fillTopFlatTriangle BC y2x2 DE x0x1, H YCommon, L Colour"                            X1YC            X2YC
 ;; b = bottomxy, de = to x1 x2, h =common top y
-l2_fillTopFlatTriangle: break
-                        ld		a,e                             ; check x0 x1 to make sure lines draw left to right
+l2_fillTopFlatTriangle: ld		a,e                             ; check x0 x1 to make sure lines draw left to right
                         JumpIfAGTENusng d, .x2gtex1
 ;                        cp		e
 ;                        jr		nc, .x2gtex1                    ; make sureline is alwasy left to right so +ve direction
@@ -175,11 +172,9 @@ l2_fillTopFlatTriangle: break
                         ld		a,ixl
                         call	l2_draw_diagonal_save			;l2_store_diagonal(x0,y0,x2,ycommon,l2_LineMaxX);
                         pop		bc,,de,,hl
-                        break                                   ; so now we have two arrays loaded h = start b = end
                         ld      a,b
                         ld		b,h                             ; and set up working values as we share
                         ld		h,a								; the flat bottom code here
-                        break
 .OldSave:               ld		d,b
                         ld		e,h								; save loop counters
 .SaveForLoop:           push	de								; de = y0ycommon
@@ -215,8 +210,7 @@ l2_fillTopFlatTriangle: break
 ; ">l2_fillBottomFlatTriangle BC y0x0 DE x1x2, H YCommon, L Colour"
 ; "note >l2_draw_diagonal_save, bc = y0,x0 de=y1,x1,a=array nbr ESOURCE LL30 or LION"
 ; "note line to   bc = left side row,col, d right pixel, l = color"
-l2_fillBottomFlatTriangle:;break
-                        ld      a,e
+l2_fillBottomFlatTriangle:ld      a,e
                         JumpIfAGTENusng d, .x2gtex1                       
 ;                        ld		a,d                             ; if x0 < x2 goto x2<x1
 ;                        cp		e                               ;      list 1 holds x1 down to x0
@@ -294,7 +288,7 @@ l2_fill_BoundsTest:     ld      a,ixh
 
 ;16 bit soli l2_fill16BottomFlatTriangle BC y0x0 DE x1x2, H YCommon, L Colour"
 ;IY Offsets IY=X0 IX=Y0 HL=X1 DE=X2 BC=YCommon A= Colour
-l2_fill16BottomFlatTriangle:;break
+l2_fill16BottomFlatTriangle:
                         ; test if Y0 and YCommon on screen 
 .TestY0YCommon          ld      (l2_Y0),ix
                         ld      (l2_Y1),hl

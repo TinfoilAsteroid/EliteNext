@@ -36,7 +36,7 @@ IYEquRowN:              MACRO   rowValue                        ; set up iy as t
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
 SBnKDataBlock:
                         INCLUDE "./Universe/Sun/SunPosVars.asm"
-                        INCLUDE "./Universe/Sun/SunRotationMatrixVars.asm"
+; Not needed as we don't rotate planets and suns                        INCLUDE "./Universe/Sun/SunRotationMatrixVars.asm"
                         INCLUDE "./Universe/Sun/SunAIRuntimeData.asm"
 
 
@@ -90,6 +90,19 @@ ResetSBnKPosition:      ld      hl,SBnKxlo
                         inc     hl
                         djnz    .zeroLoop
                         ret
+
+WarpSunByHL:            ld      b,h
+                        ld      c,l
+                        ld      h,0
+                        ld      de,(SBnKzhi)
+                        ld      a,(SBnKzlo)
+                        ld      l,a
+                        MMUSelectMathsBankedFns : call  SubBCHfromDELsigned
+                        ld      (SBnKzhi),de
+                        ld      a,l
+                        ld      (SBnKzlo),a
+                        ret
+
                                                 
 ; Z Must be at least 2 and positve to warp                        
 WarpSunCloser:          ld      hl,SBnKzsgn
@@ -188,6 +201,47 @@ SunDraw:                MMUSelectLayer2
                         exx
 ; Could make this a sub routine but unwrapping saves a call                        
                         SunBankDraw
+                        ret
+; -------------------------------------------------------------
+; Sun Position    z = ((seed.d & 7) | 1)      shift left 16
+;                 x = (seed.f & 3) shift left 16  | seed.f & 3 << 8 * -1 if seed f odd
+;                 y    = sun x position
+;
+CalculateSunWarpPositon:
+.CalcZPosition:         ld      a,(WorkingSeeds+3)      ; seed d & 7
+                        and     %00000111               ; .
+                        or      %10000001               ; | 1
+.SetZPosition:          ld      (SBnKzsgn),a            ; << 16 (i.e. load into z sign byte
+                        ld      hl, $0000               ; now set z hi and lo
+                        ld      (SBnKzlo),hl            ;
+.CalcXandYPosition:     ld      a,(WorkingSeeds+5)      ; seed f & 3
+                        and     %00000011               ; .
+                        ld      b,a
+                        ld      a,(WorkingSeeds+4)      ; get low bit of seed e
+                        and     %00000001
+                        rra                             ; roll bi t0 into bit 7
+                        or      b                       ; now calc is f & 3 * -1 if seed e is odd
+.SetXandYPosition:      ld      (SBnKxsgn),a            ; set into x and y sign byte
+                        ld      (SBnKysgn),a            ; .
+                        ld      a,b                     ; we want just seed f & 3 here
+                        ld      (SBnKxhi),a             ; set into x and y high byte
+                        ld      (SBnKyhi),a             ; .
+                        ZeroA
+                        ld      (SBnKxlo),a
+                        ld      (SBnKylo),a
+                        ret
+
+CalculateSunLaunchedPosition:
+.CalcXPosition:         MMUSelectMathsBankedFns
+                        ld      ix,SBnKxlo              ; Sun BnKxlo += ParentPlanetX
+                        ld      iy,ParentPlanetX        ; .
+                        call    AddAtIXtoAtIY24Signed   ; .
+.CalcYPosition:         ld      ix,SBnKylo              ; Sun BnKylo += ParentPlanetZ
+                        ld      iy,ParentPlanetY        ; .
+                        call    AddAtIXtoAtIY24Signed   ; .
+.CalcZPosition:         ld      ix,SBnKzlo              ; Sun BnKzlo += ParentPlanetZ
+                        ld      iy,ParentPlanetZ        ; .
+                        call    AddAtIXtoAtIY24Signed   ; .
                         ret
 
 ; --------------------------------------------------------------

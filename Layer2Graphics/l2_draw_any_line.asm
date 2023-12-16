@@ -4,9 +4,7 @@ endy                    DW     $FFFF
 traingleColor           DB     $CF
 SaveArrayS1             DS     128*2
 SaveArrayS2             DS     128*2
-
-    INCLUDE "./Layer2Graphics/BBCEliteDirectMappingLL118.asm"
-    
+   
         IFDEF Add_l2_drawHorzClipY
 l2_drawHorzClipY:       
 .ClipY:                 ex      de,hl                       ; get X1 into de

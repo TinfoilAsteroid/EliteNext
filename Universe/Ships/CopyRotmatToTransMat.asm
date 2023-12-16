@@ -6,7 +6,8 @@
 ; 18 byte fast copy
 
 ; Fast copy using the stack                                                         ; T states
-CopyRotmatToTransMat:   ld      ix,0                                                ; 14
+CopyRotmatToTransMat:   di                                                          ; disable interrups to protect during copy
+                        ld      ix,0                                                ; 14
                         add     ix,sp                                               ; 15
                         ld      sp,UBnkrotmatSidevX ; Source                        ; 10
                         pop     hl                  ; UBnkrotmatSidevX              ; 10
@@ -33,6 +34,9 @@ CopyRotmatToTransMat:   ld      ix,0                                            
                         push    de                                                  ; 10
                         push    hl                                                  ; 10
                         ld      sp,ix               ; restore stack                 ; 10
+                    IFNDEF INTERRUPS_DISABLE
+                        ei
+                    ENDIF
                         ret                                                         ; 10 Total 267 (LDI version is 318)
                         
                             
