@@ -375,8 +375,11 @@ LoopEventTriggered:     ; for now just do spawn
     DEFINE  SPAWN_LOOP           1
     
 ;--- Handle spawn event --------------------------------------------
-SpawnEvent:             ret
-                        DISPLAY "TODO: Disabled spawing for diagnostics"
+SpawnEvent:             IFDEF SPAWN_SHIP_DISABLED
+                            DISPLAY "TODO: Disabled spawing for diagnostics"
+                            ret
+                        ENDIF
+                        break
                         call    FindNextFreeSlotInC                 ; set c= slot number, if we cant find a slot                   Stack     > 0
                         ret     c                                   ; then may as well just skip routine
                         ; This if def allows spawning inside space station safe zone
@@ -387,7 +390,8 @@ SpawnEvent:             ret
 .SpawnIsPossible:       ld      iyh,c                               ; save slot free in iyh
                         ;break
                         call    SelectSpawnTable                    ; ix = correct row in spawn table, indexed on the random value found on FreeSpaceSpawnTableLow
-.GetSpawnDetails:       call    SelectSpawnTableData                ; get table data, b = max ships to spawm de rank table address, hl = address of spawn handler code                       
+.GetSpawnDetails:       call    SelectSpawnTableData                ; get table data, b = max ships to spawm de rank table address, hl = address of spawn handler code                  
+                    DISPLAY "TODO: Check spawn code as some refers to HL address, a refers to ship number but its not a ship number e.g. in test it was E1"
 .CheckIfInvalid:        ld      a,b                                 ; if b was 0
                         or      a                                   ; then its an invalid
                         ret     z                                   ; ship or just not to spawn

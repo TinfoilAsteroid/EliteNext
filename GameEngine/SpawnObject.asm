@@ -68,12 +68,12 @@ SpawnTypeThargoidHandler:       call    SpawnShipTypeA
                                 ret
 SpawnTypeMissionHandler:        ret
 
-SpawnTypeStationDebrisHandler: call    SpawnShipTypeA
+SpawnTypeStationDebrisHandler:  call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ;Set random position and vector
                                 ret
 SpawnTypeMissionEventHandler:
-SpawnTypeDoNotSpawnHandler:    ret
+SpawnTypeDoNotSpawnHandler:     ret
 
 
 
