@@ -40,8 +40,27 @@ UBnkShipModelBank           DB  0                       ; Bank nbr ship was from
 UBnKShipModelNbr            DB  0                       ; Ship Id with in the bank
 UBnKShipModelId             DB  0                       ; Absolute ship id
 ; -- Ship AI data
+; -- Targetting runtime data
 UBnKMissleHitToProcess      DB  0                       ; This is used for enquing missle blasts as we can only do one missile at a time, could make it multi but neeed to smooth CPU usage
 UBnKMissileTarget           DB  0                       ; This is the ship slot number for the target from 0 to n if the missile is not hostile to us, if the target is $FF then its us
+UBnKTargetXPos              DS  3                       ; target position for AI 
+UBnKTargetYPos              DS  3                       ; .
+UBnKTargetZPos              DS  3                       ; .
+UBnKTargetXPosSgn           DS  1                       ; target position sign for AI 
+UBnKTargetYPosSgn           DS  1                       ; .
+UBnKTargetZPosSgn           DS  1                       ; .
+UBnKTargetVectorX           DS  2                       ; target vector for AI
+UBnKTargetVectorY           DS  2                       ; .
+UBnKTargetVectorZ           DS  2                       ; .
+UBnKTargetDotProduct1       DS  2
+UBnKTargetDotProduct2       DS  2
+UBnKTargetDotProduct3       DS  2
+UBnKTacticsRotMatX          DB  0
+UBnKTacticsRotMatXSign      DB  0
+UBnKTacticsRotMatY          DB  0
+UBnKTacticsRoyMatYSign      DB  0
+UBnKTacticsRotMatZ          DB  0
+UBnKTacticsRotMatZSign      DB  0
 UBnKSpeed                   DB  0                       ; INWK +27
 UBnKAccel                   DB  0                       ; INWK +28
 UBnKRotXCounter             DB  0                       ; INWK +29
@@ -69,6 +88,8 @@ UBnKFighterShipId           DB  0                       ; computed ship Id for a
 UBnKFightersLeft            DB  0                       ; the number of ships left in hanger, 255 = infinite
 UBnKCloudCounter            DB  0                       ; cloud pixels
 UBnKCloudRadius             DB  0                       ; cloud pixels
+UBnKHeadingToPlanetOrSun    DB  0                       ; 0 = undefined 1 = heading to planet 2 = heading to sun, if it reaches planet then will move to docking, if it heads to sun then will jump
+
 UBnKRuntimeSize             EQU $-UBnKStartOfRuntimeData
 ; Flags work as follows:
 ; UBnKSpawnObject - signals on death to spawn cargo items

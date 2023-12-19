@@ -10,21 +10,21 @@ SpawnHermitHandler:             call    SpawnShipTypeA
 
 SpawnAsteroidHandler:           call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
-                                ;Set random position and vector         
+                                ;Set random position and vector
                                 ; if its a hermit jump to that to so special
-                                
+
                                 ret
-                                
+
 SpawnTypeJunkHandler:           push    af
                                 TestRoomForJunk .CanAddJunk
                                 ret
-.CanAddJunk:                    pop     af                                
+.CanAddJunk:                    pop     af
                                 call    SpawnShipTypeA
                                 AddJunkCount
                                 ret     c                                   ; abort if failed
-                                ret 
-                                
-SpawnTypeCopHandler:            ;call    SpawnShipTypeA
+                                ret
+
+SpawnTypeCopHandler:            call    SpawnShipTypeA                      ; will add logic later for alignment etc
                                 ret     c                                   ; abort if failed
                                 ; Cops will be non hostile if there are no other ones in area
                                 ; if there are, then check out cargo and fist to evalutate
@@ -33,18 +33,18 @@ SpawnTypeCopHandler:            ;call    SpawnShipTypeA
                                 ;                                            travelling to station
                                 ;                                            travelling to sun
                                 ret
-SpawnTypeTraderHandler:         ;call    SpawnShipTypeA
+SpawnTypeTraderHandler:         call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ; 50/50 goign to planet or sun
                                 ;                main loop AI determines if our FIST status will force a jump
                                 ret
-                                
+
 SpawnTypeNonTraderHandler:      call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ; 50/50 goign to planet or sun
                                 ; if FIST is high then 10% chance will auto go hostile
                                 ret
-                                
+
 SpawnTypePirateHandler:         call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ; set random position
@@ -94,60 +94,70 @@ SpawnTrader:       ; TODO
 ; DEFUNCT?                        ret
 
 
-
+;-------------------------------------------------------------------
 ; input IX = table for spawn data
-; output b = maximum to spawn
-;        de = spawn table address
-;        hl = spawn handler address
-SelectSpawnTableData:   ld      a,(ix+1*SpawnTableSize)             ; Table Type, e.g. SpawnTypeTrader being an off set (SpaceStatoin = 0, Trader = 4 etc)
-                        ld      hl,SpawnTypeHandlers                ; hl = the location in spawn hanlder routine look up table for the call address for setting up a spawn
-                        add     hl,a                                ; adjust for 2 * A to get the address of the respective spawn hanlder routine
-                        add     hl,a                                ; .
-                        ld      a,(hl)                              ; then get the address from that table into HL
-                        inc     hl                                  ; .
-                        ld      h,(hl)                              ; .
-                        ld      l,a                                 ; hl now is proper address
+; output b = maximum to spawn (0 means no spawn)
+;        de = spawn table address (0 means no spawn)
+;        iy = hl  = spawn handler routine address
+    DISPLAY "TODO: SelectSpawnTableData needs algorithim for selecting the spawn rank table based on commander, galaxy etc"
+    DISPLAY "TODO: SelectSpawnTableData for now only does basic 'A' table selection"
+SelectSpawnTableData:   
+                        ;ld      a,(ix+1*SpawnTableSize)             ; Table Type, e.g. SpawnTypeTrader being an off set (SpaceStatoin = 0, Trader = 4 etc)
+                        ;ld      hl,SpawnTypeHandlers                ; hl = the location in spawn hanlder routine look up table for the call address for setting up a spawn
+                        ;add     hl,a                                ; adjust for 2 * A to get the address of the respective spawn hanlder routine
+                        ;add     hl,a                                ; .
+                        ;ld      a,(hl)                              ; then get the address from that table into HL
+                        ;inc     hl                                  ; .
+                        ;ld      h,(hl)                              ; .
+                        ;ld      l,a                                 ; hl now is proper address
                         ld      b,(ix+2*SpawnTableSize)             ; Get Nbr of objects to  Spawn
                         ld      e,(ix+3*SpawnTableSize)             ; Spawn Rank Table Addr Low
                         ld      d,(ix+4*SpawnTableSize)             ; Spawn Rank Table Addr Hi
+                        ld      l,(ix+5*SpawnTableSize)             ; address of spawn routine
+                        ld      h,(ix+6*SpawnTableSize)    
                         ret
-
-; Output IX = pointer to correct row in table
+;-------------------------------------------------------------------
+; Picks a random number and then sets ix to the column where table low >= random number
+; Output IX = pointer to address of correct column in table Fress Space Spawn Table
 ; its up to the caller if DE is right table and it it needs to load into
 ; it is up to the main loop code to maintain SpaceStationSafeZone
-SelectSpawnTable:       
-.SelectCorrectTable:    JumpIfMemTrue SpaceStationSafeZone, .SelectSpaceStationTable
-                        ld      ix,FreeSpaceSpawnTableLow
-                        jp      .RandomShip
-.SelectSpaceStationTable:ld      ix,StationSpawnTableLow
-.RandomShip:            call    doRandom
+; if in safe zone then uses StationSpawnTable
+SelectSpawnTable:       JumpIfMemTrue SpaceStationSafeZone, .SelectStationTable ; if in space station safe zone switch to the corresponding table
+                        ld      ix,FreeSpaceSpawnTableLow           ; else we use free space table
+                        jp      .RandomShip                         ; and now do a random number
+.SelectStationTable:    ld      ix,StationSpawnTableLow             ; here we selected safe zone table
+.RandomShip:            call    doRandom                            ; random number
 .SelectLoop:            cp      (ix+0)                              ; Compare high value
                         ret     c                                   ; if random <= high threshold jump to match, we cant just do jr c as 255 would never compare
                         ret     z                                   ; if random <= high threshold jump to match, result is, last values must be 255
                         inc     ix                                  ; move to next row
                         jp      .SelectLoop                         ; we have a 255 marker to stop infinite loop
-
-; Returns with carry set if no ship to spawn
+;-------------------------------------------------------------------
+; takes ship rank table at address hl, adds random number from 0 to 16
+; entering here all decisions have already been made on what to spawn
 ; In = hl = address of first byte of table
-SelectSpawnType:        ld      b,3                                 ; maxium of 3 goes
-                        ld      iy,hl                               ; save hl as we may need it if the spawn is too high rank
-.SelectSpawnType:       call    doRandom
-                        and     %00001111                           ; random 1 to 15
-                        sla     a                                   ; * 2 as its 2 bytes per row
+; returns b with rank, c with ship id for ship type
+SelectSpawnType:        push    hl                                  ; save hl for random, de not affected by doRandom
+                        call    doRandom                            ; random number 0 to 7
+                        pop     hl
+                        and     %00000111                           ; .
+                        add     hl,a                                ; hl = row 1 on rank table
+                        ld      a,(hl)                              ; b = rank to be spawned, removed the limit now as the rank table selection should dictate this
+                        ld      b,a                                 
+                        ld      a,8                                 ; move to next row of rank table which is ship type
                         add     hl,a
                         ld      a,(hl)
-                        ld      b,a
-                        ld      a,(CurrentRank)                     ; are we experienced enough to face this ship
-                        JumpIfAGTENusng b, .GoodToSpawn             ; if current rank >= table rank, we are good
-.TooLowRank:            ld      hl,iy
-                        djnz    .SelectSpawnType                    ; 3 goes then fail out
-.NoSpawn:               SetCarryFlag
-                        ret
-.GoodToSpawn:           ld      a,8                                 ; so we shift by 8
-                        add     hl,a                                ; to get to the ship id
-                        ld      a,(hl)                              ; and fetch it in a
-                        ClearCarryFlag
-                        ret
+                        ld      c,a                                 ; so now b = rank, c = type
+                        ret                                         ; we are only selecting a candidate so no need for carry flag logic anymore
+                        
+                        ;ld      a,(CurrentRank)                     ; are we experienced enough to face this ship
+                        ;JumpIfAGTENusng b, .GoodToSpawn             ; if current rank >= table rank, we are good
+;.TooLowRank:            ld      hl,iy
+;                        djnz    .SelectSpawnType                    ; 3 goes then fail out
+;.NoSpawn:               SetCarryFlag
+;                        ret
+;GoodToSpawn:           ClearCarryFlag                              ; carry is clear as we are 
+;                       ret
 
 ; Spawn table is in two halves. if we are within range X of space station we use the second table
 ; thsi means we coudl in theory drag a hunter / pirate or thargoid say into a space station zone
@@ -155,18 +165,28 @@ SelectSpawnType:        ld      b,3                                 ; maxium of 
 ; Class of table,       0=Station,
 ; Table to pick from (this is then based on ranking )
 
+;----------------------------------------------------------------------
+; Free space spawn table. select a column on the tabel to determine the
+; row (table low, type, count, addr) to spawn
+; each row is 8 bytes so uses ix as an index into here generally
 ; Its prefilled to 8 options in the table to allocate space. though the table can only accomodate 8. ther eis a 9th as a marker, value of table = 0 means no spawn
-FreeSpaceSpawnTableLow:    DB 84,                       159,                            250,                            255,                        255,                 255,                 255,                 255               
-FreeSpaceSpawnTableType:   DB SpawnTypeCop,             SpawnTypeTrader,                SpawnTypeNonTrader,             SpawnTypePirate,            SpawnTypeDoNotSpawn, SpawnTypeDoNotSpawn, SpawnTypeDoNotSpawn, SpawnTypeDoNotSpawn
-FreeSpaceSpawnTableCount:  DB 1,                        1,                              1,                              2,                          0,                   0,                   0,                   0
-FreeSpaceSpawnTableAddrLo: DB low(ShipCopTableARank),   low(ShipNonTraderTableARank),   low(ShipNonTraderTableARank),   low(ShipPirateTableARank),  low(0),              low(0),              low(0),              low(0)
-FreeSpaceSpawnTableAddrHi: DB high(ShipCopTableARank),  high(ShipNonTraderTableARank),  high(ShipNonTraderTableARank),  high(ShipPirateTableARank), high(0),             high(0),             high(0),             high(0)
+; Last value on TableLow Low Column must be 255 to avoid unexpected stuff happening
+; SpawnTableCount is a bit mask for random number generator, random is or'ed with 1 so mask of 2 will still generate 1 or 2
+FreeSpaceSpawnTableLow:     DB 84,                       159,                            250,                            253,                         255,                             255,                             255,                             255
+FreeSpaceSpawnTableType:    DB SpawnTypeCop,             SpawnTypeTrader,                SpawnTypeNonTrader,             SpawnTypePirate,             SpawnTypeBodies,                 SpawnTypeDoNotSpawn,             SpawnTypeDoNotSpawn,             SpawnTypeDoNotSpawn
+FreeSpaceSpawnTableCount:   DB 1,                        1,                              1,                              2,                           0,                               0,                               0,                               0
+FreeSpaceSpawnTableAddrLo:  DB low(ShipCopTableARank),   low(ShipNonTraderTableARank),   low(ShipNonTraderTableARank),   low(ShipPirateTableARank),   low(ShipBodiesTableARank),       low(0),                          low(0),                          low(0)
+FreeSpaceSpawnTableAddrHi:  DB high(ShipCopTableARank),  high(ShipNonTraderTableARank),  high(ShipNonTraderTableARank),  high(ShipPirateTableARank),  high(ShipBodiesTableARank),      high(0),                         high(0),                         high(0)
+FreeSpaceSpawnHandlerAddrLo:DB low(SpawnTypeCopHandler), low(SpawnTypeTraderHandler),    low(SpawnTypeNonTraderHandler), low(SpawnTypePirateHandler), low(SpawnAsteroidHandler),       low(SpawnTypeDoNotSpawnHandler), low(SpawnTypeDoNotSpawnHandler), low(SpawnTypeDoNotSpawnHandler)
+FreeSpaceSpawnHandlerAddrHi:DB high(SpawnTypeCopHandler),high(SpawnTypeTraderHandler),   high(SpawnTypeNonTraderHandler),high(SpawnTypePirateHandler),high(SpawnAsteroidHandler),      high(SpawnTypeDoNotSpawnHandler),high(SpawnTypeDoNotSpawnHandler),high(SpawnTypeDoNotSpawnHandler)
 
-StationSpawnTableLow:      DB 84,                       159,                            250,                            255,                        255,                 255,                 255,                 255
-StationSpawnTableType:     DB SpawnTypeCop,             SpawnTypeTrader,                SpawnTypeNonTrader,             SpawnTypePirate,            SpawnTypeDoNotSpawn, SpawnTypeDoNotSpawn, SpawnTypeDoNotSpawn, SpawnTypeDoNotSpawn
-StationSpawnTableCount:    DB 1,                        1,                              1,                              3,                          0,                   0,                   0,                   0
-StationSpawnTableAddrLo:   DB low(ShipCopTableARank),   low(ShipNonTraderTableARank),   low(ShipNonTraderTableARank),   low(ShipPirateTableARank),  low(0),              low(0),              low(0),              low(0)             
-StationSpawnTableAddrHi:   DB high(ShipCopTableARank),  high(ShipNonTraderTableARank),  high(ShipNonTraderTableARank),  high(ShipPirateTableARank), high(0),             high(0),             high(0),             high(0)
+StationSpawnTableLow:       DB 84,                       159,                            250,                            255,                         255,                             255,                             255,                             255
+StationSpawnTableType:      DB SpawnTypeCop,             SpawnTypeTrader,                SpawnTypeNonTrader,             SpawnTypePirate,             SpawnTypeDoNotSpawn,             SpawnTypeDoNotSpawn,             SpawnTypeDoNotSpawn,             SpawnTypeDoNotSpawn
+StationSpawnTableCount:     DB 1,                        1,                              1,                              3,                           0,                               0,                               0,                               0
+StationSpawnTableAddrLo:    DB low(ShipCopTableARank),   low(ShipNonTraderTableARank),   low(ShipNonTraderTableARank),   low(ShipPirateTableARank),   low(0),                          low(0),                          low(0),                          low(0)
+StationSpawnTableAddrHi:    DB high(ShipCopTableARank),  high(ShipNonTraderTableARank),  high(ShipNonTraderTableARank),  high(ShipPirateTableARank),  high(0),                         high(0),                         high(0),                         high(0)
+StationSpawnHandlerAddrLo:  DB low(SpawnTypeCopHandler), low(SpawnTypeTraderHandler),    low(SpawnTypeNonTraderHandler), low(SpawnTypePirateHandler), low(SpawnTypeDoNotSpawnHandler), low(SpawnTypeDoNotSpawnHandler), low(SpawnTypeDoNotSpawnHandler), low(SpawnTypeDoNotSpawnHandler)
+StationSpawnHandlerAddrHi:  DB high(SpawnTypeCopHandler),high(SpawnTypeTraderHandler),   high(SpawnTypeNonTraderHandler),high(SpawnTypePirateHandler),high(SpawnTypeDoNotSpawnHandler),high(SpawnTypeDoNotSpawnHandler),high(SpawnTypeDoNotSpawnHandler),high(SpawnTypeDoNotSpawnHandler)
 
 SpawnTableSize             EQU  FreeSpaceSpawnTableType - FreeSpaceSpawnTableLow
 

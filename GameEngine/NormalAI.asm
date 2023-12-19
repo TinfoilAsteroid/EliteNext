@@ -41,11 +41,10 @@ CalcLaunchOffset:       ld      hl,UBnKxlo
                         ;DEFINE MISSILEBREAK
 ;.. Thsi version uses new kind logic
 ;... Now the tactics if current ship is the missile, when we enter this SelectedUniverseSlot holds slot of missile
-NormalAI:               ;ld      a,(ShipAIEnabled)
-                        ;ReturnOnBitClear a, ShipAIEnabledBitNbr 
+NormalAI:               IsAIEnabled                             ; check if AI is enabled for ship (say if its had a shut down event it may be disabled)
+                        ret     z                               ; if z is set then bit was clear so return
 .GetEnergy:             call    RechargeEnergy                  ; TA13 if enegery <= maxumum value for blueprint then recharge energy by 1
-                        ld      a,(ShipNewBitsAddr)
-.IsItATrader:           and     ShipIsTrader
+                        IsShipTrader
                         jr      nz, .NotATrader
 .ItsATrader:            call    doRandom                        
                         ReturnIfALTNusng 100                    ; 61% chance do nothing
@@ -61,21 +60,17 @@ NormalAI:               ;ld      a,(ShipAIEnabled)
                         jr      nz, .NotBountyHunter
 .CheckFIST:             CallIfMemGTENusng FugitiveInnocentStatus, 40, SetShipHostile ; if our FIST rating >= 40 set ship hostile (bit 2)
 .NotBountyHunter:
-.CheckHostile:          ld      a,(ShipNewBitsAddr)
-                        and     ShipIsHostile
-                        jr      nz,.ItsHostile
-.ItsNotHostile:         ld      a,(ShipNewBitsAddr)
-                        and     ShipIsDocking                   ; if bit 4 is not clear
-                        jr      nz,.NotDocking
-.ItsDocking:            ;break
-                        ;       do docking algorithm
-                        ;       return
-                        ret
-.NotDocking:            ;break
-                        ;       calcuilate vector to planet
-                        ;       move towards planet
-                        ;       return
-                        ret
+.CheckHostile:          IsShipHostile                           ; if ship is hostile z flag becomes nz
+                        jr      nz,.ItsHostile                  ; .
+;.. If we get here its not hostile so will be heading towards planet or sun
+;.. If its locked on to a target (sun or planet) then it will proceed towards that,
+;.. if it reaches the sun it will jump
+;.. If it reaaches the planet it will then move to docking phase
+.ItsNotHostile:         IsShipDocking                           ; if docking then do dockign algorithm
+                        jp      nz, UnivDocking
+.NotDocking:            jp      ShipHeadingToUnivBody
+                        ; ret   Above jumps both include implicit returns
+                        
 .ItsHostile:            ld      a,(ShipNewBitsAddr)
 .IsItPirate:            and     ShipIsPirate
                         jr      nz,.NotAPirate
@@ -84,6 +79,7 @@ NormalAI:               ;ld      a,(ShipAIEnabled)
                         or      Bit7Only | ShipIsTrader
 .NotSafeZone:           call    SetPlayerAsTarget
                         call    CopyPosToVector
+                        MMUSelectMathsBankedFns
                         call    NormalizeTactics
 .NotAPirate:
 .SpawnFighter:          ld      a,(UBnKFightersLeft)
@@ -257,6 +253,90 @@ ShipSpeedv3:            ld      hl,(TacticsDotProduct1)
                             ld  (TacticsSpeed),a
                         ENDIF
                         ret
+                        
+;-------------------------------------------------------------------
+; randomly set tactics to fly towards sun or planet                 
+; updates UBnKHeadingToPlanetOrSun, 1 = planet, 2 = Sun
+SetTargetBody:          call    doRandom                            ; random number
+                        and     $01                                 ; if bit 1 is set then we can load that to planet and exit
+                        jp      nz,.SelectPlanet
+.SelectSun:             ld      a,2                                 ; else set it to 2 and mark as Sun
+                        ld      (UBnKHeadingToPlanetOrSun),a
+                        ret
+.SelectPlanet:          ld      (UBnKHeadingToPlanetOrSun),a
+                        ret
+                        
+;-------------------------------------------------------------------
+; Sort out target heading for ship
+; if its 0 then randomly select sun or planet
+; after this work otu target position and course changes requried                        
+ShipHeadingToUnivBody:  ld      a,(UBnKHeadingToPlanetOrSun)        ; do we have a preference?
+                        and     a
+                        call    z,SetTargetBody                     ; no preference so we head randomly towards sun or planet then fall into movement tactics code
+                        cp      1
+                        jp      nz, UpdateSunTracking               ; if its not 1 then must be sun
+;.. Update tracking to planet.......................................
+            DISPLAY "TODO: Change this from move to planet to move to station as moving to planet is now superfluous"
+UpdatePlanetTracking:   call    SaveMMU6                            ; save current ship     
+                        MMUSelectPlanet
+                            DISPLAY "TODO: Sort out targeting station not planet" 
+                        call    CopyPlanettoGeneral                 ; get planet position
+                        call    RestoreMMU6                         ; get current Universe Object back
+                        ld      iy,PlanetXPos
+                        call    VectorUnivtoIY                      ; get Univ Target vector to planet - ship position
+;.. Get distance ...................................................
+                        call    UnivDistanceToTarget                ; Determine if ship is in safe zone of planet, 
+                        jp      c,.MoveToDockingPhase               ; if close enough to planet move to docking phase
+                        call    NormalseUnivTarget                  ; now in the target normalise it to work out direction
+.NegateDirection:       FlipSignMem UBnKTargetXPosSgn                ; negate vector so it points opposite direction
+                        FlipSignMem UBnKTargetXPosSgn                ; we have already negated the dot product above
+                        FlipSignMem UBnKTargetXPosSgn                ; .                         
+                        jp      UnivSeekingLogic                     ; 
+                        ; implicit ret
+;.. If we are close enough moce to docking phase
+.MoveToDockingPhase:    DISPLAY "TODO: Add in transitiion to docking phase"
+                        ret
+
+                         DISPLAY "TODO: Sort out random directio etc if needed" 
+;.. Close enough to start docking ..................................
+
+
+UpdateSunTracking:      call    SaveMMU6
+                        MMUSelectSun
+                        call    CopySuntoGeneral                    ; get sun position
+                        call    RestoreMMU6                         ; get current Universe Object back
+                        ld      iy,SunXPos
+                        call    VectorUnivtoIY                      ; get Univ Target vector to planet - ship position
+                        call    UnivDistanceToTarget                ; Determine if ship is in safe zone of planet, 
+                        jp      c,UnivMoveToJump                    ; if close enough to sun then jump (i.e. destrouy object but use flash of light)
+                        call    NormalseUnivTarget                  ; now in teh target normalise it to work out direction
+.NegateDirection:       FlipSignMem UBnKTargetXPosSgn                ; negate vector so it points opposite direction
+                        FlipSignMem UBnKTargetXPosSgn                ; we have already negated the dot product above
+                        FlipSignMem UBnKTargetXPosSgn                ; .                         
+                        jp      UnivSeekingLogic                     ; 
+                        ret
+                        
+                            DISPLAY "TODO: Sort out docking" 
+UnivDocking:            ret
+
+UnivMoveToJump:         DISPLAY "TODO: Add flash of light jump logic into ships. similar to explosion but just a star of random lines and no kill score"
+                        ret
+
+UnivSeekingLogic:       call    TacticsDotNosev                     ; TacticsVarResult = nose . Target Vector                           (     ->TAS3)
+                        ld      ( UBnKTargetDotProduct1),a              ; CNT = A (high byte of dot product)
+                        ld      a,(varS)                            ; get sign from dot product
+                        ld      ( UBnKTargetDotProduct2+1),a            ; Note here its direction not dir
+.RoofDotProduct:        call    XX12EquTacticsDotRoofv              ; Now tran the roof for rotation        
+                        ld      (TacticsDotProduct2),a              ; so if its +ve then the roof is similar so pull up to head towards it
+                        ld      a,(varS)                            ; .                                       
+                        ld      ( UBnKTargetDotProduct2+1),a            ; Note here its direction not dir
+;.. Update facing and speed ........................................
+                        call    UnivPitchToTarget
+                        call    UnivRollToTarget
+                        call    UnivSpeedToTarget
+                        ret                       
+
+                        
 ;;;ShipPitchv2:  ;break
 ;;;                        ld      hl,(TacticsDotProduct2)            ; pitch counter sign = opposite sign to roofdir sign
 ;;;                        ld      a,h                                ; .

@@ -248,7 +248,8 @@ FireECM:                break
 ; --------------------------------------------------------------
 RechargeEnergy:         ld      a,(UBnKEnergy)
                         ReturnIfAGTEMemusng EnergyAddr
-                        inc     a
+                DISPLAY "TODO: Add recharge rate logic for ship types"
+                        inc     a       
                         ld      (UBnKEnergy),a
                         ret
 ; --------------------------------------------------------------
@@ -474,6 +475,27 @@ CopySpaceStationtoPlanetGlobal:
                         ldir
                         ret  
 ; --------------------------------------------------------------
+; This group of routines copy the global variables to local universe
+; so we can a) track what is going on for debugging and b) encapsulate data
+CopyParentPlanettoUnivTarget:
+                        ld      hl,ParentPlanetX                ; Copy the interface data to Univ (interface may be scapped later to just use Planet X Pos
+                        jp      copyHlToTargetXPos
+; --------------------------------------------------------------
+CopyPlanettoUnivTarget: ld      hl,PlanetXPos                   ; Copy planet position to local target data
+                        jp      copyHlToTargetXPos
+; --------------------------------------------------------------
+CopySpaceStationtoUniv: ld      hl,StationXPos                  ; Copy sun position to local target data
+                        jp      copyHlToTargetXPos
+; --------------------------------------------------------------
+CopySuntoUniv:          ld      hl,SunXPos                      ; the Sun routine as teh last one can just fall into copyHL                       
+; --------------------------------------------------------------
+; -- General purpose copy 9 bytes from HL to UBnKTarget block
+; -- done here so that optimisation can be applied later
+copyHlToTargetXPos:     ld      de,UBnKTargetXPos
+                        ld      bc,3*3
+                        ldir
+                        ret
+; --------------------------------------------------------------
 ; generate space station type based on seed values
 ; returns space station type in a
 UnivSelSpaceStationType:ld      a,(DisplayEcononmy)
@@ -488,6 +510,73 @@ UnivSelSpaceStationType:ld      a,(DisplayEcononmy)
                         ld      hl,MasterStations               ; in main memory
                         add     hl,a
                         ld      a,(hl)
+                        ret      
+; --------------------------------------------------------------
+UnivPitchToTarget:      ld      hl,( UBnKTargetDotProduct2)        ; pitch counter sign = opposite sign to roofdir sign
+                        ld      a,h                                ; .
+                        xor     $80                                ; .
+                        and     $80                                ; .
+                        ld      h,a                                ; h  = flipped sign
+                        ld      a,l                                ; a = value * 2
+                        sla     a                                  ; 
+                        JumpIfAGTENusng 16, .skipPitchZero         ; if its > 16 then update pitch
+                        ZeroA                                      ; else we zero pitch but
+                        or      h                                  ; we need to retain the sign
+                        ld      (UBnKRotZCounter),a                ; .
+                        ret
+.skipPitchZero:         ld      a,2
+                        or      h
+                        ld      (UBnKRotZCounter),a
+                        ret
+
+;Direct on dot product nose is $24
+; Position                  Pitch   Roll    Speed
+; Top left forwards         up      -ve     +
+; Top right forwards        up      +ve     +
+; Bottom left forwards      down    -ve     +
+; Bottom right forwards     down    +ve     +
+; Top left rear             up      -ve     -
+; Top right rear            up      +ve     -
+; Bottom left rear          down    -ve     -
+; Bottom right rear         down    +ve     -
+                        
+UnivRollToTarget:       call    TacticsDotSidev             ; calculate side dot protuct
+                        ld      ( UBnKTargetDotProduct3),a             ; .
+                        ld      l,a                                ; .
+                        ld      a,(varS)                           ; .
+                        ld      ( UBnKTargetDotProduct3+1),a           ; .
+                        ld      h,a                                ; h = sign sidev
+                        ld      a,( UBnKTargetDotProduct2+1)           ; get flipped pitch counter sign
+                        ld      b,a                                ; b = roof product
+                        ld      a,l                                ; a = abs sidev  * 2
+                        sla     a                                  ;
+                        JumpIfAGTENusng 16,.skipRollZero           ;
+                        ZeroA                                      ; if its zoer then set rotx to zero
+                        or      b
+                        ld      (UBnKRotXCounter),a
+                        ret
+.skipRollZero:          ld      a,2
+                        or      h
+                        xor     b
+                        ld      (UBnKRotXCounter),a
+                        ret
+
+UnivSpeedToTarget:      ld      hl,( UBnKTargetDotProduct1)
+                        ld      a,h
+                        and     a
+                        jr      nz,.SlowDown
+                        ld      de,( UBnKTargetDotProduct2)             ; dot product is +ve so heading at each other
+                        ld      a,l 
+                        JumpIfALTNusng  22,.SlowDown                                  ; nose dot product < 
+.Accelerate:            ld      a,3                                 ; else
+                        ld      (UBnKAccel),a                       ;  accelleration = 3
+                        ret                                         ;  .
+.SlowDown:              JumpIfALTNusng 18, .NoSpeedChange
+.Deccelerate:           ld      a,-2
+                        ld      (UBnKAccel),a
+                        ret
+.NoSpeedChange:         ZeroA                                       ; else no change
+                        ld      (UBnKAccel),a
                         ret                        
 ; --------------------------------------------------------------
 CalculateSpaceStationWarpPositon:
@@ -694,6 +783,7 @@ UnivInitRuntime:        ld      bc,UBnKRuntimeSize
                         ld      hl,UBnKStartOfRuntimeData
                         ZeroA
                         ld      (UBnKECMCountDown),a
+                        ld      (UBnKHeadingToPlanetOrSun),a ; at the moment we don't have a preferred trader route
 .InitLoop:              ld      (hl),a
                         inc     hl
                         djnz    .InitLoop            

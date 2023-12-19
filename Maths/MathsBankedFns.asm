@@ -1,7 +1,9 @@
-
+;------------------------------------------------------------
+; HL Signed = HL - DE
 SubDEfromHLSigned:      ld      a,d
                         xor     $80
                         ld      d,a
+;------------------------------------------------------------
 ; Adds DE to HL, in form S15 result will also be S15 rather than 2's C                
 AddDEtoHLSigned:        ld      a,h                         ; extract h sign to b
                         and     $80                         ; hl = abs (hl)
@@ -37,6 +39,8 @@ AddDEtoHLSigned:        ld      a,h                         ; extract h sign to 
                         ld      h,a                         ; recover sign
                         ret 
                         
+;------------------------------------------------------------
+; BHL = BHL+CDE where signs are held in B and C
 ADDHLDESignBC:          ld      a,b
                         and     SignOnly8Bit
                         xor     c                           ;if b sign and c sign were different then bit 7 of a will be 1 which means 
@@ -51,7 +55,7 @@ ADDHLDESignBC:          ld      a,b
                         DISPLAY "TODO: don't bother with overflow for now"
                         or      c                           ; now set bit for negative value, we won't bother with overflow for now TODO
                         ret
-.ADDHLDEsBCOppSGN:       ClearCarryFlag
+.ADDHLDEsBCOppSGN:      ClearCarryFlag
                         sbc     hl,de
                         jr      c,.ADDHLDEsBCOppInvert
 .ADDHLDEsBCOppSGNNoCarry:ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
@@ -60,7 +64,7 @@ ADDHLDESignBC:          ld      a,b
                         ld      a,b
                         xor     SignOnly8Bit                ; flip sign bit
                         ret   
-
+    DISPLAY "TODO: Check if ADDHLDESignedV4 is deprecated by AddDEtoHLSigned"
 ADDHLDESignedV4:        ld      a,h
                         and     SignOnly8Bit
                         ld      b,a                         ;save sign bit in b
@@ -103,6 +107,7 @@ ADDHLDESignedV4:        ld      a,h
                         ld      h,a                         ; recover sign
                         ret 
  
+;------------------------------------------------------------
 ; extension to AddBCHtoDELsigned
 ; takes ix as the address of the values to load into DEL
 ;       iy as the address of the values to load into BCH
@@ -118,8 +123,9 @@ AddAtIXtoAtIY24Signed:  ld      l,(ix+0)            ; del = ix (sign hi lo)
                         ld      (ix+0),l            ; put result into (ix)
                         ld      (ix+1),e            ; .
                         ld      (ix+2),d            ; .
-                        ret
-                        
+                        ret                       
+;------------------------------------------------------------
+; DEL = @IX + @IY 24 bit signed
 AddDELequAtIXPlusIY24Signed:   
                         ld      l,(ix+0)            ; del = ix (sign hi lo)
                         ld      e,(ix+1)            ; .
@@ -131,10 +137,12 @@ AddDELequAtIXPlusIY24Signed:
                         call    AddBCHtoDELsigned   ; Perform del += bch
                         pop     iy                  ; get iy back
                         ret                   
+;------------------------------------------------------------
 ; extension to AddBCHtoDELsigned
 ; takes ix as the address of the values to load into DEL
 ;       iy as the address of the values to load into BCH
 ; subtracts iy from ix putting result in ix
+; DEL = @IX - @IY 24 bit signed
 SubAtIXtoAtIY24Signed:  ld      l,(ix+0)            ; del = ix (sign hi lo)
                         ld      e,(ix+1)            ; .
                         ld      d,(ix+2)            ; .
@@ -150,7 +158,7 @@ SubAtIXtoAtIY24Signed:  ld      l,(ix+0)            ; del = ix (sign hi lo)
                         ld      (ix+1),e            ; .
                         ld      (ix+2),d            ; .
                         ret
-
+;------------------------------------------------------------
 ; extension to AddBCHtoDELsigned
 ; takes ix as the address of the values to load into DEL
 ;       iy as the address of the values to load into BCH
@@ -168,8 +176,7 @@ SubDELequAtIXMinusAtIY24Signed:
                         call    AddBCHtoDELsigned   ; perform del += bch which as we flipped bch sign means (ix [210] -= iy [210])
                         pop     iy                  ; get iy back
                         ret
-
-
+;------------------------------------------------------------
 ;tested mathstestsun2
 ; DEL = DEL - BCH signed, uses BC, DE, HL, IY, A
 ; Just flips sign on b then performs add
@@ -361,7 +368,6 @@ CompareAtIXtoIYABS:     ld      a,(iy+2)
                         pop     ix                  ; iy is a smaller of the two values, or untouched in the same value
                         pop     iy                  ; Thsi means we can do a compare and pick which one we preferr after, carry says if swap occured if we need that
                         ret
-
 ;------------------------------------------------------------------------------------------------
 ; -- Manhattan distance
 ; -- very quick distance calculation based on a cube
@@ -414,6 +420,7 @@ ManhattanDistanceIXIY:  ld      l,(ix+0)            ; del = abs ix (sign hi lo)
                         ret
                        
 
+;------------------------------------------------------------
 ; Note vectors are 2 byte lead sign, angle is 8 bit lead sign
 ApplyMyAngleAToIXIY:    ;break
                         push    af                          ; save angle
@@ -432,7 +439,7 @@ ApplyMyAngleAToIXIY:    ;break
                         call    AddDEtoHLSigned             ; hl = hl + de
                         ld      (ix+0),hl                   ; .
                         ret
-           
+;------------------------------------------------------------           
 ; Applies Roll Alpha and Pitch Beta to vector at IX
 ApplyRollAndPitchToIX:  
 ;-- y Vector = y - alpha * nosev_x_hi
@@ -485,4 +492,138 @@ ApplyRollAndPitchToIX:
                         ld      (ix+4),l
                         ld      (ix+5),h
                         ret
+;------------------------------------------------------------
+; Calculates the following:
+; loads UBnKTargetVector from UBnkPostion to IY as IY - position
+VectorUnivtoIY:     ld      ix,UBnKxlo                      ; target x = iy [x] - Univ XPos
+                    call    SubDELequAtIXMinusAtIY24Signed  ; .
+                    ld      a,l                             ; .
+                    ld      (UBnKTargetXPos),a              ; .
+                    ld      (UBnKTargetXPos+1),de           ; .
+                    ld      ix,UBnKylo                      ; move to y component
+                    ld      bc,3                            ; .
+                    add     iy,bc                           ; .
+                    call    SubDELequAtIXMinusAtIY24Signed  ; target y = iy [y] - Univ YPos
+                    ld      a,l                             ; .
+                    ld      (UBnKTargetYPos),a              ; .
+                    ld      (UBnKTargetYPos+1),de           ; .         
+                    ld      bc,3                            ; move to z component
+                    add     iy,bc                           ; .
+                    call    SubDELequAtIXMinusAtIY24Signed  ; target z = iy [z] - Univ ZPos
+                    ld      a,l                             ; .
+                    ld      (UBnKTargetZPos),a              ; .
+                    ld      (UBnKTargetZPos+1),de           ; .
+                    ret
+;------------------------------------------------------------
+; Takes the UBnKTarget position and works out if its ready for a docking routine or jump
+; returns carry flag if move to docking else leaves carry unset
+UnivDistanceToTarget:DISPLAY "TODO : WRITE CODE FOR UnivDistanceToTarget"
+                    ClearCarryFlag                              ; for now clear carry flag so its not at target
+                    ret
+;------------------------------------------------------------
+; Takes the UBnKTarget position and works out if its ready for a docking routine or jump
+
+
+
+TacticsVarResult        DW 0      
+TacticsDotRoofv:        ld      hl,UBnkrotmatRoofvX
+                        jp      TacticsDotHL
                         
+TacticsDotSidev:        ld      hl,UBnkrotmatSidevX
+                        jp      TacticsDotHL
+                                          
+TacticsDotNosev:        call    CopyRotNoseToUBnKTacticsMat
+TacticsDotHL:           ld      hl,UBnKTacticsRotMatX; UBnkTransmatNosevX    ; ROTMATX HI
+.CalcXValue:            ld      a,(hl)                              ; DE = RotMatX & Vect X
+                        ld      e,a                                 ; .
+                        ld      a,(UBnKTargetVectorX)                  ; .
+                        ld      d,a                                 ; .
+                        mul                                         ; .
+                        ld      a,d                                 ; S = A = Hi (RotMatX & Vect X)
+                        ld      (varS),a                            ; .
+                        inc     hl                                  ; move to sign byte
+.CalcXSign:             ld      a,(UBnKTargetVectorX+2)                ; B  = A = Sign VecX xor sign RotMatX
+                        xor     (hl)                                ; .
+                        ld      b,a                                 ; .
+.MoveToY:               inc     hl                                  ; Move on to Y component
+.CalcYValue:            ld      a,(hl)                              ; D = 0, E = Hi (RotMatY & Vect Y)
+                        ld      e,a                                 ; .
+                        ld      a,(UBnKTargetVectorY)                  ; .
+                        ld      d,a                                 ; .
+                        mul     de                                  ; .
+                        ld      e,d                                 ; .
+                        ld      d,0                                 ; .
+                        inc     hl                                  ; move to sign byte
+.CalcYSign:             ld      a,(UBnKTargetVectorY+2)                ; c = sign of y_sign * sidev_y
+                        xor     (hl)                                ; 
+                        ld      c,a                                 ; 
+.MoveToZ:               inc     hl                                  ; Move on to Z component
+.AddXandY:              push    hl                                  ; but save HL as we need that
+                        ld      a,(varS)                            ; hl = Hi (RotMatX & Vect X) b= sign
+                        ld      h,0                                 ; de = Hi (RotMatY & Vect Y) c= sign
+                        ld      l,a                                 ;
+                        call    ADDHLDESignBC                       ; a(sign) hl = sum
+                        ld      b,a                                 ; b = sign of result
+                        ld      (TacticsVarResult),hl               ; save sub in TacticsVarResult
+.CalcZValue:            pop     hl                                  ; get back to the rotation mat z
+                        ld      a,(hl)                              ; D = 0, E = Hi (RotMatZ & Vect Z)
+                        ld      e,a                                 ; .
+                        ld      a,(UBnKTargetVectorZ)                  ; .
+                        ld      d,a                                 ; .
+                        mul     de                                  ; .
+                        ld      e,d                                 ; .
+                        ld      d,0                                 ; .
+                        inc     hl                                  ; move to sign byte
+.CalcZSign:             ld      a,(UBnKTargetVectorZ+2)
+                        xor     (hl)
+                        ld      c,a                                 ; Set C to the sign of z_sign * sidev_z
+                        ld      hl, (TacticsVarResult)              ; CHL = x + y, BDE = z products
+                        call    ADDHLDESignBC                       ; so AHL = X y z products
+                        ld      (varS),a                            ; for backwards compatibility
+                        ld      a,l                                  ; .
+                        ret
+
+CopyRotSideToUBnKTacticsMat:ld      hl,UBnkrotmatSidevX+1
+                        jp      CopyRotmatToTacticsMat
+                        
+CopyRotNoseToUBnKTacticsMat:ld      hl,UBnkrotmatNosevX+1
+                        jp      CopyRotmatToTacticsMat
+                        
+CopyRotRoofToBnKTacticsMat:ld      hl,UBnkrotmatRoofvX+1
+; Coy rotation matrix high byte to trans rot mat, strip off sign and separate to rotmat byte 2
+CopyRotmatToUBnKTacticsMat: ld      de,UBnKTacticsRotMatX
+                        ld      a,(hl)              ; matrix high byte of x
+                        ld      b,a
+                        and     SignMask8Bit
+                        ld      (de),a              ; set rot mat value
+                        inc     de
+                        ld      a,b
+                        and     SignOnly8Bit
+                        ld      (de),a              ; set rot mat sign
+                        inc     de                  ; move to next rot mat element
+                        inc     hl                  
+                        inc     hl                  ; matrix high byte of y
+.processYElement:       ld      a,(hl)              ; matrix high byte of y
+                        ld      b,a
+                        and     SignMask8Bit
+                        ld      (de),a              ; set rot mat value
+                        inc     de
+                        ld      a,b
+                        and     SignOnly8Bit
+                        ld      (de),a              ; set rot mat sign
+                        inc     de                  ; move to next rot mat element
+                        inc     hl                  
+                        inc     hl                  ; matrix high byte of z
+.ProcessZElement:       ld      a,(hl)              ; matrix high byte of z
+                        ld      b,a
+                        and     SignMask8Bit
+                        ld      (de),a              ; set rot mat value
+                        inc     de
+                        ld      a,b
+                        and     SignOnly8Bit
+                        ld      (de),a              ; set rot mat sign
+                        ret
+
+
+
+

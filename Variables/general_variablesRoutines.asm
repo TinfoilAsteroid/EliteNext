@@ -1,3 +1,48 @@
+
+; This will save to current queue position. it also asusmes that we never go beyond queue
+; limit so does not do bounds checking for speed
+SaveMMU0:               GetNextReg  MMU_SLOT_0_REGISTER             ; Get current reg value
+                        ld          hl(SaveMMU0QueueHead)               ; get address of current slot
+                        ld          (hl),a                          ; and write reg value to this address
+                        ld          hl,SaveMMU0QueueHead                ; move address pointer up one
+                        inc         (hl)
+                        ret
+
+RestoreMMU0:            ld          hl,SaveMMU0QueueHead                ; Currently looking at next free
+                        dec         (hl)                            ; so step back one
+                        ld          hl,(SaveMMU0QueueHead)              ; save position as next free
+                        ld          a,(hl)                          ; get value that was there
+                        nextreg     MMU_SLOT_0_REGISTER,a           ; and swap MMU bank
+                        ret
+
+SaveMMU6:               GetNextReg  MMU_SLOT_6_REGISTER             ; Get current reg value
+                        ld          hl,(SaveMMU6QueueHead)              ; get address of current slot
+                        ld          (hl),a                          ; and write reg value to this address
+                        ld          hl,SaveMMU6QueueHead                ; move address pointer up one
+                        inc         (hl)
+                        ret
+
+RestoreMMU6:            ld          hl,(SaveMMU6QueueHead)              ; Currently address pointer looking at next free
+                        dec         (hl)                            ; so step back one
+                        ld          hl,(SaveMMU6QueueHead)              ; save position as next free
+                        ld          a,(hl)                          ; get value that was there
+                        nextreg     MMU_SLOT_6_REGISTER,a           ; and swap MMU bank
+                        ret
+
+SaveMMU7:               GetNextReg  MMU_SLOT_7_REGISTER             ; Get current reg value
+                        ld          hl,(SaveMMU7QueueHead)              ; get address of current slot
+                        ld          (hl),a                          ; and write reg value to this address
+                        ld          hl,SaveMMU7QueueHead                ; move address pointer up one
+                        inc         (hl)
+                        ret
+
+RestoreMMU7:            ld          hl,(SaveMMU7QueueHead)              ; Currently looking at next free
+                        dec         (hl)                            ; so step back one
+                        ld          hl,(SaveMMU7QueueHead)              ; save position as next free
+                        ld          a,(hl)                          ; get value that was there
+                        nextreg     MMU_SLOT_7_REGISTER,a           ; and swap MMU bank
+                        ret
+                        
 LaserDrainSystems:      DrainSystem PlayerEnergy, CurrLaserEnergyDrain
                         BoostSystem GunTemperature, CurrLaserHeat
                         ret

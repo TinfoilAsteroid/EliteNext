@@ -786,7 +786,12 @@ SunProcessVertex:       ld      b,a                         ; save sign byte
 .calculatedOffScreen:   SetCarryFlag
                         ret
                         
-                        
+; --------------------------------------------------------------                                                
+CopySuntoGeneral:       ld      hl,SBnKxlo
+                        ld      de,SunXPos
+                        ld      bc,3*3
+                        ldir
+                        ret  
 ; .........................................................................................................................
 ; we only hit this if z is positive so we can ignore signs
 SunCalculateRadius:     ld      bc,(SBnKzlo)                ; DBC = z position

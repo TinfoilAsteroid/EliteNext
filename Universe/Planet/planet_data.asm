@@ -271,6 +271,12 @@ CopyPlanettoGlobal:     ld      hl,P_BnKxlo
                         ld      bc,3*3
                         ldir
                         ret                 
+; --------------------------------------------------------------                                                
+CopyPlanettoGeneral:    ld      hl,P_BnKxlo
+                        ld      de,PlanetXPos
+                        ld      bc,3*3
+                        ldir
+                        ret                 
 ; This sets current universe object to a planet,they use sign + 23 bit positions
 ; we need to have variable size and color
 CreatePlanet:           call    ResetP_BnKData          ; Clear out planet block

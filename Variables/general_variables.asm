@@ -10,7 +10,15 @@ LogFailure:     MACRO messageAddress
                 ld      bc,10
                 ldir
                 ENDM
-                
+;-- Memory management variables 
+SaveMMU0Queue:          DS      5                   ; Allows up to 5 levels of depth for queue stacking         
+SaveMMU6Queue:          DS      5                   ; Allows up to 5 levels of depth for queue stacking         
+SaveMMU7Queue:          DS      5                   ; Allows up to 5 levels of depth for queue stacking         
+;-- Note these are not counters but initialised to memory locations to simplify code
+;-- Point to the next free memory location to write to
+SaveMMU0QueueHead:      DW      SaveMMU0Queue       ; Current last saved MMU Entry
+SaveMMU6QueueHead:      DW      SaveMMU6Queue       ; Current last saved MMU Entry
+SaveMMU7QueueHead:      DW      SaveMMU7Queue       ; Current last saved MMU Entry
 
 varAxis1	DW 	0				; address of first axis in a rotation action
 varAxis2	DW	0				; address of 2nd axis in a roation action
@@ -278,17 +286,23 @@ DisplayPopulation		DW	0				; 03BB \ QQ6  \ population*10
 DisplayProductivity		DW	0				; 03BD \ QQ7   \ productivity*10
 Distance          		DW	0				; 03BE \ QQ8 distince in 0.1LY units
 DisplayRadius			DW	0
+; --- Used in creation of sun and planet and working out ship AI for travel direction ---------------------------------------------------
 ParentPlanetX           DS  3               ; used when spawining space station to determine origin
-ParentPlanetY           DS  3               ;
-ParentPlanetZ           DS  3               ;
-; --- Used in creation of sun and planet ------------------------------------------------------------------------------------------------
-PlanetXPos              DS  1
-PlanetYPos              DS  1
-PlanetZPos              DS  1
-PlanetType              DS  1
-SunXPos                 DS  1
-SunYPos                 DS  1
-SunZPos                 DS  1
+ParentPlanetY           DS  3               ; provisioned for 24 bit values
+ParentPlanetZ           DS  3               ; probably later on make station position an equate to planet
+PlanetXPos              DS  3               ; .
+PlanetYPos              DS  3               ; .
+PlanetZPos              DS  3               ; .
+PlanetType              DS  3               ; .
+SunXPos                 DS  3               ; .
+SunYPos                 DS  3               ; .
+SunZPos                 DS  3               ; .
+StationXPos             DS  3               ; .
+StationYPos             DS  3               ; .
+StationZPos             DS  3               ; .
+DirectionVectorX        DS  2               ; Direction vector from one point to another 
+DirectionVectorY        DS  2               ; .
+DirectionVectorZ        DS  2               ; .
 ; -- Current Missile Runbtime data ------------------------------------------------------------------------------------------------
 CurrentMissileBank:     DB      0                                   ; used by missile logic as local copy of missile bank number
 MissileXPos             DW      0
@@ -304,7 +318,7 @@ CurrentTargetYsgn       DS      2
 CurrentTargetZpos       DS      2      
 CurrentTargetZsgn       DS      2
 TargetVectorXpos        DS      2
-TargetVectorXsgn        DS      2
+TargetVectorXsgn        DS      1
 TargetVectorYpos        DS      2      
 TargetVectorYsgn        DS      2
 TargetVectorZpos        DS      2      

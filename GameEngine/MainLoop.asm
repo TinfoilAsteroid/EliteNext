@@ -129,22 +129,9 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
 .UpdateSun:             
                         IFDEF   MAINLOOP_SUN_RENDER
                             MMUSelectSun
-;.DEBUGFORCE:            
-                       ;ld          hl,$0081
-                       ;ld          (SBnKxlo),hl
-                       ;ld          hl,$0001
-                       ;ld          (SBnKylo),hl
-                       ; ld          hl,$0160
-                       ; ld          (SBnKzlo),hl
-                        ;ld          a,$80
-                        ;ld          (SBnKxsgn),a
-                        ;ld          (SBnKysgn),a
-                       ; ZeroA
-                      ;  ld          (SBnKzsgn),a
                             call    SunUpdateAndRender
                         ENDIF
 .UpdatePlanet:          IFDEF   MAINLOOP_PLANET_RENDER
-                            ;break
                             MMUSelectPlanet
                             call    PlanetUpdateAndRender
                         ENDIF
@@ -178,7 +165,7 @@ ProcessLaser:               ld      a,(CurrLaserPulseRate)
                         ENDIF
 ProcessPlanet:
                         IFDEF   MAINLOOP_MODEL_RENDER
-ProcessShipModels:          call   DrawForwardShips                                     ; Draw all ships (this may need to be self modifying)
+ProcessShipModels:          call   DrawForwardShips                                     ; Draw all ships and bodies in system (this may need to be self modifying)
                         ENDIF
                         ; add in loop so we only update every 4 frames, need to change CLS logic too, 
                         ; every 4 frames needs to do 2 updates so updates both copies of buffer
@@ -379,43 +366,42 @@ SpawnEvent:             IFDEF SPAWN_SHIP_DISABLED
                             DISPLAY "TODO: Disabled spawing for diagnostics"
                             ret
                         ENDIF
-                        break
+                        ;break
                         call    FindNextFreeSlotInC                 ; set c= slot number, if we cant find a slot                   Stack     > 0
                         ret     c                                   ; then may as well just skip routine
-                        ; This if def allows spawning inside space station safe zone
+;.. Found a slot free so can spawn, now this define controls filtering of what can be spawned near a safe zone
                         IFDEF   MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE
-                            SetMemFalse SpaceStationSafeZone                        
+                            SetMemFalse SpaceStationSafeZone        ; This if def allows spawning inside space station safe zone
                         ENDIF
-;-- A slot is free for a spawn to occur so select a spawn table and data
-.SpawnIsPossible:       ld      iyh,c                               ; save slot free in iyh
-                        ;break
-                        call    SelectSpawnTable                    ; ix = correct row in spawn table, indexed on the random value found on FreeSpaceSpawnTableLow
-.GetSpawnDetails:       call    SelectSpawnTableData                ; get table data, b = max ships to spawm de rank table address, hl = address of spawn handler code                  
-                    DISPLAY "TODO: Check spawn code as some refers to HL address, a refers to ship number but its not a ship number e.g. in test it was E1"
-.CheckIfInvalid:        ld      a,b                                 ; if b was 0
-                        or      a                                   ; then its an invalid
-                        ret     z                                   ; ship or just not to spawn
-.SetNbrToSpawn:         push    hl,,bc                              ; b will be set to the                                      Stack + 2 > 2
-                        call    doRandom                            ; actual number to spawn
-                        pop     bc                                  ; a is not really needed now as de and hl hold              Stack - 1 > 1
-                        and     b                                   ; addresses for table and handler code
-                        or      1                                   ; at least 1 
-                        ld      b,a                                 ; so b = the number to spawn
+;.. A slot is free for a spawn to occur so select a spawn table and data
+            DISPLAY "TODO: Optimise spawn so it saves off spawn data where there are more than one to do"
+            DISPLAY "TODO: Optimise spawn and counts down in loop to avoid a stall where it spawns 3 ships on one game cycle"
+.SpawnIsPossible:       call    SelectSpawnTable                    ; ix = correct row in spawn table, indexed on the random value found on FreeSpaceSpawnTableLow
+.GetSpawnDetails:       call    SelectSpawnTableData                ; get table data, b = max ships to spawm, de = rank table address, hl = address of spawn handler code                  
+            DISPLAY "TODO: Check spawn code as some refers to HL address, a refers to ship number but its not a ship number e.g. in test it was E1"
+.CheckIfInvalid:        ld      a,b                                 ; if b was 0 then its a count of 0 so no spawn
+                        or      a                                   ; .
+                        ret     z                                   ; .                            
+.SetNbrToSpawn:         push    hl,,bc                              ; de not affected by doRandom                               Stack + 2 > 2
+                        call    doRandom                            ; generate a random number to spawn
+                        pop     bc                                  ; mask it against b and make sure we have at least 1        Stack - 1 > 1
+                        and     b                                   ; .
+                        or      1                                   ; .
+                        ld      b,a                                 ; so b = the actual number to spawn
                         pop     hl                                  ; get back address of spawn handler                         Stack - 1 > 0
-
-; b = nbr to spawn, hl = handler for spawn, de = lookup table of ship type to spawn                        
+; b = nbr to spawn, c= next free slot for first ship to spawn, hl = handler for spawn, de = rank lookup table of ship type to spawn                        
 .SpawnLoop:             push    bc,,de,,hl                          ; save loop counter lookup table and handler                Stack +3  > 3
-                        ex      de,hl                               ; hl = lookup spawn type table, de = handler for spawn
+.FindSlotRequried:      ex      de,hl                               ; hl = lookup spawn type table, de = handler for spawn
                         call    SelectSpawnType                     ; a = shipId to Spawn
-                        call    .SpawnAShipTypeA                    ; if we get a carry then stop spawning
-                        pop     bc,,de,,hl                          ; get back values                                           Stack -3  > 0
+                        ex      de,hl                               ; hl = handler routine for spawning ship
+                        call    .SpawnAShipTypeC                    ; now we have bc with rank and id for ship type to spawn, hl = address of handler to run
+                        pop     bc,,de,,hl                          ; get back values for next iteration                        Stack -3  > 0
+                        ret     c                                   ; if Spawn failed carry will be set so we can assume its run out of slots and bail out
                         djnz    .SpawnLoop                          ; repeat until B = 0
                         ret                                         ; we are done
-.SpawnAShipTypeA        ex      de,hl                               ; hl= handler to spawn, a = ship to spawn
-                        ;break
-                        jp      hl                                  ; we call this so we can do a dynamic jp
+.SpawnAShipTypeC        ld      a,c                                 ; hl= handler to spawn, c = ship to spawn set a to ship type to spawn
+                        jp      hl                                  ; we call this so we can do a dynamic jp and get an implicit ret, it will return with carry set if it failed else carry clear
                         ; implicit ret from jp                      ; SpawnShipTypeA handles free slot tests etc
-
 
 
 EnemyShipBank:          DS 1

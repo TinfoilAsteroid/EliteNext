@@ -16,6 +16,38 @@ ShiftIXRight1: MACRO
 			   ld	ixl,a
 			   ENDM      
 
+ShiftIXhHLRight1: MACRO
+               ld  a,ixh
+               srl a
+               ld  ixh,a
+			   rr  h
+			   rr  l
+			   ENDM
+               
+ShiftIYhDERight1: MACRO
+               ld  a,iyh
+               srl a
+               ld  iyh,a
+               rr  d
+			   rr  e
+			   ENDM
+
+ShiftIYlBCRight1: MACRO
+               ld  a,iyl
+               srl a
+               ld  iyl,a
+			   rr  b
+               rr  c
+			   ENDM
+
+ShiftIXlBCRight1: MACRO
+               ld  a,ixl
+               srl a
+               ld  ixl,a
+			   rr  b
+               rr  c
+			   ENDM
+
 ShiftHLRight1: MACRO
 			   srl h
 			   rr  l

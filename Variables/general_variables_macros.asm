@@ -141,10 +141,16 @@ ClearECM:               MACRO
 
                         
 ; Will check to see if bit 2 is set, if it is clear, then friendly hence z is set
-;                                    if hit is set then hostile hence z is not set
+;                                    if it is set    then hostile hence z is not set
 IsShipHostile:          MACRO                               
                         ld      a,(ShipNewBitsAddr)
                         and     ShipIsHostile
+                        ENDM     
+; Will check to see if docking is set, if docking     z flag is clear
+;                                      if not docking z flag is set
+IsShipDocking:          MACRO                               
+                        ld      a,(ShipNewBitsAddr)
+                        and     ShipIsDocking
                         ENDM     
 
 ; Will check to see if bit 2 is set, if it is clear, then friendly hence z is set
@@ -161,6 +167,13 @@ IsShipExploding:        MACRO
                         and     ShipExploding                              
                         ENDM
 
+; Checks if ship is a trader, if ship is a trader then z flag is clear
+;                             if ship isn't a trader then z flag is set                        
+IsShipTrader:           MACRO
+                        ld      a,(ShipNewBitsAddr)
+                        and     ShipIsTrader
+                        ENDM
+; Will check if the AI bit is set, if set then z is clear, if clear then z is set
 IsAIEnabled:            MACRO
                         ld      hl, UBnkaiatkecm
                         bit 	ShipAIEnabledBitNbr,(hl)

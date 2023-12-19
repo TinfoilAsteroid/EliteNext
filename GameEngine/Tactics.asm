@@ -51,7 +51,11 @@ UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
                       ; ld      (TidyCounter),a
                        ;call    TidyUbnK
                        ; add AI in here too
-                       ld       a,(ShipTypeAddr)
+                        ld      a,(SelectedUniverseSlot)
+                        cp      2
+                        jp      nz,.SkipBreak
+                        break                       
+.SkipBreak:            ld       a,(ShipTypeAddr)
                                    DISPLAY "TODO: capture duff jumps"
                        ReturnIfAGTEusng ShipAiJumpTableMax              ; TODO capture duff jumps whilst debugging in case a new shjip type code is added
                        ld       hl,ShipAIJumpTable
@@ -398,8 +402,8 @@ DebugTacticsCopy:
 
                         ret
                         ENDIF
-
-TacticsVarResult        DW 0                        
+    DISPLAY "TODO: Remove all this as its moved to maths banked fns"
+;TacticsVarResult        DW 0                        
 XX12EquTacticsDotNosev: call    CopyRotNoseToTacticsMat
 XX12EquTacticsDotHL:    ld      hl,TacticsRotMatX; UBnkTransmatNosevX    ; ROTMATX HI
 .CalcXValue:            ld      a,(hl)                              ; DE = RotMatX & Vect X
@@ -534,61 +538,61 @@ CalcTargetVector:       ld      de,(TacticsTargetX)                        ; get
 ;-- Now its scaled we can normalise
 ;-- Scale down so that h d &b are zero, then do once again so l e and c are 7 bit
 ;-- use 7 bit mul96 to ensure we don;t get odd maths
-NormalizeTactics:       ld      hl, (TacticsVectorX)        ; pull XX15 into registers
-                        ld      de, (TacticsVectorY)        ; .
-                        ld      bc, (TacticsVectorZ)        ; .
-.ScaleLoop:             ld      a,h
-                        or      d
-                        or      b
-                        jr      z,.DoneScaling
-                        ShiftHLRight1
-                        ShiftDERight1
-                        ShiftBCRight1
-                        jp      .ScaleLoop
-.DoneScaling:           ShiftHLRight1                       ; as the values now need to be sign magnitued
-                        ShiftDERight1                       ; e.g. S + 7 bit we need an extra shift
-                        ShiftBCRight1                       ; now values are in L E C
-                        push    hl,,de,,bc                  ; save vecrtor x y and z nwo they are scaled to 1 byte
-                        ld      d,e                         ; hl = y(e) ^ 2
-                        mul     de                          ; .
-                        ex      de,hl                       ; .
-                        ld      d,e                         ; de = x(l) ^ 2
-                        mul     de                          ; .
-                        add     hl,de                       ; hl = hl + de
-                        ld      d,c                         ; de = y(c)^ 2 + x ^ 2
-                        ld      e,c                         ; .
-                        mul     de                          ; .
-                        add     hl,de                       ; hl =  y^ 2 + x ^ 2 + z ^ 2
-                        ex      de,hl                       ; fix as hl was holding square
-                        call    asm_sqrt                    ; IYH = A = hl = sqrt (de) = sqrt (x ^ 2 + y ^ 2 + z ^ 2)
-                        ; add in logic if h is low then use lower bytes for all 
-                        ld      a,l                         ;
-                        ld      iyh,a                       ;
-                        ld      d,a                         ; D = sqrt
-                        pop     bc                          ; retrive tacticsvectorz scaled
-                        ld      a,c                         ; a = scaled byte
-                        call    AequAdivDmul967Bit;AequAdivDmul96Unsg          ; This rountine I think is wrong and retuins bad values
-                        ld      (TacticsVectorZ),a          ; z = normalised z
-                        pop     de
-                        ld      a,e
-                        ld      d,iyh                        
-                        call    AequAdivDmul967Bit;AequAdivDmul96Unsg
-                        ld      (TacticsVectorY),a
-                        pop     hl
-                        ld      a,l
-                        ld      d,iyh                        
-                        call    AequAdivDmul967Bit;AequAdivDmul96Unsg
-                        ld      (TacticsVectorX),a
-                        ; BODGE FOR NOW
-                       ; BODGE FOR NOW
-                        ZeroA                              ;; added to help debugging
-                        ld      (TacticsVectorX+1),a       ;; added to help debugging
-                        ld      (TacticsVectorY+1),a       ;; added to help debugging
-                        ld      (TacticsVectorZ+1),a       ;; added to help debugging
-                        SignBitOnlyMem TacticsVectorX+2     ; now upper byte is sign only
-                        SignBitOnlyMem TacticsVectorY+2     ; (could move it to lower perhaps later if 
-                        SignBitOnlyMem TacticsVectorZ+2     ;  its worth it)
-                        ret
+; Moved to Maths BankNormalizeTactics:       ld      hl, (TacticsVectorX)        ; pull XX15 into registers
+; Moved to Maths Bank                        ld      de, (TacticsVectorY)        ; .
+; Moved to Maths Bank                        ld      bc, (TacticsVectorZ)        ; .
+; Moved to Maths Bank.ScaleLoop:             ld      a,h
+; Moved to Maths Bank                        or      d
+; Moved to Maths Bank                        or      b
+; Moved to Maths Bank                        jr      z,.DoneScaling
+; Moved to Maths Bank                        ShiftHLRight1
+; Moved to Maths Bank                        ShiftDERight1
+; Moved to Maths Bank                        ShiftBCRight1
+; Moved to Maths Bank                        jp      .ScaleLoop
+; Moved to Maths Bank.DoneScaling:           ShiftHLRight1                       ; as the values now need to be sign magnitued
+; Moved to Maths Bank                        ShiftDERight1                       ; e.g. S + 7 bit we need an extra shift
+; Moved to Maths Bank                        ShiftBCRight1                       ; now values are in L E C
+; Moved to Maths Bank                        push    hl,,de,,bc                  ; save vecrtor x y and z nwo they are scaled to 1 byte
+; Moved to Maths Bank                        ld      d,e                         ; hl = y(e) ^ 2
+; Moved to Maths Bank                        mul     de                          ; .
+; Moved to Maths Bank                        ex      de,hl                       ; .
+; Moved to Maths Bank                        ld      d,e                         ; de = x(l) ^ 2
+; Moved to Maths Bank                        mul     de                          ; .
+; Moved to Maths Bank                        add     hl,de                       ; hl = hl + de
+; Moved to Maths Bank                        ld      d,c                         ; de = y(c)^ 2 + x ^ 2
+; Moved to Maths Bank                        ld      e,c                         ; .
+; Moved to Maths Bank                        mul     de                          ; .
+; Moved to Maths Bank                        add     hl,de                       ; hl =  y^ 2 + x ^ 2 + z ^ 2
+; Moved to Maths Bank                        ex      de,hl                       ; fix as hl was holding square
+; Moved to Maths Bank                        call    asm_sqrt                    ; IYH = A = hl = sqrt (de) = sqrt (x ^ 2 + y ^ 2 + z ^ 2)
+; Moved to Maths Bank                        ; add in logic if h is low then use lower bytes for all 
+; Moved to Maths Bank                        ld      a,l                         ;
+; Moved to Maths Bank                        ld      iyh,a                       ;
+; Moved to Maths Bank                        ld      d,a                         ; D = sqrt
+; Moved to Maths Bank                        pop     bc                          ; retrive tacticsvectorz scaled
+; Moved to Maths Bank                        ld      a,c                         ; a = scaled byte
+; Moved to Maths Bank                        call    AequAdivDmul967Bit;AequAdivDmul96Unsg          ; This rountine I think is wrong and retuins bad values
+; Moved to Maths Bank                        ld      (TacticsVectorZ),a          ; z = normalised z
+; Moved to Maths Bank                        pop     de
+; Moved to Maths Bank                        ld      a,e
+; Moved to Maths Bank                        ld      d,iyh                        
+; Moved to Maths Bank                        call    AequAdivDmul967Bit;AequAdivDmul96Unsg
+; Moved to Maths Bank                        ld      (TacticsVectorY),a
+; Moved to Maths Bank                        pop     hl
+; Moved to Maths Bank                        ld      a,l
+; Moved to Maths Bank                        ld      d,iyh                        
+; Moved to Maths Bank                        call    AequAdivDmul967Bit;AequAdivDmul96Unsg
+; Moved to Maths Bank                        ld      (TacticsVectorX),a
+; Moved to Maths Bank                        ; BODGE FOR NOW
+; Moved to Maths Bank                       ; BODGE FOR NOW
+; Moved to Maths Bank                        ZeroA                              ;; added to help debugging
+; Moved to Maths Bank                        ld      (TacticsVectorX+1),a       ;; added to help debugging
+; Moved to Maths Bank                        ld      (TacticsVectorY+1),a       ;; added to help debugging
+; Moved to Maths Bank                        ld      (TacticsVectorZ+1),a       ;; added to help debugging
+; Moved to Maths Bank                        SignBitOnlyMem TacticsVectorX+2     ; now upper byte is sign only
+; Moved to Maths Bank                        SignBitOnlyMem TacticsVectorY+2     ; (could move it to lower perhaps later if 
+; Moved to Maths Bank                        SignBitOnlyMem TacticsVectorZ+2     ;  its worth it)
+; Moved to Maths Bank                        ret
 
             DISPLAY "TODO: TactivtsPosMinus Target"
 ;TODOcall    TacticsPosMinusTarget              ; calculate vector to target

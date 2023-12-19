@@ -9,6 +9,10 @@
 
 ; we may nneed to rebuidl these tables for cp instruction so its max rank not min
 ; Coding limit for simplicity, each table has 15 ships in it
+; Rank table structure:
+; Columns = Selection to pick from 
+; Rows    = Rank maxium rating, Type of Ship to Spawn
+; Algorithims slect which rank table to select based on galaxy, player rankings and cargo contained etc.
 ShipPirateTableARank:    DB RankingEQHarmless, RankingEQHarmless, RankingEQMostly,   RankingEQMostly,     RankingEQPoor,     RankingEQAverage,   RankingEQDeadly,    RankingEQDeadly
 ShipPirateTableA:        DB ShipID_Sidewinder, ShipID_Adder,      ShipID_Asp_Mk_2,   ShipID_Cobra_Mk_3_P, ShipID_Boulder,    ShipID_Bushmaster,  ShipID_Python_P,    ShipID_Anaconda    
 

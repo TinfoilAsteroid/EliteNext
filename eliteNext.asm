@@ -27,6 +27,7 @@
                 DISPLAY "TODO: Bug random dissapearance of ship in front view after time"
                 DISPLAY "TODO: Bug random flattening of ship in front view after time"
                 DISPLAY "TODO: Bug random exploising of station in front view after time, seems to affect short distance out"
+                DISPLAY "TODO: System map, showing planet, sun, space station and ship position, flat map compress Z, perhaps a +/- height value, say +/- character for every + 40 on z sign?"
                 DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
                 DISPLAY "DONE: Clean up console and remove compasses"
                 DISPLAY "DONE: Re-Write of Tidy"
@@ -39,6 +40,7 @@
 
     DEVICE ZXSPECTRUMNEXT
     SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
+    ;DEFINE  STARTUPDIAGS 1              ; use for displaying sprite data on start up for basic diagnostics
     DEFINE  DOUBLEBUFFER 1
     DEFINE  LATECLIPPING 1
     DEFINE  SIMPLEWARP   1
@@ -242,6 +244,7 @@ EliteNextStartup:       di
                         MMUSelectKeyboard
                         call        init_keyboard
 .PostDiag:              ClearForceTransition
+                    IFDEF STARTUPDIAGS
                         SetBorder   $04
                         MMUSelectSpriteBank
                         call        sprite_diagnostic
@@ -250,6 +253,7 @@ EliteNextStartup:       di
                         call        WaitForAnyKey                      
                         MMUSelectSpriteBank
                         call        sprite_diagnostic_clear                     
+                    ENDIF
 ;TidyCounterInitialise:  ld          a,TidyInterval
 ;                        ld          (TidyCounter),a
 TestText:               xor			a
@@ -618,9 +622,9 @@ VectorTable:
 
 IR_COUNT        dw  $0060
 
-LAST_DELTA      db  0    
-SavedMMU6       db  0 
-SavedMMU7       db  0
+LAST_DELTA          db  0    
+SavedMMU6           db  0               ; use by interrupt handler only
+SavedMMU7           db  0               ; use by interrupt handler only
 SoundInterrupt      EQU IM2Sound
 DanubeInterrupt     EQU IM2PlayDanube
 AttractInterrrupt   EQU IM2AttractMode
@@ -660,25 +664,25 @@ EndOfNonBanked:
     DISPLAY "Non Banked Code + Interrupt Handler Ends At", EndOfNonBanked
 
 
-SaveMMU6:               MACRO
-                        GetNextReg  MMU_SLOT_6_REGISTER
-                        ld      (SavedMMU6),a
-                        ENDM
-
-RestoreMMU6:            MACRO     
-                        ld      a,(SavedMMU6)               ; now restore up post interrupt
-                        nextreg MMU_SLOT_6_REGISTER,a       ; Restore MMU7                   
-                        ENDM
-
-SaveMMU7:               MACRO
-                        GetNextReg  MMU_SLOT_7_REGISTER
-                        ld      (SavedMMU7),a
-                        ENDM
-
-RestoreMMU7:            MACRO     
-                        ld      a,(SavedMMU7)               ; now restore up post interrupt
-                        nextreg MMU_SLOT_7_REGISTER,a       ; Restore MMU7                   
-                        ENDM
+;SaveMMU6:               MACRO
+;                        GetNextReg  MMU_SLOT_6_REGISTER
+;                        ld      (SavedMMU6),a
+;                        ENDM
+;
+;RestoreMMU6:            MACRO     
+;                        ld      a,(SavedMMU6)               ; now restore up post interrupt
+;                        nextreg MMU_SLOT_6_REGISTER,a       ; Restore MMU7                   
+;                        ENDM
+;
+;SaveMMU7:               MACRO
+;                        GetNextReg  MMU_SLOT_7_REGISTER
+;                        ld      (SavedMMU7),a
+;                        ENDM
+;
+;RestoreMMU7:            MACRO     
+;                        ld      a,(SavedMMU7)               ; now restore up post interrupt
+;                        nextreg MMU_SLOT_7_REGISTER,a       ; Restore MMU7                   
+;                        ENDM
 
 IM2Sound:               SaveMMU7
                         MMUSelectSound
@@ -1144,7 +1148,7 @@ GALAXYDATABlock7:   DB $FF
                     PAGE    BankMathsBankedFns
                     ORG     MathsBankedFnsAddr,BankMathsBankedFns
                     INCLUDE "./Maths/MathsBankedFns.asm"
-                    DISPLAY "Bank ",MathsBankedFnsAddr," - Bytes free ",/D, $2000 - ($-MathsBankedFnsAddr), " - BankMathsBankedAdd"
+                    DISPLAY "Bank ",BankMathsBankedFns," - Bytes free ",/D, $2000 - ($-MathsBankedFnsAddr), " - BankMathsBankedFns"
                     ASSERT $-MathsBankedFnsAddr <8912, Bank code leaks over 8K boundary
     
     SAVENEX OPEN "EliteN.nex", EliteNextStartup , TopOfStack

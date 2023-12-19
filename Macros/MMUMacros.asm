@@ -99,7 +99,7 @@ MMUSelectUniverseN:  MACRO value
                      ENDM
 
 MMUSelectSpaceStation: MACRO
-                     nextreg SpaceStationMMU,         BankSpaceStationData
+                     nextreg SpaceStationMMU,   BankSpaceStationData
                      ENDM
 
 MMUSelectMathsBankedFns   MACRO
@@ -156,3 +156,25 @@ MMUSelectScreenA:    MACRO
 MMUSelectSound:      MACRO
                      nextreg SoundMMU,		    BankSound
 					 ENDM
+                     
+
+
+SaveMMU6:           MACRO
+                    GetNextReg  MMU_SLOT_6_REGISTER
+                    ld      (SavedMMU6),a
+                    ENDM
+
+RestoreMMU6:        MACRO     
+                    ld      a,(SavedMMU6)               ; now restore up post interrupt
+                    nextreg MMU_SLOT_6_REGISTER,a       ; Restore MMU7                   
+                    ENDM
+
+SaveMMU7:           MACRO
+                    GetNextReg  MMU_SLOT_7_REGISTER
+                    ld      (SavedMMU7),a
+                    ENDM
+
+RestoreMMU7:        MACRO     
+                    ld      a,(SavedMMU7)               ; now restore up post interrupt
+                    nextreg MMU_SLOT_7_REGISTER,a       ; Restore MMU7                   
+                    ENDM                     

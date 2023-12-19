@@ -57,18 +57,31 @@ PlanetTypeMeridian      equ 128
 PlanetMinRadius         equ 6
 
 ShipTotalModelCount     equ 44
-ShipTypeScoopable       equ 4         ; a sub set of junk
-ShipTypeJunk            equ 3
-ShipTypeStation         equ 2
-ShipTypeMissile         equ 1
 ShipTypeNormal          equ 0
+ShipTypeMissile         equ 1
+ShipTypeStation         equ 2
+ShipTypeJunk            equ 3
+ShipTypeScoopable       equ 4         ; a sub set of junk
+ShipTypeTargoid         equ 5
+ShipTypeUndefined1      equ 6
+ShipTypeUndefined2      equ 7
+ShipTypeUndefined3      equ 8
+ShipTypeUndefined4      equ 9
+ShipTypeUndefined5      equ 10
+ShipTypeUndefined6      equ 11
+ShipTypeUndefined7      equ 12
+ShipTypeUndefined8      equ 13
+ShipTypeUndefined9      equ 14
+ShipTypeUndefined10      equ 15
+ShipTypeNoAI            equ 16
+
 ShipTypeText            equ 253
 ShipTypeDebug           equ 254
 ShipTypeEmpty           equ 255
 
 SpawnTypeStation        EQU 0
-SpawnTypeAsteroid       EQU SpawnTypeStation        + 1
-SpawnTypeJunk           EQU SpawnTypeAsteroid       + 1
+SpawnTypeBodies         EQU SpawnTypeStation        + 1
+SpawnTypeJunk           EQU SpawnTypeBodies         + 1
 SpawnTypeCop            EQU SpawnTypeJunk           + 1
 SpawnTypeTrader         EQU SpawnTypeCop            + 1
 SpawnTypeNonTrader      EQU SpawnTypeTrader         + 1
@@ -126,6 +139,7 @@ ShipIsBystander         equ Bit5Only   ;
 ShipIsCop               equ Bit6Only   ; 
 ShipHasEscapePod        equ Bit7Only   ;
 ShipHostileNewBitNbr    equ 2
+        DISPLAY "TODO: Add bravery based on rank, new bits and type of ship"
 
 ; UBnkaiatkecm
 ;Unused                 equ Bit0Only

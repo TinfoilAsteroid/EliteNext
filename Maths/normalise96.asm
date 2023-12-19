@@ -96,3 +96,158 @@ normaliseXX1596S7:      ld		a,(XX15VecX)	    ; XX15+0
 ; X = X / Q with 96 = 1 , i.e X = X / Q * 3/8
 ; Y = Y / Q with 96 = 1 , i.e Y = Y / Q * 3/8
 ; Z = Z / Q with 96 = 1 , i.e Z = Z / Q * 3/8
+
+;------------------------------------------------------------
+; To normalise the 24 bit version, bring out sign into TargetVectorxsgn
+; and make UBnKTargetXpos = abs (UBnKTargetXPos)
+; set up UBnKTarget[XYZ]Pos with 7 bit version of vector normalised
+; set up UBnKTargetpXYZ]Sgn with the sign bit
+NormalseUnivTarget:     ld      a,(UBnKTargetXPos+2)
+                        ld      b,a
+                        and     $80
+                        ld      (UBnKTargetXPosSgn),a        ; Split out the sign into byte 3
+                        ld      a,b
+                        and     $7F
+                        ld      (UBnKTargetXPos+2),a  
+.ABSYComponenet:        ld      a,(UBnKTargetYPos+2)
+                        ld      b,a
+                        and     $80
+                        ld      (UBnKTargetYPosSgn),a        ; Split out the sign into byte 3
+                        ld      a,b
+                        and     $7F
+                        ld      (UBnKTargetYPos+2),a                          
+.ABSXZomponenet:        ld      a,(UBnKTargetZPos+2)
+                        ld      b,a
+                        and     $80
+                        ld      (UBnKTargetZPosSgn),a        ; Split out the sign into byte 3
+                        ld      a,b
+                        and     $7F
+                        ld      (UBnKTargetZPos+2),a                          
+;.. When we hit here the UBnKTargetX,Y and Z are 24 bit abs values to simplify scaling                        
+.Scale:                 ld      hl, (TacticsVectorX)        ; pull 24 bit into registers
+                        ld      a,(TacticsVectorX+2)        ; h l ixH = X
+                        ld      ixh,a                       ;
+                        ld      de, (TacticsVectorY)        ; d e iyH = Y
+                        ld      a,(TacticsVectorY+2)        ;
+                        ld      iyh,a                       ;
+                        ld      bc, (TacticsVectorZ)        ; b c iyL = Y
+                        ld      a,(TacticsVectorZ+2)        ;
+                        ld      iyl,a                       ;
+.ScaleLoop1:            ld      a,ixh                       ; first pass get to 16 bit
+                        or      iyh
+                        or      iyl
+                        or      iyh
+                        jp      z,.DoneScaling1
+                        ShiftIXhHLRight1
+                        ShiftIYhDERight1
+                        ShiftIYlBCRight1
+.DoneScaling1:          ;-- Now we have got here hl = X, de = Y, bc = Z
+                        ;-- we cal just jump into the Normalize Tactics code
+.ScaleLoop2:            ld      a,h
+                        or      d
+                        or      b
+                        jr      z,.DoneScaling2
+                        ShiftHLRight1
+                        ShiftDERight1
+                        ShiftBCRight1
+                        jp      .ScaleLoop2
+;-- Now we are down to 8 bit values, so we need to scale again to get S7         
+.DoneScaling2:          ShiftHLRight1
+                        ShiftDERight1
+                        ShiftBCRight1
+.CalculateLength:       push    hl,,de,,bc                  ; save vecrtor x y and z nwo they are scaled to 1 byte
+                        ld      d,e                         ; hl = y ^ 2
+                        mul     de                          ; .
+                        ex      de,hl                       ; .
+                        ld      d,e                         ; de = x ^ 2
+                        mul     de                          ; .
+                        add     hl,de                       ; hl = y^ 2 + x ^ 2
+                        ld      d,c
+                        ld      e,c
+                        mul     de
+                        add     hl,de                       ; hl =  y^ 2 + x ^ 2 + z ^ 2
+                        ex      de,hl                       ; fix as hl was holding square
+                        call    asm_sqrt                    ; hl = sqrt (de) = sqrt (x ^ 2 + y ^ 2 + z ^ 2)
+                        ; add in logic if h is low then use lower bytes for all 
+.NormaliseZ:            ld      a,l                         ; save length into iyh
+                        ld      iyh,a                       ; .
+                        ld      d,a                         ;
+                        pop     bc                          ; retrive z scaled
+                        ld      a,c                         ; a = scaled byte
+                        call    AequAdivDmul967Bit          
+                        ld      (TacticsVectorZ),a          ; now Tactics Vector Z byte 1 is value
+.NormaliseY:            pop     de
+                        ld      a,e
+                        ld      d,iyh                        
+                        call    AequAdivDmul967Bit
+                        ld      (TacticsVectorY),a
+.NormaliseX:            pop     hl
+                        ld      a,l
+                        ld      d,iyh                        
+                        call    AequAdivDmul967Bit
+                        ld      (TacticsVectorX),a          ;
+                        ret
+
+            DISPLAY "TODO: Missle AI only works on S15 spread over 24 bits, i.e. ignores Sign byte 7 bits"
+;-- This norallises the Tactics vector in memory as much as possible, uses 16 bits 
+NormalizeTactics:       ld      hl, (TacticsVectorX)        ; pull XX15 into registers
+                        ld      de, (TacticsVectorY)        ; .
+                        ld      bc, (TacticsVectorZ)        ; .
+.ScaleLoop:             ld      a,h
+                        or      d
+                        or      b
+                        jr      z,.DoneScaling
+                        ShiftHLRight1
+                        ShiftDERight1
+                        ShiftBCRight1
+                        jp      .ScaleLoop
+.DoneScaling:           ShiftHLRight1                       ; as the values now need to be sign magnitued
+                        ShiftDERight1                       ; e.g. S + 7 bit we need an extra shift
+                        ShiftBCRight1                       ; now values are in L E C
+                        push    hl,,de,,bc                  ; save vecrtor x y and z nwo they are scaled to 1 byte
+                        ld      d,e                         ; hl = y ^ 2
+                        mul     de                          ; .
+                        ex      de,hl                       ; .
+                        ld      d,e                         ; de = x ^ 2
+                        mul     de                          ; .
+                        add     hl,de                       ; hl = y^ 2 + x ^ 2
+                        ld      d,c
+                        ld      e,c
+                        mul     de
+                        add     hl,de                       ; hl =  y^ 2 + x ^ 2 + z ^ 2
+                        ex      de,hl                       ; fix as hl was holding square
+                        call    asm_sqrt                    ; hl = sqrt (de) = sqrt (x ^ 2 + y ^ 2 + z ^ 2)
+                        ; add in logic if h is low then use lower bytes for all 
+                        ld      a,l
+                        ld      iyh,a
+                        ld      d,a
+                        pop     bc                          ; retrive tacticsvectorz scaled
+                        ld      a,c                         ; a = scaled byte
+                        call    AequAdivDmul967Bit;AequAdivDmul96Unsg          ; This rountine I think is wrong and retuins bad values
+                        ld      (TacticsVectorZ),a
+                        pop     de
+                        ld      a,e
+                        ld      d,iyh                        
+                        call    AequAdivDmul967Bit;AequAdivDmul96Unsg
+                        ld      (TacticsVectorY),a
+                        pop     hl
+                        ld      a,l
+                        ld      d,iyh                        
+                        call    AequAdivDmul967Bit;AequAdivDmul96Unsg
+                        ld      (TacticsVectorX),a
+                        ; BODGE FOR NOW
+                        ZeroA                              ;; added to help debugging
+                        ld      (TacticsVectorX+1),a       ;; added to help debugging
+                        ld      (TacticsVectorY+1),a       ;; added to help debugging
+                        ld      (TacticsVectorZ+1),a       ;; added to help debugging
+                        SignBitOnlyMem TacticsVectorX+2     ; now upper byte is sign only
+                        SignBitOnlyMem TacticsVectorY+2     ; (could move it to lower perhaps later if 
+                        SignBitOnlyMem TacticsVectorZ+2     ;  its worth it)
+                      ;; oly using byte 2 for sign  ldCopyByte TacticsVectorX+2, TacticsVectorX+1
+                      ;; oly using byte 2 for sign  ldCopyByte TacticsVectorY+2, TacticsVectorY+1
+                      ;; oly using byte 2 for sign  ldCopyByte TacticsVectorZ+2, TacticsVectorZ+1
+                      ;; oly using byte 2 for sign  SignBitOnlyMem TacticsVectorX+1     ; now upper byte is sign only
+                      ;; oly using byte 2 for sign  SignBitOnlyMem TacticsVectorY+1     ; (could move it to lower perhaps later if 
+                      ;; oly using byte 2 for sign  SignBitOnlyMem TacticsVectorZ+1     ;  its worth it)
+                        ret
+

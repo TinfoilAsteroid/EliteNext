@@ -134,7 +134,10 @@ GetTypeAtSlotA:         ld      hl,UniverseSlotList
 IsPlanetOrSpaceStation: ld      hl,UniverseSlotList+1
                         ld      a,(hl)
                         ret
-
+;-----------------------------------------------------------------------------
+;-- Search the slot list for a free slot and return the result in c register. 
+;-- Carry is clear if successful, else carry is set if all slots full
+;-- uses hl, bc, a
 FindNextFreeSlotInC:    ld      hl,UniverseSlotList
                         ld      b, UniverseSlotListSize
                         ld      c, 0
@@ -148,7 +151,10 @@ FindNextFreeSlotInC:    ld      hl,UniverseSlotList
 .FoundSlot:             ClearCarryFlag
                         ret
   
-                        
+;-----------------------------------------------------------------------------
+;-- calls FindNextFreeSlotInC and returns the result in a and c registers. 
+;-- Carry is clear if successful, else carry is set if all slots full
+;-- uses hl, bc, a                        
 FindNextFreeSlotInA:    call    FindNextFreeSlotInC
                         ld      a,c
                         ret
