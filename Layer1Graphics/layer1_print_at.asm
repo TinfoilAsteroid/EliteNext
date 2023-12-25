@@ -1,4 +1,4 @@
-; "l1 print char a = character, de = Ypixel Xchar of print"
+; "l1 print char a = character, de = Ypixel Xpxiel rounded to char of print"
 l1_print_char:          push	de,,hl	
                         pixelad								; hl = address of de
                         push	hl							; save hl for loop
@@ -21,6 +21,9 @@ l1_print_char:          push	de,,hl
 
 ; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
 ; now skips ascii code < 32 but moves on cursor by 1 char
+l1_print_at_char     :  sla     d       ; Convert D from char to pixel
+                        sla     d       ; by muliplying by 8
+                        sla     d       ; 
 l1_print_at:            
 .PrintLoop:             ld		a,(hl)
                         cp		0
@@ -34,6 +37,114 @@ l1_print_at:
                                         DISPLAY "TODO: looks liek rogue popde"
 .Clearstackandfinish:   ;pop		de                      ; TODO LOOOKS TO BE A ROGUE POPDE
                         ret
+                     
+
+
+HexU8Char:       DB "00",0
+HexU16Char:      DB "0000",0
+HexS8Char:       DB "+00",0
+HexS16Char:      DB "+0000",0
+HexS24Char:      DB "+0000.00",0
+
+; prints + sign for bit 7 clear in a else - sign for bit 7 set, Load to buffer location in ix
+l1_buffer_sign_at_ix:   bit     7,a
+                        jp      z,.PrintPlus
+.PrintMinus:            ld      a,"-"
+                        ld      (ix+0),a
+                        ret
+.PrintPlus:             ld      a,"+"
+                        ld      (ix+0),a
+                        ret
+
+HexMapping:     DB "0123456789ABCDEF"
+; writes hex 8 bit to ix buffer position
+l1_buffer_hex_8_at_ix:  push    bc,,hl
+                        ld      b,a
+                        swapnib
+                        and     $0F
+                        ld      hl,HexMapping
+                        add     hl,a
+                        ld      a,(hl)
+                        ld      (ix+0),a
+                        ld      hl,HexMapping
+                        ld      a,b
+                        and     $0F
+                        add     hl,a
+                        ld      a,(hl)
+                        ld      (ix+1),a
+                        pop     bc,,hl
+                        ret
+                        
+; prints 16 bit lead sign hex value in HLA at char pos DE
+l1_print_s24_hex_at_char: push  af                      ; first off do sign
+                          ld    ix,HexS24Char
+                          ld    a,h
+                          call  l1_buffer_sign_at_ix
+                          pop   af                      ; now do hl as an unsigned by clearing bit 7
+                          inc   ix                      ; move to actual digits
+                          push  af
+                          ld    a,h
+                          res   7,a                     ; clear sign bit regardless
+                          call  l1_buffer_hex_8_at_ix
+                          inc   ix
+                          inc   ix
+                          ld    a,l
+                          call  l1_buffer_hex_8_at_ix
+                          inc   ix
+                          inc   ix                      
+                          inc   ix                      ; also skip decimal point
+                          pop   af
+                          call  l1_buffer_hex_8_at_ix
+                          ld    hl,HexS24Char           ; by here de is still unaffected
+                          call  l1_print_at_char
+                          ret
+; prints 16 bit lead sign hex value in HL at char pos DE
+l1_print_s16_hex_at_char: ld    ix,HexS16Char
+                          ld    a,h
+                          call  l1_buffer_sign_at_ix
+                          inc   ix                      ; move to actual digits
+                          ld    a,h
+                          call  l1_buffer_hex_8_at_ix
+                          inc   ix
+                          inc   ix
+                          ld    a,l
+                          call  l1_buffer_hex_8_at_ix
+                          ld    hl,HexS16Char           ; by here de is still unaffected
+                          call  l1_print_at_char
+                          ret
+; prints 16 bit unsigned hext value in HL at char pos DE
+l1_print_u16_hex_at_char: ld    ix,HexU16Char
+                          ld    a,h
+                          call  l1_buffer_hex_8_at_ix
+                          inc   ix
+                          inc   ix
+                          ld    a,l
+                          call  l1_buffer_hex_8_at_ix
+                          ld    hl,HexU16Char           ; by here de is still unaffected
+                          call  l1_print_at_char
+                          ret
+; prints 8 bit signed hext value in a at char pos DE
+l1_print_s8_hex_at_char:  ld    ix,HexS8Char
+                          ld    h,a                     ; save a into h
+                          call  l1_buffer_sign_at_ix
+                          inc   ix                      ; move to actual digits
+                          ld    a,h                     ; get a back
+                          res   7,a                     ; clear sign bit regardless                          
+                          call  l1_buffer_hex_8_at_ix
+                          ld    hl,HexS8Char           ; by here de is still unaffected
+                          call  l1_print_at_char
+                          ret
+
+; prints 8 bit signed hext value in a at char pos DE
+l1_print_u8_hex_at_char:  ld    ix,HexU8Char
+                          call  l1_buffer_hex_8_at_ix
+                          ld    hl,HexU8Char           ; by here de is still unaffected
+                          call  l1_print_at_char
+                          ret
+
+
+
+
 
 ;l1_print_at_wrap:
 ;; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
@@ -114,6 +225,11 @@ L1PrintWordAtHL:        ld      a,(hl)
                         ret
                                
                     
+; print at based whole character positions DE=yx, HL = message Addr
+; 
+l1_print_at_char_wrap:  sla     d       ; Convert D from char to pixel
+                        sla     d       ; by muliplying by 8
+                        sla     d       ; 
 ; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
 ; Now has full word level wrapping
 l1_print_at_wrap:       ld      iyh,e

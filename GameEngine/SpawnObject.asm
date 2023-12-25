@@ -1,4 +1,38 @@
 
+SpawnMissileHandler:            ld      a,(UbnKShipUnivBankNbr)             ; save current bank number
+                                ld      (EnemyShipBank),a                   ;
+                                ld      a,5
+                                call    CalcLaunchOffset
+                                ld      a,0                                 ; TODO For now only 1 missile type
+                                GetByteAInTable ShipMissileTable            ; swap in missile data
+                                call    SpawnShipTypeA                      ; spawn the ship
+                                ret     c                                   ; return if failed
+                                call    UnivSetEnemyMissile                 ; as per player but sets as angry
+                                ld      a,$FF
+                                ld      (UBnKMissileTarget),a               ; set as definte player as target
+                                ld      a,(EnemyShipBank)                   ; Direct restore current bank
+                                MMUSelectUnivBankA                          ;
+                                ld      hl, UBnKMissilesLeft                ; reduce enemy missile count
+                                dec     (hl)
+                                ret
+
+            DISPLAY "TODO: FOR NOW ONLY 1 MISSILE TYPE"
+SpawnPlayerMissileHandler:      ZeroA                                       ; TODO For now only 1 missile type
+                                GetByteAInTable ShipMissileTable            ; swap in missile data
+                                call    SpawnShipTypeA                      ; spawn the ship
+                                jr      c,.MissileMissFire                  ; give a miss fire indicator as we have no slots
+                                ld      a,(MissileTargettingFlag)           ; Get target from computer
+                                ld      (UBnKMissileTarget),a               ; load target Data
+                                call    UnivSetPlayerMissile                ; .
+                                ClearMissileTargetting                      ; reset targetting
+                                ld      hl, NbrMissiles
+                                dec     (hl)
+            DISPLAY "TODO: handle removal of missile from inventory and console"
+                                ret
+.MissileMissFire:               ClearMissileTargetting
+                                ret ; TODO bing bong noise misfire message
+
+
 SpawnStationHandler:            call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ; extra code goes here
@@ -32,9 +66,11 @@ SpawnTypeCopHandler:            call    SpawnShipTypeA                      ; wi
                                 ; if not in space station area even split on orbiting a random point in space at distance random
                                 ;                                            travelling to station
                                 ;                                            travelling to sun
+                                call    UnivSetAIOnly
                                 ret
 SpawnTypeTraderHandler:         call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
+                                call    UnivSetAIOnly
                                 ; 50/50 goign to planet or sun
                                 ;                main loop AI determines if our FIST status will force a jump
                                 ret
@@ -43,6 +79,7 @@ SpawnTypeNonTraderHandler:      call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ; 50/50 goign to planet or sun
                                 ; if FIST is high then 10% chance will auto go hostile
+                                call    UnivSetAIOnly
                                 ret
 
 SpawnTypePirateHandler:         call    SpawnShipTypeA

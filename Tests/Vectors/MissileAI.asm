@@ -6,28 +6,19 @@ MISSILEMAXDECEL         equ -3
                         ;DEFINE MISSILEBREAK
 ;.. Thsi version uses new kind logic
 ;... Now the tactics if current ship is the missile, when we enter this SelectedUniverseSlot holds slot of missile
-MissileAIV3:            ;ld      a,(ShipAIEnabled)
-                        ;ReturnOnBitClear a, ShipAIEnabledBitNbr 
-                        IFDEF MISSILEDOHIT
-                            JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
-                        ENDIF
-.CheckForECM:           JumpIfMemNotZero ECMCountDown,.ECMIsActive  ; If ECM is running then kill the missile
-.IsMissileHostile:      IsShipHostile                               ; is missle attacking us?
-                        JumpIfZero .MissileTargetingShip            ; Missile is friendly then z is set else targetting us
-.MissileTargetingPlayer:ld      hl, (UBnKxlo)                       ; check if missile in range of us
-                        ld      a,(UBnKMissileDetonateRange)
-                        ld      c,a                                 ; c holds detonation range
-                        call    MissileHitUsCheckPos
-.MissileNotHitUsYet:    jp      nc, .UpdateTargetingUsPos
-.MissleHitUs:           call    PlayerHitByMissile
-                        jp      .ECMIsActive                        ; we use ECM logic to destroy missile which eqneues is
-.UpdateTargetingUsPos:  call    SetPlayerAsTarget
-                        call    CopyPosToVector
-                        ld      a,(SelectedUniverseSlot)            ; we will use this quite a lot with next bank switching
-                        add     a,BankUNIVDATA0                     ; pre calculate add to optimise
-                        ld      iyh,a
-                        jp      .NormaliseDirection
+MissileAI:
 ;--- Missile is targeting other ship
+;--- In Debug Version we use slot 1 for Missile and Slot 2 for Target so its hard coded
+.UpdateTargetPosition:  MMUSelectUniverseN 2                        ;
+                        ld      hl,UBnKxlo
+                        ld      de,CurrentTargetXPos
+                        ld      bc,9
+                        ldir
+                        MMUSelectUniverseN 1
+                        ld      hl,CurrentTargetXPos
+                        ld      de,UBnKTargetXPos
+                        ld      bc,9
+                        ldir
 .MissileTargetingShip:  ld      a,(SelectedUniverseSlot)            ; we will use this quite a lot with next bank switching
 .SaveMissileBank:       add     a,BankUNIVDATA0                     ; pre calculate add to optimise
                         ld      iyh,a

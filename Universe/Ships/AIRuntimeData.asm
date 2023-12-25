@@ -61,6 +61,9 @@ UBnKTacticsRotMatY          DB  0
 UBnKTacticsRoyMatYSign      DB  0
 UBnKTacticsRotMatZ          DB  0
 UBnKTacticsRotMatZSign      DB  0
+UBnKOffset                  DS  3 * 3                   ; Offset position for target
+UBnKDirection               DS  3 * 2                   ; Direction Vector
+UBnKDotProduct              DB  9                       ; Dot Product
 UBnKSpeed                   DB  0                       ; INWK +27
 UBnKAccel                   DB  0                       ; INWK +28
 UBnKRotXCounter             DB  0                       ; INWK +29

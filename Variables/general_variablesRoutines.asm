@@ -2,7 +2,7 @@
 ; This will save to current queue position. it also asusmes that we never go beyond queue
 ; limit so does not do bounds checking for speed
 SaveMMU0:               GetNextReg  MMU_SLOT_0_REGISTER             ; Get current reg value
-                        ld          hl(SaveMMU0QueueHead)               ; get address of current slot
+                        ld          hl,(SaveMMU0QueueHead)               ; get address of current slot
                         ld          (hl),a                          ; and write reg value to this address
                         ld          hl,SaveMMU0QueueHead                ; move address pointer up one
                         inc         (hl)
@@ -22,7 +22,7 @@ SaveMMU6:               GetNextReg  MMU_SLOT_6_REGISTER             ; Get curren
                         inc         (hl)
                         ret
 
-RestoreMMU6:            ld          hl,(SaveMMU6QueueHead)              ; Currently address pointer looking at next free
+RestoreMMU6:            ld          hl,SaveMMU6QueueHead            ; Currently address pointer looking at next free
                         dec         (hl)                            ; so step back one
                         ld          hl,(SaveMMU6QueueHead)              ; save position as next free
                         ld          a,(hl)                          ; get value that was there
@@ -30,13 +30,13 @@ RestoreMMU6:            ld          hl,(SaveMMU6QueueHead)              ; Curren
                         ret
 
 SaveMMU7:               GetNextReg  MMU_SLOT_7_REGISTER             ; Get current reg value
-                        ld          hl,(SaveMMU7QueueHead)              ; get address of current slot
+                        ld          hl,(SaveMMU7QueueHead)          ; get address of current slot
                         ld          (hl),a                          ; and write reg value to this address
-                        ld          hl,SaveMMU7QueueHead                ; move address pointer up one
+                        ld          hl,SaveMMU7QueueHead            ; move address pointer up one
                         inc         (hl)
                         ret
 
-RestoreMMU7:            ld          hl,(SaveMMU7QueueHead)              ; Currently looking at next free
+RestoreMMU7:            ld          hl,SaveMMU7QueueHead            ; Currently looking at next free
                         dec         (hl)                            ; so step back one
                         ld          hl,(SaveMMU7QueueHead)              ; save position as next free
                         ld          a,(hl)                          ; get value that was there

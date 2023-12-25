@@ -69,7 +69,6 @@ UBnkNodeArray2              DS NodeArraySize * 4        ; XX3 Holds the points a
 UbnkLineArray               DS LineArraySize * 8        ; XX19 Holds the clipped line details
 ; ONLY IF TESTING SOLID FILL UBnkTriangleOverspill       DS TraingleArraySize * 4    ; jsut a padding for testing
 UBnkLinesHeapMax            EQU $ - UbnkLineArray
-UBnkTraingleArray           EQU UbnkLineArray           ; We can use the line array as we draw lines or traingles
 UbnkEdgeProcessedList DS EdgeHeapSize
 ; Array current Lengths
 UbnkFaceVisArrayLen         DS 1
@@ -271,6 +270,29 @@ WarpUnivByHL:           ld      b,h
                         ld      a,l
                         ld      (UBnKzlo),a
                         ret
+; --------------------------------------------------------------                        
+; This sets the position of the current ship if its a player launched missile
+UnivSetPlayerMissile:   call    InitialisePlayerMissileOrientation  ; Copy in Player  facing
+                        call    ResetUbnkPosition               ; home position
+                        ld      a,MissileDropHeight             ; the missile launches from underneath
+                        ld      (UBnKylo),a                     ; so its -ve drop height
+                        ld      a,$80                           ;
+                        ld      (UBnKysgn),a                    ;
+                        ld      a,3                             ; set accelleration
+                        ld      (UBnKAccel),a                   ;
+                        ZeroA
+                        ld      (UBnKRotXCounter),a
+                        ld      (UBnKRotZCounter),a
+                        ld      a,3                             ; these are max roll and pitch rates for later
+                        ld      (UBnKRAT),a
+                        inc     a
+                        ld      (UBnKRAT2),a
+                        ld      a,22
+                        ld      (UBnKCNT2),a
+                        MaxUnivSpeed                            ; and immediatley full speed (for now at least) TODO
+                        SetMemFalse UBnKMissleHitToProcess
+                        call    ClearShipHostile                ; its a player missile
+                        ret    
 
 ; --------------------------------------------------------------                        
 ; update ship speed and pitch based on adjustments from AI Tactics
@@ -368,9 +390,8 @@ UnivInitRuntime:        ld      bc,UBnKRuntimeSize
                         inc     hl
                         djnz    .InitLoop            
                         ret
-
-
-                        
+    DISPLAY "Tracing 2", $
+    
                         include "../../Universe/Ships/InitialiseOrientation.asm"
 
 ;--------------------------------------------------------------------------------------------------------
@@ -864,67 +885,7 @@ EyeStoreYPoint:                                    ; also from LL62, XX3 node he
             INCLUDE "../../Universe/Ships/ApplyMyRollAndPitch.asm"
             INCLUDE "../../Universe/Ships/ApplyShipRollAndPitch.asm"
             INCLUDE "../../Universe/Ships/ApplyShipSpeed.asm"
-            INCLUDE "../../ModelRender/DrawLines.asm"
 ; ---------------------------------------------------------------------------------------------------------------------------------    
-
-; DIot seem to lawyas have Y = 0???
-ProcessDot:            ; break
-                        call    CopyRotmatToTransMat             ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
-                        call    ScaleXX16Matrix197               ;#02; Normalise XX16
-                        call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
-                        call    InverseXX16                      ;#11; Invert rotation matrix
-                        ld      hl,0
-                        ld      (UBnkXScaled),hl
-                        ld      (UBnkYScaled),hl
-                        ld      (UBnkZScaled),hl
-                        xor     a
-                        call    XX12EquNodeDotOrientation
-                        call    TransposeXX12ByShipToXX15
-                        call    ScaleNodeTo8Bit                     ; scale to 8 bit values, why don't we hold the magnitude here?x
-                        ld      iy,UBnkNodeArray
-                        call    ProjectNodeToEye
-                        ret
-                
-; .....................................................
-; Plot Node points as part of debugging
-PlotAllNodes:           ld      a,(VertexCtX6Addr)               ; get Hull byte#9 = number of vertices *6                                   ;;;
-.GetActualVertexCount:  ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
-                        ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
-                        ld      d,6
-                        call    asm_div8                         ; asm_div8 C_Div_D - C is the numerator, D is the denominator, A is the remainder, B is 0, C is the result of C/D,D,E,H,L are not changed"
-                        ld      b,c                              ; c = number of vertices
-                        ld      iy,UBnkNodeArray
-.PlotLoop:              ld      e,(iy)
-                        ld      d,(iy+1)
-                        ld      l,(iy+2)
-                        ld      h,(iy+3)
-                        push    bc,,iy
-                        call    PlotAtDEHL
-                        pop     bc,,iy
-                        inc     iy
-                        inc     iy
-                        inc     iy
-                        inc     iy
-                        djnz    .PlotLoop
-                        ret
-
-PlotAtDEHL:             ld      a,d
-                        and     a
-                        ret     nz
-                        ld      a,h
-                        and     a
-                        ret     nz
-                        ld      a,l
-                        and     $80
-                        ret     nz
-                        MMUSelectLayer2
-                        ld      b,l
-                        ld      c,e
-                        ld      a,$88
-                        call    l2_plot_pixel
-                        ret
-
-
 ; .....................................................
 ; Process Nodes does the following:
 ; for each node:
@@ -981,13 +942,6 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
 ;............................................................  
 .DetermineDrawType:     ReturnOnBitClear    a, ShipIsVisibleBitNbr          ; if its not visible exit early
 ;............................................................  
-.CarryOnWithDraw:       call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
-                       ; break
-                        ld      a,$E3
-                        ld      (line_gfx_colour),a  
-                        call    CullV2
-                        call    PrepLines                       ; With late clipping this just moves the data to the line array which is now x2 size
-                        call    DrawLinesLateClipping
                         ret 
 
     ;INCLUDE "../../Universe/Ships/PrepLines.asm"

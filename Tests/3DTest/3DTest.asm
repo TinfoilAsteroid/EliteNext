@@ -1,14 +1,15 @@
                 DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
                 DISPLAY "3D Test Code"
                 DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
-
+                DISPLAY "TODO: Odd Single pixel bug "
     DEVICE ZXSPECTRUMNEXT
     SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
 
 
     DEFINE  SHIP_DRAW_FULL_SCREEN 1
-    DEFINE  USE_NORMALISE_IX
+    DEFINE  USE_NORMALISE_IX  1
     DEFINE  INTERRUPS_DISABLE 1
+    DEFINE  DEBUG_NO_TACTICS_CODE 1
  CSPECTMAP 3DTest.map
  OPT --zxnext=cspect --syntax=a --reversepop
 ;-- Key Definitions                        
@@ -253,6 +254,7 @@ InputBlockerCheck:      MMUSelectKeyboard
 UpdateShipsControl:     call    UpdateUniverseObjects
 .JustViewPortCLS:       MMUSelectLayer2
                         call    l2_cls
+
 ;.. Render Ship ...................................................................................................................
 DrawForwardsShips:
 DrawShip:               xor     a
@@ -658,7 +660,7 @@ XX12PVarSign3		DB 0
     ;INCLUDE "../../Maths/asm_add.asm"
     ;INCLUDE "../../Maths/asm_subtract.asm"
     ;NCLUDE "../../Maths/DIVD3B2.asm"
-    INCLUDE "../../Maths/multiply.asm"
+    INCLUDE "../../Maths/asm_multiply.asm"
     INCLUDE "../../Maths/asm_square.asm"
     INCLUDE "../../Maths/asm_sine.asm"
     INCLUDE "../../Maths/asm_sqrt.asm"
@@ -671,19 +673,19 @@ XX12PVarSign3		DB 0
     INCLUDE "../../Maths/compare16.asm"
     INCLUDE "../../Maths/normalise96.asm"
     INCLUDE "../../Maths/binary_to_decimal.asm"
-    INCLUDE "../../Maths/Utilities/AequAdivQmul96-TIS2.asm" ; AequAdivDmul96
+    INCLUDE "../../Maths/asm_AequAdivQmul96.asm" ; AequAdivDmul96
     INCLUDE "../../Maths/Utilities/AequAmulQdiv256-FMLTU.asm"
     ;INCLUDE "../../Maths/Utilities/PRequSpeedDivZZdiv8-DV42-DV42IYH.asm"
     INCLUDE "../../Maths/Utilities/APequQmulA-MULT1.asm"
     INCLUDE "../../Maths/Utilities/badd_ll38.asm"
-    INCLUDE "../../Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
-    INCLUDE "../../Maths/Utilities/RequAdivQ-LL61.asm"
-    INCLUDE "../../Maths/Utilities/RSequQmulA-MULT12.asm"
+ ;   INCLUDE "../../Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
+ ;   INCLUDE "../../Maths/Utilities/RequAdivQ-LL61.asm"
+ ;   INCLUDE "../../Maths/Utilities/RSequQmulA-MULT12.asm"
     include "../../Universe/Ships/CopyRotMattoXX15.asm"
     include "../../Universe/Ships/CopyXX15toRotMat.asm"
     INCLUDE "../../Maths/asm_tidy.asm"
-    INCLUDE "../../Maths/Utilities/LL28AequAmul256DivD.asm"    
-    INCLUDE "../../Maths/Utilities/XAequMinusXAPplusRSdiv96-TIS1.asm"
+ ;   INCLUDE "../../Maths/Utilities/LL28AequAmul256DivD.asm"    
+ ;   INCLUDE "../../Maths/Utilities/XAequMinusXAPplusRSdiv96-TIS1.asm"
     INCLUDE "../../Menus/common_menu.asm"
 MainNonBankedCodeEnd:
     DISPLAY "Main Non Banked Code Ends at ",$

@@ -51,10 +51,10 @@ UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
                       ; ld      (TidyCounter),a
                        ;call    TidyUbnK
                        ; add AI in here too
-                        ld      a,(SelectedUniverseSlot)
-                        cp      2
-                        jp      nz,.SkipBreak
-                        break                       
+                        ;ld      a,(SelectedUniverseSlot)
+                        ;cp      2
+                        ;jp      nz,.SkipBreak
+                        ;break                       
 .SkipBreak:            ld       a,(ShipTypeAddr)
                                    DISPLAY "TODO: capture duff jumps"
                        ReturnIfAGTEusng ShipAiJumpTableMax              ; TODO capture duff jumps whilst debugging in case a new shjip type code is added

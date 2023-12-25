@@ -507,6 +507,7 @@ VectorUnivtoIY:     ld      ix,UBnKxlo                      ; target x = iy [x] 
                     ld      a,l                             ; .
                     ld      (UBnKTargetYPos),a              ; .
                     ld      (UBnKTargetYPos+1),de           ; .         
+                    ld      ix,UBnKzlo                      ; move to y component
                     ld      bc,3                            ; move to z component
                     add     iy,bc                           ; .
                     call    SubDELequAtIXMinusAtIY24Signed  ; target z = iy [z] - Univ ZPos
@@ -524,6 +525,7 @@ UnivDistanceToTarget:DISPLAY "TODO : WRITE CODE FOR UnivDistanceToTarget"
 ; Takes the UBnKTarget position and works out if its ready for a docking routine or jump
 
 
+        IFNDEF  DEBUG_NO_TACTICS_CODE
 
 TacticsVarResult        DW 0      
 TacticsDotRoofv:        ld      hl,UBnkrotmatRoofvX
@@ -623,7 +625,7 @@ CopyRotmatToUBnKTacticsMat: ld      de,UBnKTacticsRotMatX
                         and     SignOnly8Bit
                         ld      (de),a              ; set rot mat sign
                         ret
-
+        ENDIF
 
 
 

@@ -3,7 +3,8 @@
 
 ; Calculate K(3 2 1 0) = (A P+1 P) / (z_sign z_hi z_lo) where zsign hi lo is in DE with zsign leading hi
 varQRS                 DS      4
-varAPP                  DS     3
+varAPP                 DS     3
+Rvar                   DS     1
 
                     DISPLAY "TODO:  neds rewrite of whoel DIDV3B2"
 ;; NEEDS REWRITE TODO OF WHOLE DIVD3B2

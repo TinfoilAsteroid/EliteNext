@@ -97,6 +97,7 @@ normaliseXX1596S7:      ld		a,(XX15VecX)	    ; XX15+0
 ; Y = Y / Q with 96 = 1 , i.e Y = Y / Q * 3/8
 ; Z = Z / Q with 96 = 1 , i.e Z = Z / Q * 3/8
 
+        IFNDEF DEBUG_NO_TACTICS_CODE
 ;------------------------------------------------------------
 ; To normalise the 24 bit version, bring out sign into TargetVectorxsgn
 ; and make UBnKTargetXpos = abs (UBnKTargetXPos)
@@ -250,4 +251,4 @@ NormalizeTactics:       ld      hl, (TacticsVectorX)        ; pull XX15 into reg
                       ;; oly using byte 2 for sign  SignBitOnlyMem TacticsVectorY+1     ; (could move it to lower perhaps later if 
                       ;; oly using byte 2 for sign  SignBitOnlyMem TacticsVectorZ+1     ;  its worth it)
                         ret
-
+        ENDIF

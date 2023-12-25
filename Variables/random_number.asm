@@ -1,3 +1,15 @@
+; dea = random number
+doRandomS24:            call    doRandom
+                        ld      d,a
+                        push    hl
+                        call    doRandom
+                        pop     hl
+                        ld      e,a
+                        push    hl
+                        call    doRandom
+                        pop     hl
+                        ret
+
 doRandom2:									; .DORND2	\ -> &3F85 \ Restricted for explosion dust.
 doRND2:
 	and		a								; fast clear carry  leave bit0 of RAND+2 at 0. 
