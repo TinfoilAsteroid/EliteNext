@@ -120,6 +120,7 @@ InputBlockerCheck:      MMUSelectKeyboard
                         call    is_vkey_pressed
                         call    z, ToggleMissileState
 ;.. Update values based on movekey keys, may likley need damping as this coudl be very fast
+CalcValues:             call    UpdateTacticsVars
 UpdateShipsControl:     ld      a,(MissileState)
                         and     a
                         jp      z,.NotRunning
@@ -195,9 +196,8 @@ CurrentShipUniv:        DB      0
 ;..................................................................................................................................                        
 ; if ship is destroyed or exploding then z flag is clear, else z flag is set
 ;..................................................................................................................................                        
-; Replacement for MVEIT routine
-UpdateUniverseObjects:  MMUSelectUniverseN      1
-;.. Missile Tactics ...............................................................................................................                        
+; calculate details of direction and dot products
+UpdateTacticsVars:      MMUSelectUniverseN      1
                         call    LoadTargetData              ; Target position to UBnKTarget Pos
                         call    CalculateRelativePos        ; Target - missile to UBnKOffset
                         call    CheckDistance               ; Calculate distance, near far
@@ -213,8 +213,13 @@ UpdateUniverseObjects:  MMUSelectUniverseN      1
                         ld      (UBnKDotProductRoof),hl     ; .
                         ld      a,b
                         ld      (UBnKDotProductRoofSign),a
-                        call    FlipDirectionSigns
+                        ;call    FlipDirectionSigns
+;.. Missile Tactics ...............................................................................................................                        
                         call    SeekingLogic
+                        ret
+;..................................................................................................................................                        
+; Replacement for MVEIT routine
+UpdateUniverseObjects:  MMUSelectUniverseN      1
 ;.. Update Position ................................................................................................................................                        
                         call    ApplyShipRollAndPitch
                         call    ApplyShipSpeed
@@ -222,57 +227,108 @@ UpdateUniverseObjects:  MMUSelectUniverseN      1
                         ret
 ;..................................................................................................................................                        
 ; For now no random numbers
-SeekingLogic:           call    AdjustPitch
-                        call    AdjustRoll
-                        call    AdjustSpeed
+; if dot product for nose is negative then its over 90 degrees off
+
+; dot product of 36 is direct facing (96*96/256)
+; Angle table    +                  -
+;             36 =  0 (head on)  36 = 180
+;             35 = 15            35 = 166
+;             31 = 30            31 = 149
+;             27 = 41            27 = 138
+;             25 = 45            25 = 133
+;             22 = 52            22 = 127
+;             18 = 60            18 = 120
+;             15 = 65            15 = 114
+;             10 = 73            10 = 106
+;              8 = 77             8 = 102
+;              7 = 78             7 = 101
+;              3 = 85             3 = 94
+;              0 = 90             0 = 90
+
+SeekingLogic:           ld      a,(UBnKRotZCounter)
+                        and     a
+                        call    z, AdjustPitch              ; only call if there are no existing pitch orders
+                        ld      a,(UBnKRotXCounter)
+                        and     a
+                        call    z, AdjustRoll               ; only call if there are no existing roll orders
+                        ld      a,(UBnKAccel)
+                        and     a
+                        call    z, AdjustSpeed
                         ret
 ;..................................................................................................................................                        
-AdjustPitch:            ld      a,(UBnKDotProductRoofSign)
-                        ld      h,a
-                        ld      a,(UBnKDotProductRoof+1)
-                        sla     a
-                        JumpIfAGTENusng 16, .skipPitchZero
+AdjustPitch:            ld      a,(UBnKDotProductRoofSign)  ; if its negative then its over 90 degrees
+                        ld      h,a                         ; .
+                        and     a                           ; .
+                        jp      z,.Over90Degrees            ; .
+.Under90Degrees:        ld      a,(UBnKDotProductRoof+1)    ; get High byte of dot product
+                        JumpIfAGTENusng   35, .pitchZero    ; within 13 degees don't steer as proximity blast will do
+                        JumpIfAGTENusng   22, .pitchBySmall
+                        jp      .pitchNormal
 .pitchZero:             ZeroA
                         ld      (UBnKRotZCounter),a
                         call    ClearStatusPitch
                         ret
-.skipPitchZero:         ld      a,5
-                        or      h
-                        ld      (UBnKRotZCounter),a
+.pitchNormal:           ld      a,4
+                        ld      (UBnKRotZCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
+                        call    SetStatusPitch
+                        ret                     
+.pitchBySmall:          ld      a,2
+                        ld      (UBnKRotZCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
+                        call    SetStatusPitch
+                        ret
+.Over90Degrees:         ld      a,10
+                        ld      (UBnKRotZCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
                         call    SetStatusPitch
                         ret
 ;..................................................................................................................................                        
-AdjustRoll:             ld      a,(UBnKDotProductNoseSign)
-                        ld      h,a
-                        ld      a,(UBnKDotProductNose+1)
-                        sla     a
-                        JumpIfAGTENusng 16, .skipRollZero
-.pitchRoll:             ZeroA
+AdjustRoll:             ld      a,(UBnKDotProductNoseSign)  ; if its negative then its over 90 degrees
+                        ld      h,a                         ; .
+                        and     a                           ; .
+                        jp      z,.Over90Degrees            ; .
+.Under90Degrees:        ld      a,(UBnKDotProductNose+1)    ; get High byte of dot product
+                        JumpIfAGTENusng   30, .rollZero    ; within 13 degees don't steer as proximity blast will do
+                        JumpIfAGTENusng   22, .rollBySmall
+                        jp      .rollNormal
+.rollZero:              ZeroA
                         ld      (UBnKRotXCounter),a
-                        ; We don't clear as Adjust pitch may have set it
+                        call    ClearStatusRoll
                         ret
-.skipRollZero:          ld      a,5
-                        or      h
-                        ld      (UBnKRotXCounter),a
+.rollNormal:            ld      a,4
+                        ld      (UBnKRotXCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
+                        call    SetStatusRoll
+                        ret                     
+.rollBySmall:           ld      a,2
+                        ld      (UBnKRotXCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
+                        call    SetStatusRoll
+                        ret
+.Over90Degrees:         ld      a,10
+                        ld      (UBnKRotXCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
                         call    SetStatusRoll
                         ret
 ;..................................................................................................................................                        
-AdjustSpeed:            ld      a,(UBnKDotProductNoseSign)          ; if negatvie facing away so slow
+AdjustSpeed:            ld      a,(UBnKDotProductNoseSign)          ; if negative facing away so slow
                         and     a
                         jr      nz,.SlowDown
-                        ld      a,(UBnKDotProductNose)
-                        JumpIfALTNusng  22,.SlowDown                ; if nose < 22 then slow down       
-.Accelerate :           ld      a,3                                 ; else
+                        ld      a,(UBnKDotProductNose+1)
+                        JumpIfAGTENusng   30, .Accelerate           ; close enough to accellerate
+                        JumpIfALTNusng  22,.SmallSlow               ; if nose < 22  (over 50 degrees ) then small slow down
+                        jp      .NoSpeedChange                      ; between 22 and 30 coast
+.Accelerate :           ld      a,3                                 ; else on target so power on
                         ld      (UBnKAccel),a                       ;  accelleration = 3
                         call    SetStatusFast
                         call    ClearStatusSlow
                         ret
-.SlowDown:              JumpIfALTNusng 18, .NoSpeedChange           ; if its < 18 then way off so continue
-.Deccelerate:           ld      a,-2
+.SlowDown:              JumpIfALTNusng 18, .SmallSlow              ; if its < 18 then its within 120 degrees so small slow
+.Deccelerate:           ld      a,-5                               ; else faster Slow
                         ld      (UBnKAccel),a
                         call    ClearStatusFast
                         call    SetStatusSlow
                         ret
+.SmallSlow:             ld      a,-2
+                        ld      (UBnKAccel),a
+                        call    ClearStatusFast
+                        call    SetStatusSlow
+                        ret                     
 .NoSpeedChange:         ZeroA                                       ; else no change
                         ld      (UBnKAccel),a
                         call    ClearStatusFast
@@ -339,14 +395,14 @@ NormaliseDirection:     MMUSelectUniverseN 1
                         ld      bc, (UBnKDirectionZ)        ; [iyl b c ] = Z
                         ld      a,(UBnKDirectionZSign)      ; .
                         ld      iyl,a                       ; .
-.ScaleLoop1:            ld      a,ixh                       ; first pass get to 16 bit
-                        or      iyh                         ; hl = X
-                        or      iyl                         ; de = Y
-                        or      iyh                         ; bc = Z
+.ScaleLoop1:            ld      a,ixh                       ; first pass get to 16 bit leaving hl = X de = Y bc = Z 
+                        or      iyh                         ;                          
+                        or      iyl                         ;                          
                         jp      z,.DoneScaling1             ; .
                         ShiftIXhHLRight1                    ; .
                         ShiftIYhDERight1                    ; .
                         ShiftIYlBCRight1                    ; .
+                        jp      .ScaleLoop1
 .DoneScaling1:          ;-- Now we have got here hl = X, de = Y, bc = Z
                         ;-- we cal just jump into the Normalize Tactics code
 .ScaleLoop2:            ld      a,h                         ; Now scale down to 8 bit
@@ -442,11 +498,11 @@ CalculateDotProducts:   call    CopyRotmatToTactics                 ; get matrix
                         ld      e,a                                 ; .
                         mul     de                                  ; .
 .CalcXSign:             ld      a,(UBnKDirNormXSign)                ; B  = A = Sign VecX xor sign RotMatX
-                        ld      hl,UBnKOffsetXSign                  ; .
+                        ld      hl,UBnKTacticsRotMatXSign           ; .
                         xor     (hl)                                ; .
                         ld      b,a                                 ; .
 .CalcYSign:             ld      a,(UBnKDirNormYSign)                ; B  = C = Sign VecY xor sign RotMatY
-                        ld      hl,UBnKOffsetYSign                  ; .
+                        ld      hl,UBnKTacticsRotMatYSign           ; .
                         xor     (hl)                                ; .
                         ld      c,a                                 ; .
 .SumSoFar:              pop     hl                                  ; hl = vecx * dirx
@@ -458,7 +514,7 @@ CalculateDotProducts:   call    CopyRotmatToTactics                 ; get matrix
                         mul     de                       
 .CalcZSign:             push    hl
                         ld      a,(UBnKDirNormZSign)                ; B  = C = Sign VecY xor sign RotMatY
-                        ld      hl,UBnKOffsetZSign                  ; .
+                        ld      hl,UBnKTacticsRotMatZSign           ; .
                         xor     (hl)                                ; .
                         ld      c,a                                 ; so now CDE = z
                         pop     hl
@@ -476,14 +532,14 @@ CheckDistance:          ld      hl,(UBnKOffsetXHi)                 ; test if hig
                         or      l                                  ; test for low byte bit 7, i.e high of 16 bit values
                         or      e                                  ; .
                         or      c                                  ; .
-                        JumpIfNotZero       .NearAway              ; if mid byte is non zero then in near distance
-.Hit                    call    SetStatusHit                       ; which means if all mid bytes are zero then hit
-                        call    ClearStatusFar                       
+                        JumpIfZero          .Hit                   ; if mid byte is non zero then in near distance
 .Near:                  call    SetStatusNear
+.Hit                    call    SetStatusHit                       ; which means if all mid bytes are zero then hit
                         call    ClearStatusFar
                         ret
 .FarAway:               call    SetStatusFar
                         call    ClearStatusNear
+                        call    ClearStatusHit
                         ret
 ;..................................................................................................................................
 LoadTargetData:         MMUSelectUniverseN 2                        ;
@@ -908,7 +964,6 @@ HideForward             MMUSelectLayer1
 DisplayHit:             MMUSelectLayer1
                         ld      hl,ActionTextHit
                         call    DisplayBoilerLine
-                        break
                         ret
 
 HideHit:                MMUSelectLayer1
