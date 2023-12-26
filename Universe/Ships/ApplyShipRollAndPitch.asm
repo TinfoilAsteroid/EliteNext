@@ -1,10 +1,13 @@
 
-; A = value for rotation
-; HL = address of value for rotation
-; TODO logic for permanent spin, I thik this it -127??
-SplitAndDampenZ:        MACRO
-                        ld      b,a
-                        and     SignMask8Bit            ; if abs (Rotz) is 0 then skip
+
+;----------------------------------------------------------------------------------------------------------------------------------
+; based on MVEIT part 4 of 9
+; x and z counters are proper 2's c values
+ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)
+                        cp      $FF
+                        jr      z,.PitchSAxes
+.splitAndDampenZ:       ld      b,a                     ; preserve S7 counter
+                        and     SignMask8Bit            ; if abs (Rotz) is 0 then skip pitch
                         jp      z,.ProcessRoll  
                         ld      a,b                     ; b = rotate counter S7
                         and     SignOnly8Bit            ; a = sign rat2 = c = sign
@@ -15,35 +18,7 @@ SplitAndDampenZ:        MACRO
                         dec     a                       ; dampen
                         ld      (univRAT2Val),a
                         or      c                       ; make S7 again after dampening
-                        ld      (UBnKRotZCounter),a
-                        ENDM
-                        
-SplitAndDampenX:        MACRO
-                        ld      b,a
-                        and     SignMask8Bit            ; exit early is ABS = 0
-                        and     a                       ; .
-                        ret     z                       ; .
-                        ld      a,b                     ; a = rotate counter S7
-                        and     SignOnly8Bit            ; rat2 = c = sign
-                        ld      c,a                     ; .
-                        ld      (univRAT2),a            ; .
-                        ld      a,b                     ; a = abs b
-                        and     SignMask8Bit            ; .
-                        dec     a                       ; dampen
-                        ld      (univRAT2Val),a
-                        or      c                       ; make S7 again after dampening
-                        ld      (UBnKRotXCounter),a
-                        ENDM
-                        
-
-;----------------------------------------------------------------------------------------------------------------------------------
-; based on MVEIT part 4 of 9
-; x and z counters are proper 2's c values
-ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)
-                        cp      $FF
-                        jr      z,.PitchSAxes
-                        SplitAndDampenZ
-                        ;ld      a,(UBnKRotZCounter)
+                        ld      (UBnKRotZCounter),a     ; Update Rotation Counter
 .PitchSAxes:            ld	    hl,UBnkrotmatRoofvX; UBnkrotmatSidevY
                         ld	    (varAxis1),hl
                         ld	    hl,UBnkrotmatNosevX; UBnkrotmatSidevZ	
@@ -62,7 +37,20 @@ ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)
 .ProcessRoll:           ld      a,(UBnKRotXCounter)
                         cp      $FF
                         jr      z,.RollSAxis
-                        SplitAndDampenX
+.splitAndDampenX:       ld      b,a
+                        and     SignMask8Bit            ; exit early is ABS = 0
+                        and     a                       ; .
+                        ret     z                       ; .
+                        ld      a,b                     ; a = rotate counter S7
+                        and     SignOnly8Bit            ; rat2 = c = sign
+                        ld      c,a                     ; .
+                        ld      (univRAT2),a            ; .
+                        ld      a,b                     ; a = abs b
+                        and     SignMask8Bit            ; .
+                        dec     a                       ; dampen
+                        ld      (univRAT2Val),a
+                        or      c                       ; make S7 again after dampening
+                        ld      (UBnKRotXCounter),a
 .RollSAxis:           	ld	    hl,UBnkrotmatRoofvX; UBnkrotmatSidevX	
                         ld	    (varAxis1),hl
                         ld	    hl,UBnkrotmatSidevX; UBnkrotmatSidevY

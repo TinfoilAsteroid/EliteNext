@@ -24,6 +24,9 @@ l1_print_char:          push	de,,hl
 l1_print_at_char     :  sla     d       ; Convert D from char to pixel
                         sla     d       ; by muliplying by 8
                         sla     d       ; 
+                        sla     e       ; Convert E from char to pixel
+                        sla     e
+                        sla     e
 l1_print_at:            
 .PrintLoop:             ld		a,(hl)
                         cp		0
@@ -104,6 +107,7 @@ l1_print_s16_hex_at_char: ld    ix,HexS16Char
                           call  l1_buffer_sign_at_ix
                           inc   ix                      ; move to actual digits
                           ld    a,h
+                          res   7,a
                           call  l1_buffer_hex_8_at_ix
                           inc   ix
                           inc   ix
@@ -135,14 +139,32 @@ l1_print_s8_hex_at_char:  ld    ix,HexS8Char
                           call  l1_print_at_char
                           ret
 
+; prints Lead Sign byte 8 bit signed hex value in hl at char pos DE, reuse HexS8Char buffer
+l1_print_s08_hex_at_char: ld    ix,HexS8Char
+                          call  l1_buffer_sign_at_ix    ; h holds sign bit
+                          inc   ix                      ; move to actual digits
+                          ld    a,l                     ; l holds value
+                          call  l1_buffer_hex_8_at_ix
+                          ld    hl,HexS8Char           ; by here de is still unaffected
+                          call  l1_print_at_char
+                          ret
 ; prints 8 bit signed hext value in a at char pos DE
 l1_print_u8_hex_at_char:  ld    ix,HexU8Char
                           call  l1_buffer_hex_8_at_ix
                           ld    hl,HexU8Char           ; by here de is still unaffected
                           call  l1_print_at_char
                           ret
-
-
+l1_PlusSign:              DB      "+",0
+l1_MinusSign:             DB      "-",0
+; Displays sign byte in A at DE
+l1_printSignByte:         and     a
+                          jp      z,.DisplayPlus
+.DisplayMinus             ld      hl,l1_MinusSign
+                          call    l1_print_at_char      
+                          ret
+.DisplayPlus:             ld      hl,l1_PlusSign
+                          call    l1_print_at_char
+                          ret
 
 
 

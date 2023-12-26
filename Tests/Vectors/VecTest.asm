@@ -196,17 +196,296 @@ CurrentShipUniv:        DB      0
 ; if ship is destroyed or exploding then z flag is clear, else z flag is set
 ;..................................................................................................................................                        
 ; Replacement for MVEIT routine
-UpdateUniverseObjects:  call    LoadTargetData
-                        call    CalculateRelativePos
-                        
-                        MMUSelectUniverseN      1
-                        ld      a,3
-                        ld      (UBnKAccel),a
+UpdateUniverseObjects:  MMUSelectUniverseN      1
+;.. Missile Tactics ...............................................................................................................                        
+                        call    LoadTargetData              ; Target position to UBnKTarget Pos
+                        call    CalculateRelativePos        ; Target - missile to UBnKOffset
+                        call    CheckDistance               ; Calculate distance, near far
+                        call    CopyOffsetToDirection       ; Copy UBnKOffset to UBnKDirection
+                        call    NormaliseDirection          ; Normalise Direction into UBnKDirNorm
+                        ld      hl,UBnkrotmatNosev          ; Copy nose to tactics matrix and calculate dot product in a
+                        call    CalculateDotProducts        ; .
+                        ld      (UBnKDotProductNose),hl     ; .
+                        ld      a,b
+                        ld      (UBnKDotProductNoseSign),a
+                        ld      hl,UBnkrotmatRoofv          ; Copy roof to tactics matrix and calculate dot product in a
+                        call    CalculateDotProducts        ; .
+                        ld      (UBnKDotProductRoof),hl     ; .
+                        ld      a,b
+                        ld      (UBnKDotProductRoofSign),a
+                        call    FlipDirectionSigns
+                        call    SeekingLogic
+;.. Update Position ................................................................................................................................                        
                         call    ApplyShipRollAndPitch
                         call    ApplyShipSpeed
                         call    UpdateSpeedAndPitch                             ; update based on rates of speed roll and pitch accelleration/decelleration
                         ret
+;..................................................................................................................................                        
+; For now no random numbers
+SeekingLogic:           call    AdjustPitch
+                        call    AdjustRoll
+                        call    AdjustSpeed
+                        ret
+;..................................................................................................................................                        
+AdjustPitch:            ld      a,(UBnKDotProductRoofSign)
+                        ld      h,a
+                        ld      a,(UBnKDotProductRoof+1)
+                        sla     a
+                        JumpIfAGTENusng 16, .skipPitchZero
+.pitchZero:             ZeroA
+                        ld      (UBnKRotZCounter),a
+                        call    ClearStatusPitch
+                        ret
+.skipPitchZero:         ld      a,5
+                        or      h
+                        ld      (UBnKRotZCounter),a
+                        call    SetStatusPitch
+                        ret
+;..................................................................................................................................                        
+AdjustRoll:             ld      a,(UBnKDotProductNoseSign)
+                        ld      h,a
+                        ld      a,(UBnKDotProductNose+1)
+                        sla     a
+                        JumpIfAGTENusng 16, .skipRollZero
+.pitchRoll:             ZeroA
+                        ld      (UBnKRotXCounter),a
+                        ; We don't clear as Adjust pitch may have set it
+                        ret
+.skipRollZero:          ld      a,5
+                        or      h
+                        ld      (UBnKRotXCounter),a
+                        call    SetStatusRoll
+                        ret
+;..................................................................................................................................                        
+AdjustSpeed:            ld      a,(UBnKDotProductNoseSign)          ; if negatvie facing away so slow
+                        and     a
+                        jr      nz,.SlowDown
+                        ld      a,(UBnKDotProductNose)
+                        JumpIfALTNusng  22,.SlowDown                ; if nose < 22 then slow down       
+.Accelerate :           ld      a,3                                 ; else
+                        ld      (UBnKAccel),a                       ;  accelleration = 3
+                        call    SetStatusFast
+                        call    ClearStatusSlow
+                        ret
+.SlowDown:              JumpIfALTNusng 18, .NoSpeedChange           ; if its < 18 then way off so continue
+.Deccelerate:           ld      a,-2
+                        ld      (UBnKAccel),a
+                        call    ClearStatusFast
+                        call    SetStatusSlow
+                        ret
+.NoSpeedChange:         ZeroA                                       ; else no change
+                        ld      (UBnKAccel),a
+                        call    ClearStatusFast
+                        call    ClearStatusSlow
+                        ret
 
+;..................................................................................................................................                        
+FlipDirectionSigns:     ld      a,(UBnKDirNormXSign)
+                        xor     $80
+                        ld      (UBnKDirNormXSign),a
+                        ld      a,(UBnKDirNormYSign)
+                        xor     $80
+                        ld      (UBnKDirNormYSign),a
+                        ld      a,(UBnKDirNormZSign)
+                        xor     $80
+                        ld      (UBnKDirNormZSign),a
+                        ret
+                        ld      a,(UBnKDotProductNoseSign)
+                        xor     $80
+                        ld      (UBnKDotProductNoseSign),a
+                        ld      a,(UBnKDotProductRoofSign)
+                        xor     $80
+                        ld      (UBnKDotProductRoofSign),a
+                        ret
+;..................................................................................................................................                        
+CopyOffsetToDirection:  MMUSelectUniverseN 1
+                        ld      hl,UBnKOffset
+                        ld      de,UBnKDirection
+                        ld      bc,9
+                        ldir
+                        ret
+;..................................................................................................................................                        
+; Normalises UBnKDirection into UBnKDirNorm with Sign byte and 7 bit normal
+; result of 36 means they are directly in align + at - away
+NormaliseDirection:     MMUSelectUniverseN 1
+                        ld      a,(UBnKDirectionXSign)      ; Direction x = abs Direction X , b bit 7 = sign of X
+                        ld      c,a                         ; .
+                        and     $80                         ; .
+                        ld      (UBnKDirNormXSign),a        ; Save sign into NormSign
+                        ld      a,c                         ; .
+                        and     $7F                         ; .
+                        ld      (UBnKDirectionXSign),a      ; .
+.ABSYComponenet:        ld      a,(UBnKDirectionYSign)      ; Direction y = abs Direction y , b bit 6 = sign of y
+                        ld      c,a                         ; .
+                        and     $80                         ;  get sign bit from a
+                        ld      (UBnKDirNormYSign),a        ; Save sign into NormSign
+                        ld      a,c
+                        and     $7F                         ; .
+                        ld      (UBnKDirectionYSign),a      ; .                 
+.ABSXZomponenet:        ld      a,(UBnKDirectionZSign)      ; Direction y = abs Direction y , b bit 6 = sign of y
+                        ld      c,a                         ; .
+                        and     $80                         ;  get sign bit from a
+                        ld      (UBnKDirNormZSign),a        ; Save sign into NormSign
+                        ld      a,c
+                        and     $7F                         ; .
+                        ld      (UBnKDirectionZSign),a      ; .
+;.. When we hit here the UBnKTargetX,Y and Z are 24 bit abs values to simplify scaling                        
+.Scale:                 ld      hl, (UBnKDirectionX)        ; [ixh h l]  = X
+                        ld      a,(UBnKDirectionXSign)      ; .
+                        ld      ixh,a                       ; .
+                        ld      de, (UBnKDirectionY)        ; [iyh d e ] = Y
+                        ld      a,(UBnKDirectionYSign)      ; .
+                        ld      iyh,a                       ; .
+                        ld      bc, (UBnKDirectionZ)        ; [iyl b c ] = Z
+                        ld      a,(UBnKDirectionZSign)      ; .
+                        ld      iyl,a                       ; .
+.ScaleLoop1:            ld      a,ixh                       ; first pass get to 16 bit
+                        or      iyh                         ; hl = X
+                        or      iyl                         ; de = Y
+                        or      iyh                         ; bc = Z
+                        jp      z,.DoneScaling1             ; .
+                        ShiftIXhHLRight1                    ; .
+                        ShiftIYhDERight1                    ; .
+                        ShiftIYlBCRight1                    ; .
+.DoneScaling1:          ;-- Now we have got here hl = X, de = Y, bc = Z
+                        ;-- we cal just jump into the Normalize Tactics code
+.ScaleLoop2:            ld      a,h                         ; Now scale down to 8 bit
+                        or      d                           ; so l = X e = Y c = Z
+                        or      b                           ; .
+                        jr      z,.DoneScaling2             ; .
+                        ShiftHLRight1                       ; .
+                        ShiftDERight1                       ; .
+                        ShiftBCRight1                       ; .
+                        jp      .ScaleLoop2                 ; .
+;-- Now we are down to 8 bit values, so we need to scale again to get S7         
+.DoneScaling2:          ShiftHLRight1                       ; Scale once again to 7 bit with no sign
+                        ShiftDERight1                       ; l = X e = Y c = Z
+                        ShiftBCRight1                       ; .
+.CalculateLength:       push    hl,,de,,bc                  ; save vector x y and z nwo they are scaled to 1 byte
+                        ld      d,e                         ; hl = y ^ 2
+                        mul     de                          ; .
+                        ex      de,hl                       ; .
+                        ld      d,e                         ; de = x ^ 2
+                        mul     de                          ; .
+                        add     hl,de                       ; hl = y^ 2 + x ^ 2
+                        ld      d,c                         ; de = z * 2
+                        ld      e,c                         ; .
+                        mul     de                          ; .
+                        add     hl,de                       ; hl =  y^ 2 + x ^ 2 + z ^ 2
+                        ex      de,hl                       ; fix as hl was holding square
+                        call    asm_sqrt                    ; hl = sqrt (de) = sqrt (x ^ 2 + y ^ 2 + z ^ 2)
+                        ; add in logic if h is low then use lower bytes for all 
+;.RetrieveSignBits:      ld      a,(UBnKDirectionSignPacked) ; load sign bits to iyl
+;                        ld      iyl,a                       ; 
+.NormaliseZ:            ld      a,l                         ; save length into iyh
+                        ld      iyh,a                       ; .
+                        ld      d,a                         ; and also into d
+                        pop     bc                          ; retrive z scaled
+                        ld      a,c                         ; a = scaled byte
+                        call    AequAdivDmul967Bit          ; a = z*96/Length
+                        ld      (UBnKDirNormZ),a            ; now Tactics Vector Z byte 1 is value
+.NormaliseY:            pop     de                          ; retrive y scaled
+                        ld      a,e                         ; a = scaled byte
+                        ld      d,iyh                       ; d = length
+                        call    AequAdivDmul967Bit          ; a = z*96/Length
+                        ld      (UBnKDirNormY),a            ; now Tactics Vector Y byte 1 is value
+.NormaliseX:            pop     hl                          ; retrive x scaled
+                        ld      a,l                         ; a = scaled byte
+                        ld      d,iyh                       ; d = length 
+                        call    AequAdivDmul967Bit          ; a = z*96/Length
+                        ld      (UBnKDirNormX),a            ; now Tactics Vector X byte 1 is value
+                        ret
+;..................................................................................................................................                        
+; copy nose and side rotation matricies                        
+CopyRotmatToTactics:    inc     hl                                  ; optimise later by starting at x hi
+                        ld      a,(hl)
+                        ld      b,a
+                        and     $80
+                        ld      (UBnKTacticsRotMatXSign),a
+                        ld      a,b
+                        and     $7F
+                        ld      (UBnKTacticsRotMatX),a
+                        inc     hl
+                        inc     hl
+                        ld      a,(hl)
+                        ld      b,a
+                        and     $80
+                        ld      (UBnKTacticsRotMatYSign),a
+                        ld      a,b
+                        and     $7F
+                        ld      (UBnKTacticsRotMatY),a
+                        inc     hl
+                        inc     hl
+                        ld      a,(hl)
+                        ld      b,a
+                        and     $80
+                        ld      (UBnKTacticsRotMatZSign),a
+                        ld      a,b
+                        and     $7F
+                        ld      (UBnKTacticsRotMatZ),a
+                        ret
+                        
+;..................................................................................................................................                        
+; Calculate dot products of roof and side against UBnKDirNorm
+; UBnKDotProductNose = nose . direction = nose.x * dir x + nose.y * diry + nose.z * dirz
+; UBnKDotProductSide = side . direction = side.x * dir x + side.y * diry + side.z * dirz
+CalculateDotProducts:   call    CopyRotmatToTactics                 ; get matrix to work area
+.CalcXValue:            ld      a,(UBnKTacticsRotMatX)              ; stack value of rotmatx & dir x
+                        ld      d,a                                 ; .
+                        ld      a,(UBnKDirNormX)                    ; .
+                        ld      e,a                                 ; .
+                        mul     de                                  ; .
+                        push    de                                  ; save to stack for pulling into hl
+.CalcYValue:            ld      a,(UBnKTacticsRotMatY)              ; de = rotmaty & dir y
+                        ld      d,a                                 ; .
+                        ld      a,(UBnKDirNormY)                    ; .
+                        ld      e,a                                 ; .
+                        mul     de                                  ; .
+.CalcXSign:             ld      a,(UBnKDirNormXSign)                ; B  = A = Sign VecX xor sign RotMatX
+                        ld      hl,UBnKOffsetXSign                  ; .
+                        xor     (hl)                                ; .
+                        ld      b,a                                 ; .
+.CalcYSign:             ld      a,(UBnKDirNormYSign)                ; B  = C = Sign VecY xor sign RotMatY
+                        ld      hl,UBnKOffsetYSign                  ; .
+                        xor     (hl)                                ; .
+                        ld      c,a                                 ; .
+.SumSoFar:              pop     hl                                  ; hl = vecx * dirx
+                        call    ADDHLDESignBC                       ; BHL = vecx*dirx + vecy*diry
+.CalcZValue:            ld      a,(UBnKTacticsRotMatZ)              ; de = rotmatz & dir z
+                        ld      d,a                                 ; .
+                        ld      a,(UBnKDirNormZ)                    ; .
+                        ld      e,a                                 ; .
+                        mul     de                       
+.CalcZSign:             push    hl
+                        ld      a,(UBnKDirNormZSign)                ; B  = C = Sign VecY xor sign RotMatY
+                        ld      hl,UBnKOffsetZSign                  ; .
+                        xor     (hl)                                ; .
+                        ld      c,a                                 ; so now CDE = z
+                        pop     hl
+.SumUp:                 call    ADDHLDESignBC                       ; BHL = vecx*dirx + vecy*diry + vecz*dirz
+                        ret
+;..................................................................................................................................                        
+CheckDistance:          ld      hl,(UBnKOffsetXHi)                 ; test if high bytes are set (value is assumed to be 24 bit, though calcs are only 16 so this is uneeded)
+                        ld      de,(UBnKOffsetYHi)                 ; .
+                        ld      bc,(UBnKOffsetZHi)                 ; .
+                        ld      a,h                                ; sign bytes only ignoring sign bit
+                        or      d                                  ; .
+                        or      b                                  ; .
+                        ClearSignBitA                              ; .
+                        JumpIfNotZero       .FarAway               ; if upper byte is non zero then very far away
+                        or      l                                  ; test for low byte bit 7, i.e high of 16 bit values
+                        or      e                                  ; .
+                        or      c                                  ; .
+                        JumpIfNotZero       .NearAway              ; if mid byte is non zero then in near distance
+.Hit                    call    SetStatusHit                       ; which means if all mid bytes are zero then hit
+                        call    ClearStatusFar                       
+.Near:                  call    SetStatusNear
+                        call    ClearStatusFar
+                        ret
+.FarAway:               call    SetStatusFar
+                        call    ClearStatusNear
+                        ret
+;..................................................................................................................................
 LoadTargetData:         MMUSelectUniverseN 2                        ;
                         ld      hl,UBnKxlo
                         ld      de,CurrentTargetXpos
@@ -251,53 +530,6 @@ CreateTarget:           MMUSelectUniverseN  2
                         call    UnivInitRuntime
                         call    UnivSetSpawnPosition
                         ret
-                        
-Plus10:                 DB 10,0,0
-Minus10:                DB 10,0,$80
-
-Plus20:                 DB 20,0,0
-Minus20:                DB 20,0,$80
-
-SaveUBNK:               DS 3*3
-
-SavePosition:           push    hl,,de,,bc,,af
-                        ld      a,(CurrentShipUniv)
-                        cp      2
-                        jr      nz,.DoneSave
-                        ;break
-                        ld      hl, UBnKxlo
-                        ld      de, SaveUBNK
-                        ld      bc, 3*3
-                        ldir
-                        ld      a,0
-                        ld      (UBnKyhi)  ,a
-                        ld      (UBnKxhi)  ,a
-                        ld      (UBnKzhi)  ,a                        
-                        ld      (UBnKxsgn) ,a
-                        ld      (UBnKysgn) ,a
-                        ld      (UBnKzhi)  ,a
-                        ld      (UBnKzsgn) ,a
-                        ld      a, $5
-                        ld      (UBnKylo)  ,a
-                        ld      a, $5
-                        ld      (UBnKxlo)  ,a
-                        ld      a, $6E
-                        ld      (UBnKzlo)  ,a
-.DoneSave:              pop     hl,,de,,bc,,af
-                        ret
-                        
-RestorePosition:        push    hl,,de,,bc,,af
-                        ld      a,(CurrentShipUniv)
-                        cp      2
-                        jr      nz,.DoneSave
-                        ;break
-                        ld      hl, SaveUBNK
-                        ld      de, UBnKxlo
-                        ld      bc, 3*3
-                        ldir
-.DoneSave:              pop     hl,,de,,bc,,af
-                        ret
-
 
 ;----------------------------------------------------------------------------------------------------------------------------------                    
 ; Display Stats - go for 320 mode to test code
@@ -333,31 +565,40 @@ BoilerPlate8:           DB      00 ,09,  "Target    X        Y        Z",0
 BoilerPlate9:           DB      00 ,11,  "Tactics",0
 BoilerPlate10:          DB      00, 12,  "Relative  X        Y        Z",0
 BoilerPlate11           DB      00 ,14,  "Direction X        Y        Z",0
-BoilerPlate12:          DB      00 ,16,  "Dot Product",0
+BoilerPlate12:          DB      00 ,16,  "Dot Product Nose      Roof",0
 BoilerPlate13:          DB      00 ,17,  "Actions",0
 ActionTextSlow:         DB      00 ,18,  "Slow",0
-ActionTextFast:         DB      06 ,18,  "Fast",0
-ActionTextTurn:         DB      12 ,18,  "Turn",0
+ActionTextFast:         DB      08 ,18,  "Fast",0
+ActionTextRoll:         DB      16 ,18,  "Roll",0
+ActionTextPitch:        DB      24 ,18,  "Pitch",0
 ActionTextBehind:       DB      00 ,19,  "Behind",0
 ActionTextForward:      DB      10 ,19,  "Forward",0
+ActionTextNear          DB      00 ,20,  "Near",0
+ActionTextFar           DB      10 ,20,  "Far",0
 ActionTextHit:          DB      20 ,20,  "Hit",0
 ClearTextSlow:          DB      00 ,18,  "    ",0
-ClearTextFast:          DB      06 ,18,  "    ",0
-ClearTextTurn:          DB      12 ,18,  "    ",0
+ClearTextFast:          DB      08 ,18,  "    ",0
+ClearTextRoll:          DB      16 ,18,  "    ",0
+ClearTextPitch:         DB      24 ,18,  "     ",0
 ClearTextBehind:        DB      00 ,19,  "      ",0
 ClearTextForward:       DB      10 ,19,  "       ",0
 ClearTextHit:           DB      20 ,20,  "   ",0
+ClearTextNear           DB      00 ,20,  "    ",0
+ClearTextFar            DB      10 ,20,  "   ",0
 
 StatusSlow              DB      0
 StatusFast              DB      0
-StatusTurn              DB      0
+StatusRoll              DB      0
+StatusPitch             DB      0
 StatusBehind            DB      0
 StatusForward           DB      0
+StatusNear              DB      0
+StatusFar               DB      0
 StatusHit               DB      0
 ;                                         0123456789ABCDEF0123456789AB
-XPosX                   equ     $06 * 8
-XPosY                   equ     $0F * 8
-XPosZ                   equ     $18 * 8
+XPosX                   equ     $06
+XPosY                   equ     $0F
+XPosZ                   equ     $18
 RowMissle               equ     02
 RowMatrix1              equ     04
 RowMatrix2              equ     05
@@ -371,10 +612,13 @@ RowDotProduct           equ     16
 
 DisplayActionStatus:    call    UpdateStatusSlow         
                         call    UpdateStatusFast         
-                        call    UpdateStatusTurn         
+                        call    UpdateStatusRoll         
+                        call    UpdateStatusPitch
                         call    UpdateStatusBehind       
                         call    UpdateStatusForward      
                         call    UpdateStatusHit
+                        call    UpdateStatusNear
+                        call    UpdateStatusFar
                         ret                        
 
 DisplayPosition:        push    de
@@ -412,7 +656,6 @@ DisplayMatrixRow:       push    de
                         call    DisplayS16
                         ret
 
-
 DisplayRelative:        ld      d,RowRelative
                         ld      e,XPosX
                         ld      ix,UBnKOffset
@@ -429,22 +672,34 @@ DisplayRelative:        ld      d,RowRelative
 
 DisplayDirection:       ld      d,RowDirection
                         ld      e,XPosX
-                        ld      ix,UBnKDirection
-                        call    DisplayS16
+                        ld      ix,UBnKDirNormX
+                        call    DisplayS08
                         ld      d,RowDirection
                         ld      e,XPosY
-                        ld      ix,UBnKDirection+3
-                        call    DisplayS16
+                        ld      ix,UBnKDirNormY
+                        call    DisplayS08
                         ld      d,RowDirection
                         ld      e,XPosZ
-                        ld      ix,UBnKDirection+6
-                        call    DisplayS16
+                        ld      ix,UBnKDirNormZ
+                        call    DisplayS08
                         ret
 
-DisplayDotProduct:      ld      d,RowDotProduct
-                        ld      e,XPosY
-                        ld      ix,UBnKDotProduct
-                        call    DisplayS8
+DisplayDotProduct:      ld      a,(UBnKDotProductNoseSign)
+                        ld      d,RowDotProduct
+                        ld      e,XPosY+2
+                        call    l1_printSignByte
+                        ld      a,(UBnKDotProductRoofSign)
+                        ld      d,RowDotProduct
+                        ld      e,XPosZ+2
+                        call    l1_printSignByte
+                        ld      d,RowDotProduct
+                        ld      e,XPosY+3
+                        ld      ix,UBnKDotProductNose+1
+                        call    DisplayU8
+                        ld      d,RowDotProduct
+                        ld      e,XPosZ+3
+                        ld      ix,UBnKDotProductRoof+1
+                        call    DisplayU8                        
                         ret
                         
 DisplayMatrix:          ld      d,  RowMatrix1
@@ -461,7 +716,7 @@ DisplayMatrix:          ld      d,  RowMatrix1
 DisplayAccellSpeed:     ld      ix,UBnKAccel
                         ld      d, RowAccellSpeed
                         ld      e,XPosX
-                        call    DisplayU8
+                        call    DisplayS8
                         ld      ix,UBnKSpeed
                         ld      d, RowAccellSpeed
                         ld      e,XPosZ
@@ -510,6 +765,14 @@ DisplayS8:              MMUSelectLayer1
                         ld      a,(ix+0)
                         call    l1_print_s8_hex_at_char
                         ret
+; As per S8 but sign is a separate lead byte
+DisplayS08:             MMUSelectLayer1
+                        ld      a,(ix+0)
+                        ld      l,a
+                        ld      a,(ix+1)
+                        ld      h,a
+                        call    l1_print_s08_hex_at_char
+                        ret
 
 DisplayU8:              MMUSelectLayer1
                         ld      a,(ix+0)
@@ -518,17 +781,23 @@ DisplayU8:              MMUSelectLayer1
 
 SetStatusSlow:          ld      a,$FF : ld      (StatusSlow),a : ret
 SetStatusFast:          ld      a,$FF : ld      (StatusFast),a : ret
-SetStatusTurn:          ld      a,$FF : ld      (StatusTurn),a : ret
+SetStatusRoll:          ld      a,$FF : ld      (StatusRoll),a : ret
+SetStatusPitch:         ld      a,$FF : ld      (StatusPitch),a : ret
 SetStatusBehind:        ld      a,$FF : ld      (StatusBehind),a : ret
 SetStatusForward:       ld      a,$FF : ld      (StatusForward),a : ret
-SetStatusHit:           ld      a,$FF : ld      (HideHit),a : ret
+SetStatusHit:           ld      a,$FF : ld      (StatusHit),a : ret
+SetStatusNear:          ld      a,$FF : ld      (StatusNear),a : ret
+SetStatusFar:           ld      a,$FF : ld      (StatusFar),a : ret
 
 ClearStatusSlow:        ld      a,$00 : ld      (StatusSlow),a : ret
 ClearStatusFast:        ld      a,$00 : ld      (StatusFast),a : ret
-ClearStatusTurn:        ld      a,$00 : ld      (StatusTurn),a : ret
+ClearStatusRoll:        ld      a,$00 : ld      (StatusRoll),a : ret
+ClearStatusPitch:       ld      a,$00 : ld      (StatusPitch),a : ret
 ClearStatusBehind:      ld      a,$00 : ld      (StatusBehind),a : ret
 ClearStatusForward:     ld      a,$00 : ld      (StatusForward),a : ret
-ClearStatusHit:         ld      a,$00 : ld      (HideHit),a : ret
+ClearStatusHit:         ld      a,$00 : ld      (StatusHit),a : ret
+ClearStatusNear:        ld      a,$00 : ld      (StatusNear),a : ret
+ClearStatusFar:         ld      a,$00 : ld      (StatusFar),a : ret
 
 UpdateStatusSlow:       ld      a,(StatusSlow)
                         and     a
@@ -540,10 +809,15 @@ UpdateStatusFast:       ld      a,(StatusFast)
                         jp      z,HideFast
                         jp      DisplayFast
                         ; Implicit Return
-UpdateStatusTurn:       ld      a,(StatusTurn)
+UpdateStatusRoll:       ld      a,(StatusRoll)
                         and     a
-                        jp      z,HideTurn
-                        jp      DisplayTurn
+                        jp      z,HideRoll
+                        jp      DisplayRoll
+                        ; Implicit Return
+UpdateStatusPitch:      ld      a,(StatusPitch)
+                        and     a
+                        jp      z,HidePitch
+                        jp      DisplayPitch
                         ; Implicit Return
 UpdateStatusBehind:     ld      a,(StatusBehind)
                         and     a
@@ -559,6 +833,16 @@ UpdateStatusHit:        ld      a,(StatusHit)
                         and     a
                         jp      z,HideHit
                         jp      DisplayHit
+                        ; Implicit Return
+UpdateStatusNear:       ld      a,(StatusNear)
+                        and     a
+                        jp      z,HideNear
+                        jp      DisplayNear
+                        ; Implicit Return
+UpdateStatusFar:        ld      a,(StatusFar)
+                        and     a
+                        jp      z,HideFar
+                        jp      DisplayFar
                         ; Implicit Return
 
 DisplaySlow             MMUSelectLayer1
@@ -581,13 +865,23 @@ HideFast                MMUSelectLayer1
                         call    DisplayBoilerLine
                         ret
 
-DisplayTurn             MMUSelectLayer1
-                        ld      hl,ActionTextTurn
+DisplayRoll             MMUSelectLayer1
+                        ld      hl,ActionTextRoll
                         call    DisplayBoilerLine
                         ret
 
-HideTurn                MMUSelectLayer1
-                        ld      hl,ClearTextTurn
+HideRoll                MMUSelectLayer1
+                        ld      hl,ClearTextRoll
+                        call    DisplayBoilerLine
+                        ret
+
+DisplayPitch            MMUSelectLayer1
+                        ld      hl,ActionTextPitch
+                        call    DisplayBoilerLine
+                        ret
+
+HidePitch               MMUSelectLayer1
+                        ld      hl,ClearTextPitch
                         call    DisplayBoilerLine
                         ret
 
@@ -614,6 +908,7 @@ HideForward             MMUSelectLayer1
 DisplayHit:             MMUSelectLayer1
                         ld      hl,ActionTextHit
                         call    DisplayBoilerLine
+                        break
                         ret
 
 HideHit:                MMUSelectLayer1
@@ -621,6 +916,25 @@ HideHit:                MMUSelectLayer1
                         call    DisplayBoilerLine
                         ret   
                         
+DisplayNear:            MMUSelectLayer1
+                        ld      hl,ActionTextNear
+                        call    DisplayBoilerLine
+                        ret
+
+HideNear:               MMUSelectLayer1
+                        ld      hl,ClearTextNear
+                        call    DisplayBoilerLine
+                        ret   
+                        
+DisplayFar:             MMUSelectLayer1
+                        ld      hl,ActionTextFar
+                        call    DisplayBoilerLine
+                        ret
+
+HideFar:                MMUSelectLayer1
+                        ld      hl,ClearTextFar
+                        call    DisplayBoilerLine
+                        ret   
                         
 DisplayBoiler:          ld      hl, BoilerPlate1
                         call    DisplayBoilerLine

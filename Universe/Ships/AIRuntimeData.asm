@@ -58,12 +58,39 @@ UBnKTargetDotProduct3       DS  2
 UBnKTacticsRotMatX          DB  0
 UBnKTacticsRotMatXSign      DB  0
 UBnKTacticsRotMatY          DB  0
-UBnKTacticsRoyMatYSign      DB  0
+UBnKTacticsRotMatYSign      DB  0
 UBnKTacticsRotMatZ          DB  0
 UBnKTacticsRotMatZSign      DB  0
 UBnKOffset                  DS  3 * 3                   ; Offset position for target
-UBnKDirection               DS  3 * 2                   ; Direction Vector
-UBnKDotProduct              DB  9                       ; Dot Product
+UBnKOffsetX                 equ UBnKOffset
+UBnKOffsetXHi               equ UBnKOffsetX+1
+UBnKOffsetXSign             equ UBnKOffsetX+2
+UBnKOffsetY                 equ UBnKOffset+3
+UBnKOffsetYHi               equ UBnKOffsetY+1
+UBnKOffsetYSign             equ UBnKOffsetY+2
+UBnKOffsetZ                 equ UBnKOffset+6
+UBnKOffsetZHi               equ UBnKOffsetZ+1
+UBnKOffsetZSign             equ UBnKOffsetZ+2
+UBnKDirectionX              DB  0
+UBnKDirectionXHi            DB  0 
+UBnKDirectionXSign          DB  0
+UBnKDirectionY              DB  0
+UBnKDirectionYHi            DB  0 
+UBnKDirectionYSign          DB  0
+UBnKDirectionZ              DB  0
+UBnKDirectionZHi            DB  0 
+UBnKDirectionZSign          DB  0
+UBnKDirNormX                DB  0
+UBnKDirNormXSign            DB  0
+UBnKDirNormY                DB  0
+UBnKDirNormYSign            DB  0
+UBnKDirNormZ                DB  0
+UBnKDirNormZSign            DB  0
+UBnKDirection               equ UBnKDirectionX          ; Direction Vector
+UBnKDotProductNose          DW  0                       ; Dot Product
+UBnKDotProductNoseSign      DB  0
+UBnKDotProductRoof          DW  0                       ; Dot Product
+UBnKDotProductRoofSign      DB  0
 UBnKSpeed                   DB  0                       ; INWK +27
 UBnKAccel                   DB  0                       ; INWK +28
 UBnKRotXCounter             DB  0                       ; INWK +29
