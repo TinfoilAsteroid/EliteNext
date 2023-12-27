@@ -48,6 +48,7 @@ HexU16Char:      DB "0000",0
 HexS8Char:       DB "+00",0
 HexS16Char:      DB "+0000",0
 HexS24Char:      DB "+0000.00",0
+HexU8NaN:        DB "**",0
 
 ; prints + sign for bit 7 clear in a else - sign for bit 7 set, Load to buffer location in ix
 l1_buffer_sign_at_ix:   bit     7,a
@@ -166,6 +167,9 @@ l1_printSignByte:         and     a
                           call    l1_print_at_char
                           ret
 
+l1_print_u8_nan_at_char:  ld    hl,HexU8NaN
+                          call  l1_print_at_char
+                          ret
 
 
 ;l1_print_at_wrap:

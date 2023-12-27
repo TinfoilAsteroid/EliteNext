@@ -86,9 +86,36 @@ InitialiseMainLoop:     call        ClearUnivSlotList
 ;...................................................................................................................................
 InitMainLoop:           ZeroA
                         ld      (ALPHA),a
-                        ld      (BETA),a
+                        ld      (BETA),a                       
 MainLoop:	            MMUSelectMathsBankedFns                                         ; make sure we are in maths routines in case a save paged out
-                        call    doRandom                                                ; redo the seeds every frame
+;                        break
+;TestAdd:                ld      hl, 20
+;                        ld      de, 20
+;                        ld      bc, $00
+;                        call    ADDHLDESignBC
+;                        ld      hl, 10
+;                        ld      de, 20
+;                        ld      bc, $8000
+;                        call    ADDHLDESignBC
+;                        ld      hl, 20
+;                        ld      de, 10
+;                        ld      bc, $0080
+;                        call    ADDHLDESignBC
+;                        ld      hl, 10
+;                        ld      de, 10
+;                        ld      bc, $8080
+;                        call    ADDHLDESignBC
+;                        ld      hl, 20
+;                        ld      de, 10
+;                        ld      bc, $8000
+;                        call    ADDHLDESignBC
+;                        ld      hl, 10
+;                        ld      de, 20
+;                        ld      bc, $0080
+;                        call    ADDHLDESignBC
+;                        break
+                        call    doRandom
+                                                ; redo the seeds every frame
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
 InputBlockerCheck:      MMUSelectKeyboard
                         call    scan_keyboard
@@ -204,16 +231,22 @@ UpdateTacticsVars:      MMUSelectUniverseN      1
                         call    CopyOffsetToDirection       ; Copy UBnKOffset to UBnKDirection
                         call    NormaliseDirection          ; Normalise Direction into UBnKDirNorm
                         ld      hl,UBnkrotmatNosev          ; Copy nose to tactics matrix and calculate dot product in a
-                        call    CalculateDotProducts        ; .
+                        call    CalculateDotProducts        ; AHL = dot product of missile pos and nose
                         ld      (UBnKDotProductNose),hl     ; .
-                        ld      a,b
-                        ld      (UBnKDotProductNoseSign),a
-                        ld      hl,UBnkrotmatRoofv          ; Copy roof to tactics matrix and calculate dot product in a
-                        call    CalculateDotProducts        ; .
+                        ld      (UBnKDotProductNoseSign),a  ; .
+                        and     $80
+                        jp      z,.PositiveNose
+.NegativeNose:          call    SetStatusBehind
+                        call    ClearStatusForward
+                        jp      .DoRoofDot
+.PositiveNose:          call    ClearStatusBehind
+                        call    SetStatusForward
+.DoRoofDot:             ld      hl,UBnkrotmatRoofv          ; Copy roof to tactics matrix and calculate dot product in a
+                        call    CalculateDotProducts        ; AHL = dot product of missile pos and roof
                         ld      (UBnKDotProductRoof),hl     ; .
-                        ld      a,b
-                        ld      (UBnKDotProductRoofSign),a
-                        ;call    FlipDirectionSigns
+                        ld      (UBnKDotProductRoofSign),a  ; .
+                        ; as we calculate target - missile the signs are already reversed
+                        ;call    FlipDirectionSigns          ; Now the target is looking at the missile rather than missile at target
 ;.. Missile Tactics ...............................................................................................................                        
                         call    SeekingLogic
                         ret
@@ -227,6 +260,7 @@ UpdateUniverseObjects:  MMUSelectUniverseN      1
                         ret
 ;..................................................................................................................................                        
 ; For now no random numbers
+;  later random < 16 do nothing
 ; if dot product for nose is negative then its over 90 degrees off
 
 ; dot product of 36 is direct facing (96*96/256)
@@ -244,7 +278,11 @@ UpdateUniverseObjects:  MMUSelectUniverseN      1
 ;              7 = 78             7 = 101
 ;              3 = 85             3 = 94
 ;              0 = 90             0 = 90
-
+; Using nose dot product (in original CNT is nose dot product
+; it nose is pointing at target then accellerate to max speed
+; if nose is pointing > +/- 45 then then slow down slightly
+; if nose is pointing > +/- 90 then then slow down hard
+; Note impact is 0000.XX on all points
 SeekingLogic:           ld      a,(UBnKRotZCounter)
                         and     a
                         call    z, AdjustPitch              ; only call if there are no existing pitch orders
@@ -268,15 +306,15 @@ AdjustPitch:            ld      a,(UBnKDotProductRoofSign)  ; if its negative th
                         ld      (UBnKRotZCounter),a
                         call    ClearStatusPitch
                         ret
-.pitchNormal:           ld      a,4
+.pitchNormal:           ld      a,2
                         ld      (UBnKRotZCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
                         call    SetStatusPitch
                         ret                     
-.pitchBySmall:          ld      a,2
+.pitchBySmall:          ld      a,1
                         ld      (UBnKRotZCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
                         call    SetStatusPitch
                         ret
-.Over90Degrees:         ld      a,10
+.Over90Degrees:         ld      a,5
                         ld      (UBnKRotZCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
                         call    SetStatusPitch
                         ret
@@ -293,15 +331,15 @@ AdjustRoll:             ld      a,(UBnKDotProductNoseSign)  ; if its negative th
                         ld      (UBnKRotXCounter),a
                         call    ClearStatusRoll
                         ret
-.rollNormal:            ld      a,4
+.rollNormal:            ld      a,2
                         ld      (UBnKRotXCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
                         call    SetStatusRoll
                         ret                     
-.rollBySmall:           ld      a,2
+.rollBySmall:           ld      a,1
                         ld      (UBnKRotXCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
                         call    SetStatusRoll
                         ret
-.Over90Degrees:         ld      a,10
+.Over90Degrees:         ld      a,5
                         ld      (UBnKRotXCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
                         call    SetStatusRoll
                         ret
@@ -506,7 +544,8 @@ CalculateDotProducts:   call    CopyRotmatToTactics                 ; get matrix
                         xor     (hl)                                ; .
                         ld      c,a                                 ; .
 .SumSoFar:              pop     hl                                  ; hl = vecx * dirx
-                        call    ADDHLDESignBC                       ; BHL = vecx*dirx + vecy*diry
+                        call    ADDHLDESignBC                       ; AHL = vecx*dirx + vecy*diry
+                        ld      b,a                                 ; BHL = AHL
 .CalcZValue:            ld      a,(UBnKTacticsRotMatZ)              ; de = rotmatz & dir z
                         ld      d,a                                 ; .
                         ld      a,(UBnKDirNormZ)                    ; .
@@ -518,7 +557,7 @@ CalculateDotProducts:   call    CopyRotmatToTactics                 ; get matrix
                         xor     (hl)                                ; .
                         ld      c,a                                 ; so now CDE = z
                         pop     hl
-.SumUp:                 call    ADDHLDESignBC                       ; BHL = vecx*dirx + vecy*diry + vecz*dirz
+.SumUp:                 call    ADDHLDESignBC                       ; AHL = vecx*dirx + vecy*diry + vecz*dirz
                         ret
 ;..................................................................................................................................                        
 CheckDistance:          ld      hl,(UBnKOffsetXHi)                 ; test if high bytes are set (value is assumed to be 24 bit, though calcs are only 16 so this is uneeded)
@@ -622,25 +661,26 @@ BoilerPlate9:           DB      00 ,11,  "Tactics",0
 BoilerPlate10:          DB      00, 12,  "Relative  X        Y        Z",0
 BoilerPlate11           DB      00 ,14,  "Direction X        Y        Z",0
 BoilerPlate12:          DB      00 ,16,  "Dot Product Nose      Roof",0
-BoilerPlate13:          DB      00 ,17,  "Actions",0
-ActionTextSlow:         DB      00 ,18,  "Slow",0
-ActionTextFast:         DB      08 ,18,  "Fast",0
-ActionTextRoll:         DB      16 ,18,  "Roll",0
-ActionTextPitch:        DB      24 ,18,  "Pitch",0
-ActionTextBehind:       DB      00 ,19,  "Behind",0
-ActionTextForward:      DB      10 ,19,  "Forward",0
-ActionTextNear          DB      00 ,20,  "Near",0
-ActionTextFar           DB      10 ,20,  "Far",0
-ActionTextHit:          DB      20 ,20,  "Hit",0
-ClearTextSlow:          DB      00 ,18,  "    ",0
-ClearTextFast:          DB      08 ,18,  "    ",0
-ClearTextRoll:          DB      16 ,18,  "    ",0
-ClearTextPitch:         DB      24 ,18,  "     ",0
-ClearTextBehind:        DB      00 ,19,  "      ",0
-ClearTextForward:       DB      10 ,19,  "       ",0
-ClearTextHit:           DB      20 ,20,  "   ",0
-ClearTextNear           DB      00 ,20,  "    ",0
-ClearTextFar            DB      10 ,20,  "   ",0
+BoilerPlate13:          DB      00 ,17,  "    Degrees Nose      Roof",0
+BoilerPlate14:          DB      00 ,18,  "Actions",0
+ActionTextSlow:         DB      00 ,19,  "Slow",0
+ActionTextFast:         DB      08 ,19,  "Fast",0
+ActionTextRoll:         DB      16 ,19,  "Roll",0
+ActionTextPitch:        DB      24 ,19,  "Pitch",0
+ActionTextBehind:       DB      00 ,20,  "Behind",0
+ActionTextForward:      DB      10 ,20,  "Forward",0
+ActionTextNear          DB      00 ,21,  "Near",0
+ActionTextFar           DB      10 ,21,  "Far",0
+ActionTextHit:          DB      20 ,21,  "Hit",0
+ClearTextSlow:          DB      00 ,19,  "    ",0
+ClearTextFast:          DB      08 ,19,  "    ",0
+ClearTextRoll:          DB      16 ,19,  "    ",0
+ClearTextPitch:         DB      24 ,19,  "     ",0
+ClearTextBehind:        DB      00 ,20,  "      ",0
+ClearTextForward:       DB      10 ,20,  "       ",0
+ClearTextHit:           DB      20 ,21,  "   ",0
+ClearTextNear           DB      00 ,21,  "    ",0
+ClearTextFar            DB      10 ,21,  "   ",0
 
 StatusSlow              DB      0
 StatusFast              DB      0
@@ -665,6 +705,7 @@ RowTarget               equ     10
 RowRelative             equ     13
 RowDirection            equ     15
 RowDotProduct           equ     16
+RowDotDegrees           equ     17
 
 DisplayActionStatus:    call    UpdateStatusSlow         
                         call    UpdateStatusFast         
@@ -740,6 +781,8 @@ DisplayDirection:       ld      d,RowDirection
                         call    DisplayS08
                         ret
 
+
+
 DisplayDotProduct:      ld      a,(UBnKDotProductNoseSign)
                         ld      d,RowDotProduct
                         ld      e,XPosY+2
@@ -755,7 +798,34 @@ DisplayDotProduct:      ld      a,(UBnKDotProductNoseSign)
                         ld      d,RowDotProduct
                         ld      e,XPosZ+3
                         ld      ix,UBnKDotProductRoof+1
-                        call    DisplayU8                        
+                        call    DisplayU8      
+
+                        ld      a,(UBnKDotProductNoseSign)
+                        and     a
+                        ld      a,(UBnKDotProductNose+1)
+                        jp      p,.PositiveNoseProd
+.NegativeNoseProd:      neg          
+.PositiveNoseProd:      call    ArcCos
+                        ld      d,RowDotDegrees
+                        ld      e,XPosY+2
+                        cp      $FF
+                        jp      z,.NaNNose
+                        call    l1_print_u8_hex_at_char
+                        jp      .PrintRoofDegrees
+.NaNNose:               call    l1_print_u8_nan_at_char
+.PrintRoofDegrees:      ld      a,(UBnKDotProductRoofSign)
+                        and     a
+                        ld      a,(UBnKDotProductRoof+1)
+                        jp      p,.PositiveRoofProd
+.NegativeRoofProd:      neg
+.PositiveRoofProd:      call    ArcCos
+                        ld      d,RowDotDegrees
+                        ld      e,XPosZ+2
+                        cp      $FF
+                        jp      z,.NaNRoof
+                        call    l1_print_u8_hex_at_char
+                        ret
+.NaNRoof:               call    l1_print_u8_nan_at_char
                         ret
                         
 DisplayMatrix:          ld      d,  RowMatrix1
@@ -1017,6 +1087,8 @@ DisplayBoiler:          ld      hl, BoilerPlate1
                         call    DisplayBoilerLine
                         ld      hl, BoilerPlate13
                         call    DisplayBoilerLine                        
+                        ld      hl, BoilerPlate14
+                        call    DisplayBoilerLine                        
                         ret
                         
 ;----------------------------------------------------------------------------------------------------------------------------------                    
@@ -1079,41 +1151,30 @@ XX12PVarSign1		DB 0								; Note reversed so BC can do a little endian fetch
 XX12PVarSign3		DB 0
     INCLUDE "../../Variables/constant_equates.asm"
     INCLUDE "../../Variables/general_variables.asm"
-    ;NCLUDE "../../Variables/general_variablesRoutines.asm"
     INCLUDE "../../Variables/UniverseSlotRoutines.asm"
-    ;NCLUDE "../../Variables/EquipmentVariables.asm"
     INCLUDE "../../Variables/random_number.asm"
-;INCLUDE "Tables/inwk_table.asm" This is no longer needed as we will write to univer object bank
-; Include all maths libraries to test assembly   
-    ;INCLUDE "../../Maths/asm_add.asm"
-    ;INCLUDE "../../Maths/asm_subtract.asm"
-    ;NCLUDE "../../Maths/DIVD3B2.asm"
     INCLUDE "../../Maths/asm_multiply.asm"
     INCLUDE "../../Maths/asm_square.asm"
     INCLUDE "../../Maths/asm_sine.asm"
     INCLUDE "../../Maths/asm_sqrt.asm"
     INCLUDE "../../Maths/asm_arctan.asm"
+    INCLUDE "../../Maths/asm_arccos.asm"
     INCLUDE "../../Maths/SineTable.asm"
     INCLUDE "../../Maths/ArcTanTable.asm"
+    INCLUDE "../../Maths/ArcCosTable.asm"
     INCLUDE "../../Maths/negate16.asm"
     INCLUDE "../../Maths/asm_divide.asm"
     INCLUDE "../../Maths/asm_unitvector.asm"
     INCLUDE "../../Maths/compare16.asm"
     INCLUDE "../../Maths/normalise96.asm"
     INCLUDE "../../Maths/binary_to_decimal.asm"
-    INCLUDE "../../Maths/asm_AequAdivQmul96.asm" ; AequAdivDmul96
+    INCLUDE "../../Maths/asm_AequAdivQmul96.asm"
     INCLUDE "../../Maths/Utilities/AequAmulQdiv256-FMLTU.asm"
-    ;INCLUDE "../../Maths/Utilities/PRequSpeedDivZZdiv8-DV42-DV42IYH.asm"
     INCLUDE "../../Maths/Utilities/APequQmulA-MULT1.asm"
     INCLUDE "../../Maths/Utilities/badd_ll38.asm"
- ;   INCLUDE "../../Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
- ;   INCLUDE "../../Maths/Utilities/RequAdivQ-LL61.asm"
- ;   INCLUDE "../../Maths/Utilities/RSequQmulA-MULT12.asm"
     include "../../Universe/Ships/CopyRotMattoXX15.asm"
     include "../../Universe/Ships/CopyXX15toRotMat.asm"
     INCLUDE "../../Maths/asm_tidy.asm"
- ;   INCLUDE "../../Maths/Utilities/LL28AequAmul256DivD.asm"    
- ;   INCLUDE "../../Maths/Utilities/XAequMinusXAPplusRSdiv96-TIS1.asm"
     INCLUDE "../../Menus/common_menu.asm"
 MainNonBankedCodeEnd:
     DISPLAY "Main Non Banked Code Ends at ",$

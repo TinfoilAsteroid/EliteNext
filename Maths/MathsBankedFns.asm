@@ -40,7 +40,7 @@ AddDEtoHLSigned:        ld      a,h                         ; extract h sign to 
                         ret 
                         
 ;------------------------------------------------------------
-; BHL = BHL+CDE where signs are held in B and C
+; AHL = BHL+CDE where signs are held in B and C
 ADDHLDESignBC:          ld      a,b
                         and     SignOnly8Bit
                         xor     c                           ;if b sign and c sign were different then bit 7 of a will be 1 which means 
