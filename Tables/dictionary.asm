@@ -148,6 +148,8 @@ WordTransportType10         DB  "TransportType10",0
 WordViper                   DB  "Viper",0
 WordWorm                    DB  "Worm",0
 WordRattler                 DB  "Rattler",0
+WordSpecies                 DB  "Species",0
+WordDescription             DB  "Description",0
 
 WordIdx				DW  WordDummy,          WordFront,        WordRight,        WordLeft		;0-3
 					DW  WordRear,           WordLarge,        WordEscape,       WordPod      	;4-7
@@ -155,28 +157,37 @@ WordIdx				DW  WordDummy,          WordFront,        WordRight,        WordLeft	
 					DW  WordECM,            WordSystem,       WordEnergy,       WordBomb     	;12
 					DW  WordLaser,          WordPulse,        WordBeam,         WordMiliary  	;16
 					DW  WordMining,         WordCustom,       WordUnit,         WordShield   	;20
-					DW  WordDocking,        WordComputers,    WordHyperspace,   WordGalactic 	;24
-					DW  WordExtra,          WordClean,        WordOffender,     WordFugitive	;28
-					DW  WordFood,           WordTextiles,     WordRadioactives, WordSlaves		;32
-					DW  WordLiquorWines,    WordLuxuries,     WordNarcotics,    WordMachinery   ;36
-					DW  WordAlloys,         WordFirearms,     WordFurs,         WordMinerals    ;40
-					DW  WordGold,           WordPlatinum,     WordGemStones,    WordAlienItems  ;44               ;
-WordIdxUoMFull		DW  WordTonnes,         WordKilograms,    WordGrams,		WordShort		;48
-					DW	WordRange,		    WordChart,        WordData,         WordOn          ;52
-					DW  WordDistance,       WordEconomy,      WordGovernment,   WordTechLevel   ;56
-					DW  WordPopulation,     WordMillion,      WordBillion,      WordGross       ;60
-					DW  WordProductivity,   WordAverage,      WordRadius,       WordKM          ;64
-					DW  WordMCR																	;68
-WordIdxEconomy		DW  WordRich,           WordAvg,      	  WordMainly,       WordPoor        ;69
-                    DW  WordIndustrial,     WordAgricultural									;73
-WordIdxGovernment	DW  WordAnarchy,        WordFeudal,       WordMultiGovernment, WordDictatorship ;75
-                    DW  WordCommunist,      WordConfederacy,  WordDemocracy,       WordCorporate ;79
-					DW  WordState,          WordLight,        WordYears,           Word0         ; 83
-WordIdxMarketmenu	DW  WordMarket,         WordPrices,       WordProduct,         WordUoM	    ;87
+					DW  WordDocking,        WordComputers,    WordHyperspace
+WordIdxGalactic     DW  WordGalactic 	;24
+                    DW  WordExtra,          WordClean,        WordOffender,     WordFugitive	;28
+WordIdxStock    	DW  WordFood,           WordTextiles,     WordRadioactives, WordSlaves		;32
+					DW  WordLiquorWines,    WordLuxuries,     WordNarcotics,    WordComputers   ;36
+                    DW  WordMachinery,      WordAlloys,       WordFirearms,     WordFurs        ;40
+                    DW  WordMinerals,       WordGold,         WordPlatinum,     WordGemStones   ;44
+                    DW  WordAlienItems                                                          ;45
+WordIdxUoMFull		DW  WordTonnes,         WordKilograms,    WordGrams                         ;46
+WordIdxShorRangeCht DW 	WordShort,          WordRange                                           ;49
+WordIdxChart        DW  WordChart                                                               ;51
+WordIdxData         DW  WordData,           WordOn                                              ;52
+					DW  WordDistance,       WordEconomy,      WordGovernment,   WordTechLevel   ;54
+					DW  WordPopulation,     WordMillion,      WordBillion,      WordGross       ;58
+					DW  WordProductivity,   WordAverage,      WordRadius,       WordKM          ;62
+					DW  WordMCR																	;66
+WordIdxEconomy		DW  WordRich,           WordAvg,      	  WordMainly,       WordPoor        ;67
+WordIdxIndustrial   DW  WordIndustrial                                                          ;71
+WordIdxAgricultural DW  WordAgricultural									                    ;72
+WordIdxGovernment	DW  WordAnarchy,        WordFeudal,       WordMultiGovernment, WordDictatorship ;73
+                    DW  WordCommunist,      WordConfederacy,  WordDemocracy,       WordCorporate ;77
+					DW  WordState
+WordIdxLight        DW  WordLight
+WordIdxYears        DW  WordYears      
+WordIdx0            DW  Word0         ; 81
+WordIdxMarketmenu	DW  WordMarket,         WordPrices,       WordProduct,         WordUoM	    ;84
                     DW  WordPrice,          WordFor,          WordSale                          ;91
 WordIdxUomAbbrev	DW	Wordt,				Wordkg,           Wordg                 		    ;94	
-					DW  WordQuantity,       WordInv,          WordStock,           WordEquip	;97
-                    DW  WordShip,           WordMissile       ; 101
+WordIdxQuantity     DW  WordQuantity,       WordInv,          WordStock
+WordIdxEquip        DW  WordEquip	;97
+WordIdxShip         DW  WordShip,           WordMissile       ; 101
 WordIdxShipNames:   DW  WordAdder,          WordAnaconda,     WordAsp_Mk_2,        WordBoa
                     DW  WordCargoType5,     WordBoulder,      WordAsteroid,        WordBushmaster
                     DW  WordChameleon,      WordCobraMk3,     WordCobra_Mk_1,      WordCobra_Mk_3_P
@@ -196,37 +207,37 @@ TextECMSystem				DB	12,13,0          ;3
 TextEnergyBomb				DB	14,15,0          ;4
 TextEnergyUnit				DB	14,22,0          ;5
 TextDockingComp     		DB  24,25,0          ;6
-TextGalacticHyper			DB	27,26,0          ;7
+TextGalacticHyper			DB	WordIdxGalactic,      26,0          ;7
 TextFrontLaser      		DB  01,18,16,0       ;8
 TextLeftLaser       		DB  03,18,16,0       ;9
 TextRightLaser      		DB  02,18,16,0       ;10
 TextRearLaser       		DB  04,18,16,0       ;11
-TextShortRangeChart 		DB	51,52,53,0       ;12
-TextGalacticChart   		DB	27,53,0          ;13
-TextDataOn					DB	54,55,0          ;14
-TextRichIndustrial          DB  69,73,0          ;15
-TextAvgIndustrial           DB  70,73,0			 ;16
-TextMainIndustrial          DB  71,73,0          ;17
-TextPoorIndustrial          DB  72,73,0          ;18
-TextRichAgricultural        DB  69,74,0          ;19
-TextAvgAgricultural         DB  70,74,0          ;20
-TextMainAgricultural        DB  71,74,0          ;21
-TextPoorAgricultural        DB  72,74,0          ;22
-TextLightYears				DB  84,85,0			 ;23
-Text0LightYears				DB  86,84,85,0		 ;24
-TextMarketPrices			DB  87,88,0			 ;25
-TextEquipShip               DB  100,101          ;26
+TextShortRangeChart 		DB	WordIdxShorRangeCht,  WordIdxShorRangeCht+1,WordIdxChart,0       ;12
+TextGalacticChart   		DB	WordIdxGalactic,      WordIdxChart                      ,0          ;13
+TextDataOn					DB	WordIdxData,          WordIdxData+1                     ,0          ;14
+TextRichIndustrial          DB  WordIdxEconomy,       WordIndustrial                    ,0          ;15
+TextAvgIndustrial           DB  WordIdxEconomy+1,     WordIndustrial                    ,0			 ;16
+TextMainIndustrial          DB  WordIdxEconomy+2,     WordIndustrial                    ,0          ;17
+TextPoorIndustrial          DB  WordIdxEconomy+3,     WordIndustrial                    ,0          ;18
+TextRichAgricultural        DB  WordIdxEconomy,       WordIdxGovernment                 ,0          ;19
+TextAvgAgricultural         DB  WordIdxEconomy+1,     WordIdxGovernment                 ,0          ;20
+TextMainAgricultural        DB  WordIdxEconomy+2,     WordIdxGovernment                 ,0          ;21
+TextPoorAgricultural        DB  WordIdxEconomy+3,     WordIdxGovernment                 ,0          ;22
+TextLightYears				DB  WordIdxLight,         WordIdxYears,0			 ;23
+Text0LightYears				DB  WordIdx0,WordIdxLight,WordIdxYears,0		 ;24
+TextMarketPrices			DB  WordIdxMarketmenu,    WordIdxMarketmenu+1,0			 ;25
+TextEquipShip               DB  WordIdxEquip,         WordIdxShip          ;26
 
 TextDummy					DB  0
 
-TextTokens			DW  TextLargeCargoBay, TextEscapePod, TextFuelScoops				; 0 2
-					DW  TextECMSystem, TextEnergyBomb, TextEnergyUnit					; 3 5
-					DW  TextDockingComp, TextGalacticHyper  							; 6 7
-					DW	TextFrontLaser, TextLeftLaser, TextRightLaser, TextRearLaser	; 8 11
-					DW  TextShortRangeChart, TextGalacticChart, TextDataOn				; 12 14			
-TextTokenEconomy	DW  TextRichIndustrial, TextAvgIndustrial, TextPoorIndustrial, TextMainIndustrial, TextMainAgricultural, TextRichAgricultural, TextAvgAgricultural,  TextPoorAgricultural
+TextTokens			DW  TextLargeCargoBay,   TextEscapePod, TextFuelScoops				; 0 1 2
+					DW  TextECMSystem,       TextEnergyBomb, TextEnergyUnit					; 3 4 5
+					DW  TextDockingComp,     TextGalacticHyper  							; 6 7
+					DW	TextFrontLaser,      TextLeftLaser, TextRightLaser, TextRearLaser	; 8 9 10 11
+					DW  TextShortRangeChart, TextGalacticChart, TextDataOn				; 12 13 14			
+TextTokenEconomy	DW  TextRichIndustrial,  TextAvgIndustrial, TextPoorIndustrial, TextMainIndustrial, TextMainAgricultural, TextRichAgricultural, TextAvgAgricultural,  TextPoorAgricultural
 					DW  TextLightYears		                                            ; 21 23
-					DW  Text0LightYears, TextMarketPrices	
+					DW  Text0LightYears,     TextMarketPrices	
 					DW  TextDummy;  25
 TextBuffer			DS	33
 
@@ -264,38 +275,31 @@ WordLookup:             add		hl,a
                         ret
 	
 	
-expandTokenToString:
 ; ">expandTokenToString a = texttoken"
-	ld		hl,TextTokens
-	call	getTableText
-	ld		de,TextBuffer
-.ReadLoop:
-	ld		a,(hl)
-	cp		0
-	jr		z,.ReadDone
-	push	hl
-	push	de
-	ld		hl,WordIdx
-	call	getTableText
-	pop		de
-.WordExpandLoop:
-	ld		a,(hl)
-	cp		0
-	jr		z,.AddSpace
+expandTokenToString:    ld		hl,TextTokens
+                        call	getTableText
+                        ld		de,TextBuffer
+.ReadLoop:              ld		a,(hl)
+                        cp		0
+                        jr		z,.ReadDone
+                        push	hl
+                        ld		hl,WordIdx
+                        call	getTableText
+.WordExpandLoop:        ld		a,(hl)
+                        cp		0
+                        jr		z,.AddSpace
 ;.GetChar:
-	ld		(de),a
-	inc		de
-	inc		hl
-	jr		.WordExpandLoop
-.AddSpace:
-	ld		a,' '
-	ld		(de),a
-	inc		de
-	pop		hl
-	inc		hl
-	jr		.ReadLoop
-.ReadDone:
-	dec		de
-	xor		a
-	ld		(de),a
-	ret
+                        ld		(de),a
+                        inc		de
+                        inc		hl
+                        jr		.WordExpandLoop
+.AddSpace:              ld		a,' '
+                        ld		(de),a
+                        inc		de
+                        pop		hl
+                        inc		hl
+                        jr		.ReadLoop
+.ReadDone:              dec		de
+                        xor		a
+                        ld		(de),a
+                        ret

@@ -36,8 +36,8 @@
                         INCLUDE "../../Macros/jumpMacros.asm"
                         INCLUDE "../../Macros/MathsMacros.asm"
                         INCLUDE "../../Macros/MMUMacros.asm"
-                        INCLUDE "../../Macros/NegateMacros.asm"
                         INCLUDE "../../Macros/returnMacros.asm"
+                        INCLUDE "../../Macros/NegateMacros.asm"
                         INCLUDE "../../Macros/ShiftMacros.asm"
                         INCLUDE "../../Macros/signBitMacros.asm"
                         INCLUDE "../../Macros/KeyboardMacros.asm"
@@ -146,14 +146,36 @@ InputBlockerCheck:      MMUSelectKeyboard
                         ld      a,VK_P
                         call    is_vkey_pressed
                         call    z, ToggleMissileState
+                        
+                        ld      a,VK_S
+                        call    is_vkey_pressed
+                        call    z, StepMissileState
+                        
 ;.. Update values based on movekey keys, may likley need damping as this coudl be very fast
-CalcValues:             call    UpdateTacticsVars
-UpdateShipsControl:     ld      a,(MissileState)
+
+.UpdateShipsControl:    ld      a,(MissileState)
                         and     a
                         jp      z,.NotRunning
+                        cp      1
+                        jp      nz,.CalcValues
+                        ZeroA
+                        ld      (MissileState),a
+.CalcValues:            call    UpdateTacticsVars
+                        call    RenderActions
 .Running:               call    UpdateUniverseObjects
-.NotRunning:
+                        call    RenderPositions
+                        jp      MainLoop
 ;.. Render Ship ...................................................................................................................
+.NotRunning:            call    RenderPositions
+;.. Flip Buffer ..................................................................................................................
+                        jp      MainLoop
+                        
+RenderActions:          call    DisplayAccellSpeed
+                        call    DisplayRollPitch
+                        call    DisplayDotProduct
+                        call    DisplayActionStatus
+                        ret
+
 RenderPositions:        DISPLAY "TODO Copy missile and target to buffers to print"
                         MMUSelectUniverseN 2
                         ld      d,RowTarget
@@ -162,23 +184,26 @@ RenderPositions:        DISPLAY "TODO Copy missile and target to buffers to prin
                         ld      d,RowMissle
                         call    DisplayPosition
                         call    DisplayMatrix
-                        call    DisplayAccellSpeed
-                        call    DisplayRollPitch
                         call    DisplayRelative
                         call    DisplayDirection
-                        call    DisplayDotProduct
-                        call    DisplayActionStatus
-;.. Flip Buffer ..................................................................................................................
-                        jp MainLoop
+                        ret
 
 IdentityMissile:        MMUSelectUniverseN 1
                         call    InitialiseOrientation
                         ret
 
+CalcState               DB      0
 MissileState            DB      0
                         
 ToggleMissileState:     ld      a,(MissileState)
-                        xor     $80
+                        xor     $80                 ; bit 7 controlls constant run  bit 1 step
+                        ld      (MissileState),a
+                        ret
+
+StepMissileState:       ld      a,(MissileState)
+                        and     a
+                        ret     nz  ; Can not step in running mode
+                        ld      a,1
                         ld      (MissileState),a
                         ret
 
@@ -234,7 +259,7 @@ UpdateTacticsVars:      MMUSelectUniverseN      1
                         call    CalculateDotProducts        ; AHL = dot product of missile pos and nose
                         ld      (UBnKDotProductNose),hl     ; .
                         ld      (UBnKDotProductNoseSign),a  ; .
-                        and     $80
+                        ;and     $80; THSI MAY BE THE FIX BUT ROOF DO PRODUCT IS GIVING WHACKY VALUES
                         jp      z,.PositiveNose
 .NegativeNose:          call    SetStatusBehind
                         call    ClearStatusForward
@@ -243,8 +268,15 @@ UpdateTacticsVars:      MMUSelectUniverseN      1
                         call    SetStatusForward
 .DoRoofDot:             ld      hl,UBnkrotmatRoofv          ; Copy roof to tactics matrix and calculate dot product in a
                         call    CalculateDotProducts        ; AHL = dot product of missile pos and roof
+                        ;ld      a,h
+                        ;xor     $80
+                        ;ld      h,a
                         ld      (UBnKDotProductRoof),hl     ; .
                         ld      (UBnKDotProductRoofSign),a  ; .
+.DoSideDot:             ld      hl,UBnkrotmatSidev          ; Copy roof to tactics matrix and calculate dot product in a
+                        call    CalculateDotProducts        ; AHL = dot product of missile pos and roof
+                        ld      (UBnKDotProductSide),hl     ; .
+                        ld      (UBnKDotProductSideSign),a  ; .
                         ; as we calculate target - missile the signs are already reversed
                         ;call    FlipDirectionSigns          ; Now the target is looking at the missile rather than missile at target
 ;.. Missile Tactics ...............................................................................................................                        
@@ -283,10 +315,88 @@ UpdateUniverseObjects:  MMUSelectUniverseN      1
 ; if nose is pointing > +/- 45 then then slow down slightly
 ; if nose is pointing > +/- 90 then then slow down hard
 ; Note impact is 0000.XX on all points
-SeekingLogic:           ld      a,(UBnKRotZCounter)
+; if nose angle to left roll right, if nose angle is right roll left
+; Pitch counter sign = xor roof sign
+; roll counter sign = 
+
+; Original    CNT = NoseDot bit flipped
+;             AX  = RoofDot
+;             pitch counter = 3 or  AX Sign flipped
+;             A  = abs (roll counter)
+;             if a < 16
+;                  AX = SideDot
+;                  roll counter = 5 or (pitch counter sign xdor sidedot sign)
+;             get back nosedot is used to control speed
+;             if its positive & nosedot >= 22
+;                 accelleration = 3
+;             else
+;                 a = abs (a)
+;                 if a >= 18
+;                     accelleration = - 2
+; we want roof and side to be 90 degrees to the target position with nose pointing at it
+; so we pitch until 90 degrees
+
+SeekingLogic: 
+; If the roof dot product is positive then its pointing 0 to 90 degrees to target so needs to pull up
+;                         if negative then its pointing 0 to -90 degrees (or over 90 degrees) then pitch down
+;                         so it will dither around 90 degrees eventually
+.calculatePitch:        ld      hl,(UBnKDotProductRoof+1)   ; get l roof and h sign 
+                        ld      a,h                         ; a = sign of dot product
+                        or      3                           ; a = sign of dot product or 3
+                        xor     $80
+.donePitch:             ld      (UBnKPitchCounter),a         ; Save to z rotation (pitch)
+                        jp      m,.negativePitch            ; sort out diag flags
+                        call    SetStatusPitchPlus          ;
+                        jp      .processRoll                ;
+.negativePitch:         call    SetStatusPitchMinus         ;
+; Check current roll counter if its > 16 then already rolling so do nothing
+; else get the side dot product, again if its positive then its 0 to 90 degrees to target, 
+;                                                           so it should roll right to correct
+.processRoll:           ld      a,(UBnKRollCounter)         ; 
+                        ld      b,a                         ; save counter for laterd
+                        and     $7F                         ; a = abs roll counter
+                        JumpIfAGTENusng 16, .processAcceleration ; if a >= 16 skip roll block
+                        ld      hl,(UBnKDotProductSide+1)   ; l = roof dot h = sign
+                        ld      a,(UBnKPitchCounter)        ; so if the pitch and side product have oposite signs then + roll, else - roll
+                        xor     h
+                        and     $80                         ; then filter to just sign bit
+;                        xor     $80                         ; if the signs were the same then anti clockwise, if different then clockwise
+                        or      5                           ; and bring in 5
+                        ld      (UBnKRollCounter),a         ; and set counter for roll
+                        jp      m,.NegativeRoll
+                        call    SetStatusRollPlus
+                        jp      .processAcceleration
+.NegativeRoll:          call    SetStatusRollMinus                        
+; Check the nose dot product, if facing accellerate, if not facing  then slow down, but if its way off just coast
+.processAcceleration:   ld      hl,(UBnKDotProductNose+1)   ; fetch nose dot product
+                        ld      a,h
+                        and     a
+                        jp      m,.processDeceleration      ; if the dot product is neagtive handl deceleration
+                        ld      a,l                         ; if its less than 22 also process deceleration
+                        JumpIfALTNusng 22 ,.processDeceleration
+.ItsAcceleration:       ld      a,3
+                        ld      (UBnKAccel),a
+                        call    SetStatusFast
+                        call    ClearStatusSlow
+                        ret
+.processDeceleration:   ld      a,l                         ; a = abs dot product
+                        ReturnIfALTNusng 18                 ; if its < 18 then way off so coast
+                        ld      a,-2                        ; else missiles slow by -2
+                        ld      (UBnKAccel),a
+                        call    SetStatusSlow
+                        call    ClearStatusFast
+                        ret
+.NoSpeed:               ZeroA      
+                        ld      (UBnKAccel),a
+                        call    ClearStatusSlow
+                        call    ClearStatusFast
+                        ret
+
+
+oldseekinglogic:        ld      a,(UBnKPitchCounter)
                         and     a
                         call    z, AdjustPitch              ; only call if there are no existing pitch orders
-                        ld      a,(UBnKRotXCounter)
+                        ld      a,(UBnKRollCounter)
                         and     a
                         call    z, AdjustRoll               ; only call if there are no existing roll orders
                         ld      a,(UBnKAccel)
@@ -303,20 +413,23 @@ AdjustPitch:            ld      a,(UBnKDotProductRoofSign)  ; if its negative th
                         JumpIfAGTENusng   22, .pitchBySmall
                         jp      .pitchNormal
 .pitchZero:             ZeroA
-                        ld      (UBnKRotZCounter),a
+                        ld      (UBnKPitchCounter),a
                         call    ClearStatusPitch
                         ret
 .pitchNormal:           ld      a,2
-                        ld      (UBnKRotZCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
-                        call    SetStatusPitch
+                        ;ZeroA
+                        ld      (UBnKPitchCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
+                        call    SetStatusPitchPlus
                         ret                     
 .pitchBySmall:          ld      a,1
-                        ld      (UBnKRotZCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
-                        call    SetStatusPitch
+                        ;ZeroA
+                        ld      (UBnKPitchCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
+                        call    SetStatusPitchPlus
                         ret
 .Over90Degrees:         ld      a,5
-                        ld      (UBnKRotZCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
-                        call    SetStatusPitch
+                        ;ZeroA
+                        ld      (UBnKPitchCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
+                        call    SetStatusPitchPlus
                         ret
 ;..................................................................................................................................                        
 AdjustRoll:             ld      a,(UBnKDotProductNoseSign)  ; if its negative then its over 90 degrees
@@ -328,20 +441,23 @@ AdjustRoll:             ld      a,(UBnKDotProductNoseSign)  ; if its negative th
                         JumpIfAGTENusng   22, .rollBySmall
                         jp      .rollNormal
 .rollZero:              ZeroA
-                        ld      (UBnKRotXCounter),a
+                        ld      (UBnKRollCounter),a
                         call    ClearStatusRoll
                         ret
 .rollNormal:            ld      a,2
-                        ld      (UBnKRotXCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
-                        call    SetStatusRoll
+                        ;ZeroA
+                        ld      (UBnKRollCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
+                        call    SetStatusRollPlus
                         ret                     
 .rollBySmall:           ld      a,1
-                        ld      (UBnKRotXCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
-                        call    SetStatusRoll
+                        ;ZeroA
+                        ld      (UBnKRollCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
+                        call    SetStatusRollPlus
                         ret
 .Over90Degrees:         ld      a,5
-                        ld      (UBnKRotXCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
-                        call    SetStatusRoll
+                        ;ZeroA
+                        ld      (UBnKRollCounter),a     ; max climb (we will randomly choose +/- later but need to consider stick bit 8)
+                        call    SetStatusRollPlus
                         ret
 ;..................................................................................................................................                        
 AdjustSpeed:            ld      a,(UBnKDotProductNoseSign)          ; if negative facing away so slow
@@ -352,17 +468,20 @@ AdjustSpeed:            ld      a,(UBnKDotProductNoseSign)          ; if negativ
                         JumpIfALTNusng  22,.SmallSlow               ; if nose < 22  (over 50 degrees ) then small slow down
                         jp      .NoSpeedChange                      ; between 22 and 30 coast
 .Accelerate :           ld      a,3                                 ; else on target so power on
+                        ZeroA
                         ld      (UBnKAccel),a                       ;  accelleration = 3
                         call    SetStatusFast
                         call    ClearStatusSlow
                         ret
 .SlowDown:              JumpIfALTNusng 18, .SmallSlow              ; if its < 18 then its within 120 degrees so small slow
 .Deccelerate:           ld      a,-5                               ; else faster Slow
+                        ZeroA
                         ld      (UBnKAccel),a
                         call    ClearStatusFast
                         call    SetStatusSlow
                         ret
 .SmallSlow:             ld      a,-2
+                        ZeroA
                         ld      (UBnKAccel),a
                         call    ClearStatusFast
                         call    SetStatusSlow
@@ -390,6 +509,9 @@ FlipDirectionSigns:     ld      a,(UBnKDirNormXSign)
                         ld      a,(UBnKDotProductRoofSign)
                         xor     $80
                         ld      (UBnKDotProductRoofSign),a
+                        ld      a,(UBnKDotProductSideSign)
+                        xor     $80
+                        ld      (UBnKDotProductSideSign),a
                         ret
 ;..................................................................................................................................                        
 CopyOffsetToDirection:  MMUSelectUniverseN 1
@@ -563,6 +685,7 @@ CalculateDotProducts:   call    CopyRotmatToTactics                 ; get matrix
 CheckDistance:          ld      hl,(UBnKOffsetXHi)                 ; test if high bytes are set (value is assumed to be 24 bit, though calcs are only 16 so this is uneeded)
                         ld      de,(UBnKOffsetYHi)                 ; .
                         ld      bc,(UBnKOffsetZHi)                 ; .
+; If the sign and high of X Y and Z are all zero then hit else still travelling
                         ld      a,h                                ; sign bytes only ignoring sign bit
                         or      d                                  ; .
                         or      b                                  ; .
@@ -571,10 +694,14 @@ CheckDistance:          ld      hl,(UBnKOffsetXHi)                 ; test if hig
                         or      l                                  ; test for low byte bit 7, i.e high of 16 bit values
                         or      e                                  ; .
                         or      c                                  ; .
-                        JumpIfZero          .Hit                   ; if mid byte is non zero then in near distance
-.Near:                  call    SetStatusNear
+                        JumpIfNotZero       .Near                  ; if mid byte is non zero then in near distance
 .Hit                    call    SetStatusHit                       ; which means if all mid bytes are zero then hit
+                        call    ClearStatusNear
                         call    ClearStatusFar
+                        ret
+.Near:                  call    SetStatusNear
+                        call    ClearStatusFar
+                        call    ClearStatusHit
                         ret
 .FarAway:               call    SetStatusFar
                         call    ClearStatusNear
@@ -660,22 +787,15 @@ BoilerPlate8:           DB      00 ,09,  "Target    X        Y        Z",0
 BoilerPlate9:           DB      00 ,11,  "Tactics",0
 BoilerPlate10:          DB      00, 12,  "Relative  X        Y        Z",0
 BoilerPlate11           DB      00 ,14,  "Direction X        Y        Z",0
-BoilerPlate12:          DB      00 ,16,  "Dot Product Nose      Roof",0
-BoilerPlate13:          DB      00 ,17,  "    Degrees Nose      Roof",0
+BoilerPlate12:          DB      00 ,16,  "Dot Nose XXX Roof XXX Side XXX",0
+BoilerPlate13:          DB      00 ,17,  "    Nose XX  Roof XX  Side XX ",0
 BoilerPlate14:          DB      00 ,18,  "Actions",0
-ActionTextSlow:         DB      00 ,19,  "Slow",0
-ActionTextFast:         DB      08 ,19,  "Fast",0
-ActionTextRoll:         DB      16 ,19,  "Roll",0
-ActionTextPitch:        DB      24 ,19,  "Pitch",0
+BoilerPlate15:          DB      00 ,19,  "   Speed:   Pitch:    Roll:",0
 ActionTextBehind:       DB      00 ,20,  "Behind",0
 ActionTextForward:      DB      10 ,20,  "Forward",0
 ActionTextNear          DB      00 ,21,  "Near",0
 ActionTextFar           DB      10 ,21,  "Far",0
 ActionTextHit:          DB      20 ,21,  "Hit",0
-ClearTextSlow:          DB      00 ,19,  "    ",0
-ClearTextFast:          DB      08 ,19,  "    ",0
-ClearTextRoll:          DB      16 ,19,  "    ",0
-ClearTextPitch:         DB      24 ,19,  "     ",0
 ClearTextBehind:        DB      00 ,20,  "      ",0
 ClearTextForward:       DB      10 ,20,  "       ",0
 ClearTextHit:           DB      20 ,21,  "   ",0
@@ -695,6 +815,12 @@ StatusHit               DB      0
 XPosX                   equ     $06
 XPosY                   equ     $0F
 XPosZ                   equ     $18
+XNoseDP                 equ     9
+XRoofDP                 equ     18
+XSideDP                 equ     27
+XSpeed                  equ     9
+XPitch                  equ     19
+XRoll                   equ     28
 RowMissle               equ     02
 RowMatrix1              equ     04
 RowMatrix2              equ     05
@@ -785,47 +911,61 @@ DisplayDirection:       ld      d,RowDirection
 
 DisplayDotProduct:      ld      a,(UBnKDotProductNoseSign)
                         ld      d,RowDotProduct
-                        ld      e,XPosY+2
+                        ld      e,XNoseDP
                         call    l1_printSignByte
                         ld      a,(UBnKDotProductRoofSign)
                         ld      d,RowDotProduct
-                        ld      e,XPosZ+2
+                        ld      e,XRoofDP
+                        call    l1_printSignByte
+                        ld      a,(UBnKDotProductSideSign)
+                        ld      d,RowDotProduct
+                        ld      e,XSideDP
                         call    l1_printSignByte
                         ld      d,RowDotProduct
-                        ld      e,XPosY+3
+                        ld      e,XNoseDP+1
                         ld      ix,UBnKDotProductNose+1
                         call    DisplayU8
                         ld      d,RowDotProduct
-                        ld      e,XPosZ+3
+                        ld      e,XRoofDP+1
                         ld      ix,UBnKDotProductRoof+1
-                        call    DisplayU8      
-
-                        ld      a,(UBnKDotProductNoseSign)
-                        and     a
+                        call    DisplayU8    
+                        ld      d,RowDotProduct
+                        ld      e,XSideDP+1
+                        ld      ix,UBnKDotProductSide+1
+                        call    DisplayU8
+.DisplayNoseDegrees:    ld      a,(UBnKDotProductNoseSign)
+                        ld      b,a
                         ld      a,(UBnKDotProductNose+1)
-                        jp      p,.PositiveNoseProd
-.NegativeNoseProd:      neg          
-.PositiveNoseProd:      call    ArcCos
+                        call    ArcCos
                         ld      d,RowDotDegrees
-                        ld      e,XPosY+2
+                        ld      e,XNoseDP
                         cp      $FF
                         jp      z,.NaNNose
                         call    l1_print_u8_hex_at_char
                         jp      .PrintRoofDegrees
 .NaNNose:               call    l1_print_u8_nan_at_char
 .PrintRoofDegrees:      ld      a,(UBnKDotProductRoofSign)
-                        and     a
+                        ld      b,a
                         ld      a,(UBnKDotProductRoof+1)
-                        jp      p,.PositiveRoofProd
-.NegativeRoofProd:      neg
-.PositiveRoofProd:      call    ArcCos
+                        call    ArcCos
                         ld      d,RowDotDegrees
-                        ld      e,XPosZ+2
+                        ld      e,XRoofDP
                         cp      $FF
                         jp      z,.NaNRoof
                         call    l1_print_u8_hex_at_char
-                        ret
+                        jp      .PrintSideDegrees
 .NaNRoof:               call    l1_print_u8_nan_at_char
+.PrintSideDegrees:      ld      a,(UBnKDotProductSideSign)
+                        ld      b,a
+                        ld      a,(UBnKDotProductRoof+1)
+                        call    ArcCos
+                        ld      d,RowDotDegrees
+                        ld      e,XSideDP
+                        cp      $FF
+                        jp      z,.NaNSide
+                        call    l1_print_u8_hex_at_char
+                        ret
+.NaNSide:               call    l1_print_u8_nan_at_char
                         ret
                         
 DisplayMatrix:          ld      d,  RowMatrix1
@@ -842,21 +982,25 @@ DisplayMatrix:          ld      d,  RowMatrix1
 DisplayAccellSpeed:     ld      ix,UBnKAccel
                         ld      d, RowAccellSpeed
                         ld      e,XPosX
-                        call    DisplayS8
+                        call    Display82C
                         ld      ix,UBnKSpeed
                         ld      d, RowAccellSpeed
                         ld      e,XPosZ
                         call    DisplayS8
                         ret
 
-DisplayRollPitch:       ld      ix,UBnKRotXCounter
+DisplayRollPitch:       ld      ix,UBnKRollCounter
                         ld      d, RowPitchRoll
                         ld      e,XPosX
                         call    DisplayS8
-                        ld      ix,UBnKRotZCounter
+                        ld      ix,UBnKPitchCounter
                         ld      d, RowPitchRoll
                         ld      e,XPosZ
-                        call    DisplayS8
+                        ld      a,(ix+0)
+;                        cp      3
+;                        jp      z,.OK
+;                        break
+.OK                     call    DisplayS8
                         ret
 
 DisplayBoilerLine:      MMUSelectLayer1
@@ -887,6 +1031,11 @@ DisplayS16:             MMUSelectLayer1
                         call    l1_print_s16_hex_at_char
                         ret
                         
+Display82C:             MMUSelectLayer1
+                        ld      a,(ix+0)
+                        call    l1_print_82c_hex_at_char
+                        ret
+
 DisplayS8:              MMUSelectLayer1
                         ld      a,(ix+0)
                         call    l1_print_s8_hex_at_char
@@ -907,8 +1056,10 @@ DisplayU8:              MMUSelectLayer1
 
 SetStatusSlow:          ld      a,$FF : ld      (StatusSlow),a : ret
 SetStatusFast:          ld      a,$FF : ld      (StatusFast),a : ret
-SetStatusRoll:          ld      a,$FF : ld      (StatusRoll),a : ret
-SetStatusPitch:         ld      a,$FF : ld      (StatusPitch),a : ret
+SetStatusRollPlus:      ld      a,$00 : ld      (StatusRoll),a : ret
+SetStatusRollMinus:     ld      a,$80 : ld      (StatusRoll),a : ret
+SetStatusPitchPlus:     ld      a,$00 : ld      (StatusPitch),a : ret
+SetStatusPitchMinus:    ld      a,$80 : ld      (StatusPitch),a : ret
 SetStatusBehind:        ld      a,$FF : ld      (StatusBehind),a : ret
 SetStatusForward:       ld      a,$FF : ld      (StatusForward),a : ret
 SetStatusHit:           ld      a,$FF : ld      (StatusHit),a : ret
@@ -917,8 +1068,8 @@ SetStatusFar:           ld      a,$FF : ld      (StatusFar),a : ret
 
 ClearStatusSlow:        ld      a,$00 : ld      (StatusSlow),a : ret
 ClearStatusFast:        ld      a,$00 : ld      (StatusFast),a : ret
-ClearStatusRoll:        ld      a,$00 : ld      (StatusRoll),a : ret
-ClearStatusPitch:       ld      a,$00 : ld      (StatusPitch),a : ret
+ClearStatusRoll:        ld      a,$01 : ld      (StatusRoll),a : ret
+ClearStatusPitch:       ld      a,$01 : ld      (StatusPitch),a : ret
 ClearStatusBehind:      ld      a,$00 : ld      (StatusBehind),a : ret
 ClearStatusForward:     ld      a,$00 : ld      (StatusForward),a : ret
 ClearStatusHit:         ld      a,$00 : ld      (StatusHit),a : ret
@@ -938,12 +1089,16 @@ UpdateStatusFast:       ld      a,(StatusFast)
 UpdateStatusRoll:       ld      a,(StatusRoll)
                         and     a
                         jp      z,HideRoll
-                        jp      DisplayRoll
+                        cp      $80
+                        jp      z,DisplayRollMinus
+                        jp      DisplayRollPlus
                         ; Implicit Return
 UpdateStatusPitch:      ld      a,(StatusPitch)
                         and     a
                         jp      z,HidePitch
-                        jp      DisplayPitch
+                        cp      $80
+                        jp      z,DisplayPitchMinus
+                        jp      DisplayPitchPlus
                         ; Implicit Return
 UpdateStatusBehind:     ld      a,(StatusBehind)
                         and     a
@@ -972,43 +1127,73 @@ UpdateStatusFar:        ld      a,(StatusFar)
                         ; Implicit Return
 
 DisplaySlow             MMUSelectLayer1
-                        ld      hl,ActionTextSlow
-                        call    DisplayBoilerLine
+                        ld      d,19
+                        ld      e,XSpeed
+                        ld      a,$80
+                        call    l1_printSignByte
                         ret
 
 HideSlow                MMUSelectLayer1
-                        ld      hl,ClearTextSlow
-                        call    DisplayBoilerLine
+                        ld      d,19
+                        ld      e,XSpeed
+                        ld      a,$01
+                        call    l1_printSignByte
                         ret
 
 DisplayFast             MMUSelectLayer1
-                        ld      hl,ActionTextFast
-                        call    DisplayBoilerLine
+                        ld      d,19
+                        ld      e,XSpeed
+                        ld      a,$00
+                        call    l1_printSignByte
                         ret
 
 HideFast                MMUSelectLayer1
-                        ld      hl,ClearTextFast
-                        call    DisplayBoilerLine
+                        ld      d,19
+                        ld      e,XSpeed
+                        ld      a,$01
+                        call    l1_printSignByte
                         ret
 
-DisplayRoll             MMUSelectLayer1
-                        ld      hl,ActionTextRoll
-                        call    DisplayBoilerLine
+DisplayRollPlus         MMUSelectLayer1
+                        ld      d,19
+                        ld      e,XRoll
+                        ld      a,$00
+                        call    l1_printSignByte
                         ret
-
+                        
+DisplayRollMinus        MMUSelectLayer1
+                        ld      d,19
+                        ld      e,XRoll
+                        ld      a,$08
+                        call    l1_printSignByte
+                        ret
+                        
 HideRoll                MMUSelectLayer1
-                        ld      hl,ClearTextRoll
-                        call    DisplayBoilerLine
+                        ld      d,19
+                        ld      e,XRoll
+                        ld      a,$01
+                        call    l1_printSignByte
                         ret
 
-DisplayPitch            MMUSelectLayer1
-                        ld      hl,ActionTextPitch
-                        call    DisplayBoilerLine
+DisplayPitchPlus        MMUSelectLayer1
+                        ld      d,19
+                        ld      e,XPitch
+                        ld      a,$00
+                        call    l1_printSignByte
+                        ret
+
+DisplayPitchMinus       MMUSelectLayer1
+                        ld      d,19
+                        ld      e,XPitch
+                        ld      a,$80
+                        call    l1_printSignByte
                         ret
 
 HidePitch               MMUSelectLayer1
-                        ld      hl,ClearTextPitch
-                        call    DisplayBoilerLine
+                        ld      d,19
+                        ld      e,XPitch
+                        ld      a,$01
+                        call    l1_printSignByte
                         ret
 
 DisplayBehind           MMUSelectLayer1
@@ -1089,6 +1274,8 @@ DisplayBoiler:          ld      hl, BoilerPlate1
                         call    DisplayBoilerLine                        
                         ld      hl, BoilerPlate14
                         call    DisplayBoilerLine                        
+                        ld      hl, BoilerPlate15
+                        call    DisplayBoilerLine 
                         ret
                         
 ;----------------------------------------------------------------------------------------------------------------------------------                    

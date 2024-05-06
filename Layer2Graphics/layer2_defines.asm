@@ -4,6 +4,7 @@ LAYER2_SHIFTED_SCREEN_TOP  	 equ 0
 LAYER2_SHIFTED_SCREEN_MIDDLE equ $40
 LAYER2_SHIFTED_SCREEN_BOTTOM equ $80
 
+
 ; note hi byte is not decoded on DMA port so can out OUTIR
 
 IO_SPRITE_SLOT_PORT 		 equ 12347

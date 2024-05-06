@@ -49,7 +49,7 @@ HexS8Char:       DB "+00",0
 HexS16Char:      DB "+0000",0
 HexS24Char:      DB "+0000.00",0
 HexU8NaN:        DB "**",0
-
+Bin8Bit:         DB "00000000",0
 ; prints + sign for bit 7 clear in a else - sign for bit 7 set, Load to buffer location in ix
 l1_buffer_sign_at_ix:   bit     7,a
                         jp      z,.PrintPlus
@@ -78,7 +78,38 @@ l1_buffer_hex_8_at_ix:  push    bc,,hl
                         ld      (ix+1),a
                         pop     bc,,hl
                         ret
-                        
+l1_print_bin8_at_char:    push  af,,bc,,de,,hl
+                          ld    ix,Bin8Bit
+                          ld    b,8
+.WriteLoop:               sla   a
+                          jr    c,.ItsaOne
+.ItsAZero:                ld    c,'0'
+                          jp    .DoWrite
+.ItsaOne:                 ld    c,'1'
+.DoWrite:                 ld    (ix+0),c
+                          inc   ix
+                          djnz  .WriteLoop
+                          pop   af,,bc,,de,,hl
+                          ld    hl,Bin8Bit
+                          call  l1_print_at_char
+                          ret
+
+l1_print_bin8_lh_at_char: push  af,,bc,,de,,hl
+                          ld    ix,Bin8Bit
+                          ld    b,8
+.WriteLoop:               srl   a
+                          jr    c,.ItsaOne
+.ItsAZero:                ld    c,'0'
+                          jp    .DoWrite
+.ItsaOne:                 ld    c,'1'
+.DoWrite:                 ld    (ix+0),c
+                          inc   ix
+                          djnz  .WriteLoop
+                          pop   af,,bc,,de,,hl
+                          ld    hl,Bin8Bit
+                          call  l1_print_at_char
+                          ret
+
 ; prints 16 bit lead sign hex value in HLA at char pos DE
 l1_print_s24_hex_at_char: push  af                      ; first off do sign
                           ld    ix,HexS24Char
@@ -139,6 +170,19 @@ l1_print_s8_hex_at_char:  ld    ix,HexS8Char
                           ld    hl,HexS8Char           ; by here de is still unaffected
                           call  l1_print_at_char
                           ret
+; prints 8 bit 2s compliment value in a at char pos DE
+l1_print_82c_hex_at_char: ld    ix,HexS8Char
+                          ld    h,a                     ; save a into h
+                          call  l1_buffer_sign_at_ix
+                          inc   ix                      ; move to actual digits
+                          ld    a,h                     ; get a back
+                          bit   7,a
+                          jp    z,.NoNeg
+                          neg
+.NoNeg:                   call  l1_buffer_hex_8_at_ix
+                          ld    hl,HexS8Char           ; by here de is still unaffected
+                          call  l1_print_at_char
+                          ret
 
 ; prints Lead Sign byte 8 bit signed hex value in hl at char pos DE, reuse HexS8Char buffer
 l1_print_s08_hex_at_char: ld    ix,HexS8Char
@@ -157,9 +201,15 @@ l1_print_u8_hex_at_char:  ld    ix,HexU8Char
                           ret
 l1_PlusSign:              DB      "+",0
 l1_MinusSign:             DB      "-",0
+l1_ClearSign:             DB      " ",0
 ; Displays sign byte in A at DE
-l1_printSignByte:         and     a
-                          jp      z,.DisplayPlus
+l1_printSignByte:         cp      $80
+                          jp      nz,.DisplayPlus
+                          cp      1
+                          jp      nz,.DisplayMinus
+.DisplayClear:            ld      hl,l1_ClearSign
+                          call    l1_print_at_char      
+                          ret                     
 .DisplayMinus             ld      hl,l1_MinusSign
                           call    l1_print_at_char      
                           ret

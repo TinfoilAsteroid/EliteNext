@@ -51,6 +51,9 @@ suncompass_sprite2                  equ suncompass_sprite1  +1
 suncompass_sprite3                  equ suncompass_sprite2  +1
 suncompass_sprite4                  equ suncompass_sprite3  +1
 
+; For the local chart the sprites are all reused from 0 onwards to display the star map.
+; For galactic chart they are plot pixels so sprites are not needed
+
 planetcompass_sprite1               equ suncompass_sprite4  +1
 planetcompass_sprite2               equ planetcompass_sprite1  +1
 planetcompass_sprite3               equ planetcompass_sprite2  +1
@@ -92,6 +95,11 @@ compass_station_pattern             equ 31
 compass_bottomright_pattern         equ 32
 mass_locked_pattern                 equ 33
 space_station_safe_zone_pattern     equ 34
+star_size_1                         equ 35
+star_size_2                         equ 36
+star_size_3                         equ 37
+star_size_4                         equ 38
+star_size_5                         equ 39
 
 spritecursoroffset					equ 17
 spriteborderoffset                  equ 32
@@ -100,6 +108,8 @@ HideSprite:                 MACRO   spritenbr
                             nextreg		SPRITE_PORT_INDEX_REGISTER,spritenbr
                             nextreg		SPRITE_PORT_ATTR3_REGISTER,$00
                             ENDM
+
+spr_nextStar                DB 0                                        ; Next Star to allocate for local chart
 
 ; " sprite_big BC = rowcol, D = sprite nbr , E= , pattern"
 sprite_big:
@@ -755,6 +765,32 @@ sprite_lock:            ld      a,targetting_sprite1                 ; LEFT ARM
                         ret
 
        
+sprite_local_chart_hide:ld      a,(spr_nextStar)
+.hideLoop:              HideSprite a                                ; hide sprite a
+                        dec     a                                   ; count down to 0
+                        jp      p,.hideLoop                         ; once we hit negative then done
+                        inc     a                                   ; move a from -1 to 0
+                        ld      (spr_nextStar),a                    ; next is 0
+                            
+; this takes paramters:
+; b = row, hl = column, c = sprite size (1 to 5)
+sprite_local_chart_show:                       
+                        ld      a,(spr_nextStar)                    ; select next sprite slot in queue
+                        nextreg   SPRITE_PORT_INDEX_REGISTER,a      ;
+                        inc     a                                   ; mark next free slot
+                        ld      (spr_nextStar),a                    ;
+.SetXLSB:               ld      a,l                                 ; LSB of X coordinate
+                        nextreg   SPRITE_PORT_ATTR0_REGISTER,a      ; .
+.SetY                   ld      a,b                                 ; Y coordinate
+                        nextreg   SPRITE_PORT_ATTR1_REGISTER,a      ; .
+.SetXMSB:               ld      a,h                                 ; get MSB bit of X coordinate
+                        and     $01                                 ; and ensure other bits are clear
+                        nextreg   SPRITE_PORT_ATTR2_REGISTER,a      ; .
+.SetVisPattern:         ld      a,(star_size_1 - 1) | $80           ; base pattern and visible bit, no attr 4
+                        add     a,c                                 ; select correct star from 1 to 5
+                        nextreg   SPRITE_PORT_ATTR3_REGISTER,a      ; .
+                        ret
+   
                             
 sprite_targetting_hide: HideSprite targetting_sprite1
                         HideSprite targetting_sprite2
@@ -805,11 +841,17 @@ sprite_cls_all:         call    sprite_cls_cursors
                         call    sprite_ecm_hide
                         call    sprite_missile_all_hide
                         ret
-                        
+
+; Initialises sprites to sprite 0 lowest Priority, Clipping not in over border, Enable over border, Enable visibility                      
 init_sprites:           call		sprite_cls_cursors
-                        nextreg 	SPRITE_LAYERS_SYSTEM_REGISTER,%01000011
+                        nextreg 	SPRITE_LAYERS_SYSTEM_REGISTER,%00000011 ; priority  SLU
                         ret
 
+init_sprites_l2_prity:  nextreg 	SPRITE_LAYERS_SYSTEM_REGISTER,%00000111 ; Priority LSU 
+                        ret
+
+init_sprites_spr_prity: nextreg 	SPRITE_LAYERS_SYSTEM_REGISTER,%00000011 ; Priority LSU 
+                        ret
 
 select_sprite_a:        MACRO
                         nextreg SPRITE_PORT_INDEX_REGISTER,a
@@ -884,7 +926,7 @@ sprite_diagnostic:      ld      a,$80
                         inc     a
                         ld      (diag_sprite_nbr),a
                         and     $7F
-                        JumpIfALTNusng  35,.cont
+                        JumpIfALTNusng  40,.cont
 .drawBig:               ld      de,diagnostic_sprite*256 + compass_sun_pattern
                         ld      bc,150
                         ld      hl,150

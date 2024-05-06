@@ -1,14 +1,18 @@
 status_page_marker  DB "Status      PG63"    
 
+    DEFINE  LARGE_MENUS 1
+
 txt_stat_commander 			DB "COMMANDER",0
 txt_stat_inventory 			DB "INVENTORY",0
 txt_stat_present_system		DB "Present System   :",0
 txt_stat_hyperspace_system	DB "Hyperspace System:",0
-txt_stat_condition			DB "Condition   :",0
-txt_stat_fuel				DB "Fuel        :",0
-txt_stat_cash				DB "Cash        :",0
-txt_stat_legal_status		DB "Legal Status:",0
-txt_stat_rating				DB "Rating      :",0
+txt_stat_condition			DB "Condition        :",0
+txt_stat_fuel				DB "Fuel             :",0
+txt_stat_cash				DB "Cash             :",0
+txt_stat_legal_status		DB "Legal Status     :",0
+txt_stat_rating				DB "Rating           :",0
+txt_stat_missle_type        DB "Missile Type     :",0
+txt_stat_missle_count       DB "Missile Count    :",0
 txt_stat_equipment			DB "EQUIPMENT:",0
 
 txt_stat_fuel_level			DB "00.0 Light Years",0
@@ -16,38 +20,84 @@ txt_stat_cash_amount		DB "XXXXXXXXXX",0
 txt_stat_cash_decimal       DB "."
 txt_stat_cash_fraction      DB "X Cr",0
 
-status_boiler_text		DW $0240,txt_stat_commander
-						DW $0290,CommanderName
-						DW $0B08,txt_stat_present_system
-						DW $1308,txt_stat_hyperspace_system
-						DW $1B08,txt_stat_condition
-						DW $2308,txt_stat_fuel
-						DW $2B08,txt_stat_cash
-						DW $3308,txt_stat_legal_status
-						DW $3B08,txt_stat_rating
-						DW $4B08,txt_stat_equipment	
+; 01234567890123456789012345678901234567890
+;0 
+;1          COMMANDER <Comdr name>
+;2
+;3 
+;4 Present System    :
+;5 Hyperspace System :
+;6 Condition         :
+;7 Fuel              :
+;8 Cash              :
+;9 Legal Status      :
+;0 Rating            :
+;1
+;2 Equipment:         
+;3 >1:                 >2:
+;4 >3:                 >4:
+;5 >5:                 >6:
+;6 >7:                 >8:
+;7 >9:                 >10:
+;8 >11:                >12:
+;9 >13:                >14:
+;0 >15:                >15:
+;1 >17:                >18:
+;2 >19:                >19:
+;3 >21:                >20:
+;4 >22:                >23:
+;5 >23:                >24:
+;6 >25:                >26:
+;7 >25:                >26:
+;8 >25:                >26:
+;9 >27:                >28:
 
+present_pos_row         equ $20
+hyperspace_pos_row		equ	$28
+condition_pos_row		equ	$30
+fuel_pos_row			equ	$38
+cash_pos_row			equ	$40
+legal_status_pos_row	equ $48
+rank_pos_row			equ $50
+missile_type_row        equ $58
+missile_count_row       equ $60 
+equipment_pos_row		equ $68
+equipment_list_row      equ $70
+equipment1_pos_row		equ $78
+
+present_pos_col         equ $00A0
+hyperspace_pos_col    	equ	$00A0
+hyperspace_position	    equ	$131B
+condition_pos_col		equ	$00A0
+fuel_pos_col			equ	$00A0
+cash_pos_col			equ	$00A0
+legal_status_pos_col	equ $00A0
+rank_pos_col			equ $00A0
+equipment1_pos_col		equ $0008
+equipment2_pos_col		equ $0090
+
+status_boiler_text		DW $0050: DB $08                 : DW txt_stat_commander             ; row
+						DW $00A0: DB $08                 : DW CommanderName
+						DW $0008: DB present_pos_row     : DW txt_stat_present_system
+						DW $0008: DB hyperspace_pos_row  : DW txt_stat_hyperspace_system
+						DW $0008: DB condition_pos_row   : DW txt_stat_condition
+						DW $0008: DB fuel_pos_row        : DW txt_stat_fuel
+						DW $0008: DB cash_pos_row        : DW txt_stat_cash
+						DW $0008: DB legal_status_pos_row: DW txt_stat_legal_status
+						DW $0008: DB rank_pos_row        : DW txt_stat_rating
+						DW $0008: DB missile_type_row    : DW txt_stat_missle_type
+						DW $0008: DB missile_count_row   : DW txt_stat_missle_count
+						DW $0008: DB equipment_list_row  : DW txt_stat_equipment	
+status_boiler_count     equ 12
 equipment_cursor		DW  $0000
-present_position		equ	$0B98
-hyperspace_position		equ	$1398
-condition_position		equ	$1B70
-fuel_position			equ	$2370
-cash_position			equ	$2B70
-legal_status_position	equ $3370
-rank_position			equ $3B70
-equipment_position		equ $5340
-equipment_position2		equ $5378
-equipmax_row			equ $FF
 
-STAT_selected_row       DB 0
-STAT_current_topItem    DB 0
-STAT_current_end        DB 0
-STAT_buffer_rows         EQU     128
-STAT_buffer_row_len      EQU     24
-STAT_eqip_window_len    EQU 10
+STAT_buffer_rows        EQU     128
+STAT_buffer_row_len     EQU     20
+STAT_eqip_window_len    EQU     26
 STAT_display_buff_len   EQU     STAT_buffer_rows *   STAT_buffer_row_len
 STAT_display_buffer:    DS      STAT_display_buff_len                     ; maxium of 128 items can be coded for
-STAT_position			equ $5840 
+STAT_pos_row    		equ $58 
+STAT_pos_col			equ $0040 
 STAT_cash_amount    	DS 10
 STAT_cash_UoM           DB " Cr",0
 
@@ -60,9 +110,12 @@ stat_copy_to_name:      ld      hl,GalaxyExpandedName
                         ld      bc,30
                         ldir
                         ret
+                        
+menu_box_colour         equ $C0                        
 
-;----------------------------------------------------------------------------------------------------------------------------------
-STAT_print_boiler_text: INCLUDE "Menus/print_boiler_text_inlineInclude.asm"
+
+
+	
 ;----------------------------------------------------------------------------------------------------------------------------------
 STAT_DispDEIXtoIY:      ld (.STATclcn32z),ix
                         ld (.STATclcn32zIX),de
@@ -171,7 +224,7 @@ STAT_First_Item         EQU     EQ_CARGO_BAY
 STAT_buffer_list:       ld      a,(Galaxy)       ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      hl,STAT_display_buffer                      ; hl - target buffer
-                        ld      a,1                                         ; so it will still skip them on printing
+                        ld      a,0                                         ; so it will still skip them on printing
                         ld      de, STAT_display_buff_len
                         call    memfill_dma                                 ; full buffer with ASCII 1 (unprintable character)
                         ld      hl,STAT_display_buffer+STAT_buffer_row_len-1
@@ -190,11 +243,14 @@ STAT_buffer_list:       ld      a,(Galaxy)       ; DEBUG as galaxy n is not work
                         JumpIfAIsZero .NotFitted                            ; optimised check for EquipmentItemNotFitted
 .OwnItem:               push    de,, iy,, ix,, bc
                         ld      hl,ShipEquipNameTable                       ; look up equipment name
-                        ld      d,EquipNameTableRowLen                       ; ship equip name row length, e = current equip row
+                        ld      d,EquipNameTableRowLen                      ; ship equip name row length, e = current equip row
                         mul
                         add     hl,de                                       ; hl = dword list of work pointers
                         ld      de,iy                                       ; de = 0 column at current display buffer row
-                        call    STAT_expand_name                           ; expand name
+                        ld      a,'>'                                       ; all items are prefixed ">"
+                        ld      (de),a                                      ; .
+                        inc     de                                          ; .
+                        call    STAT_expand_name                            ; expand name
                         pop     iy,,ix,,bc
                         ld      de,STAT_buffer_row_len
                         add     iy,de                                       ; now iy = start of next column
@@ -204,126 +260,110 @@ STAT_buffer_list:       ld      a,(Galaxy)       ; DEBUG as galaxy n is not work
 .DoneFittedCheck:       inc     ix                        
                         inc     e
                         djnz    .ProcessRow
-.DoneProcess:           ld      a,c
-                        ld      (STAT_current_end),a
                         ret
                         
-draw_STAT_boilertext:   ld		b,10
-                        ld		hl,status_boiler_text
-                        call	STAT_print_boiler_text
+;----------------------------------------------------------------------------------------------------------------------------------
+;">print_boilder_text ix = text structure, b = message count"
+draw_STAT_boilertext:   ld		b,status_boiler_count
+                        ld		ix,status_boiler_text
+.BoilerTextLoop:        push	bc			; Save Message Count loop value
+                        ld		l,(ix+0)	; Get col into hl
+                        ld		h,(ix+1)	; 
+                        ld		b,(ix+2)	; get row into b
+                        ld		e,(ix+3)	; Get text address into hl
+                        ld		d,(ix+4)	; .
+                        push    ix          ; save ix and prep for add via hl
+                        print_msg_at_de_at_b_hl_macro txt_status_colour
+                        pop     hl          ; add 5 to ix
+                        ld      a,5         ; .
+                        add     hl,a        ; .
+                        ld      ix,hl       ; .
+                        pop		bc
+                        djnz	.BoilerTextLoop
                         ret
                           
 GetStatFuelLevel:       INCLUDE "Menus/get_fuel_level_inlineinclude.asm"
-                          
+
 ;----------------------------------------------------------------------------------------------------------------------------------	
-draw_STAT_maintext:    	ld		bc,$0101
-                        ld		de,$BEFD
-                        ld		a,$C0
-                        MMUSelectLayer2
-                        call	l2_draw_box
-                        call    draw_STAT_boilertext
+draw_STAT_maintext:    	call    draw_STAT_boilertext
 .PresentSystem:         ld      a,(Galaxy)       ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      bc, (PresentSystemX)
                         call    galaxy_name_at_bc
                         ld      de,stat_present_name
-                        call    stat_copy_to_name:
-                        ld      bc,present_position
-                        ld      hl,stat_present_name
+                        call    stat_copy_to_name
                         MMUSelectLayer2
-                        ld      e,txt_status_colour
-                        call    l2_print_at
+                        print_msg_macro txt_status_colour,  present_pos_row,  present_pos_col,  stat_present_name
 .HyperspaceSystem:      ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      bc, (TargetSystemX)
                         call    galaxy_name_at_bc
                         ld      de,stat_target_name
                         call    stat_copy_to_name:
-                        ld      bc,hyperspace_position
-                        ld      hl,stat_target_name
                         MMUSelectLayer2
-                        ld      e,txt_status_colour
-                        call    l2_print_at
+                        print_msg_macro txt_status_colour,  hyperspace_pos_row,  hyperspace_pos_col,  stat_target_name
 .StatusText:	        call	get_cmdr_condition
                         ld		hl, ConditionNameIdx
                         call	getTableText
-                        ld		bc,condition_position
-                        MMUSelectLayer2
-                        ld      e,txt_status_colour
-                        call    l2_print_at
+                        ex      hl,de
+                        print_msg_at_de_macro txt_status_colour,  condition_pos_row,  condition_pos_col
 .DisplayFuel:           call	GetStatFuelLevel
                         ld		hl, txt_fuel_level
                         ld		a,(hl)
                         cp		'0'
                         jr		nz,.PrintFuel
 .SkipLeadingZero:	    inc		hl
-.PrintFuel:             ld		bc,fuel_position
-                        MMUSelectLayer2
-                        ld      e,txt_status_colour
-                        call    l2_print_at
+                        ex      de,hl
+.PrintFuel:             print_msg_at_de_macro txt_status_colour,  fuel_pos_row,  fuel_pos_col
 .DisplayCash:           call	STAT_GetCash
-                        ld		bc,cash_position
-                        ld		hl,STAT_cash_amount
-                        MMUSelectLayer2
-                        ld      e,txt_status_colour
-                        call    l2_print_at
+                        print_msg_macro txt_status_colour,  cash_pos_row,  cash_pos_col,  STAT_cash_amount
 .PrintLegalStatus:      ld		a,(FugitiveInnocentStatus)
                         cp		0
                         jr		nz,.Naughty
-                        ld		hl,WordClean
+                        ld		de,WordClean
                         jr		.DisplayLegalStatus
 .Naughty:               cp		50
                         jr		c,.JustOffender
-.VeryNaughty:           ld		hl,WordFugitive
+.VeryNaughty:           ld		de,WordFugitive
                         jr		.DisplayLegalStatus
-.JustOffender:          ld		hl,WordOffender
-.DisplayLegalStatus:    ld		bc,legal_status_position
-                        MMUSelectLayer2
-                        ld      e,txt_status_colour
-                        call    l2_print_at
+.JustOffender:          ld		de,WordOffender
+.DisplayLegalStatus:    print_msg_at_de_macro txt_status_colour,  legal_status_pos_row,  legal_status_pos_col
 .DisplayRating:         ld      a,(CurrentRank)
                         ; now cached ld		de,(KillTally)
                         ; now cached call	getRankIndex
                         ld		hl, RankingNameIdx
                         call	getTableText
-                        ld		bc,rank_position
-                        MMUSelectLayer2
-                        ld      e,txt_status_colour
-                        call    l2_print_at
-                        ;break
-                        
+                        ex      de,hl
+                        print_msg_at_de_macro txt_status_colour,  rank_pos_row,  rank_pos_col
                         ret
+; Draw items on 320 mode, max 28 items 14 per column
 
-
-draw_STAT_items:        MMUSelectLayer1
-                        call    l1_cls
-                        ; add in all the status stuff later
-                        ld      a,(STAT_current_topItem)                    ; Move to correct top of stat list item
-                        ld      d,STAT_buffer_row_len                       ; so de = offset to first item in display
-                        ld      e,a         
-                        mul         
+draw_STAT_items:        MMUSelectLayer2
                         ld      hl,STAT_display_buffer                      ; hl = pointer to first item in display
-                        add     hl,de                                       ;
-                        ld      a,(STAT_current_topItem)                    ; set a to number of lines to display 
-                        ld      b,a                                         ;
-                        ld      a,(STAT_current_end)                        ;
-                        sub     b                                           ;
-                        JumpIfALTNusng  STAT_eqip_window_len, .FillScreen   ; if there are enough then just do a screen fill
-.JustWindowing:         ld      b,STAT_eqip_window_len                      ; if its more than a screen then window
-                        jr      .ReadyToPrint
-.FillScreen:            ld      b,a                                         ; b = the mumber of rows to display
-.ReadyToPrint:          ld      de,STAT_position
-.DrawARow:              push    de,, hl,, bc                                ; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
-                        call    l1_print_at:
-                        pop     hl,,bc                                      ; get mesage addr back and move down one line
-                        ld      de,STAT_buffer_row_len
-                        add     hl,de
-                        pop     de                                           ; get output row back
+.ReadyToPrint:          ex      de,hl                                       ; de = message to print
+                        ld      hl,equipment1_pos_col                       ; hl = column
+                        ld      b,equipment1_pos_row                        ; b = row for first line
+.CheckIfPrintable:      ld      a,(de)                                      ; if its not a lead ">" then we have run out
+                        cp      '>'
+                        ret     nz
+.DrawARow:              push    de,,hl,,bc                                  ; Save vars 
+                        print_msg_at_de_at_b_hl_macro txt_status_colour     ; Print text at row b col hl
+                        pop     de,,hl,,bc                                  ; get back row and column, we don't change column for now
+                        ld      a,l
+                        cp      equipment1_pos_col
+                        jp      z,.MoveRight
+.DownOneLeft:           ld      hl,equipment1_pos_col
                         ld      a,8
-                        add     a,d
-                        ld      d,a
-                        djnz    .DrawARow
-                        ret
+                        add     a,b
+                        ld      b,a
+                        jp      .nextBufferItem
+.MoveRight:             ld      hl,equipment2_pos_col      
+.nextBufferItem:        ld      a,STAT_buffer_row_len                       ; nbr characters per message
+                        ex      de,hl
+                        add     hl,a 
+                        ex      de,hl
+                        jp      .CheckIfPrintable
+
 
 ;----------------------------------------------------------------------------------------------------------------------------------	
 
@@ -343,64 +383,79 @@ get_cmdr_condition:     ld			a,(DockedFlag)
 .PlayerIsDocked:        xor			a
                         ret
 
-draw_status_menu:       InitNoDoubleBuffer
+draw_status_menu:       MMUSelectLayer1
+                        call	l1_cls
+                        ld		a,7
+                        call	l1_attr_cls_to_a
+                        MMUSelectLayer2
+                        call    l2_320_initialise
+                        call    asm_l2_double_buffer_off    
+                        call    l2_320_cls
+                        MMUSelectSpriteBank
+                        call    sprite_cls_cursors
+                        MMUSelectLayer2
+.Drawbox:               call    l2_draw_menu_border
                         ld		a,8
                         ld		(MenuIdMax),a	
-.Drawbox:               ld		bc,$0101
-                        ld		de,$BEFD
-                        ld		a,$C0
-                        MMUSelectLayer2    
-                        call	l2_draw_box
-                        ld		bc,$0A01
-                        ld		de,$FEC0
-                        SetMemToN STAT_current_topItem, 0
-                        call	l2_draw_horz_line
+                        ld      b,$17
+                        ld      hl,1
+                        ld      de,320-4
+                        ld      c,$C0
+                        call    l2_draw_horz_line_320           ;b = row; hl = col, de = length, c = color"
+                        ld      b,$6C
+                        ld      hl,1
+                        ld      de,320-4
+                        ld      c,$C0
+                        call    l2_draw_horz_line_320           ;b = row; hl = col, de = length, c = color"
+                        call    draw_STAT_maintext
+                        
 .equipment              call    STAT_buffer_list
                         call    draw_STAT_items
-                        call    draw_STAT_maintext
+                        
                         ret
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Handles all the input whilst in the market menu
-loop_STAT_menu:         MacroIsKeyPressed c_Pressed_CursorUp  
-                        call    z,STAT_UpPressed
-                        MacroIsKeyPressed c_Pressed_CursorDown
-                        call    z,STAT_DownPressed
+loop_STAT_menu:         ;MacroIsKeyPressed c_Pressed_CursorUp  
+                        ;call    z,STAT_UpPressed
+                        ;MacroIsKeyPressed c_Pressed_CursorDown
+                        ;call    z,STAT_DownPressed
                         ret
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-STAT_UpPressed:         xor     a
-                        ld      (STAT_selected_row),a
-.check_scroll_up:       ld      a,(STAT_current_topItem)
-                        cp      0
-                        ret     z
-                        dec     a           ; chjange later to buffering step back 1
-                        ld      (STAT_current_topItem),a
-                        call    draw_STAT_items
-                        call    draw_STAT_boilertext
-                        ret
+;STAT_UpPressed:         xor     a
+;                        ld      (STAT_selected_row),a
+;.check_scroll_up:       ld      a,(STAT_current_topItem)
+;                        cp      0
+;                        ret     z
+;                        dec     a           ; chjange later to buffering step back 1
+;                        ld      (STAT_current_topItem),a
+;                        call    draw_STAT_items
+;                        call    draw_STAT_boilertext
+;                        ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-STAT_DownPressed:       ld      a,STAT_eqip_window_len-1
-                        ld      (STAT_selected_row),a
-                        ld      a,(STAT_current_end)
-                        ld      b,a                             ; This check is if the current list is < one screen
-                        dec     b
-                        ld      a,(STAT_selected_row)
-                        cp      b
-                        ret     z
-                        cp      STAT_eqip_window_len-1
-                        jr      z, .check_scroll_down
-                        ld      hl,STAT_selected_row
-                        inc     (hl)                        
-                        ret
-.check_scroll_down:     ld      b,a
-                        ld      a,(STAT_current_topItem)                      
-                        add     b
-                        inc     a
-                        ld      hl,STAT_current_end
-                        ReturnIfAGTEusng      (hl)
-.can_scroll_down:       ld      hl,STAT_current_topItem
-                        inc     (hl)
-                        call    draw_STAT_items
-                        call    draw_STAT_boilertext
-                        ret
+;STAT_DownPressed:       ld      a,STAT_eqip_window_len-1
+;                        ld      (STAT_selected_row),a
+;                        ld      a,(STAT_current_end)
+;                        ld      b,a                             ; This check is if the current list is < one screen
+;                        dec     b
+;                        ld      a,(STAT_selected_row)
+;                        cp      b
+;                        ret     z
+;                        cp      STAT_eqip_window_len-1
+;                        jr      z, .check_scroll_down
+;                        ld      hl,STAT_selected_row
+;                        inc     (hl)                        
+;                        ret
+;.check_scroll_down:     ld      b,a
+;                        ld      a,(STAT_current_topItem)                      
+;                        add     b
+;                        inc     a
+;                        ld      hl,STAT_current_end
+;                        ReturnIfAGTEusng      (hl)
+;.can_scroll_down:       ld      hl,STAT_current_topItem
+;                        inc     (hl)
+;                        call    draw_STAT_items
+;                        call    draw_STAT_boilertext
+;                        ret
+    

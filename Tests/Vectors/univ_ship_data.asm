@@ -188,6 +188,11 @@ RandomUnivSpeed:        MACRO
                         ld      (UBnKSpeed),a
                         ENDM
                         
+ZeroUnivSpeed:          MACRO
+                        ld      a,0
+                        ld      (UBnKSpeed),a
+                        ENDM
+
 MaxUnivSpeed:           MACRO
                         ld      a,31
                         ld      (UBnKSpeed),a
@@ -289,7 +294,9 @@ UnivSetPlayerMissile:   call    InitialisePlayerMissileOrientation  ; Copy in Pl
                         ld      (UBnKRAT2),a
                         ld      a,22
                         ld      (UBnKCNT2),a
-                        MaxUnivSpeed                            ; and immediatley full speed (for now at least) TODO
+                        ZeroUnivAccelleration
+                        ZeroUnivSpeed
+                        ;MaxUnivSpeed                            ; and immediatley full speed (for now at least) TODO
                         SetMemFalse UBnKMissleHitToProcess
                         call    ClearShipHostile                ; its a player missile
                         ret    

@@ -91,10 +91,14 @@ UBnKDotProductNose          DW  0                       ; Dot Product
 UBnKDotProductNoseSign      DB  0
 UBnKDotProductRoof          DW  0                       ; Dot Product
 UBnKDotProductRoofSign      DB  0
+UBnKDotProductSide          DW  0                       ; Dot Product
+UBnKDotProductSideSign      DB  0
 UBnKSpeed                   DB  0                       ; INWK +27
 UBnKAccel                   DB  0                       ; INWK +28
 UBnKRotXCounter             DB  0                       ; INWK +29
+UBnKRollCounter             equ UBnKRotXCounter         ; change over to this in code
 UBnKRotZCounter             DB  0                       ; INWK +30
+UBnKPitchCounter            equ UBnKRotZCounter
 UBnKRAT                     DB  0                       ; temporary for rotation magnitude or roll counter, for debugging state
 UBnKRAT2                    DB  0                       ; temporary for rotation threshold
 UBnKCNT                     DB  0                       ; temp for calculating roll and pitch

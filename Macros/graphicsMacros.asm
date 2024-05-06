@@ -15,6 +15,7 @@ DoubleBuffer320IfPossible: MACRO
                         ENDIF
                         ENDM                        
                         
+    IFDEF L2_640_SUPPORT                        
 DoubleBuffer640IfPossible: MACRO
                         IFDEF DOUBLEBUFFER
                             MMUSelectLayer2
@@ -22,7 +23,7 @@ DoubleBuffer640IfPossible: MACRO
                             call  l2_flip_buffers
                         ENDIF
                         ENDM                        
-
+    ENDIF
 
 
 ErrorEquStepMinusDelta: MACRO   delta_step, delta_value

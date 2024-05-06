@@ -52,8 +52,10 @@ draw_front_view:        MMUSelectLayer1
                         call    l1_cls
                         call    l1_attr_cls
                         MMUSelectLayer2
-                        call     asm_l2_double_buffer_on
+                        call    asm_l2_double_buffer_on
+                        call    l2_initialise
                         MMUSelectSpriteBank
+                        call    init_sprites_spr_prity
                         call    sprite_cls_cursors
                         call    sprite_reticule
                         call    sprite_laser

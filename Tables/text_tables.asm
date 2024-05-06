@@ -49,19 +49,15 @@ RankingEQNutter		EQU 10
 RankingNameIdx		dw RankingName1,RankingName2,RankingName3,RankingName4,RankingName5,RankingName6,RankingName7,RankingName8,RankingName9,RankingName10,RankingName11
 RankingNameIdxLen EQU $ - RankingNameIdx
 
-
-getTableText:
 ; ">getTableText, hl = indexlist, a = textnbr, returns with hl = porinter to head of text"
 ; ">Note for ranking first 2 bytes are target rank"
-	push	de								; save DE as we will likley need it in caller
-	add		hl,a							; 0 based ref, and its 2 bytes
-	add		hl,a
-	ld		e,(hl)
-	inc		hl
-	ld		d,(hl)							; de = indexed address
-	ex		de,hl							; flip it to hl
-	pop		de								; retrieve de
-	ret										; return with hl as start entry
+getTableText:       add		hl,a							; 0 based ref, and its 2 bytes
+                    add		hl,a
+                    ld		a,(hl)
+                    inc		hl
+                    ld		h,(hl)							; hl = indexed address
+                    ld      l,a
+                    ret										; return with hl as start entry
 
 
 ;               CF      ZF      Result

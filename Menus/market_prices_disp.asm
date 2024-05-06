@@ -1,33 +1,42 @@
 mktdisp_prices_page_marker  DB "MarketPricesPG54"    
-mktdisp_boiler_text		DW $0250,TextBuffer
-						DW $0220,name_expanded
-						DW $0B80,WordUnit
-						DW $0BB0,WordQuantity
-						DW $1308,WordProduct
-						DW $1360,WordUoM
-						DW $1380,WordPrice
-						DW $13B0,WordStock
-						DW $13E0,WordInv
-						
-;char name[16];
-;current_quantity;
-;current_price;
-;base_price;
-;eco_adjust;
-;base_quantity;
-;mask;
-;units;
 
+mktdisp_boiler_unit_col     equ $80
+mktdisp_boiler_qty_col      equ $D0
+mktdisp_boiler_product_col  equ $08
+mktdisp_boiler_uom_col      equ $70
+mktdisp_boiler_price_col    equ $C0
+mktdisp_boiler_stock_col    equ $F0
+mktdisp_boiler_inv_col      equ $0120
+
+mktdisp_cash_pos_row        equ $D0
+mktdisp_cargo_pos_row       equ $C0
+marketdisp_cash_pos_row     equ $D0
+marketdisp_cargo_pos_row    equ $C0
+marketdisp_top_row          equ $20
+
+mktdisp_cash_pos_col        equ $0010
+mktdisp_cargo_pos_col       equ $0010                        
+marketdisp_cash_pos_col     equ $0048
+marketdisp_cargo_pos_col    equ $0048
+marketdisp_uom_col			equ	mktdisp_boiler_uom_col
+marketdisp_price_col        equ mktdisp_boiler_price_col + 8
+marketdisp_quantity_col 	equ	mktdisp_boiler_stock_col + $10
+marketdisp_cargo_col        equ mktdisp_boiler_inv_col
+
+marketdisp_boiler_text	DW $0050                     : DB $02                   : DW TextBuffer
+						DW $0020                     : DB $02                   : DW name_expanded					
+						DW mktdisp_boiler_product_col: DB $13                   : DW WordProduct
+						DW mktdisp_boiler_uom_col    : DB $13                   : DW WordUoM
+						DW mktdisp_boiler_price_col  : DB $13                   : DW WordPrice
+						DW mktdisp_boiler_stock_col  : DB $13                   : DW WordStock
+						DW mktdisp_boiler_inv_col    : DB $13                   : DW WordInv
+                        DW mktdisp_cargo_pos_col     : DB mktdisp_cargo_pos_row : DW mktdisp_hold_level
+                        DW mktdisp_cash_pos_col      : DB mktdisp_cash_pos_row  : DW mktdisp_cash
 
 txt_mktdisp_amount	    DB "00.0",0
 txt_mktdisp_quantity    DB "999",0
 txt_mktdisp_cargo       DB "999",0
-mktdisp_cursor			DW  $0000
-mktdisp_position		equ $2008
-mktdisp_uom				equ	$68
-mktdisp_price 			equ $88
-mktdisp_Quantity		equ	$B0
-mktdisp_Cargo           equ $E0
+
 mktdisp_UomOffset		equ 46
 mktdisp_blank_line      DB "                                ",0
 mktdisp_hold_level      DB "Cargo: ",0
@@ -185,9 +194,26 @@ MPD_DispQtyAtoDE:       cp	0
                         inc de
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------	
-MPD_print_boiler_text:  INCLUDE "Menus/print_boiler_text_inlineInclude.asm"
+MPD_print_boiler_text:  ld		b,9
+                        ld		ix,marketdisp_boiler_text
+.BoilerTextLoop:        push	bc			; Save Message Count loop value
+                        ld		l,(ix+0)	; Get col into hl
+                        ld		h,(ix+1)	;
+                        ld		b,(ix+2)	; get row into b
+                        ld		e,(ix+3)	; Get text address into hl
+                        ld		d,(ix+4)	; .
+                        push    ix          ; save ix and prep for add via hl
+                        MMUSelectLayer2
+                        print_msg_at_de_at_b_hl_macro txt_status_colour
+                        pop     hl          ; add 5 to ix
+                        ld      a,5         ; .
+                        add     hl,a        ; .
+                        ld      ix,hl       ; .
+                        pop		bc
+                        djnz	.BoilerTextLoop
+                        ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-mktdisp_GetCash:            ld		hl,(Cash+2)
+mktdisp_GetCash:        ld		hl,(Cash+2)
                         ex      de,hl
                         ld      ix,(Cash)
                         ld		iy,mktdisp_cash_amount
@@ -228,19 +254,22 @@ mktdisp_DisplayCash:        call	mktdisp_GetCash
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------	
 ; "A = stock item number"
-PrintMktDispItem:       push     af
-                        ld      hl,mktdisp_position
-                        ld      d,a
-                        ld      e,8
-                        mul
-                        ld      d,e
-                        ld      e,0
-                        add     hl,de
-                        ld      (mktdisp_cursor),hl
-                        ex      hl,de
-                        ld      hl,mktdisp_blank_line    
-                        MMUSelectLayer1   
-                        call	l1_print_at
+PrintMarketdispColour:      DB 0
+PrintMarketdispRow:         DB 0
+PrintMktDispItem:       ex      af,af'
+                        ld      a,txt_status_colour
+                        ld      (PrintMarketdispColour),a
+                        ex      af,af'
+                        push    af
+                        ld      d,a                 ; .
+                        ld      e,8                 ; .
+                        mul     de                  ; .   
+                        ld      a,market_top_row   ; hl = base cursor position + row number * 8
+                        add     a,e
+                        ld      (PrintMarketdispRow),a
+                        ld      bc,(PrintMarketdispColour)  ; loads b with row, c with color
+                        MMUSelectLayer2
+                        print_msg_ld_bc_macro $08, market_blank_line    ; Optimise later to have a specific blank line function
                         pop     af
                         ld		ix,StockFood		; start 8 bytes before index as first add will shift
                         ld      iy,CargoTonnes
@@ -251,103 +280,104 @@ PrintMktDispItem:       push     af
                         ld      d,0
                         ld      e,a
                         add     iy,de                ; cargo table is just 1 byte per item
-.GetName:               MMUSelectStockTable   
-                        ld		a,(ix+0)
-                        ld		hl,WordIdx
+.GetName:               MMUSelectStockTable
+                        ld		a,(ix+StockNameOffset)
+                        ld		hl,WordIdxStock
                         call	getTableText
-                        ld		de,(mktdisp_cursor)
-                        MMUSelectLayer1   
-                        call	l1_print_at
-.GetUom                 MMUSelectStockTable   
-                        ld		a,(ix+7)
-                        add		a,mktdisp_UomOffset
-                        ld		hl,WordIdx
+                        ex      de,hl
+                        push    ix
+                        ld      bc,(PrintMarketdispColour)  ; loads b with row, c with color
+                        MMUSelectLayer2
+                        print_msg_ld_bc_at_de_macro  $08
+                        pop     ix
+.GetUom                 MMUSelectStockTable
+                        ld		a,(ix+StockUoMOffset)
+                        ld		hl,WordIdxUoMFull
                         call	getTableText
-                        ld		de,(mktdisp_cursor)
-                        ld		e,mktdisp_uom
-                        MMUSelectLayer1    
-                        call	l1_print_at
-.GetPrice:              MMUSelectStockTable   
-                        ld		a,(ix+2)
-                        ld		de,txt_mktdisp_amount  
-                        call	MPD_DispPriceAtoDE
-                        ld		hl,txt_mktdisp_amount
-                        ld		de,(mktdisp_cursor)
-                        ld		e,mktdisp_price
-                        MMUSelectLayer1    
-                        call	l1_print_at	
-.GetQty:                MMUSelectStockTable    
-                        ld		a,(ix+1)
-                        ld		de,txt_mktdisp_quantity  
-                        call	MPD_DispQtyAtoDE
-                        ld		hl,txt_mktdisp_quantity
-                        ld		de,(mktdisp_cursor)
-                        ld		e,mktdisp_Quantity
-                        MMUSelectLayer1    	
-                        call	l1_print_at	
+                        ex      de,hl
+                        push    ix
+                        ld      bc,(PrintMarketdispColour)  ; loads b with row, c with color
+                        MMUSelectLayer2
+                        print_msg_ld_bc_at_de_macro market_uom_col
+                        pop     ix
+.GetPrice:              MMUSelectStockTable
+                        ld		a,(ix+StockPriceOffset)
+                        ld		de,txt_market_amount
+                        call	MPM_DispPriceAtoDE
+                        push    ix
+                        ld      bc,(PrintMarketdispColour)  ; loads b with row, c with color
+                        MMUSelectLayer2
+                        print_msg_ld_bc_macro market_price_col, txt_market_amount
+                        pop     ix
+.GetQty:                MMUSelectStockTable
+                        ld		a,(ix+StockQtyOffset)
+                        ld		de,txt_market_quantity
+                        call	MPM_DispQtyAtoDE
+                        ld      bc,(PrintMarketdispColour)  ; loads b with row, c with color
+                        MMUSelectLayer2
+                        print_msg_ld_bc_macro market_quantity_col, txt_market_quantity
 .GetCargoQty:           ld      a,(iy+0)
-                        ld      de,txt_mktdisp_cargo
-                        call	MPD_DispQtyAtoDE
-                        ld      hl,txt_mktdisp_cargo
-                        ld      de,(mktdisp_cursor)
-                        ld      e,mktdisp_Cargo
-                        MMUSelectLayer1    	
-                        call	l1_print_at	
+                        ld      de,txt_market_cargo
+                        call	MPM_DispQtyAtoDE
+                        ld      bc,(PrintMarketdispColour)  ; loads b with row, c with color
+                        MMUSelectLayer2
+                        print_msg_ld_bc_macro market_cargo_col, txt_market_cargo                      
                         ret
 
-draw_mktdisp_prices_menu:InitNoDoubleBuffer
-                        ld      a,$20
-                        ld      (MenuIdMax),a
-.Drawbox:               ld		bc,$0101
-                        ld		de,$BEFD
-                        ld		a,$C0
+draw_mktdisp_prices_menu:MMUSelectLayer1
+                        call	l1_cls
+                        ld		a,7
+                        call	l1_attr_cls_to_a
                         MMUSelectLayer2
-                        call	l2_draw_box
-                        ld		bc,$0A01
-                        ld		de,$FEC0
-                        call	l2_draw_horz_line                        
-.DrawProductLine        ld		bc,$1A08
-                        ld		de,$50C0
-                        call	l2_draw_horz_line
-.DrawUoMLine:           ld		bc,$1A60
-                        ld		de,$18C0
-                        call	l2_draw_horz_line
-.DrawPriceLine:         ld		bc,$1A80
-                        ld		de,$28C0
-                        call	l2_draw_horz_line
-.DrawStockLine:         ld		bc,$1AB0
-                        ld		de,$28C0
-                        call	l2_draw_horz_line
-.DrawInvLine:           ld		bc,$1AE0
-                        ld		de,$18C0
-                        call	l2_draw_horz_line
+                        call    asm_l2_double_buffer_off
+                        call    l2_320_initialise
+                        call    l2_320_cls
+                        MMUSelectSpriteBank
+                        call    sprite_cls_cursors
+                        MMUSelectLayer2
+.Drawbox:               call    l2_draw_menu_border
+                        ld		bc,$0AC0 
+                        ld      hl,$0001
+                        ld		de,320-4
+                        call	l2_draw_horz_line_320       ;b = row; hl = col, de = length, c = color"
+.DrawProductLine        ld		bc,$1DC0
+                        ld      hl,mkt_boiler_product_col
+                        ld		de,8*12
+                        call	l2_draw_horz_line_320       ;b = row; hl = col, de = length, c = color"
+.DrawUoMLine:           ld		bc,$1DC0
+                        ld      hl,mkt_boiler_uom_col
+                        ld		de,(8*9)-1
+                        call	l2_draw_horz_line_320       ;b = row; hl = col, de = length, c = color"
+.DrawPriceLine:         ld		bc,$1DC0
+                        ld      hl,mkt_boiler_price_col
+                        ld		de,8*5
+                        call	l2_draw_horz_line_320       ;b = row; hl = col, de = length, c = color"
+.DrawStockLine:         ld		bc,$1DC0
+                        ld      hl,mkt_boiler_stock_col
+                        ld		de,8*5
+                        call	l2_draw_horz_line_320       ;b = row; hl = col, de = length, c = color"
+.DrawInvLine:           ld		bc,$1DC0
+                        ld      hl,mkt_boiler_inv_col
+                        ld		de,8*3
+                        call	l2_draw_horz_line_320       ;b = row; hl = col, de = length, c = color"
 .StaticText:	        ld      a,(Galaxy)
                         MMUSelectGalaxyA
                         ld		a,25
                         call	expandTokenToString
                         call	GetDigramGalaxySeed
-                        ld		b,9
-                        ld		hl,mktdisp_boiler_text
-                        call	MPD_print_boiler_text
-.DisplayPrices:         ld		a,0
-                        ld		hl,mktdisp_position
-                        ld		(mktdisp_cursor),hl
-.MarketLoop:	        push	af
-                        call	PrintMktDispItem
+                        call	MPM_print_boiler_text
+; Generate the market list on screen
+.DisplayPrices:         ZeroA
+                        ld		hl,market_position          ; set current cursor position on screen
+                        ld		(market_cursor),hl          ; .
+.MarketLoop:	            push	af
+                        call	PrintMktDispItem         ; display a single market item
                         pop		af
                         inc		a
-                        cp		17
+                        cp		StockTypeMax
                         jr		nz,.MarketLoop
-.DisCargo:              ld      hl,mktdisp_hold_level
-                        ld      de,$A810
-                        MMUSelectLayer1
-                        call	l1_print_at
-                        call    mktdisp_DisplayCargo
-.DisCash:               ld      hl,mktdisp_cash
-                        ld      de,$B010
-                        MMUSelectLayer1
-                        call	l1_print_at
-                        call    mktdisp_DisplayCash
+.DisCargo:              call    MKT_DisplayCargo
+.DisCash:               call    MKT_DisplayCash
                         ret
 
 

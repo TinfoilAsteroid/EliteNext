@@ -1,16 +1,44 @@
 system_data_page_marker DB "System      PG53"      
 
-plant_boiler_text		DW $0240,TextBuffer
-						DW $0280,name_expanded
-						DW $0B08,WordDistance
-						DW $1308,WordEconomy
-						DW $1B08,WordGovernment
-						DW $2308,WordTechLevel
-						DW $2B08,WordPopulation
-						DW $3B08,WordGross
-						DW $3B38,WordProductivity
-						DW $4308,WordAverage	
-						DW $4348,WordRadius
+GovernmentIndexOffset	EQU 75
+SDM_system_pos_row      EQU $08
+SDM_distance_pos_row    EQU $1B
+SDM_Economy_pos_row     EQU $23
+SDM_gov_pos_row         EQU $2B
+SDM_tech_level_pos_row	EQU $33
+SDM_population_pos_row  EQU $3B
+SDM_species_pos_row     EQU $43
+SDM_UoM_pos_row         EQU $2B
+SDM_prod_pos_row        EQU $53
+SDM_radius_pos_row      EQU $5B
+SDM_desc_pos_row        EQU $6B
+SDM_dtxt_pos_row        EQU $7B
+
+SDM_system_pos_col      EQU $0008
+SDM_distance_pos_col    EQU $0060
+SDM_gov_pos_col	        EQU $0060
+SDM_tech_level_pos_col	EQU $0060
+SDM_species_pos_col     EQU $0060
+SDM_population_pos_col  EQU $0060
+SDM_prod_pos_col        EQU $00A0
+SDM_radius_pos_col      EQU $00A0
+SDM_desc_pos_col        EQU $0008
+SDM_economy_pos_col     EQU $0060
+
+plant_boiler_text		DW $0040 : DB $02 : DW TextBuffer
+						DW $0080 : DB $02 : DW name_expanded
+						DW $0008 : DB $1B : DW WordDistance
+						DW $0008 : DB $23 : DW WordEconomy
+						DW $0008 : DB $2B : DW WordGovernment
+						DW $0008 : DB $33 : DW WordTechLevel
+						DW $0008 : DB $3B : DW WordPopulation
+                        DW $0008 : DB $43 : DW WordSpecies
+						DW $0008 : DB SDM_prod_pos_row : DW WordGross
+						DW $0038 : DB SDM_prod_pos_row : DW WordProductivity
+						DW $0008 : DB SDM_radius_pos_row : DW WordAverage	
+						DW $0048 : DB SDM_radius_pos_row : DW WordRadius
+                        DW $0008 : DB SDM_desc_pos_row   : DW WordDescription
+                        
 planet_zero_dist		DW $0B60,TextBuffer
 planet_economy_disp		DW $1360,TextBuffer
 techlevel_value			DB 10,0
@@ -26,11 +54,7 @@ productivity_value      DS 20
                         DB 0
 productivity_uom        DB " M CR",0
 
-GovernmentIndexOffset	EQU 75
-DistanceScreenPos       EQU $0B60
-GovernmentScreenPos		EQU $1B60
-TechLevelScreenPos		EQU $2360
-SpeciesScreenPos        EQU $3308
+
 
 system_present_or_target DB 0
 saved_present			 DW 0
@@ -111,9 +135,25 @@ sdm_calc_distance:      ld      a,(Galaxy)
                         call    galaxy_find_distance            ; get distance into HL
 .done_number:           ret
 
-
-SDM_print_boiler_text:
-    INCLUDE "Menus/print_boiler_text_inlineInclude.asm"
+;----------------------------------------------------------------------------------------------------------------------------------
+;">print_boilder_text ix = text structure, b = message count"
+SDM_print_boiler_text:  ld		b,13
+                        ld		ix,plant_boiler_text
+.BoilerTextLoop:        push	bc			; Save Message Count loop value
+                        ld		l,(ix+0)	; Get col into hl
+                        ld		h,(ix+1)	; 
+                        ld		b,(ix+2)	; get row into b
+                        ld		e,(ix+3)	; Get text address into hl
+                        ld		d,(ix+4)	; .
+                        push    ix          ; save ix and prep for add via hl
+                        print_msg_at_de_at_b_hl_macro txt_status_colour
+                        pop     hl          ; add 5 to ix
+                        ld      a,5         ; .
+                        add     hl,a        ; .
+                        ld      ix,hl       ; .
+                        pop		bc
+                        djnz	.BoilerTextLoop
+                        ret
 
 PlanetLeftJustifyLoop:  ld      a,(hl)
                         cp      "0"
@@ -126,7 +166,29 @@ SD_working_cursor       DW   0
 
 sd_copy_of_seed         DS 6
     
-draw_system_data_menu:  InitNoDoubleBuffer
+draw_system_data_menu:  MMUSelectLayer1
+                        call	l1_cls
+                        ld		a,7
+                        call	l1_attr_cls_to_a
+                        MMUSelectLayer2
+                        call    asm_l2_double_buffer_off    
+                        call    l2_320_initialise
+                        call    l2_320_cls
+                        MMUSelectSpriteBank
+                        call    sprite_cls_cursors
+                        MMUSelectLayer2
+.Drawbox:               call    l2_draw_menu_border
+                        ld      b,$17
+                        ld      hl,1
+                        ld      de,320-4
+                        ld      c,$C0
+                        call    l2_draw_horz_line_320           ;b = row; hl = col, de = length, c = color"
+.DescHorzLine:          ld      b,SDM_desc_pos_row -4
+                        ld      hl,1
+                        ld      de,320-4
+                        ld      c,$C0
+                        call    l2_draw_horz_line_320 
+.PrintBoiler:           call	SDM_print_boiler_text
                         ZeroA
                         ld      (system_present_or_target),a
                         ld		a,8
@@ -157,21 +219,11 @@ draw_system_data_menu:  InitNoDoubleBuffer
                         ld      de,sd_copy_of_seed
                         call    galaxy_copy_seed
 .GetSystemName:         call    GalaxyDigramWorkings       ; we have galaxy working seed populated now
-.Drawbox:               ld		bc,$0101
-                        ld		de,$BEFD
-                        ld		a,$C0
-                        MMUSelectLayer2
-                        call	l2_draw_box
-                        ld		bc,$0A01
-                        ld		de,$FEC0
-                        call	l2_draw_horz_line
 .ExpandStatic:          ld		a,14
                         call	expandTokenToString
-.TargetSystem:          ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
+.TargetSystem:          ld      a,(Galaxy)                  ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      bc, (SD_working_cursor)
- ;   call    galaxy_name_at_bc
-  ;  cp      $FF               ; if we didn't get a 
                         ld      hl,sd_copy_of_seed
                         ld      de,GalaxyWorkingSeed
                         call    galaxy_copy_seed
@@ -181,9 +233,9 @@ draw_system_data_menu:  InitNoDoubleBuffer
                         call    SD_copy_to_name:
                         ld      de,hyperspace_position
                         ld      hl,name_expanded
-.StaticText:	        ld		b,11
-                        ld		hl,plant_boiler_text
-                        call	SDM_print_boiler_text
+                        MMUSelectLayer2
+                        print_msg_macro txt_status_colour,  SDM_system_pos_row,  SDM_system_pos_col,  name_expanded
+                        
 .CalcDistance:          ld		a,(system_present_or_target)
                         cp		0
                         jr		z,.ZeroDistance
@@ -197,28 +249,25 @@ draw_system_data_menu:  InitNoDoubleBuffer
                         inc     hl
                         ld      de,distance_uom
                         call    SDTackOnUOMtoHL
-                        ld      de,DistanceScreenPos
-                        ld      hl,distance_value
-                        MMUSelectLayer1	
-                        call	l1_print_at                         
+.displayDistance:       MMUSelectLayer2
+                        print_msg_macro txt_status_colour,  SDM_distance_pos_row,  SDM_distance_pos_col,  TextBuffer
                         jp      .DisplayEconomy
 .ZeroDistance:          ld		a,24						; print literal zero dist
                         call	expandTokenToString
-                        ld		b,1
-                        ld		hl,planet_zero_dist
-                        call	SDM_print_boiler_text	
+                        MMUSelectLayer2
+                        print_msg_macro txt_status_colour,  SDM_distance_pos_row,  SDM_distance_pos_col,  TextBuffer
 .DisplayEconomy:        ld		a,(SDDisplayEconomy)
                         add     a,TextEconomyOffset
                         call	expandTokenToString
-                        ld		b,1
-                        ld		hl,planet_economy_disp
-                        call	SDM_print_boiler_text	
+                        ex      de,hl
+                        MMUSelectLayer2
+                        print_msg_macro txt_status_colour,  SDM_Economy_pos_row,  SDM_economy_pos_col,  TextBuffer; ,  planet_economy_disp
 .DisplayGovernment:     ld		a,(SDDisplayGovernment)
                         add		a,TextGovOffset
                         call	WordIndexToAddress
-                        ld		de,GovernmentScreenPos
-                        MMUSelectLayer1	
-                        call	l1_print_at
+                        ex      de,hl
+                        MMUSelectLayer2
+                        print_msg_at_de_macro txt_status_colour,  SDM_gov_pos_row,  SDM_gov_pos_col;,  GovernmentScreenPos
 .DisplayTechLevel:      ld		a,(SDDisplayTekLevel)
                         ld		de,techlevel_value
                         call    SDM_DispAtoDE
@@ -227,9 +276,8 @@ draw_system_data_menu:  InitNoDoubleBuffer
                         ld      hl,techlevel_value
                         ld      b,5
                         call    PlanetLeftJustifyLoop
-                        ld		de,TechLevelScreenPos
-                        MMUSelectLayer1	
-                        call	l1_print_at
+                        MMUSelectLayer2
+                        print_msg_macro txt_status_colour,  SDM_tech_level_pos_row,  SDM_tech_level_pos_col,  techlevel_value
 .DisplayPopulation:     ld      a,(SDDisplayPopulation)
                         ld      ixh,0
                         ld      ixl,a
@@ -243,32 +291,31 @@ draw_system_data_menu:  InitNoDoubleBuffer
                         call    SDTackOnUOMtoHL
                         ld      de,$2B60
                         ld      hl,population_value
-                        MMUSelectLayer1	
-                        call	l1_print_at 
+                        MMUSelectLayer2
+                        print_msg_macro txt_status_colour,  SDM_population_pos_row,  SDM_population_pos_col,  population_value
 ;SDDisplayPopulation     DB 0
 .DisplayPopulationType: ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         call    galaxy_get_species
                         call    SD_copy_species
-                        ld		hl,SD_species
-                        ld		de,SpeciesScreenPos
-                        MMUSelectLayer1	
-                        call	l1_print_at
+                        MMUSelectLayer2
+                        print_msg_macro txt_status_colour,  SDM_species_pos_row,  SDM_species_pos_col,  SD_species
 .DisplayProductivity:   ld      hl,(SDDisplayProductivity)
                         push    hl
                         pop     ix
                         ld      de,0
                         ld      iy,productivity_value
                         call    DispDEIXtoIY
-.AddProdUoM:            push    iy
+.AddProdUoM:            ;break
+                        push    iy
                         pop     hl
-                        inc     hl
+                        ;inc     hl
                         ld      de,productivity_uom
                         call    SDTackOnUOMtoHL
                         ld      de,$3BA0
                         ld      hl,productivity_value
-                        MMUSelectLayer1	
-                        call	l1_print_at 
+                        MMUSelectLayer2
+                        print_msg_macro txt_status_colour,  SDM_prod_pos_row,  SDM_prod_pos_col,  productivity_value
 .DisplayRadius:         ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
                         ld      hl,(GalaxyDisplayRadius)
@@ -279,13 +326,11 @@ draw_system_data_menu:  InitNoDoubleBuffer
                         call    DispDEIXtoIY
 .AddRadiusUoM:          push    iy
                         pop     hl
-                        inc     hl
+                        ;inc     hl
                         ld      de,radius_uom
-                        call    SDTackOnUOMtoHL                        
-                        ld      hl,radius_value
-                        ld      de,$43A0
-                        MMUSelectLayer1	
-                        call	l1_print_at                       
+                        call    SDTackOnUOMtoHL  
+                        MMUSelectLayer2                        
+                        print_msg_macro txt_status_colour,  SDM_radius_pos_row,  SDM_radius_pos_col,  radius_value
 .DisplayDescription:    ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
                         MMUSelectGalaxyA
 .CopySaveToGal:         ld      de,GalaxyWorkingSeed
@@ -294,10 +339,9 @@ draw_system_data_menu:  InitNoDoubleBuffer
                         ld      bc,(SD_working_cursor)
                         call     GalaxyGenerateDesc 
                         call    SD_copy_description
-                        ld      de,$5708
-                        ld      hl,SD_planet_description  
-                        MMUSelectLayer1	
-                        call	l1_print_at_wrap
+                        ld      iyl,38          ; wrap length
+                        MMUSelectLayer2
+                        print_msg_wrap_macro txt_status_colour,  SDM_dtxt_pos_row,  SDM_desc_pos_col,  SD_planet_description
                         ret
 
 ; HL = value to add on

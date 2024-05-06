@@ -85,9 +85,10 @@ l2_cls_burst:           call l2_cls_upper_two_thirds_burst
 
 l2_cls:                 call l2_cls_upper_two_thirds
                         jp   l2_cls_lower_third
-	
-l2_320_cls:             	    
-l2_640_cls:             call l2_cls_upper_two_thirds
+	    IFDEF L2_640_SUPPORT
+l2_640_cls:             
+        ENDIF
+l2_320_cls:             call l2_cls_upper_two_thirds
                         call   l2_cls_lower_third
                         ; need to clear banks 4 and 5 via normal paging, say into C000 with interrupts disabled
                         asm_l2_bank_3_macro

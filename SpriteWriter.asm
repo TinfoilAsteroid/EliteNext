@@ -16,7 +16,7 @@ DEBUGLOGSUMMARY equ 1
                         ld      a,$01
                         ld      (FileNumber),a
                         ld      hl,Sprite1
-                        ld      b,38
+                        ld      b,40
 .WriteLoop:             push    bc,,hl
                         call    WriteFile
                         ld      a,(FileNumber)

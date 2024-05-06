@@ -93,7 +93,10 @@ SpawnTypeStationDebris  EQU SpawnTypeMission        + 1
 SpawnTypeMissionEvent   EQU SpawnTypeStationDebris  + 1
 SpawnTypeDoNotSpawn     EQU SpawnTypeMissionEvent   + 1
 
-
+; Inventory Equates
+StockTypeCount          EQU 17
+StockTypeMax            EQU StockTypeCount - 1
+StockTypePenultimate    EQU StockTypeCount - 2
 ; Laser and Missile Settings
 ; Laser and Missile
 ShipLaserPower          equ %11110000

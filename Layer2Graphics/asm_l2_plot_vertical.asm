@@ -90,3 +90,38 @@ l2_draw_vert_line_to:   ld		a,b
                         jr		l2_draw_vert_line	; we can hijack its clipping, 0 check and return logic
                         ; no return needed
 	
+    
+;; ">l2_draw_vert_line"
+; ">b = row; hl = col, e = length, c = color"
+l2_draw_vert_line_320:  ZeroA
+                        or      e
+                        ret     z							; if its zero length then just return
+                        DISPLAY "TODO need 1 pixel logic"
+                        push    bc
+.selectBank:            call    asm_l2_320_col_bank_select  ; select bank and load row into h
+                        pop     bc
+                        ld      l,b                         ; hl is adjusted address
+                        push    hl
+                        dec     hl
+                        ClearCarryFlag
+.checkVertLength:       ld      a,b
+                        dec     a
+                        ClearCarryFlag
+                        adc     e                           ; check if it oversplills
+                        jp      nc,.lengthOK
+.tooLong:               adc     e                           ; as a now is negive add length results
+                        dec     a                           ; a = adjsted length
+                        ld      e,a                         ;                        
+.lengthOK:              ld		a,c                         ; set colour
+                        pop     bc                          ; bc = memory address
+; we now hijack l2_draw_horz_dma as in 320 mode the screen is in effect rotated 90 degrees from a memory perspective
+; de is already length, bc is already target
+                        ld		(l2_horz_pixel),a  
+                        ld      d,0                         ; de = length 
+                        ld      (l2_horz_lenlo),de
+                        ld      (l2_horz_target),bc
+.write_dma:             ld 		hl, l2_horz_line            ;
+                        ld 		b, l2_horz_cmd_len          ; 
+                        ld		c,IO_DATAGEAR_DMA_PORT      ; 
+                        otir                                ; run line draw 
+                        ret

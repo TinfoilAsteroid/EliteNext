@@ -19,24 +19,28 @@
 ;units;
 
 ;						nam	currr   CR  Ecadj  Qty  Msk  UoM
-StockFood			DB  32,  0, 0,  19, -2,      6, $01, 48  ; 01
-StockTextiles		DB	33,  0, 0,  20, -1,     10, $03, 48  ; 02
-StockRadioactives	DB  34,  0, 0,  65, -3,      2, $07, 48  ; 03
-StockSlaves			DB  35,  0, 0,  40, -5,    226, $1F, 48  ; 04
-StockLiquorWines	DB  36,  0, 0,  83, -5,    251, $0F, 48  ; 05
-StockLuxuries		DB  37,  0, 0, 196,  8,     54, $03, 48  ; 06
-StockNarcotics		DB  38,  0, 0, 235, 29,      8, $78, 48  ; 07
-StockComputers		DB  25,  0, 0, 154, 14,     56, $03, 48  ; 08
-StockMachinery		DB  39,  0, 0, 117,  6,     40, $07, 48  ; 09
-StockAlloys			DB  40,  0, 0,  78,  1,     17, $1F, 48  ; 11
-StockFirearms   	DB  41,  0, 0, 124, 13,     29, $07, 48  ; 12
-StockFurs       	DB  42,  0, 0, 176, -9,    220, $3F, 48  ; 13
-StockMinerals   	DB  43,  0, 0,  32, -1,     53, $03, 48  ; 14
-StockGold       	DB  44,  0, 0,  97, -1,     66, $07, 49  ; 15
-StockPlatinum   	DB  45,  0, 0, 171, -2,     55, $1F, 49  ; 16
-StockGemStones 		DB  46,  0, 0,  45, -1,    250, $0F, 50  ; 17
-StockAlienItems		DB  47,  0, 0,  53, 15,    192, $07, 48  ; 18
-
+StockFood			DB  00,  0, 0,  19, -2,      6, $01, 00  ; 00
+StockTextiles		DB	01,  0, 0,  20, -1,     10, $03, 00  ; 01
+StockRadioactives	DB  02,  0, 0,  65, -3,      2, $07, 00  ; 02
+StockSlaves			DB  03,  0, 0,  40, -5,    226, $1F, 00  ; 03
+StockLiquorWines	DB  04,  0, 0,  83, -5,    251, $0F, 00  ; 04
+StockLuxuries		DB  05,  0, 0, 196,  8,     54, $03, 00  ; 05
+StockNarcotics		DB  06,  0, 0, 235, 29,      8, $78, 00  ; 06
+StockComputers		DB  07,  0, 0, 154, 14,     56, $03, 00  ; 07
+StockMachinery		DB  08,  0, 0, 117,  6,     40, $07, 00  ; 08
+StockAlloys			DB  19,  0, 0,  78,  1,     17, $1F, 00  ; 09
+StockFirearms   	DB  10,  0, 0, 124, 13,     29, $07, 00  ; 10
+StockFurs       	DB  12,  0, 0, 176, -9,    220, $3F, 00  ; 11
+StockMinerals   	DB  13,  0, 0,  32, -1,     53, $03, 00  ; 12
+StockGold       	DB  14,  0, 0,  97, -1,     66, $07, 01  ; 13
+StockPlatinum   	DB  15,  0, 0, 171, -2,     55, $1F, 01  ; 14
+StockGemStones 		DB  16,  0, 0,  45, -1,    250, $0F, 02  ; 15
+StockAlienItems		DB  17,  0, 0,  53, 15,    192, $07, 00  ; 16
+StockRowWidth       EQU StockTextiles - StockFood
+StockNameOffset     EQU 0
+StockQtyOffset      EQU 1
+StockPriceOffset    EQU 2
+StockUoMOffset      EQU 7
 
 ;.QQ23	\Prxs -> &3DA6 \  Market prices info
 ;\ base_price, gradient sign+5bits, base_quantity, mask, units 2bits

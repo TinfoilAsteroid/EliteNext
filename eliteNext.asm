@@ -153,12 +153,13 @@ ScreenHyperspace EQU ScreenDocking+1
                         INCLUDE "./Macros/ShiftMacros.asm"
                         INCLUDE "./Macros/signBitMacros.asm"
                         INCLUDE "./Macros/KeyboardMacros.asm"
+                        INCLUDE "./Macros/print_text_macros.asm"
                         INCLUDE "./Universe/UniverseMacros/asm_linedraw.asm"
                         INCLUDE "./Universe/UniverseMacros/UniverseVarsDefineMacro.asm"
                         INCLUDE "./Tables/message_queue_macros.asm"
                         INCLUDE "./Variables/general_variables_macros.asm"
                         INCLUDE "./Variables/UniverseSlot_macros.asm"
-                        
+
                         INCLUDE "./Data/ShipIdEquates.asm"
                         
 
@@ -224,6 +225,7 @@ EliteNextStartup:       di
                         nextreg     LINE_INTERRUPT_CONTROL_REGISTER,%00000110       ; Video interrup on 
                         nextreg     LINE_INTERRUPT_VALUE_LSB_REGISTER,0   ; lasta line..                        
                         im	2                        
+        di ; debug
 .GenerateDefaultCmdr:   MMUSelectCommander
                         call		defaultCommander
                         call        saveCommander
@@ -273,6 +275,8 @@ InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
                         MMUSelectLayer1
                         call		l1_cls
                         SetBorder   $00
+                        
+                        
                     IFDEF SKIPATTRACT
                         DISPLAY "INITGALAXIES SKIP ATTRACT"
                         jp DefaultCommander

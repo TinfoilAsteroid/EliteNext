@@ -9,33 +9,12 @@ MISSILEMAXDECEL         equ -3
 MissileAI:
 ;--- Missile is targeting other ship
 ;--- In Debug Version we use slot 1 for Missile and Slot 2 for Target so its hard coded
-.UpdateTargetPosition:  MMUSelectUniverseN 2                        ;
-                        ld      hl,UBnKxlo
-                        ld      de,CurrentTargetXPos
-                        ld      bc,9
-                        ldir
-                        MMUSelectUniverseN 1
-                        ld      hl,CurrentTargetXPos
-                        ld      de,UBnKTargetXPos
-                        ld      bc,9
-                        ldir
 .MissileTargetingShip:  ld      a,(SelectedUniverseSlot)            ; we will use this quite a lot with next bank switching
 .SaveMissileBank:       add     a,BankUNIVDATA0                     ; pre calculate add to optimise
                         ld      iyh,a
                         IFDEF MISSILEDEBUG
                             ld  (TacticsMissileBank),a
                         ENDIF
-.SaveTargetBank:        ld      a,(UBnKMissileTarget)               ; target will be used a lot too
-                        add     a,BankUNIVDATA0                     ; pre calculate add to optimise
-                        ld      iyl,a                               ; save target                        
-                        IFDEF MISSILEDEBUG
-                            ld  (TacticsTargetBank),a
-                        ENDIF
-.IsMissleTargetGone:    JumpIfSlotAEmpty    .ECMIsActive            ; if the target was blown up then detonate
-;... Note we don't have to check for impact as we already have a loop doing that
-.SelectTargetShip:      SelectTargetBank
-.IsShipExploding:       IsShipExploding                             ; check exploding status
-                        jr      z,.UpdateTargetingShipX             ; as if exploding then the missile will also explode
 .ShipIsExploding:       SelectMissileBank                           ; get missile back into memory
                         jp      .ECMIsActive
 ;--- At this point we already have the target banked in ready for calculating vector

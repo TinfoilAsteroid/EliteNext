@@ -1,8 +1,7 @@
-;Calculate a = arccos (a)
-ArcCos:                 and     a
-                        jp      p,.PositiveTable
+;Calculate a = arccos (b a) where b is the sign and a is the value 
+ArcCos:                 bit     7,b
+                        jp      z,.PositiveTable
 .NegativeTable:         ld      hl,ArcNegPosTable
-                        neg
                         jp      .LookupAngle
 .PositiveTable:         ld      hl,ArcCosPosTable
 .LookupAngle:           JumpIfAGTENusng 37, .NaN

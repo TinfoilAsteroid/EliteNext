@@ -88,3 +88,32 @@ l2_draw_horz_line_to:   ld 		a,d
 .singlepixel:           ld		a,e
                         l2_plot_macro; jp		l2_plot_pixel				; hijack return
                         ret
+
+
+; "l2_draw_horz_line"
+; ">b = row; hl = col, de = length, c = color"
+l2_draw_horz_line_320:  ld		a,d
+                        or      e
+.zerolengthexit:        ret		z
+                        DISPLAY "TODO need 1 pixel logic"
+.longenoughtfordma:     push    hl,,bc                      ; copy row and colour to ixh and ixl
+                        call    asm_l2_320_col_bank_select  ; Select the first bank to start writing to and adjust hl
+.bankSelected:          pop     bc                          ; get back row and colour
+                        ld      l,b                         ; set target row
+.fillBank:              ld      (hl),c                      ; plot pixel
+                        ld      a,d                         ; if we run out of DE then done
+                        or      e                           ; .
+                        jp      z,.fillComplete             ; .
+                        inc     h                           ; move on one column
+                        ld      a,h                         ; if we are done next bank
+                        cp      64                          ; .
+                        jp      z,.nextBank                 ; if inc H compeltes a carry then we have spanned a bank
+                        dec     de                          ; one less still to do
+                        jp      .fillBank                   ; else carry on
+.fillComplete:          pop     hl                          ; clean up stack on completion
+                        ret
+.nextBank:              push    bc
+                        call    asm_l2_320_next_bank        ; cycle on one bank as we always go left to right
+                        ld      h,0                         ; reset banked memory address colum to 0
+                        dec     de
+                        jp      .bankSelected

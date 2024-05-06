@@ -58,10 +58,37 @@ l2_draw_box_320:        push    bc,,de,,hl,,af
                         ;TODOcall    l2_draw_horz_line_320       ; b = row, hl = col, e = width a = colour
 .leftVertLine:          pop     bc,,de,,hl,,af	
                         push    bc,,de,,hl,,af	
-                        ;TODOcall    l2_draw_vert_line_320
+                        ld      d,0                             ; de = height 
+                        ld      e,c
+                        ld      c,a                             ; set colour
+                        call    l2_draw_vert_line_320
                         pop     bc,,de,,hl,,af	
-                        add     hl,de
+                        add     hl,de                           ; hl = right column
                         dec     hl
-                        ;TODOcall    l2_draw_vert_line_320
+                        ld      d,0                             ; de = length
+                        ld      e,c
+                        ld      c,a                             ; set colour
+                        call    l2_draw_vert_line_320
                         ret
-                        
+
+l2_draw_menu_border:    ld      b,1
+                        ld      hl,1
+                        ld      e,255-2
+                        ld      c,$C0
+                        call    l2_draw_vert_line_320           ;b = row; hl = col, de = length, c = color"
+                        ld      b,1
+                        ld      hl,320-2
+                        ld      e,255-2
+                        ld      c,$C0
+                        call    l2_draw_vert_line_320           ;b = row; hl = col, de = length, c = color"
+                        ld      b,1
+                        ld      hl,1
+                        ld      de,320-4
+                        ld      c,$C0
+                        call    l2_draw_horz_line_320
+                        ld      b,253
+                        ld      hl,2
+                        ld      de,320-4
+                        ld      c,$C0
+                        call    l2_draw_horz_line_320
+                        ret

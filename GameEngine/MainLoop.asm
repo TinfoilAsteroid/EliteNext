@@ -15,10 +15,65 @@
     DEFINE  MAINLOOP_MODEL_RENDER    1
    ; DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
     DEFINE  MAINLOOP_WARP_ENABLED 1
-
+;.................................................................................................................................    
+; Main loop
+;   bank in Maths
+;   do random number
+;   update lasers
+;   update ECM
+;   cool warp engines
+;   refreshKeyboard
+;   if keyboard blocking is set then skip the following
+;       test for view key
+;       test for pause key
+;       if paused then jump back to main loop
+;       test for movement keys
+;       handle movement 
+;           have we got a cursor routine loaded 
+;               if yes then select screen (self modifying code)
+;               call cursor routine (self modifying code)
+;   Is there a main loop mission set?
+;       if yes then jump to it
+;   Are we docked?
+;       if yes jump to UpdateLoop
+;       else    decrement Event Counter (cycles 0 to 255)
+;                if its zero then call LoopEventTriggered
+;                if Event Counter %00001111 is 0 then call RechargeShip
+;                if there are any player missiles left 
+;                    if player launch missile flag set call LaunchPlayerMissile
+;                if WarpPressed call ProcessWarp
+;                if UpdateShipsControl is 0 call UpdateUniverseObjects
+;                if a ScreenTransition is forced, then jump to BruteForceChange
+;                if ViewUpdate is zero jump to UpdateLoop
+;                else
+;                   Check for Hyperspace countdown message
+;                   Display any message in queuye and update message timer
+;                   dec console refresh timer and if zero update console then reset timer, set console redraw flag
+;                   clear view port
+;                   Update and render sun
+;                   Update and render planet
+;                   Draw space dust on layer 1
+;                   if laser is on then draw laser sprites
+;                                       drain laser
+;                                  else hide laser sprites
+;                   draw ships in viewport
+;                   if console redraw flag set, call UpdateConsole
+;UpdateLoop:        if ScreenLoopJp is not zoer
+;                       call screen loop hook (self modifying code)
+;                   switch docked flag:  StateCompletedLaunch,   goto WeHaveCompletedLaunch (these all then jump to DoubleBufferCheck)
+;                                        StateInTransition,      goto WeAreInTransition
+;                                        StateHJumping,          goto WeAreHJumping
+;                                        StateHEntering,         goto WeAreHEntering
+;                                        StateCompletedHJump,    goto WeHaveCompletedHJump
+;                   else goto Double BufferCheck
+;DoubleBufferCheck  Flip buffers if double buffered
+;                   if ScreenTransitionForced set
+;BruteForceChange:      then call SetScreenA
+;                   jump back to main loop
 ;.................................................................................................................................    
 MainLoop:	    MMUSelectMathsBankedFns                                         ; make sure we are in maths routines in case a save paged out
-                call    doRandom                                                ; redo the seeds every frame
+.doRandom:      call    doRandom                                                ; redo the seeds every frame
+.doLasers:
                 IFDEF LASER_V2
                         call    LaserBeamV2
                 ELSE
@@ -27,9 +82,13 @@ MainLoop:	    MMUSelectMathsBankedFns                                         ; 
                         UpdateLaserRestCounter
                         CoolLasers
                 ENDIF
+;...............ECM                
+.doECM:
                 IFDEF MAINLOOP_ECM
                         INCLUDE "./GameEngine/MainLoop_ECM.asm"
                 ENDIF
+;...............Warp
+.doWarp:
                 IFDEF MAINLOOP_WARP_ENABLED
                         ld      a,(WarpCooldown)
                         and     a
@@ -38,6 +97,8 @@ MainLoop:	    MMUSelectMathsBankedFns                                         ; 
                         ld      (WarpCooldown),a
 .AlreadyCool
                 ENDIF
+;...............Keyboard
+.doKeyboard
                 IFDEF MAINLOOP_KEYBOARDSCAN
                         MMUSelectKeyboard
                         call    scan_keyboard                                           ; perform the physical input scan
@@ -62,6 +123,12 @@ InputBlockerCheck:      ld      a,$0
                 ENDIF
 HandleMovement:         ld      a,(CallCursorRoutine+2)
                         JumpIfAIsZero     TestAreWeDocked
+;.. Handle Special Mission logic  .................................................................................................
+HandleMissionLogic:     ld      a,$00                                                   ; if we have a bank then we have a mission
+                        and     a                                                       ;
+                        jp      z,HandleBankSelect                                      ;
+.MissionLogic:          DISPLAY "TODO Add MMUSelectMissionBankA"                                          ; so select mission bank
+MissionJump:            call    $0000                                                   ; and call custom logic routined
 ;.. Handle displaying correct screen ..............................................................................................
 HandleBankSelect:       ld      a,$00
                         MMUSelectScreenA
@@ -215,7 +282,6 @@ WeAreHJumping:          call    hyperspace_Lightning
 WeAreHEntering:         ld      a,StateCompletedHJump
                         ld      (DockedFlag),a
                         jp      DoubleBufferCheck
-
 ;--
 LaunchedFromStation:    
                         ret

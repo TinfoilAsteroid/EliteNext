@@ -4,7 +4,7 @@
 ; Calculate K(3 2 1 0) = (A P+1 P) / (z_sign z_hi z_lo) where zsign hi lo is in DE with zsign leading hi
 varQRS                 DS      4
 varAPP                 DS     3
-Rvar                   DS     1
+RvarDiv                DS     1
 
                     DISPLAY "TODO:  neds rewrite of whoel DIDV3B2"
 ;; NEEDS REWRITE TODO OF WHOLE DIVD3B2
@@ -23,14 +23,14 @@ Requ256mulAdivQ_6502:
                         rl      b                       ; ROL R                  \ Rotate the counter in R to the left, and catch the result bit into bit 0 (which will be a 0 if we didn't do the subtraction, or 1 if we did)
                         jp      c, .LL31_6502            ; BCS LL31               \ If we still have set bits in R, loop back to LL31 to do the next iteration of 7
                         ld      a,b
-                        ld      (Rvar),a
+                        ld      (RvarDiv),a
                         ret                             ; RTS                    \ R left with remainder of division
 .LL29_6502:             sub     c                       ; SBC Q                  \ A >= Q, so set A = A - Q
                         SetCarryFlag                    ; SEC                    \ Set the C flag to rotate into the result in R
                         rl      b                       ; ROL R                  \ Rotate the counter in R to the left, and catch the result bit into bit 0 (which will be a 0 if we didn't do the subtraction, or 1 if we did)
                         jp      c, .LL31_6502            ; BCS LL31               \ If we still have set bits in R, loop back to LL31 to do the next iteration of 7
                         ld      a,b                     ; RTS                    \ Return from the subroutine with R containing the
-                        ld      (Rvar),a                ; .
+                        ld      (RvarDiv),a                ; .
                         ret                             ; .                      \ remainder of the division
 .LL2_6502:              ld      a,$FF                   ; LDA #255               \ The division is very close to 1, so return the closest
                         ld      (varR),a                ; STA R                  \ possible answer to 256, i.e. R = 255

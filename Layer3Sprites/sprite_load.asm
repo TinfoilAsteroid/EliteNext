@@ -8,7 +8,7 @@ Filename                DB "NESpr"
 FileNbr                 DB "00"
 Extension:              DB ".dat",0
 
-SpriteCount             EQU     38
+SpriteCount             EQU     40
 
 FileNbrA:               ld      a,(FileNumber)
                         swapnib
