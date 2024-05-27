@@ -88,11 +88,30 @@ PrintHexARegAt:         MACRO   x,y
                         pop     af,,bc,,de,,hl
                         ENDM
 
-
 SetBorder:              MACRO   value
                         ld          a,value
                         call        l1_set_border
                         ENDM
+                        
+DumpDataTest:           MACRO   command, recordcount, recordlen, dataaddr
+                        ld      a,recordcount
+                        ld      d,a
+                        ld      e,recordlen
+                        mul     de
+                        ld      hl,dataaddr
+                        ld      a,command
+                        call    ENPiDumpDataTest
+                        ENDM
+DumpDataToPi:           MACRO   command, recordcount, recordlen, dataaddr
+                        ld      a,recordcount
+                        ld      d,a
+                        ld      e,recordlen
+                        mul     de
+                        ld      hl,dataaddr
+                        ld      a,command
+                        call    ENPiDumpData
+                        ENDM
+                        
 
 charactersetaddr		equ 15360
 STEPDEBUG               equ 1
@@ -119,20 +138,38 @@ EliteNextStartup:       di
                         MessageAt   15,0,ResetMessage
                         break
                         call        WaitForAnyKey
+DumpTest:               DumpDataTest $F0, (LineHeapSize), 5, LineHeap
+                        call        WaitForAnyKey
+                        
 TestCode:               call        ENPiHello
                         call        WaitForAnyKey
+                        call        l1_cls
                         call        ENPiPingTest
                         call        WaitForAnyKey
+                        call        l1_cls
                         ld          a,1
                         ld          (Var_ViewPort),a
                         call        ENPiSetView
-
-                        call        PlayerInput
-
-                        call        UpdateUniverse
-
+                        call        WaitForAnyKey
+                        call        l1_cls
+                        call        ENPiPlayerInput
+                        call        WaitForAnyKey
+                        call        l1_cls
+                        call        ENPiAddShip
+                        call        WaitForAnyKey
+                        call        l1_cls
+                        call        ENPiUpdateUniverse
+                        call        WaitForAnyKey
+                        call        l1_cls
                         call        ENPiFireECM
+                        call        WaitForAnyKey                        
+                        call        l1_cls
                         call        ENPiRenderData
+                        call        WaitForAnyKey
+                        DumpDataToPi $F0, (LineHeapSize), 5, LineHeap
+                        call        WaitForAnyKey
+                        call        l1_cls
+                        call        ENPiSetView ; to test that redner data was OK
 EndLoop:                jp          EndLoop
 InitialiseMessage:      db 'Starting',0
 ResetMessage:           db 'PiReset',0
@@ -145,16 +182,41 @@ PiSendCommand:          MACRO   cmd
                         ld      d,cmd
                         call    PiWriteByte
                         ENDM
+PiSendShortDataBlock:   MACRO   dataAddr, dataLen
+                        ld      hl,dataAddr
+                        ld      b,dataLen
+                        call    PiWriteDataBlock
+                        ENDM
+                      
+;--------------------------------------------------------------------------------------
+;Receiving data heap
+; Size aliases
+CloudHeapSize:
+CompassHeapSize:
+PositionHeapSize:
+MatrixHeapSize:
+LaserHeapSize:
+ScannerDataSize:
+LineHeapSize:           DB      0
+; Data aliases
+CloudHeap:              ; DS      4 * 16
+LaserHeap:
+MatrixHeap:
+PositionHeap:
+CompassHeap:
+StatusHeap:
+ScannerHeap:            ; DS (3*15) + 9                       ; so its ships + star, planet,scanner, data size determins the poitn where it bedomes star data
+LineHeap:               DS      256*5
 ;--------------------------------------------------------------------------------------
 ENPiHello:              MessageAt 0,2,CommandMessage
                         PiSendCommand   1
                         MessageAt 9,2,SentMessage
                         MessageAt 13,2,HelloMessage
                         ld      hl,HelloMessage
-                        ld      d,5             ; 5 characters
+                        ld      b,5             ; 5 characters
                         ld      e,1             ; fixed, no terminating 0
                         call    PiWriteString
-                        MessageAt 18,2,SentMessage
+                        MessageAt 18,2,SentHello
                         MessageAt 22,2,ReadingMessage
                         ld      hl,HelloResponse
                         ld      d,5             ; 5 characters
@@ -185,15 +247,17 @@ ENPiSetView:            MessageAt 0,6,CommandMessage
                         ret
 ;--------------------------------------------------------------------------------------
 ; 0x15 To Test    Request Render data
-LineHeapSize:           DB      0
-LineHeap:               DS      256*5
 ENPiRenderData:         PiSendCommand   $15
+                        MessageAt 9,6,SentMessage
+                        MessageAt 13,6,RenderMessage
                         call    PiReadByte                  ; Read number of lines to render
                         and     a
                         ret     z
                         ld      (LineHeapSize),a            ; Cache line list
+                        PrintHexARegAt 0,0
+                        ld      a,(LineHeapSize)
                         ld      hl,LineHeap
-                        ld      d,4                         ; de = 4 byte blocks of data
+                        ld      d,5                         ; de = 5 byte blocks of data includin gline colour
                         ld      e,a
                         mul     de
                         call    PiReadBlock
@@ -201,10 +265,9 @@ ENPiRenderData:         PiSendCommand   $15
                         ret
 ;--------------------------------------------------------------------------------------
 ; 0x16 Input......Request Explode Cloud data, returns render position as xy, age, & ship size, leaves drawing to main game engine
-CloudSize:              DB      0
-CloudHeap:              DS      4 * 16
 ENPiCloudList:          PiSendCommand   $16
-                        call    piReadByte
+                        call    PiReadByte
+                        ld      (CloudHeapSize),a
                         and     a
                         ret     z
                         ld      hl,CloudHeap
@@ -214,14 +277,77 @@ ENPiCloudList:          PiSendCommand   $16
                         call    PiReadBlock
                         ret
 ;--------------------------------------------------------------------------------------
-; 0x1A To Test    Request Compass Position Data, nbr of ships, ship data (bits 0-3 array nbr 4 to 7 line color), x, y, stick length, star, sun,planet (as per ship data but no array number)
+; 0x1A To Test    Request Compass Position Data,Retubnr
+ENPiCompassList:        PiSendCommand   $1A
+                        call    PiReadByte
+                        ld      (CompassHeapSize),a
+                        and     a
+                        ld      hl,CompassHeap
+                        ld      d,3         ; x y z (255 rear, else front)
+                        add     a,3         ; factor in star,planet,station, if no ships then a is 0
+                        ld      e,a
+                        mul     de
+                        call    PiReadBlock
+                        ret
 ; 0x1B To Test    Request Compass Position (ship nbr, if bit 7 set then 1 = sun 2 = planet 3 = station) > 4x8 bit values for color, x,y,stick length (signed)
+;                 writes to ixh = x ixl = y a = z
+ENPiCompassNbr:         PiSendCommand   $1B
+                        call    PiReadByte
+                        ld      ixh,a
+                        call    PiReadByte
+                        ld      ixl,a
+                        call    PiReadByte
+                        ret
 ; 0x1C To Test    Request all 3d Position Data > next byte is number of ships, followed by 3x24 bit for sun, 3x24 bit for planet, 3x24 bit for space station, nbr ships x 1x8 bit ship index, 3x16 bit for ships
+ENPiPositionList:       PiSendCommand   $1C
+                        call    PiReadByte
+                        ld      (PositionHeapSize),a
+                        ld      d,10            ; Ship Nbr x y z are all 16.8 format
+                        mul     de
+                        ld      hl,3*3          ; star, planet,station
+                        add     hl,de
+                        ex      de,hl           ; de = length
+                        ld      hl,PositionHeap
+                        call    PiReadBlock
+                        ret  
 ; 0x1D To Test    Request ship n Position Data (ship nbr, if bit 7 set then 1 = sun 2 = planet 3 = station) >  followed by 3x24 bit for sun, 3x24 bit for planet, 3x24 bit for space station, nbr ships x 3x16 bit for ships
+ENPiPositionNbr:        PiSendCommand   $1D
+                        ld      (PositionHeapSize),a
+                        ld      hl,PositionHeap
+                        ld      de, 9*3            ; x y z are all 16.8 format
+                        call    PiReadBlock
+                        ret  
 ; 0x1E To Test    Request Matrix data (ships + space station)
+ENPiMatrixList:         PiSendCommand   $1E
+                        ld      (MatrixHeapSize),a
+                        ld      d,(2*9)+1           ; ship nbr 3 x 3 grid of 2 byte values 
+                        inc     a                   ; add in space station
+                        ld      e,a
+                        mul     de
+                        dec     de                  ; space station does not have a ship nbr
+                        call    PiReadBlock
+                        ret
 ; 0x1F To Test    Request Ship matrix (ship nbr, if bit 7 set then 1 = sun 2 = planet 3 = station)
+ENPiMatrixNbr:          PiSendCommand   $1F
+                        ld      hl,MatrixHeap
+                        ld      de,9*2
+                        call    PiReadBlock
+                        ret
 ; 0x20 To Test    Firing > next byte is ship id that would be hit by laser in low byte, bit 7 is 0 for front 1 for rear, FF means no hit
+ENPiFiringLaser:        PiSendCommand   $20
+                        call    PiReadByte
+                        ret
 ; 0x21 Input      List of lasers hitting player and direction, first byte count follwoed by ship id and facing as per 0x20
+ENPiLaserList:          PiSendCommand   $21
+                        call    PiReadByte
+                        ld      (LaserHeapSize),a
+                        ret     z
+                        ld      hl,LaserHeap
+                        ld      d,2
+                        ld      a,a
+                        mul     de
+                        call    PiReadBlock
+                        ret
 ; 0x22 Input      Missile Hit Check, loops through all missiles in flight: first byte is missile id (low nibble), high nibble nbr of ships hit, list of ships his and distance from missile, if ship id is hit bit 7 then direect hit and no distance byte
 
 ;--------------------------------------------------------------------------------------
@@ -232,15 +358,14 @@ ENPiFireECM:            PiSendCommand   $23
                         ret
 ; 0x30 To Test    Add Ship    > next bytes are Type, position, rotation, state (what here) also used for launch missile, flags as bit mask for overides 7=Angry,6 = scared, 5 = hunter, 4 trader, 3 = courier, 2 = bezerk, 1 = has cloak,, 0=has_ecm
 ; Note position needs to move to 16.8 code is currently 8.8
-AddPosition:            DW $1050, $2000, $0F00
-AddRotation:            DW $0100, $0000, $0000, $0000, $0100, $0000, $0000,$0000, $0100
-AddRotandSpeed:         DB $00, $00, $00, $10, $01
+AddType:                DB 1
+AddPosition:            DW $1001, $2002, $0F03
+AddRotation:            DW $0100, $0001, $0001, $0001, $0100, $0001, $0001,$0001, $0100
+AddRotandSpeed:         DB $01, $02, $03, $04, $05
 AddFlags:               DB 0
-AddLen:                 equ AddFlags - AddPosition
+AddLen:                 equ 31
 ENPiAddShip:            PiSendCommand $30
-                        ld      hl,AddPosition
-                        ld      d,AddLen
-                        call    PiWriteDataBlock
+                        PiSendShortDataBlock AddType, AddLen
                         ret
 ; 0x31 To Test    Ship Dead   > next byte is ship number
 ENPiShipDead:           PiSendCommand   $31
@@ -256,9 +381,7 @@ ENPiRemoveShip:         PiSendCommand   $33
 RangeData:              DB      $20,$20,$20,$30
 RangeResult:            DS      16
 ENPiShipsInRange:       PiSendCommand   $40
-                        ld      hl,Rangedata
-                        ld      de,4
-                        call    PiWriteDataBlock
+                        PiSendShortDataBlock RangeData,4
                         call    PiReadByte
                         ret     z                       ; if zero then no data
                         ld      e,a
@@ -278,33 +401,84 @@ ENPiResetUniverse:      PiSendCommand   $67
 ; 0x68 Input      Performed Jump
 JumpSampleSeeds:        DW  $AF, $B0, $34, $54, $76, $01
 ENPiPerformedJump:      PiSendCommand   $68
-                        ld      hl,JumpSampleSeeds
-                        ld      d,6
-                        call    PiWriteDataBlock
+                        PiSendShortDataBlock JumpSampleSeeds,6
+                        ret
+;--------------------------------------------------------------------------------------
+; 0x69 Input      Undock Player assuming existing seed it valid
+ENPiUndock:             PiSendCommand   $69
+                        ret
+;--------------------------------------------------------------------------------------
+; 0x6A Input      Undock Player Seeded, used if we need to set new seed, e.g. after load game
+ENPiUndockSeeded:       PiSendCommand   $6A
+                        PiSendShortDataBlock JumpSampleSeeds,6
                         ret
 ;--------------------------------------------------------------------------------------
 ; 0x70 Input      Player input
-PlayerInput:            DW $0000, $0000,$0000,$0000,$0000
+PlayerInput:            DW $0201, $0403,$0605,$0807
 ENPiPlayerInput:        PiSendCommand   $70
-                        ld      hl,PlayerInput
-                        ld      d,10
-                        call    PiWriteDataBlock
+                        PiSendShortDataBlock PlayerInput, 8
                         ret
 ;--------------------------------------------------------------------------------------
 ; 0x71 Input      Update Universe
 ENPiUpdateUniverse:     PiSendCommand   $71
                         ret
+;--------------------------------------------------------------------------------------
+; 0x72 Input      Update Universe n ticks, tick count in d
+EMPiUpdateTicks:        push    de
+                        PiSendCommand   $72
+                        pop     de
+                        call    PiWriteByte
+                        ret
 ; 0x73 Input      Update tactics all
 ENPiUndateTactics:      PiSendCommand   $73
                         ret
-; 0x80 Input      get all scanner data
-ScannerDataSize:        DB 0
-ScannerHeap:            DS (3*15) + 9                       ; so its ships + star, planet,scanner, data size determins the poitn where it bedomes star data
-ENPiGetScannerData:     PiSendCommand   $80
+;--------------------------------------------------------------------------------------
+; 0x74 Input      Update tactics ship n (bit 7 means space station), ship Id in d
+ENPiTacticsNbr:         push    de
+                        PiSendCommand   $74
+                        pop     de
+                        call    PiWriteByte
+                        ret
+; 0x75 Input      get all status data upper nibble byte 1 ship nbr lowe nibble + next byte 12 bit mask + 2 bytes for space station
+;                 Bit Mask   11, 10, 9 111 In Use and alive
+;                                      100 In Use Dead
+;                                      101 In Use Exploding
+;                                      110 In Use to remove
+;                             8 Is Angry
+;                             7 Is Scared
+;                             6 Is Firing
+;                             5 Is Berzerk
+;                             4 Is cloaked
+;                             3 Is hunter
+;                             2 ,1 0    111 Is Trader
+;                                       100 Is Pirate
+;                                       101 Is Authority
+;                                       110 Is Courier
+;                                       001 Is Thargoid
+;                             1 ECM Active
+;                             0
+ENPiGetStatusAll:       PiSendCommand  $75
+                        call    PiReadByte
+                        inc     a
+                        ld      d,a
+                        ld      e,2
+                        mul     de
+                        ld      hl,StatusHeap
+                        call    PiReadBlock
+                        ret
+; 0x76 Input      get ship n status data (bit 7 means space station), returns status in de
+ENPiGetStatusNbr:       push    de
+                        PiSendCommand  $76
+                        pop     de
+                        call    PiWriteByte
+                        call    PiReadWord
+                        ret
+; 0x80 Input      get all scanner data next byte is number of ships, followed by 1 byte ship nbr, 3x1 byte, x1,y1,y2, blob is draw at y2
+ENPiGetScannerAll:      PiSendCommand   $80
                         call    PiReadByte
                         ld      (ScannerDataSize),a
                         ld      d,a
-                        ld      e,3
+                        ld      e,4                         ; ship nbr, x1 y1 y2
                         mul     de
                         ld      hl,9                        ; Star, Planet Station
                         add     hl,de
@@ -312,47 +486,90 @@ ENPiGetScannerData:     PiSendCommand   $80
                         ld      hl,ScannerHeap
                         call    PiReadBlock
                         ret
+; 0x81 Input      get ship scanner data > object id, bit 7 shifs to bodies < returns 3x1 byte, x1,y1,y2, blob is draw at y2
+;                 d = ship nbr, returns de x1 y1 a y2
+ENPiGetScannerNbr:      push    de
+                        PiSendCommand   $80
+                        pop     de
+                        call    PiWriteByte
+                        call    PiReadByte
+                        ld      d,a
+                        call    PiReadByte
+                        ld      e,a
+                        call    PiReadByte
+                        ret
+; 0x90 Input      set object status > object nbr
+;                 a = object nbr, de = status mask as per get status TODO shall we do as a word instead of two bytes?
+ENPiSetObjectStatus:    push    de,,af
+                        PiSendCommand   $90
+                        pop     af
+                        ld      d,a
+                        call    PiWriteByte
+                        pop     de
+                        ld      ixl,e
+                        call    PiWriteByte
+                        ld      e,ixl
+                        call    PiWriteByte
+                        ret
+; 0xA0 Input      set all mode 1 = all objects regarless of if they exist, 0 = only ones where object used = true
+; 0xF0 to 0xFF    send command in a reg then send b messages from memory location hl with d a multiplier based on packet size
+;                 d = 1 for byte, 2 for word, 3 for 8.8 etc
+; Raw data dump, hl = address, de  length in bytes
+ENPiDumpData:           push    hl,,de,,bc
+                        PiSendCommand   a
+                        pop     hl,,bc,,de
+                        ld      bc,de
+                        call    PiWriteLongDataBlock        ; hl = address of string to write, bc  = length
+                        ret
+ENPiDumpDataTest:       push    hl,,de,,bc
+                        pop     hl,,de,,bc
+                        ld      bc,de
+                        call    PiTestLongDataBlock        ; hl = address of string to write, bc  = length
+                        ret
+
 ;--------------------------------------------------------------------------------------
 ; Tests to implement
 
-; 0x68 Input      Performed Jump
-; 0x69 Input      Undock Player
-; 0x6A Input      Undock Player Seeded
-; 0x72 Input      Update Universe n ticks
-; 0x74 Input      Update tactics ship n (bit 7 means space station)
-; 0x75 Input      get all status data 2 byte bit masks - In Use,flag_dead, flag_remove,  so up to 16 objects
-; 0x76 Input      get ship n status data (bit 7 means space station)
-
-; 0x81 Input      get all scanner data > object id, bit 7 shifs to bodies < returns 3x1 byte, x1,y1,y2, blob is draw at y2
-; 0x90 Input      set object status > object nbr
-; 0xA0 Input      set all mode 1 = all objects regarless of if they exist, 0 = only ones where object used = true
 ;--------------------------------------------------------------------------------------
 ; viarables for printing
 HelloMessage:           DB 'Hello',0
 CommandMessage:         DB 'Command',0
 SentMessage:            DB 'Sent',0
+SentHello:              DB 'String Hello',0
 ReadingMessage:         DB 'Reading',0
 PingMessage:            db 'Ping ',0,0
 HelloResponse:          db 'XXXXX',0,0,0,0,0,0,0,0
 ViewMessage:            db 'View Set',0,0,0
+RenderMessage:          db 'Render',0
 ResponseMessage:        DB      'Ping Result : '
 PingCode:               DB      '0', 0
+StringMessage:          DB '                               ',0
+StringClear:            DB '...............................',0
 ;--------------------------------------------------------------------------------------
 ; Pi diagnostics
 ; d = row char e = col pixel
+ClearMessageArea:       push    af,,bc,,hl,,de
+                        ld      hl,StringMessage
+                        ld      b,30
+                        ld      a,0
+.fillLoop:              ld      (hl),a
+                        inc     hl
+                        djnz    .fillLoop
+                        pop     af,,bc,,hl,,de
+                        ret
 PrintPortBinary:        push    af,,bc,,hl,,de
                         ld      d,12
-                        ld      e,0
+                        ld      e,20
                         GetNextReg 152
-                        call    l1_print_bin8_lh_at_char
+                        call    l1_print_bin8_l2r_at_char
                         ld      d,12
                         ld      e,10
                         GetNextReg 153
-                        call    l1_print_bin8_lh_at_char
+                        call    l1_print_bin8_l2r_at_char
                         ld      d,12
-                        ld      e,20
+                        ld      e,0
                         GetNextReg 155
-                        call    l1_print_bin8_lh_at_char
+                        call    l1_print_bin8_l2r_at_char
                         pop     af,,bc,,hl,,de
                         ret
 ;--------------------------------------------------------------------------------------
@@ -438,7 +655,7 @@ PiWriteByte:            IFDEF DEBUGMODE
                         PiSetnDSRnCTSnACK           ; clear DSR
                         ret
 ;--------------------------------------------------------------------------------------
-; result in a
+; result in a, affects af, hl, de
 PiReadByte:             call    PiSetReadMode       ; read mode
                         PiSetnDSRCTSnACK            ; CTS and nACK (DSR is write only so won't matter)
                         IFDEF DEBUGMODE
@@ -468,15 +685,15 @@ PiReadByte:             call    PiSetReadMode       ; read mode
                         ret
 ;--------------------------------------------------------------------------------------
 ; hl = target, de = length
-PiReadBlock:            exx                         ; Use alternate registers to hold counters
-                        call    PiSetReadMode       ; read mode
-                        exx                         ; Use alternate registers to hold counters
+PiReadBlock:            exx                         ; preserve hl and de
+                        call    PiReadByte          ; read data
+                        exx                         ; recover hl and de
                         ld      (hl),a              ; of course exx does not affect af so we can do this
-                        inc     hl
-                        dec     de
-                        ld      a,d
-                        or      e
-                        jp      nz,PiReadBlock
+                        inc     hl                  ; next memory addr
+                        dec     de                  ; a byte done
+                        ld      a,d                 ; have we reached the last byte
+                        or      e                   ; .
+                        jp      nz,PiReadBlock      ; if no loop
                         ret
 ;--------------------------------------------------------------------------------------
 ; Diag messages
@@ -503,17 +720,56 @@ PiReadWord:             call    PiReadByte
                         ld      e,a
                         call    PiReadByte
                         ld      d,a
-; hl = address of string to write, d = length
-PiWriteDataBlock:       ld      a,(hl)              ; assume that if d = 0 then we are writing 256 bytes
-                        ld      d,a                 ; d = data to write
+
+; hl = address of string to write, bc  = length
+PiWriteLongDataBlock:   ld      d,(hl)              ; assume that if d = 0 then we are writing 256 bytes
+                        push    bc,,hl
                         call    PiWriteByte
-                        pop     de
-                        dec     d
-                        jp      nz,PiWriteDataBlock ; if d has not hit zero then loop
-                        ZeroA                       ; if e is zero then send a /0 to finish                        
+                        pop     bc,,hl
+                        inc     hl
+                        dec     bc
+                        ld      a,b
+                        or      c
+                        jp      nz,PiWriteLongDataBlock ; if d has not hit zero then loop
                         ret
-; hl = address of string to write, d = length, if e = 0 then send terminating /0
-PiWriteString:          call    PiWriteDataBlock
+; hl = address of string to write, bc  = length
+PiTestLongDataBlock:    ld      d,(hl)              ; assume that if d = 0 then we are writing 256 bytes
+                        push    bc,,hl
+                        nop
+                        pop     bc,,hl
+                        inc     hl
+                        dec     bc
+                        ld      a,b
+                        or      c
+                        jp      nz,PiTestLongDataBlock ; if d has not hit zero then loop
+                        ret
+; hl = address of string to write, b = length
+PiWriteDataBlock:       push    bc
+                        ld      d,(hl)              ; assume that if d = 0 then we are writing 256 bytes
+                        IFDEF DEBUGMODE
+                            push ix
+                            push af
+                            ld  a,d
+                            ld (ix+0),a
+                            MessageAt 20,5,StringMessage
+                            pop  af
+                        ENDIF
+                        call    PiWriteByte
+                        inc     hl
+                        IFDEF DEBUGMODE
+                            pop  ix
+                            inc  ix
+                        ENDIF
+                        pop     bc
+                        djnz    PiWriteDataBlock ; if d has not hit zero then loop
+                        ret
+; hl = address of string to write, b = length, if e = 0 then send terminating /0
+; Max string length 256 characters
+PiWriteString:          IFDEF DEBUGMODE
+                            call    ClearMessageArea
+                            ld      ix,StringMessage
+                        ENDIF
+                        call    PiWriteDataBlock
                         ZeroA                       ; if e is zero then send a /0 to finish
                         or      e                   ; .
                         ret     nz                  ; this is done if receiving end is expecting variable string length
@@ -540,19 +796,25 @@ PiWaitforACK:           GetNextReg  155             ; read status until bit 2 (A
                         ret
 
 PiWaitforCTS:           GetNextReg  155             ; read status until bit 1 (CTS) is set
-                        call    PrintPortBinary
+                        IFDEF DEBUGMODE
+                            call    PrintPortBinary
+                        ENDIF
                         and %00000010               ;
                         jp  z,PiWaitforCTS          ; if not then spin waiting
                         ret
 PiWaitforCTSnACK:       GetNextReg  155             ; read status for ACK low and CTS High
-                        call    PrintPortBinary
+                        IFDEF DEBUGMODE
+                            call    PrintPortBinary
+                        ENDIF
                         and %00000110               ; just want ACK and CTS bits
                         cp  %00000010               ; if CTS is set and ACK is clear
                         jp  nz,PiWaitforCTSnACK     ; reg value is just CTS then we are good
                         ret
 
 PiWaitforDSR:           GetNextReg  155             ; read status until bit 2 (DSR) is set
-                        call    PrintPortBinary
+                        IFDEF DEBUGMODE
+                            call    PrintPortBinary
+                        ENDIF
                         and %00000001               ;
                         jp  z,PiWaitforDSR          ; if not then spin waiting
                         ret

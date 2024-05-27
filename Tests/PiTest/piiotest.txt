@@ -2543,1171 +2543,1761 @@
  88   0000 ~                                    pop     af,,bc,,de,,hl
  89   0000                                      ENDM
  90   0000
- 91   0000
- 92   0000              SetBorder:              MACRO   value
- 93   0000 ~                                    ld          a,value
- 94   0000 ~                                    call        l1_set_border
- 95   0000                                      ENDM
- 96   0000
- 97   0000              charactersetaddr		equ 15360
- 98   0000              STEPDEBUG               equ 1
- 99   0000
-100   0000              TopOfStack              equ $5CCB ;$6100
-101   0000
-102   0000                                      ORG $5DCB;      $6200
-103   5DCB F3           EliteNextStartup:       di
-104   5DCC ED 91 07 03  .InitialiseClockSpeed:  nextreg     TURBO_MODE_REGISTER,Speed_28MHZ
-105   5DD0              .InitialiseLayerOrder:  DISPLAY "Starting Assembly At ", EliteNextStartup
-106   5DD0                                      ; "STARTUP"
-107   5DD0                                      ; Make sure  rom is in page 0 during load
-108   5DD0 ED 91 15 05                          nextreg 	SPRITE_LAYERS_SYSTEM_REGISTER,%00000101 ; ULS
-109   5DD4                                      SetBorder   0
-109   5DD4 3E 00       >                        ld          a,0
-109   5DD6 CD A9 63    >                        call        l1_set_border
-110   5DD9 CD 84 63                             call        l1_cls
-111   5DDC 3E 07                                ld          a,7
-112   5DDE CD 9F 63                             call        l1_attr_cls_to_a
-113   5DE1 ED 91 06 01  .InitialisePeripherals: nextreg     PERIPHERAL_2_REGISTER, AUDIO_CHIPMODE_AY ; Enable Turbo Sound
-114   5DE5 ED 91 08 52                          nextreg     PERIPHERAL_3_REGISTER, DISABLE_RAM_IO_CONTENTION | ENABLE_TURBO_SOUND | INTERNAL_SPEAKER_ENABLE
-115   5DE9 ED 91 09 00                          nextreg     PERIPHERAL_4_REGISTER, %00000000
-116   5DED ED 91 68 10                          nextreg     ULA_CONTROL_REGISTER,  %00010000                ; set up ULA CONRTROL may need to change bit 0 at least, but bit 4 is separate extended keys from main matrix
-117   5DF1              .InitialisingMessage:   MessageAt   0,0,InitialiseMessage
-117   5DF1 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-117   5DF5 16 00       >                        ld      d,0
-117   5DF7 1E 00       >                        ld      e,0*8
-117   5DF9 21 34 5E    >                        ld      hl,InitialiseMessage
-117   5DFC CD BD 65    >                        call    l1_print_at_char_wrap
-117   5DFF E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-118   5E03 CD 61 60                             call        PiReset
-119   5E06                                      MessageAt   15,0,ResetMessage
-119   5E06 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-119   5E0A 16 00       >                        ld      d,0
-119   5E0C 1E 78       >                        ld      e,15*8
-119   5E0E 21 3D 5E    >                        ld      hl,ResetMessage
-119   5E11 CD BD 65    >                        call    l1_print_at_char_wrap
-119   5E14 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-120   5E18 DD 01                                break
-121   5E1A CD 1C 66                             call        WaitForAnyKey
-122   5E1D CD 47 5E     TestCode:               call        ENPiHello
-123   5E20 CD 1C 66                             call        WaitForAnyKey
-124   5E23 CD 07 5F                             call        ENPiPingTest
-125   5E26 CD 1C 66                             call        WaitForAnyKey
-126   5E29 3E 01                                ld          a,1
-127   5E2B 32 45 5E                             ld          (Var_ViewPort),a
-128   5E2E CD 6E 5F                             call        ENPiSetView
-129   5E31 C3 31 5E     EndLoop:                jp          EndLoop
-130   5E34 53 74 61 72  InitialiseMessage:      db 'Starting',0
-130   5E38 74 69 6E 67
-130   5E3C 00
-131   5E3D 50 69 52 65  ResetMessage:           db 'PiReset',0
-131   5E41 73 65 74 00
-132   5E45              ;--------------------------------------------------------------------------------------
-133   5E45              ; Elite Pi Commands
-134   5E45              ;
-135   5E45 00           Var_ViewPort:           DB      0
-136   5E46 00           Var_BYTE                DB      0
-137   5E47              PiSendCommand:          MACRO   cmd
-138   5E47 ~                                    ld      d,cmd
-139   5E47 ~                                    call    PiWriteByte
-140   5E47                                      ENDM
-141   5E47
-142   5E47              ENPiHello:              MessageAt 0,2,CommandMessage
-142   5E47 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-142   5E4B 16 02       >                        ld      d,2
-142   5E4D 1E 00       >                        ld      e,0*8
-142   5E4F 21 D3 5E    >                        ld      hl,CommandMessage
-142   5E52 CD BD 65    >                        call    l1_print_at_char_wrap
-142   5E55 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-143   5E59                                      PiSendCommand   1
-143   5E59 16 01       >                        ld      d,1
-143   5E5B CD 81 60    >                        call    PiWriteByte
-144   5E5E                                      MessageAt 9,2,SentMessage
-144   5E5E F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-144   5E62 16 02       >                        ld      d,2
-144   5E64 1E 48       >                        ld      e,9*8
-144   5E66 21 DB 5E    >                        ld      hl,SentMessage
-144   5E69 CD BD 65    >                        call    l1_print_at_char_wrap
-144   5E6C E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-145   5E70                                      MessageAt 13,2,HelloMessage
-145   5E70 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-145   5E74 16 02       >                        ld      d,2
-145   5E76 1E 68       >                        ld      e,13*8
-145   5E78 21 CD 5E    >                        ld      hl,HelloMessage
-145   5E7B CD BD 65    >                        call    l1_print_at_char_wrap
-145   5E7E E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-146   5E82 21 CD 5E                             ld      hl,HelloMessage
-147   5E85 16 05                                ld      d,5             ; 5 characters
-148   5E87 1E 01                                ld      e,1             ; fixed, no terminating 0
-149   5E89 CD 6C 62                             call    PiWriteString
-150   5E8C                                      MessageAt 18,2,SentMessage
-150   5E8C F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-150   5E90 16 02       >                        ld      d,2
-150   5E92 1E 90       >                        ld      e,18*8
-150   5E94 21 DB 5E    >                        ld      hl,SentMessage
-150   5E97 CD BD 65    >                        call    l1_print_at_char_wrap
-150   5E9A E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-151   5E9E                                      MessageAt 22,2,ReadingMessage
-151   5E9E F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-151   5EA2 16 02       >                        ld      d,2
-151   5EA4 1E B0       >                        ld      e,22*8
-151   5EA6 21 E0 5E    >                        ld      hl,ReadingMessage
-151   5EA9 CD BD 65    >                        call    l1_print_at_char_wrap
-151   5EAC E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-152   5EB0 21 EF 5E                             ld      hl,HelloResponse
-153   5EB3 16 05                                ld      d,5             ; 5 characters
-154   5EB5 1E 01                                ld      e,1             ; fixed, no terminating 0
-155   5EB7 CD 7F 62                             call    PiReadString
-156   5EBA                                      MessageAt  0,3,HelloResponse
-156   5EBA F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-156   5EBE 16 03       >                        ld      d,3
-156   5EC0 1E 00       >                        ld      e,0*8
-156   5EC2 21 EF 5E    >                        ld      hl,HelloResponse
-156   5EC5 CD BD 65    >                        call    l1_print_at_char_wrap
-156   5EC8 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-157   5ECC C9                                   ret
-158   5ECD 48 65 6C 6C  HelloMessage:           DB 'Hello',0
-158   5ED1 6F 00
-159   5ED3 43 6F 6D 6D  CommandMessage:         DB 'Command',0
-159   5ED7 61 6E 64 00
-160   5EDB 53 65 6E 74  SentMessage:            DB 'Sent',0
-160   5EDF 00
-161   5EE0 52 65 61 64  ReadingMessage:         DB 'Reading',0
-161   5EE4 69 6E 67 00
-162   5EE8 50 69 6E 67  PingMessage:            db 'Ping ',0,0
-162   5EEC 20 00 00
-163   5EEF 58 58 58 58  HelloResponse:          db 'XXXXX',0,0,0,0,0,0,0,0
-163   5EF3 58 00 00 00
-163   5EF7 00 00 00 00
-163   5EFB 00
-164   5EFC 56 69 65 77  ViewMessage:            db 'View Set',0,0,0
-164   5F00 20 53 65 74
-164   5F04 00 00 00
-165   5F07              ENPiPingTest:           MessageAt 0,4,CommandMessage
-165   5F07 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-165   5F0B 16 04       >                        ld      d,4
-165   5F0D 1E 00       >                        ld      e,0*8
-165   5F0F 21 D3 5E    >                        ld      hl,CommandMessage
-165   5F12 CD BD 65    >                        call    l1_print_at_char_wrap
-165   5F15 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-166   5F19                                      PiSendCommand 2
-166   5F19 16 02       >                        ld      d,2
-166   5F1B CD 81 60    >                        call    PiWriteByte
-167   5F1E                                      MessageAt 9,4,SentMessage
-167   5F1E F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-167   5F22 16 04       >                        ld      d,4
-167   5F24 1E 48       >                        ld      e,9*8
-167   5F26 21 DB 5E    >                        ld      hl,SentMessage
-167   5F29 CD BD 65    >                        call    l1_print_at_char_wrap
-167   5F2C E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-168   5F30                                      MessageAt 13,4,PingMessage
-168   5F30 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-168   5F34 16 04       >                        ld      d,4
-168   5F36 1E 68       >                        ld      e,13*8
-168   5F38 21 E8 5E    >                        ld      hl,PingMessage
-168   5F3B CD BD 65    >                        call    l1_print_at_char_wrap
-168   5F3E E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-169   5F42 CD 5F 61                             call    PiReadByte
-170   5F45 21 6C 5F                             ld      hl,PingCode
-171   5F48 C6 30                                add     a,'0'
-172   5F4A 77                                   ld      (hl),a
-173   5F4B                                      MessageAt   0,5,ResponseMessage
-173   5F4B F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-173   5F4F 16 05       >                        ld      d,5
-173   5F51 1E 00       >                        ld      e,0*8
-173   5F53 21 5E 5F    >                        ld      hl,ResponseMessage
-173   5F56 CD BD 65    >                        call    l1_print_at_char_wrap
-173   5F59 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-174   5F5D C9                                   ret
-175   5F5E 50 69 6E 67  ResponseMessage:        DB      'Ping Result : '
-175   5F62 20 52 65 73
-175   5F66 75 6C 74 20
-175   5F6A 3A 20
-176   5F6C 30 00        PingCode:               DB      '0', 0
-177   5F6E              ENPiSetView:            MessageAt 0,6,CommandMessage
-177   5F6E F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-177   5F72 16 06       >                        ld      d,6
-177   5F74 1E 00       >                        ld      e,0*8
-177   5F76 21 D3 5E    >                        ld      hl,CommandMessage
-177   5F79 CD BD 65    >                        call    l1_print_at_char_wrap
-177   5F7C E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-178   5F80                                      PiSendCommand 18
-178   5F80 16 12       >                        ld      d,18
-178   5F82 CD 81 60    >                        call    PiWriteByte
-179   5F85                                      MessageAt 9,6,SentMessage
-179   5F85 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-179   5F89 16 06       >                        ld      d,6
-179   5F8B 1E 48       >                        ld      e,9*8
-179   5F8D 21 DB 5E    >                        ld      hl,SentMessage
-179   5F90 CD BD 65    >                        call    l1_print_at_char_wrap
-179   5F93 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-180   5F97                                      MessageAt 13,6,ViewMessage
-180   5F97 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-180   5F9B 16 06       >                        ld      d,6
-180   5F9D 1E 68       >                        ld      e,13*8
-180   5F9F 21 FC 5E    >                        ld      hl,ViewMessage
-180   5FA2 CD BD 65    >                        call    l1_print_at_char_wrap
-180   5FA5 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-181   5FA9 3A 45 5E                             ld      a,(Var_ViewPort)
-182   5FAC 57                                   ld      d,a
-183   5FAD CD 81 60                             call    PiWriteByte
-184   5FB0                                      MessageAt  25,6,SentMessage
-184   5FB0 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-184   5FB4 16 06       >                        ld      d,6
-184   5FB6 1E C8       >                        ld      e,25*8
-184   5FB8 21 DB 5E    >                        ld      hl,SentMessage
-184   5FBB CD BD 65    >                        call    l1_print_at_char_wrap
-184   5FBE E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-185   5FC2 C9                                   ret
-186   5FC3              ; d = row char e = col pixel
-187   5FC3 F5 C5 E5 D5  PrintPortBinary:        push    af,,bc,,hl,,de
-188   5FC7 16 0C                                ld      d,12
-189   5FC9 1E 00                                ld      e,0
-190   5FCB                                      GetNextReg 152
-190   5FCB 01 3B 24    >            ld bc,$243B
-190   5FCE 3E 98       >            ld a,152
-190   5FD0 ED 79       >            out (c),a
-190   5FD2 04          >            inc b
-190   5FD3 ED 78       >            in a,(c)
-191   5FD5 CD 77 64                             call    l1_print_bin8_lh_at_char
-192   5FD8 16 0C                                ld      d,12
-193   5FDA 1E 0A                                ld      e,10
-194   5FDC                                      GetNextReg 153
-194   5FDC 01 3B 24    >            ld bc,$243B
-194   5FDF 3E 99       >            ld a,153
-194   5FE1 ED 79       >            out (c),a
-194   5FE3 04          >            inc b
-194   5FE4 ED 78       >            in a,(c)
-195   5FE6 CD 77 64                             call    l1_print_bin8_lh_at_char
-196   5FE9 16 0C                                ld      d,12
-197   5FEB 1E 14                                ld      e,20
-198   5FED                                      GetNextReg 155
-198   5FED 01 3B 24    >            ld bc,$243B
-198   5FF0 3E 9B       >            ld a,155
-198   5FF2 ED 79       >            out (c),a
-198   5FF4 04          >            inc b
-198   5FF5 ED 78       >            in a,(c)
-199   5FF7 CD 77 64                             call    l1_print_bin8_lh_at_char
-200   5FFA D1 E1 C1 F1                          pop     af,,bc,,hl,,de
-201   5FFE C9                                   ret
-202   5FFF              ;--------------------------------------------------------------------------------------
-203   5FFF              ; Pi Library
-204   5FFF
-205   5FFF              PiSetnDSRnCTSnACK:      MACRO
-206   5FFF ~                                    nextreg 155,0
-207   5FFF                                      ENDM
-208   5FFF              PiSetnDSRCTSnACK:       MACRO
-209   5FFF ~                                    nextreg 155,2
-210   5FFF                                      ENDM
-211   5FFF              PiSetDSR:               MACRO
-212   5FFF ~                                    nextreg 155,1           ; Set DSR high andy anything else writable low
-213   5FFF                                      ENDM
-214   5FFF              PiSetnCTSACK:           MACRO
-215   5FFF ~                                    nextreg 155,4           ; Set ACK high andy anything else writable low
-216   5FFF                                      ENDM
-217   5FFF ED 91 90 00  PiSetReadMode:          nextreg 144, 0              ; pins 4 to 7 read  enable
-218   6003 ED 91 91 00                          nextreg 145, 0              ; pins 0 to 3 read enable
-219   6007 ED 91 93 06                          nextreg 147,2+4             ; data ready pin read, CTS write, ack write , Desync read
-220   600B                                      MessageAt 0,15,PiInReadMode
-220   600B F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-220   600F 16 0F       >                        ld      d,15
-220   6011 1E 00       >                        ld      e,0*8
-220   6013 21 F7 61    >                        ld      hl,PiInReadMode
-220   6016 CD BD 65    >                        call    l1_print_at_char_wrap
-220   6019 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-221   601D                                      MessageAt 15,15,PiClearMode
-221   601D F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-221   6021 16 0F       >                        ld      d,15
-221   6023 1E 78       >                        ld      e,15*8
-221   6025 21 05 62    >                        ld      hl,PiClearMode
-221   6028 CD BD 65    >                        call    l1_print_at_char_wrap
-221   602B E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-222   602F C9                                   ret
-223   6030
-224   6030 ED 91 90 F0  PiSetWriteMode:         nextreg 144, 16+32+64+128   ;pins 4 to 7 write enable
-225   6034 ED 91 91 0F                          nextreg 145, 1+2+4+8        ;pins 0 to 3 write enable
-226   6038 ED 91 93 09                          nextreg 147, 1 + 8          ;DSR and Desync pins write enable
-227   603C                                      MessageAt 15,15,PiInWriteMode
-227   603C F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-227   6040 16 0F       >                        ld      d,15
-227   6042 1E 78       >                        ld      e,15*8
-227   6044 21 E8 61    >                        ld      hl,PiInWriteMode
-227   6047 CD BD 65    >                        call    l1_print_at_char_wrap
-227   604A E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-228   604E                                      MessageAt 0,15,PiClearMode
-228   604E F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-228   6052 16 0F       >                        ld      d,15
-228   6054 1E 00       >                        ld      e,0*8
-228   6056 21 05 62    >                        ld      hl,PiClearMode
-228   6059 CD BD 65    >                        call    l1_print_at_char_wrap
-228   605C E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-229   6060 C9                                   ret
-230   6061              ;--------------------------------------------------------------------------------------
-231   6061 ED 91 93 07  PiReset:                nextreg 147,1+2+4           ; data ready 0, cts 0, ack 0
-232   6065 ED 91 9B 00                          nextreg 155,0               ;
-233   6069 C9                                   ret
-234   606A CD 30 60                             call    PiSetWriteMode      ; clear out bits on data line
-235   606D ED 91 98 00                          nextreg 152,0
-236   6071 ED 91 99 00                          nextreg 153,0
-237   6075 ED 91 9B 00                          nextreg 155,0               ; and clear DSR,DeSync
-238   6079 CD FF 5F                             call    PiSetReadMode
-239   607C ED 91 9B 00                          nextreg 155,0               ; and clear CTS,ACK
-240   6080 C9                                   ret
-241   6081
-242   6081              ;--------------------------------------------------------------------------------------
-243   6081              ;  Write byte held in d (data)
-244   6081              PiWriteByte:            IFDEF DEBUGMODE
-245   6081 7A                                       ld      a,d
-246   6082 32 46 5E                                 ld      (Var_BYTE),a
-247   6085                                      ENDIF
-248   6085 CD 30 60                             call    PiSetWriteMode      ; Write Mode
-249   6088                                      PiSetnDSRnCTSnACK
-249   6088 ED 91 9B 00 >                        nextreg 155,0
-250   608C                                      IFDEF DEBUGMODE
-251   608C                                          MessageAt 0,16,PiWaitCTS
-251   608C F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-251   6090 16 10       >                        ld      d,16
-251   6092 1E 00       >                        ld      e,0*8
-251   6094 21 2F 62    >                        ld      hl,PiWaitCTS
-251   6097 CD BD 65    >                        call    l1_print_at_char_wrap
-251   609A E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-252   609E                                          MessageAt 15,16,PiClearMode
-252   609E F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-252   60A2 16 10       >                        ld      d,16
-252   60A4 1E 78       >                        ld      e,15*8
-252   60A6 21 05 62    >                        ld      hl,PiClearMode
-252   60A9 CD BD 65    >                        call    l1_print_at_char_wrap
-252   60AC E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-253   60B0                                          MessageAt 0,17,PiClearMode
-253   60B0 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-253   60B4 16 11       >                        ld      d,17
-253   60B6 1E 00       >                        ld      e,0*8
-253   60B8 21 05 62    >                        ld      hl,PiClearMode
-253   60BB CD BD 65    >                        call    l1_print_at_char_wrap
-253   60BE E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-254   60C2                                      ENDIF
-255   60C2 CD B5 62                             call    PiWaitforCTSnACK    ; wait for Clear to send
-256   60C5                                      IFDEF DEBUGMODE
-257   60C5                                          MessageAt 15,16,PiWriting
-257   60C5 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-257   60C9 16 10       >                        ld      d,16
-257   60CB 1E 78       >                        ld      e,15*8
-257   60CD 21 13 62    >                        ld      hl,PiWriting
-257   60D0 CD BD 65    >                        call    l1_print_at_char_wrap
-257   60D3 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-258   60D7                                          MessageAt 0,16,PiClearMode
-258   60D7 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-258   60DB 16 10       >                        ld      d,16
-258   60DD 1E 00       >                        ld      e,0*8
-258   60DF 21 05 62    >                        ld      hl,PiClearMode
-258   60E2 CD BD 65    >                        call    l1_print_at_char_wrap
-258   60E5 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-259   60E9 3A 46 5E                                 ld      a,(Var_BYTE)
-260   60EC                                          PrintHexARegAt 25,19
-260   60EC F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-260   60F0 16 13       >                        ld      d,19
-260   60F2 1E C8       >                        ld      e,25*8
-260   60F4 CD 47 65    >                        call    l1_print_u8_hex_at_char
-260   60F7 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-261   60FB                                      ENDIF
-262   60FB 7A                                   ld      a,d                 ; build up port values and send
-263   60FC                                      IFDEF DEBUGMODE
-264   60FC 3A 46 5E                                 ld      a,(Var_BYTE)    ; DEBUG
-265   60FF 57                                       ld      d,a
-266   6100                                      ENDIF
-267   6100 E6 F0                                and     %11110000           ; we don't swap here and let the pi
-268   6102 ED 92 98                             nextreg 152,a               ; handle that
-269   6105 7A                                   ld      a,d                 ; .
-270   6106 E6 0F                                and     %00001111           ; .
-271   6108 ED 92 99                             nextreg 153,a               ; .
-272   610B                                      PiSetDSR                    ; Data Set is Ready
-272   610B ED 91 9B 01 >                        nextreg 155,1           ; Set DSR high andy anything else writable low
-273   610F                                      IFDEF DEBUGMODE
-274   610F                                          MessageAt 0,17,PiWaitACK
-274   610F F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-274   6113 16 11       >                        ld      d,17
-274   6115 1E 00       >                        ld      e,0*8
-274   6117 21 4B 62    >                        ld      hl,PiWaitACK
-274   611A CD BD 65    >                        call    l1_print_at_char_wrap
-274   611D E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-275   6121                                          MessageAt 15,16,PiClearMode
-275   6121 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-275   6125 16 10       >                        ld      d,16
-275   6127 1E 78       >                        ld      e,15*8
-275   6129 21 05 62    >                        ld      hl,PiClearMode
-275   612C CD BD 65    >                        call    l1_print_at_char_wrap
-275   612F E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-276   6133                                      ENDIF
-277   6133 CD 8F 62                             call    PiWaitforACK        ; Poll for Ackowledge
-278   6136                                      IFDEF DEBUGMODE
-279   6136                                          MessageAt 0,17,PiClearMode
-279   6136 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-279   613A 16 11       >                        ld      d,17
-279   613C 1E 00       >                        ld      e,0*8
-279   613E 21 05 62    >                        ld      hl,PiClearMode
-279   6141 CD BD 65    >                        call    l1_print_at_char_wrap
-279   6144 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-280   6148                                          MessageAt 15,16,PiClearMode
-280   6148 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-280   614C 16 10       >                        ld      d,16
-280   614E 1E 78       >                        ld      e,15*8
-280   6150 21 05 62    >                        ld      hl,PiClearMode
-280   6153 CD BD 65    >                        call    l1_print_at_char_wrap
-280   6156 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-281   615A                                      ENDIF
-282   615A                                      PiSetnDSRnCTSnACK           ; clear DSR
-282   615A ED 91 9B 00 >                        nextreg 155,0
-283   615E C9                                   ret
-284   615F              ;--------------------------------------------------------------------------------------
-285   615F              ; result in a
-286   615F CD FF 5F     PiReadByte:             call    PiSetReadMode       ; read mode
-287   6162                                      PiSetnDSRCTSnACK            ; CTS and nACK (DSR is write only so won't matter)
-287   6162 ED 91 9B 02 >                        nextreg 155,2
-288   6166                                      IFDEF DEBUGMODE
-289   6166                                          MessageAt 0,16,PiWaitDSR
-289   6166 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-289   616A 16 10       >                        ld      d,16
-289   616C 1E 00       >                        ld      e,0*8
-289   616E 21 3D 62    >                        ld      hl,PiWaitDSR
-289   6171 CD BD 65    >                        call    l1_print_at_char_wrap
-289   6174 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-290   6178                                          MessageAt 15,16,PiClearMode
-290   6178 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-290   617C 16 10       >                        ld      d,16
-290   617E 1E 78       >                        ld      e,15*8
-290   6180 21 05 62    >                        ld      hl,PiClearMode
-290   6183 CD BD 65    >                        call    l1_print_at_char_wrap
-290   6186 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-291   618A                                      ENDIF
-292   618A CD CA 62                             call    PiWaitforDSR        ; Wait for data to be ready
-293   618D                                      IFDEF DEBUGMODE
-294   618D                                          MessageAt 15,16,PiReading
-294   618D F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-294   6191 16 10       >                        ld      d,16
-294   6193 1E 78       >                        ld      e,15*8
-294   6195 21 21 62    >                        ld      hl,PiReading
-294   6198 CD BD 65    >                        call    l1_print_at_char_wrap
-294   619B E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-295   619F                                      ENDIF
-296   619F                                      GetNextReg  152             ; Read data and re-assemble byte
-296   619F 01 3B 24    >            ld bc,$243B
-296   61A2 3E 98       >            ld a,152
-296   61A4 ED 79       >            out (c),a
-296   61A6 04          >            inc b
-296   61A7 ED 78       >            in a,(c)
-297   61A9 E6 F0                                and     %11110000           ; it will be pre swapnib on the pi side
-298   61AB 6F                                   ld      l,a                 ; so we don't have to here
-299   61AC                                      GetNextReg  153             ; .
-299   61AC 01 3B 24    >            ld bc,$243B
-299   61AF 3E 99       >            ld a,153
-299   61B1 ED 79       >            out (c),a
-299   61B3 04          >            inc b
-299   61B4 ED 78       >            in a,(c)
-300   61B6 E6 0F                                and     %00001111           ; .
-301   61B8 B5                                   or      l                   ; .
-302   61B9                                      IFDEF DEBUGMODE
-303   61B9 32 46 5E                                 ld      (Var_BYTE),a
-304   61BC                                      ENDIF
-305   61BC                                      PiSetnCTSACK                ; not clear to send, ACK set
-305   61BC ED 91 9B 04 >                        nextreg 155,4           ; Set ACK high andy anything else writable low
-306   61C0                                      IFDEF DEBUGMODE
-307   61C0 3A 46 5E                                 ld      a,(Var_BYTE)
-308   61C3                                          PrintHexARegAt 25,19
-308   61C3 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-308   61C7 16 13       >                        ld      d,19
-308   61C9 1E C8       >                        ld      e,25*8
-308   61CB CD 47 65    >                        call    l1_print_u8_hex_at_char
-308   61CE E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-309   61D2 3A 46 5E                                 ld      a,(Var_BYTE)
-310   61D5                                          MessageAt 15,16,PiClearMode
-310   61D5 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-310   61D9 16 10       >                        ld      d,16
-310   61DB 1E 78       >                        ld      e,15*8
-310   61DD 21 05 62    >                        ld      hl,PiClearMode
-310   61E0 CD BD 65    >                        call    l1_print_at_char_wrap
-310   61E3 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-311   61E7                                      ENDIF
-312   61E7 C9                                   ret
-313   61E8              ;--------------------------------------------------------------------------------------
-314   61E8              ; Diag messages
-315   61E8 49 6E 20 57  PiInWriteMode:          DB 'In Write  Mode',0
-315   61EC 72 69 74 65
-315   61F0 20 20 4D 6F
-315   61F4 64 65 00
-316   61F7 49 6E 20 52  PiInReadMode:           DB 'In Read Mode ',0
-316   61FB 65 61 64 20
-316   61FF 4D 6F 64 65
-316   6203 20 00
-317   6205 2E 2E 2E 2E  PiClearMode:            DB '.............',0
-317   6209 2E 2E 2E 2E
-317   620D 2E 2E 2E 2E
-317   6211 2E 00
-318   6213 57 72 69 74  PiWriting               DB 'Writing      ',0
-318   6217 69 6E 67 20
-318   621B 20 20 20 20
-318   621F 20 00
-319   6221 52 65 61 64  PiReading               DB 'Reading      ',0
-319   6225 69 6E 67 20
-319   6229 20 20 20 20
-319   622D 20 00
-320   622F 57 61 69 74  PiWaitCTS:              DB 'Waiting CTS  ',0
-320   6233 69 6E 67 20
-320   6237 43 54 53 20
-320   623B 20 00
-321   623D 57 61 69 74  PiWaitDSR:              DB 'Waiting DSR  ',0
-321   6241 69 6E 67 20
-321   6245 44 53 52 20
-321   6249 20 00
-322   624B 57 61 69 74  PiWaitACK:              DB 'Waiting ACK  ',0
-322   624F 69 6E 67 20
-322   6253 41 43 4B 20
-322   6257 20 00
-323   6259              ;--------------------------------------------------------------------------------------
-324   6259              ; hl = word to write
-325   6259 55           PiWriteWord:            ld      d,l
-326   625A E5                                   push    hl
-327   625B CD 81 60                             call    PiWriteByte
-328   625E E1                                   pop     hl
-329   625F 54                                   ld      d,h
-330   6260 CD 81 60                             call    PiWriteByte
-331   6263 C9                                   ret
-332   6264              ;--------------------------------------------------------------------------------------
-333   6264              ; de = word read - low high sequence
-334   6264 CD 5F 61     PiReadWord:             call    PiReadByte
-335   6267 5F                                   ld      e,a
-336   6268 CD 5F 61                             call    PiReadByte
-337   626B 57                                   ld      d,a
-338   626C              ; hl = address of string to write, d = length, if e = 0 then send terminating /0
-339   626C D5           PiWriteString:          push    de
-340   626D 7E                                   ld      a,(hl)              ; assume that if d = 0 then we are writing 256 bytes
-341   626E 57                                   ld      d,a                 ; d = data to write
-342   626F CD 81 60                             call    PiWriteByte
-343   6272 D1                                   pop     de
-344   6273 15                                   dec     d
-345   6274 C2 6C 62                             jp      nz,PiWriteString   ; if d has not hit zero then loop
-346   6277                                      ZeroA                       ; if e is zero then send a /0 to finish
-346   6277 AF          >                        xor a
-347   6278 B3                                   or      e                   ; .
-348   6279 C0                                   ret     nz                  ; this is done if receiving end is expecting variable string length
-349   627A 57                                   ld      d,a                 ; d is data to write
-350   627B CD 81 60                             call    PiWriteByte         ; a will stil be /0
-351   627E C9                                   ret
-352   627F              ; hl = address to write to, d = Limit, if e = 0 then expecting terminating /0 (i.e. variable length) else d = fixed string length
-353   627F D5 E5        PiReadString:           push    de,,hl              ; Recived
-354   6281 CD 5F 61                             call    PiReadByte
-355   6284 E1                                   pop     hl
-356   6285 77                                   ld      (hl),a
-357   6286 23                                   inc     hl
-358   6287 D1                                   pop     de
-359   6288 15                                   dec     d
-360   6289 C8                                   ret     z                   ; d provides a hard limit or fixed string length depending on e
-361   628A B3                                   or      e                   ; if the byte read the a is 0 and e was zero then this will be zero
-362   628B C2 7F 62                             jp      nz,PiReadString
-363   628E C9                                   ret
-364   628F
-365   628F              PiWaitforACK:           GetNextReg  155             ; read status until bit 2 (ACK) is set
-365   628F 01 3B 24    >            ld bc,$243B
-365   6292 3E 9B       >            ld a,155
-365   6294 ED 79       >            out (c),a
-365   6296 04          >            inc b
-365   6297 ED 78       >            in a,(c)
-366   6299 CD C3 5F                             call    PrintPortBinary
-367   629C E6 04                                and %00000100               ;
-368   629E CA 8F 62                             jp  z,PiWaitforACK          ; if not then spin waiting
-369   62A1 C9                                   ret
-370   62A2
-371   62A2              PiWaitforCTS:           GetNextReg  155             ; read status until bit 1 (CTS) is set
-371   62A2 01 3B 24    >            ld bc,$243B
-371   62A5 3E 9B       >            ld a,155
-371   62A7 ED 79       >            out (c),a
-371   62A9 04          >            inc b
-371   62AA ED 78       >            in a,(c)
-372   62AC CD C3 5F                             call    PrintPortBinary
-373   62AF E6 02                                and %00000010               ;
-374   62B1 CA A2 62                             jp  z,PiWaitforCTS          ; if not then spin waiting
-375   62B4 C9                                   ret
-376   62B5              PiWaitforCTSnACK:       GetNextReg  155             ; read status for ACK low and CTS High
-376   62B5 01 3B 24    >            ld bc,$243B
-376   62B8 3E 9B       >            ld a,155
-376   62BA ED 79       >            out (c),a
-376   62BC 04          >            inc b
-376   62BD ED 78       >            in a,(c)
-377   62BF CD C3 5F                             call    PrintPortBinary
-378   62C2 E6 06                                and %00000110               ; just want ACK and CTS bits
-379   62C4 FE 02                                cp  %00000010               ; if CTS is set and ACK is clear
-380   62C6 C2 B5 62                             jp  nz,PiWaitforCTSnACK     ; reg value is just CTS then we are good
-381   62C9 C9                                   ret
-382   62CA
-383   62CA              PiWaitforDSR:           GetNextReg  155             ; read status until bit 2 (DSR) is set
-383   62CA 01 3B 24    >            ld bc,$243B
-383   62CD 3E 9B       >            ld a,155
-383   62CF ED 79       >            out (c),a
-383   62D1 04          >            inc b
-383   62D2 ED 78       >            in a,(c)
-384   62D4 CD C3 5F                             call    PrintPortBinary
-385   62D7 E6 01                                and %00000001               ;
-386   62D9 CA CA 62                             jp  z,PiWaitforDSR          ; if not then spin waiting
-387   62DC C9                                   ret
-388   62DD
-389   62DD
-390   62DD              SetPiDesycMode:
-391   62DD
-392   62DD              PIDescyncReceived:
-393   62DD
-394   62DD
-395   62DD              SendAddObject:
-396   62DD
-397   62DD
-398   62DD                                      INCLUDE	"../../Hardware/memfill_dma.asm"
+ 91   0000              SetBorder:              MACRO   value
+ 92   0000 ~                                    ld          a,value
+ 93   0000 ~                                    call        l1_set_border
+ 94   0000                                      ENDM
+ 95   0000
+ 96   0000              DumpDataTest:           MACRO   command, recordcount, recordlen, dataaddr
+ 97   0000 ~                                    ld      a,recordcount
+ 98   0000 ~                                    ld      d,a
+ 99   0000 ~                                    ld      e,recordlen
+100   0000 ~                                    mul     de
+101   0000 ~                                    ld      hl,dataaddr
+102   0000 ~                                    ld      a,command
+103   0000 ~                                    call    ENPiDumpDataTest
+104   0000                                      ENDM
+105   0000              DumpDataToPi:           MACRO   command, recordcount, recordlen, dataaddr
+106   0000 ~                                    ld      a,recordcount
+107   0000 ~                                    ld      d,a
+108   0000 ~                                    ld      e,recordlen
+109   0000 ~                                    mul     de
+110   0000 ~                                    ld      hl,dataaddr
+111   0000 ~                                    ld      a,command
+112   0000 ~                                    call    ENPiDumpData
+113   0000                                      ENDM
+114   0000
+115   0000
+116   0000              charactersetaddr		equ 15360
+117   0000              STEPDEBUG               equ 1
+118   0000
+119   0000              TopOfStack              equ $5CCB ;$6100
+120   0000
+121   0000                                      ORG $5DCB;      $6200
+122   5DCB F3           EliteNextStartup:       di
+123   5DCC ED 91 07 03  .InitialiseClockSpeed:  nextreg     TURBO_MODE_REGISTER,Speed_28MHZ
+124   5DD0              .InitialiseLayerOrder:  DISPLAY "Starting Assembly At ", EliteNextStartup
+125   5DD0                                      ; "STARTUP"
+126   5DD0                                      ; Make sure  rom is in page 0 during load
+127   5DD0 ED 91 15 05                          nextreg 	SPRITE_LAYERS_SYSTEM_REGISTER,%00000101 ; ULS
+128   5DD4                                      SetBorder   0
+128   5DD4 3E 00       >                        ld          a,0
+128   5DD6 CD 44 6C    >                        call        l1_set_border
+129   5DD9 CD 1F 6C                             call        l1_cls
+130   5DDC 3E 07                                ld          a,7
+131   5DDE CD 3A 6C                             call        l1_attr_cls_to_a
+132   5DE1 ED 91 06 01  .InitialisePeripherals: nextreg     PERIPHERAL_2_REGISTER, AUDIO_CHIPMODE_AY ; Enable Turbo Sound
+133   5DE5 ED 91 08 52                          nextreg     PERIPHERAL_3_REGISTER, DISABLE_RAM_IO_CONTENTION | ENABLE_TURBO_SOUND | INTERNAL_SPEAKER_ENABLE
+134   5DE9 ED 91 09 00                          nextreg     PERIPHERAL_4_REGISTER, %00000000
+135   5DED ED 91 68 10                          nextreg     ULA_CONTROL_REGISTER,  %00010000                ; set up ULA CONRTROL may need to change bit 0 at least, but bit 4 is separate extended keys from main matrix
+136   5DF1              .InitialisingMessage:   MessageAt   0,0,InitialiseMessage
+136   5DF1 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+136   5DF5 16 00       >                        ld      d,0
+136   5DF7 1E 00       >                        ld      e,0*8
+136   5DF9 21 96 5E    >                        ld      hl,InitialiseMessage
+136   5DFC CD 7F 6E    >                        call    l1_print_at_char_wrap
+136   5DFF E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+137   5E03 CD A9 68                             call        PiReset
+138   5E06                                      MessageAt   15,0,ResetMessage
+138   5E06 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+138   5E0A 16 00       >                        ld      d,0
+138   5E0C 1E 78       >                        ld      e,15*8
+138   5E0E 21 9F 5E    >                        ld      hl,ResetMessage
+138   5E11 CD 7F 6E    >                        call    l1_print_at_char_wrap
+138   5E14 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+139   5E18 DD 01                                break
+140   5E1A CD DE 6E                             call        WaitForAnyKey
+141   5E1D              DumpTest:               DumpDataTest $F0, (LineHeapSize), 5, LineHeap
+141   5E1D 3A A9 5E    >                        ld      a,(LineHeapSize)
+141   5E20 57          >                        ld      d,a
+141   5E21 1E 05       >                        ld      e,5
+141   5E23 ED 30       >                        mul     de
+141   5E25 21 AA 5E    >                        ld      hl,LineHeap
+141   5E28 3E F0       >                        ld      a,$F0
+141   5E2A CD 4D 67    >                        call    ENPiDumpDataTest
+142   5E2D CD DE 6E                             call        WaitForAnyKey
+143   5E30
+144   5E30 CD AA 63     TestCode:               call        ENPiHello
+145   5E33 CD DE 6E                             call        WaitForAnyKey
+146   5E36 CD 1F 6C                             call        l1_cls
+147   5E39 CD 30 64                             call        ENPiPingTest
+148   5E3C CD DE 6E                             call        WaitForAnyKey
+149   5E3F CD 1F 6C                             call        l1_cls
+150   5E42 3E 01                                ld          a,1
+151   5E44 32 A7 5E                             ld          (Var_ViewPort),a
+152   5E47 CD 87 64                             call        ENPiSetView
+153   5E4A CD DE 6E                             call        WaitForAnyKey
+154   5E4D CD 1F 6C                             call        l1_cls
+155   5E50 CD A0 66                             call        ENPiPlayerInput
+156   5E53 CD DE 6E                             call        WaitForAnyKey
+157   5E56 CD 1F 6C                             call        l1_cls
+158   5E59 CD 0B 66                             call        ENPiAddShip
+159   5E5C CD DE 6E                             call        WaitForAnyKey
+160   5E5F CD 1F 6C                             call        l1_cls
+161   5E62 CD AE 66                             call        ENPiUpdateUniverse
+162   5E65 CD DE 6E                             call        WaitForAnyKey
+163   5E68 CD 1F 6C                             call        l1_cls
+164   5E6B CD E1 65                             call        ENPiFireECM
+165   5E6E CD DE 6E                             call        WaitForAnyKey
+166   5E71 CD 1F 6C                             call        l1_cls
+167   5E74 CD DC 64                             call        ENPiRenderData
+168   5E77 CD DE 6E                             call        WaitForAnyKey
+169   5E7A                                      DumpDataToPi $F0, (LineHeapSize), 5, LineHeap
+169   5E7A 3A A9 5E    >                        ld      a,(LineHeapSize)
+169   5E7D 57          >                        ld      d,a
+169   5E7E 1E 05       >                        ld      e,5
+169   5E80 ED 30       >                        mul     de
+169   5E82 21 AA 5E    >                        ld      hl,LineHeap
+169   5E85 3E F0       >                        ld      a,$F0
+169   5E87 CD 3D 67    >                        call    ENPiDumpData
+170   5E8A CD DE 6E                             call        WaitForAnyKey
+171   5E8D CD 1F 6C                             call        l1_cls
+172   5E90 CD 87 64                             call        ENPiSetView ; to test that redner data was OK
+173   5E93 C3 93 5E     EndLoop:                jp          EndLoop
+174   5E96 53 74 61 72  InitialiseMessage:      db 'Starting',0
+174   5E9A 74 69 6E 67
+174   5E9E 00
+175   5E9F 50 69 52 65  ResetMessage:           db 'PiReset',0
+175   5EA3 73 65 74 00
+176   5EA7              ;--------------------------------------------------------------------------------------
+177   5EA7              ; Elite Pi Commands
+178   5EA7              ;
+179   5EA7 00           Var_ViewPort:           DB      0
+180   5EA8 00           Var_BYTE                DB      0
+181   5EA9              PiSendCommand:          MACRO   cmd
+182   5EA9 ~                                    ld      d,cmd
+183   5EA9 ~                                    call    PiWriteByte
+184   5EA9                                      ENDM
+185   5EA9              PiSendShortDataBlock:   MACRO   dataAddr, dataLen
+186   5EA9 ~                                    ld      hl,dataAddr
+187   5EA9 ~                                    ld      b,dataLen
+188   5EA9 ~                                    call    PiWriteDataBlock
+189   5EA9                                      ENDM
+190   5EA9
+191   5EA9              ;--------------------------------------------------------------------------------------
+192   5EA9              ;Receiving data heap
+193   5EA9              ; Size aliases
+194   5EA9              CloudHeapSize:
+195   5EA9              CompassHeapSize:
+196   5EA9              PositionHeapSize:
+197   5EA9              MatrixHeapSize:
+198   5EA9              LaserHeapSize:
+199   5EA9              ScannerDataSize:
+200   5EA9 00           LineHeapSize:           DB      0
+201   5EAA              ; Data aliases
+202   5EAA              CloudHeap:              ; DS      4 * 16
+203   5EAA              LaserHeap:
+204   5EAA              MatrixHeap:
+205   5EAA              PositionHeap:
+206   5EAA              CompassHeap:
+207   5EAA              StatusHeap:
+208   5EAA              ScannerHeap:            ; DS (3*15) + 9                       ; so its ships + star, planet,scanner, data size determins the poitn where it bedomes star data
+209   5EAA 00 00 00...  LineHeap:               DS      256*5
+210   63AA              ;--------------------------------------------------------------------------------------
+211   63AA              ENPiHello:              MessageAt 0,2,CommandMessage
+211   63AA F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+211   63AE 16 02       >                        ld      d,2
+211   63B0 1E 00       >                        ld      e,0*8
+211   63B2 21 5F 67    >                        ld      hl,CommandMessage
+211   63B5 CD 7F 6E    >                        call    l1_print_at_char_wrap
+211   63B8 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+212   63BC                                      PiSendCommand   1
+212   63BC 16 01       >                        ld      d,1
+212   63BE CD C9 68    >                        call    PiWriteByte
+213   63C1                                      MessageAt 9,2,SentMessage
+213   63C1 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+213   63C5 16 02       >                        ld      d,2
+213   63C7 1E 48       >                        ld      e,9*8
+213   63C9 21 67 67    >                        ld      hl,SentMessage
+213   63CC CD 7F 6E    >                        call    l1_print_at_char_wrap
+213   63CF E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+214   63D3                                      MessageAt 13,2,HelloMessage
+214   63D3 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+214   63D7 16 02       >                        ld      d,2
+214   63D9 1E 68       >                        ld      e,13*8
+214   63DB 21 59 67    >                        ld      hl,HelloMessage
+214   63DE CD 7F 6E    >                        call    l1_print_at_char_wrap
+214   63E1 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+215   63E5 21 59 67                             ld      hl,HelloMessage
+216   63E8 06 05                                ld      b,5             ; 5 characters
+217   63EA 1E 01                                ld      e,1             ; fixed, no terminating 0
+218   63EC CD 08 6B                             call    PiWriteString
+219   63EF                                      MessageAt 18,2,SentHello
+219   63EF F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+219   63F3 16 02       >                        ld      d,2
+219   63F5 1E 90       >                        ld      e,18*8
+219   63F7 21 6C 67    >                        ld      hl,SentHello
+219   63FA CD 7F 6E    >                        call    l1_print_at_char_wrap
+219   63FD E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+220   6401                                      MessageAt 22,2,ReadingMessage
+220   6401 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+220   6405 16 02       >                        ld      d,2
+220   6407 1E B0       >                        ld      e,22*8
+220   6409 21 79 67    >                        ld      hl,ReadingMessage
+220   640C CD 7F 6E    >                        call    l1_print_at_char_wrap
+220   640F E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+221   6413 21 88 67                             ld      hl,HelloResponse
+222   6416 16 05                                ld      d,5             ; 5 characters
+223   6418 1E 01                                ld      e,1             ; fixed, no terminating 0
+224   641A CD 1A 6B                             call    PiReadString
+225   641D                                      MessageAt  0,3,HelloResponse
+225   641D F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+225   6421 16 03       >                        ld      d,3
+225   6423 1E 00       >                        ld      e,0*8
+225   6425 21 88 67    >                        ld      hl,HelloResponse
+225   6428 CD 7F 6E    >                        call    l1_print_at_char_wrap
+225   642B E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+226   642F C9                                   ret
+227   6430              ;--------------------------------------------------------------------------------------
+228   6430              ENPiPingTest:           MessageAt 0,4,CommandMessage
+228   6430 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+228   6434 16 04       >                        ld      d,4
+228   6436 1E 00       >                        ld      e,0*8
+228   6438 21 5F 67    >                        ld      hl,CommandMessage
+228   643B CD 7F 6E    >                        call    l1_print_at_char_wrap
+228   643E E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+229   6442                                      PiSendCommand 2
+229   6442 16 02       >                        ld      d,2
+229   6444 CD C9 68    >                        call    PiWriteByte
+230   6447                                      MessageAt 9,4,SentMessage
+230   6447 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+230   644B 16 04       >                        ld      d,4
+230   644D 1E 48       >                        ld      e,9*8
+230   644F 21 67 67    >                        ld      hl,SentMessage
+230   6452 CD 7F 6E    >                        call    l1_print_at_char_wrap
+230   6455 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+231   6459                                      MessageAt 13,4,PingMessage
+231   6459 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+231   645D 16 04       >                        ld      d,4
+231   645F 1E 68       >                        ld      e,13*8
+231   6461 21 81 67    >                        ld      hl,PingMessage
+231   6464 CD 7F 6E    >                        call    l1_print_at_char_wrap
+231   6467 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+232   646B CD A7 69                             call    PiReadByte
+233   646E 21 B5 67                             ld      hl,PingCode
+234   6471 C6 30                                add     a,'0'
+235   6473 77                                   ld      (hl),a
+236   6474                                      MessageAt   0,5,ResponseMessage
+236   6474 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+236   6478 16 05       >                        ld      d,5
+236   647A 1E 00       >                        ld      e,0*8
+236   647C 21 A7 67    >                        ld      hl,ResponseMessage
+236   647F CD 7F 6E    >                        call    l1_print_at_char_wrap
+236   6482 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+237   6486 C9                                   ret
+238   6487              ;--------------------------------------------------------------------------------------
+239   6487              ENPiSetView:            MessageAt 0,6,CommandMessage
+239   6487 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+239   648B 16 06       >                        ld      d,6
+239   648D 1E 00       >                        ld      e,0*8
+239   648F 21 5F 67    >                        ld      hl,CommandMessage
+239   6492 CD 7F 6E    >                        call    l1_print_at_char_wrap
+239   6495 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+240   6499                                      PiSendCommand 18
+240   6499 16 12       >                        ld      d,18
+240   649B CD C9 68    >                        call    PiWriteByte
+241   649E                                      MessageAt 9,6,SentMessage
+241   649E F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+241   64A2 16 06       >                        ld      d,6
+241   64A4 1E 48       >                        ld      e,9*8
+241   64A6 21 67 67    >                        ld      hl,SentMessage
+241   64A9 CD 7F 6E    >                        call    l1_print_at_char_wrap
+241   64AC E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+242   64B0                                      MessageAt 13,6,ViewMessage
+242   64B0 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+242   64B4 16 06       >                        ld      d,6
+242   64B6 1E 68       >                        ld      e,13*8
+242   64B8 21 95 67    >                        ld      hl,ViewMessage
+242   64BB CD 7F 6E    >                        call    l1_print_at_char_wrap
+242   64BE E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+243   64C2 3A A7 5E                             ld      a,(Var_ViewPort)
+244   64C5 57                                   ld      d,a
+245   64C6 CD C9 68                             call    PiWriteByte
+246   64C9                                      MessageAt  25,6,SentMessage
+246   64C9 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+246   64CD 16 06       >                        ld      d,6
+246   64CF 1E C8       >                        ld      e,25*8
+246   64D1 21 67 67    >                        ld      hl,SentMessage
+246   64D4 CD 7F 6E    >                        call    l1_print_at_char_wrap
+246   64D7 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+247   64DB C9                                   ret
+248   64DC              ;--------------------------------------------------------------------------------------
+249   64DC              ; 0x15 To Test    Request Render data
+250   64DC              ENPiRenderData:         PiSendCommand   $15
+250   64DC 16 15       >                        ld      d,$15
+250   64DE CD C9 68    >                        call    PiWriteByte
+251   64E1                                      MessageAt 9,6,SentMessage
+251   64E1 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+251   64E5 16 06       >                        ld      d,6
+251   64E7 1E 48       >                        ld      e,9*8
+251   64E9 21 67 67    >                        ld      hl,SentMessage
+251   64EC CD 7F 6E    >                        call    l1_print_at_char_wrap
+251   64EF E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+252   64F3                                      MessageAt 13,6,RenderMessage
+252   64F3 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+252   64F7 16 06       >                        ld      d,6
+252   64F9 1E 68       >                        ld      e,13*8
+252   64FB 21 A0 67    >                        ld      hl,RenderMessage
+252   64FE CD 7F 6E    >                        call    l1_print_at_char_wrap
+252   6501 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+253   6505 CD A7 69                             call    PiReadByte                  ; Read number of lines to render
+254   6508 A7                                   and     a
+255   6509 C8                                   ret     z
+256   650A 32 A9 5E                             ld      (LineHeapSize),a            ; Cache line list
+257   650D                                      PrintHexARegAt 0,0
+257   650D F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+257   6511 16 00       >                        ld      d,0
+257   6513 1E 00       >                        ld      e,0*8
+257   6515 CD 09 6E    >                        call    l1_print_u8_hex_at_char
+257   6518 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+258   651C 3A A9 5E                             ld      a,(LineHeapSize)
+259   651F 21 AA 5E                             ld      hl,LineHeap
+260   6522 16 05                                ld      d,5                         ; de = 5 byte blocks of data includin gline colour
+261   6524 5F                                   ld      e,a
+262   6525 ED 30                                mul     de
+263   6527 CD 30 6A                             call    PiReadBlock
+264   652A                                      ; Stick in here drawing lines later
+265   652A C9                                   ret
+266   652B              ;--------------------------------------------------------------------------------------
+267   652B              ; 0x16 Input......Request Explode Cloud data, returns render position as xy, age, & ship size, leaves drawing to main game engine
+268   652B              ENPiCloudList:          PiSendCommand   $16
+268   652B 16 16       >                        ld      d,$16
+268   652D CD C9 68    >                        call    PiWriteByte
+269   6530 CD A7 69                             call    PiReadByte
+270   6533 32 A9 5E                             ld      (CloudHeapSize),a
+271   6536 A7                                   and     a
+272   6537 C8                                   ret     z
+273   6538 21 AA 5E                             ld      hl,CloudHeap
+274   653B 57                                   ld      d,a
+275   653C 1E 04                                ld      e,4
+276   653E ED 30                                mul     de
+277   6540 CD 30 6A                             call    PiReadBlock
+278   6543 C9                                   ret
+279   6544              ;--------------------------------------------------------------------------------------
+280   6544              ; 0x1A To Test    Request Compass Position Data,Retubnr
+281   6544              ENPiCompassList:        PiSendCommand   $1A
+281   6544 16 1A       >                        ld      d,$1A
+281   6546 CD C9 68    >                        call    PiWriteByte
+282   6549 CD A7 69                             call    PiReadByte
+283   654C 32 A9 5E                             ld      (CompassHeapSize),a
+284   654F A7                                   and     a
+285   6550 21 AA 5E                             ld      hl,CompassHeap
+286   6553 16 03                                ld      d,3         ; x y z (255 rear, else front)
+287   6555 C6 03                                add     a,3         ; factor in star,planet,station, if no ships then a is 0
+288   6557 5F                                   ld      e,a
+289   6558 ED 30                                mul     de
+290   655A CD 30 6A                             call    PiReadBlock
+291   655D C9                                   ret
+292   655E              ; 0x1B To Test    Request Compass Position (ship nbr, if bit 7 set then 1 = sun 2 = planet 3 = station) > 4x8 bit values for color, x,y,stick length (signed)
+293   655E              ;                 writes to ixh = x ixl = y a = z
+294   655E              ENPiCompassNbr:         PiSendCommand   $1B
+294   655E 16 1B       >                        ld      d,$1B
+294   6560 CD C9 68    >                        call    PiWriteByte
+295   6563 CD A7 69                             call    PiReadByte
+296   6566 DD 67                                ld      ixh,a
+297   6568 CD A7 69                             call    PiReadByte
+298   656B DD 6F                                ld      ixl,a
+299   656D CD A7 69                             call    PiReadByte
+300   6570 C9                                   ret
+301   6571              ; 0x1C To Test    Request all 3d Position Data > next byte is number of ships, followed by 3x24 bit for sun, 3x24 bit for planet, 3x24 bit for space station, nbr ships x 1x8 bit ship index, 3x16 bit for ships
+302   6571              ENPiPositionList:       PiSendCommand   $1C
+302   6571 16 1C       >                        ld      d,$1C
+302   6573 CD C9 68    >                        call    PiWriteByte
+303   6576 CD A7 69                             call    PiReadByte
+304   6579 32 A9 5E                             ld      (PositionHeapSize),a
+305   657C 16 0A                                ld      d,10            ; Ship Nbr x y z are all 16.8 format
+306   657E ED 30                                mul     de
+307   6580 21 09 00                             ld      hl,3*3          ; star, planet,station
+308   6583 19                                   add     hl,de
+309   6584 EB                                   ex      de,hl           ; de = length
+310   6585 21 AA 5E                             ld      hl,PositionHeap
+311   6588 CD 30 6A                             call    PiReadBlock
+312   658B C9                                   ret
+313   658C              ; 0x1D To Test    Request ship n Position Data (ship nbr, if bit 7 set then 1 = sun 2 = planet 3 = station) >  followed by 3x24 bit for sun, 3x24 bit for planet, 3x24 bit for space station, nbr ships x 3x16 bit for ships
+314   658C              ENPiPositionNbr:        PiSendCommand   $1D
+314   658C 16 1D       >                        ld      d,$1D
+314   658E CD C9 68    >                        call    PiWriteByte
+315   6591 32 A9 5E                             ld      (PositionHeapSize),a
+316   6594 21 AA 5E                             ld      hl,PositionHeap
+317   6597 11 1B 00                             ld      de, 9*3            ; x y z are all 16.8 format
+318   659A CD 30 6A                             call    PiReadBlock
+319   659D C9                                   ret
+320   659E              ; 0x1E To Test    Request Matrix data (ships + space station)
+321   659E              ENPiMatrixList:         PiSendCommand   $1E
+321   659E 16 1E       >                        ld      d,$1E
+321   65A0 CD C9 68    >                        call    PiWriteByte
+322   65A3 32 A9 5E                             ld      (MatrixHeapSize),a
+323   65A6 16 13                                ld      d,(2*9)+1           ; ship nbr 3 x 3 grid of 2 byte values
+324   65A8 3C                                   inc     a                   ; add in space station
+325   65A9 5F                                   ld      e,a
+326   65AA ED 30                                mul     de
+327   65AC 1B                                   dec     de                  ; space station does not have a ship nbr
+328   65AD CD 30 6A                             call    PiReadBlock
+329   65B0 C9                                   ret
+330   65B1              ; 0x1F To Test    Request Ship matrix (ship nbr, if bit 7 set then 1 = sun 2 = planet 3 = station)
+331   65B1              ENPiMatrixNbr:          PiSendCommand   $1F
+331   65B1 16 1F       >                        ld      d,$1F
+331   65B3 CD C9 68    >                        call    PiWriteByte
+332   65B6 21 AA 5E                             ld      hl,MatrixHeap
+333   65B9 11 12 00                             ld      de,9*2
+334   65BC CD 30 6A                             call    PiReadBlock
+335   65BF C9                                   ret
+336   65C0              ; 0x20 To Test    Firing > next byte is ship id that would be hit by laser in low byte, bit 7 is 0 for front 1 for rear, FF means no hit
+337   65C0              ENPiFiringLaser:        PiSendCommand   $20
+337   65C0 16 20       >                        ld      d,$20
+337   65C2 CD C9 68    >                        call    PiWriteByte
+338   65C5 CD A7 69                             call    PiReadByte
+339   65C8 C9                                   ret
+340   65C9              ; 0x21 Input      List of lasers hitting player and direction, first byte count follwoed by ship id and facing as per 0x20
+341   65C9              ENPiLaserList:          PiSendCommand   $21
+341   65C9 16 21       >                        ld      d,$21
+341   65CB CD C9 68    >                        call    PiWriteByte
+342   65CE CD A7 69                             call    PiReadByte
+343   65D1 32 A9 5E                             ld      (LaserHeapSize),a
+344   65D4 C8                                   ret     z
+345   65D5 21 AA 5E                             ld      hl,LaserHeap
+346   65D8 16 02                                ld      d,2
+347   65DA 7F                                   ld      a,a
+348   65DB ED 30                                mul     de
+349   65DD CD 30 6A                             call    PiReadBlock
+350   65E0 C9                                   ret
+351   65E1              ; 0x22 Input      Missile Hit Check, loops through all missiles in flight: first byte is missile id (low nibble), high nibble nbr of ships hit, list of ships his and distance from missile, if ship id is hit bit 7 then direect hit and no distance byte
+352   65E1
+353   65E1              ;--------------------------------------------------------------------------------------
+354   65E1              ; 0x23 To Test    Fire ECM, byte = duration
+355   65E1              ENPiFireECM:            PiSendCommand   $23
+355   65E1 16 23       >                        ld      d,$23
+355   65E3 CD C9 68    >                        call    PiWriteByte
+356   65E6 16 50                                ld      d,$50
+357   65E8 CD C9 68                             call    PiWriteByte
+358   65EB C9                                   ret
+359   65EC              ; 0x30 To Test    Add Ship    > next bytes are Type, position, rotation, state (what here) also used for launch missile, flags as bit mask for overides 7=Angry,6 = scared, 5 = hunter, 4 trader, 3 = courier, 2 = bezerk, 1 = has cloak,, 0=has_ecm
+360   65EC              ; Note position needs to move to 16.8 code is currently 8.8
+361   65EC 01           AddType:                DB 1
+362   65ED 01 10 02 20  AddPosition:            DW $1001, $2002, $0F03
+362   65F1 03 0F
+363   65F3 00 01 01 00  AddRotation:            DW $0100, $0001, $0001, $0001, $0100, $0001, $0001,$0001, $0100
+363   65F7 01 00 01 00
+363   65FB 00 01 01 00
+363   65FF 01 00 01 00
+363   6603 00 01
+364   6605 01 02 03 04  AddRotandSpeed:         DB $01, $02, $03, $04, $05
+364   6609 05
+365   660A 00           AddFlags:               DB 0
+366   660B              AddLen:                 equ 31
+367   660B              ENPiAddShip:            PiSendCommand $30
+367   660B 16 30       >                        ld      d,$30
+367   660D CD C9 68    >                        call    PiWriteByte
+368   6610                                      PiSendShortDataBlock AddType, AddLen
+368   6610 21 EC 65    >                        ld      hl,AddType
+368   6613 06 1F       >                        ld      b,AddLen
+368   6615 CD E0 6A    >                        call    PiWriteDataBlock
+369   6618 C9                                   ret
+370   6619              ; 0x31 To Test    Ship Dead   > next byte is ship number
+371   6619              ENPiShipDead:           PiSendCommand   $31
+371   6619 16 31       >                        ld      d,$31
+371   661B CD C9 68    >                        call    PiWriteByte
+372   661E 16 00                                ld      d,0
+373   6620 CD C9 68                             call    PiWriteByte
+374   6623 C9                                   ret
+375   6624              ; 0x32 To Test    Remove Ship > next byte is ship number
+376   6624              ENPiRemoveShip:         PiSendCommand   $33
+376   6624 16 33       >                        ld      d,$33
+376   6626 CD C9 68    >                        call    PiWriteByte
+377   6629 16 00                                ld      d,0
+378   662B CD C9 68                             call    PiWriteByte
+379   662E C9                                   ret
+380   662F              ; 0x40 Input      Request ship nbrs in range X of position , 3x8 bit for position, 1x8bit for range
+381   662F 20 20 20 30  RangeData:              DB      $20,$20,$20,$30
+382   6633 00 00 00...  RangeResult:            DS      16
+383   6643              ENPiShipsInRange:       PiSendCommand   $40
+383   6643 16 40       >                        ld      d,$40
+383   6645 CD C9 68    >                        call    PiWriteByte
+384   6648                                      PiSendShortDataBlock RangeData,4
+384   6648 21 2F 66    >                        ld      hl,RangeData
+384   664B 06 04       >                        ld      b,4
+384   664D CD E0 6A    >                        call    PiWriteDataBlock
+385   6650 CD A7 69                             call    PiReadByte
+386   6653 C8                                   ret     z                       ; if zero then no data
+387   6654 5F                                   ld      e,a
+388   6655 16 00                                ld      d,0
+389   6657 21 33 66                             ld      hl,RangeResult
+390   665A CD 30 6A                             call    PiReadBlock
+391   665D C9                                   ret
+392   665E              ;--------------------------------------------------------------------------------------
+393   665E              ; 0x66 To Test    Shutdown
+394   665E              ENPisShutdown:          PiSendCommand   $66
+394   665E 16 66       >                        ld      d,$66
+394   6660 CD C9 68    >                        call    PiWriteByte
+395   6663 C9                                   ret
+396   6664              ;--------------------------------------------------------------------------------------
+397   6664              ; 0x67 To Test    Restart Universe
+398   6664              ENPiResetUniverse:      PiSendCommand   $67
+398   6664 16 67       >                        ld      d,$67
+398   6666 CD C9 68    >                        call    PiWriteByte
+399   6669 C9                                   ret
+400   666A              ;--------------------------------------------------------------------------------------
+401   666A              ; 0x68 Input      Performed Jump
+402   666A AF 00 B0 00  JumpSampleSeeds:        DW  $AF, $B0, $34, $54, $76, $01
+402   666E 34 00 54 00
+402   6672 76 00 01 00
+403   6676              ENPiPerformedJump:      PiSendCommand   $68
+403   6676 16 68       >                        ld      d,$68
+403   6678 CD C9 68    >                        call    PiWriteByte
+404   667B                                      PiSendShortDataBlock JumpSampleSeeds,6
+404   667B 21 6A 66    >                        ld      hl,JumpSampleSeeds
+404   667E 06 06       >                        ld      b,6
+404   6680 CD E0 6A    >                        call    PiWriteDataBlock
+405   6683 C9                                   ret
+406   6684              ;--------------------------------------------------------------------------------------
+407   6684              ; 0x69 Input      Undock Player assuming existing seed it valid
+408   6684              ENPiUndock:             PiSendCommand   $69
+408   6684 16 69       >                        ld      d,$69
+408   6686 CD C9 68    >                        call    PiWriteByte
+409   6689 C9                                   ret
+410   668A              ;--------------------------------------------------------------------------------------
+411   668A              ; 0x6A Input      Undock Player Seeded, used if we need to set new seed, e.g. after load game
+412   668A              ENPiUndockSeeded:       PiSendCommand   $6A
+412   668A 16 6A       >                        ld      d,$6A
+412   668C CD C9 68    >                        call    PiWriteByte
+413   668F                                      PiSendShortDataBlock JumpSampleSeeds,6
+413   668F 21 6A 66    >                        ld      hl,JumpSampleSeeds
+413   6692 06 06       >                        ld      b,6
+413   6694 CD E0 6A    >                        call    PiWriteDataBlock
+414   6697 C9                                   ret
+415   6698              ;--------------------------------------------------------------------------------------
+416   6698              ; 0x70 Input      Player input
+417   6698 01 02 03 04  PlayerInput:            DW $0201, $0403,$0605,$0807
+417   669C 05 06 07 08
+418   66A0              ENPiPlayerInput:        PiSendCommand   $70
+418   66A0 16 70       >                        ld      d,$70
+418   66A2 CD C9 68    >                        call    PiWriteByte
+419   66A5                                      PiSendShortDataBlock PlayerInput, 8
+419   66A5 21 98 66    >                        ld      hl,PlayerInput
+419   66A8 06 08       >                        ld      b,8
+419   66AA CD E0 6A    >                        call    PiWriteDataBlock
+420   66AD C9                                   ret
+421   66AE              ;--------------------------------------------------------------------------------------
+422   66AE              ; 0x71 Input      Update Universe
+423   66AE              ENPiUpdateUniverse:     PiSendCommand   $71
+423   66AE 16 71       >                        ld      d,$71
+423   66B0 CD C9 68    >                        call    PiWriteByte
+424   66B3 C9                                   ret
+425   66B4              ;--------------------------------------------------------------------------------------
+426   66B4              ; 0x72 Input      Update Universe n ticks, tick count in d
+427   66B4 D5           EMPiUpdateTicks:        push    de
+428   66B5                                      PiSendCommand   $72
+428   66B5 16 72       >                        ld      d,$72
+428   66B7 CD C9 68    >                        call    PiWriteByte
+429   66BA D1                                   pop     de
+430   66BB CD C9 68                             call    PiWriteByte
+431   66BE C9                                   ret
+432   66BF              ; 0x73 Input      Update tactics all
+433   66BF              ENPiUndateTactics:      PiSendCommand   $73
+433   66BF 16 73       >                        ld      d,$73
+433   66C1 CD C9 68    >                        call    PiWriteByte
+434   66C4 C9                                   ret
+435   66C5              ;--------------------------------------------------------------------------------------
+436   66C5              ; 0x74 Input      Update tactics ship n (bit 7 means space station), ship Id in d
+437   66C5 D5           ENPiTacticsNbr:         push    de
+438   66C6                                      PiSendCommand   $74
+438   66C6 16 74       >                        ld      d,$74
+438   66C8 CD C9 68    >                        call    PiWriteByte
+439   66CB D1                                   pop     de
+440   66CC CD C9 68                             call    PiWriteByte
+441   66CF C9                                   ret
+442   66D0              ; 0x75 Input      get all status data upper nibble byte 1 ship nbr lowe nibble + next byte 12 bit mask + 2 bytes for space station
+443   66D0              ;                 Bit Mask   11, 10, 9 111 In Use and alive
+444   66D0              ;                                      100 In Use Dead
+445   66D0              ;                                      101 In Use Exploding
+446   66D0              ;                                      110 In Use to remove
+447   66D0              ;                             8 Is Angry
+448   66D0              ;                             7 Is Scared
+449   66D0              ;                             6 Is Firing
+450   66D0              ;                             5 Is Berzerk
+451   66D0              ;                             4 Is cloaked
+452   66D0              ;                             3 Is hunter
+453   66D0              ;                             2 ,1 0    111 Is Trader
+454   66D0              ;                                       100 Is Pirate
+455   66D0              ;                                       101 Is Authority
+456   66D0              ;                                       110 Is Courier
+457   66D0              ;                                       001 Is Thargoid
+458   66D0              ;                             1 ECM Active
+459   66D0              ;                             0
+460   66D0              ENPiGetStatusAll:       PiSendCommand  $75
+460   66D0 16 75       >                        ld      d,$75
+460   66D2 CD C9 68    >                        call    PiWriteByte
+461   66D5 CD A7 69                             call    PiReadByte
+462   66D8 3C                                   inc     a
+463   66D9 57                                   ld      d,a
+464   66DA 1E 02                                ld      e,2
+465   66DC ED 30                                mul     de
+466   66DE 21 AA 5E                             ld      hl,StatusHeap
+467   66E1 CD 30 6A                             call    PiReadBlock
+468   66E4 C9                                   ret
+469   66E5              ; 0x76 Input      get ship n status data (bit 7 means space station), returns status in de
+470   66E5 D5           ENPiGetStatusNbr:       push    de
+471   66E6                                      PiSendCommand  $76
+471   66E6 16 76       >                        ld      d,$76
+471   66E8 CD C9 68    >                        call    PiWriteByte
+472   66EB D1                                   pop     de
+473   66EC CD C9 68                             call    PiWriteByte
+474   66EF CD BA 6A                             call    PiReadWord
+475   66F2 C9                                   ret
+476   66F3              ; 0x80 Input      get all scanner data next byte is number of ships, followed by 1 byte ship nbr, 3x1 byte, x1,y1,y2, blob is draw at y2
+477   66F3              ENPiGetScannerAll:      PiSendCommand   $80
+477   66F3 16 80       >                        ld      d,$80
+477   66F5 CD C9 68    >                        call    PiWriteByte
+478   66F8 CD A7 69                             call    PiReadByte
+479   66FB 32 A9 5E                             ld      (ScannerDataSize),a
+480   66FE 57                                   ld      d,a
+481   66FF 1E 04                                ld      e,4                         ; ship nbr, x1 y1 y2
+482   6701 ED 30                                mul     de
+483   6703 21 09 00                             ld      hl,9                        ; Star, Planet Station
+484   6706 19                                   add     hl,de
+485   6707 EB                                   ex      hl,de                       ; de = total data block now
+486   6708 21 AA 5E                             ld      hl,ScannerHeap
+487   670B CD 30 6A                             call    PiReadBlock
+488   670E C9                                   ret
+489   670F              ; 0x81 Input      get ship scanner data > object id, bit 7 shifs to bodies < returns 3x1 byte, x1,y1,y2, blob is draw at y2
+490   670F              ;                 d = ship nbr, returns de x1 y1 a y2
+491   670F D5           ENPiGetScannerNbr:      push    de
+492   6710                                      PiSendCommand   $80
+492   6710 16 80       >                        ld      d,$80
+492   6712 CD C9 68    >                        call    PiWriteByte
+493   6715 D1                                   pop     de
+494   6716 CD C9 68                             call    PiWriteByte
+495   6719 CD A7 69                             call    PiReadByte
+496   671C 57                                   ld      d,a
+497   671D CD A7 69                             call    PiReadByte
+498   6720 5F                                   ld      e,a
+499   6721 CD A7 69                             call    PiReadByte
+500   6724 C9                                   ret
+501   6725              ; 0x90 Input      set object status > object nbr
+502   6725              ;                 a = object nbr, de = status mask as per get status TODO shall we do as a word instead of two bytes?
+503   6725 D5 F5        ENPiSetObjectStatus:    push    de,,af
+504   6727                                      PiSendCommand   $90
+504   6727 16 90       >                        ld      d,$90
+504   6729 CD C9 68    >                        call    PiWriteByte
+505   672C F1                                   pop     af
+506   672D 57                                   ld      d,a
+507   672E CD C9 68                             call    PiWriteByte
+508   6731 D1                                   pop     de
+509   6732 DD 6B                                ld      ixl,e
+510   6734 CD C9 68                             call    PiWriteByte
+511   6737 DD 5D                                ld      e,ixl
+512   6739 CD C9 68                             call    PiWriteByte
+513   673C C9                                   ret
+514   673D              ; 0xA0 Input      set all mode 1 = all objects regarless of if they exist, 0 = only ones where object used = true
+515   673D              ; 0xF0 to 0xFF    send command in a reg then send b messages from memory location hl with d a multiplier based on packet size
+516   673D              ;                 d = 1 for byte, 2 for word, 3 for 8.8 etc
+517   673D              ; Raw data dump, hl = address, de  length in bytes
+518   673D E5 D5 C5     ENPiDumpData:           push    hl,,de,,bc
+519   6740                                      PiSendCommand   a
+519   6740 57          >                        ld      d,a
+519   6741 CD C9 68    >                        call    PiWriteByte
+520   6744 D1 C1 E1                             pop     hl,,bc,,de
+521   6747 42 4B                                ld      bc,de
+522   6749 CD C2 6A                             call    PiWriteLongDataBlock        ; hl = address of string to write, bc  = length
+523   674C C9                                   ret
+524   674D E5 D5 C5     ENPiDumpDataTest:       push    hl,,de,,bc
+525   6750 C1 D1 E1                             pop     hl,,de,,bc
+526   6753 42 4B                                ld      bc,de
+527   6755 CD D2 6A                             call    PiTestLongDataBlock        ; hl = address of string to write, bc  = length
+528   6758 C9                                   ret
+529   6759
+530   6759              ;--------------------------------------------------------------------------------------
+531   6759              ; Tests to implement
+532   6759
+533   6759              ;--------------------------------------------------------------------------------------
+534   6759              ; viarables for printing
+535   6759 48 65 6C 6C  HelloMessage:           DB 'Hello',0
+535   675D 6F 00
+536   675F 43 6F 6D 6D  CommandMessage:         DB 'Command',0
+536   6763 61 6E 64 00
+537   6767 53 65 6E 74  SentMessage:            DB 'Sent',0
+537   676B 00
+538   676C 53 74 72 69  SentHello:              DB 'String Hello',0
+538   6770 6E 67 20 48
+538   6774 65 6C 6C 6F
+538   6778 00
+539   6779 52 65 61 64  ReadingMessage:         DB 'Reading',0
+539   677D 69 6E 67 00
+540   6781 50 69 6E 67  PingMessage:            db 'Ping ',0,0
+540   6785 20 00 00
+541   6788 58 58 58 58  HelloResponse:          db 'XXXXX',0,0,0,0,0,0,0,0
+541   678C 58 00 00 00
+541   6790 00 00 00 00
+541   6794 00
+542   6795 56 69 65 77  ViewMessage:            db 'View Set',0,0,0
+542   6799 20 53 65 74
+542   679D 00 00 00
+543   67A0 52 65 6E 64  RenderMessage:          db 'Render',0
+543   67A4 65 72 00
+544   67A7 50 69 6E 67  ResponseMessage:        DB      'Ping Result : '
+544   67AB 20 52 65 73
+544   67AF 75 6C 74 20
+544   67B3 3A 20
+545   67B5 30 00        PingCode:               DB      '0', 0
+546   67B7 20 20 20 20  StringMessage:          DB '                               ',0
+546   67BB 20 20 20 20
+546   67BF 20 20 20 20
+546   67C3 20 20 20 20
+546   67C7 20 20 20 20
+546   67CB 20 20 20 20
+546   67CF 20 20 20 20
+546   67D3 20 20 20 00
+547   67D7 2E 2E 2E 2E  StringClear:            DB '...............................',0
+547   67DB 2E 2E 2E 2E
+547   67DF 2E 2E 2E 2E
+547   67E3 2E 2E 2E 2E
+547   67E7 2E 2E 2E 2E
+547   67EB 2E 2E 2E 2E
+547   67EF 2E 2E 2E 2E
+547   67F3 2E 2E 2E 00
+548   67F7              ;--------------------------------------------------------------------------------------
+549   67F7              ; Pi diagnostics
+550   67F7              ; d = row char e = col pixel
+551   67F7 F5 C5 E5 D5  ClearMessageArea:       push    af,,bc,,hl,,de
+552   67FB 21 B7 67                             ld      hl,StringMessage
+553   67FE 06 1E                                ld      b,30
+554   6800 3E 00                                ld      a,0
+555   6802 77           .fillLoop:              ld      (hl),a
+556   6803 23                                   inc     hl
+557   6804 10 FC                                djnz    .fillLoop
+558   6806 D1 E1 C1 F1                          pop     af,,bc,,hl,,de
+559   680A C9                                   ret
+560   680B F5 C5 E5 D5  PrintPortBinary:        push    af,,bc,,hl,,de
+561   680F 16 0C                                ld      d,12
+562   6811 1E 14                                ld      e,20
+563   6813                                      GetNextReg 152
+563   6813 01 3B 24    >            ld bc,$243B
+563   6816 3E 98       >            ld a,152
+563   6818 ED 79       >            out (c),a
+563   681A 04          >            inc b
+563   681B ED 78       >            in a,(c)
+564   681D CD 39 6D                             call    l1_print_bin8_l2r_at_char
+565   6820 16 0C                                ld      d,12
+566   6822 1E 0A                                ld      e,10
+567   6824                                      GetNextReg 153
+567   6824 01 3B 24    >            ld bc,$243B
+567   6827 3E 99       >            ld a,153
+567   6829 ED 79       >            out (c),a
+567   682B 04          >            inc b
+567   682C ED 78       >            in a,(c)
+568   682E CD 39 6D                             call    l1_print_bin8_l2r_at_char
+569   6831 16 0C                                ld      d,12
+570   6833 1E 00                                ld      e,0
+571   6835                                      GetNextReg 155
+571   6835 01 3B 24    >            ld bc,$243B
+571   6838 3E 9B       >            ld a,155
+571   683A ED 79       >            out (c),a
+571   683C 04          >            inc b
+571   683D ED 78       >            in a,(c)
+572   683F CD 39 6D                             call    l1_print_bin8_l2r_at_char
+573   6842 D1 E1 C1 F1                          pop     af,,bc,,hl,,de
+574   6846 C9                                   ret
+575   6847              ;--------------------------------------------------------------------------------------
+576   6847              ; Pi Library
+577   6847
+578   6847              PiSetnDSRnCTSnACK:      MACRO
+579   6847 ~                                    nextreg 155,0
+580   6847                                      ENDM
+581   6847              PiSetnDSRCTSnACK:       MACRO
+582   6847 ~                                    nextreg 155,2
+583   6847                                      ENDM
+584   6847              PiSetDSR:               MACRO
+585   6847 ~                                    nextreg 155,1           ; Set DSR high andy anything else writable low
+586   6847                                      ENDM
+587   6847              PiSetnCTSACK:           MACRO
+588   6847 ~                                    nextreg 155,4           ; Set ACK high andy anything else writable low
+589   6847                                      ENDM
+590   6847 ED 91 90 00  PiSetReadMode:          nextreg 144, 0              ; pins 4 to 7 read  enable
+591   684B ED 91 91 00                          nextreg 145, 0              ; pins 0 to 3 read enable
+592   684F ED 91 93 06                          nextreg 147,2+4             ; data ready pin read, CTS write, ack write , Desync read
+593   6853                                      MessageAt 0,15,PiInReadMode
+593   6853 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+593   6857 16 0F       >                        ld      d,15
+593   6859 1E 00       >                        ld      e,0*8
+593   685B 21 4D 6A    >                        ld      hl,PiInReadMode
+593   685E CD 7F 6E    >                        call    l1_print_at_char_wrap
+593   6861 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+594   6865                                      MessageAt 15,15,PiClearMode
+594   6865 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+594   6869 16 0F       >                        ld      d,15
+594   686B 1E 78       >                        ld      e,15*8
+594   686D 21 5B 6A    >                        ld      hl,PiClearMode
+594   6870 CD 7F 6E    >                        call    l1_print_at_char_wrap
+594   6873 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+595   6877 C9                                   ret
+596   6878
+597   6878 ED 91 90 F0  PiSetWriteMode:         nextreg 144, 16+32+64+128   ;pins 4 to 7 write enable
+598   687C ED 91 91 0F                          nextreg 145, 1+2+4+8        ;pins 0 to 3 write enable
+599   6880 ED 91 93 09                          nextreg 147, 1 + 8          ;DSR and Desync pins write enable
+600   6884                                      MessageAt 15,15,PiInWriteMode
+600   6884 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+600   6888 16 0F       >                        ld      d,15
+600   688A 1E 78       >                        ld      e,15*8
+600   688C 21 3E 6A    >                        ld      hl,PiInWriteMode
+600   688F CD 7F 6E    >                        call    l1_print_at_char_wrap
+600   6892 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+601   6896                                      MessageAt 0,15,PiClearMode
+601   6896 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+601   689A 16 0F       >                        ld      d,15
+601   689C 1E 00       >                        ld      e,0*8
+601   689E 21 5B 6A    >                        ld      hl,PiClearMode
+601   68A1 CD 7F 6E    >                        call    l1_print_at_char_wrap
+601   68A4 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+602   68A8 C9                                   ret
+603   68A9              ;--------------------------------------------------------------------------------------
+604   68A9 ED 91 93 07  PiReset:                nextreg 147,1+2+4           ; data ready 0, cts 0, ack 0
+605   68AD ED 91 9B 00                          nextreg 155,0               ;
+606   68B1 C9                                   ret
+607   68B2 CD 78 68                             call    PiSetWriteMode      ; clear out bits on data line
+608   68B5 ED 91 98 00                          nextreg 152,0
+609   68B9 ED 91 99 00                          nextreg 153,0
+610   68BD ED 91 9B 00                          nextreg 155,0               ; and clear DSR,DeSync
+611   68C1 CD 47 68                             call    PiSetReadMode
+612   68C4 ED 91 9B 00                          nextreg 155,0               ; and clear CTS,ACK
+613   68C8 C9                                   ret
+614   68C9
+615   68C9              ;--------------------------------------------------------------------------------------
+616   68C9              ;  Write byte held in d (data)
+617   68C9              PiWriteByte:            IFDEF DEBUGMODE
+618   68C9 7A                                       ld      a,d
+619   68CA 32 A8 5E                                 ld      (Var_BYTE),a
+620   68CD                                      ENDIF
+621   68CD CD 78 68                             call    PiSetWriteMode      ; Write Mode
+622   68D0                                      PiSetnDSRnCTSnACK
+622   68D0 ED 91 9B 00 >                        nextreg 155,0
+623   68D4                                      IFDEF DEBUGMODE
+624   68D4                                          MessageAt 0,16,PiWaitCTS
+624   68D4 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+624   68D8 16 10       >                        ld      d,16
+624   68DA 1E 00       >                        ld      e,0*8
+624   68DC 21 85 6A    >                        ld      hl,PiWaitCTS
+624   68DF CD 7F 6E    >                        call    l1_print_at_char_wrap
+624   68E2 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+625   68E6                                          MessageAt 15,16,PiClearMode
+625   68E6 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+625   68EA 16 10       >                        ld      d,16
+625   68EC 1E 78       >                        ld      e,15*8
+625   68EE 21 5B 6A    >                        ld      hl,PiClearMode
+625   68F1 CD 7F 6E    >                        call    l1_print_at_char_wrap
+625   68F4 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+626   68F8                                          MessageAt 0,17,PiClearMode
+626   68F8 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+626   68FC 16 11       >                        ld      d,17
+626   68FE 1E 00       >                        ld      e,0*8
+626   6900 21 5B 6A    >                        ld      hl,PiClearMode
+626   6903 CD 7F 6E    >                        call    l1_print_at_char_wrap
+626   6906 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+627   690A                                      ENDIF
+628   690A CD 50 6B                             call    PiWaitforCTSnACK    ; wait for Clear to send
+629   690D                                      IFDEF DEBUGMODE
+630   690D                                          MessageAt 15,16,PiWriting
+630   690D F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+630   6911 16 10       >                        ld      d,16
+630   6913 1E 78       >                        ld      e,15*8
+630   6915 21 69 6A    >                        ld      hl,PiWriting
+630   6918 CD 7F 6E    >                        call    l1_print_at_char_wrap
+630   691B E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+631   691F                                          MessageAt 0,16,PiClearMode
+631   691F F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+631   6923 16 10       >                        ld      d,16
+631   6925 1E 00       >                        ld      e,0*8
+631   6927 21 5B 6A    >                        ld      hl,PiClearMode
+631   692A CD 7F 6E    >                        call    l1_print_at_char_wrap
+631   692D E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+632   6931 3A A8 5E                                 ld      a,(Var_BYTE)
+633   6934                                          PrintHexARegAt 25,19
+633   6934 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+633   6938 16 13       >                        ld      d,19
+633   693A 1E C8       >                        ld      e,25*8
+633   693C CD 09 6E    >                        call    l1_print_u8_hex_at_char
+633   693F E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+634   6943                                      ENDIF
+635   6943 7A                                   ld      a,d                 ; build up port values and send
+636   6944                                      IFDEF DEBUGMODE
+637   6944 3A A8 5E                                 ld      a,(Var_BYTE)    ; DEBUG
+638   6947 57                                       ld      d,a
+639   6948                                      ENDIF
+640   6948 E6 F0                                and     %11110000           ; we don't swap here and let the pi
+641   694A ED 92 98                             nextreg 152,a               ; handle that
+642   694D 7A                                   ld      a,d                 ; .
+643   694E E6 0F                                and     %00001111           ; .
+644   6950 ED 92 99                             nextreg 153,a               ; .
+645   6953                                      PiSetDSR                    ; Data Set is Ready
+645   6953 ED 91 9B 01 >                        nextreg 155,1           ; Set DSR high andy anything else writable low
+646   6957                                      IFDEF DEBUGMODE
+647   6957                                          MessageAt 0,17,PiWaitACK
+647   6957 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+647   695B 16 11       >                        ld      d,17
+647   695D 1E 00       >                        ld      e,0*8
+647   695F 21 A1 6A    >                        ld      hl,PiWaitACK
+647   6962 CD 7F 6E    >                        call    l1_print_at_char_wrap
+647   6965 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+648   6969                                          MessageAt 15,16,PiClearMode
+648   6969 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+648   696D 16 10       >                        ld      d,16
+648   696F 1E 78       >                        ld      e,15*8
+648   6971 21 5B 6A    >                        ld      hl,PiClearMode
+648   6974 CD 7F 6E    >                        call    l1_print_at_char_wrap
+648   6977 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+649   697B                                      ENDIF
+650   697B CD 2A 6B                             call    PiWaitforACK        ; Poll for Ackowledge
+651   697E                                      IFDEF DEBUGMODE
+652   697E                                          MessageAt 0,17,PiClearMode
+652   697E F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+652   6982 16 11       >                        ld      d,17
+652   6984 1E 00       >                        ld      e,0*8
+652   6986 21 5B 6A    >                        ld      hl,PiClearMode
+652   6989 CD 7F 6E    >                        call    l1_print_at_char_wrap
+652   698C E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+653   6990                                          MessageAt 15,16,PiClearMode
+653   6990 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+653   6994 16 10       >                        ld      d,16
+653   6996 1E 78       >                        ld      e,15*8
+653   6998 21 5B 6A    >                        ld      hl,PiClearMode
+653   699B CD 7F 6E    >                        call    l1_print_at_char_wrap
+653   699E E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+654   69A2                                      ENDIF
+655   69A2                                      PiSetnDSRnCTSnACK           ; clear DSR
+655   69A2 ED 91 9B 00 >                        nextreg 155,0
+656   69A6 C9                                   ret
+657   69A7              ;--------------------------------------------------------------------------------------
+658   69A7              ; result in a, affects af, hl, de
+659   69A7 CD 47 68     PiReadByte:             call    PiSetReadMode       ; read mode
+660   69AA                                      PiSetnDSRCTSnACK            ; CTS and nACK (DSR is write only so won't matter)
+660   69AA ED 91 9B 02 >                        nextreg 155,2
+661   69AE                                      IFDEF DEBUGMODE
+662   69AE                                          MessageAt 0,16,PiWaitDSR
+662   69AE F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+662   69B2 16 10       >                        ld      d,16
+662   69B4 1E 00       >                        ld      e,0*8
+662   69B6 21 93 6A    >                        ld      hl,PiWaitDSR
+662   69B9 CD 7F 6E    >                        call    l1_print_at_char_wrap
+662   69BC E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+663   69C0                                          MessageAt 15,16,PiClearMode
+663   69C0 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+663   69C4 16 10       >                        ld      d,16
+663   69C6 1E 78       >                        ld      e,15*8
+663   69C8 21 5B 6A    >                        ld      hl,PiClearMode
+663   69CB CD 7F 6E    >                        call    l1_print_at_char_wrap
+663   69CE E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+664   69D2                                      ENDIF
+665   69D2 CD 65 6B                             call    PiWaitforDSR        ; Wait for data to be ready
+666   69D5                                      IFDEF DEBUGMODE
+667   69D5                                          MessageAt 15,16,PiReading
+667   69D5 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+667   69D9 16 10       >                        ld      d,16
+667   69DB 1E 78       >                        ld      e,15*8
+667   69DD 21 77 6A    >                        ld      hl,PiReading
+667   69E0 CD 7F 6E    >                        call    l1_print_at_char_wrap
+667   69E3 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+668   69E7                                      ENDIF
+669   69E7                                      GetNextReg  152             ; Read data and re-assemble byte
+669   69E7 01 3B 24    >            ld bc,$243B
+669   69EA 3E 98       >            ld a,152
+669   69EC ED 79       >            out (c),a
+669   69EE 04          >            inc b
+669   69EF ED 78       >            in a,(c)
+670   69F1 E6 F0                                and     %11110000           ; it will be pre swapnib on the pi side
+671   69F3 6F                                   ld      l,a                 ; so we don't have to here
+672   69F4                                      GetNextReg  153             ; .
+672   69F4 01 3B 24    >            ld bc,$243B
+672   69F7 3E 99       >            ld a,153
+672   69F9 ED 79       >            out (c),a
+672   69FB 04          >            inc b
+672   69FC ED 78       >            in a,(c)
+673   69FE E6 0F                                and     %00001111           ; .
+674   6A00 B5                                   or      l                   ; .
+675   6A01                                      IFDEF DEBUGMODE
+676   6A01 32 A8 5E                                 ld      (Var_BYTE),a
+677   6A04                                      ENDIF
+678   6A04                                      PiSetnCTSACK                ; not clear to send, ACK set
+678   6A04 ED 91 9B 04 >                        nextreg 155,4           ; Set ACK high andy anything else writable low
+679   6A08                                      IFDEF DEBUGMODE
+680   6A08 3A A8 5E                                 ld      a,(Var_BYTE)
+681   6A0B                                          PrintHexARegAt 25,19
+681   6A0B F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+681   6A0F 16 13       >                        ld      d,19
+681   6A11 1E C8       >                        ld      e,25*8
+681   6A13 CD 09 6E    >                        call    l1_print_u8_hex_at_char
+681   6A16 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+682   6A1A 3A A8 5E                                 ld      a,(Var_BYTE)
+683   6A1D                                          MessageAt 15,16,PiClearMode
+683   6A1D F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+683   6A21 16 10       >                        ld      d,16
+683   6A23 1E 78       >                        ld      e,15*8
+683   6A25 21 5B 6A    >                        ld      hl,PiClearMode
+683   6A28 CD 7F 6E    >                        call    l1_print_at_char_wrap
+683   6A2B E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+684   6A2F                                      ENDIF
+685   6A2F C9                                   ret
+686   6A30              ;--------------------------------------------------------------------------------------
+687   6A30              ; hl = target, de = length
+688   6A30 D9           PiReadBlock:            exx                         ; preserve hl and de
+689   6A31 CD A7 69                             call    PiReadByte          ; read data
+690   6A34 D9                                   exx                         ; recover hl and de
+691   6A35 77                                   ld      (hl),a              ; of course exx does not affect af so we can do this
+692   6A36 23                                   inc     hl                  ; next memory addr
+693   6A37 1B                                   dec     de                  ; a byte done
+694   6A38 7A                                   ld      a,d                 ; have we reached the last byte
+695   6A39 B3                                   or      e                   ; .
+696   6A3A C2 30 6A                             jp      nz,PiReadBlock      ; if no loop
+697   6A3D C9                                   ret
+698   6A3E              ;--------------------------------------------------------------------------------------
+699   6A3E              ; Diag messages
+700   6A3E 49 6E 20 57  PiInWriteMode:          DB 'In Write  Mode',0
+700   6A42 72 69 74 65
+700   6A46 20 20 4D 6F
+700   6A4A 64 65 00
+701   6A4D 49 6E 20 52  PiInReadMode:           DB 'In Read Mode ',0
+701   6A51 65 61 64 20
+701   6A55 4D 6F 64 65
+701   6A59 20 00
+702   6A5B 2E 2E 2E 2E  PiClearMode:            DB '.............',0
+702   6A5F 2E 2E 2E 2E
+702   6A63 2E 2E 2E 2E
+702   6A67 2E 00
+703   6A69 57 72 69 74  PiWriting               DB 'Writing      ',0
+703   6A6D 69 6E 67 20
+703   6A71 20 20 20 20
+703   6A75 20 00
+704   6A77 52 65 61 64  PiReading               DB 'Reading      ',0
+704   6A7B 69 6E 67 20
+704   6A7F 20 20 20 20
+704   6A83 20 00
+705   6A85 57 61 69 74  PiWaitCTS:              DB 'Waiting CTS  ',0
+705   6A89 69 6E 67 20
+705   6A8D 43 54 53 20
+705   6A91 20 00
+706   6A93 57 61 69 74  PiWaitDSR:              DB 'Waiting DSR  ',0
+706   6A97 69 6E 67 20
+706   6A9B 44 53 52 20
+706   6A9F 20 00
+707   6AA1 57 61 69 74  PiWaitACK:              DB 'Waiting ACK  ',0
+707   6AA5 69 6E 67 20
+707   6AA9 41 43 4B 20
+707   6AAD 20 00
+708   6AAF              ;--------------------------------------------------------------------------------------
+709   6AAF              ; hl = word to write
+710   6AAF 55           PiWriteWord:            ld      d,l
+711   6AB0 E5                                   push    hl
+712   6AB1 CD C9 68                             call    PiWriteByte
+713   6AB4 E1                                   pop     hl
+714   6AB5 54                                   ld      d,h
+715   6AB6 CD C9 68                             call    PiWriteByte
+716   6AB9 C9                                   ret
+717   6ABA              ;--------------------------------------------------------------------------------------
+718   6ABA              ; de = word read - low high sequence
+719   6ABA CD A7 69     PiReadWord:             call    PiReadByte
+720   6ABD 5F                                   ld      e,a
+721   6ABE CD A7 69                             call    PiReadByte
+722   6AC1 57                                   ld      d,a
+723   6AC2
+724   6AC2              ; hl = address of string to write, bc  = length
+725   6AC2 56           PiWriteLongDataBlock:   ld      d,(hl)              ; assume that if d = 0 then we are writing 256 bytes
+726   6AC3 C5 E5                                push    bc,,hl
+727   6AC5 CD C9 68                             call    PiWriteByte
+728   6AC8 E1 C1                                pop     bc,,hl
+729   6ACA 23                                   inc     hl
+730   6ACB 0B                                   dec     bc
+731   6ACC 78                                   ld      a,b
+732   6ACD B1                                   or      c
+733   6ACE C2 C2 6A                             jp      nz,PiWriteLongDataBlock ; if d has not hit zero then loop
+734   6AD1 C9                                   ret
+735   6AD2              ; hl = address of string to write, bc  = length
+736   6AD2 56           PiTestLongDataBlock:    ld      d,(hl)              ; assume that if d = 0 then we are writing 256 bytes
+737   6AD3 C5 E5                                push    bc,,hl
+738   6AD5 00                                   nop
+739   6AD6 E1 C1                                pop     bc,,hl
+740   6AD8 23                                   inc     hl
+741   6AD9 0B                                   dec     bc
+742   6ADA 78                                   ld      a,b
+743   6ADB B1                                   or      c
+744   6ADC C2 D2 6A                             jp      nz,PiTestLongDataBlock ; if d has not hit zero then loop
+745   6ADF C9                                   ret
+746   6AE0              ; hl = address of string to write, b = length
+747   6AE0 C5           PiWriteDataBlock:       push    bc
+748   6AE1 56                                   ld      d,(hl)              ; assume that if d = 0 then we are writing 256 bytes
+749   6AE2                                      IFDEF DEBUGMODE
+750   6AE2 DD E5                                    push ix
+751   6AE4 F5                                       push af
+752   6AE5 7A                                       ld  a,d
+753   6AE6 DD 77 00                                 ld (ix+0),a
+754   6AE9                                          MessageAt 20,5,StringMessage
+754   6AE9 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+754   6AED 16 05       >                        ld      d,5
+754   6AEF 1E A0       >                        ld      e,20*8
+754   6AF1 21 B7 67    >                        ld      hl,StringMessage
+754   6AF4 CD 7F 6E    >                        call    l1_print_at_char_wrap
+754   6AF7 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+755   6AFB F1                                       pop  af
+756   6AFC                                      ENDIF
+757   6AFC CD C9 68                             call    PiWriteByte
+758   6AFF 23                                   inc     hl
+759   6B00                                      IFDEF DEBUGMODE
+760   6B00 DD E1                                    pop  ix
+761   6B02 DD 23                                    inc  ix
+762   6B04                                      ENDIF
+763   6B04 C1                                   pop     bc
+764   6B05 10 D9                                djnz    PiWriteDataBlock ; if d has not hit zero then loop
+765   6B07 C9                                   ret
+766   6B08              ; hl = address of string to write, b = length, if e = 0 then send terminating /0
+767   6B08              ; Max string length 256 characters
+768   6B08              PiWriteString:          IFDEF DEBUGMODE
+769   6B08 CD F7 67                                 call    ClearMessageArea
+770   6B0B DD 21 B7 67                              ld      ix,StringMessage
+771   6B0F                                      ENDIF
+772   6B0F CD E0 6A                             call    PiWriteDataBlock
+773   6B12                                      ZeroA                       ; if e is zero then send a /0 to finish
+773   6B12 AF          >                        xor a
+774   6B13 B3                                   or      e                   ; .
+775   6B14 C0                                   ret     nz                  ; this is done if receiving end is expecting variable string length
+776   6B15 57                                   ld      d,a                 ; d is data to write
+777   6B16 CD C9 68                             call    PiWriteByte         ; a will stil be /0
+778   6B19 C9                                   ret
+779   6B1A              ; hl = address to write to, d = Limit, if e = 0 then expecting terminating /0 (i.e. variable length) else d = fixed string length
+780   6B1A D5 E5        PiReadString:           push    de,,hl              ; Recived
+781   6B1C CD A7 69                             call    PiReadByte
+782   6B1F E1                                   pop     hl
+783   6B20 77                                   ld      (hl),a
+784   6B21 23                                   inc     hl
+785   6B22 D1                                   pop     de
+786   6B23 15                                   dec     d
+787   6B24 C8                                   ret     z                   ; d provides a hard limit or fixed string length depending on e
+788   6B25 B3                                   or      e                   ; if the byte read the a is 0 and e was zero then this will be zero
+789   6B26 C2 1A 6B                             jp      nz,PiReadString
+790   6B29 C9                                   ret
+791   6B2A
+792   6B2A              PiWaitforACK:           GetNextReg  155             ; read status until bit 2 (ACK) is set
+792   6B2A 01 3B 24    >            ld bc,$243B
+792   6B2D 3E 9B       >            ld a,155
+792   6B2F ED 79       >            out (c),a
+792   6B31 04          >            inc b
+792   6B32 ED 78       >            in a,(c)
+793   6B34 CD 0B 68                             call    PrintPortBinary
+794   6B37 E6 04                                and %00000100               ;
+795   6B39 CA 2A 6B                             jp  z,PiWaitforACK          ; if not then spin waiting
+796   6B3C C9                                   ret
+797   6B3D
+798   6B3D              PiWaitforCTS:           GetNextReg  155             ; read status until bit 1 (CTS) is set
+798   6B3D 01 3B 24    >            ld bc,$243B
+798   6B40 3E 9B       >            ld a,155
+798   6B42 ED 79       >            out (c),a
+798   6B44 04          >            inc b
+798   6B45 ED 78       >            in a,(c)
+799   6B47                                      IFDEF DEBUGMODE
+800   6B47 CD 0B 68                                 call    PrintPortBinary
+801   6B4A                                      ENDIF
+802   6B4A E6 02                                and %00000010               ;
+803   6B4C CA 3D 6B                             jp  z,PiWaitforCTS          ; if not then spin waiting
+804   6B4F C9                                   ret
+805   6B50              PiWaitforCTSnACK:       GetNextReg  155             ; read status for ACK low and CTS High
+805   6B50 01 3B 24    >            ld bc,$243B
+805   6B53 3E 9B       >            ld a,155
+805   6B55 ED 79       >            out (c),a
+805   6B57 04          >            inc b
+805   6B58 ED 78       >            in a,(c)
+806   6B5A                                      IFDEF DEBUGMODE
+807   6B5A CD 0B 68                                 call    PrintPortBinary
+808   6B5D                                      ENDIF
+809   6B5D E6 06                                and %00000110               ; just want ACK and CTS bits
+810   6B5F FE 02                                cp  %00000010               ; if CTS is set and ACK is clear
+811   6B61 C2 50 6B                             jp  nz,PiWaitforCTSnACK     ; reg value is just CTS then we are good
+812   6B64 C9                                   ret
+813   6B65
+814   6B65              PiWaitforDSR:           GetNextReg  155             ; read status until bit 2 (DSR) is set
+814   6B65 01 3B 24    >            ld bc,$243B
+814   6B68 3E 9B       >            ld a,155
+814   6B6A ED 79       >            out (c),a
+814   6B6C 04          >            inc b
+814   6B6D ED 78       >            in a,(c)
+815   6B6F                                      IFDEF DEBUGMODE
+816   6B6F CD 0B 68                                 call    PrintPortBinary
+817   6B72                                      ENDIF
+818   6B72 E6 01                                and %00000001               ;
+819   6B74 CA 65 6B                             jp  z,PiWaitforDSR          ; if not then spin waiting
+820   6B77 C9                                   ret
+821   6B78
+822   6B78
+823   6B78              SetPiDesycMode:
+824   6B78
+825   6B78              PIDescyncReceived:
+826   6B78
+827   6B78
+828   6B78              SendAddObject:
+829   6B78
+830   6B78
+831   6B78                                      INCLUDE	"../../Hardware/memfill_dma.asm"
 # file opened: ../../Hardware/memfill_dma.asm
-  1+  62DD
-  2+  62DD 00           memfillvalue		DB 0
-  3+  62DE 83 C3 C7 CB  memfill        		DB DMA_DISABLE,  DMA_RESET, DMA_RESET_PORT_A_TIMING, DMA_RESET_PORT_B_TIMING ,DMA_WRO_BLOCK_PORTA_A2B_XFR
-  3+  62E2 7D
-  4+  62E3 DD 62        memfill_astrt  		DW memfillvalue
-  5+  62E5 00 40        memfill_length 		DB $00,$40
-  6+  62E7 24 10 AD     					DB DMA_WR1_P1FIXED_MEMORY ,DMA_WR2_P2INC_MEMORY ,DMA_WR4_CONT_MODE
-  7+  62EA 00 00        memfill_bstrt  		DB $00,$00
-  8+  62EC 82 CF B3 87  					DB DMA_STOP_AT_END, DMA_LOAD, DMA_FORCE_READY, DMA_ENABLE
-  9+  62F0              memfill_cmd_len	  	EQU $ - memfill
- 10+  62F0
- 11+  62F0              memfill_dma:
- 12+  62F0              ; "memfill_dma, hl = address to fill, a = value, de = length"
- 13+  62F0              .set_fill_value:
- 14+  62F0 32 DD 62     	ld 		(memfillvalue),a
- 15+  62F3              .set_target:
- 16+  62F3 22 EA 62     	ld		(memfill_bstrt),hl
- 17+  62F6              .set_length:
- 18+  62F6 ED 53 E5 62  	ld		(memfill_length),de
- 19+  62FA              .write_dma:
- 20+  62FA 21 DE 62     	ld 		hl, memfill
- 21+  62FD 06 12        	ld 		b, memfill_cmd_len
- 22+  62FF 0E 6B        	ld		c,IO_DATAGEAR_DMA_PORT
- 23+  6301 ED B3        	otir
- 24+  6303 C9           	ret
- 25+  6304
+  1+  6B78
+  2+  6B78 00           memfillvalue		DB 0
+  3+  6B79 83 C3 C7 CB  memfill        		DB DMA_DISABLE,  DMA_RESET, DMA_RESET_PORT_A_TIMING, DMA_RESET_PORT_B_TIMING ,DMA_WRO_BLOCK_PORTA_A2B_XFR
+  3+  6B7D 7D
+  4+  6B7E 78 6B        memfill_astrt  		DW memfillvalue
+  5+  6B80 00 40        memfill_length 		DB $00,$40
+  6+  6B82 24 10 AD     					DB DMA_WR1_P1FIXED_MEMORY ,DMA_WR2_P2INC_MEMORY ,DMA_WR4_CONT_MODE
+  7+  6B85 00 00        memfill_bstrt  		DB $00,$00
+  8+  6B87 82 CF B3 87  					DB DMA_STOP_AT_END, DMA_LOAD, DMA_FORCE_READY, DMA_ENABLE
+  9+  6B8B              memfill_cmd_len	  	EQU $ - memfill
+ 10+  6B8B
+ 11+  6B8B              memfill_dma:
+ 12+  6B8B              ; "memfill_dma, hl = address to fill, a = value, de = length"
+ 13+  6B8B              .set_fill_value:
+ 14+  6B8B 32 78 6B     	ld 		(memfillvalue),a
+ 15+  6B8E              .set_target:
+ 16+  6B8E 22 85 6B     	ld		(memfill_bstrt),hl
+ 17+  6B91              .set_length:
+ 18+  6B91 ED 53 80 6B  	ld		(memfill_length),de
+ 19+  6B95              .write_dma:
+ 20+  6B95 21 79 6B     	ld 		hl, memfill
+ 21+  6B98 06 12        	ld 		b, memfill_cmd_len
+ 22+  6B9A 0E 6B        	ld		c,IO_DATAGEAR_DMA_PORT
+ 23+  6B9C ED B3        	otir
+ 24+  6B9E C9           	ret
+ 25+  6B9F
 # file closed: ../../Hardware/memfill_dma.asm
-399   6304              ; Layer 1  ------------------------------------------------------------------------------------------------------------------------
-400   6304                  INCLUDE "../../Layer1Graphics/layer1_attr_utils.asm"
+832   6B9F              ; Layer 1  ------------------------------------------------------------------------------------------------------------------------
+833   6B9F                  INCLUDE "../../Layer1Graphics/layer1_attr_utils.asm"
 # file opened: ../../Layer1Graphics/layer1_attr_utils.asm
-  1+  6304
-  2+  6304 00 58        L1AttrRow00:            DW $5800                    ;Row 1    */
-  3+  6306 20 58        L1AttrRow01:            DW $5820                    ;Row 2    */
-  4+  6308 40 58        L1AttrRow02:            DW $5840                    ;Row 3    */
-  5+  630A 60 58        L1AttrRow03:            DW $5860                    ;Row 4    */
-  6+  630C 80 58        L1AttrRow04:            DW $5880                    ;Row 5    */
-  7+  630E A0 58        L1AttrRow05:            DW $58A0                    ;Row 6    */
-  8+  6310 C0 58        L1AttrRow06:            DW $58C0                    ;Row 7    */
-  9+  6312 E0 58        L1AttrRow07:            DW $58E0                    ;Row 8    */
- 10+  6314 00 59        L1AttrRow08:            DW $5900                    ;Row 9    */
- 11+  6316 20 59        L1AttrRow09:            DW $5920                    ;Row 10   */
- 12+  6318 40 59        L1AttrRow10:            DW $5940                    ;Row 11   */
- 13+  631A 60 59        L1AttrRow11:            DW $5960                    ;Row 12   */
- 14+  631C 80 59        L1AttrRow12:            DW $5980                    ;Row 13   */
- 15+  631E A0 59        L1AttrRow13:            DW $59A0                    ;Row 14   */
- 16+  6320 C0 59        L1AttrRow14:            DW $59C0                    ;Row 15   */
- 17+  6322 E0 59        L1AttrRow15:            DW $59E0                    ;Row 16   */
- 18+  6324 00 5A        L1AttrRow16:            DW $5A00                    ;Row 17   */
- 19+  6326 20 5A        L1AttrRow17:            DW $5A20                    ;Row 18   */
- 20+  6328 40 5A        L1AttrRow18:            DW $5A40                    ;Row 19   */
- 21+  632A 60 5A        L1AttrRow19:            DW $5A60                    ;Row 20   */
- 22+  632C 80 5A        L1AttrRow20:            DW $5A80                    ;Row 21   */
- 23+  632E A0 5A        L1AttrRow21:            DW $5AA0                    ;Row 22   */
- 24+  6330 C0 5A        L1AttrRow22:            DW $5AC0                    ;Row 23   */
- 25+  6332 E0 5A        L1AttrRow23:            DW $5AE0                    ;Row 23   */
- 26+  6334
- 27+  6334              ; "l2_hilight_row, d = row, e = colour"
- 28+  6334 21 04 63     l1_hilight_row:         ld      hl, L1AttrRow00
- 29+  6337 4B                                   ld      c,e
- 30+  6338 7A                                   ld      a,d
- 31+  6339 CB 27                                sla     a
- 32+  633B ED 31                                add     hl,a
- 33+  633D 7E                                   ld      a,(hl)
- 34+  633E 5F                                   ld      e,a
- 35+  633F 23                                   inc     hl
- 36+  6340 7E                                   ld      a,(hl)
- 37+  6341 57                                   ld      d,a
- 38+  6342 EB                                   ex      hl,de
- 39+  6343 79                                   ld		a,c
- 40+  6344 11 20 00                             ld		de, 32
- 41+  6347 CD F0 62                             call	memfill_dma
- 42+  634A C9                                   ret
- 43+  634B
+  1+  6B9F
+  2+  6B9F 00 58        L1AttrRow00:            DW $5800                    ;Row 1    */
+  3+  6BA1 20 58        L1AttrRow01:            DW $5820                    ;Row 2    */
+  4+  6BA3 40 58        L1AttrRow02:            DW $5840                    ;Row 3    */
+  5+  6BA5 60 58        L1AttrRow03:            DW $5860                    ;Row 4    */
+  6+  6BA7 80 58        L1AttrRow04:            DW $5880                    ;Row 5    */
+  7+  6BA9 A0 58        L1AttrRow05:            DW $58A0                    ;Row 6    */
+  8+  6BAB C0 58        L1AttrRow06:            DW $58C0                    ;Row 7    */
+  9+  6BAD E0 58        L1AttrRow07:            DW $58E0                    ;Row 8    */
+ 10+  6BAF 00 59        L1AttrRow08:            DW $5900                    ;Row 9    */
+ 11+  6BB1 20 59        L1AttrRow09:            DW $5920                    ;Row 10   */
+ 12+  6BB3 40 59        L1AttrRow10:            DW $5940                    ;Row 11   */
+ 13+  6BB5 60 59        L1AttrRow11:            DW $5960                    ;Row 12   */
+ 14+  6BB7 80 59        L1AttrRow12:            DW $5980                    ;Row 13   */
+ 15+  6BB9 A0 59        L1AttrRow13:            DW $59A0                    ;Row 14   */
+ 16+  6BBB C0 59        L1AttrRow14:            DW $59C0                    ;Row 15   */
+ 17+  6BBD E0 59        L1AttrRow15:            DW $59E0                    ;Row 16   */
+ 18+  6BBF 00 5A        L1AttrRow16:            DW $5A00                    ;Row 17   */
+ 19+  6BC1 20 5A        L1AttrRow17:            DW $5A20                    ;Row 18   */
+ 20+  6BC3 40 5A        L1AttrRow18:            DW $5A40                    ;Row 19   */
+ 21+  6BC5 60 5A        L1AttrRow19:            DW $5A60                    ;Row 20   */
+ 22+  6BC7 80 5A        L1AttrRow20:            DW $5A80                    ;Row 21   */
+ 23+  6BC9 A0 5A        L1AttrRow21:            DW $5AA0                    ;Row 22   */
+ 24+  6BCB C0 5A        L1AttrRow22:            DW $5AC0                    ;Row 23   */
+ 25+  6BCD E0 5A        L1AttrRow23:            DW $5AE0                    ;Row 23   */
+ 26+  6BCF
+ 27+  6BCF              ; "l2_hilight_row, d = row, e = colour"
+ 28+  6BCF 21 9F 6B     l1_hilight_row:         ld      hl, L1AttrRow00
+ 29+  6BD2 4B                                   ld      c,e
+ 30+  6BD3 7A                                   ld      a,d
+ 31+  6BD4 CB 27                                sla     a
+ 32+  6BD6 ED 31                                add     hl,a
+ 33+  6BD8 7E                                   ld      a,(hl)
+ 34+  6BD9 5F                                   ld      e,a
+ 35+  6BDA 23                                   inc     hl
+ 36+  6BDB 7E                                   ld      a,(hl)
+ 37+  6BDC 57                                   ld      d,a
+ 38+  6BDD EB                                   ex      hl,de
+ 39+  6BDE 79                                   ld		a,c
+ 40+  6BDF 11 20 00                             ld		de, 32
+ 41+  6BE2 CD 8B 6B                             call	memfill_dma
+ 42+  6BE5 C9                                   ret
+ 43+  6BE6
 # file closed: ../../Layer1Graphics/layer1_attr_utils.asm
-401   634B                  INCLUDE "../../Layer1Graphics/layer1_cls.asm"
+834   6BE6                  INCLUDE "../../Layer1Graphics/layer1_cls.asm"
 # file opened: ../../Layer1Graphics/layer1_cls.asm
-  1+  634B AF           l1_cls_top:             xor     a
-  2+  634C 21 00 40                             ld      hl, $4000
-  3+  634F 11 00 08                             ld      de, $0800
-  4+  6352 CD F0 62                             call    memfill_dma
-  5+  6355 C9                                   ret
-  6+  6356
-  7+  6356 AF           l1_cls_mid:             xor     a
-  8+  6357 21 00 48                             ld      hl, $4800
-  9+  635A 11 00 08                             ld      de, $0800
- 10+  635D CD F0 62                             call    memfill_dma
- 11+  6360 C9                                   ret
- 12+  6361
- 13+  6361 AF           l1_cls_bottom:          xor     a
- 14+  6362 21 00 50                             ld      hl, $5000
- 15+  6365 11 00 08                             ld      de, $0800
- 16+  6368 CD F0 62                             call    memfill_dma
- 17+  636B C9                                   ret
- 18+  636C
- 19+  636C              ; Designed specifically to clear a whole character aligned line
- 20+  636C 1E 00        l1_cls_line_d:          ld      e,0
- 21+  636E ED 94                                pixelad
- 22+  6370 11 00 01                             ld      de,32 * 8
- 23+  6373 AF                                   xor     a
- 24+  6374 CD F0 62                             call    memfill_dma
- 25+  6377 C9                                   ret
- 26+  6378
- 27+  6378              ; Designed specifically to clear a whole character aligned 2 lines line, used for say clearing hyperspace message
- 28+  6378 1E 00        l1_cls_2_lines_d:       ld      e,0
- 29+  637A ED 94                                pixelad
- 30+  637C 11 00 02                             ld      de,32 * 16
- 31+  637F AF                                   xor     a
- 32+  6380 CD F0 62                             call    memfill_dma
- 33+  6383 C9                                   ret
- 34+  6384
- 35+  6384 AF           l1_cls:                 xor		a
- 36+  6385 21 00 40     l1_cls_to_a:            ld		hl,	$4000
- 37+  6388 11 00 18                             ld		de, $1800
- 38+  638B CD F0 62                             call	memfill_dma
- 39+  638E C9                                   ret
- 40+  638F
- 41+  638F 21 00 58     l1_attr_cls_2DlinesA:   ld		hl,	$5800
- 42+  6392 1E 20                                ld      e,32
- 43+  6394 ED 30                                mul
- 44+  6396 19                                   add     hl,de
- 45+  6397 11 40 00                             ld		de, 32 * 2
- 46+  639A CD F0 62                             call	memfill_dma
- 47+  639D C9                                   ret
- 48+  639E
- 49+  639E
- 50+  639E AF           l1_attr_cls:            xor		a
- 51+  639F 21 00 58     l1_attr_cls_to_a:       ld		hl,	$5800
- 52+  63A2 11 00 03                             ld		de, $0300
- 53+  63A5 CD F0 62                             call	memfill_dma
- 54+  63A8 C9                                   ret
- 55+  63A9
- 56+  63A9 01 FE FE     l1_set_border:          ld	    bc, 0xFEFE
- 57+  63AC ED 79                                out		(c),a
- 58+  63AE C9                                   ret
+  1+  6BE6 AF           l1_cls_top:             xor     a
+  2+  6BE7 21 00 40                             ld      hl, $4000
+  3+  6BEA 11 00 08                             ld      de, $0800
+  4+  6BED CD 8B 6B                             call    memfill_dma
+  5+  6BF0 C9                                   ret
+  6+  6BF1
+  7+  6BF1 AF           l1_cls_mid:             xor     a
+  8+  6BF2 21 00 48                             ld      hl, $4800
+  9+  6BF5 11 00 08                             ld      de, $0800
+ 10+  6BF8 CD 8B 6B                             call    memfill_dma
+ 11+  6BFB C9                                   ret
+ 12+  6BFC
+ 13+  6BFC AF           l1_cls_bottom:          xor     a
+ 14+  6BFD 21 00 50                             ld      hl, $5000
+ 15+  6C00 11 00 08                             ld      de, $0800
+ 16+  6C03 CD 8B 6B                             call    memfill_dma
+ 17+  6C06 C9                                   ret
+ 18+  6C07
+ 19+  6C07              ; Designed specifically to clear a whole character aligned line
+ 20+  6C07 1E 00        l1_cls_line_d:          ld      e,0
+ 21+  6C09 ED 94                                pixelad
+ 22+  6C0B 11 00 01                             ld      de,32 * 8
+ 23+  6C0E AF                                   xor     a
+ 24+  6C0F CD 8B 6B                             call    memfill_dma
+ 25+  6C12 C9                                   ret
+ 26+  6C13
+ 27+  6C13              ; Designed specifically to clear a whole character aligned 2 lines line, used for say clearing hyperspace message
+ 28+  6C13 1E 00        l1_cls_2_lines_d:       ld      e,0
+ 29+  6C15 ED 94                                pixelad
+ 30+  6C17 11 00 02                             ld      de,32 * 16
+ 31+  6C1A AF                                   xor     a
+ 32+  6C1B CD 8B 6B                             call    memfill_dma
+ 33+  6C1E C9                                   ret
+ 34+  6C1F
+ 35+  6C1F AF           l1_cls:                 xor		a
+ 36+  6C20 21 00 40     l1_cls_to_a:            ld		hl,	$4000
+ 37+  6C23 11 00 18                             ld		de, $1800
+ 38+  6C26 CD 8B 6B                             call	memfill_dma
+ 39+  6C29 C9                                   ret
+ 40+  6C2A
+ 41+  6C2A 21 00 58     l1_attr_cls_2DlinesA:   ld		hl,	$5800
+ 42+  6C2D 1E 20                                ld      e,32
+ 43+  6C2F ED 30                                mul
+ 44+  6C31 19                                   add     hl,de
+ 45+  6C32 11 40 00                             ld		de, 32 * 2
+ 46+  6C35 CD 8B 6B                             call	memfill_dma
+ 47+  6C38 C9                                   ret
+ 48+  6C39
+ 49+  6C39
+ 50+  6C39 AF           l1_attr_cls:            xor		a
+ 51+  6C3A 21 00 58     l1_attr_cls_to_a:       ld		hl,	$5800
+ 52+  6C3D 11 00 03                             ld		de, $0300
+ 53+  6C40 CD 8B 6B                             call	memfill_dma
+ 54+  6C43 C9                                   ret
+ 55+  6C44
+ 56+  6C44 01 FE FE     l1_set_border:          ld	    bc, 0xFEFE
+ 57+  6C47 ED 79                                out		(c),a
+ 58+  6C49 C9                                   ret
 # file closed: ../../Layer1Graphics/layer1_cls.asm
-402   63AF                  INCLUDE "../../Layer1Graphics/layer1_print_at.asm"
+835   6C4A                  INCLUDE "../../Layer1Graphics/layer1_print_at.asm"
 # file opened: ../../Layer1Graphics/layer1_print_at.asm
-  1+  63AF              ; "l1 print char a = character, de = Ypixel Xpxiel rounded to char of print"
-  2+  63AF D5 E5        l1_print_char:          push	de,,hl
-  3+  63B1 ED 94                                pixelad								; hl = address of de
-  4+  63B3 E5                                   push	hl							; save hl for loop
-  5+  63B4 26 00                                ld		h,0
-  6+  63B6 6F                                   ld		l,a
-  7+  63B7 29                                   add		hl,hl						; * 2
-  8+  63B8 29                                   add		hl,hl						; * 4
-  9+  63B9 29                                   add		hl,hl						; * 8 to get byte address
- 10+  63BA ED 34 00 3C                          add		hl,charactersetaddr			; hl = address of rom char
- 11+  63BE EB                                   ex		de,hl						; save address into de
- 12+  63BF E1                                   pop		hl							; get back hl for loop
- 13+  63C0 06 08                                ld		b,8							; do 8 rows
- 14+  63C2 1A           .PrintCharLoop:         ld		a,(de)						; row byte
- 15+  63C3 13                                   inc		de							; next byte
- 16+  63C4 77                                   ld		(hl),a						; poke to screen
- 17+  63C5 ED 93                                pixeldn								; Down 1 row
- 18+  63C7 10 F9                                djnz	.PrintCharLoop				; loop for 8 bytes
- 19+  63C9 E1 D1                                pop		de,,hl					    ; restore hl
- 20+  63CB C9                                   ret
- 21+  63CC
- 22+  63CC              ; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
- 23+  63CC              ; now skips ascii code < 32 but moves on cursor by 1 char
- 24+  63CC              l1_print_at_char
- 24+  63CC CB 22           sla     d       ; Convert D from char to pixel
- 25+  63CE CB 22                                sla     d       ; by muliplying by 8
- 26+  63D0 CB 22                                sla     d       ;
- 27+  63D2 CB 23                                sla     e       ; Convert E from char to pixel
- 28+  63D4 CB 23                                sla     e
- 29+  63D6 CB 23                                sla     e
- 30+  63D8              l1_print_at:
- 31+  63D8 7E           .PrintLoop:             ld		a,(hl)
- 32+  63D9 FE 00                                cp		0
- 33+  63DB C8                                   ret		z
- 34+  63DC                                      CallIfAGTENusng " ", l1_print_char
- 34+  63DC FE 20       >                        cp      " "
- 34+  63DE D4 AF 63    >                        call	nc,l1_print_char
- 35+  63E1 23                                   inc		hl							; move 1 message character right
- 36+  63E2 7B                                   ld		a,e
- 37+  63E3 C6 08                                add		a,8
- 38+  63E5 5F                                   ld		e,a							; move 1 screen character right
- 39+  63E6 18 F0                                jr		.PrintLoop
- 40+  63E8                                                      DISPLAY "TODO: looks liek rogue popde"
- 41+  63E8              .Clearstackandfinish:   ;pop		de                      ; TODO LOOOKS TO BE A ROGUE POPDE
- 42+  63E8 C9                                   ret
- 43+  63E9
- 44+  63E9
- 45+  63E9
- 46+  63E9 30 30 00     HexU8Char:       DB "00",0
- 47+  63EC 30 30 30 30  HexU16Char:      DB "0000",0
- 47+  63F0 00
- 48+  63F1 2B 30 30 00  HexS8Char:       DB "+00",0
- 49+  63F5 2B 30 30 30  HexS16Char:      DB "+0000",0
- 49+  63F9 30 00
- 50+  63FB 2B 30 30 30  HexS24Char:      DB "+0000.00",0
- 50+  63FF 30 2E 30 30
- 50+  6403 00
- 51+  6404 2A 2A 00     HexU8NaN:        DB "**",0
- 52+  6407 30 30 30 30  Bin8Bit:         DB "00000000",0
- 52+  640B 30 30 30 30
- 52+  640F 00
- 53+  6410              ; prints + sign for bit 7 clear in a else - sign for bit 7 set, Load to buffer location in ix
- 54+  6410 CB 7F        l1_buffer_sign_at_ix:   bit     7,a
- 55+  6412 CA 1B 64                             jp      z,.PrintPlus
- 56+  6415 3E 2D        .PrintMinus:            ld      a,"-"
- 57+  6417 DD 77 00                             ld      (ix+0),a
- 58+  641A C9                                   ret
- 59+  641B 3E 2B        .PrintPlus:             ld      a,"+"
- 60+  641D DD 77 00                             ld      (ix+0),a
- 61+  6420 C9                                   ret
- 62+  6421
- 63+  6421 30 31 32 33  HexMapping:     DB "0123456789ABCDEF"
- 63+  6425 34 35 36 37
- 63+  6429 38 39 41 42
- 63+  642D 43 44 45 46
- 64+  6431              ; writes hex 8 bit to ix buffer position
- 65+  6431 C5 E5        l1_buffer_hex_8_at_ix:  push    bc,,hl
- 66+  6433 47                                   ld      b,a
- 67+  6434 ED 23                                swapnib
- 68+  6436 E6 0F                                and     $0F
- 69+  6438 21 21 64                             ld      hl,HexMapping
- 70+  643B ED 31                                add     hl,a
- 71+  643D 7E                                   ld      a,(hl)
- 72+  643E DD 77 00                             ld      (ix+0),a
- 73+  6441 21 21 64                             ld      hl,HexMapping
- 74+  6444 78                                   ld      a,b
- 75+  6445 E6 0F                                and     $0F
- 76+  6447 ED 31                                add     hl,a
- 77+  6449 7E                                   ld      a,(hl)
- 78+  644A DD 77 01                             ld      (ix+1),a
- 79+  644D E1 C1                                pop     bc,,hl
- 80+  644F C9                                   ret
- 81+  6450 F5 C5 D5 E5  l1_print_bin8_at_char:    push  af,,bc,,de,,hl
- 82+  6454 DD 21 07 64                            ld    ix,Bin8Bit
- 83+  6458 06 08                                  ld    b,8
- 84+  645A CB 27        .WriteLoop:               sla   a
- 85+  645C 38 05                                  jr    c,.ItsaOne
- 86+  645E 0E 30        .ItsAZero:                ld    c,'0'
- 87+  6460 C3 65 64                               jp    .DoWrite
- 88+  6463 0E 31        .ItsaOne:                 ld    c,'1'
- 89+  6465 DD 71 00     .DoWrite:                 ld    (ix+0),c
- 90+  6468 DD 23                                  inc   ix
- 91+  646A 10 EE                                  djnz  .WriteLoop
- 92+  646C E1 D1 C1 F1                            pop   af,,bc,,de,,hl
- 93+  6470 21 07 64                               ld    hl,Bin8Bit
- 94+  6473 CD CC 63                               call  l1_print_at_char
- 95+  6476 C9                                     ret
- 96+  6477
- 97+  6477 F5 C5 D5 E5  l1_print_bin8_lh_at_char: push  af,,bc,,de,,hl
- 98+  647B DD 21 07 64                            ld    ix,Bin8Bit
- 99+  647F 06 08                                  ld    b,8
-100+  6481 CB 3F        .WriteLoop:               srl   a
-101+  6483 38 05                                  jr    c,.ItsaOne
-102+  6485 0E 30        .ItsAZero:                ld    c,'0'
-103+  6487 C3 8C 64                               jp    .DoWrite
-104+  648A 0E 31        .ItsaOne:                 ld    c,'1'
-105+  648C DD 71 00     .DoWrite:                 ld    (ix+0),c
-106+  648F DD 23                                  inc   ix
-107+  6491 10 EE                                  djnz  .WriteLoop
-108+  6493 E1 D1 C1 F1                            pop   af,,bc,,de,,hl
-109+  6497 21 07 64                               ld    hl,Bin8Bit
-110+  649A CD CC 63                               call  l1_print_at_char
-111+  649D C9                                     ret
-112+  649E
-113+  649E              ; prints 16 bit lead sign hex value in HLA at char pos DE
-114+  649E F5           l1_print_s24_hex_at_char: push  af                      ; first off do sign
-115+  649F DD 21 FB 63                            ld    ix,HexS24Char
-116+  64A3 7C                                     ld    a,h
-117+  64A4 CD 10 64                               call  l1_buffer_sign_at_ix
-118+  64A7 F1                                     pop   af                      ; now do hl as an unsigned by clearing bit 7
-119+  64A8 DD 23                                  inc   ix                      ; move to actual digits
-120+  64AA F5                                     push  af
-121+  64AB 7C                                     ld    a,h
-122+  64AC CB BF                                  res   7,a                     ; clear sign bit regardless
-123+  64AE CD 31 64                               call  l1_buffer_hex_8_at_ix
-124+  64B1 DD 23                                  inc   ix
-125+  64B3 DD 23                                  inc   ix
-126+  64B5 7D                                     ld    a,l
-127+  64B6 CD 31 64                               call  l1_buffer_hex_8_at_ix
-128+  64B9 DD 23                                  inc   ix
-129+  64BB DD 23                                  inc   ix
-130+  64BD DD 23                                  inc   ix                      ; also skip decimal point
-131+  64BF F1                                     pop   af
-132+  64C0 CD 31 64                               call  l1_buffer_hex_8_at_ix
-133+  64C3 21 FB 63                               ld    hl,HexS24Char           ; by here de is still unaffected
-134+  64C6 CD CC 63                               call  l1_print_at_char
-135+  64C9 C9                                     ret
-136+  64CA              ; prints 16 bit lead sign hex value in HL at char pos DE
-137+  64CA DD 21 F5 63  l1_print_s16_hex_at_char: ld    ix,HexS16Char
-138+  64CE 7C                                     ld    a,h
-139+  64CF CD 10 64                               call  l1_buffer_sign_at_ix
-140+  64D2 DD 23                                  inc   ix                      ; move to actual digits
-141+  64D4 7C                                     ld    a,h
-142+  64D5 CB BF                                  res   7,a
-143+  64D7 CD 31 64                               call  l1_buffer_hex_8_at_ix
-144+  64DA DD 23                                  inc   ix
-145+  64DC DD 23                                  inc   ix
-146+  64DE 7D                                     ld    a,l
-147+  64DF CD 31 64                               call  l1_buffer_hex_8_at_ix
-148+  64E2 21 F5 63                               ld    hl,HexS16Char           ; by here de is still unaffected
-149+  64E5 CD CC 63                               call  l1_print_at_char
-150+  64E8 C9                                     ret
-151+  64E9              ; prints 16 bit unsigned hext value in HL at char pos DE
-152+  64E9 DD 21 EC 63  l1_print_u16_hex_at_char: ld    ix,HexU16Char
-153+  64ED 7C                                     ld    a,h
-154+  64EE CD 31 64                               call  l1_buffer_hex_8_at_ix
-155+  64F1 DD 23                                  inc   ix
-156+  64F3 DD 23                                  inc   ix
-157+  64F5 7D                                     ld    a,l
-158+  64F6 CD 31 64                               call  l1_buffer_hex_8_at_ix
-159+  64F9 21 EC 63                               ld    hl,HexU16Char           ; by here de is still unaffected
-160+  64FC CD CC 63                               call  l1_print_at_char
-161+  64FF C9                                     ret
-162+  6500              ; prints 8 bit signed hext value in a at char pos DE
-163+  6500 DD 21 F1 63  l1_print_s8_hex_at_char:  ld    ix,HexS8Char
-164+  6504 67                                     ld    h,a                     ; save a into h
-165+  6505 CD 10 64                               call  l1_buffer_sign_at_ix
-166+  6508 DD 23                                  inc   ix                      ; move to actual digits
-167+  650A 7C                                     ld    a,h                     ; get a back
-168+  650B CB BF                                  res   7,a                     ; clear sign bit regardless
-169+  650D CD 31 64                               call  l1_buffer_hex_8_at_ix
-170+  6510 21 F1 63                               ld    hl,HexS8Char           ; by here de is still unaffected
-171+  6513 CD CC 63                               call  l1_print_at_char
-172+  6516 C9                                     ret
-173+  6517              ; prints 8 bit 2s compliment value in a at char pos DE
-174+  6517 DD 21 F1 63  l1_print_82c_hex_at_char: ld    ix,HexS8Char
-175+  651B 67                                     ld    h,a                     ; save a into h
-176+  651C CD 10 64                               call  l1_buffer_sign_at_ix
-177+  651F DD 23                                  inc   ix                      ; move to actual digits
-178+  6521 7C                                     ld    a,h                     ; get a back
-179+  6522 CB 7F                                  bit   7,a
-180+  6524 CA 29 65                               jp    z,.NoNeg
-181+  6527 ED 44                                  neg
-182+  6529 CD 31 64     .NoNeg:                   call  l1_buffer_hex_8_at_ix
-183+  652C 21 F1 63                               ld    hl,HexS8Char           ; by here de is still unaffected
-184+  652F CD CC 63                               call  l1_print_at_char
-185+  6532 C9                                     ret
-186+  6533
-187+  6533              ; prints Lead Sign byte 8 bit signed hex value in hl at char pos DE, reuse HexS8Char buffer
-188+  6533 DD 21 F1 63  l1_print_s08_hex_at_char: ld    ix,HexS8Char
-189+  6537 CD 10 64                               call  l1_buffer_sign_at_ix    ; h holds sign bit
-190+  653A DD 23                                  inc   ix                      ; move to actual digits
-191+  653C 7D                                     ld    a,l                     ; l holds value
-192+  653D CD 31 64                               call  l1_buffer_hex_8_at_ix
-193+  6540 21 F1 63                               ld    hl,HexS8Char           ; by here de is still unaffected
-194+  6543 CD CC 63                               call  l1_print_at_char
-195+  6546 C9                                     ret
-196+  6547              ; prints 8 bit signed hext value in a at char pos DE
-197+  6547 DD 21 E9 63  l1_print_u8_hex_at_char:  ld    ix,HexU8Char
-198+  654B CD 31 64                               call  l1_buffer_hex_8_at_ix
-199+  654E 21 E9 63                               ld    hl,HexU8Char           ; by here de is still unaffected
-200+  6551 CD CC 63                               call  l1_print_at_char
-201+  6554 C9                                     ret
-202+  6555 2B 00        l1_PlusSign:              DB      "+",0
-203+  6557 2D 00        l1_MinusSign:             DB      "-",0
-204+  6559 20 00        l1_ClearSign:             DB      " ",0
-205+  655B              ; Displays sign byte in A at DE
-206+  655B FE 80        l1_printSignByte:         cp      $80
-207+  655D C2 73 65                               jp      nz,.DisplayPlus
-208+  6560 FE 01                                  cp      1
-209+  6562 C2 6C 65                               jp      nz,.DisplayMinus
-210+  6565 21 59 65     .DisplayClear:            ld      hl,l1_ClearSign
-211+  6568 CD CC 63                               call    l1_print_at_char
-212+  656B C9                                     ret
-213+  656C 21 57 65     .DisplayMinus             ld      hl,l1_MinusSign
-214+  656F CD CC 63                               call    l1_print_at_char
-215+  6572 C9                                     ret
-216+  6573 21 55 65     .DisplayPlus:             ld      hl,l1_PlusSign
-217+  6576 CD CC 63                               call    l1_print_at_char
-218+  6579 C9                                     ret
-219+  657A
-220+  657A 21 04 64     l1_print_u8_nan_at_char:  ld    hl,HexU8NaN
-221+  657D CD CC 63                               call  l1_print_at_char
-222+  6580 C9                                     ret
-223+  6581
-224+  6581
-225+  6581              ;l1_print_at_wrap:
-226+  6581              ;; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
-227+  6581              ;	ld      iyh,e
-228+  6581              ;.PrintLoop:
-229+  6581              ;	ld		a,(hl)
-230+  6581              ;	cp		0
-231+  6581              ;	ret		z
-232+  6581              ;.CountWordCharLen
-233+  6581              ;; Need to change to word wrap, so it will loop through string as before
-234+  6581              ;; but read up until a null or space, take the character count * 8 for pixels
-235+  6581              ;; if that is > 238 then force a premature line wrap
-236+  6581              ;
-237+  6581              ;
-238+  6581              ;    push    iy
-239+  6581              ;    call	l1_print_char
-240+  6581              ;    pop     iy
-241+  6581              ;	inc		hl							; move 1 message character right
-242+  6581              ;	ld		a,e
-243+  6581              ;    cp      238
-244+  6581              ;    jr      nc,.NextLine
-245+  6581              ;	add		a,8
-246+  6581              ;	ld		e,a							; move 1 screen character right
-247+  6581              ;	jr		.PrintLoop
-248+  6581              ;.Clearstackandfinish:
-249+  6581              ;	pop		de
-250+  6581              ;	ret
-251+  6581              ;.NextLine:
-252+  6581              ;    ld      a,(hl)
-253+  6581              ;    cp      " "
-254+  6581              ;    ld      e,iyh
-255+  6581              ;    ld      a,d
-256+  6581              ;    add     a,8
-257+  6581              ;    ld      d,a
-258+  6581              ;    jr		.PrintLoop
-259+  6581
-260+  6581              ; Counts next word at hl, uses e and forces a wrap if it would over flow puts value in c
-261+  6581 E5           L1LenWordAtHL:          push    hl
-262+  6582 D5                                   push    de
-263+  6583 7E           .CountLoop:             ld      a,(hl)
-264+  6584 FE 00                                cp      0
-265+  6586 28 0F                                jr      z,.CountDone
-266+  6588 FE 20                                cp      32
-267+  658A 28 0B                                jr      z,.CountDone
-268+  658C 7B                                   ld      a,e
-269+  658D C6 08                                add     a,8
-270+  658F 5F                                   ld      e,a
-271+  6590 FE EE                                cp      238
-272+  6592 30 07                                jr      nc,.TooLong
-273+  6594 23                                   inc     hl
-274+  6595 18 EC                                jr      .CountLoop
-275+  6597 D1           .CountDone:             pop     de
-276+  6598 E1                                   pop     hl
-277+  6599 AF                                   xor     a
-278+  659A C9                                   ret
-279+  659B D1           .TooLong                pop     de
-280+  659C E1                                   pop     hl
-281+  659D 3E FF                                ld      a,$FF
-282+  659F C9                                   ret
-283+  65A0
-284+  65A0 7E           L1PrintWordAtHL:        ld      a,(hl)
-285+  65A1 FE 00                                cp      0
-286+  65A3 C8                                   ret     z
-287+  65A4 FE 20                                cp      32
-288+  65A6 28 0F                                jr      z,.ItsASpace
-289+  65A8 FD E5                                push    iy
-290+  65AA CD AF 63                             call	l1_print_char
-291+  65AD FD E1                                pop     iy
-292+  65AF 7B                                   ld      a,e
-293+  65B0 C6 08                                add     a,8
-294+  65B2 5F                                   ld      e,a
-295+  65B3 23                                   inc     hl
-296+  65B4 C3 A0 65                             jp      L1PrintWordAtHL
-297+  65B7 23           .ItsASpace:             inc     hl      ;  Just a bodge for now
-298+  65B8 7B                                   ld      a,e
-299+  65B9 C6 08                                add     a,8
-300+  65BB 5F                                   ld      e,a
-301+  65BC C9                                   ret
-302+  65BD
-303+  65BD
-304+  65BD              ; print at based whole character positions DE=yx, HL = message Addr
-305+  65BD              ;
-306+  65BD CB 22        l1_print_at_char_wrap:  sla     d       ; Convert D from char to pixel
-307+  65BF CB 22                                sla     d       ; by muliplying by 8
-308+  65C1 CB 22                                sla     d       ;
-309+  65C3              ; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
-310+  65C3              ; Now has full word level wrapping
-311+  65C3 FD 63        l1_print_at_wrap:       ld      iyh,e
-312+  65C5 7E           .PrintLoop:             ld		a,(hl)
-313+  65C6 FE 00                                cp		0
-314+  65C8 C8                                   ret		z
-315+  65C9 CD 81 65     .CountWordCharLen:      call    L1LenWordAtHL
-316+  65CC FE FF                                cp      $FF
-317+  65CE 28 06                                jr      z,.WrapNextLine
-318+  65D0 CD A0 65     .NotTooLong:            call    L1PrintWordAtHL
-319+  65D3              ; Need to change to word wrap, so it will loop through string as before
-320+  65D3              ; but read up until a null or space, take the character count * 8 for pixels
-321+  65D3              ; if that is > 238 then force a premature line wrap
-322+  65D3 18 F0                                jr		.PrintLoop
-323+  65D5              .Clearstackandfinish:   ;op		de
-324+  65D5 C9                                   ret
-325+  65D6              .WrapNextLine:
-326+  65D6 FD 5C        .NextLine:              ld      e,iyh
-327+  65D8 7A                                   ld      a,d
-328+  65D9 C6 08                                add     a,8
-329+  65DB 57                                   ld      d,a
-330+  65DC 18 E7                                jr		.PrintLoop
-331+  65DE
-332+  65DE
+  1+  6C4A              ; "l1 print char a = character, de = Ypixel Xpxiel rounded to char of print"
+  2+  6C4A D5 E5        l1_print_char:          push	de,,hl
+  3+  6C4C ED 94                                pixelad								; hl = address of de
+  4+  6C4E E5                                   push	hl							; save hl for loop
+  5+  6C4F 26 00                                ld		h,0
+  6+  6C51 6F                                   ld		l,a
+  7+  6C52 29                                   add		hl,hl						; * 2
+  8+  6C53 29                                   add		hl,hl						; * 4
+  9+  6C54 29                                   add		hl,hl						; * 8 to get byte address
+ 10+  6C55 ED 34 00 3C                          add		hl,charactersetaddr			; hl = address of rom char
+ 11+  6C59 EB                                   ex		de,hl						; save address into de
+ 12+  6C5A E1                                   pop		hl							; get back hl for loop
+ 13+  6C5B 06 08                                ld		b,8							; do 8 rows
+ 14+  6C5D 1A           .PrintCharLoop:         ld		a,(de)						; row byte
+ 15+  6C5E 13                                   inc		de							; next byte
+ 16+  6C5F 77                                   ld		(hl),a						; poke to screen
+ 17+  6C60 ED 93                                pixeldn								; Down 1 row
+ 18+  6C62 10 F9                                djnz	.PrintCharLoop				; loop for 8 bytes
+ 19+  6C64 E1 D1                                pop		de,,hl					    ; restore hl
+ 20+  6C66 C9                                   ret
+ 21+  6C67
+ 22+  6C67              ; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
+ 23+  6C67              ; now skips ascii code < 32 but moves on cursor by 1 char
+ 24+  6C67              l1_print_at_char
+ 24+  6C67 CB 22           sla     d       ; Convert D from char to pixel
+ 25+  6C69 CB 22                                sla     d       ; by muliplying by 8
+ 26+  6C6B CB 22                                sla     d       ;
+ 27+  6C6D CB 23                                sla     e       ; Convert E from char to pixel
+ 28+  6C6F CB 23                                sla     e
+ 29+  6C71 CB 23                                sla     e
+ 30+  6C73              l1_print_at:
+ 31+  6C73 7E           .PrintLoop:             ld		a,(hl)
+ 32+  6C74 FE 00                                cp		0
+ 33+  6C76 C8                                   ret		z
+ 34+  6C77                                      CallIfAGTENusng " ", l1_print_char
+ 34+  6C77 FE 20       >                        cp      " "
+ 34+  6C79 D4 4A 6C    >                        call	nc,l1_print_char
+ 35+  6C7C 23                                   inc		hl							; move 1 message character right
+ 36+  6C7D 7B                                   ld		a,e
+ 37+  6C7E C6 08                                add		a,8
+ 38+  6C80 5F                                   ld		e,a							; move 1 screen character right
+ 39+  6C81 18 F0                                jr		.PrintLoop
+ 40+  6C83                                                      DISPLAY "TODO: looks liek rogue popde"
+ 41+  6C83              .Clearstackandfinish:   ;pop		de                      ; TODO LOOOKS TO BE A ROGUE POPDE
+ 42+  6C83 C9                                   ret
+ 43+  6C84
+ 44+  6C84
+ 45+  6C84
+ 46+  6C84 30 30 00     HexU8Char:       DB "00",0
+ 47+  6C87 30 30 30 30  HexU16Char:      DB "0000",0
+ 47+  6C8B 00
+ 48+  6C8C 2B 30 30 00  HexS8Char:       DB "+00",0
+ 49+  6C90 2B 30 30 30  HexS16Char:      DB "+0000",0
+ 49+  6C94 30 00
+ 50+  6C96 2B 30 30 30  HexS24Char:      DB "+0000.00",0
+ 50+  6C9A 30 2E 30 30
+ 50+  6C9E 00
+ 51+  6C9F 2A 2A 00     HexU8NaN:        DB "**",0
+ 52+  6CA2 30 30 30 30  Bin8Bit:         DB "00000000",0
+ 52+  6CA6 30 30 30 30
+ 52+  6CAA 00
+ 53+  6CAB              ; prints + sign for bit 7 clear in a else - sign for bit 7 set, Load to buffer location in ix
+ 54+  6CAB CB 7F        l1_buffer_sign_at_ix:   bit     7,a
+ 55+  6CAD CA B6 6C                             jp      z,.PrintPlus
+ 56+  6CB0 3E 2D        .PrintMinus:            ld      a,"-"
+ 57+  6CB2 DD 77 00                             ld      (ix+0),a
+ 58+  6CB5 C9                                   ret
+ 59+  6CB6 3E 2B        .PrintPlus:             ld      a,"+"
+ 60+  6CB8 DD 77 00                             ld      (ix+0),a
+ 61+  6CBB C9                                   ret
+ 62+  6CBC
+ 63+  6CBC 30 31 32 33  HexMapping:     DB "0123456789ABCDEF"
+ 63+  6CC0 34 35 36 37
+ 63+  6CC4 38 39 41 42
+ 63+  6CC8 43 44 45 46
+ 64+  6CCC              ; writes hex 8 bit to ix buffer position
+ 65+  6CCC C5 E5        l1_buffer_hex_8_at_ix:  push    bc,,hl
+ 66+  6CCE 47                                   ld      b,a
+ 67+  6CCF ED 23                                swapnib
+ 68+  6CD1 E6 0F                                and     $0F
+ 69+  6CD3 21 BC 6C                             ld      hl,HexMapping
+ 70+  6CD6 ED 31                                add     hl,a
+ 71+  6CD8 7E                                   ld      a,(hl)
+ 72+  6CD9 DD 77 00                             ld      (ix+0),a
+ 73+  6CDC 21 BC 6C                             ld      hl,HexMapping
+ 74+  6CDF 78                                   ld      a,b
+ 75+  6CE0 E6 0F                                and     $0F
+ 76+  6CE2 ED 31                                add     hl,a
+ 77+  6CE4 7E                                   ld      a,(hl)
+ 78+  6CE5 DD 77 01                             ld      (ix+1),a
+ 79+  6CE8 E1 C1                                pop     bc,,hl
+ 80+  6CEA C9                                   ret
+ 81+  6CEB F5 C5 D5 E5  l1_print_bin8_at_char:    push  af,,bc,,de,,hl
+ 82+  6CEF DD 21 A2 6C                            ld    ix,Bin8Bit
+ 83+  6CF3 06 08                                  ld    b,8
+ 84+  6CF5 CB 27        .WriteLoop:               sla   a
+ 85+  6CF7 38 05                                  jr    c,.ItsaOne
+ 86+  6CF9 0E 30        .ItsAZero:                ld    c,'0'
+ 87+  6CFB C3 00 6D                               jp    .DoWrite
+ 88+  6CFE 0E 31        .ItsaOne:                 ld    c,'1'
+ 89+  6D00 DD 71 00     .DoWrite:                 ld    (ix+0),c
+ 90+  6D03 DD 23                                  inc   ix
+ 91+  6D05 10 EE                                  djnz  .WriteLoop
+ 92+  6D07 E1 D1 C1 F1                            pop   af,,bc,,de,,hl
+ 93+  6D0B 21 A2 6C                               ld    hl,Bin8Bit
+ 94+  6D0E CD 67 6C                               call  l1_print_at_char
+ 95+  6D11 C9                                     ret
+ 96+  6D12
+ 97+  6D12 F5 C5 D5 E5  l1_print_bin8_r2l_at_char:push  af,,bc,,de,,hl
+ 98+  6D16 DD 21 A2 6C                            ld    ix,Bin8Bit
+ 99+  6D1A 06 08                                  ld    b,8
+100+  6D1C CB 3F        .WriteLoop:               srl   a
+101+  6D1E 38 05                                  jr    c,.ItsaOne
+102+  6D20 0E 30        .ItsAZero:                ld    c,'0'
+103+  6D22 C3 27 6D                               jp    .DoWrite
+104+  6D25 0E 31        .ItsaOne:                 ld    c,'1'
+105+  6D27 DD 71 00     .DoWrite:                 ld    (ix+0),c
+106+  6D2A DD 23                                  inc   ix
+107+  6D2C 10 EE                                  djnz  .WriteLoop
+108+  6D2E E1 D1 C1 F1                            pop   af,,bc,,de,,hl
+109+  6D32 21 A2 6C                               ld    hl,Bin8Bit
+110+  6D35 CD 67 6C                               call  l1_print_at_char
+111+  6D38 C9                                     ret
+112+  6D39
+113+  6D39 F5 C5 D5 E5  l1_print_bin8_l2r_at_char:push  af,,bc,,de,,hl
+114+  6D3D DD 21 A2 6C                            ld    ix,Bin8Bit
+115+  6D41 06 08                                  ld    b,8
+116+  6D43 CB 27        .WriteLoop:               sla   a
+117+  6D45 38 05                                  jr    c,.ItsaOne
+118+  6D47 0E 30        .ItsAZero:                ld    c,'0'
+119+  6D49 C3 4E 6D                               jp    .DoWrite
+120+  6D4C 0E 31        .ItsaOne:                 ld    c,'1'
+121+  6D4E DD 71 00     .DoWrite:                 ld    (ix+0),c
+122+  6D51 DD 23                                  inc   ix
+123+  6D53 10 EE                                  djnz  .WriteLoop
+124+  6D55 E1 D1 C1 F1                            pop   af,,bc,,de,,hl
+125+  6D59 21 A2 6C                               ld    hl,Bin8Bit
+126+  6D5C CD 67 6C                               call  l1_print_at_char
+127+  6D5F C9                                     ret
+128+  6D60
+129+  6D60              ; prints 16 bit lead sign hex value in HLA at char pos DE
+130+  6D60 F5           l1_print_s24_hex_at_char: push  af                      ; first off do sign
+131+  6D61 DD 21 96 6C                            ld    ix,HexS24Char
+132+  6D65 7C                                     ld    a,h
+133+  6D66 CD AB 6C                               call  l1_buffer_sign_at_ix
+134+  6D69 F1                                     pop   af                      ; now do hl as an unsigned by clearing bit 7
+135+  6D6A DD 23                                  inc   ix                      ; move to actual digits
+136+  6D6C F5                                     push  af
+137+  6D6D 7C                                     ld    a,h
+138+  6D6E CB BF                                  res   7,a                     ; clear sign bit regardless
+139+  6D70 CD CC 6C                               call  l1_buffer_hex_8_at_ix
+140+  6D73 DD 23                                  inc   ix
+141+  6D75 DD 23                                  inc   ix
+142+  6D77 7D                                     ld    a,l
+143+  6D78 CD CC 6C                               call  l1_buffer_hex_8_at_ix
+144+  6D7B DD 23                                  inc   ix
+145+  6D7D DD 23                                  inc   ix
+146+  6D7F DD 23                                  inc   ix                      ; also skip decimal point
+147+  6D81 F1                                     pop   af
+148+  6D82 CD CC 6C                               call  l1_buffer_hex_8_at_ix
+149+  6D85 21 96 6C                               ld    hl,HexS24Char           ; by here de is still unaffected
+150+  6D88 CD 67 6C                               call  l1_print_at_char
+151+  6D8B C9                                     ret
+152+  6D8C              ; prints 16 bit lead sign hex value in HL at char pos DE
+153+  6D8C DD 21 90 6C  l1_print_s16_hex_at_char: ld    ix,HexS16Char
+154+  6D90 7C                                     ld    a,h
+155+  6D91 CD AB 6C                               call  l1_buffer_sign_at_ix
+156+  6D94 DD 23                                  inc   ix                      ; move to actual digits
+157+  6D96 7C                                     ld    a,h
+158+  6D97 CB BF                                  res   7,a
+159+  6D99 CD CC 6C                               call  l1_buffer_hex_8_at_ix
+160+  6D9C DD 23                                  inc   ix
+161+  6D9E DD 23                                  inc   ix
+162+  6DA0 7D                                     ld    a,l
+163+  6DA1 CD CC 6C                               call  l1_buffer_hex_8_at_ix
+164+  6DA4 21 90 6C                               ld    hl,HexS16Char           ; by here de is still unaffected
+165+  6DA7 CD 67 6C                               call  l1_print_at_char
+166+  6DAA C9                                     ret
+167+  6DAB              ; prints 16 bit unsigned hext value in HL at char pos DE
+168+  6DAB DD 21 87 6C  l1_print_u16_hex_at_char: ld    ix,HexU16Char
+169+  6DAF 7C                                     ld    a,h
+170+  6DB0 CD CC 6C                               call  l1_buffer_hex_8_at_ix
+171+  6DB3 DD 23                                  inc   ix
+172+  6DB5 DD 23                                  inc   ix
+173+  6DB7 7D                                     ld    a,l
+174+  6DB8 CD CC 6C                               call  l1_buffer_hex_8_at_ix
+175+  6DBB 21 87 6C                               ld    hl,HexU16Char           ; by here de is still unaffected
+176+  6DBE CD 67 6C                               call  l1_print_at_char
+177+  6DC1 C9                                     ret
+178+  6DC2              ; prints 8 bit signed hext value in a at char pos DE
+179+  6DC2 DD 21 8C 6C  l1_print_s8_hex_at_char:  ld    ix,HexS8Char
+180+  6DC6 67                                     ld    h,a                     ; save a into h
+181+  6DC7 CD AB 6C                               call  l1_buffer_sign_at_ix
+182+  6DCA DD 23                                  inc   ix                      ; move to actual digits
+183+  6DCC 7C                                     ld    a,h                     ; get a back
+184+  6DCD CB BF                                  res   7,a                     ; clear sign bit regardless
+185+  6DCF CD CC 6C                               call  l1_buffer_hex_8_at_ix
+186+  6DD2 21 8C 6C                               ld    hl,HexS8Char           ; by here de is still unaffected
+187+  6DD5 CD 67 6C                               call  l1_print_at_char
+188+  6DD8 C9                                     ret
+189+  6DD9              ; prints 8 bit 2s compliment value in a at char pos DE
+190+  6DD9 DD 21 8C 6C  l1_print_82c_hex_at_char: ld    ix,HexS8Char
+191+  6DDD 67                                     ld    h,a                     ; save a into h
+192+  6DDE CD AB 6C                               call  l1_buffer_sign_at_ix
+193+  6DE1 DD 23                                  inc   ix                      ; move to actual digits
+194+  6DE3 7C                                     ld    a,h                     ; get a back
+195+  6DE4 CB 7F                                  bit   7,a
+196+  6DE6 CA EB 6D                               jp    z,.NoNeg
+197+  6DE9 ED 44                                  neg
+198+  6DEB CD CC 6C     .NoNeg:                   call  l1_buffer_hex_8_at_ix
+199+  6DEE 21 8C 6C                               ld    hl,HexS8Char           ; by here de is still unaffected
+200+  6DF1 CD 67 6C                               call  l1_print_at_char
+201+  6DF4 C9                                     ret
+202+  6DF5
+203+  6DF5              ; prints Lead Sign byte 8 bit signed hex value in hl at char pos DE, reuse HexS8Char buffer
+204+  6DF5 DD 21 8C 6C  l1_print_s08_hex_at_char: ld    ix,HexS8Char
+205+  6DF9 CD AB 6C                               call  l1_buffer_sign_at_ix    ; h holds sign bit
+206+  6DFC DD 23                                  inc   ix                      ; move to actual digits
+207+  6DFE 7D                                     ld    a,l                     ; l holds value
+208+  6DFF CD CC 6C                               call  l1_buffer_hex_8_at_ix
+209+  6E02 21 8C 6C                               ld    hl,HexS8Char           ; by here de is still unaffected
+210+  6E05 CD 67 6C                               call  l1_print_at_char
+211+  6E08 C9                                     ret
+212+  6E09              ; prints 8 bit signed hext value in a at char pos DE
+213+  6E09 DD 21 84 6C  l1_print_u8_hex_at_char:  ld    ix,HexU8Char
+214+  6E0D CD CC 6C                               call  l1_buffer_hex_8_at_ix
+215+  6E10 21 84 6C                               ld    hl,HexU8Char           ; by here de is still unaffected
+216+  6E13 CD 67 6C                               call  l1_print_at_char
+217+  6E16 C9                                     ret
+218+  6E17 2B 00        l1_PlusSign:              DB      "+",0
+219+  6E19 2D 00        l1_MinusSign:             DB      "-",0
+220+  6E1B 20 00        l1_ClearSign:             DB      " ",0
+221+  6E1D              ; Displays sign byte in A at DE
+222+  6E1D FE 80        l1_printSignByte:         cp      $80
+223+  6E1F C2 35 6E                               jp      nz,.DisplayPlus
+224+  6E22 FE 01                                  cp      1
+225+  6E24 C2 2E 6E                               jp      nz,.DisplayMinus
+226+  6E27 21 1B 6E     .DisplayClear:            ld      hl,l1_ClearSign
+227+  6E2A CD 67 6C                               call    l1_print_at_char
+228+  6E2D C9                                     ret
+229+  6E2E 21 19 6E     .DisplayMinus             ld      hl,l1_MinusSign
+230+  6E31 CD 67 6C                               call    l1_print_at_char
+231+  6E34 C9                                     ret
+232+  6E35 21 17 6E     .DisplayPlus:             ld      hl,l1_PlusSign
+233+  6E38 CD 67 6C                               call    l1_print_at_char
+234+  6E3B C9                                     ret
+235+  6E3C
+236+  6E3C 21 9F 6C     l1_print_u8_nan_at_char:  ld    hl,HexU8NaN
+237+  6E3F CD 67 6C                               call  l1_print_at_char
+238+  6E42 C9                                     ret
+239+  6E43
+240+  6E43
+241+  6E43              ;l1_print_at_wrap:
+242+  6E43              ;; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
+243+  6E43              ;	ld      iyh,e
+244+  6E43              ;.PrintLoop:
+245+  6E43              ;	ld		a,(hl)
+246+  6E43              ;	cp		0
+247+  6E43              ;	ret		z
+248+  6E43              ;.CountWordCharLen
+249+  6E43              ;; Need to change to word wrap, so it will loop through string as before
+250+  6E43              ;; but read up until a null or space, take the character count * 8 for pixels
+251+  6E43              ;; if that is > 238 then force a premature line wrap
+252+  6E43              ;
+253+  6E43              ;
+254+  6E43              ;    push    iy
+255+  6E43              ;    call	l1_print_char
+256+  6E43              ;    pop     iy
+257+  6E43              ;	inc		hl							; move 1 message character right
+258+  6E43              ;	ld		a,e
+259+  6E43              ;    cp      238
+260+  6E43              ;    jr      nc,.NextLine
+261+  6E43              ;	add		a,8
+262+  6E43              ;	ld		e,a							; move 1 screen character right
+263+  6E43              ;	jr		.PrintLoop
+264+  6E43              ;.Clearstackandfinish:
+265+  6E43              ;	pop		de
+266+  6E43              ;	ret
+267+  6E43              ;.NextLine:
+268+  6E43              ;    ld      a,(hl)
+269+  6E43              ;    cp      " "
+270+  6E43              ;    ld      e,iyh
+271+  6E43              ;    ld      a,d
+272+  6E43              ;    add     a,8
+273+  6E43              ;    ld      d,a
+274+  6E43              ;    jr		.PrintLoop
+275+  6E43
+276+  6E43              ; Counts next word at hl, uses e and forces a wrap if it would over flow puts value in c
+277+  6E43 E5           L1LenWordAtHL:          push    hl
+278+  6E44 D5                                   push    de
+279+  6E45 7E           .CountLoop:             ld      a,(hl)
+280+  6E46 FE 00                                cp      0
+281+  6E48 28 0F                                jr      z,.CountDone
+282+  6E4A FE 20                                cp      32
+283+  6E4C 28 0B                                jr      z,.CountDone
+284+  6E4E 7B                                   ld      a,e
+285+  6E4F C6 08                                add     a,8
+286+  6E51 5F                                   ld      e,a
+287+  6E52 FE EE                                cp      238
+288+  6E54 30 07                                jr      nc,.TooLong
+289+  6E56 23                                   inc     hl
+290+  6E57 18 EC                                jr      .CountLoop
+291+  6E59 D1           .CountDone:             pop     de
+292+  6E5A E1                                   pop     hl
+293+  6E5B AF                                   xor     a
+294+  6E5C C9                                   ret
+295+  6E5D D1           .TooLong                pop     de
+296+  6E5E E1                                   pop     hl
+297+  6E5F 3E FF                                ld      a,$FF
+298+  6E61 C9                                   ret
+299+  6E62
+300+  6E62 7E           L1PrintWordAtHL:        ld      a,(hl)
+301+  6E63 FE 00                                cp      0
+302+  6E65 C8                                   ret     z
+303+  6E66 FE 20                                cp      32
+304+  6E68 28 0F                                jr      z,.ItsASpace
+305+  6E6A FD E5                                push    iy
+306+  6E6C CD 4A 6C                             call	l1_print_char
+307+  6E6F FD E1                                pop     iy
+308+  6E71 7B                                   ld      a,e
+309+  6E72 C6 08                                add     a,8
+310+  6E74 5F                                   ld      e,a
+311+  6E75 23                                   inc     hl
+312+  6E76 C3 62 6E                             jp      L1PrintWordAtHL
+313+  6E79 23           .ItsASpace:             inc     hl      ;  Just a bodge for now
+314+  6E7A 7B                                   ld      a,e
+315+  6E7B C6 08                                add     a,8
+316+  6E7D 5F                                   ld      e,a
+317+  6E7E C9                                   ret
+318+  6E7F
+319+  6E7F
+320+  6E7F              ; print at based whole character positions DE=yx, HL = message Addr
+321+  6E7F              ;
+322+  6E7F CB 22        l1_print_at_char_wrap:  sla     d       ; Convert D from char to pixel
+323+  6E81 CB 22                                sla     d       ; by muliplying by 8
+324+  6E83 CB 22                                sla     d       ;
+325+  6E85              ; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
+326+  6E85              ; Now has full word level wrapping
+327+  6E85 FD 63        l1_print_at_wrap:       ld      iyh,e
+328+  6E87 7E           .PrintLoop:             ld		a,(hl)
+329+  6E88 FE 00                                cp		0
+330+  6E8A C8                                   ret		z
+331+  6E8B CD 43 6E     .CountWordCharLen:      call    L1LenWordAtHL
+332+  6E8E FE FF                                cp      $FF
+333+  6E90 28 06                                jr      z,.WrapNextLine
+334+  6E92 CD 62 6E     .NotTooLong:            call    L1PrintWordAtHL
+335+  6E95              ; Need to change to word wrap, so it will loop through string as before
+336+  6E95              ; but read up until a null or space, take the character count * 8 for pixels
+337+  6E95              ; if that is > 238 then force a premature line wrap
+338+  6E95 18 F0                                jr		.PrintLoop
+339+  6E97              .Clearstackandfinish:   ;op		de
+340+  6E97 C9                                   ret
+341+  6E98              .WrapNextLine:
+342+  6E98 FD 5C        .NextLine:              ld      e,iyh
+343+  6E9A 7A                                   ld      a,d
+344+  6E9B C6 08                                add     a,8
+345+  6E9D 57                                   ld      d,a
+346+  6E9E 18 E7                                jr		.PrintLoop
+347+  6EA0
+348+  6EA0
 # file closed: ../../Layer1Graphics/layer1_print_at.asm
-403   65DE
-404   65DE              ; Keyboard
-405   65DE FE FD FB F7  KeyAddrTab				DB	$FE, $FD, $FB, $F7, $EF, $DF, $BF, $7F
-405   65E2 EF DF BF 7F
-406   65E6
-407   65E6 21 DE 65     WaitForNoKey:           ld      hl,KeyAddrTab                   ; de = table of IO ports to read
-408   65E9 06 08                                ld		b,8                             ; 8 ports to ready
-409   65EB 7E           .PortReadLoop:          ld		a,(hl)							; Set up port to read as (hl)$FE
-410   65EC DB FE                                in		a,($FE)							; read port to a
-411   65EE E6 1F                                and     %00011111
-412   65F0 FE 1F                                cp      %00011111
-413   65F2 20 F2                                jr      nz ,WaitForNoKey
-414   65F4 23                                   inc		hl                              ; and ready for next read
-415   65F5 10 F4                                djnz    .PortReadLoop
-416   65F7 C9                                   ret
-417   65F8 57 61 69 74  WaitMsg:                DB "Waiting for Input",0
-417   65FC 69 6E 67 20
-417   6600 66 6F 72 20
-417   6604 49 6E 70 75
-417   6608 74 00
-418   660A 2E 2E 2E 2E  WaitClear:              DB ".................",0
-418   660E 2E 2E 2E 2E
-418   6612 2E 2E 2E 2E
-418   6616 2E 2E 2E 2E
-418   661A 2E 00
-419   661C F5 D5 C5 E5  WaitForAnyKey:          push    af,,de,,bc,,hl
-420   6620                                      IFDEF DEBUGMODE
-421   6620                                          MessageAt 10,20,WaitMsg
-421   6620 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-421   6624 16 14       >                        ld      d,20
-421   6626 1E 50       >                        ld      e,10*8
-421   6628 21 F8 65    >                        ld      hl,WaitMsg
-421   662B CD BD 65    >                        call    l1_print_at_char_wrap
-421   662E E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-422   6632                                      ENDIF
-423   6632 CD E6 65                             call    WaitForNoKey
-424   6635 21 DE 65     .waitKeyLoop:           ld		hl,KeyAddrTab                   ; de = table of IO ports to read
-425   6638 06 08                                ld		b,8                             ; 8 ports to ready
-426   663A 7E           .PortReadLoop:          ld		a,(hl)							; Set up port to read as (hl)$FE
-427   663B DB FE                                in		a,($FE)							; read port to a
-428   663D E6 1F                                and     %00011111
-429   663F FE 1F                                cp      %00011111
-430   6641 C2 4B 66                             jp      nz,.WaitComplete
-431   6644 C0                                   ret     nz
-432   6645 23                                   inc		hl                              ; and ready for next read
-433   6646 10 F2                                djnz    .PortReadLoop
-434   6648 C3 35 66                             jp      .waitKeyLoop
-435   664B E1 C1 D1 F1  .WaitComplete:          pop     af,,de,,bc,,hl
-436   664F                                      IFDEF DEBUGMODE
-437   664F                                          MessageAt 10,20,WaitClear
-437   664F F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
-437   6653 16 14       >                        ld      d,20
-437   6655 1E 50       >                        ld      e,10*8
-437   6657 21 0A 66    >                        ld      hl,WaitClear
-437   665A CD BD 65    >                        call    l1_print_at_char_wrap
-437   665D E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
-438   6661                                      ENDIF
-439   6661 C9                                   ret
-440   6662
-441   6662              MainNonBankedCodeEnd:
-442   6662
-443   6662
-444   6662                  SAVENEX OPEN "piiotest.nex", EliteNextStartup , TopOfStack
-445   6662                  SAVENEX CFG  0,0,0,1
-446   6662                  SAVENEX AUTO
-447   6662                  SAVENEX CLOSE
-448   6662                  DISPLAY "Main Non Banked Code End ", MainNonBankedCodeEnd , " Bytes free ", 0B000H - MainNonBankedCodeEnd
-449   6662                  ASSERT MainNonBankedCodeEnd < 0B000H, Program code leaks intot interrup vector table
-450   6662
+836   6EA0
+837   6EA0              ; Keyboard
+838   6EA0 FE FD FB F7  KeyAddrTab				DB	$FE, $FD, $FB, $F7, $EF, $DF, $BF, $7F
+838   6EA4 EF DF BF 7F
+839   6EA8
+840   6EA8 21 A0 6E     WaitForNoKey:           ld      hl,KeyAddrTab                   ; de = table of IO ports to read
+841   6EAB 06 08                                ld		b,8                             ; 8 ports to ready
+842   6EAD 7E           .PortReadLoop:          ld		a,(hl)							; Set up port to read as (hl)$FE
+843   6EAE DB FE                                in		a,($FE)							; read port to a
+844   6EB0 E6 1F                                and     %00011111
+845   6EB2 FE 1F                                cp      %00011111
+846   6EB4 20 F2                                jr      nz ,WaitForNoKey
+847   6EB6 23                                   inc		hl                              ; and ready for next read
+848   6EB7 10 F4                                djnz    .PortReadLoop
+849   6EB9 C9                                   ret
+850   6EBA 57 61 69 74  WaitMsg:                DB "Waiting for Input",0
+850   6EBE 69 6E 67 20
+850   6EC2 66 6F 72 20
+850   6EC6 49 6E 70 75
+850   6ECA 74 00
+851   6ECC 2E 2E 2E 2E  WaitClear:              DB ".................",0
+851   6ED0 2E 2E 2E 2E
+851   6ED4 2E 2E 2E 2E
+851   6ED8 2E 2E 2E 2E
+851   6EDC 2E 00
+852   6EDE F5 D5 C5 E5  WaitForAnyKey:          push    af,,de,,bc,,hl
+853   6EE2                                      IFDEF DEBUGMODE
+854   6EE2                                          MessageAt 10,20,WaitMsg
+854   6EE2 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+854   6EE6 16 14       >                        ld      d,20
+854   6EE8 1E 50       >                        ld      e,10*8
+854   6EEA 21 BA 6E    >                        ld      hl,WaitMsg
+854   6EED CD 7F 6E    >                        call    l1_print_at_char_wrap
+854   6EF0 E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+855   6EF4                                      ENDIF
+856   6EF4 CD A8 6E                             call    WaitForNoKey
+857   6EF7 21 A0 6E     .waitKeyLoop:           ld		hl,KeyAddrTab                   ; de = table of IO ports to read
+858   6EFA 06 08                                ld		b,8                             ; 8 ports to ready
+859   6EFC 7E           .PortReadLoop:          ld		a,(hl)							; Set up port to read as (hl)$FE
+860   6EFD DB FE                                in		a,($FE)							; read port to a
+861   6EFF E6 1F                                and     %00011111
+862   6F01 FE 1F                                cp      %00011111
+863   6F03 C2 0D 6F                             jp      nz,.WaitComplete
+864   6F06 C0                                   ret     nz
+865   6F07 23                                   inc		hl                              ; and ready for next read
+866   6F08 10 F2                                djnz    .PortReadLoop
+867   6F0A C3 F7 6E                             jp      .waitKeyLoop
+868   6F0D E1 C1 D1 F1  .WaitComplete:          pop     af,,de,,bc,,hl
+869   6F11                                      IFDEF DEBUGMODE
+870   6F11                                          MessageAt 10,20,WaitClear
+870   6F11 F5 C5 D5 E5 >                        push    af,,bc,,de,,hl
+870   6F15 16 14       >                        ld      d,20
+870   6F17 1E 50       >                        ld      e,10*8
+870   6F19 21 CC 6E    >                        ld      hl,WaitClear
+870   6F1C CD 7F 6E    >                        call    l1_print_at_char_wrap
+870   6F1F E1 D1 C1 F1 >                        pop     af,,bc,,de,,hl
+871   6F23                                      ENDIF
+872   6F23 C9                                   ret
+873   6F24
+874   6F24              MainNonBankedCodeEnd:
+875   6F24
+876   6F24
+877   6F24                  SAVENEX OPEN "piiotest.nex", EliteNextStartup , TopOfStack
+878   6F24                  SAVENEX CFG  0,0,0,1
+879   6F24                  SAVENEX AUTO
+880   6F24                  SAVENEX CLOSE
+881   6F24                  DISPLAY "Main Non Banked Code End ", MainNonBankedCodeEnd , " Bytes free ", 0B000H - MainNonBankedCodeEnd
+882   6F24                  ASSERT MainNonBankedCodeEnd < 0B000H, Program code leaks intot interrup vector table
+883   6F24
 # file closed: piiotest.asm

@@ -401,94 +401,95 @@
    4+ 0000              LAYER2_SHIFTED_SCREEN_MIDDLE equ $40
    5+ 0000              LAYER2_SHIFTED_SCREEN_BOTTOM equ $80
    6+ 0000
-   7+ 0000              ; note hi byte is not decoded on DMA port so can out OUTIR
-   8+ 0000
-   9+ 0000              IO_SPRITE_SLOT_PORT 		 equ 12347
-  10+ 0000              IO_SPRITE_PATTERN_PORT       equ 91
-  11+ 0000              IO_SPRITE_ATTRIBUTES_PORT    equ 87
-  12+ 0000
-  13+ 0000              LAYER2_VISIBLE_MASK 		equ $02
-  14+ 0000              ; DEBUG 0 for always write to primary 08 for double buffering
-  15+ 0000                  IFDEF DOUBLEBUFFER
-  16+ 0000 ~            LAYER2_SHADOW_SCREEN_MASK 	equ $08
-  17+ 0000                  ELSE
-  18+ 0000              LAYER2_SHADOW_SCREEN_MASK 	equ $00
-  19+ 0000                  ENDIF
-  20+ 0000              LAYER2_READ_ENABLE_MASK 	equ %00000100
-  21+ 0000              LAYER2_WRITE_ENABLE_MASK 	equ %00000001
-  22+ 0000              LAYER2_READ_WRITE_MASK      equ %00000101
-  23+ 0000              LAYER2_SCREEN_SECTION_MASK 	equ $03
-  24+ 0000              LAYER2_SCREEN_SECTION_SHIFT equ 6
-  25+ 0000
-  26+ 0000              LAYER2_DISABLE_MEM_WRITE    equ %11111110
-  27+ 0000              LAYER2_DISABLE_MEM_READ     equ %11111011
-  28+ 0000              LAYER2_DISABLE_MEM_ACCESS   equ %11111010
-  29+ 0000
-  30+ 0000              LAYER2_SCREEN_BANK1          equ 8
-  31+ 0000              LAYER2_SCREEN_BANK2          equ 9
-  32+ 0000              LAYER2_SCREEN_BANK3          equ 10
-  33+ 0000              LAYER2_SCREEN_BANK4          equ 11     ; used by 320 and 640 mode
-  34+ 0000              LAYER2_SCREEN_BANK5          equ 12     ; used by 320 and 640 mode
-  35+ 0000              LAYER2_SHADOW_BANK1          equ 13
-  36+ 0000              LAYER2_SHADOW_BANK2          equ 14
-  37+ 0000              LAYER2_SHADOW_BANK3          equ 15
-  38+ 0000              LAYER2_SHADOW_BANK4          equ 16     ; used by 320 and 640 mode
-  39+ 0000              LAYER2_SHADOW_BANK5          equ 17     ; used by 320 and 640 mode
-  40+ 0000
-  41+ 0000              SCREEN_HEIGHT 				 equ 192
-  42+ 0000              SCREEN_RAM_BASE				 equ $0000
-  43+ 0000              SCREEN_HOZ_MIN_PIX		     equ 10
-  44+ 0000
-  45+ 0000              SPRITES_VISIBLE_MASK         equ $01
-  46+ 0000              SPRITES_ON_BORDER_MASK       equ $02
-  47+ 0000              LAYER_PRIORITIES_MASK        equ $07
-  48+ 0000              LORES_MODE_MASK              equ $80
-  49+ 0000              LAYER_PRIORITIES_SHIFT       equ 2
-  50+ 0000
-  51+ 0000              LAYER_PRIORITIES_S_L_U 		equ 0
-  52+ 0000              LAYER_PRIORITIES_L_S_U 		equ 1
-  53+ 0000              LAYER_PRIORITIES_S_U_L  	equ 2
-  54+ 0000              LAYER_PRIORITIES_L_U_S 		equ 3
-  55+ 0000              LAYER_PRIORITIES_U_S_L 		equ 4
-  56+ 0000              LAYER_PRIORITIES_U_L_S 		equ 5
-  57+ 0000
-  58+ 0000              DMA_WRO_BLOCK_PORTA_A2B_XFR  equ $7D
-  59+ 0000              DMA_WRO_BLOCK_PORTA_B2A_XFR  equ $79
-  60+ 0000              DMA_WR1_P1FIXED_MEMORY       equ $24
-  61+ 0000              DMA_WR1_P1DEC_MEMORY         equ $04
-  62+ 0000              DMA_WR1_P1INC_MEMORY         equ $14
-  63+ 0000              DMA_WR2_P2FIXED_MEMORY       equ $20
-  64+ 0000              DMA_WR2_P2DEC_MEMORY         equ $00
-  65+ 0000              DMA_WR2_P2INC_MEMORY         equ $10
-  66+ 0000              DMA_WR4_CONT_MODE            equ $AD
-  67+ 0000              DMA_WR4_BURST_MODE           equ $CD
-  68+ 0000              DMA_RESET                    equ $c3
-  69+ 0000              DMA_RESET_PORT_A_TIMING      equ $c7
-  70+ 0000              DMA_RESET_PORT_B_TIMING      equ $cb
-  71+ 0000              DMA_LOAD                     equ $cf
-  72+ 0000              DMA_CONTINUE                 equ $d3
-  73+ 0000              DMA_DISABLE_INTERUPTS        equ $af
-  74+ 0000              DMA_ENABLE_INTERUPTS         equ $ab
-  75+ 0000              DMA_RESET_DISABLE_INTERUPTS  equ $a3
-  76+ 0000              DMA_ENABLE_AFTER_RETI        equ $b7
-  77+ 0000              DMA_READ_STATUS_BYTE         equ $bf
-  78+ 0000              DMA_REINIT_STATUS_BYTE       equ $8b
-  79+ 0000              DMA_START_READ_SEQUENCE      equ $a7
-  80+ 0000              DMA_FORCE_READY              equ $b3
-  81+ 0000              DMA_STOP_AT_END			     equ $82
-  82+ 0000              DMA_DISABLE                  equ $83
-  83+ 0000              DMA_ENABLE                   equ $87
-  84+ 0000              DMA_WRITE_REGISTER_COMMAND   equ $bb
-  85+ 0000              DMA_BURST                    equ $cd
-  86+ 0000              DMA_CONTINUOUS               equ $ad
-  87+ 0000              ZXN_DMA_PORT                 equ $6b
-  88+ 0000
+   7+ 0000
+   8+ 0000              ; note hi byte is not decoded on DMA port so can out OUTIR
+   9+ 0000
+  10+ 0000              IO_SPRITE_SLOT_PORT 		 equ 12347
+  11+ 0000              IO_SPRITE_PATTERN_PORT       equ 91
+  12+ 0000              IO_SPRITE_ATTRIBUTES_PORT    equ 87
+  13+ 0000
+  14+ 0000              LAYER2_VISIBLE_MASK 		equ $02
+  15+ 0000              ; DEBUG 0 for always write to primary 08 for double buffering
+  16+ 0000                  IFDEF DOUBLEBUFFER
+  17+ 0000 ~            LAYER2_SHADOW_SCREEN_MASK 	equ $08
+  18+ 0000                  ELSE
+  19+ 0000              LAYER2_SHADOW_SCREEN_MASK 	equ $00
+  20+ 0000                  ENDIF
+  21+ 0000              LAYER2_READ_ENABLE_MASK 	equ %00000100
+  22+ 0000              LAYER2_WRITE_ENABLE_MASK 	equ %00000001
+  23+ 0000              LAYER2_READ_WRITE_MASK      equ %00000101
+  24+ 0000              LAYER2_SCREEN_SECTION_MASK 	equ $03
+  25+ 0000              LAYER2_SCREEN_SECTION_SHIFT equ 6
+  26+ 0000
+  27+ 0000              LAYER2_DISABLE_MEM_WRITE    equ %11111110
+  28+ 0000              LAYER2_DISABLE_MEM_READ     equ %11111011
+  29+ 0000              LAYER2_DISABLE_MEM_ACCESS   equ %11111010
+  30+ 0000
+  31+ 0000              LAYER2_SCREEN_BANK1          equ 8
+  32+ 0000              LAYER2_SCREEN_BANK2          equ 9
+  33+ 0000              LAYER2_SCREEN_BANK3          equ 10
+  34+ 0000              LAYER2_SCREEN_BANK4          equ 11     ; used by 320 and 640 mode
+  35+ 0000              LAYER2_SCREEN_BANK5          equ 12     ; used by 320 and 640 mode
+  36+ 0000              LAYER2_SHADOW_BANK1          equ 13
+  37+ 0000              LAYER2_SHADOW_BANK2          equ 14
+  38+ 0000              LAYER2_SHADOW_BANK3          equ 15
+  39+ 0000              LAYER2_SHADOW_BANK4          equ 16     ; used by 320 and 640 mode
+  40+ 0000              LAYER2_SHADOW_BANK5          equ 17     ; used by 320 and 640 mode
+  41+ 0000
+  42+ 0000              SCREEN_HEIGHT 				 equ 192
+  43+ 0000              SCREEN_RAM_BASE				 equ $0000
+  44+ 0000              SCREEN_HOZ_MIN_PIX		     equ 10
+  45+ 0000
+  46+ 0000              SPRITES_VISIBLE_MASK         equ $01
+  47+ 0000              SPRITES_ON_BORDER_MASK       equ $02
+  48+ 0000              LAYER_PRIORITIES_MASK        equ $07
+  49+ 0000              LORES_MODE_MASK              equ $80
+  50+ 0000              LAYER_PRIORITIES_SHIFT       equ 2
+  51+ 0000
+  52+ 0000              LAYER_PRIORITIES_S_L_U 		equ 0
+  53+ 0000              LAYER_PRIORITIES_L_S_U 		equ 1
+  54+ 0000              LAYER_PRIORITIES_S_U_L  	equ 2
+  55+ 0000              LAYER_PRIORITIES_L_U_S 		equ 3
+  56+ 0000              LAYER_PRIORITIES_U_S_L 		equ 4
+  57+ 0000              LAYER_PRIORITIES_U_L_S 		equ 5
+  58+ 0000
+  59+ 0000              DMA_WRO_BLOCK_PORTA_A2B_XFR  equ $7D
+  60+ 0000              DMA_WRO_BLOCK_PORTA_B2A_XFR  equ $79
+  61+ 0000              DMA_WR1_P1FIXED_MEMORY       equ $24
+  62+ 0000              DMA_WR1_P1DEC_MEMORY         equ $04
+  63+ 0000              DMA_WR1_P1INC_MEMORY         equ $14
+  64+ 0000              DMA_WR2_P2FIXED_MEMORY       equ $20
+  65+ 0000              DMA_WR2_P2DEC_MEMORY         equ $00
+  66+ 0000              DMA_WR2_P2INC_MEMORY         equ $10
+  67+ 0000              DMA_WR4_CONT_MODE            equ $AD
+  68+ 0000              DMA_WR4_BURST_MODE           equ $CD
+  69+ 0000              DMA_RESET                    equ $c3
+  70+ 0000              DMA_RESET_PORT_A_TIMING      equ $c7
+  71+ 0000              DMA_RESET_PORT_B_TIMING      equ $cb
+  72+ 0000              DMA_LOAD                     equ $cf
+  73+ 0000              DMA_CONTINUE                 equ $d3
+  74+ 0000              DMA_DISABLE_INTERUPTS        equ $af
+  75+ 0000              DMA_ENABLE_INTERUPTS         equ $ab
+  76+ 0000              DMA_RESET_DISABLE_INTERUPTS  equ $a3
+  77+ 0000              DMA_ENABLE_AFTER_RETI        equ $b7
+  78+ 0000              DMA_READ_STATUS_BYTE         equ $bf
+  79+ 0000              DMA_REINIT_STATUS_BYTE       equ $8b
+  80+ 0000              DMA_START_READ_SEQUENCE      equ $a7
+  81+ 0000              DMA_FORCE_READY              equ $b3
+  82+ 0000              DMA_STOP_AT_END			     equ $82
+  83+ 0000              DMA_DISABLE                  equ $83
+  84+ 0000              DMA_ENABLE                   equ $87
+  85+ 0000              DMA_WRITE_REGISTER_COMMAND   equ $bb
+  86+ 0000              DMA_BURST                    equ $cd
+  87+ 0000              DMA_CONTINUOUS               equ $ad
+  88+ 0000              ZXN_DMA_PORT                 equ $6b
   89+ 0000
-  90+ 0000              COLOUR_TRANSPARENT			 equ $E3
-  91+ 0000
+  90+ 0000
+  91+ 0000              COLOUR_TRANSPARENT			 equ $E3
   92+ 0000
   93+ 0000
   94+ 0000
+  95+ 0000
 # file closed: ../../Layer2Graphics/layer2_defines.asm
   27  0000                                      INCLUDE	"../../Hardware/memory_bank_defines.asm"
 # file opened: ../../Hardware/memory_bank_defines.asm
@@ -714,81 +715,82 @@
   15+ 0000 ~                                    ENDIF
   16+ 0000                                      ENDM
   17+ 0000
-  18+ 0000              DoubleBuffer640IfPossible: MACRO
-  19+ 0000 ~                                    IFDEF DOUBLEBUFFER
-  20+ 0000 ~                                        MMUSelectLayer2
-  21+ 0000 ~                                        call  l2_640_cls
-  22+ 0000 ~                                        call  l2_flip_buffers
-  23+ 0000 ~                                    ENDIF
-  24+ 0000                                      ENDM
-  25+ 0000
-  26+ 0000
+  18+ 0000                  IFDEF L2_640_SUPPORT
+  19+ 0000 ~            DoubleBuffer640IfPossible: MACRO
+  20+ 0000 ~                                    IFDEF DOUBLEBUFFER
+  21+ 0000 ~                                        MMUSelectLayer2
+  22+ 0000 ~                                        call  l2_640_cls
+  23+ 0000 ~                                        call  l2_flip_buffers
+  24+ 0000 ~                                    ENDIF
+  25+ 0000 ~                                    ENDM
+  26+ 0000                  ENDIF
   27+ 0000
-  28+ 0000              ErrorEquStepMinusDelta: MACRO   delta_step, delta_value
-  29+ 0000 ~                                    ld      hl,(delta_step)
-  30+ 0000 ~                                    ld      de,(delta_value)
-  31+ 0000 ~                                    ClearCarryFlag
-  32+ 0000 ~                                    sbc     hl,de
-  33+ 0000 ~                                    ld      (error),hl
-  34+ 0000                                      ENDM
-  35+ 0000
-  36+ 0000              ; we could hold steps and deltas in alternate registers later
-  37+ 0000              ErrorPlusStep:          MACRO   delta_step
-  38+ 0000 ~                                    ld      hl,(error)
-  39+ 0000 ~                                    ld      de,(delta_step)
-  40+ 0000 ~                                    add     hl,de
-  41+ 0000 ~                                    ld      (error),hl
-  42+ 0000                                      ENDM
-  43+ 0000
-  44+ 0000              ErrorMinusStep:         MACRO   delta_step
-  45+ 0000 ~                                    ld      hl,(error)
-  46+ 0000 ~                                    ld      de,(delta_step)
-  47+ 0000 ~                                    ClearCarryFlag
-  48+ 0000 ~                                    sbc     hl,de
-  49+ 0000 ~                                    ld      (error),hl
-  50+ 0000                                      ENDM
-  51+ 0000
-  52+ 0000              SetExitFalse:           MACRO
-  53+ 0000 ~                                    xor     a
-  54+ 0000 ~                                    ld      (set_exit),a
-  55+ 0000                                      ENDM
-  56+ 0000
-  57+ 0000              ; pulls axis high byte to a, returns nz if negative, z if positive
-  58+ 0000              IsAxisLT0:              MACRO   axis
-  59+ 0000 ~                                    ld      a,(axis+1)
-  60+ 0000 ~                                    and     $80
-  61+ 0000                                      ENDM
-  62+ 0000
-  63+ 0000              ; modifies HL, loaded with register, returns z if >=0, nz if negative
-  64+ 0000              IsMemld16GTE0           MACRO   mem
-  65+ 0000 ~                                    ld      hl, (mem)
-  66+ 0000 ~                                    bit     7,h
-  67+ 0000                                      ENDM
-  68+ 0000
-  69+ 0000              IsMemNegative8JumpFalse:MACRO   mem, target
-  70+ 0000 ~                                    ld      a,(mem)
-  71+ 0000 ~                                    and     $80
-  72+ 0000 ~                                    jp      z, target
-  73+ 0000                                      ENDM
-  74+ 0000
-  75+ 0000              IsMem16GT0JumpFalse:    MACRO   mem, target
-  76+ 0000 ~                                    ld      hl, (mem)
-  77+ 0000 ~                                    bit     7,h
-  78+ 0000 ~                                    jp      nz, target
-  79+ 0000 ~                                    ld      a,h
-  80+ 0000 ~                                    or      l
-  81+ 0000 ~                                    jp      z,  target
-  82+ 0000                                      ENDM
-  83+ 0000
-  84+ 0000              FloorHLdivDETarget:     MACRO   target
-  85+ 0000 ~                                    call    l_div                   ;       .  (so we swap and call l_div) HL = DE / HL, DE = DE % HL
-  86+ 0000 ~                                    ld      a,d                     ;       .  get bit 7 into carry (set if negative)
-  87+ 0000 ~                                    sla     a                       ;
-  88+ 0000 ~                                    jr      nc,.FloorIsOK           ;
-  89+ 0000 ~            .FloorAdjust:           dec     hl                      ;       .  if remainder >= adjust by 1 for negative
-  90+ 0000 ~            .FloorIsOK:             ld      (target),hl             ;       .  now save the msd value
-  91+ 0000                                      ENDM
-  92+ 0000
+  28+ 0000
+  29+ 0000              ErrorEquStepMinusDelta: MACRO   delta_step, delta_value
+  30+ 0000 ~                                    ld      hl,(delta_step)
+  31+ 0000 ~                                    ld      de,(delta_value)
+  32+ 0000 ~                                    ClearCarryFlag
+  33+ 0000 ~                                    sbc     hl,de
+  34+ 0000 ~                                    ld      (error),hl
+  35+ 0000                                      ENDM
+  36+ 0000
+  37+ 0000              ; we could hold steps and deltas in alternate registers later
+  38+ 0000              ErrorPlusStep:          MACRO   delta_step
+  39+ 0000 ~                                    ld      hl,(error)
+  40+ 0000 ~                                    ld      de,(delta_step)
+  41+ 0000 ~                                    add     hl,de
+  42+ 0000 ~                                    ld      (error),hl
+  43+ 0000                                      ENDM
+  44+ 0000
+  45+ 0000              ErrorMinusStep:         MACRO   delta_step
+  46+ 0000 ~                                    ld      hl,(error)
+  47+ 0000 ~                                    ld      de,(delta_step)
+  48+ 0000 ~                                    ClearCarryFlag
+  49+ 0000 ~                                    sbc     hl,de
+  50+ 0000 ~                                    ld      (error),hl
+  51+ 0000                                      ENDM
+  52+ 0000
+  53+ 0000              SetExitFalse:           MACRO
+  54+ 0000 ~                                    xor     a
+  55+ 0000 ~                                    ld      (set_exit),a
+  56+ 0000                                      ENDM
+  57+ 0000
+  58+ 0000              ; pulls axis high byte to a, returns nz if negative, z if positive
+  59+ 0000              IsAxisLT0:              MACRO   axis
+  60+ 0000 ~                                    ld      a,(axis+1)
+  61+ 0000 ~                                    and     $80
+  62+ 0000                                      ENDM
+  63+ 0000
+  64+ 0000              ; modifies HL, loaded with register, returns z if >=0, nz if negative
+  65+ 0000              IsMemld16GTE0           MACRO   mem
+  66+ 0000 ~                                    ld      hl, (mem)
+  67+ 0000 ~                                    bit     7,h
+  68+ 0000                                      ENDM
+  69+ 0000
+  70+ 0000              IsMemNegative8JumpFalse:MACRO   mem, target
+  71+ 0000 ~                                    ld      a,(mem)
+  72+ 0000 ~                                    and     $80
+  73+ 0000 ~                                    jp      z, target
+  74+ 0000                                      ENDM
+  75+ 0000
+  76+ 0000              IsMem16GT0JumpFalse:    MACRO   mem, target
+  77+ 0000 ~                                    ld      hl, (mem)
+  78+ 0000 ~                                    bit     7,h
+  79+ 0000 ~                                    jp      nz, target
+  80+ 0000 ~                                    ld      a,h
+  81+ 0000 ~                                    or      l
+  82+ 0000 ~                                    jp      z,  target
+  83+ 0000                                      ENDM
+  84+ 0000
+  85+ 0000              FloorHLdivDETarget:     MACRO   target
+  86+ 0000 ~                                    call    l_div                   ;       .  (so we swap and call l_div) HL = DE / HL, DE = DE % HL
+  87+ 0000 ~                                    ld      a,d                     ;       .  get bit 7 into carry (set if negative)
+  88+ 0000 ~                                    sla     a                       ;
+  89+ 0000 ~                                    jr      nc,.FloorIsOK           ;
+  90+ 0000 ~            .FloorAdjust:           dec     hl                      ;       .  if remainder >= adjust by 1 for negative
+  91+ 0000 ~            .FloorIsOK:             ld      (target),hl             ;       .  now save the msd value
+  92+ 0000                                      ENDM
+  93+ 0000
 # file closed: ../../Macros/graphicsMacros.asm
   31  0000                                      INCLUDE "../../Macros/callMacros.asm"
 # file opened: ../../Macros/callMacros.asm
@@ -4984,15 +4986,15 @@
  912  653C 3A 7F C0     DisplayDotProduct:      ld      a,(UBnKDotProductNoseSign)
  913  653F 16 10                                ld      d,RowDotProduct
  914  6541 1E 09                                ld      e,XNoseDP
- 915  6543 CD 0F E2                             call    l1_printSignByte
+ 915  6543 CD 8D E2                             call    l1_printSignByte
  916  6546 3A 82 C0                             ld      a,(UBnKDotProductRoofSign)
  917  6549 16 10                                ld      d,RowDotProduct
  918  654B 1E 12                                ld      e,XRoofDP
- 919  654D CD 0F E2                             call    l1_printSignByte
+ 919  654D CD 8D E2                             call    l1_printSignByte
  920  6550 3A 85 C0                             ld      a,(UBnKDotProductSideSign)
  921  6553 16 10                                ld      d,RowDotProduct
  922  6555 1E 1B                                ld      e,XSideDP
- 923  6557 CD 0F E2                             call    l1_printSignByte
+ 923  6557 CD 8D E2                             call    l1_printSignByte
  924  655A 16 10                                ld      d,RowDotProduct
  925  655C 1E 0A                                ld      e,XNoseDP+1
  926  655E DD 21 7E C0                          ld      ix,UBnKDotProductNose+1
@@ -5013,9 +5015,9 @@
  941  6587 1E 09                                ld      e,XNoseDP
  942  6589 FE FF                                cp      $FF
  943  658B CA 94 65                             jp      z,.NaNNose
- 944  658E CD FB E1                             call    l1_print_u8_hex_at_char
+ 944  658E CD 79 E2                             call    l1_print_u8_hex_at_char
  945  6591 C3 97 65                             jp      .PrintRoofDegrees
- 946  6594 CD 2E E2     .NaNNose:               call    l1_print_u8_nan_at_char
+ 946  6594 CD AC E2     .NaNNose:               call    l1_print_u8_nan_at_char
  947  6597 3A 82 C0     .PrintRoofDegrees:      ld      a,(UBnKDotProductRoofSign)
  948  659A 47                                   ld      b,a
  949  659B 3A 81 C0                             ld      a,(UBnKDotProductRoof+1)
@@ -5024,9 +5026,9 @@
  952  65A3 1E 12                                ld      e,XRoofDP
  953  65A5 FE FF                                cp      $FF
  954  65A7 CA B0 65                             jp      z,.NaNRoof
- 955  65AA CD FB E1                             call    l1_print_u8_hex_at_char
+ 955  65AA CD 79 E2                             call    l1_print_u8_hex_at_char
  956  65AD C3 B3 65                             jp      .PrintSideDegrees
- 957  65B0 CD 2E E2     .NaNRoof:               call    l1_print_u8_nan_at_char
+ 957  65B0 CD AC E2     .NaNRoof:               call    l1_print_u8_nan_at_char
  958  65B3 3A 85 C0     .PrintSideDegrees:      ld      a,(UBnKDotProductSideSign)
  959  65B6 47                                   ld      b,a
  960  65B7 3A 81 C0                             ld      a,(UBnKDotProductRoof+1)
@@ -5035,9 +5037,9 @@
  963  65BF 1E 1B                                ld      e,XSideDP
  964  65C1 FE FF                                cp      $FF
  965  65C3 CA CA 65                             jp      z,.NaNSide
- 966  65C6 CD FB E1                             call    l1_print_u8_hex_at_char
+ 966  65C6 CD 79 E2                             call    l1_print_u8_hex_at_char
  967  65C9 C9                                   ret
- 968  65CA CD 2E E2     .NaNSide:               call    l1_print_u8_nan_at_char
+ 968  65CA CD AC E2     .NaNSide:               call    l1_print_u8_nan_at_char
  969  65CD C9                                   ret
  970  65CE
  971  65CE 16 04        DisplayMatrix:          ld      d,  RowMatrix1
@@ -5094,7 +5096,7 @@
 1020  6631 DD 7E 01                             ld      a,(ix+1)
 1021  6634 6F                                   ld      l,a
 1022  6635 DD 7E 00                             ld      a,(ix+0)
-1023  6638 CD 52 E1                             call    l1_print_s24_hex_at_char
+1023  6638 CD D0 E1                             call    l1_print_s24_hex_at_char
 1024  663B C9                                   ret
 1025  663C
 1026  663C              DisplayS16:             MMUSelectLayer1
@@ -5103,19 +5105,19 @@
 1028  6643 67                                   ld      h,a
 1029  6644 DD 7E 00                             ld      a,(ix+0)
 1030  6647 6F                                   ld      l,a
-1031  6648 CD 7E E1                             call    l1_print_s16_hex_at_char
+1031  6648 CD FC E1                             call    l1_print_s16_hex_at_char
 1032  664B C9                                   ret
 1033  664C
 1034  664C              Display82C:             MMUSelectLayer1
 1034  664C ED 91 57 3A >					 nextreg L1memMMU,		    BankLAYER1
 1035  6650 DD 7E 00                             ld      a,(ix+0)
-1036  6653 CD CB E1                             call    l1_print_82c_hex_at_char
+1036  6653 CD 49 E2                             call    l1_print_82c_hex_at_char
 1037  6656 C9                                   ret
 1038  6657
 1039  6657              DisplayS8:              MMUSelectLayer1
 1039  6657 ED 91 57 3A >					 nextreg L1memMMU,		    BankLAYER1
 1040  665B DD 7E 00                             ld      a,(ix+0)
-1041  665E CD B4 E1                             call    l1_print_s8_hex_at_char
+1041  665E CD 32 E2                             call    l1_print_s8_hex_at_char
 1042  6661 C9                                   ret
 1043  6662              ; As per S8 but sign is a separate lead byte
 1044  6662              DisplayS08:             MMUSelectLayer1
@@ -5124,13 +5126,13 @@
 1046  6669 6F                                   ld      l,a
 1047  666A DD 7E 01                             ld      a,(ix+1)
 1048  666D 67                                   ld      h,a
-1049  666E CD E7 E1                             call    l1_print_s08_hex_at_char
+1049  666E CD 65 E2                             call    l1_print_s08_hex_at_char
 1050  6671 C9                                   ret
 1051  6672
 1052  6672              DisplayU8:              MMUSelectLayer1
 1052  6672 ED 91 57 3A >					 nextreg L1memMMU,		    BankLAYER1
 1053  6676 DD 7E 00                             ld      a,(ix+0)
-1054  6679 CD FB E1                             call    l1_print_u8_hex_at_char
+1054  6679 CD 79 E2                             call    l1_print_u8_hex_at_char
 1055  667C C9                                   ret
 1056  667D
 1057  667D 3E FF        SetStatusSlow:          ld      a,$FF
@@ -5250,7 +5252,7 @@
 1130  675D 16 13                                ld      d,19
 1131  675F 1E 09                                ld      e,XSpeed
 1132  6761 3E 80                                ld      a,$80
-1133  6763 CD 0F E2                             call    l1_printSignByte
+1133  6763 CD 8D E2                             call    l1_printSignByte
 1134  6766 C9                                   ret
 1135  6767
 1136  6767              HideSlow                MMUSelectLayer1
@@ -5258,7 +5260,7 @@
 1137  676B 16 13                                ld      d,19
 1138  676D 1E 09                                ld      e,XSpeed
 1139  676F 3E 01                                ld      a,$01
-1140  6771 CD 0F E2                             call    l1_printSignByte
+1140  6771 CD 8D E2                             call    l1_printSignByte
 1141  6774 C9                                   ret
 1142  6775
 1143  6775              DisplayFast             MMUSelectLayer1
@@ -5266,7 +5268,7 @@
 1144  6779 16 13                                ld      d,19
 1145  677B 1E 09                                ld      e,XSpeed
 1146  677D 3E 00                                ld      a,$00
-1147  677F CD 0F E2                             call    l1_printSignByte
+1147  677F CD 8D E2                             call    l1_printSignByte
 1148  6782 C9                                   ret
 1149  6783
 1150  6783              HideFast                MMUSelectLayer1
@@ -5274,7 +5276,7 @@
 1151  6787 16 13                                ld      d,19
 1152  6789 1E 09                                ld      e,XSpeed
 1153  678B 3E 01                                ld      a,$01
-1154  678D CD 0F E2                             call    l1_printSignByte
+1154  678D CD 8D E2                             call    l1_printSignByte
 1155  6790 C9                                   ret
 1156  6791
 1157  6791              DisplayRollPlus         MMUSelectLayer1
@@ -5282,7 +5284,7 @@
 1158  6795 16 13                                ld      d,19
 1159  6797 1E 1C                                ld      e,XRoll
 1160  6799 3E 00                                ld      a,$00
-1161  679B CD 0F E2                             call    l1_printSignByte
+1161  679B CD 8D E2                             call    l1_printSignByte
 1162  679E C9                                   ret
 1163  679F
 1164  679F              DisplayRollMinus        MMUSelectLayer1
@@ -5290,7 +5292,7 @@
 1165  67A3 16 13                                ld      d,19
 1166  67A5 1E 1C                                ld      e,XRoll
 1167  67A7 3E 08                                ld      a,$08
-1168  67A9 CD 0F E2                             call    l1_printSignByte
+1168  67A9 CD 8D E2                             call    l1_printSignByte
 1169  67AC C9                                   ret
 1170  67AD
 1171  67AD              HideRoll                MMUSelectLayer1
@@ -5298,7 +5300,7 @@
 1172  67B1 16 13                                ld      d,19
 1173  67B3 1E 1C                                ld      e,XRoll
 1174  67B5 3E 01                                ld      a,$01
-1175  67B7 CD 0F E2                             call    l1_printSignByte
+1175  67B7 CD 8D E2                             call    l1_printSignByte
 1176  67BA C9                                   ret
 1177  67BB
 1178  67BB              DisplayPitchPlus        MMUSelectLayer1
@@ -5306,7 +5308,7 @@
 1179  67BF 16 13                                ld      d,19
 1180  67C1 1E 13                                ld      e,XPitch
 1181  67C3 3E 00                                ld      a,$00
-1182  67C5 CD 0F E2                             call    l1_printSignByte
+1182  67C5 CD 8D E2                             call    l1_printSignByte
 1183  67C8 C9                                   ret
 1184  67C9
 1185  67C9              DisplayPitchMinus       MMUSelectLayer1
@@ -5314,7 +5316,7 @@
 1186  67CD 16 13                                ld      d,19
 1187  67CF 1E 13                                ld      e,XPitch
 1188  67D1 3E 80                                ld      a,$80
-1189  67D3 CD 0F E2                             call    l1_printSignByte
+1189  67D3 CD 8D E2                             call    l1_printSignByte
 1190  67D6 C9                                   ret
 1191  67D7
 1192  67D7              HidePitch               MMUSelectLayer1
@@ -5322,7 +5324,7 @@
 1193  67DB 16 13                                ld      d,19
 1194  67DD 1E 13                                ld      e,XPitch
 1195  67DF 3E 01                                ld      a,$01
-1196  67E1 CD 0F E2                             call    l1_printSignByte
+1196  67E1 CD 8D E2                             call    l1_printSignByte
 1197  67E4 C9                                   ret
 1198  67E5
 1199  67E5              DisplayBehind           MMUSelectLayer1
@@ -5906,168 +5908,171 @@
   93+ 6ADC              SpawnTypeMissionEvent   EQU SpawnTypeStationDebris  + 1
   94+ 6ADC              SpawnTypeDoNotSpawn     EQU SpawnTypeMissionEvent   + 1
   95+ 6ADC
-  96+ 6ADC
-  97+ 6ADC              ; Laser and Missile Settings
-  98+ 6ADC              ; Laser and Missile
-  99+ 6ADC              ShipLaserPower          equ %11110000
- 100+ 6ADC              ShipMissileCount        equ %00001111
- 101+ 6ADC              ShipMissiles1           equ %00000001
- 102+ 6ADC              ShipMissiles2           equ %00000010
- 103+ 6ADC              ShipMissiles3           equ %00000011
- 104+ 6ADC              ShipMissiles4           equ %00000100
- 105+ 6ADC              ShipMissiles5           equ %00000101
- 106+ 6ADC              ShipMissiles6           equ %00000110
- 107+ 6ADC              ShipMissiles7           equ %00000111
- 108+ 6ADC              ShipMissiles8           equ %00001000
- 109+ 6ADC              ShipMissiles9           equ %00001001
- 110+ 6ADC              ShipMissiles10          equ %00001010
- 111+ 6ADC              ShipMissiles11          equ %00001011
- 112+ 6ADC              ShipMissiles12          equ %00001100
- 113+ 6ADC              ShipMissiles13          equ %00001101
- 114+ 6ADC              ShipMissiles14          equ %00001110
- 115+ 6ADC              ShipMissiles15          equ %00001111
- 116+ 6ADC              ; AI Flags  UniverseAIControl
- 117+ 6ADC              ShipCanAnger            equ %10000000   ; Yes or no
- 118+ 6ADC              ShipFighterBaySize      equ %01110000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
- 119+ 6ADC              ShipFighterBaySize1     equ %00010000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
- 120+ 6ADC              ShipFighterBaySize2     equ %00100000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
- 121+ 6ADC              ShipFighterBaySize3     equ %00110000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
- 122+ 6ADC              ShipFighterBaySize4     equ %01000000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
- 123+ 6ADC              ShipFighterBaySize5     equ %01010000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
- 124+ 6ADC              ShipFighterBaySizeInf   equ %01110000   ; Infinite fighters (well 255 as thats enough)
- 125+ 6ADC              ShipFighterType         equ %00001100   ; 4 types 0 = Worm, 1 = Sidewinder, 2 = Viper, 3 = Thargon
- 126+ 6ADC              ShipFighterWorm         equ %00000000
- 127+ 6ADC              ShipFighterSidewinder   equ %00000100
- 128+ 6ADC              ShipFighterViper        equ %00001000
- 129+ 6ADC              ShipFighterThargon      equ %00001100
- 130+ 6ADC              ShipUltraHostile        equ %00000010   ; If ultra hostile, will never back down so behaves like a missile
- 131+ 6ADC              ShipFree                equ $00000011   ; Unused bits at present for later
- 132+ 6ADC              ; NewBTactics
- 133+ 6ADC              ShipIsTrader            equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
- 134+ 6ADC              ShipIsBountyHunter      equ Bit1Only   ;
- 135+ 6ADC              ShipIsHostile           equ Bit2Only   ; Also used as Angry flag now
- 136+ 6ADC              ShipIsPirate            equ Bit3Only   ;
- 137+ 6ADC              ShipIsDocking           equ Bit4Only   ;
- 138+ 6ADC              ShipIsBystander         equ Bit5Only   ;
- 139+ 6ADC              ShipIsCop               equ Bit6Only   ;
- 140+ 6ADC              ShipHasEscapePod        equ Bit7Only   ;
- 141+ 6ADC              ShipHostileNewBitNbr    equ 2
- 142+ 6ADC                      DISPLAY "TODO: Add bravery based on rank, new bits and type of ship"
- 143+ 6ADC
- 144+ 6ADC              ; UBnkaiatkecm
- 145+ 6ADC              ;Unused                 equ Bit0Only
- 146+ 6ADC              ;Unused                 equ Bit1Only
- 147+ 6ADC              ;Unused                 equ Bit2Only
- 148+ 6ADC              ShipIsDot               equ Bit3Only
- 149+ 6ADC              ShipKilled              equ Bit4Only    ; Ship has just been marked as killed so initiate cloud of debris
- 150+ 6ADC              ShipExploding           equ Bit5Only
- 151+ 6ADC              ShipIsVisible           equ Bit6Only
- 152+ 6ADC              ShipAIEnabled           equ Bit7Only   ;
- 153+ 6ADC
- 154+ 6ADC
- 155+ 6ADC              ; UBnkaiakecm 2
- 156+ 6ADC              ;ShipAngryNewBitNbr      equ 4
- 157+ 6ADC              ShipExplosionDuration   equ 75         ; amount of frames an explosion lasts for
- 158+ 6ADC              ShipNotHostile          equ Bit2Clear   ;
- 159+ 6ADC              ShipIsNotDot            equ Bit3Clear
- 160+ 6ADC              ShipIsDotBitNbr         equ 3
- 161+ 6ADC              ShipKilledBitNbr        equ 4
- 162+ 6ADC              ShipIsVisibleBitNbr     equ 6
- 163+ 6ADC              ShipIsScoopDockEsc      equ Bit7Only   ;
- 164+ 6ADC              ShipAIDisabled          equ Bit7Clear
- 165+ 6ADC              ShipAIEnabledBitNbr     equ 7
- 166+ 6ADC              ShipExplodingBitNbr     equ 5
- 167+ 6ADC              ; Equipment Defaults
- 168+ 6ADC              ECMCounterMax           equ $80
- 169+ 6ADC              ; Main Loop State
- 170+ 6ADC              StatePlayerDocked       equ $FF
- 171+ 6ADC              StateCompletedLaunch    equ $FD
- 172+ 6ADC              StateInTransition       equ $FE
- 173+ 6ADC              StateHJumping           equ $FC
- 174+ 6ADC              StateHEntering          equ $FB
- 175+ 6ADC              StateCompletedHJump     equ $FA
- 176+ 6ADC              StateNormal             equ 0
- 177+ 6ADC              ; Missile Stage flags , $8x = locked to ship id x, $0x = fire at ship id x requested
- 178+ 6ADC              StageMissileNotTargeting equ $FF
- 179+ 6ADC              StageMissileTargeting   equ $FE
- 180+ 6ADC
- 181+ 6ADC
- 182+ 6ADC              ShipMaxDistance     equ 192
- 183+ 6ADC              HyperSpaceTimers    equ $0B0B
+  96+ 6ADC              ; Inventory Equates
+  97+ 6ADC              StockTypeCount          EQU 17
+  98+ 6ADC              StockTypeMax            EQU StockTypeCount - 1
+  99+ 6ADC              StockTypePenultimate    EQU StockTypeCount - 2
+ 100+ 6ADC              ; Laser and Missile Settings
+ 101+ 6ADC              ; Laser and Missile
+ 102+ 6ADC              ShipLaserPower          equ %11110000
+ 103+ 6ADC              ShipMissileCount        equ %00001111
+ 104+ 6ADC              ShipMissiles1           equ %00000001
+ 105+ 6ADC              ShipMissiles2           equ %00000010
+ 106+ 6ADC              ShipMissiles3           equ %00000011
+ 107+ 6ADC              ShipMissiles4           equ %00000100
+ 108+ 6ADC              ShipMissiles5           equ %00000101
+ 109+ 6ADC              ShipMissiles6           equ %00000110
+ 110+ 6ADC              ShipMissiles7           equ %00000111
+ 111+ 6ADC              ShipMissiles8           equ %00001000
+ 112+ 6ADC              ShipMissiles9           equ %00001001
+ 113+ 6ADC              ShipMissiles10          equ %00001010
+ 114+ 6ADC              ShipMissiles11          equ %00001011
+ 115+ 6ADC              ShipMissiles12          equ %00001100
+ 116+ 6ADC              ShipMissiles13          equ %00001101
+ 117+ 6ADC              ShipMissiles14          equ %00001110
+ 118+ 6ADC              ShipMissiles15          equ %00001111
+ 119+ 6ADC              ; AI Flags  UniverseAIControl
+ 120+ 6ADC              ShipCanAnger            equ %10000000   ; Yes or no
+ 121+ 6ADC              ShipFighterBaySize      equ %01110000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
+ 122+ 6ADC              ShipFighterBaySize1     equ %00010000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
+ 123+ 6ADC              ShipFighterBaySize2     equ %00100000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
+ 124+ 6ADC              ShipFighterBaySize3     equ %00110000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
+ 125+ 6ADC              ShipFighterBaySize4     equ %01000000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
+ 126+ 6ADC              ShipFighterBaySize5     equ %01010000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
+ 127+ 6ADC              ShipFighterBaySizeInf   equ %01110000   ; Infinite fighters (well 255 as thats enough)
+ 128+ 6ADC              ShipFighterType         equ %00001100   ; 4 types 0 = Worm, 1 = Sidewinder, 2 = Viper, 3 = Thargon
+ 129+ 6ADC              ShipFighterWorm         equ %00000000
+ 130+ 6ADC              ShipFighterSidewinder   equ %00000100
+ 131+ 6ADC              ShipFighterViper        equ %00001000
+ 132+ 6ADC              ShipFighterThargon      equ %00001100
+ 133+ 6ADC              ShipUltraHostile        equ %00000010   ; If ultra hostile, will never back down so behaves like a missile
+ 134+ 6ADC              ShipFree                equ $00000011   ; Unused bits at present for later
+ 135+ 6ADC              ; NewBTactics
+ 136+ 6ADC              ShipIsTrader            equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
+ 137+ 6ADC              ShipIsBountyHunter      equ Bit1Only   ;
+ 138+ 6ADC              ShipIsHostile           equ Bit2Only   ; Also used as Angry flag now
+ 139+ 6ADC              ShipIsPirate            equ Bit3Only   ;
+ 140+ 6ADC              ShipIsDocking           equ Bit4Only   ;
+ 141+ 6ADC              ShipIsBystander         equ Bit5Only   ;
+ 142+ 6ADC              ShipIsCop               equ Bit6Only   ;
+ 143+ 6ADC              ShipHasEscapePod        equ Bit7Only   ;
+ 144+ 6ADC              ShipHostileNewBitNbr    equ 2
+ 145+ 6ADC                      DISPLAY "TODO: Add bravery based on rank, new bits and type of ship"
+ 146+ 6ADC
+ 147+ 6ADC              ; UBnkaiatkecm
+ 148+ 6ADC              ;Unused                 equ Bit0Only
+ 149+ 6ADC              ;Unused                 equ Bit1Only
+ 150+ 6ADC              ;Unused                 equ Bit2Only
+ 151+ 6ADC              ShipIsDot               equ Bit3Only
+ 152+ 6ADC              ShipKilled              equ Bit4Only    ; Ship has just been marked as killed so initiate cloud of debris
+ 153+ 6ADC              ShipExploding           equ Bit5Only
+ 154+ 6ADC              ShipIsVisible           equ Bit6Only
+ 155+ 6ADC              ShipAIEnabled           equ Bit7Only   ;
+ 156+ 6ADC
+ 157+ 6ADC
+ 158+ 6ADC              ; UBnkaiakecm 2
+ 159+ 6ADC              ;ShipAngryNewBitNbr      equ 4
+ 160+ 6ADC              ShipExplosionDuration   equ 75         ; amount of frames an explosion lasts for
+ 161+ 6ADC              ShipNotHostile          equ Bit2Clear   ;
+ 162+ 6ADC              ShipIsNotDot            equ Bit3Clear
+ 163+ 6ADC              ShipIsDotBitNbr         equ 3
+ 164+ 6ADC              ShipKilledBitNbr        equ 4
+ 165+ 6ADC              ShipIsVisibleBitNbr     equ 6
+ 166+ 6ADC              ShipIsScoopDockEsc      equ Bit7Only   ;
+ 167+ 6ADC              ShipAIDisabled          equ Bit7Clear
+ 168+ 6ADC              ShipAIEnabledBitNbr     equ 7
+ 169+ 6ADC              ShipExplodingBitNbr     equ 5
+ 170+ 6ADC              ; Equipment Defaults
+ 171+ 6ADC              ECMCounterMax           equ $80
+ 172+ 6ADC              ; Main Loop State
+ 173+ 6ADC              StatePlayerDocked       equ $FF
+ 174+ 6ADC              StateCompletedLaunch    equ $FD
+ 175+ 6ADC              StateInTransition       equ $FE
+ 176+ 6ADC              StateHJumping           equ $FC
+ 177+ 6ADC              StateHEntering          equ $FB
+ 178+ 6ADC              StateCompletedHJump     equ $FA
+ 179+ 6ADC              StateNormal             equ 0
+ 180+ 6ADC              ; Missile Stage flags , $8x = locked to ship id x, $0x = fire at ship id x requested
+ 181+ 6ADC              StageMissileNotTargeting equ $FF
+ 182+ 6ADC              StageMissileTargeting   equ $FE
+ 183+ 6ADC
  184+ 6ADC
- 185+ 6ADC              ; -- game limts
- 186+ 6ADC              MaxNumberOfStars	equ 11
- 187+ 6ADC              ConsoleRefreshInterval  equ 5
- 188+ 6ADC              MaxJunkStation      equ 3
- 189+ 6ADC              MaxJunkFreeSpace    equ 5
- 190+ 6ADC              WarpCoolDownPeriod  equ 90
- 191+ 6ADC
- 192+ 6ADC              ShipTypeSize		equ	32 			;??????? just a guess for now
- 193+ 6ADC              ShipSST				equ 4			; its a space station
- 194+ 6ADC              UniverseBasePage 	equ 70			; Base memory bank for universe Item #0
- 195+ 6ADC              ShipDataBasePage	equ	90			; Needs 2mb upgrade but what the heck
- 196+ 6ADC              ShipCountMax		equ	2			; For now just 2 ships to debug
- 197+ 6ADC              LineLimitPerShip	equ 70			; Max lines per ship
- 198+ 6ADC              FaceLimitPerShip	equ	70			; Same as line limit to simplify some logic
- 199+ 6ADC              ; "NEED TO DEFINE SHIPTYPESIZE TODO"
- 200+ 6ADC
- 201+ 6ADC              ; Memory page managment	(Refers to a memory slot as a place to access data)
- 202+ 6ADC              ShipDataSlot		equ	6			; this may move into rom swap out space later
- 203+ 6ADC              UniverseObjectSlot	equ	7
- 204+ 6ADC
- 205+ 6ADC              KeyForwardsView		equ	$20
- 206+ 6ADC              ; Game specific equates
- 207+ 6ADC              MissileDropHeight   equ 5           ; how far the missile is ejected on launch in y axis
- 208+ 6ADC              WarpSequenceCount   equ 50
- 209+ 6ADC
- 210+ 6ADC              ;...Game Colour Mapping
- 211+ 6ADC              L2DustColour        equ L2ColourGREY_1
- 212+ 6ADC              L2SunScannerBright  equ 252
- 213+ 6ADC              L2SunScanner        equ 180
- 214+ 6ADC              L2DebrisColour      equ L2ColourYELLOW_1
- 215+ 6ADC
- 216+ 6ADC
- 217+ 6ADC              ; Ship Data
- 218+ 6ADC              ;;;;	.XX21	\ -> &5600 \ Table of pointers to ships' data given to XX0
- 219+ 6ADC              ;;;;00 7F			 EQUW &7F00 \ type  1 is #MSL  Missile data on page off bottom of screen
- 220+ 6ADC              ;;;;00 00			 EQUW 0     \ type  2 is #SST  Space Station, Coriolis or Dodo.
- 221+ 6ADC              ;;;;00 00			 EQUW 0     \ type  3 is #ESC  Escape capsule
- 222+ 6ADC              ;;;;00 00			 EQUW 0     \ type  4 is #PLT  Plate, alloys
- 223+ 6ADC              ;;;;00 00			 EQUW 0     \ type  5 is #OIL  Cargo cannister
- 224+ 6ADC              ;;;;00 00			 EQUW 0     \ type  6 is       Boulder
- 225+ 6ADC              ;;;;00 00			 EQUW 0     \ type  7 is #AST  Asteroid
- 226+ 6ADC              ;;;;00 00			 EQUW 0     \ type  8 is #SPL  Splinter, rock.
- 227+ 6ADC              ;;;;00 00			 EQUW 0     \ type  9 is #SHU  Shuttle
- 228+ 6ADC              ;;;;00 00			 EQUW 0     \ type 10 is       Transporter
- 229+ 6ADC              ;;;;00 00			 EQUW 0     \ type 11 is #CYL  Cobra Mk III,  Boa
- 230+ 6ADC              ;;;;00 00			 EQUW 0     \ type 12 is       Python
- 231+ 6ADC              ;;;;00 00			 EQUW 0     \ type 13 is       Last of three traders
- 232+ 6ADC              ;;;;00 00			 EQUW 0     \ type 14 is #ANA  Anaconda
- 233+ 6ADC              ;;;;00 00			 EQUW 0     \ type 15 is #WRM  Worm with Anaconda
- 234+ 6ADC              ;;;;00 00			 EQUW 0     \ type 16 is #COP  Viper
- 235+ 6ADC              ;;;;00 00			 EQUW 0     \ type 17 is       First pirate
- 236+ 6ADC              ;;;;00 00			 EQUW 0     \ type 18 is
- 237+ 6ADC              ;;;;00 00			 EQUW 0     \ type 19 is #KRA  Krait small pirate
- 238+ 6ADC              ;;;;00 00			 EQUW 0     \ type 20 is #ADA  Adder
- 239+ 6ADC              ;;;;00 00			 EQUW 0     \ type 21 is
- 240+ 6ADC              ;;;;00 00			 EQUW 0     \ type 22 is
- 241+ 6ADC              ;;;;00 00			 EQUW 0     \ type 23 is
- 242+ 6ADC              ;;;;00 00			 EQUW 0     \ type 24 is #CYL2 Last strong pirate
- 243+ 6ADC              ;;;;00 00			 EQUW 0     \ type 25 is #ASP  Asp Mk II
- 244+ 6ADC              ;;;;00 00			 EQUW 0     \ type 26 is #FER  Fer de Lance
- 245+ 6ADC              ;;;;00 00			 EQUW 0     \ type 27 is
- 246+ 6ADC              ;;;;00 00			 EQUW 0     \ type 28 is	Last of three bounty hunters
- 247+ 6ADC              ;;;;00 00			 EQUW 0     \ type 29 is #THG  Thargoid
- 248+ 6ADC              ;;;;00 00			 EQUW 0     \ type 30 is #TGL  Thargon
- 249+ 6ADC              ;;;;00 00			 EQUW 0     \ type 31 is #CON  Constrictor
- 250+ 6ADC              ;;;;	.E%	\ -> &563E \ Hull NEWB bits are escpod, cop, inno, ?, pirate, angry, hunter, trader.
- 251+ 6ADC              ;;;;			\ NEWB examples
- 252+ 6ADC              ;;;;\ 21			EQUB &21    \ 0010 0001    9 Shuttle has no escape pod, inno, trader.
- 253+ 6ADC              ;;;;\ 61			EQUB &61    \ 0110 0001   10 Tansporter no escape pod, Cop, inno, trader.
- 254+ 6ADC              ;;;;\ A0			EQUB &A0    \ 1010 0000   11 Cobra has Escape pod, inno, not a trader.
- 255+ 6ADC              ;;;;\ C2			EQUB &C2    \ 1100 0010   16 Viper has Escape pod, Cop, hunter.
- 256+ 6ADC              ;;;;\ 8C			EQUB &8C    \ 1000 1100   19 Krait pirate has escape pod, is pirate and angry.
- 257+ 6ADC
+ 185+ 6ADC              ShipMaxDistance     equ 192
+ 186+ 6ADC              HyperSpaceTimers    equ $0B0B
+ 187+ 6ADC
+ 188+ 6ADC              ; -- game limts
+ 189+ 6ADC              MaxNumberOfStars	equ 11
+ 190+ 6ADC              ConsoleRefreshInterval  equ 5
+ 191+ 6ADC              MaxJunkStation      equ 3
+ 192+ 6ADC              MaxJunkFreeSpace    equ 5
+ 193+ 6ADC              WarpCoolDownPeriod  equ 90
+ 194+ 6ADC
+ 195+ 6ADC              ShipTypeSize		equ	32 			;??????? just a guess for now
+ 196+ 6ADC              ShipSST				equ 4			; its a space station
+ 197+ 6ADC              UniverseBasePage 	equ 70			; Base memory bank for universe Item #0
+ 198+ 6ADC              ShipDataBasePage	equ	90			; Needs 2mb upgrade but what the heck
+ 199+ 6ADC              ShipCountMax		equ	2			; For now just 2 ships to debug
+ 200+ 6ADC              LineLimitPerShip	equ 70			; Max lines per ship
+ 201+ 6ADC              FaceLimitPerShip	equ	70			; Same as line limit to simplify some logic
+ 202+ 6ADC              ; "NEED TO DEFINE SHIPTYPESIZE TODO"
+ 203+ 6ADC
+ 204+ 6ADC              ; Memory page managment	(Refers to a memory slot as a place to access data)
+ 205+ 6ADC              ShipDataSlot		equ	6			; this may move into rom swap out space later
+ 206+ 6ADC              UniverseObjectSlot	equ	7
+ 207+ 6ADC
+ 208+ 6ADC              KeyForwardsView		equ	$20
+ 209+ 6ADC              ; Game specific equates
+ 210+ 6ADC              MissileDropHeight   equ 5           ; how far the missile is ejected on launch in y axis
+ 211+ 6ADC              WarpSequenceCount   equ 50
+ 212+ 6ADC
+ 213+ 6ADC              ;...Game Colour Mapping
+ 214+ 6ADC              L2DustColour        equ L2ColourGREY_1
+ 215+ 6ADC              L2SunScannerBright  equ 252
+ 216+ 6ADC              L2SunScanner        equ 180
+ 217+ 6ADC              L2DebrisColour      equ L2ColourYELLOW_1
+ 218+ 6ADC
+ 219+ 6ADC
+ 220+ 6ADC              ; Ship Data
+ 221+ 6ADC              ;;;;	.XX21	\ -> &5600 \ Table of pointers to ships' data given to XX0
+ 222+ 6ADC              ;;;;00 7F			 EQUW &7F00 \ type  1 is #MSL  Missile data on page off bottom of screen
+ 223+ 6ADC              ;;;;00 00			 EQUW 0     \ type  2 is #SST  Space Station, Coriolis or Dodo.
+ 224+ 6ADC              ;;;;00 00			 EQUW 0     \ type  3 is #ESC  Escape capsule
+ 225+ 6ADC              ;;;;00 00			 EQUW 0     \ type  4 is #PLT  Plate, alloys
+ 226+ 6ADC              ;;;;00 00			 EQUW 0     \ type  5 is #OIL  Cargo cannister
+ 227+ 6ADC              ;;;;00 00			 EQUW 0     \ type  6 is       Boulder
+ 228+ 6ADC              ;;;;00 00			 EQUW 0     \ type  7 is #AST  Asteroid
+ 229+ 6ADC              ;;;;00 00			 EQUW 0     \ type  8 is #SPL  Splinter, rock.
+ 230+ 6ADC              ;;;;00 00			 EQUW 0     \ type  9 is #SHU  Shuttle
+ 231+ 6ADC              ;;;;00 00			 EQUW 0     \ type 10 is       Transporter
+ 232+ 6ADC              ;;;;00 00			 EQUW 0     \ type 11 is #CYL  Cobra Mk III,  Boa
+ 233+ 6ADC              ;;;;00 00			 EQUW 0     \ type 12 is       Python
+ 234+ 6ADC              ;;;;00 00			 EQUW 0     \ type 13 is       Last of three traders
+ 235+ 6ADC              ;;;;00 00			 EQUW 0     \ type 14 is #ANA  Anaconda
+ 236+ 6ADC              ;;;;00 00			 EQUW 0     \ type 15 is #WRM  Worm with Anaconda
+ 237+ 6ADC              ;;;;00 00			 EQUW 0     \ type 16 is #COP  Viper
+ 238+ 6ADC              ;;;;00 00			 EQUW 0     \ type 17 is       First pirate
+ 239+ 6ADC              ;;;;00 00			 EQUW 0     \ type 18 is
+ 240+ 6ADC              ;;;;00 00			 EQUW 0     \ type 19 is #KRA  Krait small pirate
+ 241+ 6ADC              ;;;;00 00			 EQUW 0     \ type 20 is #ADA  Adder
+ 242+ 6ADC              ;;;;00 00			 EQUW 0     \ type 21 is
+ 243+ 6ADC              ;;;;00 00			 EQUW 0     \ type 22 is
+ 244+ 6ADC              ;;;;00 00			 EQUW 0     \ type 23 is
+ 245+ 6ADC              ;;;;00 00			 EQUW 0     \ type 24 is #CYL2 Last strong pirate
+ 246+ 6ADC              ;;;;00 00			 EQUW 0     \ type 25 is #ASP  Asp Mk II
+ 247+ 6ADC              ;;;;00 00			 EQUW 0     \ type 26 is #FER  Fer de Lance
+ 248+ 6ADC              ;;;;00 00			 EQUW 0     \ type 27 is
+ 249+ 6ADC              ;;;;00 00			 EQUW 0     \ type 28 is	Last of three bounty hunters
+ 250+ 6ADC              ;;;;00 00			 EQUW 0     \ type 29 is #THG  Thargoid
+ 251+ 6ADC              ;;;;00 00			 EQUW 0     \ type 30 is #TGL  Thargon
+ 252+ 6ADC              ;;;;00 00			 EQUW 0     \ type 31 is #CON  Constrictor
+ 253+ 6ADC              ;;;;	.E%	\ -> &563E \ Hull NEWB bits are escpod, cop, inno, ?, pirate, angry, hunter, trader.
+ 254+ 6ADC              ;;;;			\ NEWB examples
+ 255+ 6ADC              ;;;;\ 21			EQUB &21    \ 0010 0001    9 Shuttle has no escape pod, inno, trader.
+ 256+ 6ADC              ;;;;\ 61			EQUB &61    \ 0110 0001   10 Tansporter no escape pod, Cop, inno, trader.
+ 257+ 6ADC              ;;;;\ A0			EQUB &A0    \ 1010 0000   11 Cobra has Escape pod, inno, not a trader.
+ 258+ 6ADC              ;;;;\ C2			EQUB &C2    \ 1100 0010   16 Viper has Escape pod, Cop, hunter.
+ 259+ 6ADC              ;;;;\ 8C			EQUB &8C    \ 1000 1100   19 Krait pirate has escape pod, is pirate and angry.
+ 260+ 6ADC
 # file closed: ../../Variables/constant_equates.asm
 1340  6ADC                  INCLUDE "../../Variables/general_variables.asm"
 # file opened: ../../Variables/general_variables.asm
@@ -7807,7 +7812,7 @@
    4+ 73FA              ; Calculate K(3 2 1 0) = (A P+1 P) / (z_sign z_hi z_lo) where zsign hi lo is in DE with zsign leading hi
    5+ 73FA 00 00 00 00  varQRS                 DS      4
    6+ 73FE 00 00 00     varAPP                 DS     3
-   7+ 7401 00           Rvar                   DS     1
+   7+ 7401 00           RvarDiv                DS     1
    8+ 7402
    9+ 7402                                  DISPLAY "TODO:  neds rewrite of whoel DIDV3B2"
   10+ 7402              ;; NEEDS REWRITE TODO OF WHOLE DIVD3B2
@@ -7831,7 +7836,7 @@
   23+ 740F CB 10                                rl      b                       ; ROL R                  \ Rotate the counter in R to the left, and catch the result bit into bit 0 (which will be a 0 if we didn't do the subtraction, or 1 if we did)
   24+ 7411 DA 02 74                             jp      c, .LL31_6502            ; BCS LL31               \ If we still have set bits in R, loop back to LL31 to do the next iteration of 7
   25+ 7414 78                                   ld      a,b
-  26+ 7415 32 01 74                             ld      (Rvar),a
+  26+ 7415 32 01 74                             ld      (RvarDiv),a
   27+ 7418 C9                                   ret                             ; RTS                    \ R left with remainder of division
   28+ 7419 91           .LL29_6502:             sub     c                       ; SBC Q                  \ A >= Q, so set A = A - Q
   29+ 741A                                      SetCarryFlag                    ; SEC                    \ Set the C flag to rotate into the result in R
@@ -7839,7 +7844,7 @@
   30+ 741B CB 10                                rl      b                       ; ROL R                  \ Rotate the counter in R to the left, and catch the result bit into bit 0 (which will be a 0 if we didn't do the subtraction, or 1 if we did)
   31+ 741D DA 02 74                             jp      c, .LL31_6502            ; BCS LL31               \ If we still have set bits in R, loop back to LL31 to do the next iteration of 7
   32+ 7420 78                                   ld      a,b                     ; RTS                    \ Return from the subroutine with R containing the
-  33+ 7421 32 01 74                             ld      (Rvar),a                ; .
+  33+ 7421 32 01 74                             ld      (RvarDiv),a                ; .
   34+ 7424 C9                                   ret                             ; .                      \ remainder of the division
   35+ 7425 3E FF        .LL2_6502:              ld      a,$FF                   ; LDA #255               \ The division is very close to 1, so return the closest
   36+ 7427 32 17 6C                             ld      (varR),a                ; STA R                  \ possible answer to 256, i.e. R = 255
@@ -10312,69 +10317,8 @@
   15+ 7FC1 00
   16+ 7FC2
   17+ 7FC2              txt_status_colour		equ $FF
-  18+ 7FC2
-  19+ 7FC2              ;;DEFUNCTprint_boiler_text_l2:
-  20+ 7FC2              ;;DEFUNCT; ">print_boilder_text hl = text structure, b = message count"
-  21+ 7FC2              ;;DEFUNCTBoilerTextLoop:
-  22+ 7FC2              ;;DEFUNCT	push		bc			; Save Message Count loop value
-  23+ 7FC2              ;;DEFUNCT	ld			c,(hl)		; Get Row into b
-  24+ 7FC2              ;;DEFUNCT	inc			hl
-  25+ 7FC2              ;;DEFUNCT	ld			b,(hl)		; Get Col into b
-  26+ 7FC2              ;;DEFUNCT	inc			hl
-  27+ 7FC2              ;;DEFUNCT	ld			e,(hl)		; Get text address Lo into E
-  28+ 7FC2              ;;DEFUNCT	inc			hl
-  29+ 7FC2              ;;DEFUNCT	ld			d,(hl)		; Get text address Hi into E
-  30+ 7FC2              ;;DEFUNCT	inc			hl
-  31+ 7FC2              ;;DEFUNCT	push		hl			; Save present HL to stack as this is the address for the next message
-  32+ 7FC2              ;;DEFUNCT	ex			de,hl		; now hl = address of text data
-  33+ 7FC2              ;;DEFUNCT	ld			e,txt_status_colour
-  34+ 7FC2              ;;DEFUNCT    MMUSelectLayer2
-  35+ 7FC2              ;;DEFUNCT	call		l1_print_at
-  36+ 7FC2              ;;DEFUNCT	pop			hl
-  37+ 7FC2              ;;DEFUNCT	pop			bc
-  38+ 7FC2              ;;DEFUNCT	djnz		BoilerTextLoop
-  39+ 7FC2              ;;DEFUNCT	ret
-  40+ 7FC2
-  41+ 7FC2
-  42+ 7FC2              ;:DEFUNCT print_boiler_text:
-  43+ 7FC2              ;:DEFUNCT ; ">print_boilder_text hl = text structure, b = message count"
-  44+ 7FC2              ;:DEFUNCT .BoilerTextLoop:
-  45+ 7FC2              ;:DEFUNCT 	push		bc			; Save Message Count loop value
-  46+ 7FC2              ;:DEFUNCT 	ld			c,(hl)		; Get Row into b
-  47+ 7FC2              ;:DEFUNCT 	inc			hl
-  48+ 7FC2              ;:DEFUNCT 	ld			b,(hl)		; Get Col into b
-  49+ 7FC2              ;:DEFUNCT 	inc			hl
-  50+ 7FC2              ;:DEFUNCT 	ld			e,(hl)		; Get text address Lo into E
-  51+ 7FC2              ;:DEFUNCT 	inc			hl
-  52+ 7FC2              ;:DEFUNCT 	ld			d,(hl)		; Get text address Hi into E
-  53+ 7FC2              ;:DEFUNCT 	inc			hl
-  54+ 7FC2              ;:DEFUNCT 	push		hl			; Save present HL to stack as this is the address for the next message
-  55+ 7FC2              ;:DEFUNCT 	ex			de,hl		; now hl = address of text data
-  56+ 7FC2              ;:DEFUNCT 	ld			e,txt_status_colour
-  57+ 7FC2              ;:DEFUNCT 	push		bc
-  58+ 7FC2              ;:DEFUNCT 	pop			de
-  59+ 7FC2              ;:DEFUNCT 	call		l1_print_at
-  60+ 7FC2              ;:DEFUNCT 	pop			hl
-  61+ 7FC2              ;:DEFUNCT 	pop			bc
-  62+ 7FC2              ;:DEFUNCT 	djnz		.BoilerTextLoop
-  63+ 7FC2              ;:DEFUNCT 	ret
-  64+ 7FC2
-  65+ 7FC2              ;;DEFUNCTGetFuelLevel:           INCLUDE "Menus/get_fuel_level_inlineinclude.asm"
-  66+ 7FC2
-  67+ 7FC2              ;;DEFUNCTGetCash:                ld      hl,(Cash)
-  68+ 7FC2              ;;DEFUNCT                        ex      de,hl
-  69+ 7FC2              ;;DEFUNCT                        ld      ix,(Cash+2)
-  70+ 7FC2              ;;DEFUNCT                        ld		iy,txt_cash_amount
-  71+ 7FC2              ;;DEFUNCT                        call 	DispDEIXtoIY	; This will write out with 0 termination after last digit
-  72+ 7FC2              ;;DEFUNCT.ShiftDecimalDigit:     ld		a,(IY+0)				;Push last digit to post decimal
-  73+ 7FC2              ;;DEFUNCT                        ld		(txt_cash_fraction),a
-  74+ 7FC2              ;;DEFUNCT.UpdateInteger:         ld		hl,txt_cash_amount+1	; Now was there only 1 digit
-  75+ 7FC2              ;;DEFUNCT                        ld		a,(hl)					; if so we leave it alone so its "0.0"
-  76+ 7FC2              ;;DEFUNCT                        cp		0
-  77+ 7FC2              ;;DEFUNCT                        ret		z
-  78+ 7FC2              ;;DEFUNCT                        ld		(IY),0					; Else we erase last digit as it went to fraction
-  79+ 7FC2              ;;DEFUNCT                        ret
-  80+ 7FC2
+  18+ 7FC2              txt_highlight_colour    equ $D0
+  19+ 7FC2
 # file closed: ../../Menus/common_menu.asm
 1366  7FC2              MainNonBankedCodeEnd:
 1367  7FC2                  DISPLAY "Main Non Banked Code Ends at ",$
@@ -10555,267 +10499,316 @@
   50+ E10A 30 2E 30 30
   50+ E10E 00
   51+ E10F 2A 2A 00     HexU8NaN:        DB "**",0
-  52+ E112
-  53+ E112              ; prints + sign for bit 7 clear in a else - sign for bit 7 set, Load to buffer location in ix
-  54+ E112 CB 7F        l1_buffer_sign_at_ix:   bit     7,a
-  55+ E114 CA 1D E1                             jp      z,.PrintPlus
-  56+ E117 3E 2D        .PrintMinus:            ld      a,"-"
-  57+ E119 DD 77 00                             ld      (ix+0),a
-  58+ E11C C9                                   ret
-  59+ E11D 3E 2B        .PrintPlus:             ld      a,"+"
-  60+ E11F DD 77 00                             ld      (ix+0),a
-  61+ E122 C9                                   ret
-  62+ E123
-  63+ E123 30 31 32 33  HexMapping:     DB "0123456789ABCDEF"
-  63+ E127 34 35 36 37
-  63+ E12B 38 39 41 42
-  63+ E12F 43 44 45 46
-  64+ E133              ; writes hex 8 bit to ix buffer position
-  65+ E133 C5 E5        l1_buffer_hex_8_at_ix:  push    bc,,hl
-  66+ E135 47                                   ld      b,a
-  67+ E136 ED 23                                swapnib
-  68+ E138 E6 0F                                and     $0F
-  69+ E13A 21 23 E1                             ld      hl,HexMapping
-  70+ E13D ED 31                                add     hl,a
-  71+ E13F 7E                                   ld      a,(hl)
-  72+ E140 DD 77 00                             ld      (ix+0),a
-  73+ E143 21 23 E1                             ld      hl,HexMapping
-  74+ E146 78                                   ld      a,b
-  75+ E147 E6 0F                                and     $0F
-  76+ E149 ED 31                                add     hl,a
-  77+ E14B 7E                                   ld      a,(hl)
-  78+ E14C DD 77 01                             ld      (ix+1),a
-  79+ E14F E1 C1                                pop     bc,,hl
-  80+ E151 C9                                   ret
-  81+ E152
-  82+ E152              ; prints 16 bit lead sign hex value in HLA at char pos DE
-  83+ E152 F5           l1_print_s24_hex_at_char: push  af                      ; first off do sign
-  84+ E153 DD 21 06 E1                            ld    ix,HexS24Char
-  85+ E157 7C                                     ld    a,h
-  86+ E158 CD 12 E1                               call  l1_buffer_sign_at_ix
-  87+ E15B F1                                     pop   af                      ; now do hl as an unsigned by clearing bit 7
-  88+ E15C DD 23                                  inc   ix                      ; move to actual digits
-  89+ E15E F5                                     push  af
-  90+ E15F 7C                                     ld    a,h
-  91+ E160 CB BF                                  res   7,a                     ; clear sign bit regardless
-  92+ E162 CD 33 E1                               call  l1_buffer_hex_8_at_ix
-  93+ E165 DD 23                                  inc   ix
-  94+ E167 DD 23                                  inc   ix
-  95+ E169 7D                                     ld    a,l
-  96+ E16A CD 33 E1                               call  l1_buffer_hex_8_at_ix
-  97+ E16D DD 23                                  inc   ix
-  98+ E16F DD 23                                  inc   ix
-  99+ E171 DD 23                                  inc   ix                      ; also skip decimal point
- 100+ E173 F1                                     pop   af
- 101+ E174 CD 33 E1                               call  l1_buffer_hex_8_at_ix
- 102+ E177 21 06 E1                               ld    hl,HexS24Char           ; by here de is still unaffected
- 103+ E17A CD D7 E0                               call  l1_print_at_char
- 104+ E17D C9                                     ret
- 105+ E17E              ; prints 16 bit lead sign hex value in HL at char pos DE
- 106+ E17E DD 21 00 E1  l1_print_s16_hex_at_char: ld    ix,HexS16Char
- 107+ E182 7C                                     ld    a,h
- 108+ E183 CD 12 E1                               call  l1_buffer_sign_at_ix
- 109+ E186 DD 23                                  inc   ix                      ; move to actual digits
- 110+ E188 7C                                     ld    a,h
- 111+ E189 CB BF                                  res   7,a
- 112+ E18B CD 33 E1                               call  l1_buffer_hex_8_at_ix
- 113+ E18E DD 23                                  inc   ix
- 114+ E190 DD 23                                  inc   ix
- 115+ E192 7D                                     ld    a,l
- 116+ E193 CD 33 E1                               call  l1_buffer_hex_8_at_ix
- 117+ E196 21 00 E1                               ld    hl,HexS16Char           ; by here de is still unaffected
- 118+ E199 CD D7 E0                               call  l1_print_at_char
- 119+ E19C C9                                     ret
- 120+ E19D              ; prints 16 bit unsigned hext value in HL at char pos DE
- 121+ E19D DD 21 F7 E0  l1_print_u16_hex_at_char: ld    ix,HexU16Char
- 122+ E1A1 7C                                     ld    a,h
- 123+ E1A2 CD 33 E1                               call  l1_buffer_hex_8_at_ix
- 124+ E1A5 DD 23                                  inc   ix
- 125+ E1A7 DD 23                                  inc   ix
- 126+ E1A9 7D                                     ld    a,l
- 127+ E1AA CD 33 E1                               call  l1_buffer_hex_8_at_ix
- 128+ E1AD 21 F7 E0                               ld    hl,HexU16Char           ; by here de is still unaffected
- 129+ E1B0 CD D7 E0                               call  l1_print_at_char
- 130+ E1B3 C9                                     ret
- 131+ E1B4              ; prints 8 bit signed hext value in a at char pos DE
- 132+ E1B4 DD 21 FC E0  l1_print_s8_hex_at_char:  ld    ix,HexS8Char
- 133+ E1B8 67                                     ld    h,a                     ; save a into h
- 134+ E1B9 CD 12 E1                               call  l1_buffer_sign_at_ix
- 135+ E1BC DD 23                                  inc   ix                      ; move to actual digits
- 136+ E1BE 7C                                     ld    a,h                     ; get a back
- 137+ E1BF CB BF                                  res   7,a                     ; clear sign bit regardless
- 138+ E1C1 CD 33 E1                               call  l1_buffer_hex_8_at_ix
- 139+ E1C4 21 FC E0                               ld    hl,HexS8Char           ; by here de is still unaffected
- 140+ E1C7 CD D7 E0                               call  l1_print_at_char
- 141+ E1CA C9                                     ret
- 142+ E1CB              ; prints 8 bit 2s compliment value in a at char pos DE
- 143+ E1CB DD 21 FC E0  l1_print_82c_hex_at_char: ld    ix,HexS8Char
- 144+ E1CF 67                                     ld    h,a                     ; save a into h
- 145+ E1D0 CD 12 E1                               call  l1_buffer_sign_at_ix
- 146+ E1D3 DD 23                                  inc   ix                      ; move to actual digits
- 147+ E1D5 7C                                     ld    a,h                     ; get a back
- 148+ E1D6 CB 7F                                  bit   7,a
- 149+ E1D8 CA DD E1                               jp    z,.NoNeg
- 150+ E1DB ED 44                                  neg
- 151+ E1DD CD 33 E1     .NoNeg:                   call  l1_buffer_hex_8_at_ix
- 152+ E1E0 21 FC E0                               ld    hl,HexS8Char           ; by here de is still unaffected
- 153+ E1E3 CD D7 E0                               call  l1_print_at_char
- 154+ E1E6 C9                                     ret
- 155+ E1E7
- 156+ E1E7              ; prints Lead Sign byte 8 bit signed hex value in hl at char pos DE, reuse HexS8Char buffer
- 157+ E1E7 DD 21 FC E0  l1_print_s08_hex_at_char: ld    ix,HexS8Char
- 158+ E1EB CD 12 E1                               call  l1_buffer_sign_at_ix    ; h holds sign bit
- 159+ E1EE DD 23                                  inc   ix                      ; move to actual digits
- 160+ E1F0 7D                                     ld    a,l                     ; l holds value
- 161+ E1F1 CD 33 E1                               call  l1_buffer_hex_8_at_ix
- 162+ E1F4 21 FC E0                               ld    hl,HexS8Char           ; by here de is still unaffected
- 163+ E1F7 CD D7 E0                               call  l1_print_at_char
- 164+ E1FA C9                                     ret
- 165+ E1FB              ; prints 8 bit signed hext value in a at char pos DE
- 166+ E1FB DD 21 F4 E0  l1_print_u8_hex_at_char:  ld    ix,HexU8Char
- 167+ E1FF CD 33 E1                               call  l1_buffer_hex_8_at_ix
- 168+ E202 21 F4 E0                               ld    hl,HexU8Char           ; by here de is still unaffected
- 169+ E205 CD D7 E0                               call  l1_print_at_char
- 170+ E208 C9                                     ret
- 171+ E209 2B 00        l1_PlusSign:              DB      "+",0
- 172+ E20B 2D 00        l1_MinusSign:             DB      "-",0
- 173+ E20D 20 00        l1_ClearSign:             DB      " ",0
- 174+ E20F              ; Displays sign byte in A at DE
- 175+ E20F FE 80        l1_printSignByte:         cp      $80
- 176+ E211 C2 27 E2                               jp      nz,.DisplayPlus
- 177+ E214 FE 01                                  cp      1
- 178+ E216 C2 20 E2                               jp      nz,.DisplayMinus
- 179+ E219 21 0D E2     .DisplayClear:            ld      hl,l1_ClearSign
- 180+ E21C CD D7 E0                               call    l1_print_at_char
- 181+ E21F C9                                     ret
- 182+ E220 21 0B E2     .DisplayMinus             ld      hl,l1_MinusSign
- 183+ E223 CD D7 E0                               call    l1_print_at_char
- 184+ E226 C9                                     ret
- 185+ E227 21 09 E2     .DisplayPlus:             ld      hl,l1_PlusSign
- 186+ E22A CD D7 E0                               call    l1_print_at_char
- 187+ E22D C9                                     ret
- 188+ E22E
- 189+ E22E 21 0F E1     l1_print_u8_nan_at_char:  ld    hl,HexU8NaN
- 190+ E231 CD D7 E0                               call  l1_print_at_char
- 191+ E234 C9                                     ret
- 192+ E235
- 193+ E235
- 194+ E235              ;l1_print_at_wrap:
- 195+ E235              ;; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
- 196+ E235              ;	ld      iyh,e
- 197+ E235              ;.PrintLoop:
- 198+ E235              ;	ld		a,(hl)
- 199+ E235              ;	cp		0
- 200+ E235              ;	ret		z
- 201+ E235              ;.CountWordCharLen
- 202+ E235              ;; Need to change to word wrap, so it will loop through string as before
- 203+ E235              ;; but read up until a null or space, take the character count * 8 for pixels
- 204+ E235              ;; if that is > 238 then force a premature line wrap
- 205+ E235              ;
- 206+ E235              ;
- 207+ E235              ;    push    iy
- 208+ E235              ;    call	l1_print_char
- 209+ E235              ;    pop     iy
- 210+ E235              ;	inc		hl							; move 1 message character right
- 211+ E235              ;	ld		a,e
- 212+ E235              ;    cp      238
- 213+ E235              ;    jr      nc,.NextLine
- 214+ E235              ;	add		a,8
- 215+ E235              ;	ld		e,a							; move 1 screen character right
- 216+ E235              ;	jr		.PrintLoop
- 217+ E235              ;.Clearstackandfinish:
- 218+ E235              ;	pop		de
- 219+ E235              ;	ret
- 220+ E235              ;.NextLine:
- 221+ E235              ;    ld      a,(hl)
- 222+ E235              ;    cp      " "
- 223+ E235              ;    ld      e,iyh
- 224+ E235              ;    ld      a,d
- 225+ E235              ;    add     a,8
- 226+ E235              ;    ld      d,a
- 227+ E235              ;    jr		.PrintLoop
- 228+ E235
- 229+ E235              ; Counts next word at hl, uses e and forces a wrap if it would over flow puts value in c
- 230+ E235 E5           L1LenWordAtHL:          push    hl
- 231+ E236 D5                                   push    de
- 232+ E237 7E           .CountLoop:             ld      a,(hl)
- 233+ E238 FE 00                                cp      0
- 234+ E23A 28 0F                                jr      z,.CountDone
- 235+ E23C FE 20                                cp      32
- 236+ E23E 28 0B                                jr      z,.CountDone
- 237+ E240 7B                                   ld      a,e
- 238+ E241 C6 08                                add     a,8
- 239+ E243 5F                                   ld      e,a
- 240+ E244 FE EE                                cp      238
- 241+ E246 30 07                                jr      nc,.TooLong
- 242+ E248 23                                   inc     hl
- 243+ E249 18 EC                                jr      .CountLoop
- 244+ E24B D1           .CountDone:             pop     de
- 245+ E24C E1                                   pop     hl
- 246+ E24D AF                                   xor     a
- 247+ E24E C9                                   ret
- 248+ E24F D1           .TooLong                pop     de
- 249+ E250 E1                                   pop     hl
- 250+ E251 3E FF                                ld      a,$FF
- 251+ E253 C9                                   ret
- 252+ E254
- 253+ E254 7E           L1PrintWordAtHL:        ld      a,(hl)
- 254+ E255 FE 00                                cp      0
- 255+ E257 C8                                   ret     z
- 256+ E258 FE 20                                cp      32
- 257+ E25A 28 0F                                jr      z,.ItsASpace
- 258+ E25C FD E5                                push    iy
- 259+ E25E CD BA E0                             call	l1_print_char
- 260+ E261 FD E1                                pop     iy
- 261+ E263 7B                                   ld      a,e
- 262+ E264 C6 08                                add     a,8
- 263+ E266 5F                                   ld      e,a
- 264+ E267 23                                   inc     hl
- 265+ E268 C3 54 E2                             jp      L1PrintWordAtHL
- 266+ E26B 23           .ItsASpace:             inc     hl      ;  Just a bodge for now
- 267+ E26C 7B                                   ld      a,e
- 268+ E26D C6 08                                add     a,8
- 269+ E26F 5F                                   ld      e,a
- 270+ E270 C9                                   ret
- 271+ E271
- 272+ E271
- 273+ E271              ; print at based whole character positions DE=yx, HL = message Addr
- 274+ E271              ;
- 275+ E271 CB 22        l1_print_at_char_wrap:  sla     d       ; Convert D from char to pixel
- 276+ E273 CB 22                                sla     d       ; by muliplying by 8
- 277+ E275 CB 22                                sla     d       ;
- 278+ E277              ; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
- 279+ E277              ; Now has full word level wrapping
- 280+ E277 FD 63        l1_print_at_wrap:       ld      iyh,e
- 281+ E279 7E           .PrintLoop:             ld		a,(hl)
- 282+ E27A FE 00                                cp		0
- 283+ E27C C8                                   ret		z
- 284+ E27D CD 35 E2     .CountWordCharLen:      call    L1LenWordAtHL
- 285+ E280 FE FF                                cp      $FF
- 286+ E282 28 06                                jr      z,.WrapNextLine
- 287+ E284 CD 54 E2     .NotTooLong:            call    L1PrintWordAtHL
- 288+ E287              ; Need to change to word wrap, so it will loop through string as before
- 289+ E287              ; but read up until a null or space, take the character count * 8 for pixels
- 290+ E287              ; if that is > 238 then force a premature line wrap
- 291+ E287 18 F0                                jr		.PrintLoop
- 292+ E289              .Clearstackandfinish:   ;op		de
- 293+ E289 C9                                   ret
- 294+ E28A              .WrapNextLine:
- 295+ E28A FD 5C        .NextLine:              ld      e,iyh
- 296+ E28C 7A                                   ld      a,d
- 297+ E28D C6 08                                add     a,8
- 298+ E28F 57                                   ld      d,a
- 299+ E290 18 E7                                jr		.PrintLoop
- 300+ E292
- 301+ E292
+  52+ E112 30 30 30 30  Bin8Bit:         DB "00000000",0
+  52+ E116 30 30 30 30
+  52+ E11A 00
+  53+ E11B              ; prints + sign for bit 7 clear in a else - sign for bit 7 set, Load to buffer location in ix
+  54+ E11B CB 7F        l1_buffer_sign_at_ix:   bit     7,a
+  55+ E11D CA 26 E1                             jp      z,.PrintPlus
+  56+ E120 3E 2D        .PrintMinus:            ld      a,"-"
+  57+ E122 DD 77 00                             ld      (ix+0),a
+  58+ E125 C9                                   ret
+  59+ E126 3E 2B        .PrintPlus:             ld      a,"+"
+  60+ E128 DD 77 00                             ld      (ix+0),a
+  61+ E12B C9                                   ret
+  62+ E12C
+  63+ E12C 30 31 32 33  HexMapping:     DB "0123456789ABCDEF"
+  63+ E130 34 35 36 37
+  63+ E134 38 39 41 42
+  63+ E138 43 44 45 46
+  64+ E13C              ; writes hex 8 bit to ix buffer position
+  65+ E13C C5 E5        l1_buffer_hex_8_at_ix:  push    bc,,hl
+  66+ E13E 47                                   ld      b,a
+  67+ E13F ED 23                                swapnib
+  68+ E141 E6 0F                                and     $0F
+  69+ E143 21 2C E1                             ld      hl,HexMapping
+  70+ E146 ED 31                                add     hl,a
+  71+ E148 7E                                   ld      a,(hl)
+  72+ E149 DD 77 00                             ld      (ix+0),a
+  73+ E14C 21 2C E1                             ld      hl,HexMapping
+  74+ E14F 78                                   ld      a,b
+  75+ E150 E6 0F                                and     $0F
+  76+ E152 ED 31                                add     hl,a
+  77+ E154 7E                                   ld      a,(hl)
+  78+ E155 DD 77 01                             ld      (ix+1),a
+  79+ E158 E1 C1                                pop     bc,,hl
+  80+ E15A C9                                   ret
+  81+ E15B F5 C5 D5 E5  l1_print_bin8_at_char:    push  af,,bc,,de,,hl
+  82+ E15F DD 21 12 E1                            ld    ix,Bin8Bit
+  83+ E163 06 08                                  ld    b,8
+  84+ E165 CB 27        .WriteLoop:               sla   a
+  85+ E167 38 05                                  jr    c,.ItsaOne
+  86+ E169 0E 30        .ItsAZero:                ld    c,'0'
+  87+ E16B C3 70 E1                               jp    .DoWrite
+  88+ E16E 0E 31        .ItsaOne:                 ld    c,'1'
+  89+ E170 DD 71 00     .DoWrite:                 ld    (ix+0),c
+  90+ E173 DD 23                                  inc   ix
+  91+ E175 10 EE                                  djnz  .WriteLoop
+  92+ E177 E1 D1 C1 F1                            pop   af,,bc,,de,,hl
+  93+ E17B 21 12 E1                               ld    hl,Bin8Bit
+  94+ E17E CD D7 E0                               call  l1_print_at_char
+  95+ E181 C9                                     ret
+  96+ E182
+  97+ E182 F5 C5 D5 E5  l1_print_bin8_r2l_at_char:push  af,,bc,,de,,hl
+  98+ E186 DD 21 12 E1                            ld    ix,Bin8Bit
+  99+ E18A 06 08                                  ld    b,8
+ 100+ E18C CB 3F        .WriteLoop:               srl   a
+ 101+ E18E 38 05                                  jr    c,.ItsaOne
+ 102+ E190 0E 30        .ItsAZero:                ld    c,'0'
+ 103+ E192 C3 97 E1                               jp    .DoWrite
+ 104+ E195 0E 31        .ItsaOne:                 ld    c,'1'
+ 105+ E197 DD 71 00     .DoWrite:                 ld    (ix+0),c
+ 106+ E19A DD 23                                  inc   ix
+ 107+ E19C 10 EE                                  djnz  .WriteLoop
+ 108+ E19E E1 D1 C1 F1                            pop   af,,bc,,de,,hl
+ 109+ E1A2 21 12 E1                               ld    hl,Bin8Bit
+ 110+ E1A5 CD D7 E0                               call  l1_print_at_char
+ 111+ E1A8 C9                                     ret
+ 112+ E1A9
+ 113+ E1A9 F5 C5 D5 E5  l1_print_bin8_l2r_at_char:push  af,,bc,,de,,hl
+ 114+ E1AD DD 21 12 E1                            ld    ix,Bin8Bit
+ 115+ E1B1 06 08                                  ld    b,8
+ 116+ E1B3 CB 27        .WriteLoop:               sla   a
+ 117+ E1B5 38 05                                  jr    c,.ItsaOne
+ 118+ E1B7 0E 30        .ItsAZero:                ld    c,'0'
+ 119+ E1B9 C3 BE E1                               jp    .DoWrite
+ 120+ E1BC 0E 31        .ItsaOne:                 ld    c,'1'
+ 121+ E1BE DD 71 00     .DoWrite:                 ld    (ix+0),c
+ 122+ E1C1 DD 23                                  inc   ix
+ 123+ E1C3 10 EE                                  djnz  .WriteLoop
+ 124+ E1C5 E1 D1 C1 F1                            pop   af,,bc,,de,,hl
+ 125+ E1C9 21 12 E1                               ld    hl,Bin8Bit
+ 126+ E1CC CD D7 E0                               call  l1_print_at_char
+ 127+ E1CF C9                                     ret
+ 128+ E1D0
+ 129+ E1D0              ; prints 16 bit lead sign hex value in HLA at char pos DE
+ 130+ E1D0 F5           l1_print_s24_hex_at_char: push  af                      ; first off do sign
+ 131+ E1D1 DD 21 06 E1                            ld    ix,HexS24Char
+ 132+ E1D5 7C                                     ld    a,h
+ 133+ E1D6 CD 1B E1                               call  l1_buffer_sign_at_ix
+ 134+ E1D9 F1                                     pop   af                      ; now do hl as an unsigned by clearing bit 7
+ 135+ E1DA DD 23                                  inc   ix                      ; move to actual digits
+ 136+ E1DC F5                                     push  af
+ 137+ E1DD 7C                                     ld    a,h
+ 138+ E1DE CB BF                                  res   7,a                     ; clear sign bit regardless
+ 139+ E1E0 CD 3C E1                               call  l1_buffer_hex_8_at_ix
+ 140+ E1E3 DD 23                                  inc   ix
+ 141+ E1E5 DD 23                                  inc   ix
+ 142+ E1E7 7D                                     ld    a,l
+ 143+ E1E8 CD 3C E1                               call  l1_buffer_hex_8_at_ix
+ 144+ E1EB DD 23                                  inc   ix
+ 145+ E1ED DD 23                                  inc   ix
+ 146+ E1EF DD 23                                  inc   ix                      ; also skip decimal point
+ 147+ E1F1 F1                                     pop   af
+ 148+ E1F2 CD 3C E1                               call  l1_buffer_hex_8_at_ix
+ 149+ E1F5 21 06 E1                               ld    hl,HexS24Char           ; by here de is still unaffected
+ 150+ E1F8 CD D7 E0                               call  l1_print_at_char
+ 151+ E1FB C9                                     ret
+ 152+ E1FC              ; prints 16 bit lead sign hex value in HL at char pos DE
+ 153+ E1FC DD 21 00 E1  l1_print_s16_hex_at_char: ld    ix,HexS16Char
+ 154+ E200 7C                                     ld    a,h
+ 155+ E201 CD 1B E1                               call  l1_buffer_sign_at_ix
+ 156+ E204 DD 23                                  inc   ix                      ; move to actual digits
+ 157+ E206 7C                                     ld    a,h
+ 158+ E207 CB BF                                  res   7,a
+ 159+ E209 CD 3C E1                               call  l1_buffer_hex_8_at_ix
+ 160+ E20C DD 23                                  inc   ix
+ 161+ E20E DD 23                                  inc   ix
+ 162+ E210 7D                                     ld    a,l
+ 163+ E211 CD 3C E1                               call  l1_buffer_hex_8_at_ix
+ 164+ E214 21 00 E1                               ld    hl,HexS16Char           ; by here de is still unaffected
+ 165+ E217 CD D7 E0                               call  l1_print_at_char
+ 166+ E21A C9                                     ret
+ 167+ E21B              ; prints 16 bit unsigned hext value in HL at char pos DE
+ 168+ E21B DD 21 F7 E0  l1_print_u16_hex_at_char: ld    ix,HexU16Char
+ 169+ E21F 7C                                     ld    a,h
+ 170+ E220 CD 3C E1                               call  l1_buffer_hex_8_at_ix
+ 171+ E223 DD 23                                  inc   ix
+ 172+ E225 DD 23                                  inc   ix
+ 173+ E227 7D                                     ld    a,l
+ 174+ E228 CD 3C E1                               call  l1_buffer_hex_8_at_ix
+ 175+ E22B 21 F7 E0                               ld    hl,HexU16Char           ; by here de is still unaffected
+ 176+ E22E CD D7 E0                               call  l1_print_at_char
+ 177+ E231 C9                                     ret
+ 178+ E232              ; prints 8 bit signed hext value in a at char pos DE
+ 179+ E232 DD 21 FC E0  l1_print_s8_hex_at_char:  ld    ix,HexS8Char
+ 180+ E236 67                                     ld    h,a                     ; save a into h
+ 181+ E237 CD 1B E1                               call  l1_buffer_sign_at_ix
+ 182+ E23A DD 23                                  inc   ix                      ; move to actual digits
+ 183+ E23C 7C                                     ld    a,h                     ; get a back
+ 184+ E23D CB BF                                  res   7,a                     ; clear sign bit regardless
+ 185+ E23F CD 3C E1                               call  l1_buffer_hex_8_at_ix
+ 186+ E242 21 FC E0                               ld    hl,HexS8Char           ; by here de is still unaffected
+ 187+ E245 CD D7 E0                               call  l1_print_at_char
+ 188+ E248 C9                                     ret
+ 189+ E249              ; prints 8 bit 2s compliment value in a at char pos DE
+ 190+ E249 DD 21 FC E0  l1_print_82c_hex_at_char: ld    ix,HexS8Char
+ 191+ E24D 67                                     ld    h,a                     ; save a into h
+ 192+ E24E CD 1B E1                               call  l1_buffer_sign_at_ix
+ 193+ E251 DD 23                                  inc   ix                      ; move to actual digits
+ 194+ E253 7C                                     ld    a,h                     ; get a back
+ 195+ E254 CB 7F                                  bit   7,a
+ 196+ E256 CA 5B E2                               jp    z,.NoNeg
+ 197+ E259 ED 44                                  neg
+ 198+ E25B CD 3C E1     .NoNeg:                   call  l1_buffer_hex_8_at_ix
+ 199+ E25E 21 FC E0                               ld    hl,HexS8Char           ; by here de is still unaffected
+ 200+ E261 CD D7 E0                               call  l1_print_at_char
+ 201+ E264 C9                                     ret
+ 202+ E265
+ 203+ E265              ; prints Lead Sign byte 8 bit signed hex value in hl at char pos DE, reuse HexS8Char buffer
+ 204+ E265 DD 21 FC E0  l1_print_s08_hex_at_char: ld    ix,HexS8Char
+ 205+ E269 CD 1B E1                               call  l1_buffer_sign_at_ix    ; h holds sign bit
+ 206+ E26C DD 23                                  inc   ix                      ; move to actual digits
+ 207+ E26E 7D                                     ld    a,l                     ; l holds value
+ 208+ E26F CD 3C E1                               call  l1_buffer_hex_8_at_ix
+ 209+ E272 21 FC E0                               ld    hl,HexS8Char           ; by here de is still unaffected
+ 210+ E275 CD D7 E0                               call  l1_print_at_char
+ 211+ E278 C9                                     ret
+ 212+ E279              ; prints 8 bit signed hext value in a at char pos DE
+ 213+ E279 DD 21 F4 E0  l1_print_u8_hex_at_char:  ld    ix,HexU8Char
+ 214+ E27D CD 3C E1                               call  l1_buffer_hex_8_at_ix
+ 215+ E280 21 F4 E0                               ld    hl,HexU8Char           ; by here de is still unaffected
+ 216+ E283 CD D7 E0                               call  l1_print_at_char
+ 217+ E286 C9                                     ret
+ 218+ E287 2B 00        l1_PlusSign:              DB      "+",0
+ 219+ E289 2D 00        l1_MinusSign:             DB      "-",0
+ 220+ E28B 20 00        l1_ClearSign:             DB      " ",0
+ 221+ E28D              ; Displays sign byte in A at DE
+ 222+ E28D FE 80        l1_printSignByte:         cp      $80
+ 223+ E28F C2 A5 E2                               jp      nz,.DisplayPlus
+ 224+ E292 FE 01                                  cp      1
+ 225+ E294 C2 9E E2                               jp      nz,.DisplayMinus
+ 226+ E297 21 8B E2     .DisplayClear:            ld      hl,l1_ClearSign
+ 227+ E29A CD D7 E0                               call    l1_print_at_char
+ 228+ E29D C9                                     ret
+ 229+ E29E 21 89 E2     .DisplayMinus             ld      hl,l1_MinusSign
+ 230+ E2A1 CD D7 E0                               call    l1_print_at_char
+ 231+ E2A4 C9                                     ret
+ 232+ E2A5 21 87 E2     .DisplayPlus:             ld      hl,l1_PlusSign
+ 233+ E2A8 CD D7 E0                               call    l1_print_at_char
+ 234+ E2AB C9                                     ret
+ 235+ E2AC
+ 236+ E2AC 21 0F E1     l1_print_u8_nan_at_char:  ld    hl,HexU8NaN
+ 237+ E2AF CD D7 E0                               call  l1_print_at_char
+ 238+ E2B2 C9                                     ret
+ 239+ E2B3
+ 240+ E2B3
+ 241+ E2B3              ;l1_print_at_wrap:
+ 242+ E2B3              ;; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
+ 243+ E2B3              ;	ld      iyh,e
+ 244+ E2B3              ;.PrintLoop:
+ 245+ E2B3              ;	ld		a,(hl)
+ 246+ E2B3              ;	cp		0
+ 247+ E2B3              ;	ret		z
+ 248+ E2B3              ;.CountWordCharLen
+ 249+ E2B3              ;; Need to change to word wrap, so it will loop through string as before
+ 250+ E2B3              ;; but read up until a null or space, take the character count * 8 for pixels
+ 251+ E2B3              ;; if that is > 238 then force a premature line wrap
+ 252+ E2B3              ;
+ 253+ E2B3              ;
+ 254+ E2B3              ;    push    iy
+ 255+ E2B3              ;    call	l1_print_char
+ 256+ E2B3              ;    pop     iy
+ 257+ E2B3              ;	inc		hl							; move 1 message character right
+ 258+ E2B3              ;	ld		a,e
+ 259+ E2B3              ;    cp      238
+ 260+ E2B3              ;    jr      nc,.NextLine
+ 261+ E2B3              ;	add		a,8
+ 262+ E2B3              ;	ld		e,a							; move 1 screen character right
+ 263+ E2B3              ;	jr		.PrintLoop
+ 264+ E2B3              ;.Clearstackandfinish:
+ 265+ E2B3              ;	pop		de
+ 266+ E2B3              ;	ret
+ 267+ E2B3              ;.NextLine:
+ 268+ E2B3              ;    ld      a,(hl)
+ 269+ E2B3              ;    cp      " "
+ 270+ E2B3              ;    ld      e,iyh
+ 271+ E2B3              ;    ld      a,d
+ 272+ E2B3              ;    add     a,8
+ 273+ E2B3              ;    ld      d,a
+ 274+ E2B3              ;    jr		.PrintLoop
+ 275+ E2B3
+ 276+ E2B3              ; Counts next word at hl, uses e and forces a wrap if it would over flow puts value in c
+ 277+ E2B3 E5           L1LenWordAtHL:          push    hl
+ 278+ E2B4 D5                                   push    de
+ 279+ E2B5 7E           .CountLoop:             ld      a,(hl)
+ 280+ E2B6 FE 00                                cp      0
+ 281+ E2B8 28 0F                                jr      z,.CountDone
+ 282+ E2BA FE 20                                cp      32
+ 283+ E2BC 28 0B                                jr      z,.CountDone
+ 284+ E2BE 7B                                   ld      a,e
+ 285+ E2BF C6 08                                add     a,8
+ 286+ E2C1 5F                                   ld      e,a
+ 287+ E2C2 FE EE                                cp      238
+ 288+ E2C4 30 07                                jr      nc,.TooLong
+ 289+ E2C6 23                                   inc     hl
+ 290+ E2C7 18 EC                                jr      .CountLoop
+ 291+ E2C9 D1           .CountDone:             pop     de
+ 292+ E2CA E1                                   pop     hl
+ 293+ E2CB AF                                   xor     a
+ 294+ E2CC C9                                   ret
+ 295+ E2CD D1           .TooLong                pop     de
+ 296+ E2CE E1                                   pop     hl
+ 297+ E2CF 3E FF                                ld      a,$FF
+ 298+ E2D1 C9                                   ret
+ 299+ E2D2
+ 300+ E2D2 7E           L1PrintWordAtHL:        ld      a,(hl)
+ 301+ E2D3 FE 00                                cp      0
+ 302+ E2D5 C8                                   ret     z
+ 303+ E2D6 FE 20                                cp      32
+ 304+ E2D8 28 0F                                jr      z,.ItsASpace
+ 305+ E2DA FD E5                                push    iy
+ 306+ E2DC CD BA E0                             call	l1_print_char
+ 307+ E2DF FD E1                                pop     iy
+ 308+ E2E1 7B                                   ld      a,e
+ 309+ E2E2 C6 08                                add     a,8
+ 310+ E2E4 5F                                   ld      e,a
+ 311+ E2E5 23                                   inc     hl
+ 312+ E2E6 C3 D2 E2                             jp      L1PrintWordAtHL
+ 313+ E2E9 23           .ItsASpace:             inc     hl      ;  Just a bodge for now
+ 314+ E2EA 7B                                   ld      a,e
+ 315+ E2EB C6 08                                add     a,8
+ 316+ E2ED 5F                                   ld      e,a
+ 317+ E2EE C9                                   ret
+ 318+ E2EF
+ 319+ E2EF
+ 320+ E2EF              ; print at based whole character positions DE=yx, HL = message Addr
+ 321+ E2EF              ;
+ 322+ E2EF CB 22        l1_print_at_char_wrap:  sla     d       ; Convert D from char to pixel
+ 323+ E2F1 CB 22                                sla     d       ; by muliplying by 8
+ 324+ E2F3 CB 22                                sla     d       ;
+ 325+ E2F5              ; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
+ 326+ E2F5              ; Now has full word level wrapping
+ 327+ E2F5 FD 63        l1_print_at_wrap:       ld      iyh,e
+ 328+ E2F7 7E           .PrintLoop:             ld		a,(hl)
+ 329+ E2F8 FE 00                                cp		0
+ 330+ E2FA C8                                   ret		z
+ 331+ E2FB CD B3 E2     .CountWordCharLen:      call    L1LenWordAtHL
+ 332+ E2FE FE FF                                cp      $FF
+ 333+ E300 28 06                                jr      z,.WrapNextLine
+ 334+ E302 CD D2 E2     .NotTooLong:            call    L1PrintWordAtHL
+ 335+ E305              ; Need to change to word wrap, so it will loop through string as before
+ 336+ E305              ; but read up until a null or space, take the character count * 8 for pixels
+ 337+ E305              ; if that is > 238 then force a premature line wrap
+ 338+ E305 18 F0                                jr		.PrintLoop
+ 339+ E307              .Clearstackandfinish:   ;op		de
+ 340+ E307 C9                                   ret
+ 341+ E308              .WrapNextLine:
+ 342+ E308 FD 5C        .NextLine:              ld      e,iyh
+ 343+ E30A 7A                                   ld      a,d
+ 344+ E30B C6 08                                add     a,8
+ 345+ E30D 57                                   ld      d,a
+ 346+ E30E 18 E7                                jr		.PrintLoop
+ 347+ E310
+ 348+ E310
 # file closed: ../../Layer1Graphics/layer1_print_at.asm
-1378  E292                  DISPLAY "Bank ",BankLAYER1," - Bytes free ",/D, $2000 - ($-LAYER1Addr), " - BankLAYER1"
-1379  E292
-1380  E292                  DISPLAY "Bank ",BankShipModels1," - Bytes free ",/D, $2000 - ($-ShipModelsAddr), " - BankShipModels1"
-1381  E292              ; Bank 70  ------------------------------------------------------------------------------------------------------------------------
-1382  E292                                  SLOT    UniverseBankAddr
-1383  E292                                  PAGE    BankUNIVDATA0
-1384  E292                                  ORG	    UniverseBankAddr,BankUNIVDATA0
+1378  E310                  DISPLAY "Bank ",BankLAYER1," - Bytes free ",/D, $2000 - ($-LAYER1Addr), " - BankLAYER1"
+1379  E310
+1380  E310                  DISPLAY "Bank ",BankShipModels1," - Bytes free ",/D, $2000 - ($-ShipModelsAddr), " - BankShipModels1"
+1381  E310              ; Bank 70  ------------------------------------------------------------------------------------------------------------------------
+1382  E310                                  SLOT    UniverseBankAddr
+1383  E310                                  PAGE    BankUNIVDATA0
+1384  E310                                  ORG	    UniverseBankAddr,BankUNIVDATA0
 1385  C000                                  INCLUDE "../../Tests/Vectors/univ_ship_data.asm"
 # file opened: ../../Tests/Vectors/univ_ship_data.asm
    1+ C000              ;    DEFINE DEBUGMISSILELAUNCH 1

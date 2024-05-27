@@ -45,6 +45,7 @@ class UniverseObject:
     flag_is_trader = False         # just going from sun to station or visa verse
     flag_is_courier = False        # just transporter, so will avoid combat
     flag_is_berzerk = False        # will try and ram player
+    flag_is_cloaked = False
     flag_do_draw = True            # destroyed and cloaked ships dont draw
     credits = 0
     legal_staus = 0
@@ -117,6 +118,7 @@ class UniverseObject:
         self.flag_is_trader = False         # just going from sun to station or visa verse
         self.flag_is_courier = False        # just transporter, so will avoid combat
         self.flag_is_berzerk = False        # will try and ram player
+        self.flag_is_cloaked = False        # activly using cloak
         self.flag_has_cloak = False
         self.flag_has_ecm = False           # does it have ECM unit that works
         self.flag_do_draw = True            # destroyed and cloaked ships dont draw
@@ -254,6 +256,7 @@ class UniverseObject:
         self.compass = unit_vector(self.location)
         self.compass[0] *= 16.0
         self.compass[1] *= -16.0
+        self.compass[2] = -1 if  self.location[2] < 0 else 1
         # update scanner
         self.scanner = self.location/256.0
         self.scanner[2] = (self.scanner[2] /4 ) - (self.scanner[1] / 2)

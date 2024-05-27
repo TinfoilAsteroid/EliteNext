@@ -146,6 +146,10 @@ class piio:
         else:
             self.write_byte(byte)
 
+    def write_255_block(self,length):
+        for i in range(0,lenght):
+            self.write_byte(255)
+
     def write_8dot8_abs(self,mydecimal):
         self.write16bit(int(abs(mydecimal * 256.0)))
 
@@ -176,6 +180,13 @@ class piio:
         else:
             self.write24bit(max(abs(mydecimal*256.0),8388607))
 
+    def read_string(self,length):
+        retstring = ""
+        mylen = length
+        while mylen > 0:
+            restring += chr(self.read_byte())
+        return retstring
+
     def read_16bit(self):
         return self.read_byte() >> 8 + self.read_byte()
 
@@ -184,7 +195,25 @@ class piio:
         if value > 127:
             value = 256-value
         return value
- 
+        
+    def read_byte_s7(self):
+        value = self.read_byte()
+        if value > 127:
+            value = (value & 0x7F) * -1
+        return value
+        
+    def read_word_signed(self):
+        value = self.read_byte()
+        if value > 32767:
+            value = 65536-value
+        return value
+
+    def read_word_s15(self):
+        value = self.read_byte()
+        if value > 32767:
+            value = (value & 0x7FFF) * -1
+        return value        
+        
     def read_8dot8_abs(self):
         return (self.read_byte() / 265.0) + self.read_byte
 
@@ -220,12 +249,11 @@ class piio:
             signed_val = (signed_val -8388607) * -1
         return signed_val / 256.0
 
-    def write_compass(self,location):
+    def write_compass(self,compass):
         #print (@In write compass position)
         # now stream out all 3 components of compass as 8 bit bytes
         # by design it can never be greater than 16
-
-        for x in np.nditer(location, flags=['external_loop'], order ='C'):
+        for x in np.nditer(compass, flags=['external_loop'], order ='C'):
             self.write_byte_signed(int(floor(x)))
 
     def write_scanner(self,location):

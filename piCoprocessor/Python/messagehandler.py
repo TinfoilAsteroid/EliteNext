@@ -13,7 +13,7 @@ class MessageHandler:
 
     def desyncReset(Self):
         self.pi.desyncReset()
-
+# TODO CHECK ALL list extracts return ship number as part of data
     def processMsg(self,command):
         if command < 1: return
         if command == 0x01:                     #  0x01 Tested.OK..Hello returns olleH 
@@ -64,8 +64,8 @@ class MessageHandler:
             self.undock_player()                 
         elif command == 0x6A:                   #  0x6A Input      Undock Player Seeded
             self.undock_player_seeded()         
-        elif command == 0x68:                   #  0x70 Input      Player input
-            player_input()                      
+        elif command == 0x70:                   #  0x70 Input      Player input
+            self.player_input()                      
         elif command == 0x71:                   #  0x71 Input      Update Universe
             self.update_univ()                  
         elif command == 0x72:
@@ -79,11 +79,34 @@ class MessageHandler:
                                                 #  0x81 Input      get all scanner data > object id, bit 7 shifs to bodies < returns 3x1 byte, x1,y1,y2, blob is draw at y2
                                                 #  0x90 Input      set object status > object nbr
                                                 #  0xA0 Input      set all mode 1 = all objects regarless of if they exist, 0 = only ones where object used = true
+        elif command == 0xF0:
+            self.dump_string()                  #  0xF0 Input      Dump data for n as string to screen
+        elif command == 0xF1:
+            self.dump_byte()                    #  0xF1 Input      Dump data for n bytes as unsigned byte
+        elif command == 0xF2:
+            self.dump_byte_2c()                 #  0xF2 Input      Dump data for n bytes as 2's c signed byte
+        elif command == 0xF3:
+            self.dump_byte_sgn()                #  0xF3 Input      Dump data for n bytes as S7 signed byte
+        elif command == 0xF4:
+            self.dump_word()                    #  0xF4 Input      Dump data for n bytes as unsigned word
+        elif command == 0xF5:
+            self.dump_word_2c()                 #  0xF5 Input      Dump data for n bytes as unsigned word
+        elif command == 0xF6:
+            self.dump_word_sgn()                #  0xF6 Input      Dump data for n bytes as S15 word
+        elif command == 0xF7:
+            self.dump_8dot8()                   #  0xF7 Input      Dump data for n bytes as S7.8 word
+        elif command == 0xF8:
+            self.dump_16dot8()                  #  0xF8 Input      Dump data for n bytes as S15.8 24 bit
+        elif command == 0xF9:
+            self.dump_16dot8_2c()               #  0xF8 Input      Dump data for n bytes as 16.8 2'sc
+        elif command == 0xFA:
+            self.dump_16dot8_2c()               #  0xF8 Input      Dump data for n bytes as 16.8 lead sign
 #---------------------------------------------------------------------------------------------------------------------
 # Command Functions
 #---------------------------------------------------------------------------------------------------------------------
     #  0x01 Input......Hello
     def write_hello_reply(self):
+        self.pi.read_string(
         self.pi.set_port_write()
         self.pi.write_string('olleH')
     #---------------------------------------------------------------------------------------------------------------------
@@ -97,7 +120,7 @@ class MessageHandler:
     #  Tested OK
     def select_view_port(self):
         self.local.set_viewport(self.pi.read_byte())
-        print ("view port ",self.local.player_viewport)
+        print ("view port ",self.local.player_viewport, " processed")
     #---------------------------------------------------------------------------------------------------------------------
     #  0x15 Input      Drawing Ships
     #  to test
@@ -111,7 +134,7 @@ class MessageHandler:
         self.pi.write_mode()
         self.pi.write_cloud_list(self.local.get_explode_list())
     #---------------------------------------------------------------------------------------------------------------------
-    #  0x1A Input      Request Compass Position Data > next bute number of  followed by batches of 4x8 bit values for color, x,y,stick length (signed)
+    #  0x1A Input      Request Compass Position Data > next byte number of followed by batches of 4x3 byte ship nbr, x, y (relative to center of compass)
     def get_compass_list(self):
         self.pi.write_mode()
         self.pi.write_byte(np.count_nonzero(self.local.ul.objectUsage == True))
@@ -120,29 +143,27 @@ class MessageHandler:
             if x:
                self.pi.write_byte( it.index + self.local.ul.objectList[it.index].compass_colour) # merged index and color to save 1 byte
                self.pi.write_compass(self.local.ul.objectList[it.index].compass)
-        self.pi.write_byte((self.local.star.compass_colour >> 4))   # for consistency we will still store colour in upper 4 bits for bodies as per ships
-        self.pi.write_univ_body_position(self.local.star.compass)
-        self.pi.write_byte((self.local.planet.compass_colour >> 4)) # for consistency we will still store colour in upper 4 bits for bodies as per ships
-        self.pi.write_univ_body_position(self.local.planet.compass)
-        self.pi.write_byte((self.local.station.compass_colour >> 4))# for consistency we will still store colour in upper 4 bits for bodies as per ships
-        self.pi.write_univ_body_position(self.local.station.compass)
+        # we don't need to do color - main game handles this elf.pi.write_byte((self.local.star.compass_colour >> 4))   # for consistency we will still store colour in upper 4 bits for bodies as per ships
+        self.pi.write_compass(self.local.star.compass)
+        self.pi.write_compass(self.local.planet.compass)
+        self.pi.write_compass(self.local.station.compass)
     #---------------------------------------------------------------------------------------------------------------------
     #  0x1B Input      Request Compass Position (ship nbr, if bit 7 set then 1 = sun 2 = planet 3 = station) > 4x8 bit values for color, x,y,stick length (signed)
     def get_compass_ship(self):
         objectid = pi.read_byte()
         self.pi.write_mode()
         if objectid == 129:
-            self.pi.write_byte((self.local.star.compass_colour >> 4))   # for consistency we will still store colour in upper 4 bits for bodies as per ships
-            self.pi.write_compass(self.local.star.compass)
+             self.pi.write_compass(self.local.star.compass)
         elif objectid == 130:
-            self.pi.write_byte((self.local.planet.compass_colour >> 4)) # for consistency we will still store colour in upper 4 bits for bodies as per ships
             self.pi.write_compass(self.local.planet.compass)
         elif objectid == 131:
-            self.pi.write_byte((self.local.station.compass_colour >> 4))# for consistency we will still store colour in upper 4 bits for bodies as per ships
             self.pi.write_compass(self.local.station.compass)
         else:
-            self.pi.write_byte( it.index + self.local.ul.objectList[it.index].compass_colour) # merged index and color to save 1 byte
-            self.pi.write_compass(self.local.ul.objectList[object_id].compass)
+            if self.local.ul.objectUsage:
+                self.pi.write_compass(self.local.ul.objectList[object_id].compass)
+            else
+                self.pi.write_byte(255)
+                self.pi.write_byte(255)
     #---------------------------------------------------------------------------------------------------------------------
     #  0x1C Input      Request all 3d Position Data > next byte is number of ships, nbr ships x 1X8 bit for array nnbr & 3x16 bit for ships followed by 3x24 bit for sun, 3x24 bit for planet, 3x24 bit for space station, 
     def get_all_positions(self):
@@ -188,7 +209,10 @@ class MessageHandler:
         if objectid == 131:
             self.pi.write_univ_matrix(self.local.station.rotmat)
         else:
-            self.pi.write_univ_matrix(self.local.ul.objectList[objectid].rotmat)
+            if self.local.ul.objectUsage:
+                self.pi.write_univ_matrix(self.local.ul.objectList[objectid].rotmat)
+            else
+                self.pi.write_255_block(9*2)
     #---------------------------------------------------------------------------------------------------------------------
     #  0x20 Input      Firing > next byte is ship id that would be hit by laser in low byte, bit 7 is 0 for front 1 for rear, FF means no hit
     def player_firing(self):
@@ -237,7 +261,7 @@ class MessageHandler:
         print("Command addUniverseObject------------------------------------")
         type = self.pi.read_byte()
         print ("Adding Ship Type ",type)
-        position = self.pi.read_univ_position()
+        position = self.pi.read_univ_position() 
         for i in range (0,3):
            print ("P",i,position[i],":",)
         rotation = self.pi.read_matrix()
@@ -300,33 +324,105 @@ class MessageHandler:
     #                  flight_speed 8.8
     #                  flight_accel 8.8
     def player_input(self):
-        self.local.flight_roll = self.pi.read_8_8()
-        self.local.flight_climb = self.pi.read_8_8()
-        self.local.flight_speed = self.pi.read_8_8()
-        self.local.flight_accell = self.pi.read_8_8()
+        self.local.flight_roll = self.pi.read_8dot8_leadsign()
+        self.local.flight_climb = self.pi.read_8dot8_leadsign()
+        self.local.flight_speed = self.pi.read_8dot8_leadsign()
+        self.local.flight_accell = self.pi.read_8dot8_leadsign()
+        print ("Local flight data");
+        print ("Local r ",self.local.flight_roll );
+        print ("Local c ",self.local.flight_climb );
+        print ("Local s ",self.local.flight_speed );
+        print ("Local a ",self.local.flight_accell );
+        prnt
     #  0x71 Input      Update Universe
     # to test
     def update_univ(self):
-        self.local.update_universe(self)
+        self.local.update_universe()
     #---------------------------------------------------------------------------------------------------------------------
     #  0x72 Input      Update Universe n ticks (byte = number of ticks)
     def update_univ_ticks(self):
         count = self.pi.read_byte()
         for i in range(0,count):
-            self.local.update_universe(self)
+            self.local.update_universe()
 #  0x73 Input      Update tactics all
 #  0x74 Input      Update tactics ship n (bit 7 means space station)
 #  0x75 Input      get all status data
 #  0x76 Input      get ship n status data (bit 7 means space station)
-#  0x80 Input      get all scanner data < next byte is number of ships, followed by 3x1 byte, x1,y1,y2, blob is draw at y2
+#  0x80 Input      get all scanner data < next byte is number of ships, followed by 1 byte ship nbr, 3x1 byte, x1,y1,y2, blob is draw at y2
     def get_scanner_list(self):
         self.pi.write_byte(np.count_nonzero(self.local.ul.objectUsage == True))
         it =  np.nditer(self.local.ul.ojectUsage, flags=['c_index'], order ='C')
         for x in it:
             if x:
+               pi.write_byte(it.index)
                pi.write_scanner(self.local.ul.objectList[it.index].scanner)
         self.pi.write_scanner(self.local.star.scanner)
         self.pi.write_scanner(self.local.planet.scanner)
         self.pi.write_scanner(self.local.station.scanner)
     #---------------------------------------------------------------------------------------------------------------------
-    #  0x81 Input      get all scanner data > object id, bit 7 shifs to bodies < returns 3x1 byte, x1,y1,y2, blob is draw at y2
+    #  0x81 Input      get ship scanner data > object id, bit 7 shifs to bodies < returns 3x1 byte, x1,y1,y2, blob is draw at y2
+    
+    #---------------------------------------------------------------------------------------------------------------------
+    # Diagnostics section
+    #  0xF0 Input      Dump data for n as string to screen
+    def self.dump_string(self):
+        datalen = self.pi_read_byte()
+        for i in range(0,datalen):
+            print(self.pi.read_byte(),' ',)
+        print("")
+    #  0xF1 Input      Dump data for n bytes as unsigned byte
+    def self.dump_byte(self):
+        print (self.pi.read_string(self.pi_read_byte())
+    #  0xF3 Input      Dump data for n bytes as S7 signed byte
+    def self.dump_byte_2c(self):
+        datalen = self.pi_read_byte()
+        for i in range(0,datalen):
+            print(self.pi.read_byte_signed(),' ',)
+        print("")
+    #  0xF4 Input      Dump data for n bytes as unsigned word
+    def self.dump_byte_sgn(self):
+        datalen = self.pi_read_byte()
+        for i in range(0,datalen):
+            print(self.pi.read_byte_s7(),' ',)
+        print("")
+    #  0xF5 Input      Dump data for n bytes as unsigned word
+    def self.dump_word(self):
+        datalen = self.pi_read_byte()
+        for i in range(0,datalen):
+            print(self.pi.read_16bit(),' ',)
+        print("")
+    def self.dump_word_2c(self):
+        datalen = self.pi_read_byte()
+        for i in range(0,datalen):
+            print(self.pi.read_word_signed(),' ',)
+        print("")
+    #  0xF6 Input      Dump data for n bytes as S15 word
+    def self.dump_word_sgn(self):
+        datalen = self.pi_read_byte()
+        for i in range(0,datalen):
+            print(self.pi.read_word_s15(),' ',)
+        print("")
+    #  0xF7 Input      Dump data for n bytes as S7.8 word
+    def self.dump_8dot8(self):
+        datalen = self.pi_read_byte()
+        for i in range(0,datalen):
+            print(self.pi.read_8dot8_abs(),' ',)
+        print("")
+    #  0xF8 Input      Dump data for n bytes as S15.8 24 bit
+    def self.dump_16dot8(self):
+        datalen = self.pi_read_byte()
+        for i in range(0,datalen):
+            print(self.pi.read_16dot8_abs(),' ',)
+        print("")
+    #  0xF9 Input      Dump data for n bytes as 16.8 2'sc
+    def self.dump_16dot8_2c(self):
+        datalen = self.pi_read_byte()
+        for i in range(0,datalen):
+            print(self.pi.read_16dot8_2c(),' ',)
+        print("")
+    #  0xFA Input      Dump data for n bytes as 16.8 lead sign
+    def self.dump_16dot8_2c(self):
+        datalen = self.pi_read_byte()
+        for i in range(0,datalen):
+            print(self.pi.read_8dot8_leadsign(),' ',)
+        print("")        

@@ -49,12 +49,13 @@
     ;DEFINE  ROUND_ROLL_AND_PITCH    1  ; Forces rouding of rotmat matricies to 8 bit
     ;DEFINE  FORCE_TIDY 1               ; Forces call to Tidy every iteration
     DEFINE  BYPASS_TIDY 1               ; Forces tidy routine to return even if force FORCE_TIDY was enabled
+    DEFINE  COPROCESSOR_TEST 1
     ;DEFINE  SPAWN_SHIP_DISABLED  1      ; Forces spawn event to immedatly return rather than do anything
     ;DEFINE DEBUGCIRCLE1 1
     ;DEFINE DEBUGCIRCLE2 1 
     ;DEFINE DEBUGCIRCLE3 1 
     ;DEFINE DEBUGCIRCLE4 1 
-    ;DEFINE DEBUGCIRCLE5 1 
+    ;DEFINE DEBUGCIRCLE5 1 ws
     ;DEFINE DEBUGCIRCLE6 1 
     ;DEFINE  DEBUGPLANET 1
     ;DEFINE  DEBUGPLANETCIRCLE 1
@@ -201,6 +202,7 @@ STEPDEBUG               equ 1
 
 TopOfStack              equ $5CCB ;$6100
 
+;--- START OF CODE -------------------------------------------------------------------------
                         ORG $5DCB;      $6200
 EliteNextStartup:       di
 .InitiliseFileIO:       call        GetDefaultDrive

@@ -94,10 +94,26 @@ l1_print_bin8_at_char:    push  af,,bc,,de,,hl
                           call  l1_print_at_char
                           ret
 
-l1_print_bin8_lh_at_char: push  af,,bc,,de,,hl
+l1_print_bin8_r2l_at_char:push  af,,bc,,de,,hl
                           ld    ix,Bin8Bit
                           ld    b,8
 .WriteLoop:               srl   a
+                          jr    c,.ItsaOne
+.ItsAZero:                ld    c,'0'
+                          jp    .DoWrite
+.ItsaOne:                 ld    c,'1'
+.DoWrite:                 ld    (ix+0),c
+                          inc   ix
+                          djnz  .WriteLoop
+                          pop   af,,bc,,de,,hl
+                          ld    hl,Bin8Bit
+                          call  l1_print_at_char
+                          ret
+                          
+l1_print_bin8_l2r_at_char:push  af,,bc,,de,,hl
+                          ld    ix,Bin8Bit
+                          ld    b,8
+.WriteLoop:               sla   a
                           jr    c,.ItsaOne
 .ItsAZero:                ld    c,'0'
                           jp    .DoWrite
