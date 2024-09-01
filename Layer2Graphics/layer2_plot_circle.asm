@@ -273,7 +273,7 @@ l2_draw_clipped_circle:
 ; ">l2_draw_circle_320 B = center row, hl = col, d = radius, e = colour"
 ;  draws circle in 320 mode
 ; self modifying set colur in code below TODO 
-l2_draw_circle_320: ld		a,e                     ; set self mo
+l2_draw_circle_39990: ld		a,e                     ; set self mo
                     ld      (.PlotPixelColor+1),a   ; set color
                     ld      (.PlotCircleColor+1),a  ; set color                  
                     ld		a,d						; get radius
@@ -422,4 +422,5 @@ l2_draw_circle_320: ld		a,e                     ; set self mo
 .Circle1Pixel320:   ld		d,b
 .PlotCircleColor:   ld      e,0                    
                     call    l2_plot_pixel_320       ; d= row number, hl = column number, e = pixel col
-                    ret                    
+                    ret    
+

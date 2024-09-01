@@ -308,35 +308,6 @@ GalaxyExtendedDescs:    DB 211                                                  
                         DB 7                                                    ; System   7, Galaxy 0                  Lave = Token 26
                         DB 46                                                   ; System  46, Galaxy 0              Riedquat = Token 27
 
-    INCLUDE "./Data/EquipmentEquates.asm"
-
-EquipNameTableRowLen    EQU 8
-ShipEquipNameTable      DW  WordFuel,       0,              0,          0
-                        DW  WordMissile,    0,              0,          0
-                        DW  WordLarge,      WordCargo,      WordBay,    0
-                        DW  WordECM,        WordSystem,     0,          0
-                        DW  WordFuel,       WordScoops,     0,          0
-                        DW  WordEscape,     WordPod,        0,          0
-                        DW  WordEnergy,     WordBomb,       0,          0
-                        DW  WordExtra,      WordEnergy,     WordUnit,   0
-                        DW  WordDocking,    WordComputers,  0,          0
-                        DW  WordGalactic,   WordHyperdrive, 0,          0
-                        DW  WordFront,      WordPulse,      WordLaser,  0
-                        DW  WordRear,       WordPulse,      WordLaser,  0
-                        DW  WordLeft,       WordPulse,      WordLaser,  0
-                        DW  WordRight,      WordPulse,      WordLaser,  0
-                        DW  WordFront,      WordBeam,       WordLaser,  0
-                        DW  WordRear,       WordBeam,       WordLaser,  0
-                        DW  WordLeft,       WordBeam,       WordLaser,  0
-                        DW  WordRight,      WordBeam,       WordLaser,  0
-                        DW  WordFront,      WordMining,     WordLaser,  0
-                        DW  WordRear,       WordMining,     WordLaser,  0
-                        DW  WordLeft,       WordMining,     WordLaser,  0
-                        DW  WordRight,      WordMining,     WordLaser,  0
-                        DW  WordFront,      WordMilitary,   WordLaser,  0
-                        DW  WordRear,       WordMilitary,   WordLaser,  0
-                        DW  WordLeft,       WordMilitary,   WordLaser,  0
-                        DW  WordRight,      WordMilitary,   WordLaser,  0
 
 ;Each row is 7 bytes
 ;                                                               12345  6  789012345678901
@@ -354,34 +325,6 @@ ShipEquipNameTable      DW  WordFuel,       0,              0,          0
 ;                           a  p  h  e                                            fi     P     Vi
 ;                           n  o  o  c                                            tt     o     ew
 ;                           B  s  w  h  price                  type               ed     s
-ShipEquipmentList       DB  0, 0, 1, 1, low     2, high     2, EQ_FUEL          , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0, 1, 1, 1, low   300, high   300, EQ_MISSILE       , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0, 2, 1, 1, low  4000, high  4000, EQ_CARGO_BAY     , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0, 3, 1, 2, low  6000, high  6000, EQ_ECM           , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0, 4, 1, 5, low  5250, high  5250, EQ_FUEL_SCOOPS   , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0, 5, 1, 6, low 10000, high 10000, EQ_ESCAPE_POD    , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0, 6, 1, 7, low  9000, high  9000, EQ_ENERGY_BOMB   , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0, 7, 1, 8, low 15000, high 15000, EQ_ENERGY_UNIT   , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0, 8, 1, 9, low 15000, high 15000, EQ_DOCK_COMP     , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0, 9, 1,10, low 50000, high 50000, EQ_GAL_DRIVE     , 0     ,$FF , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,10, 1, 3, low  4000, high  4000, EQ_FRONT_PULSE   , 0     ,$00 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,11, 1, 3, low  4000, high  4000, EQ_REAR_PULSE    , 0     ,$01 , 1  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,12, 1, 3, low  4000, high  4000, EQ_LEFT_PULSE    , 0     ,$02 , 2  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,13, 1, 3, low  4000, high  4000, EQ_RIGHT_PULSE   , 0     ,$03 , 3  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,14, 0, 4, low 10000, high 10000, EQ_FRONT_BEAM    , 0     ,$00 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,15, 0, 4, low 10000, high 10000, EQ_REAR_BEAM     , 0     ,$01 , 1  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,16, 0, 4, low 10000, high 10000, EQ_LEFT_BEAM     , 0     ,$02 , 2  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,17, 0, 4, low 10000, high 10000, EQ_RIGHT_BEAM    , 0     ,$03 , 3  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,18, 0,10, low  8000, high  8000, EQ_FRONT_MINING  , 0     ,$00 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,19, 0,10, low  8000, high  8000, EQ_REAR_MINING   , 0     ,$01 , 1  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,20, 0,10, low  8000, high  8000, EQ_LEFT_MINING   , 0     ,$02 , 2  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,21, 0,10, low  8000, high  8000, EQ_RIGHT_MINING  , 0     ,$03 , 3  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,22, 0,10, low 60000, high 60000, EQ_FRONT_MILITARY, 0     ,$00 , 0  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,23, 0,10, low 60000, high 60000, EQ_REAR_MILITARY , 0     ,$01 , 1  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,24, 0,10, low 60000, high 60000, EQ_LEFT_MILITARY , 0     ,$02 , 2  , 0  , 0  , 0  , 0  , 0 , 0 
-                        DB  0,25, 0,10, low 60000, high 60000, EQ_RIGHT_MILITARY, 0     ,$03 , 3  , 0  , 0  , 0  , 0  , 0 , 0 
-ShipEquipTableRowLen    EQU 16
-ShipEquipTableSize      EQU ($-ShipEquipmentList)/ShipEquipTableRowLen
 
 ;------------------------------------------------------------------------------------------------------------------------------------
 GalaxyRandSeed			DB	43	            ; Just some start values
@@ -1091,81 +1034,109 @@ find_system_by_name:    call    set_galaxy_search_len
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 nearestfound:           DW 0
+;need to change to proper handle negatives
 ; In here de carries current nearest and loads into nearest found
 ; does a basic distance check for x then y each under threshold, then does x+y under threshold  jsut in case we have an extreme like 0 x and high dist y
-find_nearest_to_bc:     ld      ix,galaxy_data
-                        ld      iyh,0
-                        ld      iyl,120
-                        ld      (nearestfound),bc
-find_nearest_loop:      ld      a,(ix+3)                        ;
+find_nearest_to_bc:     ld      ix,galaxy_data                  ; ix = pointer to galaxy data
+                        ld      iyh,0                           ; iyh is counter of number to read, i.e. 256
+                        ld      iyl,120                         ; intial distance of 120
+                        ld      (nearestfound),bc               ; assume current position is nearest found at a distance of 120
+.find_nearest_loop:     ld      a,(ix+3)                        ;
                         ld      e,a                             ; e= current seed x
-                        JumpIfALTNusng c, nearestXPosLT         ; not we need to know if its e - c or c - e we coudl do 2's compliement of course
-nearestXPosGTE:         push    de                              ;
-                        ld      h,0                             ;
-                        ld      l,a                             ; hl = seed x
-                        ld      d,0                             ;
-                        ld      e,c                             ; de = nearest x
-                        or      a                               ;
-                        sbc     hl,de                           ; hl = distance between the two
-                        pop     de
-                        jp      nearestDistXPos
-nearestXPosLT:          push    de                              ;
-                        ld      h,0                             ;
-                        ld      l,c                             ; hl = nearest x
-                        ld      d,0                             ;
-                        or      a                               ; de = seed x
-                        sbc     hl,de                           ;
-                        pop     de                              ; hl = distance between the two
-nearestDistXPos:        ld      a,l                             ; so l = abs distance as does a
-                        cp      iyl                             ; under initial threshold?
-                        jr      nc,find_nearest_miss            ; no so its a miss
- ;DEBUG                       ld      l,a                             ; l = distance (we can drop thsi as it was done above!)
-                        ld      a,(ix+1)                        ;
-                        ld      d,a                             ; d = seed y
-                        JumpIfALTNusng b, nearestYPosLT         ; determine abs calc
-nearestYPosGTE:         push    hl                              ; save current x distance
-                        push    de                              ;
-                        ld      h,0                             ;
-                        ld      l,a                             ; hl = seed y
-                        ld      d,0                             ;
-                        ld      e,b                             ; de = nearest y
-                        or      a                               ;
-                        sbc     hl,de                           ; hl = distance between the two
-                        ld      a,l
-                        pop     de
-                        pop     hl
-                        jp      nearestDistYPos
-nearestYPosLT:          push    hl                              ; save current x distance
-                        push    de                              ;
-                        ld      h,0                             ;
-                        ld      l,b                             ; hl = nearest y
-                        ld      e,d                             ;
-                        ld      d,0                             ; de = seed y
-                        or      a                               ;
-                        sbc     hl,de                           ; hl = distance between the two
-                        ld      a,l
-                        pop     de
-                        pop     hl                              ; now we get distance in l back into hl, distance y is in a
-nearestDistYPos:        cp      iyl                             ; under initial threshold?
-                        jr      nc, find_nearest_miss
-                        ld      h,0                             ; hl = distance for x
-                        add     hl,a                            ; adding distance y
-                        ld      a,l                             ; and copy it to l
-                        cp      iyl                             ; is the pair under distance
-                        jr      nc, find_nearest_miss           ;
-nearest_found_a_hit:    ld      iyl,a                           ; so we have a hit
+                        sub     c                               ; a = ix+3 - c (X)
+                        jp      p,.positiveDistX
+.negativeDistX:         neg                                     ;
+.positiveDistX:         JumpIfAGTENusng iyl, .find_nearest_miss  ; is distance >= current iyl distance
+.checkY:                ld      l,a                             ; save distance
+                        ld      a,(ix+1)
+                        ld      d,a                             ; d = current seed y
+                        sub     b                               ; a = ix+1 - b (Y)
+                        jp      p,.positiveDistY
+.negativeDistY:         neg                                     ;
+.positiveDistY:         JumpIfAGTENusng iyl, .find_nearest_miss ; is distance >= current iyl distance
+.nearest_found_a_hit:   ld      iyl,a                           ; so we have a hit
                         ld      (nearestfound),de               ;
                         ReturnIfALTNusng 2                      ; exact match bail out, note 1 can be an exact match due to Y axis, as we are looking at seed pos then this is accurate enough and we won't hit dx 1 and dy 0 hopefully in any galaxy :)
-find_nearest_miss:      push     ix
+.find_nearest_miss:     push     ix
                         pop      hl
                         add      hl,8
                         push     hl
                         pop      ix
-                        dec     iyh
-                        ld      a,iyh
-                        JumpIfAIsNotZero find_nearest_loop
-                        ld      bc ,(nearestfound)              ; if we hit here then after searching we have found a nearest
+                        dec      iyh
+                        ld       a,iyh
+                        JumpIfAIsNotZero .find_nearest_loop
+.CompletedSearch:       ld      bc ,(nearestfound)              ; if we hit here then after searching we have found a nearest
                         ret
+;
+                        
+                        
+;;                        JumpIfALTNusng c, nearestXPosLT         ; not we need to know if its e - c or c - e we coudl do 2's compliement of course
+;;nearestXPosGTE:         push    de                              ;
+;;                        ld      h,0                             ;
+;;                        ld      l,a                             ; hl = seed x
+;;                        ld      d,0                             ;
+;;                        ld      e,c                             ; de = nearest x
+;;                        or      a                               ;
+;;                        sbc     hl,de                           ; hl = distance between the two
+;;                        pop     de
+;;                        jp      nearestDistXPos
+;;nearestXPosLT:          push    de                              ;
+;;                        ld      h,0                             ;
+;;                        ld      l,c                             ; hl = nearest x
+;;                        ld      d,0                             ;
+;;                        or      a                               ; de = seed x
+;;                        sbc     hl,de                           ;
+;;                        pop     de                              ; hl = distance between the two
+;;nearestDistXPos:        ld      a,l                             ; so l = abs distance as does a
+;;                        cp      iyl                             ; under initial threshold?
+;;                        jr      nc,find_nearest_miss            ; no so its a miss
+;; ;DEBUG                       ld      l,a                             ; l = distance (we can drop thsi as it was done above!)
+;;                        ld      a,(ix+1)                        ; 
+;;                        ld      d,a                             ; d = seed y
+;;                        JumpIfALTNusng b, nearestYPosLT         ; determine abs calc
+;;nearestYPosGTE:         push    hl                              ; save current x distance
+;;                        push    de                              ;
+;;                        ld      h,0                             ;
+;;                        ld      l,a                             ; hl = seed y
+;;                        ld      d,0                             ;
+;;                        ld      e,b                             ; de = nearest y
+;;                        or      a                               ;
+;;                        sbc     hl,de                           ; hl = distance between the two
+;;                        ld      a,l
+;;                        pop     de
+;;                        pop     hl
+;;                        jp      nearestDistYPos
+;;nearestYPosLT:          push    hl                              ; save current x distance
+;;                        push    de                              ;
+;;                        ld      h,0                             ;
+;;                        ld      l,b                             ; hl = nearest y
+;;                        ld      e,d                             ;
+;;                        ld      d,0                             ; de = seed y
+;;                        or      a                               ;
+;;                        sbc     hl,de                           ; hl = distance between the two
+;;                        ld      a,l
+;;                        pop     de
+;;                        pop     hl                              ; now we get distance in l back into hl, distance y is in a
+;;nearestDistYPos:        cp      iyl                             ; under initial threshold?
+;;                        jr      nc, find_nearest_miss
+;;                        ld      h,0                             ; hl = distance for x
+;;                        add     hl,a                            ; adding distance y
+;;                        ld      a,l                             ; and copy it to l
+;;                        cp      iyl                             ; is the pair under distance
+;;                        jr      nc, find_nearest_miss           ;
+;;nearest_found_a_hit:    ld      iyl,a                           ; so we have a hit
+;;                        ld      (nearestfound),de               ;
+;;                        ReturnIfALTNusng 2                      ; exact match bail out, note 1 can be an exact match due to Y axis, as we are looking at seed pos then this is accurate enough and we won't hit dx 1 and dy 0 hopefully in any galaxy :)
+;;find_nearest_miss:      push     ix
+;;                        pop      hl
+;;                        add      hl,8
+;;                        push     hl
+;;                        pop      ix
+;;                        dec     iyh
+;;                        ld      a,iyh
+;;                        JumpIfAIsNotZero find_nearest_loop
+;;.CompletedSearch:       ld      bc ,(nearestfound)              ; if we hit here then after searching we have found a nearest
+;;                        ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Does a sqare root distance
 galaxy_find_distance:   ld      d,0

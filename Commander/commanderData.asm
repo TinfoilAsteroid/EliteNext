@@ -5,7 +5,6 @@ defaultSeeds	        DB $4a, $5a, $48, $02, $53, $b7
 defaultHomeX	        DB $14
 defaultHomeY	        DB $AD
 defaultSaveName         DB "Default.SAV",0,0,0,0
-
 ; Gun and cabin temps are not saved as can only be saved in dock
 ; Note Can only save whilst docked
 SaveCommanderHeader     DB  "COMMANDERSAVE..."
@@ -14,6 +13,7 @@ SaveCommanderName       DS  15
 SaveSeeds               DS  06
 SaveStockAvaliabiliy    DS  17
 SaveCargo               DS  16
+SaveCargoRunningLoad    DS  1
 SaveEquipmentFitted     DS  EQ_ITEM_COUNT
 SaveLaserType           DS  4
 SaveLaserDamagedFlag    DS  4
@@ -38,7 +38,9 @@ copyCommanderToSave:    ldCopyStringLen CommanderName,      SaveCommanderName, 1
                         ldCopyStringLen GalaxySeeds,        SaveSeeds, 6
                         ldCopyStringLen StockAvaliabiliy,   SaveStockAvaliabiliy, 16
                         ldCopyStringLen CargoTonnes,        SaveCargo, 16
+                        ldCopyByte      CargoRunningLoad,   SaveCargoRunningLoad
                         ldCopyStringLen EquipmentFitted,    SaveEquipmentFitted, EQ_ITEM_COUNT
+                        ldCopyByte      NbrMissiles,        SaveEquipmentFitted+1 
                         ldCopyStringLen LaserType,          SaveLaserType, 4
                         ldCopyStringLen LaserDamagedFlag,   SaveLaserDamagedFlag, 4
                         ldCopy2Byte     PresentSystemX,     SavePresentSystemX
@@ -60,7 +62,9 @@ copyCommanderFromSave:  ldCopyStringLen SaveCommanderName,      CommanderName, 1
                         ldCopyStringLen SaveSeeds,              GalaxySeeds, 6
                         ldCopyStringLen SaveStockAvaliabiliy,   StockAvaliabiliy, 16
                         ldCopyStringLen SaveCargo,              CargoTonnes, 16
+                        ldCopyByte      SaveCargoRunningLoad,   CargoRunningLoad
                         ldCopyStringLen SaveEquipmentFitted,    EquipmentFitted, EQ_ITEM_COUNT
+                        ldCopyByte      SaveEquipmentFitted+1,  NbrMissiles
                         ldCopyStringLen SaveLaserType,          LaserType, 4
                         ldCopyStringLen SaveLaserDamagedFlag,    LaserDamagedFlag, 4
                         ldCopy2Byte     SavePresentSystemX,     PresentSystemX
@@ -117,18 +121,28 @@ defaultCommander:       ldCopyStringLen defaultName, CommanderName, 8
                         ld		(Fuel),a
                         ld      a,BankGalaxyData0
                         ld		(Galaxy),a
-                        xor		a
                         ld      hl,EquipmentFitted
-                        ld      b, EQ_ITEM_COUNT
-.ClearFittedLooop:      ld      (hl),a
+                        ld      a,(Fuel)
+                        ld      (hl),a
                         inc     hl
-                        djnz    .ClearFittedLooop
+.DefaultMissiles:       xor		a
+                        IFDEF DEBUGCMDREQUIP
+                        ld      a,4
+                        ENDIF
+                        ld      (hl),a
+                        inc     hl
+                        ld      hl,EquipmentFitted-2
+                        ld      b, EQ_ITEM_COUNT
+.ClearFittedLoop:       ld      (hl),a
+                        inc     hl
+                        djnz    .ClearFittedLoop
                         SetAFalse
+                        break
                         ld      (EquipmentFitted+EQ_FRONT_BEAM),a
-                        ld		(MissionData),a						;The Plan/Mission
-                        ld      a,3                                  ; a = 0 = pulse laser
+                        ld		(MissionData),a					   ;The Plan/Mission
+                        ld      a,3                                ; a = 0 = pulse laser
                         ld		(LaserType),a
-                        ld      a,$FF                                 ; a = 255
+                        ld      a,$FF                              ; a = 255
                         ld		(LaserType+1),a
                         ld		(LaserType+2),a
                         ld		(LaserType+3),a
@@ -139,6 +153,9 @@ defaultCommander:       ldCopyStringLen defaultName, CommanderName, 8
                         ld      (LaserDamagedFlag+3),a
 ; REMOVE?             ld      a,EQ_FRONT_PULSE
                         xor     a
+                        IFDEF DEBUGCMDREQUIP
+                        ld      a,$FF
+                        ENDIF
                         ld		(ECMPresent),a
                         ld		(FuelScoopsBarrelStatus),a
                         ld		(EnergyBomb),a
@@ -150,6 +167,9 @@ defaultCommander:       ldCopyStringLen defaultName, CommanderName, 8
                         ld		(KillTally),a
                         ld      (OuterHyperCount),a
                         ld      (InnerHyperCount),a
+                        IFDEF DEBUGCMDREQUIP
+                        xor     a
+                        ENDIF
                         dec		a								; now a = 255
                         ld		(ForeShield),a
                         ld		(AftShield),a

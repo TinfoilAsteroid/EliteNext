@@ -11,7 +11,18 @@
 ;               1       0       HL < DE
 ;               1       1       Impossible
 ;
-
+CompareDEHLunsigned:ex      de,hl
+                    push    hl
+                    and     a
+                    sbc     hl,de
+                    pop     hl
+                    ex      de,hl
+                    ret
+CompareHLDEunsigned:push    hl
+                    and     a
+                    sbc     hl,de
+                    pop     hl
+                    ret
                     
 CompareBCDESigned:  push    hl
                     and     a

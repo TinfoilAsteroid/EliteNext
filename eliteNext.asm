@@ -49,7 +49,16 @@
     ;DEFINE  ROUND_ROLL_AND_PITCH    1  ; Forces rouding of rotmat matricies to 8 bit
     ;DEFINE  FORCE_TIDY 1               ; Forces call to Tidy every iteration
     DEFINE  BYPASS_TIDY 1               ; Forces tidy routine to return even if force FORCE_TIDY was enabled
-    DEFINE  COPROCESSOR_TEST 1
+    ;DEFINE  q 1
+    ;DEFINE  TESTGALAXYCHART 1
+    ;DEFINE TESTSHORTRANGECHART 1
+    ;DEFINE  TESTSYSTEMMENU 1
+    ;DEFINE  TESTMARKETROMENU 1
+;    DEFINE  TESTSTATUSMENU 1
+    ;DEFINE TESTINVENTORYMENU 1
+    DEFINE TESTMUL 1
+    DEFINE  DEBUGCMDREQUIP 1
+
     ;DEFINE  SPAWN_SHIP_DISABLED  1      ; Forces spawn event to immedatly return rather than do anything
     ;DEFINE DEBUGCIRCLE1 1
     ;DEFINE DEBUGCIRCLE2 1 
@@ -138,6 +147,7 @@ ScreenHyperspace EQU ScreenDocking+1
                         INCLUDE "./Layer2Graphics/layer2_defines.asm"
                         INCLUDE	"./Hardware/memory_bank_defines.asm"
                         INCLUDE "./Hardware/screen_equates.asm"
+                        INCLUDE "./Data/EquipmentEquates.asm"
                         INCLUDE "./Data/ShipModelEquates.asm"
                         INCLUDE "./Menus/clear_screen_inline_no_double_buffer.asm"	
                         INCLUDE "./Macros/graphicsMacros.asm"
@@ -219,6 +229,7 @@ EliteNextStartup:       di
 .InitialisePeripherals: nextreg     PERIPHERAL_2_REGISTER, AUDIO_CHIPMODE_AY ; Enable Turbo Sound
                         nextreg     PERIPHERAL_3_REGISTER, DISABLE_RAM_IO_CONTENTION | ENABLE_TURBO_SOUND | INTERNAL_SPEAKER_ENABLE
                         nextreg     PERIPHERAL_4_REGISTER, %00000000
+                        ; disable next keys creating normal 8x5 grid presses
                         nextreg     ULA_CONTROL_REGISTER,  %00010000                ; set up ULA CONRTROL may need to change bit 0 at least, but bit 4 is separate extended keys from main matrix
                         MMUSelectSound
                         call        InitAudio
@@ -227,7 +238,7 @@ EliteNextStartup:       di
                         nextreg     LINE_INTERRUPT_CONTROL_REGISTER,%00000110       ; Video interrup on 
                         nextreg     LINE_INTERRUPT_VALUE_LSB_REGISTER,0   ; lasta line..                        
                         im	2                        
-        di ; debug
+                        di ; debug
 .GenerateDefaultCmdr:   MMUSelectCommander
                         call		defaultCommander
                         call        saveCommander
@@ -267,18 +278,169 @@ DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks
                         MMUSelectUniverseN  0
                         MMUSelectLayer2
                         SetBorder   $07
-InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
+;
+;COMMENTED OUT AS RAND OUT OF MEMORY DEBUGGING InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
+;                        ;break
+;                        call		ResetUniv                       ; Reset ship data
+;                        call        ResetGalaxy                     ; Reset each galaxy copying in code
+;                        call        SeedAllGalaxies
+;                        MMUSelectSpriteBank
+;                        call        sprite_cls_all
+;                        MMUSelectLayer1
+;                        call		l1_cls
+;                        SetBorder   $00
+TESTCODEPOINT1:      IFDEF TESTGALAXYCHART
+                        break
+                        MMUSelectMenuGalCht
+                        call        draw_g_chart
+.testGalaxyChartLoop:   MMUSelectKeyboard
+                        call        scan_keyboard
+                        MMUSelectMenuGalCht
+                        call        update_g_chart
+                        MMUSelectKeyboard
+                        call        MovementKeyTest
+                        MMUSelectMenuGalCht
+                        call        cursors_g_chart
+                        jp          .testGalaxyChartLoop
+                    ENDIF                 
+TESTCODEPOINT2:     IFDEF TESTSHORTRANGECHART
+                        break
+                        MMUSelectMenuShrCht
+                        call        draw_s_chart
+                        break
+.testGalaxyChartLoop:   MMUSelectKeyboard
+                        call        scan_keyboard
+                        MMUSelectMenuShrCht
+                        call        update_s_chart
+                        MMUSelectKeyboard
+                        call        MovementKeyTest
+                        MMUSelectMenuShrCht
+                        call        cursors_s_chart
+                        jp          .testGalaxyChartLoop
+                    ENDIF                 
+TESTCODEPOINT3:     IFDEF TESTSYSTEMMENU
+                        break
+                        MMUSelectMenuSystem
+                        call        draw_s_data
+                        break
+.testMenuSystemLoop:    MMUSelectKeyboard
+                        call        scan_keyboard
+                        MMUSelectMenuSystem
+                        call        update_s_data
+                        jp          .testMenuSystemLoop
+                    ENDIF          
+                    ; if not docked then market is just a price list
+TESTCODEPOINT4:     IFDEF TESTMARKETROMENU
                         ;break
-                        call		ResetUniv                       ; Reset ship data
-                        call        ResetGalaxy                     ; Reset each galaxy copying in code
-                        call        SeedAllGalaxies
-                        MMUSelectSpriteBank
-                        call        sprite_cls_all
-                        MMUSelectLayer1
-                        call		l1_cls
-                        SetBorder   $00
+                        MMUSelectStockTable                    ; .
+                        call    generate_stock_market          ; generate new prices
                         
-                        
+                        MMUSelectMenuMarket
+                        call        draw_mkt_data
+                        break
+.testMenuMktLoop:       MMUSelectKeyboard
+                        call        scan_keyboard
+                        MMUSelectMenuMarket
+                        call        update_mkt_data
+                        jp          .testMenuMktLoop
+                    ENDIF          
+TESTCODEPOINT5:     IFDEF TESTSTATUSMENU
+                        ;break
+                        MMUSelectMenuStatus
+                        call        draw_stat_menu
+                        break
+.testMenuStatLoop:      jp          .testMenuStatLoop
+                    ENDIF         
+TESTCODEPOINT6:     IFDEF TESTINVENTORYMENU
+                        MMUSelectMenuInvent
+                        call        draw_inv_menu
+                        break
+.testMenuInvLoop:       jp          .testMenuInvLoop
+                    ENDIF         
+TESTCODEPOINT7:     IFDEF TESTMUL
+                        ld      b,3
+                        ld      ix,.DataSet
+.MathsLoop1:            push    ix,,bc
+                        ld      b,(ix+0)
+                        ld      h,(ix+1)
+                        ld      l,(ix+2)
+                        ld      c,(ix+3)
+                        ld      d,(ix+4)
+                        ld      e,(ix+5)
+                        break
+                        call    BCDEHLequBHLmulCDEs; BCDEHLequBHLmulCDEu 
+                        break
+                        pop     hl,,bc
+                        ld      a,6
+                        add     hl,a
+                        ld      ix,hl
+                        djnz    .MathsLoop1
+                        break
+;                                                                            B C D E H L
+.DataSet:               DB 0x80, 0x50, 0x80, 0x00, 0x50, 0x80    ; Result    800019504000 Pass            
+;.DataSet:               DB 0x00, 0x50, 0x80, 0x00, 0x50, 0x80    ; Result    000019504000 Pass            
+;.DataSet1:              DB 0x10, 0x50, 0x80, 0x00, 0x50, 0x80    ; Result    000521504000 Pass                 
+;.DataSet2:              DB 0x02, 0x50, 0x80, 0x10, 0x50, 0x80    ; Result    000263CAC000 Pass
+;.DataSet3:              DB 0x00, 0x00, 0x80, 0x00, 0x50, 0x80    ; Result    000000284000 Pass               
+;.DataSet4:              DB 0x00, 0x00, 0x80, 0x00, 0x00, 0x80    ; Result    000000004000 Pass
+.DataSet3:              DB 0x00, 0x00, 0x80, 0x80, 0x50, 0x80    ; Result    800000284000 Pass               
+.DataSet4:              DB 0x80, 0x00, 0x80, 0x80, 0x00, 0x80    ; Result    000000004000 Pass
+          
+                    ENDIF 
+                ;    TESTINVENTORYMENU
+                    
+                     ; MMUSelectMenuInvent
+                    ;
+                    
+                    ;MMUSelectMenuStatus
+                    IFDEF COPROCESSOR_TEST
+                        DISPLAY "PI COPROCESSOR TEST ENABELD"
+;--- Initialise Pi--------------------------------------------------;
+                        MMUSelectPIFns
+                        call        PiReset
+;--- Create Universe------------------------------------------------;
+                        call        ENPiResetUniverse
+;--- Set View-------------------------------------------------------;
+                        ld          a,1
+                        call        ENPiSetView
+                        ld          hl,.PiPlayerInput
+                        call        ENPiPlayerInput
+;--- Create Object--------------------------------------------------;
+;--- Update Universe------------------------------------------------;
+                        call        ENPiUpdateUniverse
+;--- Display Object-------------------------------------------------;
+                        call        ENPiRenderData
+                        ld          bc,(HeapSizeBytes)
+                        ld          de,LineHeap
+                        ld          hl,LineBuffer ; this needs expanding later
+                        call        memcopy_dma
+; "memcopy_dma, hl = target address de = source address to copy, bc = length"
+                        ld          hl,LineBuffer
+                        ld          a,(LineHeapSize)
+                        ld          b,a
+.DrawLinesLoop:         push        bc,,hl
+                        inc         hl
+                        ld          a,(hl)
+                        ld          (x1),a
+                        inc         hl
+                        ld          (y1),a
+                        inc         hl
+                        ld          (x2),a
+                        inc         hl
+                        ld          (y2),a
+                        MMUSelectLayer2
+                        call        l2_draw_6502_line
+                        pop         bc,,hl
+                        ld          a,5
+                        add         hl,a
+                        djnz        .DrawLinesLoop
+                        call        l2_flip_buffers
+                        jp          .PiTestComplete
+.PiDataSection:
+.PiPlayerInput:         DW $0201, $0403,$0605,$0807
+.LineBufferPointer:     DW 0
+.PiTestComplete:        jp          .PiTestComplete
+                    ENDIF
                     IFDEF SKIPATTRACT
                         DISPLAY "INITGALAXIES SKIP ATTRACT"
                         jp DefaultCommander
@@ -847,11 +1009,12 @@ CopyBodyToUniverse1:    MCopyBodyToUniverse     CopyShipToUniverse1
     INCLUDE "./Data/ShipModelMetaData1.asm"
     DISPLAY "Bank ",BankShipModels1," - Bytes free ",/D, $2000 - ($-ShipModelsAddr), " - BankShipModels1"
 ; Bank 66  ------------------------------------------------------------------------------------------------------------------------
-    SLOT    DispMarketAddr
-    PAGE    BankDispMarket
-    ORG     DispMarketAddr
-    INCLUDE "./Menus/market_prices_disp.asm"
-    DISPLAY "Bank ",BankDispMarket," - Bytes free ",/D, $2000 - ($-MenuShrChtAddr), " - BankDispMarket"
+; marked now incorporated in menu with read only swtich replaced with equipment table
+    SLOT    EquipmentTablesAddr
+    PAGE    BankEquipmentTables
+    ORG     EquipmentTablesAddr
+    INCLUDE "./Tables/EquipmentTables.asm"
+    DISPLAY "Bank ",BankEquipmentTables," - Bytes free ",/D, $2000 - ($-EquipmentTablesAddr), " - BankEquipmentTables"
 ; Bank 67  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ShipModelsAddr
     PAGE    BankShipModels2
@@ -1149,14 +1312,20 @@ GALAXYDATABlock7:   DB $FF
                     INCLUDE "./Hardware/sound.asm"
                     DISPLAY "Sound ",BankSound," - Bytes free ",/D, $2000 - ($-SoundAddr), " - BankSound"
                     ASSERT $-SoundAddr <8912, Bank code leaks over 8K boundary
- ; Bank 102  -----------------------------------------------------------------------------------------------------------------------
+; Bank 102  -----------------------------------------------------------------------------------------------------------------------
                     SLOT    MathsBankedFnsAddr
                     PAGE    BankMathsBankedFns
                     ORG     MathsBankedFnsAddr,BankMathsBankedFns
                     INCLUDE "./Maths/MathsBankedFns.asm"
                     DISPLAY "Bank ",BankMathsBankedFns," - Bytes free ",/D, $2000 - ($-MathsBankedFnsAddr), " - BankMathsBankedFns"
                     ASSERT $-MathsBankedFnsAddr <8912, Bank code leaks over 8K boundary
-    
+; Bank 103  -----------------------------------------------------------------------------------------------------------------------
+                    SLOT    PIFnsAddr
+                    PAGE    BankPIFns
+                    ORG     PIFnsAddr,BankPIFns
+                    INCLUDE "./PI/PIFns.asm"
+                    DISPLAY "Bank ",BankPIFns," - Bytes free ",/D, $2000 - ($-PIFnsAddr), " - BankPIFns"
+                    ASSERT $-PIFnsAddr <8912, Bank code leaks over 8K boundary
     SAVENEX OPEN "EliteN.nex", EliteNextStartup , TopOfStack
     SAVENEX CFG  0,0,0,1
     SAVENEX AUTO

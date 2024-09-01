@@ -1,69 +1,41 @@
+                              ;0123456780ABCDEF
 market_prices_page_marker  DB "MarketPricesPG54"
+ 
+draw_mkt_data:          ld      a,0
+                        jp      MPM_draw_market_prices_menu
+draw_mkt_dataRO:        ld      a,$FF
+                        jp      MPM_draw_market_prices_menu
 
-mkt_boiler_unit_col     equ $80
-mkt_boiler_qty_col      equ $D0
-mkt_boiler_product_col  equ $08
-mkt_boiler_uom_col      equ $70
-mkt_boiler_price_col    equ $C0
-mkt_boiler_stock_col    equ $F0
-mkt_boiler_inv_col      equ $0120
+close_mkt_data:         ret
 
-mkt_cash_pos_row        equ $D0
-mkt_cargo_pos_row       equ $C0
-market_cash_pos_row     equ $D0
-market_cargo_pos_row    equ $C0
-market_top_row          equ $20
-
-mkt_cash_pos_col        equ $0010
-mkt_cargo_pos_col       equ $0010                        
-market_cash_pos_col     equ $0048
-market_cargo_pos_col    equ $0048
-market_uom_col			equ	mkt_boiler_uom_col
-market_price_col        equ mkt_boiler_price_col + 8
-market_quantity_col 	equ	mkt_boiler_stock_col + $10
-market_cargo_col        equ mkt_boiler_inv_col
-
-market_boiler_text		DW $0050                 : DB $02               : DW TextBuffer
-						DW $0020                 : DB $02               : DW name_expanded					
-						DW mkt_boiler_product_col: DB $13               : DW WordProduct
-						DW mkt_boiler_uom_col    : DB $13               : DW WordUoM
-						DW mkt_boiler_price_col  : DB $13               : DW WordPrice
-						DW mkt_boiler_stock_col  : DB $13               : DW WordStock
-						DW mkt_boiler_inv_col    : DB $13               : DW WordInv
-                        DW mkt_cargo_pos_col     : DB mkt_cargo_pos_row : DW mkt_hold_level
-                        DW mkt_cash_pos_col      : DB mkt_cash_pos_row  : DW mkt_cash
-
-
-
-txt_market_amount	    DB "00.0",0
-txt_market_quantity     DB "999",0
-txt_market_cargo        DB "999",0
-market_cursor			DB  $00
-market_position			equ $2008
-
-;market_UomOffset		equ 46
-market_blank_line       DB "                                      ",0
-mkt_hold_level          DB "Cargo: ",0
-mkt_cash				DB "Cash : ",0
-mkt_selected_row        db  0
-
-mkt_cash_amount			DS 20
-mkt_cash_UoM            DB " Cr       ",0
-mkt_cargo_position      equ $A848
-mkt_cargo_amount		DS 20
-mkt_cargo_UoM           DB " Tonnes   ",0
-;                           12345678901
+update_mkt_data:        ld      a,(mkt_read_only_mode)
+                        and     a
+                        ret     nz
+                        jp loop_market_menu
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 mkt_highlight_row:      ld      a,(mkt_selected_row)
-                        call    PrintMartetItemHigh
+                        ld      hl,MPM_market_data01
+                        ld      d,a
+                        ld      e,6
+                        mul     de
+                        add     hl,de
+                        ld      ix,hl
+                        ld      (ix+3),$BC 
+                        ld		b,1
+                        call	MPM_print_boiler_text
                         ret
-
-
-
 ;----------------------------------------------------------------------------------------------------------------------------------
 mkt_lowlight_row        ld      a,(mkt_selected_row)
-                        call    PrintMarketItemDefault
+                        ld      hl,MPM_market_data01
+                        ld      d,a
+                        ld      e,6
+                        mul     de
+                        add     hl,de
+                        ld      ix,hl
+                        ld      (ix+3),$FF 
+                        ld		b,1
+                        call	MPM_print_boiler_text
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 MKT_DispDEIXtoIY1DP:    call    MKT_DispDEIXtoIY
@@ -171,61 +143,24 @@ MPM_DispPriceAtoDE:     ld h,0
                         ld	(de),a
                         inc	de
                         ret
-;----------------------------------------------------------------------------------------------------------------------------------
-MPM_DispQtyAtoDE:       cp	0
-                        jr	z,.NoStock
-                        ld h,0
-                        ld l,a
-                        ld	bc,-100
-                        call	.NumLeadBlank1
-.WasLead0:              cp      ' '
-                        jr      nz,.NotHundredsZero
-                        ld	c,-10
-                        call	.NumLeadBlank1
-                        ld	c,-1
-                        jr		MPM_Num1
-.NotHundredsZero:       ld	c,-10
-                        call	MPM_Num1
-                        ld	c,-1
-                        jr		MPM_Num1
-.NumLeadBlank1:	        ld	a,'0'-1
-.NumLeadBlank2:	        inc	a
-                        add	hl,bc
-                        jr	c,.NumLeadBlank2
-                        cp	'0'
-                        jr	nz,.DontBlank
-.Blank:                 ld	a,' '
-.DontBlank:	            sbc	hl,bc
-                        ld	(de),a
-                        inc	de
-                        ret
-.NoStock:               ld	a,' '
-                        ld	(de),a
-                        inc	de
-                        ld	(de),a
-                        inc	de
-                        ld	a,'-'
-                        ld	(de),a
-                        inc de
-                        ret
-;----------------------------------------------------------------------------------------------------------------------------------
-MPM_print_boiler_text:  ld		b,9
-                        ld		ix,market_boiler_text
-.BoilerTextLoop:        push	bc			; Save Message Count loop value
-                        ld		l,(ix+0)	; Get col into hl
-                        ld		h,(ix+1)	;
-                        ld		b,(ix+2)	; get row into b
-                        ld		e,(ix+3)	; Get text address into hl
-                        ld		d,(ix+4)	; .
-                        push    ix          ; save ix and prep for add via hl
+;---------------------------------------------------------------------------------------------------------------------------------
+; prints text based on message data
+MPM_print_boiler_text:      
+.BoilerTextLoop:        push        bc          ; Save Message Count loop value
+                        ld          b,(ix+0)    ; get row into b
+                        ld          de,(ix+1)   ; get column into hl (as we can't load direct to hl from ix)
+                        ex          de,hl       ;
+                        ld          c,(ix+3)    ; c = colour
+                        ld          de,(ix+4)   ; de = address of message
+                        push        ix
                         MMUSelectLayer2
-                        print_msg_at_de_at_b_hl_macro txt_status_colour
-                        pop     hl          ; add 5 to ix
-                        ld      a,5         ; .
-                        add     hl,a        ; .
-                        ld      ix,hl       ; .
-                        pop		bc
-                        djnz	.BoilerTextLoop
+                        call        l2_print_at_320
+                        pop         hl          ; move ix on to next string if needed
+                        ld          a,6         ;
+                        add         hl,a        ;
+                        ld          ix,hl       ;
+                        pop         bc          ; remainder of lines in loop
+                        djnz        .BoilerTextLoop
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 MKT_GetCash:            ld		hl,(Cash+2)
@@ -248,100 +183,113 @@ MKT_GetCargo:   	    ld      de,0
                         call 	MKT_DispDEIXtoIY
                         push    IY
                         pop     de
-                        inc     de
-                        ld      hl,mkt_cargo_UoM
-                        ld      bc,11
-                        ldir
+                        ;inc     de
+                        ;ld      hl,mkt_cargo_UoM
+                        ;ld      bc,11
+                       ; ldir
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-MKT_DisplayCargo:       call	MKT_GetCargo
-                        MMUSelectLayer2
-                        print_msg_macro txt_status_colour,  market_cargo_pos_row,  market_cargo_pos_col,  mkt_cargo_amount
-                        ret
-;----------------------------------------------------------------------------------------------------------------------------------
-MKT_DisplayCash:        call	MKT_GetCash
-                        MMUSelectLayer2
-                        print_msg_macro txt_status_colour,  market_cash_pos_row,  market_cash_pos_col,  mkt_cash_amount
-                        ret
-;----------------------------------------------------------------------------------------------------------------------------------
-; "A = stock item number"
-; These must be in this order so that the print macro can load into bc
-PrintMarketColour:      DB 0
-PrintMarketRow:         DB 0
-PrintMartetItemHigh:    ex      af,af'
-                        ld      a,txt_highlight_colour
-                        ld      (PrintMarketColour),a
-                        ex      af,af'
-                        jp      PrintMarketItem
-PrintMarketItemDefault: ex      af,af'
-                        ld      a,txt_status_colour
-                        ld      (PrintMarketColour),a
-                        ex      af,af'
-PrintMarketItem:        push    af
-                        ld      d,a                 ; .
-                        ld      e,8                 ; .
-                        mul     de                  ; .   
-                        ld      a,market_top_row   ; hl = base cursor position + row number * 8
-                        add     a,e
-                        ld      (PrintMarketRow),a
-                        ld      bc,(PrintMarketColour)  ; loads b with row, c with color
-                        MMUSelectLayer2
-                        print_msg_ld_bc_macro $08, market_blank_line    ; Optimise later to have a specific blank line function
-                        pop     af
-                        ld		ix,StockFood		; start 8 bytes before index as first add will shift
-                        ld      iy,CargoTonnes
-                        ld		e,8
-                        ld		d,a
-                        mul
-                        add		ix,de				; Move down a row ix += a * 8
-                        ld      d,0
-                        ld      e,a
-                        add     iy,de                ; cargo table is just 1 byte per item
-.GetName:               MMUSelectStockTable
-                        ld		a,(ix+StockNameOffset)
-                        ld		hl,WordIdxStock
-                        call	getTableText
-                        ex      de,hl
-                        push    ix
-                        ld      bc,(PrintMarketColour)  ; loads b with row, c with color
-                        MMUSelectLayer2
-                        print_msg_ld_bc_at_de_macro  $08
-                        pop     ix
-.GetUom                 MMUSelectStockTable
-                        ld		a,(ix+StockUoMOffset)
-                        ld		hl,WordIdxUoMFull
-                        call	getTableText
-                        ex      de,hl
-                        push    ix
-                        ld      bc,(PrintMarketColour)  ; loads b with row, c with color
-                        MMUSelectLayer2
-                        print_msg_ld_bc_at_de_macro market_uom_col
-                        pop     ix
-.GetPrice:              MMUSelectStockTable
-                        ld		a,(ix+StockPriceOffset)
-                        ld		de,txt_market_amount
-                        call	MPM_DispPriceAtoDE
-                        push    ix
-                        ld      bc,(PrintMarketColour)  ; loads b with row, c with color
-                        MMUSelectLayer2
-                        print_msg_ld_bc_macro market_price_col, txt_market_amount
-                        pop     ix
-.GetQty:                MMUSelectStockTable
-                        ld		a,(ix+StockQtyOffset)
-                        ld		de,txt_market_quantity
-                        call	MPM_DispQtyAtoDE
-                        ld      bc,(PrintMarketColour)  ; loads b with row, c with color
-                        MMUSelectLayer2
-                        print_msg_ld_bc_macro market_quantity_col, txt_market_quantity
-.GetCargoQty:           ld      a,(iy+0)
-                        ld      de,txt_market_cargo
-                        call	MPM_DispQtyAtoDE
-                        ld      bc,(PrintMarketColour)  ; loads b with row, c with color
-                        MMUSelectLayer2
-                        print_msg_ld_bc_macro market_cargo_col, txt_market_cargo                      
-                        ret
+; re-display market data line from boiler text with selected colour
+; b holds row, c holds colour
 
-draw_market_prices_menu:MMUSelectLayer1
+;----------------------------------------------------------------------------------------------------------------------------------
+; move quanity on line and redisplay, moves from stock to cargo (+) or from cargo to stock (-)
+; b holds adjustment signed value, c holds colour to re-draw
+
+;----------------------------------------------------------------------------------------------------------------------------------
+MPM_shift_de_a_chars:   ex      de,hl               ; now adjust 
+                        add     hl,a
+                        ex      de,hl
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+MPM_Clear_Boiler:       ld      hl,MPM_market_txt01
+DEFECTIUVE
+                        ld      c,17
+.WriteLoopOuter:        ld      b,MPM_market_row_len -1
+.WriteLoopInner:        ld      d," "
+                        ld      (hl),d
+                        inc     hl
+                        djnz    .WriteLoopInner
+                        ld      (hl),0
+                        dec     c
+                        jp      nz,.WriteLoopOuter
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+MPM_getCargoQtyIY:      ld		a,(iy)
+                        call	Stock_DispQtyAtoDE
+                        ret                             
+;----------------------------------------------------------------------------------------------------------------------------------
+; loads market data to boiler text
+MPM_Market_To_Boiler:   break
+                        call    MPM_Clear_Boiler
+                        ld      de,MPM_market_txt01
+                        MMUSelectStockTable
+                        ld		ix,StockFood		; start 8 bytes before index as first add will shift
+                        ld      iy,CargoTonnes      ; amount in hold
+                        ld      b,17
+.readItemsLoop:         push    bc
+.GetName:               MMUSelectStockTable
+                        push    de,,de              ; save for outer loop too
+                        call    copyStockItemNameIXDE
+                        pop     de                        
+.GetUoM:                ld      a,13
+                        call    MPM_shift_de_a_chars
+                        push    de
+                        call    copyStockStockUoMIXDE
+                        pop     de
+.GetPrice:              ld      a,10
+                        call    MPM_shift_de_a_chars
+                        push    de
+                        call    getStockPriceIXtoDE
+                        pop     de
+                        ld      a,6
+                        call    MPM_shift_de_a_chars
+                        push    de
+                        call    getStockQtyIX
+                        pop     de
+                        ld      a,4
+                        call    MPM_shift_de_a_chars
+                        call    MPM_getCargoQtyIY
+.NextStockRow:          ld      de,8
+                        add     ix,de
+                        inc     iy
+                        pop     de
+                        ld      a,MPM_market_row_len
+                        call    MPM_shift_de_a_chars
+                        pop     bc
+                        djnz    .readItemsLoop
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+; a = buffer line to update
+mkt_update_line:        ld      hl,CargoTonnes                  ; prep index to cargo hold values
+                        add     hl,a
+                        ld      iy,hl
+                        ld      d,MPM_market_row_len            ; output bufffer for lines
+                        ld      e,a
+                        mul     de
+                        push    af                              ; save a for later
+                        ld      hl,MPM_market_txt01
+                        add     hl,de
+                        ld      a,29
+                        add     hl,a
+                        push    hl
+                        ex      de,hl
+                        call    getStockQtyIX
+                        pop     hl
+                        ld      a,4
+                        add     hl,a
+                        ex      de,hl
+                        call    MPM_getCargoQtyIY
+                        pop     af                              ; get row number back
+                        ld      d,8
+                        ld      e,a
+                        mul     de
+                        call    mkt_highlight_row
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+MPM_draw_market_prices_menu:
+                        ld      (mkt_read_only_mode),a
+                        MMUSelectLayer1
                         call	l1_cls
                         ld		a,7
                         call	l1_attr_cls_to_a
@@ -352,55 +300,35 @@ draw_market_prices_menu:MMUSelectLayer1
                         MMUSelectSpriteBank
                         call    sprite_cls_cursors
                         MMUSelectLayer2
-                                                
 .Drawbox:               call    l2_draw_menu_border
-                        ld		bc,$0AC0 
-                        ld      hl,$0001
-                        ld		de,320-4
-                        call	l2_draw_horz_line_320       ;b = row; hl = col, de = length, c = color"
-.DrawProductLine        ld		bc,$1DC0
-                        ld      hl,mkt_boiler_product_col
-                        ld		de,8*12
-                        call	l2_draw_horz_line_320       ;b = row; hl = col, de = length, c = color"
-.DrawUoMLine:           ld		bc,$1DC0
-                        ld      hl,mkt_boiler_uom_col
-                        ld		de,(8*9)-1
-                        call	l2_draw_horz_line_320       ;b = row; hl = col, de = length, c = color"
-.DrawPriceLine:         ld		bc,$1DC0
-                        ld      hl,mkt_boiler_price_col
-                        ld		de,8*5
-                        call	l2_draw_horz_line_320       ;b = row; hl = col, de = length, c = color"
-.DrawStockLine:         ld		bc,$1DC0
-                        ld      hl,mkt_boiler_stock_col
-                        ld		de,8*5
-                        call	l2_draw_horz_line_320       ;b = row; hl = col, de = length, c = color"
-.DrawInvLine:           ld		bc,$1DC0
-                        ld      hl,mkt_boiler_inv_col
-                        ld		de,8*3
-                        call	l2_draw_horz_line_320       ;b = row; hl = col, de = length, c = color"
 .StaticText:	        ld      a,(Galaxy)
                         MMUSelectGalaxyA
                         ld		a,25
                         call	expandTokenToString
                         call	GetDigramGalaxySeed
+                        call    MPM_copy_str_hl_to_de
+                        call    MPM_Market_To_Boiler
+.DisCargo:              call    MKT_GetCargo
+.DisCash:               call    MKT_GetCash
+                        ld		b,23
+                        ld		ix,MPM_boiler_text
                         call	MPM_print_boiler_text
-; Generate the market list on screen
-.DisplayPrices:         ZeroA
-                        ld		hl,market_position          ; set current cursor position on screen
-                        ld		(market_cursor),hl          ; .
-MarketLoop:	            push	af
-                        call	PrintMarketItemDefault     ; display a single market item
-                        pop		af
-                        inc		a
-                        cp		StockTypeMax
-                        jr		nz,MarketLoop
+                        ld      a,(mkt_read_only_mode)
+                        and     a
+                        ret     nz
 .InitialHighlight:      xor     a
                         ld      (mkt_selected_row),a        ; assume on row zero
                         call    mkt_highlight_row
-.DisCargo:              call    MKT_DisplayCargo
-.DisCash:               call    MKT_DisplayCash
                         ret
 
+;----------------------------------------------------------------------------------------------------------------------------------
+MPM_copy_str_hl_to_de:  ld      a,(hl)
+                        ld      (de),a
+                        inc     hl
+                        inc     de
+                        and     a                               ; check if we wrote a \0 if so then done
+                        jp      nz,SDM_copy_str_hl_to_de
+                        ret
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Handles all the input whilst in the market menu
@@ -413,7 +341,6 @@ loop_market_menu:       MacroIsKeyPressed c_Pressed_CursorUp
                         MacroIsKeyPressed c_Pressed_RollRight
                         call    z,mkt_RightPressed
                         ret
-
 ;----------------------------------------------------------------------------------------------------------------------------------
 mkt_UpPressed:          ld      a,(mkt_selected_row)
                         cp      0
@@ -430,7 +357,7 @@ mkt_DownPressed:        ld      a,c_Pressed_CursorDown
                         cp      1
                         jr      z,.ItsOK
 .ItsOK:                 ld      a,(mkt_selected_row)
-                        cp      StockTypePenultimate
+                        cp      StockTypeMax
                         ret     z
                         call    mkt_lowlight_row
                         ld      hl,mkt_selected_row
@@ -454,7 +381,7 @@ mkt_LeftPressed:        ld      a,(mkt_selected_row)
                         MMUSelectStockTable
                         inc     (ix+1)
                         ld      a,(ix+7)
-                        cp      48
+.IsUoMTonnes:           and     a                                   ; tonnes is now UoM zero
                         jr      nz,.UnderATonne
                         ld      hl,CargoRunningLoad
                         dec     (hl)            ; We need to cosider UoM
@@ -464,9 +391,12 @@ mkt_LeftPressed:        ld      a,(mkt_selected_row)
                         call    addDEtoCash
                         ; DO ADD CASH
                         ld      a,(mkt_selected_row)
-                        call    PrintMarketItem
-                        call    MKT_DisplayCargo
-                        call    MKT_DisplayCash
+                        call    mkt_update_line
+                        call    MKT_GetCash
+                        call    MKT_GetCargo
+                        ld      ix,MPM_market_cash
+                        ld      b,2
+                        call    MPM_print_boiler_text
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 mkt_RightPressed:       MMUSelectStockTable
@@ -525,7 +455,107 @@ mkt_RightPressed:       MMUSelectStockTable
                         ld      e,a
                         call    subDEfromCash
                         ld      a,(mkt_selected_row)
-                        call    PrintMarketItem
-                        call    MKT_DisplayCargo
-                        call    MKT_DisplayCash
+                        call    mkt_update_line
+                        call    MKT_GetCash
+                        call    MKT_GetCargo
+                        ld      ix,MPM_market_cash
+                        ld      b,2
+                        call    MPM_print_boiler_text
                         ret
+                       
+;----------------------------------------------------------------------------------------------------------------------------------
+mkt_read_only_mode      DB  $00
+mkt_boiler_unit_col     equ $80
+mkt_boiler_qty_col      equ $D0
+mkt_boiler_product_col  equ $08
+mkt_boiler_uom_col      equ $70
+mkt_boiler_price_col    equ $C0
+mkt_boiler_stock_col    equ $F0
+mkt_boiler_inv_col      equ $0120
+
+mkt_cash_pos_row        equ $D0
+mkt_cargo_pos_row       equ $C0
+market_cash_pos_row     equ $D0
+market_cargo_pos_row    equ $C0
+market_top_row          equ $20
+
+mkt_cash_pos_col        equ $0010
+mkt_cargo_pos_col       equ $0010                        
+market_cash_pos_col     equ $0048
+market_cargo_pos_col    equ $0048
+market_uom_col			equ	mkt_boiler_uom_col
+market_price_col        equ mkt_boiler_price_col + 8
+market_quantity_col 	equ	mkt_boiler_stock_col + $10
+market_cargo_col        equ mkt_boiler_inv_col
+
+MPM_boiler_text:        DB 002, low 08  , high 08  , $FF, low MPM_system_name  , high MPM_system_name    
+                        DB 016, low 08  , high 08  , $FF, low MPM_header1      , high MPM_header1
+                        DB 024, low 08  , high 08  , $FF, low MPM_header2      , high MPM_header2 
+MPM_market_cash         DB 180, low 08  , high 08  , $FF, low mkt_cash ,         high mkt_cash
+MPM_market_cargo        DB 180, low 160 , high 160 , $FF, low mkt_hold_level ,   high mkt_hold_level
+MPM_market_data01       DB 040, low 08  , high 08  , $FF, low MPM_market_txt01 , high MPM_market_txt01
+MPM_market_data02       DB 048, low 08  , high 08  , $FF, low MPM_market_txt02 , high MPM_market_txt02
+MPM_market_data03       DB 056, low 08  , high 08  , $FF, low MPM_market_txt03 , high MPM_market_txt03
+MPM_market_data04       DB 064, low 08  , high 08  , $FF, low MPM_market_txt04 , high MPM_market_txt04
+MPM_market_data05       DB 072, low 08  , high 08  , $FF, low MPM_market_txt05 , high MPM_market_txt05
+MPM_market_data06       DB 080, low 08  , high 08  , $FF, low MPM_market_txt06 , high MPM_market_txt06
+MPM_market_data07       DB 088, low 08  , high 08  , $FF, low MPM_market_txt07 , high MPM_market_txt07
+MPM_market_data08       DB 096, low 08  , high 08  , $FF, low MPM_market_txt08 , high MPM_market_txt08
+MPM_market_data09       DB 104, low 08  , high 08  , $FF, low MPM_market_txt09 , high MPM_market_txt09
+MPM_market_data10       DB 112, low 08  , high 08  , $FF, low MPM_market_txt10 , high MPM_market_txt10
+MPM_market_data11       DB 120, low 08  , high 08  , $FF, low MPM_market_txt11 , high MPM_market_txt11
+MPM_market_data12       DB 128, low 08  , high 08  , $FF, low MPM_market_txt12 , high MPM_market_txt12
+MPM_market_data13       DB 136, low 08  , high 08  , $FF, low MPM_market_txt13 , high MPM_market_txt13
+MPM_market_data14       DB 144, low 08  , high 08  , $FF, low MPM_market_txt14 , high MPM_market_txt14
+MPM_market_data15       DB 152, low 08  , high 08  , $FF, low MPM_market_txt15 , high MPM_market_txt15
+MPM_market_data16       DB 160, low 08  , high 08  , $FF, low MPM_market_txt16 , high MPM_market_txt16
+MPM_market_data17       DB 168, low 08  , high 08  , $FF, low MPM_market_txt17 , high MPM_market_txt17
+
+MPM_system_name         DB "Market Data : "
+MPM_system_title        DB "                ",0
+MPM_header1:            DB "                      UNIT  -QUANTITY-",0
+MPM_header2:            DB "PRODUCT      UoM      PRICE SALE CARGO",0
+                           ;0        1         2         3    E              4
+                           ;1234567890123456789012345678901234567  8 9 0 1 2 3 4 5 6 7 8
+MPM_market_txtblank:    DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt01:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_row_len      EQU $ - MPM_market_txt01                                        
+MPM_market_txt02:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt03:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt04:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt05:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt06:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt07:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt08:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt09:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt10:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt11:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt12:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt13:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt14:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt15:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt16:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPM_market_txt17:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+MPN_market_sizeof:      EQU $ - MPM_market_txt01
+MPN_mark
+
+txt_market_amount	    DB "00.0",0
+txt_market_quantity     DB "999",0
+txt_market_cargo        DB "999",0
+market_cursor			DB  $00
+market_position			equ $2008
+
+;market_UomOffset		equ 46
+market_blank_line       DB "                                      ",0
+mkt_hold_level          DB "Cargo (Tonnes): "
+mkt_cargo_amount		DS 20
+mkt_cargo_EoL           DB 0
+
+mkt_cash				DB "Cash : "
+mkt_cash_amount			DS 20
+mkt_cash_UoM            DB " Cr       ",0
+mkt_selected_row        db  0
+
+mkt_cargo_position      equ $A848
+;                           12345678901
+                        

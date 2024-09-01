@@ -1,6 +1,4 @@
-ZeroA:		            MACRO
-                        xor a
-                        ENDM
+
                         
 SetATrue:               MACRO
                         xor     a

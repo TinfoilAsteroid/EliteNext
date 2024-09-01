@@ -410,7 +410,7 @@ FileNameStringPointer	DW	0				;0C00	   \ pointer to filename string
 CommanderLoadAddress	DW	0				;0C03
 LengthOfFile			DW	0				;0C0B
 SaveDataEndAddress		DW	0				;&0C0F	      \ &0C00 is end address of data to save
-
+LineBuffer:                                ; needs to be 5 * 255 ideally
 EdgesBuffer				DS 50
 EdgesBufferSP			equ	$				; Was $0CFF			; Heap pointer for edges buffer
 ShipLinesBufferSP		equ EdgesBufferSP	; was $0CFF

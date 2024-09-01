@@ -91,4 +91,9 @@ l2_draw_menu_border:    ld      b,1
                         ld      de,320-4
                         ld      c,$C0
                         call    l2_draw_horz_line_320
+                        ld      b,11
+                        ld      hl,2
+                        ld      de,320-4
+                        ld      c,$C0
+                        call    l2_draw_horz_line_320
                         ret

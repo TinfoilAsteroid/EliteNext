@@ -1,36 +1,5 @@
 ivnentory_page_marker   DB "Inventory   PG52"  
 
-inv_pos_row		        equ	$08
-inv_fuel_pos_row		equ	$1B
-inv_cash_pos_row		equ	$23
-inv_stock_pos_row    	equ $33
-
-inv_pos_col   	        equ	$0080
-inv_fuel_pos_col		equ	$0030
-inv_cash_pos_col		equ	$0030
-inv_stock_pos_col       equ $0008
-inv_stock_amt_pos_col   equ $0080
-inv_stock_uom_pos_col   equ $00E0
-
-inventory_boiler_text	DW inv_pos_col : DB inv_pos_row:      DW INM_inventory
-						DW $0008       : DB inv_fuel_pos_row: DW INM_fuel
-						DW $0008       : DB inv_cash_pos_row: DW INM_cash
-
-INM_inventory 			DB "INVENTORY",0
-INM_fuel				DB "Fuel:",0
-INM_cash				DB "Cash:",0
-
-txt_inventory_amount	DB "00000",0
-
-inventory_curr_row      DB  inv_stock_pos_row
-
-inventory_amount		equ $80
-inventory_uom			equ	$B0
-inv_selected_row        DB 0
-
-INM_cash_amount			DS 10
-INM_cash_UoM            DB " Cr",0
-
 INM_DispAtoDE:          ld h,0
                         ld l,a
                         ld	bc,-10000
@@ -50,25 +19,27 @@ INM_DispAtoDE:          ld h,0
                         ld	(de),a
                         inc	de
                         ret 
-
-INM_print_boiler_text:  ld		b,3
-                        ld		ix,inventory_boiler_text
-.BoilerTextLoop:        push	bc			; Save Message Count loop value
-                        ld		l,(ix+0)	; Get col into hl
-                        ld		h,(ix+1)	; 
-                        ld		b,(ix+2)	; get row into b
-                        ld		e,(ix+3)	; Get text address into hl
-                        ld		d,(ix+4)	; .
-                        push    ix          ; save ix and prep for add via hl
-                        print_msg_at_de_at_b_hl_macro txt_status_colour
-                        pop     hl          ; add 5 to ix
-                        ld      a,5         ; .
-                        add     hl,a        ; .
-                        ld      ix,hl       ; .
-                        pop		bc
-                        djnz	.BoilerTextLoop
+                        
+;---------------------------------------------------------------------------------------------------------------------------------
+; prints text based on message data
+INM_print_boiler_text:      
+.BoilerTextLoop:        push        bc          ; Save Message Count loop value
+                        ld          b,(ix+0)    ; get row into b
+                        ld          de,(ix+1)   ; get column into hl (as we can't load direct to hl from ix)
+                        ex          de,hl       ;
+                        ld          c,(ix+3)    ; c = colour
+                        ld          de,(ix+4)   ; de = address of message
+                        push        ix
+                        MMUSelectLayer2
+                        call        l2_print_at_320
+                        pop         hl          ; move ix on to next string if needed
+                        ld          a,6         ;
+                        add         hl,a        ;
+                        ld          ix,hl       ;
+                        pop         bc          ; remainder of lines in loop
+                        djnz        .BoilerTextLoop
                         ret
-
+;---------------------------------------------------------------------------------------------------------------------------------
 INM_DispDEIXtoIY:       ld (.inmclcn32z),ix
                         ld (.inmclcn32zIX),de
                         ld ix,.inmclcn32t+36
@@ -123,9 +94,89 @@ INM_DispDEIXtoIY:       ld (.inmclcn32z),ix
                         dw $86a0,1, $4240,$0f, $9680,$98, $e100,$05f5, $ca00,$3b9a
 .inmclcn32z             ds 2
 .inmclcn32zIX           ds 2
-
-INM_GetFuelLevel:       INCLUDE "Menus/get_fuel_level_inlineinclude.asm"
-
+;----------------------------------------------------------------------------------------------------------------------------------
+INM_GetFuelLevel:       ld		a,(Fuel)
+                        ld		de,INM_fuel_level
+                        ld	c, -100
+                        call	.Num1
+                        ld	c,-10
+                        call	.Num1
+                        ld	c,-1
+.Num1:	                ld	b,'0'-1
+.Num2:	                inc		b
+                        add		a,c
+                        jr		c,.Num2
+                        sub 	c
+                        push	bc
+                        push	af
+                        ld		a,c
+                        cp		-1
+                        call	z,.InsertDot
+                        ld		a,b
+                        ld		(de),a
+                        inc		de
+                        pop		af
+                        pop		bc
+                        ret 
+.InsertDot:             ld		a,'.'
+                        ld		(de),a
+                        inc		de
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+INM_shift_de_a_chars:   ex      de,hl               ; now adjust 
+                        add     hl,a
+                        ex      de,hl
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+INM_Clear_Boiler:       ld      hl,INM_market_txt01
+                        ld      c,17
+.WriteLoopOuter:        ld      b,INM_market_txt_len -1
+.WriteLoopInner:        ld      d," "
+                        ld      (hl),d
+                        inc     hl
+                        djnz    .WriteLoopInner
+                        ld      b,INM_market_txt_nulls+1
+.WriteNullsLoop:        ld      d,0
+                        ld      (hl),0
+                        inc     hl
+                        djnz    .WriteNullsLoop
+                        dec     c
+                        
+                        jp      nz,.WriteLoopOuter
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+INM_getCargoQtyIY:      ld		a,(iy)
+                        call	Stock_DispQtyAtoDE
+                        ret   
+;----------------------------------------------------------------------------------------------------------------------------------
+; loads market data to boiler text
+INM_Market_To_Boiler:   ld      de,INM_market_txt01
+                        MMUSelectStockTable
+                        ld		ix,StockFood		; start 8 bytes before index as first add will shift
+                        ld      iy,CargoTonnes      ; amount in hold
+                        ld      b,17
+.readItemsLoop:         push    bc
+.GetName:               MMUSelectStockTable
+                        push    de,,de              ; save for outer loop too
+                        call    copyStockItemNameIXDE
+                        pop     de                        
+.GetUoM:                ld      a,13
+                        call    INM_shift_de_a_chars
+                        push    de
+                        call    copyStockStockUoMIXDE
+                        pop     de
+.GetPrice:              ld      a,10
+                        call    INM_shift_de_a_chars
+                        call    INM_getCargoQtyIY
+.NextStockRow:          ld      de,8
+                        add     ix,de
+                        inc     iy
+                        pop     de
+                        ld      a,INM_market_row_len
+                        call    INM_shift_de_a_chars
+                        pop     bc
+                        djnz    .readItemsLoop
+                        ret
 ; "A = stock item number"
 ;----------------------------------------------------------------------------------------------------------------------------------
 PrintInvItem:           ld		b,a                                 ; look up item  amount
@@ -190,6 +241,7 @@ INM_GetCash:            ld		hl,(Cash+2)
                         ldir
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
+draw_inv_menu:
 draw_inventory_menu:    MMUSelectLayer1
                         call	l1_cls
                         ld		a,7
@@ -202,42 +254,88 @@ draw_inventory_menu:    MMUSelectLayer1
                         call    sprite_cls_cursors
                         MMUSelectLayer2
 .Drawbox:               call    l2_draw_menu_border                        
-                        ld      b,$17
-                        ld      hl,1
-                        ld      de,320-4
-                        ld      c,$C0
-                        call    l2_draw_horz_line_320           ;b = row; hl = col, de = length, c = color"
-                        ld      b,$2F
-                        ld      hl,1
-                        ld      de,320-4
-                        ld      c,$C0
-                        call    l2_draw_horz_line_320           ;b = row; hl = col, de = length, c = color"                        
-.StaticText:	        call	INM_print_boiler_text
 .DisplayFuel:           call	INM_GetFuelLevel
-                        ld		hl, txt_fuel_level
-                        ld		a,(hl)
-                        cp		'0'
-                        jr		nz,.PrintFuel
-.SkipLeadingZero:	    inc		hl
-.PrintFuel:             ex      de,hl
-                        MMUSelectLayer2
-                        print_msg_at_de_macro txt_status_colour,  inv_fuel_pos_row,  inv_fuel_pos_col
 .DisplayCash:           call	INM_GetCash
-                        MMUSelectLayer2	
-                        print_msg_macro txt_status_colour,  inv_cash_pos_row,  inv_cash_pos_col,  INM_cash_amount
-                      ;  ld		bc,inv_cash_position
-                       ; ld		hl,INM_cash_amount
-.DisplayInventory:      ZeroA
-                        ld      iy,StockFood                ; start of the table for data 
-.InvLoop:	            push	af
-                        call	PrintInvItem
-                        ld      hl,iy                       ; move to next row
-                        ld      a,StockRowWidth
-                        add     hl,a
-                        ld      iy,hl
-                        pop		af
-                        inc		a
-                        cp		17
-                        jr		nz,.InvLoop
+.DisplayInventory:      call    INM_Market_To_Boiler
+                        ld      b,3+17
+                        ld      ix,inventory_boiler_text
+.StaticText:	        call	INM_print_boiler_text
                         ret
+
+inv_pos_row		        equ	$08
+inv_fuel_pos_row		equ	$1B
+inv_cash_pos_row		equ	$23
+inv_stock_pos_row    	equ $33
+
+inv_pos_col   	        equ	$0080
+inv_fuel_pos_col		equ	$0030
+inv_cash_pos_col		equ	$0030
+inv_stock_pos_col       equ $0008
+inv_stock_amt_pos_col   equ $0080
+inv_stock_uom_pos_col   equ $00E0
+
+
+
+txt_inventory_amount	DB "00000",0
+
+inventory_curr_row      DB  inv_stock_pos_row
+
+inventory_amount		equ $80
+inventory_uom			equ	$B0
+inv_selected_row        DB 0
+
+
+inventory_boiler_text	DB 002, low $0080 , high $0080, $FF, low INM_inventory , high INM_inventory
+						DB 012, low $0008 , high $0008, $FF, low INM_fuel      , high INM_fuel
+						DB 020, low $0008 , high $0008, $FF, low INM_cash      , high INM_cash
+
+INM_market_data01       DB 040, low 08  , high 08  , $FF, low INM_market_txt01 , high INM_market_txt01
+INM_market_data02       DB 048, low 08  , high 08  , $FF, low INM_market_txt02 , high INM_market_txt02
+INM_market_data03       DB 056, low 08  , high 08  , $FF, low INM_market_txt03 , high INM_market_txt03
+INM_market_data04       DB 064, low 08  , high 08  , $FF, low INM_market_txt04 , high INM_market_txt04
+INM_market_data05       DB 072, low 08  , high 08  , $FF, low INM_market_txt05 , high INM_market_txt05
+INM_market_data06       DB 080, low 08  , high 08  , $FF, low INM_market_txt06 , high INM_market_txt06
+INM_market_data07       DB 088, low 08  , high 08  , $FF, low INM_market_txt07 , high INM_market_txt07
+INM_market_data08       DB 096, low 08  , high 08  , $FF, low INM_market_txt08 , high INM_market_txt08
+INM_market_data09       DB 104, low 08  , high 08  , $FF, low INM_market_txt09 , high INM_market_txt09
+INM_market_data10       DB 112, low 08  , high 08  , $FF, low INM_market_txt10 , high INM_market_txt10
+INM_market_data11       DB 120, low 08  , high 08  , $FF, low INM_market_txt11 , high INM_market_txt11
+INM_market_data12       DB 128, low 08  , high 08  , $FF, low INM_market_txt12 , high INM_market_txt12
+INM_market_data13       DB 136, low 08  , high 08  , $FF, low INM_market_txt13 , high INM_market_txt13
+INM_market_data14       DB 144, low 08  , high 08  , $FF, low INM_market_txt14 , high INM_market_txt14
+INM_market_data15       DB 152, low 08  , high 08  , $FF, low INM_market_txt15 , high INM_market_txt15
+INM_market_data16       DB 160, low 08  , high 08  , $FF, low INM_market_txt16 , high INM_market_txt16
+INM_market_data17       DB 168, low 08  , high 08  , $FF, low INM_market_txt17 , high INM_market_txt17
+
+INM_inventory 			DB "INVENTORY",0
+INM_fuel				DB "Fuel:"
+INM_fuel_level          DS 20,0
+INM_cash				DB "Cash:"
+INM_cash_amount			DS 10," "
+INM_cash_UoM            DB " Cr",0
+
+                           ;1234567890123456789012345678901234567  8 9 0 1 2 3 4 5 6 7 8
+INM_market_txtblank:    DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt01:       DB "                                     "
+INM_market_txt_len      EQU $ - INM_market_txt01
+INM_market_txt_null     DB 0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt_nulls    EQU $ - INM_market_txt_null  
+INM_market_row_len      EQU $ - INM_market_txt01                                        
+INM_market_txt02:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt03:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt04:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt05:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt06:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt07:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt08:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt09:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt10:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt11:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt12:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt13:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt14:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt15:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt16:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INM_market_txt17:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
+INV_market_sizeof:      EQU $ - INM_market_txt01
 

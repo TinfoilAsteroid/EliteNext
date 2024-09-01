@@ -547,14 +547,15 @@ div16_skip:		        djnz div16_loop
 ; In: Divide BC by divider DE
 ; Out: BC = result, HL = rest
 ;
-HLDivC_Iteration: 	    MACRO
-                        add	hl,hl		; unroll 16 times
+HLDivC_MACRO: 	        MACRO
+                        add	    hl,hl		; unroll 16 times
                         rla				; ...
-                        cp	c			; ...
-                        jr	1F
-                        sub	c			; ...
-1:					
+                        jr      c,      .DoSubInc
+                        cp	    c			; ...
+                        jr      c,      .NoSubInc
+.DoSubInc:              sub	c			; ...			
                         inc	l			; ...
+.NoSubInc:                        
                         ENDM
 
 EDivC_Iteration:        MACRO

@@ -32,12 +32,12 @@ l2_pp_dont_plot:        pop     af
 
 ; ">l2_plot_pixel d= row number, hl = column number, e = pixel col"
 l2_plot_pixel_320:      ld      a,h
-                        and     a                               ; if h = 0 then must be < 256 so OK
+.checkXlt256:           and     a                               ; if h = 0 then must be < 256 so OK
                         jp      z,.DoneCheck
-                        cp      1                               ; if h <> 1 then must be > 320
+.checkXgt320:           cp      1                               ; if h <> 1 then must be > 320
                         jr      nz,.DontPlot                    ; 
                         ld      a,l                             ; so now its >= 256
-                        and     %11000000                       ; if its 7 or 6 set then > 319
+.checkXlt320:           and     %11000000                       ; if its 7 or 6 set then > 319
                         jr      nz,.DontPlot
 .DoneCheck:             call    asm_l2_320_col_bank_select      ; adjust hl for hl address which is now in l only
                         ld      l,d                             ; low byte is row from d

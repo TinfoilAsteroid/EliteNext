@@ -219,7 +219,7 @@ KeyCode_GameSkip     	equ VK_Z
 KeyCode_Save         	equ VK_O
 KeyCode_Freeze       	equ VK_B
 KeyCode_Resume       	equ VK_L
-KeyCode_Recentre     	equ VK_STOP
+KeyCode_Recentre     	equ VK_H
 KeyCode_Quit         	equ VK_Y
 KeyCode_PlanetData   	equ VK_0
 KeyCode_CursorUp        equ VK_Q
@@ -363,15 +363,17 @@ scan_keyboard:          ld		ix,RawKeys                      ; hl = table of raw 
                         djnz	.ProcessBitsLoop				; Process all key group bits
                         dec     c                               ; thats one row of bits all processed
                         jr      nz,.PortReadLoop				; Read next input port
-.ReadExtend0:           GetNextReg EXTENDED_KEYS_0_REGISTER
+.ReadExtend0:           ; bits are set to 1 for press on the next register
+                        GetNextReg EXTENDED_KEYS_0_REGISTER
                         ld      (RawKeys+8),a                   ; save to extended slot
                         ld      b,8
                         ld      hl,Keys + VK_SEMI
-.ProcessExtend0:        rla                                     ; shift bits left into carry for extended keys
-                        jr      nc,.SetExtend0KeyPressed
+                        ld      e,a                             ; e now holds the raw keys for shifting
+.ProcessExtend0:        rl      e                               ; shift bits left into carry for extended keys
+                        jr      c,.SetExtend0KeyPressed         ; if carry they key was pressedw
 .Extend0NotPressed:     ZeroA                       
                         jp      .SetExtend0Key
-.SetExtend0KeyPressed:  ld      a,(hl)
+.SetExtend0KeyPressed:  ld      a,(hl)                          ; consider if key was already held down
                         cp      2
                         jr      z,.Extend0AlreadyHeld
                         inc     a
@@ -382,8 +384,9 @@ scan_keyboard:          ld		ix,RawKeys                      ; hl = table of raw 
                         ld      (RawKeys+9),a                      ; save to extended slot
                         ld      b,8
                         ld      hl,Keys + VK_DELETE
-.ProcessExtend1:        rla                                     ; shift bits left into carry for extended keys
-                        jr      nc,.SetExtend1KeyPressed
+                        ld      e,a  
+.ProcessExtend1:        rl      e                                 ; shift bits left into carry for extended keys
+                        jr      c,.SetExtend1KeyPressed
 .Extend1NotPressed:     ZeroA                       
                         jp      .SetExtend1Key
 .SetExtend1KeyPressed:  ld      a,(hl)
@@ -612,7 +615,7 @@ InputCursor             DB  0               ; Current Cursor Position
 EnterPressed            DB  0               ; zero notpressed FF pressed
 InputChanged            DB  0
 InsertMode              DB  0
-InputLimit              EQU 20 
+InputLimit              EQU 15 
 
 keyboard_copy_input_to_de:  ld      hl,InputString
                             ld      a,(InputCursor)
@@ -678,11 +681,16 @@ LastKeyPressed:         db 0
 
 initInputText:          ZeroA
                         ld      (InputCursor),a
+                        ld      a,InputBlinkOn
+                        ld      (InputBlinkSymbol),a
+                        ld      hl,InputBlinkDelay
+                        ld      (InputBlinkCounter),hl
                         ld      (LastKeyPressed),a
                         ld      (InputLength),a
                         SetMemTrue  InsertMode
                         SetMemFalse EnterPressed
                         SetMemFalse InputChanged
+                        ZeroA
                         ld      hl,InputString
                         ld      b,30
 .wipeloop:              ld      (hl),a
@@ -757,11 +765,16 @@ initInputText:          ZeroA
 .NoKeyPressed:          ZeroA
                         ld      (LastKeyPressed),a              ; Clear last key pressed
 
+InputBlinkDelay         EQU     750
+InputBlinkOn            EQU     "*"
+InputBlinkOff:          EQU     "-"
+InputBlinkCounter:      DW      InputBlinkDelay
+InputBlinkSymbol:       DB      InputBlinkOn
 
 InputName:              SetMemFalse InputChanged
-                        call    is_any_key_pressed
+                        call    is_any_key_pressed              
                         cp      $FF
-                        ret     z
+                        jp      z,InputBlinkCursor
 .KeyPressed:            ld      c,a
                         ld      a,(InputCursor)                 ; No key so we can now look at if we are at the end of the buffer    
                         cp      InputLimit                      ; move to variable later and then cp (hl)
@@ -777,7 +790,7 @@ InputName:              SetMemFalse InputChanged
                         jr      z,.SpacePressed                 ; for now we will ignore the shift and just assume delete
                         cp      ">"         ; ENTER
                         jr      z,.EnterPressed
-                        ret
+                        jp      InputBlinkCursor
 .AlphaPressed:          ld      b,a
                         ld      a,(InputCursor)
                         ld      c,a
@@ -789,7 +802,7 @@ InputName:              SetMemFalse InputChanged
                         ld      hl,InputCursor
                         inc     (hl)
                         SetMemTrue InputChanged
-                        ret
+                        jp      InputBlinkCursor
 .EnterPressed:          ld      a,(InputCursor)
                         ld      hl,InputString
                         add     hl,a
@@ -798,7 +811,7 @@ InputName:              SetMemFalse InputChanged
                         SetMemTrue EnterPressed
                         SetMemTrue InputChanged
                         call    init_keyboard           ; Flush keyboard status so futher inputs don't auto read the enter key as a second press
-                        ret   
+                        jp      InputBlinkCursor   
 .SpacePressed:          ld      a,(InputCursor)         ; Space = delete
                         cp      0                       ; if input is zero length then can not delete
                         ret     z
@@ -809,7 +822,31 @@ InputName:              SetMemFalse InputChanged
                         ZeroA                           ; .
                         ld      (hl),a                  ; .
                         SetMemTrue InputChanged
+InputBlinkCursor:       ld      hl,(InputBlinkCounter)
+                        dec     hl
+                        ld      a,h
+                        or      l
+                        jp      z,.ToggleBlink
+                        ld      (InputBlinkCounter),hl
                         ret
+.ToggleBlink:           ld      hl,InputBlinkDelay
+                        ld      (InputBlinkCounter),hl
+                        ld      a,(InputBlinkSymbol)
+                        cp      InputBlinkOn
+                        ld      a,InputBlinkOff
+                        jp      z,.UpdateBlink
+.SetBlinkOn:            ld      a,InputBlinkOn
+.UpdateBlink:           ld      (InputBlinkSymbol),a
+                        ld      b,a
+                        ld      a,(InputCursor)
+                        ld      hl,InputString
+                        add     hl,a
+                        ld      (hl),b
+                        inc     hl
+                        ld      (hl),0
+                        SetMemTrue InputChanged
+                        ret
+                        
 
 TargetMissileTest:      AnyMissilesLeft
                         JumpIfZero      .ClearTargetting

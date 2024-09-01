@@ -1,9 +1,9 @@
 ; d = vector 1 e = vector 2 h = vector3 l = vector 4 b = vector 5
 ; performs (d*e + h*l) / b and puts the result in de where e is 0
 TidyCalc:       push    bc
-                call    mulDbyESigned           ; de = vector 1 * vector 2
+                call    DEequDmulEs           ; de = vector 1 * vector 2
                 ex      hl,de                   ; get hl into de and save result of de
-                call    mulDbyESigned           ; de = vector 2 * vector 3
+                call    DEequDmulEs           ; de = vector 2 * vector 3
                 call    AddDEtoHLSigned         ; BC = HL = HL + DE
                 pop     de                      ; DE = BC saved from earlier
                 ld      a,h                     ; check for result 0
@@ -34,9 +34,9 @@ TidyCalc:       push    bc
 ; d = vector 1 e = vector 2 h = vector3 l = vector 4
 ; performs (d*e - h*l) / 96 and puts the result in de where e is 0
 
-TidySide:       call    mulDbyESigned           ; de = vector 1 * vector 2
+TidySide:       call    DEequDmulEs           ; de = vector 1 * vector 2
                 ex      de,hl                   ; get hl = vector 1 * vector 2
-                call    mulDbyESigned           ; de = vector 2 * vector 3
+                call    DEequDmulEs           ; de = vector 2 * vector 3
                 call    SubDEfromHLSigned       ; BC = HL = HL - DE
                 ld      bc,hl                   ; .
                 ld      de,$60                  ; now de = 96

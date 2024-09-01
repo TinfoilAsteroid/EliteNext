@@ -6,7 +6,8 @@ Cash					DB  0,0,0,0			; 0361 - 0364 Cash now litte endian
 Fuel					DB	25				; 0365  QQ14
 CargoBaySize			DB	70				; 036E
 CargoRunningLoad        DB  0
-CargoTonnes             DB  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+;                           0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
+CargoTonnes             DB  0,0,0,0,0,0,0,0,0,0, 0, 0, 0, 0, 0, 0, 0
 ;CargoTonnes		    DB	16,1,2,3,4,5,6,7,6,9,10,11,12,13,14,15			; 036F - 037F	QQ20
 SlaveCargoTonnes		equ CargoTonnes+3
 NarcoticsCargoTonnes	equ CargoTonnes+6
@@ -26,7 +27,7 @@ LaserDamagedFlag        DS  4               ; probabiliy out of 255 that it will
 ; dont need as static from table LaserDurability         DS  4               ; probabability out of 255 that a hit on it unshielded will add random amount of damage
 ; dont need as static from table LaserDurabilityAmount   DS  4               ; max amount of damagage can be sustained in one damage hit
 QQ20                    equ CargoTonnes
-EquipmentFitted         DS  EQ_ITEM_COUNT    ; Series of flags for if each item is fitted
+EquipmentFitted         DS  EQ_ITEM_COUNT,0   ; Series of flags for if each item is fitted
 ECMPresent				EQU EquipmentFitted + EQ_ECM				; 0380
 FuelScoop               EQU EquipmentFitted + EQ_FUEL_SCOOPS
 EnergyBomb				EQU EquipmentFitted + EQ_ENERGY_BOMB		; 0382	Also random hyperspeace in Elite A

@@ -17,7 +17,6 @@ MenuGalChtAddr          equ $c000
 MenuEquipSAddr          equ $c000
 MenuInventAddr          equ $c000
 MenuMarketAddr          equ $c000
-DispMarketAddr          equ $c000
 MenuShrChtAddr          equ $c000
 MenuStatusAddr          equ $c000
 MenuSystemAddr          equ $c000
@@ -43,6 +42,8 @@ GalaxyDataAddr          equ $e000
 SoundAddr               equ $e000
 KeyboardAddr            equ $e000
 MathsBankedFnsAddr      equ $0000
+PIFnsAddr               equ $e000
+EquipmentTablesAddr     equ $e000
 
 EXSDOSMMU0              equ MMU_SLOT_0_REGISTER
 MathsTablesMMU          equ MMU_SLOT_0_REGISTER
@@ -61,7 +62,6 @@ MenuGalChtMMU           equ MMU_SLOT_6_REGISTER
 MenuInventMMU           equ MMU_SLOT_6_REGISTER
 MenuSystemMMU           equ MMU_SLOT_6_REGISTER
 MenuMarketMMU           equ MMU_SLOT_6_REGISTER
-DispMarketMMU           equ MMU_SLOT_6_REGISTER
 MenuStatusMMU           equ MMU_SLOT_6_REGISTER
 LaunchShipMMU           equ MMU_SLOT_6_REGISTER
 L1memMMU       		    equ MMU_SLOT_7_REGISTER
@@ -75,6 +75,8 @@ ConsoleImageDataMMU	    equ MMU_SLOT_7_REGISTER
 GalaxyDataMMU	        equ MMU_SLOT_7_REGISTER
 SoundMMU                equ MMU_SLOT_7_REGISTER
 KeyboardMMU             equ MMU_SLOT_7_REGISTER
+PIFnsMMU                equ	MMU_SLOT_7_REGISTER
+EquipmentTablesMMU      equ MMU_SLOT_7_REGISTER
 
 ; banks 8 to 17 are reserved for layer 2 memory
 BankResetUniv           equ 49
@@ -94,7 +96,7 @@ BankFrontView           equ 62
 BankMenuStatus          equ 63
 BankMenuEquipS          equ 64
 BankLaunchShip          equ 65
-BankDispMarket          equ 66
+BankEquipmentTables     equ 66
 BankShipModels2         equ 67
 BankShipModels3         equ 68
 BankShipModels4         equ 69
@@ -129,6 +131,7 @@ BankMathsTables         equ 99
 BankSound               equ 100
 BankKeyboard            equ 101
 BankMathsBankedFns      equ 102
+BankPIFns               equ 103
 
 BankROM                 equ 255
 

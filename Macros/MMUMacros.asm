@@ -141,6 +141,10 @@ MMUSelectMenuMarket: MACRO
                      nextreg MenuMarketMMU,		BankMenuMarket
 					 ENDM
 
+MMUSelectEquipmentTables: MACRO
+                    nextreg EquipmentTablesMMU,		BankEquipmentTables
+					 ENDM
+
 MMUSelectMenuStatus: MACRO
                      nextreg MenuStatusMMU,		BankMenuStatus
 					 ENDM
@@ -157,7 +161,10 @@ MMUSelectSound:      MACRO
                      nextreg SoundMMU,		    BankSound
 					 ENDM
                      
-
+MMUSelectPIFns:      MACRO
+                     nextreg PIFnsMMU,          BankPIFns
+					 ENDM
+                     
 
 SaveMMU6:           MACRO
                     GetNextReg  MMU_SLOT_6_REGISTER

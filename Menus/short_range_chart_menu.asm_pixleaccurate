@@ -1,0 +1,976 @@
+short_range_page_marker  DB "ShortRange  PG50"
+                            ;0123456780ABCDEF
+draw_s_chart:               jp SRM_galactic_chart
+
+close_s_chart:              ret
+
+update_s_chart:             ret
+cursors_s_chart:            jp  SRM_cursors
+
+;----------------------------------------------------------------------------------------------------------------------------------
+SRM_galactic_chart:         MMUSelectLayer1                         ; initialise display
+                            call  l1_cls                            ; .
+                            ld      a,7                             ; .
+                            call    l1_attr_cls_to_a                ; .
+                            MMUSelectLayer2                         ; .
+                            call    l2_320_initialise               ; .
+                            call    asm_l2_double_buffer_off        ; .
+                            call    l2_320_cls                      ; .
+                            MMUSelectSpriteBank                     ; .
+                            call    sprite_cls_cursors              ; .
+                            ld      a,SRM_cursor_dampen
+                            ld      (SRM_cursor_dampen_timer),a
+.selectPresentSystem:       call    SRM_get_current_name
+;                            call    SRM_get_present_system
+.drawOuterBorder:           MMUSelectLayer2                         ; draw chart background graphics
+                            call    l2_draw_menu_border
+.drawTextAreas:             ld      de, 243
+                            ld      hl,265
+                            ld      b,11
+                            ld      c,$C0
+                            call    l2_draw_vert_line_320           ;b = row; hl = col, de = length, c = color"
+                            ld      b,153
+                            ld      hl,2
+                            ld      de,262
+                            ld      c,$C0
+                            call    l2_draw_horz_line_320           ;b = row; hl = col, de = length, c = color"
+.generateHeaderText:        ld      b,1                             ; only 1 line to print og boiler text
+                            ld      ix,SRM_boiler_text              ; .
+                            call    SRM_print_boiler_text           ; .
+.plot_stars:                call    SRM_plot_stars                         
+;.CircleandCrosshair:        call    SRM_chart_postion
+;                            call    SRM_target_cursor
+;                            call    SRM_get_current_name
+;.getTargetName:             call    SRM_get_target_name
+                            ret
+SRM_get_current_name:       ld      a,(Galaxy)
+                            MMUSelectGalaxyA
+                            ld      bc,(PresentSystemX)
+                            ld      (GalaxyTargetSystem),bc
+                            call    galaxy_system_under_cursor          ; TODO for some reason this bit
+                            call    GetDigramWorkingSeed
+                            ld      hl,name_expanded
+                            call    CapitaliseString
+                            ld      hl, name_expanded
+                            ld      de,short_rg_chart_current_name
+.copy_target_loop:          ld      a,(hl)
+                            ld      (de),a
+                            inc     hl
+                            inc     de
+                            and     a
+                            jp      nz,.copy_target_loop
+                            ret
+;----------------------------------------------------------------------------------------------------------------------------------
+;
+;.Drawbox:               call    l2_draw_menu_border
+;                        ld      bc,$0AC0 
+;                        ld      hl,$0001
+;                        ld      de,320-4
+;                        call    l2_draw_horz_line_320       ;b = row; hl = col, de = length, c = color"
+;                        ld      a,$80
+;                        ld      (MenuIdMax),a
+;                        CopyPresentSystemToTarget               ; for short range we always start at present and cusor on present
+;srmStaticText:          ld      a,short_range_header
+;                        call    expandTokenToString
+;                        call    SRM_print_boiler_text
+;srmSetUpChart:          call    copy_galaxy_to_system
+;                        break
+;                        call    plot_local_stars
+;.CircleandCrosshair:    break
+;                        call    SRM_draw_chart_circle_and_crosshair
+;                        call    SRM_draw_hyperspace_cross_hair
+                        ret
+
+;----------------------------------------------------------------------------------------------------------------------------------
+SRM_plot_stars:             xor     a                               ; intiailise
+                            ld      (XSAV),a                        ; .
+                            ld      ix,galaxy_data                  ; .
+                            ld      (srm_buffer_size),a             ; .
+.CClearNameList:            ld      hl,srm_printed_text             ; .
+                            ld      de,srm_fill_buffer_size         ; .
+                            call    memfill_dma:                    ; .
+.CounterLoop:               xor     a                               ; clear carry
+                            ld      a,(Galaxy)                      ; select galaxy
+                            MMUSelectGalaxyA                        ; .
+                            push    ix                              ; .
+                            push    ix                              ; .
+                            pop     hl                              ; .
+                            ld      de,SystemSeed                   ; and loop through seeds
+                            call    copy_seed                       ; .
+                            ld      a,(SystemSeed+1)                ; c = Ycoord of star
+                            ld      c,a                             ;
+.srmcalcLocaldy:            ld      a,(PresentSystemY)              ;
+                            ld      b,a                             ; so b holds Y ccord of present system
+                            ld      a,c                             ; a = seed1 Y ccoord
+                            sub     b                               ; if abs range within local max y 
+                            bit     7,a                             ; .
+                            jr      z,.srmpositivedy                ; .
+.srmnegativedy:             neg                                     ; .
+.srmpositivedy:             cp      local_max_range_y               ; .
+                            jr      nc,.srmtoofar                   ; ignore too far away
+.srmcalcLocaldx:            ld      iyl,a                           ; save dy into iyl
+                            ld      a,(SystemSeed+3)                ; seed Xcoord of star
+                            ld      c,a                             ; c= X coord
+                            ld      a,(PresentSystemX)              ; b= current system X coord
+                            ld      b,a                             ; . so b holds Y ccord
+                            ld      a,c                             ; a= X coord - present X
+                            sub     b                               ;
+                            bit     7,a                             ; check distance
+                            jr      z,.srmpositivedx                ; .
+.srmnegativedx:             neg                                     ; .
+.srmpositivedx:             cp      local_max_range_x               ; .
+                            jr      nc,.srmtoofar                   ; .
+.srmOKToPlot                ld      iyh,a                           ; save dx
+                            ld      e,iyl                           ; Get back the Y ccord * 2
+                            ld      d,0                             ;
+                            sla     e                               ; as initial position will be < 128 we can do just e
+                            ld      hl,srm_star_y_centre            ; a +=  screen center
+                            add     hl,de
+                            ld      (.SystemPlotY+1),hl             ; set up y position
+                            ld      (local_name_row),hl             ; row for local name based off star
+                            ld      d,0                             ; delta * 4 we use barrel shift for speed
+                            ld      e,iyh                           ;
+                            ld      b,2                             ;
+                            bsla    de,b                            ; x delta *= 4
+                            ld      hl,srm_star_x_centre
+                            add     hl,de
+                            ld      (.SystemPlotX+1),hl             ; x position
+                            ;ex      de,hl                           ; de = x position
+                            ;ld      b,3                             ; now divide by 8 to get char column
+                            ;bsra    de,b
+                            ld      (local_name_col),hl             ; colum for local name will be based off star position
+                            ld      a,(SystemSeed+5)                ; radius = seed 5 & 3 + 2 (for now)
+                            and     %00000011                       ; .
+                            add     a,2                             ; .
+                            ld      e,a                             ; .
+.SystemPlotX:               ld      hl,$0000                        ; colum number as pixels
+.SystemPlotY:               ld      bc,$0000                        ; row number as pixels
+                            call    SRM_show_star_sprite            ; B = row, hl = col, d = radius, e = colour
+                       ; call    srm_get_name
+                            MMUSelectLayer2
+                            call    srm_label_system8bit
+.srmtoofar:                 pop     hl                              ; next seed
+                            add     hl,8                            ; .
+                            push    hl                              ; .
+                            pop     ix                              ; .
+                            ld      a,(XSAV)                        ; if we have looped back to 0 on counter
+                            dec     a                               ; its done
+                            cp      0                               ; .
+                            ret     z                               ; .
+                            ld      (XSAV),a                        ; else loop
+                            jp      .CounterLoop                     ; .
+;----------------------------------------------------------------------------------------------------------------------------------
+SRM_show_star_sprite:       MMUSelectSpriteBank                   
+                            ld      a,(spr_nextStar)                    ; select next sprite slot in queue
+                            nextreg   SPRITE_PORT_INDEX_REGISTER,a      ;
+                            inc     a                                   ; mark next free slot
+                            ld      (spr_nextStar),a                    ;
+.SetXLSB:                   ld      a,l                                 ; LSB of X coordinate
+                            nextreg   SPRITE_PORT_ATTR0_REGISTER,a      ; .
+.SetY                       ld      a,c                                 ; Y coordinate LSB
+                            nextreg   SPRITE_PORT_ATTR1_REGISTER,a      ; .
+.SetXMSB:                   ld      a,h                                 ; get MSB bit of X coordinate
+                            and     $01                                 ; and ensure other bits are clear
+                            nextreg   SPRITE_PORT_ATTR2_REGISTER,a      ; .
+.SetVisPattern:             ld      a, (star_size_1 - 1) | $80          ; base pattern and visible bit
+                            add     a,e                                 ; select correct star from 1 to 5
+                            nextreg   SPRITE_PORT_ATTR3_REGISTER,a      ; .
+; write out extended attribute
+                            ld      a,%00000000                         ; its a single sprite
+                            or      h
+                            nextreg SPRITE_PORT_ATTR4_REGISTER,a
+                            ret
+
+
+;----------------------------------------------------------------------------------------------------------------------------------
+; Initially we'll just do it as before then work out an offset/scaling
+SRM_draw_chart_circle_and_crosshair:
+                        ld      bc,(PresentSystemX)             ; bc = present system?????
+                        MMUSelectSpriteBank
+                        call    sprite_local_cursor
+                        MMUSelectLayer2
+                        ;ld      bc,srm_xy_centre
+                        ;call    l2_draw_circle
+                        ld      bc,srm_xy_centre                ; must be ordered x y in data
+                        ld      hl,srm_x_centre
+                        ld      a,(Fuel)
+                        ld      d,a
+                        ld      e,$FF
+                        ;TODOcall   l2_draw_circle_320
+                        ret
+                                        DISPLAY "TODO:  move cursor code"
+; TODO MOVE CURSOR CODE
+;----------------------------------------------------------------------------------------------------------------------------------
+SRM_draw_hyperspace_cross_hair:
+                        ld      bc,(TargetSystemX)              ; bc = selected jump
+                        ld      de,(PresentSystemX)
+                        ld      c,srm_x_centre
+                        ld      b,srm_y_centre
+                        MMUSelectSpriteBank
+                        call    sprite_local_hyper_cursor
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+srm_get_name:           ld      a,(Galaxy)
+                        MMUSelectGalaxyA
+                        ld      bc,(TargetSystemX)
+                        ld      (GalaxyTargetSystem),bc
+                        call    galaxy_system_under_cursor
+                        cp      0
+                        ret     z
+                        call    GetDigramWorkingSeed
+                        ld      hl,name_expanded
+                        call    CapitaliseString
+                        ld      hl, name_expanded
+                        ld      a,$FF
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+SRM_update_hyperspace_cross_hair:
+                        ld      bc,(TargetSystemX)              ; bc = selected jump
+                        ld      de,(PresentSystemX)
+                        ld      a,c                             ; a = target x pos
+                        sub     e                               ; a = target x - present x
+                        jp      p,.NoFlipX                      ; if > 0 skip next bit
+                        neg                                     ; c = a = abs a * 4
+                        sla     a                               ; .
+                        sla     a                               ; .
+                        ld      c,a                             ;  .
+                        ld      a,srm_x_centre                  ; c = a = centre screen - c
+                        sub     c                               ; .
+                        ld      c,a                             ; .
+                        jp      .fixY                           ;. now do Y
+.NoFlipX:               sla     a
+                        sla     a
+                        add     a,srm_x_centre
+                        ld      c,a
+.fixY:                  ld      a,b                             ; for Y its * 2
+                        sub     d
+                        jp      p,.NoFlipY
+                        neg
+                        sla     a
+                        ld      b,a
+                        ld      a,srm_y_centre
+                        sub     b
+                        ld      b,a
+                        jp      .RedrawSprite
+.NoFlipY                sla     a
+                        add     a,srm_y_centre
+                        ld      b,a
+.RedrawSprite:          MMUSelectSpriteBank
+                        call    sprite_lhc_move
+                        call    srm_name_current
+                        ret
+
+srm_clear_name_area:    ld      h,8
+                        ld      de,$A000 | COLOUR_TRANSPARENT
+                        ld      bc,$A80A
+.ClearLoop:             push    hl
+                        push    de
+                        push    bc
+                        MMUSelectLayer2
+                        call    l2_draw_horz_line
+                        pop     bc
+                        pop     de
+                        pop     hl
+                        inc     b
+                        dec     h
+                        jr      nz,.ClearLoop
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+srm_system_undercursor: ld      a,(Galaxy)
+                        MMUSelectGalaxyA
+                        ld      bc,(TargetSystemX)
+                        ld      (GalaxyTargetSystem),bc
+                        call    galaxy_system_under_cursor
+                        cp      0
+                        ret     z
+srm_name_current:       call    srm_get_name
+                        cp      0
+                        ret     z
+                        push    hl
+                        push    af
+                        call    srm_clear_name_area
+                        ;ld      bc,$A80A
+                        ;ld     e,$FF
+                        ex      de,hl
+                        ld      b,$A0
+                        ld      hl, $00A0
+                        ld      c,$FF
+                        MMUSelectLayer2
+                        call    l2_print_at_320         ;b = row, hl = col, de = addr of message, c = color
+                        ;call   l2_print_7at            ; bc= colrow, hl = addr of message, e = colour"
+                        pop     af
+                        pop     hl
+                        call    srm_calc_distance
+                        ld      de,srm_distance
+                        ld      bc,$B0
+                        ld      hl,$0A
+                        ld      c,$FF
+                        MMUSelectLayer2
+                        call    l2_print_at_320
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+srm_calc_distance:      ld      a,(Galaxy)                                      ; Default in 0 distance
+                        MMUSelectGalaxyA
+                        ld      de,srm_dist_amount
+                        ld      hl,srm_default_dist
+                        ldi
+                        ldi
+                        ldi
+                        ldi
+                        ldi
+                        ld      bc,(PresentSystemX)
+                        ld      (GalaxyPresentSystem),bc
+                        ld      bc,(TargetSystemX)
+                        ld      (GalaxyDestinationSystem),bc
+                        call    galaxy_find_distance                            ; get distance into HL
+                        ld      ix,(Distance)
+                        ld      de,0
+                        ld      iy,srm_distance_val
+                        call    DispDEIXtoIY                                    ; use DEIX as distance and write to string at location IY
+                        push    iy
+                        pop     hl                                              ; hl = iy
+                        ld      de,srm_distance_val
+                        ld      a,(hl)                                          ;Push last digit to post decimal
+                        ld      (srm_fraction),a    
+                        dec     hl
+                        call    compare16HLDE                                   
+                        jr      c,.done_number
+                        ld      a,(hl)
+                        ld      (srm_dist_amount+2),a
+                        dec     hl
+                        call    compare16HLDE
+                        jr      c,.done_number
+                        ld      a,(hl)
+                        ld      (srm_dist_amount+1),a
+                        dec     hl
+                        call    compare16HLDE
+                        jr      c,.done_number
+                        ld      a,(hl)
+                        ld      (srm_dist_amount),a
+.done_number:           ret
+
+PosScan1                DW      0
+PosScan2                DW      0
+; bc = row col, d = xlength e = y length
+; Check logic simplies to , if 1 = bc and 2 = de:
+; 12   X1            X2    OK         2 LT X1
+; 1    X1  2         X2    FAIL       1 LT X1 && 2 GT X1 && 2 LT X2
+;      X1  12        X2    FAIL       1 GT X1 && 1 LT X2 && 2 GT X1 && 2 LT X2
+;      X1  1         X2 2  FAIL       1 GT X1 && 1 LT X2 && 2 GT X2
+;      X1            X2 12 OK         1 GT X2
+; Checks to see if we have enough room to print text. srm_printed_text holds the buffer
+; Carry flag is set on failure
+REFINE TO CHECK IN PIXELS\
+; uses IY register to search through table of occupied spaces to look for a free gap. 
+; if a collision is made, first check above by 8 pixels, then below by 8 pixels
+; then try to right by right position + 16 pixels
+;                                                 above by 8
+;                                                 below by 8
+; also suggest connecting line in red?
+; local_name_row (pixles), local_name_col(pixles), local_name_row_bottom(pixles) local_name_col_right (pixles)
+; logic check, if ((cache top  >= local_name_row  and <= local_name_row + 8) or (cache bottom >= local_name_row and <= local_name_row + 8))
+;                   test 1                               test 2                  test 3                             test 4
+;                 and
+;                 ((cache left >= local_name_left and <= local_name right+8) or (cache right >= local_name_left and <= local_name right+8))
+;                   test 5                               test 6                  test 7                             test 8
+;                 then collisiondw
+;                 else pass OK
+;                 
+;              A < B C z
+;              A = B c Z
+;              A > B c z
+;                 cache left   between
+IsDEgteHL:              MACRO   gteJump
+                        push    hl
+                        or      a
+                        sbc     hl,de
+                        pop     hl
+                        jp      c, gteJump
+                        ENDM
+                        
+IsHLgteDE:              MACRO   gteJump
+                        ex      de,hl
+                        push    hl
+                        or      a
+                        sbc     hl,de
+                        pop     hl
+                        ex      de,hl
+                        jp      c, gteJump
+                        ENDM
+
+;   h =top row, l = bottom row <not needed now>, d = left, e = right, ix = pointer to data
+;   If A == N, then Z flag is set.
+;   If A != N, then Z flag is reset.
+;   If A < N, then C flag is set.
+;   If A >= N, then C flag is reset.
+;----------------------------------------------------------------------------------------------------------------------------------
+;-- Performs a search for the box within a single cache entry pointed to by ix, carry is set if there is a collision
+FreeNameIXTest8Bit:     ld      a,(ix+0)                  ;test collision box top
+.TestRow:               cp      h                         ;if ct >= local t
+                        jp      nz,.MissOnRow             ;   (else ct < local so miss)
+.HitOnRow:                                                ;.
+.TestLeftAndRight:      ld      a,(ix+2)                  ;test collision box bottom
+                        cp      d                         ;if cl >= local l
+                        jp      c,.MissOnLft              ;   (else cl < local l so miss)
+                        cp      e                         ;   if cl <= local r
+                        jp      z,.HitOnLft               ;      jp collisiononrow-starttestingcol
+                        jp      c,.HitOnLft               ;      (else cl > local r so miss)
+.MissOnLft:             ld      a,(ix+3)                  ; a now holds bottom row as we are doing 8 bit
+                        cp      d                         ;if cr >= local l
+                        jp      c,.MissOnRgt              ;   (else ct < local so miss)
+                        cp      e                         ;   if cb <= local r
+                        jp      z,.HitOnRgt               ;      jp collisiononrow-starttestingcol
+                        jp      c,.HitOnRgt               ;      (else ce > local r so miss)
+                        jp      .MissOnRgt                ;OR
+.HitOnLft:
+.HitOnRgt:
+.Collision:             SetCarryFlag
+                        ret
+.MissOnRow:
+.MissOnRgt:
+.NoCollision:           ClearCarryFlag
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+;-- Performs picking up of local data for the search box then calls FreeNameIXTest8Bit to find if the space is already used up
+TestBoxAgainstCache:    ld      a,(local_name_row8bit)  ; row will hold row only as its character based, we can scrap l
+                        ld      h,a
+                        ld      de,(local_name_col8bit) ; col will hold right left
+TestLoop:               ld      ix,srm_printed_text     ; ix pointer to cache list
+                        ld      a,(srm_buffer_size)     ; number of entries present in cache
+                        ld      b,a                     ; .
+                        ld      c,0                     ; count of collisions
+.CompareTopRow:         call    FreeNameIXTest8Bit      ; perform collision test
+                        ret     c                       ; failure means exit
+                        inc     ix
+                        inc     ix
+                        inc     ix
+                        dnjz    .CompareTopRow
+                        ClearCarryFlag
+                        ret
+srm_cachestarpos:       push    af,,de,,hl
+                        ld      hl,srm_printed_text
+                        ld      d,srm_fill_buffer_size
+                        ld      a,(srm_buffer_size)
+                        ld      e,a
+                        mul     de
+                        add     hl,de
+                        ld      (hl),b
+                        inc     hl
+                        ld      (hl),c
+                        ld      a,(local_name_len)
+                        dec     a
+                        add     a,c
+                        inc     hl
+                        ld      (hl),a
+                        pop     af,,de,,hl
+                        ret
+srm_cachelabel:         push    af,,bc,,de,,hl
+                        ld      hl,srm_printed_text
+                        ld      d,srm_fill_buffer_size
+                        ld      a,(srm_buffer_size)
+                        ld      e,a
+                        mul     de
+                        add     hl,de
+                        ex      de,hl
+                        ld      hl,local_name_row8bit
+                        ld      bc,3
+                        ldir
+                        pop     af,,bc,,de,,hl
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+;-- Takes the pixel lable details and converts to char positions
+srm_scale_label_pos:    ld      de,(local_name_row)     ; convert pixels to char positions
+                        ld      b,3                     ;
+                        bsra    de,b                    ;
+                        ld      a,e
+                        ld      (local_name_row8bit),a  ;
+                        ld      c,a                     ; for caching
+                        ld      de,(local_name_col)     ; convert pixels to char positions
+                        ld      b,d                     ;
+                        bsra    de,3                    ;
+                        ld      b,e                     ; b holds column for start of text (which is actual star position)
+                        call    srm_cachestarpos
+                        ld      a,(local_name_len)      ; now a holds actual end 
+                        dec     a                       ; .
+                        ld      c,a                     ; .
+                        ld      a,b                     ; now shift to left of star
+                        sbc     a,c                     ;
+                        ld      c,b                     ;
+                        dec     a                       ; and an additional 2 chars. position will never be off left 
+                        dec     a                       ; by design of page
+                        dec     c                       ;
+                        dec     c                       ;
+                        ld      (local_name_col8bit),a  ; for reading into e
+                        ld      a,c
+                        ld      (local_name_col8bit+1),a; right most side for reading into d
+                        ret
+; takes memorty location local_name_col and local_name_row as character positions of text                        
+srm_label_system8bit:   call    copy_system_to_working  ; set up working seed
+                        ld      a,(Galaxy)              ; and name
+                        MMUSelectGalaxyA                ;
+                        call    GetDigramWorkingSeed    ;
+                        ld      hl,name_expanded        ; hl = y
+                        call    CapitaliseString        ; .
+                        ld      hl,name_expanded        
+                        call    srm_string_len          ; gets length of string at hl into b
+                        ld      a,b                     
+                        ld      (local_name_len),a      
+                        call    srm_scale_label_pos     ; now local 8 bit holds direct position
+ ;.......................first attempt                  
+.attempt1:              call    TestBoxAgainstCache     ; hl = row de = col bc = col right col e = chars
+                        jr      nc,.OKToPrint
+;.......................attempt 2 up one row
+.attempt2:              ld      hl,local_name_row8bit
+                        dec     (hl)
+                        call    TestBoxAgainstCache     ; hl = row de = col bc = col right col e = chars
+                        jr      nc,.OKToPrint
+;.......................attempt 3 down one row
+.attempt3:              ld      hl,local_name_row8bit
+                        inc     (hl)
+                        inc     (hl)
+                        call    TestBoxAgainstCache     ; hl = row de = col bc = col right col e = chars
+                        jr      nc,.OKToPrint
+;.......................attempt 4 to the right
+.attempt4:              ld      hl,local_name_row8bit
+                        dec     (hl)
+                        ld      de,(local_name_col8bit)
+                        ld      a,(local_name_len)
+                        inc     e
+                        inc     e
+                        ld      d,e
+                        add     a,d
+                        ld      d,a
+                        ld      (local_name_col8bit),de ; now same row to the right
+                        call    TestBoxAgainstCache     ; hl = row de = col bc = col right col e = chars
+                        jr      nc,.OKToPrint
+;.......................attempt 2 up one row
+.attempt5:              ld      hl,local_name_row8bit
+                        dec     (hl)
+                        call    TestBoxAgainstCache     ; hl = row de = col bc = col right col e = chars
+                        jr      nc,.OKToPrint
+;.......................attempt 3 down one row
+.attempt6:              ld      hl,local_name_row8bit
+                        inc     (hl)
+                        inc     (hl)
+                        call    TestBoxAgainstCache     ; hl = row de = col bc = col right col e = chars
+                        jr      nc,.OKToPrint
+                        ret     c                       ; give up on attempt 6
+.OKToPrint:             call    srm_cachelabel
+                        ld      a,(local_name_col8bit)
+                        ld      d,8
+                        ld      e,a
+                        mul     de                      ; de * 8 to get pixel address
+                        ld      a,(local_name_row8bit)
+                        sla     a
+                        sla     a
+                        sla     a                       
+                        ld      b,a                     ;; now in pixels
+                        ld      de,name_expanded
+                        ld      c,$FF
+                        MMUSelectLayer2
+                        call    l2_print_at_320         ;b = row, hl = col, de = addr of message, c = color
+                        ret
+
+
+;FreeNameIXTest:         ld      de,(ix+0)               ;test collision box top
+;.TestTopTop:            ld      hl,$0000                ;if ct >= local col t
+;                        IsDEgteHL .hitTest1a            ; 
+;                        jp      .nocollisionTopRow      ;
+;.hitTest1a:                                     
+;.TestTopBtm:            ld      hl,$0000                ;   if ct <= local col b
+;                        IsHLgteDE .collisiononrow       ;      jp collisiononrow-starttestingcol
+;.nocollisionTopRow:                                     ;OR
+;.TestBtmRow:                                            ;
+;                        ld      de,(ix+2)               ;test collision box bottom
+;.TestBtmTop:            ld      hl,$0000                ;if cb  >= local col t 
+;                        IsDEgteHL .hitTest2a            ;    
+;                        jp      .NoCollision            ;    
+;.hitTest2a:                                     
+;.TestBtmRBtm:           ld      hl,$0000                ;   if de <= local col b
+;                        IsHLgteDE .collisiononrow       ;       jp collisiononrow-starttestingcol
+;                                                        ;   else
+;.NoCollision:           ClearCarryFlag                  ;       nocollision
+;                        ret
+;.collisiononrow                                         ;AND
+;                        ld      de,(ix+4)               ;test collision box top
+;.TestLeftLeft:          ld      hl,$0000                ;if ct >= local col t
+;                        IsDEgteHL .hitTest3a            ; 
+;                        jp      .nocollisionTopRow      ;
+;.hitTest3a:                                     
+;.TestLeftRight:         ld      hl,$0000                ;   if ct <= local col b
+;                        IsHLgteDE .Collsion             ;      jp collisiononcol
+;.nocollisionTopRow:                                     ;OR
+;.TestRight:                                            ;
+;.TestRightLeft:         ld      hl,$0000                ;if cb  >= local col t 
+;                        ld      de,(ix+2)               ;test collision box bottom
+;                        IsDEgteHL .hitTest4a            ;    
+;                        jp      .NoCollision            ;    
+;.hitTest4a:  
+;.TestRightRight:        ld      hl,$0000                ;   if de <= local col b
+;                        IsHLgteDE .Collision       ;       jp collisiononcol 
+;                        jp      .NoCollision
+;.Collsion:              SetCarryFlag
+;                        ret
+;                                
+;FreeNameIXTest:         ld      de,(ix+0)
+;.FreeTopRow1:           ld      hl,$0000                ;test top >= local top
+;                        IsDEgteHL .passTest1
+;                        jp      .fal
+;.FreeBtmRow1:           ld      hl,$0000                        
+;                        IsHLgteDE .passTest2
+;                        call    CompareDEHLunsigned
+;                        jp      c,.Test2                ; on top < local top its a miss but we do OR
+;.FreeBtmRow1:           ld      hl,$0000                        
+;                        call    CompareDEHLunsigned
+;                        jp      nz,.Test2               ; on top < local top its a miss but we do OR
+;                        jp      nc,.Test2               ; on top < local top its a miss but we do OR                        
+;.Test2:                 ld      de,(ix+2)               ; else fall into test 2
+;.FreeTopRow1:           ld      hl,$0000                ; test top >= local top
+;                        call    CompareDEHLunsigned
+;                        jp      c,.failTest2            ; on top < local top its a miss but we do OR
+;.FreeBtmRow1:           ld      hl,$0000                        
+;                        call    CompareDEHLunsigned
+;                        jp      nz,.failTest1           ; on top < local top its a miss but we do OR
+;                        jp      nc,.failTest1           ; on top < local top its a miss but we do OR
+;                        jp      .passRowTest
+;                        
+;\                       
+;
+;TestBoxAgainstCache:    ld      hl,local_name_row_top
+;                        ld      de,local_name_row_bottom
+;.SetUpTests:            ld      (FreeNameIXTest.TestTopTop),hl
+;                        ld      (FreeNameIXTest.TestBtmTop),hl
+;                        ld      (FreeNameIXTest.TestTopBtm),hl
+;                        ld      (FreeNameIXTest.TestBtmBtm),hl
+;                        ld      hl,local_name_col_left
+;                        ld      de,local_name_col_right
+;.SetUpTests:            ld      (FreeNameIXTest.TestLeftpLeft),hl
+;                        ld      (FreeNameIXTest.TestRightLeft),hl
+;                        ld      (FreeNameIXTest.TestLeftRight),hl
+;                        ld      (FreeNameIXTest.TestRightRight),hl
+;.TestLoop:              ld      ix,srm_printed_text     ; ix pointer to cache list
+;                        ld      a,(srm_buffer_size)     ; number of entries present in cache
+;                        ld      b,a                     ; .
+;                        ld      c,0                     ; count of collisions
+;.CompareTopRow:         push    bc
+;                        call    FreeNameIXTest          ; perform collision test
+;                        jp      c,.hitOnBox
+;                        ld      hl,ix
+;                        ld      a,8
+;                        add     hl,a
+;                        ld      ix,hl
+;                        pop     bc
+;                        dnjz    .CompareTopRow
+;                        ClearCarryFlag
+;                        ret
+;.hitOnBox:              pop     bc
+;                        ret
+;
+;FreeSlotCheck:          call    TestBoxAgainstCache
+;                        ret     nc
+;.TestUp8                        
+;                        
+                        
+                        
+;                        ld      a,c                     ;
+;                        ld      (.CheckStartX+1),a       ; Top Left X (get it in now whilst its in a
+;                        add     a,e                     ;
+;                        jr      nc,.NoOverflow          ;
+;.Overflow:              ld      a,$FF                   ; Make length max
+;.NoOverflow:            ld      (.CheckEndX+1),a         ; Bottom Right X
+;                        ld      a,b                     ; d = height in pixels
+;                        ld      (.CheckStartY+1),a       ; Top Left Y
+;                        add     a,8                     ; Bottom Right Y
+;                        ld      (.CheckEndY+1),a
+;.CheckBoxes:            ld      a,(srm_buffer_size)     ; If buffer is empty no check
+;                        cp      0                       ; .
+;                        jr      z,.SafeToPrint          ; .
+;                        ld      ix,srm_printed_text     ; Buffer list                    
+;                        ld      b,a
+;.CheckBoxLoop:          ld      a,(ix+3)                ; zero length buffer entry gets skipped
+;                        cp      0                       ; .
+;                        jr      z,.NoMatch              ; .                                          .Example $5D,$0C to $65,$11 93,12 to 101,17
+;.CheckStartY:           ld      a,$00                   ; get start row                              .Compare $52,$0D to $62,$0F 82,13 to 98,15
+;                        inc     a                       ; as we do GTE not GT                        .$5D < $62 so potential hit
+;                        JumpIfAGTENusng (ix+2), .NoMatch; Start Y > BottomRightY then not applicable .$0C < $0F so potential hit
+;.CheckStartX:           ld      a,$00                   ; get start col                              .$65 > $52 so potential hit
+;                        inc     a                       ; as we do GTE not GT                        .$11 < $0D so potential hit
+;                        JumpIfAGTENusng (ix+3), .NoMatch; Start X > BottomRightX then not applicable .
+;.CheckEndY:             ld      a,$00                   ;                                            .
+;                        JumpIfALTNusng  (ix+0), .NoMatch; End Y < TopLeft Y then not applicable      .
+;.CheckEndX:             ld      a,$00                   ;                                            .
+;                        JumpIfALTNusng (ix+1),  .NoMatch; End X < TopLeft X then not applicable      .
+;;.......................If we get here then there is an overlap so fails                        
+;.MatchedBox:            SetCarryFlag ; changed from a holding result ld      a,$FF
+;                        ret
+;;.......................If we get here then there was no overlap so check next box                        
+;.NoMatch:               inc     ix
+;                        inc     ix
+;                        inc     ix
+;                        inc     ix
+;                        djnz    .CheckBoxLoop
+;;.......................If we get here then there was no overlap in the entire buffer so good                        
+;.NoBoxMatched:          ld      b,h                     ; restore bc
+;.SafeToPrint:           ld      hl,srm_printed_text
+;                        ld      a,(srm_buffer_size)     ; now we have to work on buffer size as 1 per 4 byte group
+;                        ld      d,a                     ; but move the pointer on by 4 before writing out next entry
+;                        inc     a                       ;
+;                        ld      (srm_buffer_size),a     ; write out now as we have it in a reg
+;                        ld      e,4                     ; hl moves on 4 bytes
+;                        mul     de                      ; .
+;                        add     hl,de                   ; .
+;                        ld      a,(.CheckStartY+1)       ; Copy from modified code
+;                        ld      (hl),a                  ;
+;                        inc     hl                      ;
+;                        ld      a,(.CheckStartX+1)       ;
+;                        ld      (hl),a                  ;
+;                        inc     hl                      ;
+;                        ld      a,(.CheckEndY+1)         ;
+;                        ld      (hl),a                  ;
+;                        inc     hl                      ;
+;                        ld      a,(.CheckEndX+1)         ;
+;                        ld      (hl),a                  ;
+;                        ClearCarryFlag; changed from a holing result xor     a
+;                        ret
+
+; hl = string pointer, returns b with length
+srm_string_len:         ld      b,a
+.FindLoop:              ld      a,(hl)
+                        and     a
+                        ret     z
+                        inc     hl
+                        inc     b
+                        jp      .FindLoop
+                       
+;srm_adjust_label_pos:                       
+;; takes memorty location local_name_col and local_name_row as character positions of text                        
+;srm_label_system:       call    copy_system_to_working                      ; set up working seed
+;                        ld      a,(Galaxy)                                  ; and name
+;                        MMUSelectGalaxyA                                    ;
+;                        call    GetDigramWorkingSeed                        ;
+;                        ld      hl,name_expanded                            ; hl = y
+;                        call    CapitaliseString                            ; .
+;                        ld      hl,name_expanded
+;                        call    srm_string_len
+;                        ld      hl,(local_name_row)
+;                        ld      de,(local_name_col)                         ; de = x
+;                        ld      a,8
+;                        add     hl,a
+;                        ld      (local_name_row_bottom),hl
+;                        ld      a,b                                         ; a = string length in pixels (will assume < 255)
+;                        ld      (local_name_len),a                          ;s ave a copy of length in chars
+;                        sla     a
+;                        sla     a
+;                        sla     a
+;                        add     a,8                                         ; for character width
+;                        add     de,a
+;                        ld      (local_name_col_right),hl                   ; given general text size we can assume always on screen
+;;.......................first attempt 
+;.attempt1:              push    bc,,de,,hl
+;                        call    FreeNameSlotCheck       ; hl = row de = col bc = col right col e = chars
+;                        pop     bc,,de,,hl
+;                        jr      nc,.OKToPrint
+;;.......................attempt 2 left of star name
+;.attempt2:              ld      a,c                     ; col = col - (e+1)
+;                        ClearCarryFlag                  ;
+;                        sbc     a,e                     ; move to the left
+;                        jp      m,.attempt3             ; but negative X is bad
+;                        sbc     a, 3                    ; 3 characters + half star width
+;                        jp      m,.attempt3             ; but negative X is bad
+;                        ld      c,a                     ; we can load to col as its good
+;                        push    bc,,de
+;                        call    FreeNameSlotCheck 
+;                        pop     bc,,de
+;                        jr      nc,.OKToPrint
+;.recoverattempt2:       ld      a,c                     ; if it failed then we adjust col back to original value
+;                        inc     a
+;                        add     e                  
+;;.......................attempt 3 down 8 pixels                        
+;.attempt3:              ld      a,b
+;                        add     a,8
+;                        ld      b,a
+;                        push    bc,,de
+;                        call    FreeNameSlotCheck           
+;                        pop     bc,,de
+;                        jr      nc,.OKToPrint
+;;.......................attempt 4 down 16 pixels
+;.attempt4:              ld      a,b
+;                        sub     16
+;                        ld      b,a
+;                        push    bc,,de
+;                        call    FreeNameSlotCheck           ; attempt down 8 pixels attemps
+;                        pop     bc,,de
+;                        ret     c                       ; give up on attempt 3
+;.OKToPrint:             ld      d,8                     ; de = c = column in characters
+;                        ld      e,c                     ; .
+;                        mul     de                      ; hl = de = hl in pixles
+;                        ex      de,hl                   ; .
+;                        ld      de,name_expanded
+;                        ld      c,$FF
+;                        MMUSelectLayer2
+;                        call    l2_print_at_320         ;b = row, hl = col, de = addr of message, c = color
+;                        ret
+
+;----------------------------------------------------------------------------------------------------------------------------------
+SRM_cursors:
+local_chart_cursors:    ld     a,(CursorKeysPressed)
+                        ReturnIfAIsZero
+                        rla
+                        call   c,srm_UpPressed
+                        rla
+                        call   c,srm_DownPressed
+                        rla
+                        call   c,srm_LeftPressed
+                        rla
+                        call   c,srm_RightPressed
+                        rla
+                        call   c,srm_HomePressed
+                        rla
+                        call   c,srm_RecenterPressed
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+srm_UpPressed:          ld     a,(TargetSystemY)
+                        JumpIfAIsZero   srm_BoundsLimit 
+                        ld      b,a                         ; save target as we will need it
+                        ld      a,(PresentSystemY)
+                        sub     b                           ; get the difference between present and target
+                        jp      m,.SkipBoundsTest           ; if target is right of present, we can go left
+                        JumpIfAGTENusng 40,srm_BoundsLimit  ; if no more than 20 then OK
+.SkipBoundsTest:        ld      a,b
+                        dec     a
+                        ld      (TargetSystemY),a
+                        call    SRM_update_hyperspace_cross_hair
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+srm_DownPressed:        ld     a,(PresentSystemY)
+                        ld      b,a
+                        ld      a,(TargetSystemY)
+                        ld      c,a
+                        JumpIfAEqNusng 128,srm_BoundsLimit
+                        sub     b
+                        jp      m,.SkipBoundsTest
+                        JumpIfAGTENusng 40,srm_BoundsLimit
+.SkipBoundsTest:        ld      a,c
+                        inc    a
+                        ld      (TargetSystemY),a
+                        call    SRM_update_hyperspace_cross_hair
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+srm_LeftPressed:        ld      a,(TargetSystemX)           ; we can't move left if target is zero
+                        JumpIfAIsZero   srm_BoundsLimit 
+                        ld      b,a                         ; save target as we will need it
+                        ld      a,(PresentSystemX)
+                        sub     b                           ; get the difference between present and target
+                        jp      m,.SkipBoundsTest           ; if target is right of present, we can go left
+                        JumpIfAGTENusng 20,srm_BoundsLimit  ; if no more than 20 then OK
+.SkipBoundsTest:        ld      a,b
+                        dec     a
+                        ld      (TargetSystemX),a
+                        call    SRM_update_hyperspace_cross_hair
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+srm_RightPressed:       ld      a,(PresentSystemX)
+                        ld      b,a
+                        ld      a,(TargetSystemX)
+                        ld      c,a
+                        JumpIfAEqNusng 255,srm_BoundsLimit
+                        sub     b
+                        jp      m,.SkipBoundsTest
+                        JumpIfAGTENusng 20,srm_BoundsLimit
+.SkipBoundsTest:        ld      a,c
+                        inc    a
+                        ld      (TargetSystemX),a
+                        call    SRM_update_hyperspace_cross_hair
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+srm_HomePressed:        ld      hl,(PresentSystemX)
+                        ld      (TargetSystemX),hl
+                        call    SRM_update_hyperspace_cross_hair
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+srm_RecenterPressed:    ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
+                        MMUSelectGalaxyA
+                        ld      bc,(TargetSystemX)
+                        call    find_nearest_to_bc
+                        ld      (TargetSystemX),bc
+                        call    SRM_update_hyperspace_cross_hair
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+srm_BoundsLimit:        xor     a
+                        ret
+;---------------------------------------------------------------------------------------------------------------------------------
+; prints text based on message data
+SRM_print_boiler_text:      
+.BoilerTextLoop:        push        bc          ; Save Message Count loop value
+                        ld          b,(ix+0)    ; get row into b
+                        ld          de,(ix+1)   ; get column into hl (as we can't load direct to hl from ix)
+                        ex          de,hl       ;
+                        ld          c,(ix+3)    ; c = colour
+                        ld          de,(ix+4)   ; de = address of message
+                        push        ix
+                        MMUSelectLayer2
+                        call        l2_print_at_320
+                        pop         hl          ; move ix on to next string if needed
+                        ld          a,6         ;
+                        add         hl,a        ;
+                        ld          ix,hl       ;
+                        pop         bc          ; remainder of lines in loop
+                        djnz        .BoilerTextLoop
+                        ret
+
+SRM_message_timer           EQU 2500
+SRM_message_clear_counter   dw  0
+
+SRM_cursor_dampen           equ 125
+SRM_cursor_dampen_timer:    DB  0
+
+data_short_range_chart:     ;row  column low high  colr text address low high
+SRM_boiler_text             DB 002, low 096, high 096, $FF, low short_rg_chart_header,   high short_rg_chart_header
+
+
+short_rg_chart_header       DB "Galactic Chart:"
+short_rg_chart_current_name DS 20,0
+
+
+short_range_boiler_text DW $0030 : DB $02 : DW TextBuffer
+short_range_header      equ 12
+srm_xy_centre           equ $6080
+srm_x_centre            equ 160
+srm_y_centre            equ $60
+srm_star_x_centre       equ 160 - 8 ; adjusted for sprite centre
+srm_star_y_centre       equ $60 - 8 ; adjusted for sprite centre
+local_chart_star_colour equ 216
+local_dx                dw 0
+local_dy                dw 0
+local_max_range_x       equ 20
+local_max_range_y       equ $26
+local_name_row          dw  0
+local_name_col          dw  0   ; Moved to 320 mode
+local_name_row_bottom   dw  0
+local_name_col_right    dw  0   ; Moved to 320 mode
+local_name_len          db  0
+local_label_shift_x     equ 3 ; Incluing offset for 320 mode in charactres
+local_label_shift_y     equ 32-5 ; Incluing offset for 320 mode in pixels
+local_name_row8bit      db 0
+local_name_col8bit      dw 0
+srm_distance            DB "Distance: "
+srm_dist_amount         DB "000"
+srm_decimal             DB "."
+srm_fraction            DB "0"
+srm_dis_ly              DB " Light Years",0
+srm_default_dist        DB "  0.0"
+
+srm_distance_val        DS  6
+srm_fill_buffer_len     EQU 32
+srm_fill_buffer_size    EQU 3 * srm_fill_buffer_len                          ; up to 32 labels topx topy lengthx spare
+            DISPLAY "TODO: space for occupied cells may mvoe to bit flags"
+srm_printed_text        DS  srm_fill_buffer_size                             ; space for occupied cells may move to bit flags later TODO
+srm_buffer_size         DB  0
+;----------------------------------------------------------------------------------------------------------------------------------
+; Change to display
+; now 320 mode, will hold 32 lines by 40 columns (not all can hold text)
+; buffer row will have row, col, length as number of characters occupied
+; when drawing text, will now draw a line from the star to the text, )poss underline?)
+; up to 32 stars in local chart (this will be overkill)
+; each entry will be row (pixel), col (pixel), col to (pixel)
+srm_320_label_buffer    DS  32 * 4

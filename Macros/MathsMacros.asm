@@ -1,3 +1,6 @@
+ZeroA:		            MACRO
+                        xor a
+                        ENDM
 ; sets z flag is HL less than 255 else sets it to nz (note opposite of GT127)
 IsHLGT255:              MACRO
                         bit     7,h

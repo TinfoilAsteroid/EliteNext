@@ -1,3 +1,5 @@
+
+
 AequAdivDmul96Unsg:     JumpIfAGTENusng d, .Unity    			; if A >= Q then return with a 1 (unity i.e. 96)
                         ld          b,%11111111                 ; Loop through 8 bits
 .DivLoop:               sla         a                           ; shift a left
@@ -48,24 +50,7 @@ AequDmulEdiv256usgn:    mul     de
                         ret
 
     
-; muliptiply S7d ny S7e signed
-; used A and B registers
-; result in DE
-mulDbyESigned:          ld      a,d
-                        xor     e
-                        and     SignOnly8Bit
-                        ld      b,a
-                        ld      a,d
-                        and     SignMask8Bit
-                        ld      d,a
-                        ld      a,e
-                        and     SignMask8Bit
-                        ld      e,a
-                        mul     de
-                        ld      a,d
-                        or      b
-                        ld      d,a
-                        ret
+
                        
 
 

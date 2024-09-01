@@ -6,4 +6,5 @@ ZeroCargo:
         ld      (hl),a
 		inc		hl
 		djnz	.ZeroLoop
+        ld      (SaveCargoRunningLoad),a
 		ret
