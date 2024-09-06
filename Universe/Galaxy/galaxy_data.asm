@@ -808,7 +808,7 @@ galaxy_planet_data:     ld      a,(GalaxyWorkingSeed+2)
                         ld      a,(GalaxyDisplayPopulation)
                         ld      h,0
                         ld      l,a
-                        call    mulDEbyHL
+                        call    HLequDEmulHL; replaces mulDEbyHL
                         ex      de,hl
                         ShiftDELeft1
                         ShiftDELeft1

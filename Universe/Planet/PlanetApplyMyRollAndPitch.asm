@@ -55,7 +55,7 @@ Planet_Roll:				ld      a,(ALPHA)                   ; get roll value
 							ld      a,(P_BnKylo)                ; HLE = x sgn, hi, lo
 							ld      e,a                         ; .
 							ld      hl,(P_BnKyhi)               ; .
-							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+							call    DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 							ld		a,l
 							ld		(PlanetAlphaMulY),a			; save result
 							ld		(PlanetAlphaMulY+1),de		; save result
@@ -65,7 +65,7 @@ Planet_Roll:				ld      a,(ALPHA)                   ; get roll value
 							ld      a,(P_BnKxlo)                ; HLE = x sgn, hi, lo
 							ld      e,a                         ; .
 							ld      hl,(P_BnKxhi)               ; .
-							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+							call    DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 							ld		a,l
 							ld		(PlanetAlphaMulX),a			; save result
 							ld		(PlanetAlphaMulX+1),de		; save result							
@@ -93,7 +93,7 @@ Planet_Pitch:				ld      a,(BETA)                   ; get roll value
 							ld      a,(P_BnKylo)                ; HLE = x sgn, hi, lo
 							ld      e,a                         ; .
 							ld      hl,(P_BnKyhi)               ; .
-							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+							call    DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 							ld		a,l
 							ld		(PlanetBetaMulY),a			; save result
 							ld		(PlanetBetaMulY+1),de		; save result
@@ -103,7 +103,7 @@ Planet_Pitch:				ld      a,(BETA)                   ; get roll value
 							ld      a,(P_BnKzlo)                ; HLE = x sgn, hi, lo
 							ld      e,a                         ; .
 							ld      hl,(P_BnKzhi)               ; .
-							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+							call    DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 							ld		a,l
 							ld		(PlanetBetaMulZ),a			; save result
 							ld		(PlanetBetaMulZ+1),de		; save result							

@@ -78,7 +78,7 @@ Sun_Roll:				    ld      a,(ALPHA)                   ; get roll value
 							ld      a,(SBnKylo)                ; HLE = x sgn, hi, lo
 							ld      e,a                         ; .
 							ld      hl,(SBnKyhi)               ; .
-							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+							call    DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 							ld		a,l
 							ld		(SunAlphaMulY),a			; save result
 							ld		(SunAlphaMulY+1),de		; save result
@@ -88,7 +88,7 @@ Sun_Roll:				    ld      a,(ALPHA)                   ; get roll value
 							ld      a,(SBnKxlo)                ; HLE = x sgn, hi, lo
 							ld      e,a                         ; .
 							ld      hl,(SBnKxhi)               ; .
-							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+							call     DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 							ld		a,l
 							ld		(SunAlphaMulX),a			; save result
 							ld		(SunAlphaMulX+1),de		; save result							
@@ -116,7 +116,7 @@ Sun_Pitch:				    ld      a,(BETA)                   ; get roll value
 							ld      a,(SBnKylo)                ; HLE = x sgn, hi, lo
 							ld      e,a                         ; .
 							ld      hl,(SBnKyhi)               ; .
-							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+							call     DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 							ld		a,l
 							ld		(SunBetaMulY),a			; save result
 							ld		(SunBetaMulY+1),de		; save result
@@ -126,7 +126,7 @@ Sun_Pitch:				    ld      a,(BETA)                   ; get roll value
 							ld      a,(SBnKzlo)                ; HLE = x sgn, hi, lo
 							ld      e,a                         ; .
 							ld      hl,(SBnKzhi)               ; .
-							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+							call     DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 							ld		a,l
 							ld		(SunBetaMulZ),a			; save result
 							ld		(SunBetaMulZ+1),de		; save result							

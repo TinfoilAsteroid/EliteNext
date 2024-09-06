@@ -50,7 +50,6 @@ suncompass_sprite1                  equ missile_sprite4  +1
 suncompass_sprite2                  equ suncompass_sprite1  +1
 suncompass_sprite3                  equ suncompass_sprite2  +1
 suncompass_sprite4                  equ suncompass_sprite3  +1
-
 ; For the local chart the sprites are all reused from 0 onwards to display the star map.
 ; For galactic chart they are plot pixels so sprites are not needed
 
@@ -64,6 +63,7 @@ stationcompass_sprite2              equ stationcompass_sprite1  +1
 stationcompass_sprite3              equ stationcompass_sprite2  +1
 stationcompass_sprite4              equ stationcompass_sprite3  +1
 diagnostic_sprite                   equ stationcompass_sprite4  +1
+last_sprite                         equ diagnostic_sprite
 
 
 glactic_pattern_1                   equ 0
@@ -890,24 +890,39 @@ sprite_compass_hide:    HideSprite compass_sun
                         HideSprite stationcompass_sprite1
                         ret
 
-sprite_cls_cursors:     call    sprite_galactic_hide    
-                        call    sprite_galactic_hyper_hide  
-                        call    sprite_local_hide   
-                        call    sprite_local_hyper_hide 
-                        call    sprite_reticule_hide
-                        call    sprite_laser_hide
-                        call    sprite_compass_hide
-                        call    sprite_targetting_hide
-                        call    sprite_missile_all_hide
-                        ret
+;sprite_cls_cursors:     call    sprite_galactic_hide    
+;                        call    sprite_galactic_hyper_hide  
+;                        call    sprite_local_hide   
+;                        call    sprite_local_hyper_hide 
+;                        call    sprite_reticule_hide
+;                        call    sprite_laser_hide
+;                        call    sprite_compass_hide
+;                        call    sprite_targetting_hide
+;                        call    sprite_missile_all_hide
+;                        ret
                         
-sprite_cls_all:         call    sprite_cls_cursors
-                        call    sprite_ecm_hide
-                        call    sprite_missile_all_hide
+sprite_cls_all:         ld      a,(spr_nextStar)
+    break
+                        JumpIfAGTENusng   last_sprite, .maxSprites
+                        ld      a,last_sprite
+.maxSprites:            ld      b,a
+                        ZeroA
+.clsLoop:               HideSprite a
+                        inc     a
+                        djnz    .clsLoop
                         ret
 
+;
+;call    sprite_cls_cursors
+;                        call    sprite_ecm_hide
+;                        call    sprite_missile_all_hide
+;                        call    sprite_local_chart_hide
+;                        call    sprite_compass_hide
+;                        call    sprite_laser_hide
+;                        ret
+
 ; Initialises sprites to sprite 0 lowest Priority, Clipping not in over border, Enable over border, Enable visibility                      
-init_sprites:           call        sprite_cls_cursors
+init_sprites:           call        sprite_cls_all; sprite_cls_cursors
                         nextreg     SPRITE_LAYERS_SYSTEM_REGISTER,%00000011 ; priority  SLU
                         ret
 

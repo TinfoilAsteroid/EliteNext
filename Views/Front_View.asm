@@ -56,7 +56,7 @@ draw_front_view:        MMUSelectLayer1
                         call    l2_initialise
                         MMUSelectSpriteBank
                         call    init_sprites_spr_prity
-                        call    sprite_cls_cursors
+                        call    sprite_cls_all; sprite_cls_cursors
                         call    sprite_reticule
                         call    sprite_laser
                         call    sprite_targetting
@@ -196,7 +196,7 @@ draw_hyperspace:        MMUSelectLayer1
                         MMUSelectLayer2
                         call     asm_l2_double_buffer_on
                         MMUSelectSpriteBank
-                        call    sprite_cls_cursors
+                        call    sprite_cls_all;sprite_cls_cursors
                         MMUSelectConsoleBank
                         ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
                         ld          de,ConsoleImageData

@@ -1615,6 +1615,7 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
 ;............................................................  
 .DetermineDrawType:     ReturnOnBitClear    a, ShipIsVisibleBitNbr          ; if its not visible exit early
                         JumpOnABitClear ShipIsDotBitNbr, .CarryOnWithDraw   ; if not dot do normal draw
+                        ;break
 ;............................................................  
 .itsJustADot:           call    ProcessDot
                         call    UnivVisibleNonDot           ; set is a dot flag

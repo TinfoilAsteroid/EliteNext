@@ -251,7 +251,7 @@ draw_inventory_menu:    MMUSelectLayer1
                         call    l2_320_initialise
                         call    l2_320_cls
                         MMUSelectSpriteBank
-                        call    sprite_cls_cursors
+                        call    sprite_cls_all; sprite_cls_cursors
                         MMUSelectLayer2
 .Drawbox:               call    l2_draw_menu_border                        
 .DisplayFuel:           call	INM_GetFuelLevel

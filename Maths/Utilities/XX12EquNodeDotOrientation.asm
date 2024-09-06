@@ -17,7 +17,7 @@ XX12CalcXCell:
         ld      d,0                                     ; d = value
 		ld		h,b
 		ld		l,c
-		call	mulDEbyHL							    ; hl = |orientation| * |x pos)
+		call	HLequHLmulDEu; replaces mulDEbyHL							    ; hl = |orientation| * |x pos)
 		ld		(XX12PVarResult1),hl				    ; T = 16 bit result, we only want to use high byte later
 		ld		a,ixh
 		ld		(XX12PVarSign1),a					    ; S = sign  not sign 1 and 2 are reversed in memory so that fetchign back will put 1 in high byte 2 in low byte
@@ -39,7 +39,7 @@ XX12CalcYCell:
         ld      d,0                                     ; d = value
 		ld		h,b
 		ld		l,c
-		call	mulDEbyHL							    ; hl = |orientation| * |x pos)
+		call	HLequHLmulDEu; replaces mulDEbyHL							    ; hl = |orientation| * |x pos)
 		ld		(XX12PVarResult2),hl				    ; T = 16 bit result
 		ld		a,ixh
 		ld		(XX12PVarSign2),a					    ; S = sign
@@ -60,7 +60,7 @@ XX12CalcZCell:
         ld      d,0                                     ; d = value
 		ld		h,b
 		ld		l,c
-		call	mulDEbyHL							    ; hl = |orientation| * |x pos)
+		call	HLequHLmulDEu; replaces mulDEbyHL							    ; hl = |orientation| * |x pos)
 		ld		(XX12PVarResult3),hl				    ; T = 16 bit result
 		ld		a,ixh
 		ld		(XX12PVarSign3),a					    ; S = sign

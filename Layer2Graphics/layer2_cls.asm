@@ -28,6 +28,7 @@ l2_cls_dma_bank:
                         ret
 
 ; ">l2_cls_dma_bank sets a bank to"  
+        IFDEF L2_BURST_SUPPORT
 l2_cls_dma_bank_burst:  
 .set_colour:            ld (l2_cls_byte),a
 .write_dma:             ld hl, l2_fill_burst
@@ -35,7 +36,7 @@ l2_cls_dma_bank_burst:
                         ld	c,IO_DATAGEAR_DMA_PORT
                         otir
                         ret
-
+        ENDIF
 l2_set_color_upper2:    ld      a,0
                         call asm_l2_row_bank_select
                         ld      a,(l2_cls_byte)
@@ -56,7 +57,7 @@ l2_cls_upper_two_thirds:;ld a,0								; pretend we are plotting pixel on row 0 
                         ld 	a,COLOUR_TRANSPARENT
                         call l2_cls_dma_bank
                         ret
-
+        IFDEF L2_BURST_SUPPORT
 l2_cls_upper_two_thirds_burst:;ld a,0								; pretend we are plotting pixel on row 0 to force top selection
                         asm_l2_bank_0_macro ; call asm_l2_row_bank_select
                         ld 	a,COLOUR_TRANSPARENT
@@ -66,22 +67,22 @@ l2_cls_upper_two_thirds_burst:;ld a,0								; pretend we are plotting pixel on 
                         ld 	a,COLOUR_TRANSPARENT
                         call l2_cls_dma_bank_burst
                         ret
-
+        ENDIF
 l2_cls_lower_third:     ;ld a,128							; pretend we are plotting pixel on row 64 to force mid selection
                         asm_l2_bank_2_macro; call asm_l2_row_bank_select
                         ld 	a,COLOUR_TRANSPARENT
                         call l2_cls_dma_bank
                         ret
-
+        IFDEF L2_BURST_SUPPORT
 l2_cls_lower_third_burst:asm_l2_bank_2_macro; call asm_l2_row_bank_select
                         ld 	a,COLOUR_TRANSPARENT
                         call l2_cls_dma_bank_burst
                         ret
-                                                       
-                        
+        ENDIF                                               
+        IFDEF L2_BURST_SUPPORT
 l2_cls_burst:           call l2_cls_upper_two_thirds_burst
                         jp   l2_cls_lower_third_burst
-
+        ENDIF
 
 l2_cls:                 call l2_cls_upper_two_thirds
                         jp   l2_cls_lower_third

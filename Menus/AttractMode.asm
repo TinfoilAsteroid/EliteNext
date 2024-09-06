@@ -29,20 +29,20 @@ RandomYCounter:         call    doRandom
                         
 
 AttractModeInit:        MMUSelectLayer1
-                        call	l1_cls 
-                        ld		a,7
-                        call	l1_attr_cls_to_a                        
-                        ld      e,$FF
-                        ld      de,(Attract_boiler_text)
-                        ld      hl,ATTR_LoadCommander
-                        call    l1_print_at
+                        call	    l1_cls 
+                        ld		    a,7
+                        call	    l1_attr_cls_to_a                        
+                        ld          e,$FF
+                        ld          de,(Attract_boiler_text)
+                        ld          hl,ATTR_LoadCommander
+                        call        l1_print_at
                         MMUSelectSpriteBank    
-                        call        sprite_cls_cursors  
+                        call        sprite_cls_all;sprite_cls_cursors  
 .ClearLayer2:           MMUSelectLayer2 
-                        call    asm_l2_double_buffer_on
-                        call    l2_cls     
-                        call    l2_flip_buffers
-                        call    l2_cls     
+                        call        asm_l2_double_buffer_on
+                        call        l2_cls     
+                        call        l2_flip_buffers
+                        call        l2_cls     
                         MMUSelectConsoleBank
 .LoadConsole:           ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
                         ld          de,ConsoleImageData

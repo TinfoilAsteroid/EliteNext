@@ -2,9 +2,10 @@
 starty                  DW     $FFFF
 endy                    DW     $FFFF
 traingleColor           DB     $CF
+        IFDEF SOLIDTRIANGLES
 SaveArrayS1             DS     128*2
 SaveArrayS2             DS     128*2
-   
+        ENDIF
         IFDEF Add_l2_drawHorzClipY
 l2_drawHorzClipY:       
 .ClipY:                 ex      de,hl                       ; get X1 into de
@@ -197,8 +198,11 @@ SwapCoords:             ld      hl,(y1)                         ;       then swa
         ; DEFINE SPLITLINE 1
     
         ;DEFINE CLIPPED_LINEX 1
-        ;DEFINE SPLITORLINEX  1
+        DEFINE SPLITORLINEX  1
         IFDEF SPLITLINE:
+l2_draw_clipped_line:
+        ENDIF
+        IFDEF SPLITORLINEX
 l2_draw_clipped_line:
         ENDIF
         IFDEF CLIPPED_LINEX:
@@ -417,7 +421,7 @@ LineDrawDxGteDy:        ld      hl,(delta_y_step)               ;       error = 
                         adc     hl,hl                           ;               hl = (2 * |y1|)
                         dec     hl                              ;               hl = (2 * |y1| - 1)
                         ld      de,(delta_x)                    ;               hl = hl * delta_x
-                        call    mulHLbyDE2sc                    ;               .
+                        call    HLequHLmulDE2sc; replaces mulHLbyDE2sc                    ;               .
                         ld      (temp),hl                       ;               save to temp
                         ld      bc,hl                           ;            msd = temp / delta_y_step
                         ld      de,(delta_y_step)               ;               BC = BC / DE, HL = BC % DE
@@ -438,7 +442,7 @@ LineDrawDxGteDy:        ld      hl,(delta_y_step)               ;       error = 
                         jp      c,.xposLTxmin                   ;            .
 .xposGTExmin:           ld      hl,(msd)                        ;               rem = temp - (msd * delta_y_step) (its really IY from floor_divq)
                         ld      de,(delta_y_step)               ;                   de = msd * delta_y_step
-                        call    mulHLbyDE2sc                    ;                   .
+                        call    HLequHLmulDE2sc; replaces mulHLbyDE2sc                    ;                   .
                         ex      de,hl                           ;                   .
                         ld      hl,(temp)                       ;                   hl = temp - de
                         ClearCarryFlag                          ;                   .
@@ -481,7 +485,7 @@ LineDrawDxGteDy:        ld      hl,(delta_y_step)               ;       error = 
                         ClearCarryFlag                          ;                   .
                         sbc     hl,de                           ;                   .
                         ld      de,(delta_y_step)               ;                   hl = delta_y_step * (clip_xmin - x1)
-                        call    mulHLbyDE2sc                    ;                   .
+                        call    HLequHLmulDE2sc; repalces mulHLbyDE2sc                    ;                   .
                         ld      (temp),hl                       ;                   .
 .msdEQtempDIVdxstep:    ld      bc,hl                           ;               msd = temp / delta_x_step
                         ld      de,(delta_x_step)               ;                  BC = BC / DE, HL = BC % DE
@@ -538,7 +542,7 @@ LineDrawDxGteDy:        ld      hl,(delta_y_step)               ;       error = 
                         ClearCarryFlag                          ;
                         sbc     hl,de
                         ld      de,(delta_x_step)               ;                   hl = delta_x_step * (127-y1)
-                        call    mulHLbyDE2sc                    ;                   .
+                        call    HLequHLmulDE2sc; replacesmulHLbyDE2sc                    ;                   .
                         ld      de,(delta_x)                    ;                   hl += delta_x
                         ClearCarryFlag                          ;                   .
                         adc     hl,de                           ;                   .
@@ -553,7 +557,7 @@ LineDrawDxGteDy:        ld      hl,(delta_y_step)               ;       error = 
                         ld      (x_pos_end),hl                  ;               .
                         ld      hl,(msd)                        ;               if ((temp - msd * delta_y_step) == 0) --x_pos_end
                         ld      de,(delta_y_step)               ;               .
-                        call    mulHLbyDE2sc                    ;               .
+                        call    HLequHLmulDE2sc; replacesmulHLbyDE2sc                    ;               .
                         ex      de,hl                           ;               .
                         ld      hl,(temp)                       ;               .
                         ClearCarryFlag                          ;               .
@@ -645,7 +649,7 @@ LineDrawDxLTDy:         ;ret
                         adc     hl,hl                           ;               hl = (2* hl)
                         dec     hl                              ;               hl = (2 *  hl - 1)
                         ld      de,(delta_y)                    ;               hl = hl  * delta_y
-                        call    mulHLbyDE2sc                    ;               .
+                        call    HLequHLmulDE2sc; replacesmulHLbyDE2sc                    ;               .
                         ld      (temp),hl                       ;               .
                         ld      bc,hl                           ;            msd = temp / delta_x_step
                         ld      de,(delta_x_step)               ;               BC = BC / DE, HL = BC % DE
@@ -665,7 +669,7 @@ LineDrawDxLTDy:         ;ret
                         jp      nz,.yposLT0
 .yposGT0:               ld      hl,(msd)                        ;               rem = temp - (msd * delta_x_step)
                         ld      de,(delta_x_step)               ;                   de = msd * delta_x_step
-                        call    mulHLbyDE2sc                    ;                   .
+                        call   HLequHLmulDE2sc; replaces mulHLbyDE2sc                    ;                   .
                         ex      de,hl                           ;                   .
                         ld      hl,(temp)                       ;                   hl = temp - de
                         ClearCarryFlag                          ;                   .
@@ -706,7 +710,7 @@ LineDrawDxLTDy:         ;ret
                         ld      hl,(y1)                         ;           temp = delta_x_step * (0 - y1)
                         macronegate16hl                         ;           .
                         ld      de,(delta_x_step)               ;           .       hl = delta_x_step * (- y1)
-                        call    mulHLbyDE2sc                    ;           .
+                        call    HLequHLmulDE2sc; replacesmulHLbyDE2sc                    ;           .
                         ld      (temp),hl                       ;           .
 .msdEQtempDIVdxstep:    ld      bc,hl                           ;           msd = temp / delta_y_step
                         ld      de,(delta_y_step)               ;               BC = BC / DE, HL = BC % DE
@@ -762,7 +766,7 @@ LineDrawDxLTDy:         ;ret
                         ClearCarryFlag                          ;
                         sbc     hl,de
                         ld      de,(delta_y_step)               ;                   hl = delta_x_step * (clip_xmax - x1)
-                        call    mulHLbyDE2sc                    ;                   .
+                        call    HLequHLmulDE2sc; replacesmulHLbyDE2sc                    ;                   .
                         ld      de,(delta_y)                    ;                   hl += delta_y
                         ClearCarryFlag                          ;                   .
                         adc     hl,de                           ;                   .
@@ -777,7 +781,7 @@ LineDrawDxLTDy:         ;ret
                         ld      (y_pos_end),hl                  ;               .
                         ld      hl,(msd)                        ;               if ((temp - msd * delta_x_step) == 0) --y_pos_end
                         ld      de,(delta_x_step)               ;               .
-                        call    mulHLbyDE2sc                    ;               .
+                        call    HLequHLmulDE2sc; replacesmulHLbyDE2sc                    ;               .
                         ex      de,hl                           ;               .
                         ld      hl,(temp)                       ;               .
                         ClearCarryFlag                          ;               .
@@ -882,7 +886,14 @@ result                  dw      0
 ;    swap = 0;
 ;    if (y1 > y2)
 ;    draws line from x1,y1 to x2,y2 memory locations in colour held in a
-l2_draw_elite_line:     ld      hl,(y1)                         ; if (y1 > y2)
+l2_draw_elite_line:     ;............................................................  
+                        ld      hl,(UBnKzlo)
+                        ld      a,h
+                        and     a
+                        jp      nz,.noBreak
+.DoBreak:               break
+.noBreak:                       
+                        ld      hl,(y1)                         ; if (y1 > y2)
                         ld      de,(y2)                         ; .
                         call    CompareHLDESgn                  ; .
                         jp      c,.NoSwapCoords                 ; 

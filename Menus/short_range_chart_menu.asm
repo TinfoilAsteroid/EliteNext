@@ -25,7 +25,7 @@ SRM_galactic_chart:         MMUSelectLayer1                         ; initialise
                             call    asm_l2_double_buffer_off        ; .
                             call    l2_320_cls                      ; .
                             MMUSelectSpriteBank                     ; .
-                            call    sprite_cls_cursors              ; .
+                            call    sprite_cls_all;sprite_cls_cursors              ; .
                             ld      a,SRM_cursor_dampen
                             ld      (SRM_cursor_dampen_timer),a
 .selectPresentSystem:       call    SRM_get_current_name

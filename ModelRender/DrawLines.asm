@@ -33,9 +33,9 @@ DrawLines:              ld	a,$65 ; DEBUG
                         ret                                     ; --- Wireframe end  \ LL118-1
 
 DrawLinesLateClipping:  ld	a,$65 ; DEBUG
-                        ld    iyl,a					      ; set ixl to colour (assuming we come in here with a = colour to draw)
+                        ld    iyl,a					            ; set ixl to colour (assuming we come in here with a = colour to draw)
                         ld	a,(UbnkLineArrayLen)			; get number of lines
-                        ReturnIfAIsZero   				; No lines then bail out.
+                        ReturnIfAIsZero   				    ; No lines then bail out.
                         ld	iyh,a			                  ; number of lines still to draw
                         ld	hl,UbnkLineArray
                         MMUSelectLayer2

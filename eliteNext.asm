@@ -1,3 +1,4 @@
+
                 DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
                 DISPLAY "MASTER TODO LIST"
                 DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
@@ -56,8 +57,8 @@
     ;DEFINE  TESTMARKETROMENU 1
 ;    DEFINE  TESTSTATUSMENU 1
     ;DEFINE TESTINVENTORYMENU 1
-    DEFINE TESTMUL 1
-    DEFINE  DEBUGCMDREQUIP 1
+    ;DEFINE TESTMUL 1
+    ;DEFINE  DEBUGCMDREQUIP 1
 
     ;DEFINE  SPAWN_SHIP_DISABLED  1      ; Forces spawn event to immedatly return rather than do anything
     ;DEFINE DEBUGCIRCLE1 1
@@ -279,16 +280,16 @@ DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks
                         MMUSelectLayer2
                         SetBorder   $07
 ;
-;COMMENTED OUT AS RAND OUT OF MEMORY DEBUGGING InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
-;                        ;break
-;                        call		ResetUniv                       ; Reset ship data
-;                        call        ResetGalaxy                     ; Reset each galaxy copying in code
-;                        call        SeedAllGalaxies
-;                        MMUSelectSpriteBank
-;                        call        sprite_cls_all
-;                        MMUSelectLayer1
-;                        call		l1_cls
-;                        SetBorder   $00
+InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
+                        break
+                        call		ResetUniv                       ; Reset ship data
+                        call        ResetGalaxy                     ; Reset each galaxy copying in code
+                        call        SeedAllGalaxies
+                        MMUSelectSpriteBank
+                        call        sprite_cls_all
+                        MMUSelectLayer1
+                        call		l1_cls
+                        SetBorder   $00
 TESTCODEPOINT1:      IFDEF TESTGALAXYCHART
                         break
                         MMUSelectMenuGalCht
@@ -737,7 +738,9 @@ XX12PVarSign3		DB 0
 ; Include all maths libraries to test assembly   
     INCLUDE "./Maths/asm_AddDEToCash.asm"
     INCLUDE "./Maths/DIVD3B2.asm"
-    INCLUDE "./Maths/asm_multiply.asm"
+    ;INCLUDE "./Maths/asm_multiply.asm"
+    DISPLAY ">Loading S78 Maths routines"
+    INCLUDE "./MathsFPS78/asm_multiply_S78.asm"
     INCLUDE "./Maths/asm_square.asm"
     INCLUDE "./Maths/asm_sine.asm"
     INCLUDE "./Maths/asm_sqrt.asm"
@@ -962,7 +965,7 @@ IM2AttractMode:         ;break
     INCLUDE "./Layer2Graphics/asm_l2_plot_horizontal.asm"
     INCLUDE "./Layer2Graphics/asm_l2_plot_vertical.asm"
     INCLUDE "./Layer2Graphics/layer2_plot_diagonal.asm"
-    INCLUDE "./Layer2Graphics/int_bren_save.asm"
+;    INCLUDE "./Layer2Graphics/int_bren_save.asm"
 ;    INCLUDE "./Layer2Graphics/asm_l2_plot_triangle.asm"
 ;    INCLUDE "./Layer2Graphics/asm_l2_fill_triangle.asm"
 ;    INCLUDE "./Layer2Graphics/L2_SolidTriangles.asm"

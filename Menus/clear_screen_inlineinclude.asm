@@ -13,5 +13,5 @@ InitialiseMenu:         MACRO
                         ENDIF    
                         call	l2_cls	; Get some space 
                         MMUSelectSpriteBank
-                        call    sprite_cls_cursors
+                        call    sprite_cls_all;sprite_cls_cursors
                         ENDM

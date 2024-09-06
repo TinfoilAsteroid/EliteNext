@@ -1,5 +1,7 @@
-
+; asm_divide_S78
+; Division routines for Lead sign 7.8 format, adapted based on Q88 format but only respresents negatives by sign bit 
     
+    DISPLAY "TODO: Still need an S15.8 / S0.8 which in effect increases the value"
 FP88DIVITER:        MACRO
                     rla
                     adc hl,hl
@@ -10,6 +12,7 @@ FP88DIVITER:        MACRO
                     ENDM
 ;HL = DE/BC as S7.8 Fixed Point maths, when doing 24 bit maths scale down to 8.8 as its accurate enough
 ;AHL = BHL/CDE, performed by scaling down BHL and CDE into two S8.8 values then calling fixedS7_8
+; its an approximate as by the time we need a 24 bit divide it will be for objects a long way away
 fixedS23_8_divs:    ld      a,b               ; prep by saving off sign bit before shifting
                     xor     c
                     and     $80
@@ -32,8 +35,14 @@ fixedS23_8_divs:    ld      a,b               ; prep by saving off sign bit befo
 .ShiftComplete:     set     0,c                ; fast way to ensure BC is at least not zero, in this case 0.0039 which means we can never have divide by 0
 .checkZeroDivide:   ld      a,h                ; use the result is zero from below to save some code space
                     or      a                  ; .
-                    jp      z,BC_Div_DE_88.resultIsZero
-                    jp      BC_Div_DE_88NegateDE ; now we can just fall into a fixed S7.8 but after all the inital checks have been done
+                    jp      z,BC_Div_DE_88.resultIsZero ; as this already zeros A we can use it
+                    call    BC_Div_DE_88NegateDE ; now we can just fall into a fixed S7.8 but after all the inital checks have been done
+                    ld      a,h                ; now shift result from HL to AHL
+                    and     $80                ; so A only holds sign bit
+                    ld      h,l                ; 
+                    res     7,h                ; h will be the abs version
+                    ld      l,0                ; and decimal will always be 0
+                    ret                        ;
 
                     
 ;HL = DE/BC as S7.8 Fixed Point maths, when doing 24 bit maths scale down to 8.8 as its accurate enough

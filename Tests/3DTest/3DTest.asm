@@ -468,7 +468,7 @@ Test_Roll:				ld      a,(ALPHA)                   ; get roll value
 						ld      a,(UBnKylo)                ; HLE = x sgn, hi, lo
 						ld      e,a                         ; .
 						ld      hl,(UBnKyhi)               ; .
-						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						call    DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 						ld		a,l
 						ld		(TestAlphaMulY),a			; save result
 						ld		(TestAlphaMulY+1),de		; save result
@@ -478,7 +478,7 @@ Test_Roll:				ld      a,(ALPHA)                   ; get roll value
 						ld      a,(UBnKxlo)                ; HLE = x sgn, hi, lo
 						ld      e,a                         ; .
 						ld      hl,(UBnKxhi)               ; .
-						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						call    DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 						ld		a,l
 						ld		(TestAlphaMulX),a			; save result
 						ld		(TestAlphaMulX+1),de		; save result							
@@ -506,7 +506,7 @@ Test_Pitch:				ld      a,(BETA)                   ; get roll value
 						ld      a,(UBnKylo)                ; HLE = x sgn, hi, lo
 						ld      e,a                         ; .
 						ld      hl,(UBnKyhi)               ; .
-						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						call    DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 						ld		a,l
 						ld		(TestBetaMulY),a			; save result
 						ld		(TestBetaMulY+1),de		; save result
@@ -516,7 +516,7 @@ Test_Pitch:				ld      a,(BETA)                   ; get roll value
 						ld      a,(UBnKzlo)                ; HLE = x sgn, hi, lo
 						ld      e,a                         ; .
 						ld      hl,(UBnKzhi)               ; .
-						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						call    DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 						ld		a,l
 						ld		(TestBetaMulZ),a			; save result
 						ld		(TestBetaMulZ+1),de		; save result							
@@ -660,7 +660,10 @@ XX12PVarSign3		DB 0
     ;INCLUDE "../../Maths/asm_add.asm"
     ;INCLUDE "../../Maths/asm_subtract.asm"
     ;NCLUDE "../../Maths/DIVD3B2.asm"
-    INCLUDE "../../Maths/asm_multiply.asm"
+    
+    ;INCLUDE "./Maths/asm_multiply.asm"
+    DISPLAY ">Loading S78 Maths routines"
+    INCLUDE "../../MathsFPS78/asm_multiply_S78.asm"
     INCLUDE "../../Maths/asm_square.asm"
     INCLUDE "../../Maths/asm_sine.asm"
     INCLUDE "../../Maths/asm_sqrt.asm"
@@ -706,8 +709,8 @@ MainNonBankedCodeEnd:
     INCLUDE "../../Layer2Graphics/asm_l2_plot_vertical.asm"
     INCLUDE "../../Layer2Graphics/layer2_plot_diagonal.asm"
     INCLUDE "../../Layer2Graphics/int_bren_save.asm"
-    INCLUDE "../../Layer2Graphics/layer2_plot_circle.asm"
-    INCLUDE "../../Layer2Graphics/layer2_plot_circle_fill.asm"
+    ;INCLUDE "../../Layer2Graphics/layer2_plot_circle.asm"
+    ;INCLUDE "../../Layer2Graphics/layer2_plot_circle_fill.asm"
     INCLUDE "../../Layer2Graphics/BBCEliteDirectMappingLL118.asm"    
     INCLUDE "../../Layer2Graphics/l2_draw_any_line.asm"
     INCLUDE "../../Layer2Graphics/l2_draw_line_v2.asm"

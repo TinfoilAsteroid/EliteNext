@@ -24,7 +24,7 @@ GCM_galactic_chart:         MMUSelectLayer1                         ; initialise
                             call    asm_l2_double_buffer_off        ; .
                             call    l2_320_cls                      ; .
                             MMUSelectSpriteBank                     ; .
-                            call    sprite_cls_cursors              ; .
+                            call    sprite_cls_all; sprite_cls_cursors              ; .
                             ld      a,GCM_cursor_dampen
                             ld      (GCM_cursor_dampen_timer),a
 .selectPresentSystem:       ld      hl,(PresentSystemX)             ; load present galaxy and system               

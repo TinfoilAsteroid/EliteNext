@@ -7,7 +7,7 @@ InitNoDoubleBuffer:         MACRO
                             call    asm_l2_double_buffer_off    
                             call	l2_cls	; Get some space
                             MMUSelectSpriteBank
-                            call    sprite_cls_cursors
+                            call    sprite_cls_all;sprite_cls_cursors
                             ENDM
 	
     

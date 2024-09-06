@@ -268,7 +268,7 @@ l2_draw_clipped_circle:
                     ld      c,l             ; c = x
                     call    l2_plot_pixel
                     ret
-                    
+        IFDEF CIRCLE_39990_ENABLED            
 ;---------------------------------------------------------------------------------------------------------------------------------
 ; ">l2_draw_circle_320 B = center row, hl = col, d = radius, e = colour"
 ;  draws circle in 320 mode
@@ -423,4 +423,4 @@ l2_draw_circle_39990: ld		a,e                     ; set self mo
 .PlotCircleColor:   ld      e,0                    
                     call    l2_plot_pixel_320       ; d= row number, hl = column number, e = pixel col
                     ret    
-
+        ENDIF

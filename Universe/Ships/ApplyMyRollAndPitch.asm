@@ -76,7 +76,7 @@ UBnKRoll_24Bit:			ld      a,(ALPHA)                   ; get roll value
 						ld      a,(UBnKylo)                ; HLE = x sgn, hi, lo
 						ld      e,a                         ; .
 						ld      hl,(UBnKyhi)               ; .
-						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						call    DELCequHLEmulDs; replacesmulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 						ld		a,l
 						ld		(UBnK24BitAlphaMulY),a			; save result
 						ld		(UBnK24BitAlphaMulY+1),de		; save result
@@ -86,7 +86,7 @@ UBnKRoll_24Bit:			ld      a,(ALPHA)                   ; get roll value
 						ld      a,(UBnKxlo)                ; HLE = x sgn, hi, lo
 						ld      e,a                         ; .
 						ld      hl,(UBnKxhi)               ; .
-						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						call    DELCequHLEmulDs; replacesmulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 						ld		a,l
 						ld		(UBnK24BitAlphaMulX),a			; save result
 						ld		(UBnK24BitAlphaMulX+1),de		; save result							
@@ -114,7 +114,7 @@ UBnKPitch_24Bit:		ld      a,(BETA)                   ; get roll value
 						ld      a,(UBnKylo)                ; HLE = x sgn, hi, lo
 						ld      e,a                         ; .
 						ld      hl,(UBnKyhi)               ; .
-						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						call    DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 						ld		a,l
 						ld		(UBnK24BitBetaMulY),a			; save result
 						ld		(UBnK24BitBetaMulY+1),de		; save result
@@ -124,7 +124,7 @@ UBnKPitch_24Bit:		ld      a,(BETA)                   ; get roll value
 						ld      a,(UBnKzlo)                ; HLE = x sgn, hi, lo
 						ld      e,a                         ; .
 						ld      hl,(UBnKzhi)               ; .
-						call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
+						call    DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * -alpha / 256 
 						ld		a,l
 						ld		(UBnK24BitBetaMulZ),a			; save result
 						ld		(UBnK24BitBetaMulZ+1),de		; save result							
@@ -429,7 +429,7 @@ Univ_Roll_And_Pitch:	    ld      a,(ALPHA)                   ; get roll value
 							ld      a,(UBnKxlo)                 ; HLE = x sgn, hi, lo
 							ld      e,a                         ; .
 							ld      hl,(UBnKxhi)                ; hl = UBnKchi sgn
-							call    mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * alpha / 256 
+							call    DELCequHLEmulDs; replaces mulHLEbyDSigned             ; DELC = x * alpha, so DEL = X * alpha / 256 
 ;-- DEL = K2 = y - alpha * x
                             ld      bc,de                       ; transfer to BCH for now
                             ld      h,l
@@ -446,7 +446,7 @@ Univ_Roll_And_Pitch:	    ld      a,(ALPHA)                   ; get roll value
 ;-- DELC = beta * HLE, i.e. beta * K2
                             ld      a,(BETA)
                             ld      d,a
-                            call    mulHLEbyDSigned             ; DELC = beta * K2
+                            call    DELCequHLEmulDs; replacesmulHLEbyDSigned             ; DELC = beta * K2
 ;-- DEL = z + DEL, i.e. z + Beta * K2 /256
                             ld      bc,(UBnKzhi)                ; BCH = z
                             ld      a,(UBnKzlo)                 ; .
@@ -462,7 +462,7 @@ Univ_Roll_And_Pitch:	    ld      a,(ALPHA)                   ; get roll value
 							ld      a,(UBnKzlo)                 ; HLE = z sgn, hi, lo
 							ld      e,a                         ; .
 							ld      hl,(UBnKzhi)                ; hl = UBnKchi sgn
-							call    mulHLEbyDSigned             ; DELC = z * beta, so DEL = z * beta / 256 
+							call    DELCequHLEmulDs; replacesmulHLEbyDSigned             ; DELC = z * beta, so DEL = z * beta / 256 
 ;-- BCH = DEL ..................................................
                             ld      bc,de                       ; transfer to BCH for now
                             ld      h,l
@@ -482,7 +482,7 @@ Univ_Roll_And_Pitch:	    ld      a,(ALPHA)                   ; get roll value
 							ld      a,(UBnKylo)                 ; HLE = y sgn, hi, lo
 							ld      e,a                         ; .
 							ld      hl,(UBnKyhi)                ; hl = UBnKyhi sgn
-							call    mulHLEbyDSigned             ; DELC = y * alpha, so DEL = Y * alpha / 256 
+							call    DELCequHLEmulDs; replacesmulHLEbyDSigned             ; DELC = y * alpha, so DEL = Y * alpha / 256 
 ;-- DEL = x + alpha * y
                             ld      bc,de                       ; transfer to BCH for now
                             ld      h,l                         ; .

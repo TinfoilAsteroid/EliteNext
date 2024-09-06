@@ -980,7 +980,9 @@ ReadyForNextPoint:      push    iy                                  ; copy scree
 ProcessShip:            call    CheckVisible                ; checks for z -ve and outside view frustrum, sets up flags for next bit
 ;............................................................  
 .DetermineDrawType:     ReturnOnBitClear    a, ShipIsVisibleBitNbr          ; if its not visible exit early
+ 
 ;............................................................  
+
 .CarryOnWithDraw:       call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
                        ; break
                         ld      a,$E3

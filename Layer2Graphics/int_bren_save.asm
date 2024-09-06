@@ -132,7 +132,7 @@ HLEquMidX:              ld      hl,(l2_X1)
 .CalcIntegerComponent:  ;break
                         ld      hl,(l2_dY2)         ; Integer component = dY2 * dXHi /256
                         ld      de,(ld_dxHi)        ; .
-                        call    DEHLequDEmulHL      ; .
+                        call    fixedS78_mulu; replaces DEHLequDEmulHL      ; .
                         ld      (l2_integer),de     ; .
                         ld      (l2_integer2),hl    ; .
 .CalcRemainderFraction: ld      bc,(l2_dxRemainder) ; dXRemainder = TRUNC((dxRemainder)/DY)*256
@@ -142,7 +142,7 @@ HLEquMidX:              ld      hl,(l2_X1)
                         ld      (l2_dxRemainder2),hl
 .CalcAdjustment:        ld      hl,(l2_dY2)         ; Adj component = DY2 * dXRemainder /256
                         ld      de,bc               ;
-                        call    DEHLequDEmulHL      ;
+                        call    fixedS78_mulu; replaces DEHLequDEmulHL      ;
                         ld      hl,(l2_integer)
                         add     hl,de
                         ret

@@ -128,9 +128,10 @@ draw_launch_ship:       MMUSelectLayer1
                         call    l1_cls
                         call    l1_attr_cls
                         MMUSelectSpriteBank
-                        call    sprite_cls_cursors
+                        call    sprite_cls_all;sprite_cls_cursors
                         MMUSelectLayer2
-                        call    asm_l2_double_buffer_on     
+                        call    asm_l2_double_buffer_on 
+                        call    l2_initialise
 .CurrentBuffer:         ld      a,$FF                           ; Clear upper 2 thirds to white
                         ld      (l2_cls_byte),a
                         call    l2_set_color_upper2
@@ -168,7 +169,7 @@ draw_docking_ship:      MMUSelectLayer1
                         call    l1_cls
                         call    l1_attr_cls
                         MMUSelectSpriteBank
-                        call    sprite_cls_cursors
+                        call    sprite_cls_all;sprite_cls_cursors
                         MMUSelectLayer2
                         call    asm_l2_double_buffer_on     
 .CurrentBuffer:         ld      a,$FF                           ; Clear upper 2 thirds to white

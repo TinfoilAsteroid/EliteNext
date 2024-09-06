@@ -78,6 +78,7 @@ l2_print_chr_at:        ld		a,d
                         call	l2_plot_pixel				; This will shift bc to poke row
                         jr		.IterateLoop
 
+    IFDEF   L2_PRINT_AT_ENABLED
 ; "l2_print_at bc= colrow, hl = addr of message, e = colour"
 ; "No error trapping, if there is no null is will just cycle on the line"
 l2_print_at:            ld	a,(hl)							; Return if empty string
@@ -98,7 +99,7 @@ l2_print_at:            ld	a,(hl)							; Return if empty string
                         ex		af,af'
                         inc		hl
                         jr		l2_print_at					; Just loop until 0 found
-	
+	ENDIF
 
 ; "l2_print_chr_at, bc = col,row, d= character, e = colour"
 ; "Need a version that also prints absence of character"

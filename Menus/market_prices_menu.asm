@@ -205,12 +205,16 @@ MPM_shift_de_a_chars:   ex      de,hl               ; now adjust
 MPM_Clear_Boiler:       ld      hl,MPM_market_txt01
 DEFECTIUVE
                         ld      c,17
-.WriteLoopOuter:        ld      b,MPM_market_row_len -1
+.WriteLoopOuter:        ld      b,36
 .WriteLoopInner:        ld      d," "
                         ld      (hl),d
                         inc     hl
                         djnz    .WriteLoopInner
-                        ld      (hl),0
+                        ld      b,12
+                        ld      d,0
+.WriteLoopInner0:       ld      (hl),d
+                        inc     hl
+                        djnz    .WriteLoopInner0
                         dec     c
                         jp      nz,.WriteLoopOuter
                         ret
@@ -220,7 +224,7 @@ MPM_getCargoQtyIY:      ld		a,(iy)
                         ret                             
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; loads market data to boiler text
-MPM_Market_To_Boiler:   break
+MPM_Market_To_Boiler:   ;break
                         call    MPM_Clear_Boiler
                         ld      de,MPM_market_txt01
                         MMUSelectStockTable
@@ -288,6 +292,7 @@ mkt_update_line:        ld      hl,CargoTonnes                  ; prep index to 
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 MPM_draw_market_prices_menu:
+                        ;break
                         ld      (mkt_read_only_mode),a
                         MMUSelectLayer1
                         call	l1_cls
@@ -298,7 +303,7 @@ MPM_draw_market_prices_menu:
                         call    l2_320_initialise
                         call    l2_320_cls
                         MMUSelectSpriteBank
-                        call    sprite_cls_cursors
+                        call    sprite_cls_all
                         MMUSelectLayer2
 .Drawbox:               call    l2_draw_menu_border
 .StaticText:	        ld      a,(Galaxy)
@@ -306,12 +311,14 @@ MPM_draw_market_prices_menu:
                         ld		a,25
                         call	expandTokenToString
                         call	GetDigramGalaxySeed
+                        ld      de,MPM_system_title
                         call    MPM_copy_str_hl_to_de
                         call    MPM_Market_To_Boiler
 .DisCargo:              call    MKT_GetCargo
 .DisCash:               call    MKT_GetCash
                         ld		b,23
                         ld		ix,MPM_boiler_text
+                        ;break
                         call	MPM_print_boiler_text
                         ld      a,(mkt_read_only_mode)
                         and     a
@@ -515,7 +522,7 @@ MPM_system_name         DB "Market Data : "
 MPM_system_title        DB "                ",0
 MPM_header1:            DB "                      UNIT  -QUANTITY-",0
 MPM_header2:            DB "PRODUCT      UoM      PRICE SALE CARGO",0
-                           ;0        1         2         3    E              4
+                           ;0        1         2         3             4
                            ;1234567890123456789012345678901234567  8 9 0 1 2 3 4 5 6 7 8
 MPM_market_txtblank:    DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
 MPM_market_txt01:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0

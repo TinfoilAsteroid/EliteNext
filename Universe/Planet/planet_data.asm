@@ -1113,11 +1113,11 @@ DrawElipse:
                         ld      (P_BnKSinCNT2),a            ; for debugging
 ; calculate BnKVxSin = VX*Sin(CNT2)-------------------------;
 .GetVxSin:              ld      a,(P_BnKVx)                 ; Set A = K2+2 = |v_x|
-                        call    AequAmulQdiv256usgn         ; R = A * Q / 256 = |v_x| * |sin(CNT2)|
+                        call    AequAmulQdiv256u; replaces AequAmulQdiv256usgn         ; R = A * Q / 256 = |v_x| * |sin(CNT2)|
                         ld      (P_BnKVxSin),a              ; now varR = vx*sin(CNT2)
 ; calculate BnkVySin = Vy*Sin(CNT2)-------------------------;
 .GetVySin:              ld      a,(P_BnKVy)                 ; Set A = K2+3 = |v_y|
-                        call    AequAmulQdiv256usgn         ; Set varK = A * Q / 256 = |v_y| * |sin(CNT2)|
+                        call    AequAmulQdiv256u; replacesAequAmulQdiv256usgn         ; Set varK = A * Q / 256 = |v_y| * |sin(CNT2)|
                         ld      (P_BnKVySin),a              ; 
 ; Now work sign of vx and vy * sin -------------------------; In 6502 below, in z80 C flag is reversed
 .CalcVxVyMulSinSign:    ld      a,(P_BnKCNT2)               ; If CNT2 >= 33 then this sets the C flag, else clear : C is clear if the segment starts in the first half of the circle, 0 to 180 degrees
@@ -1139,11 +1139,11 @@ DrawElipse:
                         ld      (P_BnKCosCNT2),a            ; for debugging                        
 ; calculate Uy*Cos(CNT2)------------------------------------;
 .GetUyCos:              ld      a,(P_BnKUy)                 ; Set A = K2+1 = |u_y|
-                        call    AequAmulQdiv256usgn         ; Set P_BnKUyCos(wasK+2) = A * Q / 256 = |u_y| * |cos(CNT2)|
+                        call    AequAmulQdiv256u; replacesAequAmulQdiv256usgn         ; Set P_BnKUyCos(wasK+2) = A * Q / 256 = |u_y| * |cos(CNT2)|
                         ld      (P_BnKUyCos),a              ; .
 ; calculate Ux*Cos(CNT2)------------------------------------;
 .GetUxCos:              ld      a,(P_BnKUx)                 ; Set A = K2 = |u_x|
-                        call    AequAmulQdiv256usgn         ; Set P_BnKUxCos(wasP) = A * Q / 256 = |u_x| * |cos(CNT2)| also sets the C flag, so in the following, ADC #15 adds 16 rather than 15 (use use non carry add)
+                        call    AequAmulQdiv256u; replacesAequAmulQdiv256usgn         ; Set P_BnKUxCos(wasP) = A * Q / 256 = |u_x| * |cos(CNT2)| also sets the C flag, so in the following, ADC #15 adds 16 rather than 15 (use use non carry add)
                         ld      (P_BnKUxCos),a              ; .
 ; now work out sign for cos CNT2----------------------------;
 .CalcUxUyMulCosSign:    ld      a,(P_BnKCNT2)               ; If (CNT2 + 16) mod 64 >= 33 then this sets the C flag,
