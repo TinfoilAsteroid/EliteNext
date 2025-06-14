@@ -1,6 +1,6 @@
-del     maths24test.map
-del     maths24test.txt
-del     maths24test.nex
+del     mathRollPitch.map
+del     mathRollPitch.txt
+del     mathRollPitch.nex
 
-sjasmplus --msg=all --color=auto --lst=piiotest.txt maths24test.asm
+sjasmplus --msg=all --color=auto --lst=mathsRollPitch.txt mathsRollPitch.asm
 

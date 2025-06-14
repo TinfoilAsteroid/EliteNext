@@ -902,7 +902,6 @@ sprite_compass_hide:    HideSprite compass_sun
 ;                        ret
                         
 sprite_cls_all:         ld      a,(spr_nextStar)
-    break
                         JumpIfAGTENusng   last_sprite, .maxSprites
                         ld      a,last_sprite
 .maxSprites:            ld      b,a

@@ -59,12 +59,24 @@ NegIY:			    MACRO
                     ENDM
 
 NegHL:			    MACRO
-                    xor a
-                    sub l
-                    ld l,a
-                    sbc a,a
-                    sub h
-                    ld h,a
+                    xor     a
+                    sub     l
+                    ld      l,a
+                    sbc     a,a
+                    sub     h
+                    ld      h,a
+                    ENDM
+
+NegAHL:			    MACRO
+                    ld      b,a         ; save a in b
+                    xor     a           ; l = 0 - l
+                    sub     l   
+                    ld      l,a
+                    sbc     a,a         ; h = 0 - h
+                    sub     h
+                    ld      h,a
+                    sbc     a,a         ; a= 0 - b
+                    sub     b                            
                     ENDM
 
 NegDE:			    MACRO

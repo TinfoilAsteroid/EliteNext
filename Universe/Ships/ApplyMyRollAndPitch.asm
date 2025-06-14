@@ -14,7 +14,82 @@ UBnK24BitBetaMulY       DB $00,$00, $00, $00
 UBnK24BitK2             DS 3
     
 PitchBlock              DB  1
+    ENDIF
 
+
+MyRollAndPitch24Bit:    ld      a,(ALPHA)                  ; Check both ALPHA and BETA for 0
+                        ld      h,a
+                        ld      a,(BETA)
+                        or      h
+                        ret     z
+;   1. K2 = y - alpha * x
+.Step1:                 ld      a,h                         ; Calc alpha * x h = alpha from above
+                        ld      d,a                         ;
+                        ld      hl,(UBnKxhi)                ;
+                        ld      a,(UBnKxlo)                 ;
+                        ld      e,a                         ;
+                        call    DEHLequHLEmulDs             ; DELC = alpha * x so DEL is what we want
+.YMinusAx:              ld      c,h
+                        ld      a,(UBnKysgn)
+                        ld      b,a
+                        ld      hl,(UBnKylo)
+                        call    AHLequBHLminusDEC           ; K2 = y - alpha * x
+                        push    af,,hl                      ; save K2
+;   2. z = z + beta * K2
+.Step2:                 ld      e,l                         ; HEL = AHL
+                        ld      l,h
+                        ld      h,a
+                        ld      a,(BETA)
+                        ld      d,a
+                        call    DEHLequHLEmulDs             ; DELC = beta * K2 so DEL is what we want
+.ZPlusBk:               ld      c,h
+                        ld      hl,(UBnKzlo)
+                        ld      a,(UBnKzsgn)
+                        ld      b,a
+                        call    AHLequBHLplusDEC
+.SetZ:                  ld      (UBnKzlo),hl
+                        ld      (UBnKzsgn),a                        
+;   3. y = K2 - beta * z
+.Step3:                 ld      a,(BETA)
+                        ld      d,a
+.GetZBack:              ld      hl,(UBnKzhi)
+                        ld      a,(UBnKzlo)
+                        ld      e,a
+                        call    DEHLequHLEmulDs             ; DELC = beta * K2 so DEL is what we want                      
+.K2MinusBZ:             ld      b,l                    
+                        ld      c,h
+                        pop     af,,hl                      ; will it go wrong if K2 negative?    
+                        ld      b,a
+                        call    AHLequBHLminusDEC           ; y = K2 -Bz
+.SetY:                  ld      (UBnKylo),hl
+                        ld      (UBnKysgn),a                        
+;   4. x = x + alpha * y 
+.Step4:                 ld      a,(ALPHA)                   ; Calc alpha * x
+                        ld      d,a                         ;
+.GetYBack:              ld      hl,(UBnKyhi)                ;
+                        ld      a,(UBnKylo)                 ;
+                        ld      e,a                         ;
+                        call    DEHLequHLEmulDs             ; DELC = alpha * x so DEL is what we want
+.XPlusAx:               ld      c,h
+.GetXBack:              ld      a,(UBnKxsgn)
+                        ld      b,a
+                        ld      hl,(UBnKxlo)
+                        call    AHLequBHLplusDEC           ; x+ alpha * x
+.SetX:                  ld      (UBnKxlo),hl
+                        ld      (UBnKxsgn),a    
+                        ret
+MySpeed24Bit:           ld      a,(DELTA)                   ; CDE = - Delta, delta will always be at least 1 so we don't have to check for 0 speed
+                        ld      c,$80                       ;
+                        ld      d,0
+						ld      e,a                         ; 
+						ld      hl,(UBnKzlo)                ; DEL = z position
+						ld      a,(UBnKzhi)                 ; .
+						ld      b,a                         ; .                       
+						call    AHLequBHLplusCDE; replaces  AddBCHtoDELsigned           ; update speed
+						ld      (UBnKzhi),a                ; write back to zpos
+						ld      (UBnKzlo),hl                ;
+                        
+    IFDEF UNIV_OLD_APPLY_MY_ROLL_AND_PITCH
 ApplyMyRollAndPitch:    ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
 .CheckForRoll:          and		a
 						call	nz,UBnKRoll_24Bit
@@ -69,6 +144,8 @@ DebugAlert2:             ld      a,(ix+1)
                         ld      ix,UBnkrotmatNosevX
                         call    ApplyRollAndPitchToIX
                         ret
+    ENDIF
+    IFDEF USE_24BIT_ROLL_AND_PITCH
 
 UBnKRoll_24Bit:			ld      a,(ALPHA)                   ; get roll value
 						and 	$7F
@@ -146,7 +223,8 @@ UBnKPitch_24Bit:		ld      a,(BETA)                   ; get roll value
 						call	AddAtIXtoAtIY24Signed	
 						ret            
     
-    ELSE
+    ENDIF
+    IFDEF ORIG_APPLY_MY_ROLL_AND_PITCH
 APPequPosPlusAPP:       MACRO    Position, PositionSign
                         push    bc
                         ld      c,a                         ; save original value of a into c
@@ -495,6 +573,7 @@ Univ_Roll_And_Pitch:	    ld      a,(ALPHA)                   ; get roll value
                             ld      (UBnKxlo),a                 ; .
 .ApplyRollToRight:          ;call    ApplyMyRollToOrientation                            
 .ApplyPitchToClimb:         call    ApplyMyPitchToOrientation
+                          ; MMUSelectMathsBankedFns
                           ;  call    TidyVectorsIX ; doesn't work
 							ret        
     ENDIF

@@ -6,7 +6,8 @@
     DEFINE DEBUGMODE 1
     DEVICE ZXSPECTRUMNEXT
     SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
-    DEFINE  TESTING_MATHS_DIVIDE 1
+    ;DEFINE  TESTING_MATHS_DIVIDE 1
+    DEFINE  TESTING_ROLL_PITCH 1
  CSPECTMAP maths24test.map
  OPT --zxnext=cspect --syntax=a --reversepop
                 DEFINE  SOUNDPACE 3
@@ -80,7 +81,7 @@ ConstNorm           equ 197
 ; Pause Menu (only place you can load from )
 ; byint and selling equipment
 ; bying and selling stock
-
+#define TESTING_MATHS_MULTIPLY
 TopOfStack              equ $5CCB ;$6100
 
                         ORG $5DCB;      $6200
@@ -146,6 +147,36 @@ EliteNextStartup:       di
                         call    TestDivide
                         break
                 ENDIF
+                IFDEF   TESTING_ROLLL_PITCH
+                        break
+                
+                
+;   1. K2 = y - alpha * x
+;   2. z = z + beta * K2
+;   3. y = K2 - beta * z
+;   4. x = x + alpha * y
+MyhRollAndPitch24Bit:   ld      a,(ALPHA)                   ; Calc alpha * x
+                        ld      d,a                         ;
+                        ld      hl,(UBnKxhi)                ;
+                        ld      a,(UBnKxlo)                 ;
+                        ld      e,a                         ;
+                        call    DECLequHLEmulDs             ; DELC = alpha * x so DEL is what we want
+                        brek
+                ENDIF
+                        
+                        ld      
+UBnKxlo                 DB  0
+UBnKxhi                 DB  0
+UBnKxsgn                DB  0
+UBnKylo                 DB  $79
+UBnKyhi                 DB  $05
+UBnKysgn                DB  0
+UBnKzlo                 DB  $10
+UBnKzhi                 DB  $06
+UBnKzsgn                DB  $80
+Alpha                   DB  0
+Beta                    DB  0
+
 ErrorCount:             DW  0
                         ;  X              Y              Filler....Result...........................
                         ;    0    1    2    3    4    5    6    7,   8,   9,   A,   B,   C,   D,   E,   F
@@ -224,8 +255,8 @@ TestMult:               ld      hl,(iy+0)
                         ret
 
 ;--------------------------------------------------------------------------------------
-    INCLUDE	"../../Maths24/asm_mulitply24.asm"
-    INCLUDE	"../../Maths24/asm_divide24.asm"
+    INCLUDE	"../../MathsFPS78\asm_multiply_S78.asm"
+    INCLUDE	"../../MathsFPS78/asm_divide_S78.asm"
     INCLUDE	"../../Maths24/asm_addition24.asm"
 
 

@@ -443,6 +443,7 @@ MaximiseIXVector:       ld      a,b                 ; Now loop round until bit 7
 VectorToPlanet:         call    PlanetCopyPosToXX15 ; Perform all of SPS3 
                         ld      ix,P_XX15
                         call    MaximiseIXVector
+                        MMUSelectMathsBankedFns
                         call    NormaliseIXVector
 
 

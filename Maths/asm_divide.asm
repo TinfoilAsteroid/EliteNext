@@ -248,83 +248,83 @@ DVID3B:                 ld      a,(varP)                    ; LDA P             
 ;INPUTS: hl = dividend dbc = divisor
 ;OUTPUTS: hl/de -> AHL = quotient CDE = remainder, Carryflag set if divide by 0
 
-DVIDT:                  ld      d,a                     ; D = var P+1
-                        ld      a,(varQ)            
-                        ld      c,a                     ; C = var Q
-                        ld      a,(varP)            
-                        ld      e,a                     ; E = var P
-                        ; Need fast exists on ABS values 
-BAequDEdivC:            ld      a,d                     ; Fast exit is value is 0
-                        or      e                       ; .
-                        jr      z,.ResultIsZero         ; .
-                        ld      a,c                     ; Fast exit is divide by 0 
-                        and     a                       ;
-                        jr      z,.ResultIsFFFF         ;
-.SavSign:               ld      a,d                     ; preserve sign of result in var T
-                        xor     c                       ;                        
-                        and     $80
-                        ld      l,a                     ; l = var T
-                        ld      a,0
-                        ld      b,16
-                        ShiftDELeft1
-                        sla     c                       ; c = abs c
-                        srl     c
-.DivideLoop:            rl      a
-                        JumpIfALTNusng c, .SkipSubtract
-                        ClearCarryFlag
-                        sbc     c
-                        ClearCarryFlag
-.SkipSubtract:          ccf
-                        rl      e
-                        rl      d
-                        dec     b
-                        jr      nz,.DivideLoop
-                        ld      a,e
-                        or      l
-                        ld      b,d
-                        ret
-.ResultIsZero:          ZeroA
-                        ld      b,a
-                        ret
-.ResultIsFFFF:          ld      a,$FF
-                        ld      b,a
-                        ret
+;;;DVIDT:                  ld      d,a                     ; D = var P+1
+;;;                        ld      a,(varQ)            
+;;;                        ld      c,a                     ; C = var Q
+;;;                        ld      a,(varP)            
+;;;                        ld      e,a                     ; E = var P
+;;;                        ; Need fast exists on ABS values 
+;;;BAequDEdivC:            ld      a,d                     ; Fast exit is value is 0
+;;;                        or      e                       ; .
+;;;                        jr      z,.ResultIsZero         ; .
+;;;                        ld      a,c                     ; Fast exit is divide by 0 
+;;;                        and     a                       ;
+;;;                        jr      z,.ResultIsFFFF         ;
+;;;.SavSign:               ld      a,d                     ; preserve sign of result in var T
+;;;                        xor     c                       ;                        
+;;;                        and     $80
+;;;                        ld      l,a                     ; l = var T
+;;;                        ld      a,0
+;;;                        ld      b,16
+;;;                        ShiftDELeft1
+;;;                        sla     c                       ; c = abs c
+;;;                        srl     c
+;;;.DivideLoop:            rl      a
+;;;                        JumpIfALTNusng c, .SkipSubtract
+;;;                        ClearCarryFlag
+;;;                        sbc     c
+;;;                        ClearCarryFlag
+;;;.SkipSubtract:          ccf
+;;;                        rl      e
+;;;                        rl      d
+;;;                        dec     b
+;;;                        jr      nz,.DivideLoop
+;;;                        ld      a,e
+;;;                        or      l
+;;;                        ld      b,d
+;;;                        ret
+;;;.ResultIsZero:          ZeroA
+;;;                        ld      b,a
+;;;                        ret
+;;;.ResultIsFFFF:          ld      a,$FF
+;;;                        ld      b,a
+;;;                        ret
 
-DIV96:                  ld      d,a                     ; D = var P+1
-                        ld      a,(varQ)            
-                        ld      c,96                    ; C = var Q
-                        ld      a,(varP)            
-                        ld      e,a                     ; E = var P
-                        ; Need fast exists on ABS values 
-BAequDEdiv96            ld      a,d                     ; Fast exit is value is 0
-                        or      e                       ; .
-                        jr      z,.ResultIsZero         ; .
-.SavSign:               ld      a,d                     ; preserve sign of result in var T
-                        xor     c                       ;                        
-                        and     $80
-                        ld      l,a                     ; l = var T
-                        ld      a,0
-                        ld      b,16
-                        ShiftDELeft1
-                        sla     c                       ; c = abs c
-                        srl     c
-.DivideLoop:            rl      a
-                        JumpIfALTNusng c, .SkipSubtract
-                        ClearCarryFlag
-                        sbc     c
-                        ClearCarryFlag
-.SkipSubtract:          ccf
-                        rl      e
-                        rl      d
-                        dec     b
-                        jr      nz,.DivideLoop
-                        ld      a,e
-                        or      l
-                        ld      b,d
-                        ret
-.ResultIsZero:          ZeroA
-                        ld      b,a
-                        ret
+;;;DIV96:                  ld      d,a                     ; D = var P+1
+;;;                        ld      a,(varQ)            
+;;;                        ld      c,96                    ; C = var Q
+;;;                        ld      a,(varP)            
+;;;                        ld      e,a                     ; E = var P
+;;;                        ; Need fast exists on ABS values 
+;;;BAequDEdiv96            ld      a,d                     ; Fast exit is value is 0
+;;;                        or      e                       ; .
+;;;                        jr      z,.ResultIsZero         ; .
+;;;.SavSign:               ld      a,d                     ; preserve sign of result in var T
+;;;                        xor     c                       ;                        
+;;;                        and     $80
+;;;                        ld      l,a                     ; l = var T
+;;;                        ld      a,0
+;;;                        ld      b,16
+;;;                        ShiftDELeft1
+;;;                        sla     c                       ; c = abs c
+;;;                        srl     c
+;;;.DivideLoop:            rl      a
+;;;                        JumpIfALTNusng c, .SkipSubtract
+;;;                        ClearCarryFlag
+;;;                        sbc     c
+;;;                        ClearCarryFlag
+;;;.SkipSubtract:          ccf
+;;;                        rl      e
+;;;                        rl      d
+;;;                        dec     b
+;;;                        jr      nz,.DivideLoop
+;;;                        ld      a,e
+;;;                        or      l
+;;;                        ld      b,d
+;;;                        ret
+;;;.ResultIsZero:          ZeroA
+;;;                        ld      b,a
+;;;                        ret
                         
 Div16by24usgn:          inc     d                           ; can we fast retu
                         dec     d

@@ -1,0 +1,164 @@
+Structre of Next Kind
+
+Memory Banking
+---------------
+Bank 49
+Bank 50 - All functionality associated with the short range chart
+Bank 51 - All functionality associated with Galactic Chart
+Bank 52 - All functionality for inventoryh page
+Bank 53 - All functionality for System Information page
+Bank 54 - All functionality for Trading Market
+Bank 55 - All functionality for Stock price page
+Bank 56 - All functionality for about commander page
+Bank 57 - Layer 2 functionality
+          CLS
+          Bank select
+          Flipping Buffers
+          Initialisation
+          Printing Characters
+          Drawing Boxes
+          Drawing A Pixle, Horizontal (pre clipped), Diagonal (pre clipped), Vertical lines (pre clipped), circles, filled circles, Drawing line with clipping
+Bank 58 - Layer 1 functionality
+          CLS
+          Setting Attribute colours
+          Print At
+Bank 59 - Master copy of the Ship Models Data
+          This contains all the core code for copying models out of the model bank into each run time ship's "Universe" bank
+          This includes the ship Model Data set 1, the other banks are much furher on but probably should be moved to 60.. to help with organisation
+Bank 60 - Sprites (layer 3), sprites are used to supplement pages, e.g. curors, laser beams, directional charts on the rigfht hand side of player screen
+Bank 61 - This contains the Layer 1 screen shot for the ship console. It would be nice later to be able to load differnt ones if a player buys a new ship
+Bank 62 - The code for the front view, e.g. input, and rendering
+Bank 63 - All functionality for the status menu page
+Bank 64 - All functionality for the equipment menu page
+Bank 65 - All the functionality for drawing launch from a space station, technically its a menu that transitions between space station menu and front view
+Bank 66 - Contains all the lookup data to support equipment data
+Bank 67 - Additional ship Models
+Bank 68 - Additional ship Models
+Bank 69 - Additional ship Models
+Bank 70 - Universe Data, this the the base NPC id 0, each Universe Data bank contains all functionality and data to support rendering and AI for a given
+          space object, Universe Data is a band name should really be NPC Object
+Bank 71 - each universe bank is here, there are 12 in total for NPC       
+Bank 72 - Bank 70 is a special case as that will always hold the space station data and in fact there is a equate of BankSpaceStationData = BankUNIVDATA0
+Bank 73 - NPC Object       
+Bank 74 - NPC Object       
+Bank 75 - NPC Object                
+Bank 76 - NPC Object       
+Bank 77 - NPC Object       
+Bank 78 - NPC Object       
+Bank 79 - NPC Object      
+Bank 80 - NPC Object       
+Bank 81 - NPC Object       
+Bank 82 - NPC Object       
+Bank 83 - Sun/System Star - This is techincally an NPC object but has custom rendering code      
+Bank 84 - Planet          - This is techincally an NPC object but has custom rendering code   
+Bank 91- The primary Galaxy data, this contains support code as well as the galaxy table, each galaxy is prebuyilt during game initialisation and all
+         the code from bank 91 replicated into them. The intention is for new game intiailisation to geneate the galaxy and save it as files for the game save
+         this will allow missions to change the structure of the galaxy , e.g. a super nova "There goes the neigbourhood" or Thargoid takeovers
+         or even something funky like an alternate relaity messing up a galaxy
+Bank 92 - Galaxy 1         
+Bank 93 - Galaxy 2         
+Bank 94 - Galaxy 3         
+Bank 95 - Galaxy 4         
+Bank 96 - Galaxy 5         
+Bank 97 - Galaxy 6         
+Bank 98 - Galaxy 7    
+Bank 99 - The horror that is maths tables, the nbr one reason I have not got this finished is I am terrible at z80 fixed point maths
+Bank 100- Sound library, sound is played via interrupts. Bank 100 will hold sound efffects and music
+Bank 101- Keyboard code, to modularise and keep the main code small, all keyboard reading code is here and handles setting up variables
+Bank 102 -The true horror, the crawling monster of maths. This is paged into Bank 0 to be used by the game as read only code
+          it all went wrong when I tried to implement the matrix tidy code from BBC elite and it trashed the project
+Bank 103 -Raspberry Pi functions. In a galaxy far far away I thought of off loading all the maths to the pi as it effect a maths gpu, but then that made debugging a nightmare, but the idea would have been to pass off Fixed point values and then leave the pi to asyncrhously update all ships etc
+
+Self modifying code -  A lot of the code here, e.g line drawing, interrupts, main menu is driven by self modifying code,
+                       e.g. different screens all have the same entry points by virte of design, but when switching pages
+                       the main loop it changed to page in the correct bank, this is about removing as many if then branches in main run code as possible. Same happens with line drawing, rather than pushing and popping, looping code is modified so say ld  bc,xxxx will be "poked" with the correct value if its used a lot
+                       
+Unwrapping code - Loops are unwrapped as much as possible as there is plenty of memory
+
+Repeating code - where say universe or galaxy banks exist, code is replicated in them during generation so you can to "page in bank X" call address $XXXX and it will always hit the mark, kind of an object orientated approach, encapsulating data and code in an atomic block (or some other fancy buzzword)
+
+Banking
+    Memory_bank_defines holds the configuration of paging
+    the <bank>Addr equates hold the base address at which each bank when its brought into the normal address space
+    The <bank>MMU equates hold the respective slot that is brought in
+        Typically:
+            Read only code goes to MMU Slot 0
+            "Data" based code, e.g. menus, NPCs go into Slot 6
+            Generic code such as look up tables, graphics and hardware related go into Slot 7
+
+Screen logic
+    This is the most complex part of the self modifying code. As each menu/viuew etc does different things is scenarios such as cursor key press, rather than having huge if blocks, this table modifies the main menu so it can just run as a linear block of code in a loop
+    
+    The main logic for this is in SetScreenA
+        This reads teh table ScreenIndex
+        There is also game logic to force screen transitions along with normal chjanges
+        There is logic for if a selection is a ship view port vs menu
+        The actual table is in ScreenKeyMap and is structed as thus:
+            Docked flag, thsi determines if the screen entry can be selected when docked/not at all/only when docked
+            The Keypress table says which key can activate this screen
+            The bank for the display code used for self modifying the main loop
+            The address where the display code entry point is
+            The address for the main loop update routine
+            Do we draw stars (e.g. is it an external ship view)
+            Input blocker flag - used in transition screens such as launch and warp
+            Double Buffering - menus (e.g. charts, trading, status) don't need double buffer
+            Cursor key input hander routine
+            Does hyperspace block this key
+            Does this menu block update ships (e.g. pauses the simulation but not true pause)
+            Function for drawing system jump (e.g. inside system warp)
+
+
+How the main code works:
+    The code is orged to $5DCB at the moment, it doesn't matter too much on specifics
+    First interrupts are disabeld then hardware setup done, e.g. get default drive, set turbo, init sprits and sound
+    Interrupts are intiailised to point to the Vector table, Interrupts provide sound/music more on that later
+    Message queues are set up too, when a message is displayed on screen, e.g. "Right on commander" or "Did you remember to turn off the cooker before you launched" this is queued up, messages have a life on screen, so they are displayed until time runs out then the message is cleared and the next one is displayed (if any)
+    The galaxies are not initialised, Reset Univ clears the NPC data, Reset Galaxy clears galaxy data by copying galaxy 0 to 1-7. SeedAllGalaxies is then called to perform the Elite galaxy generation logic
+    Next screens are all set (remove sprites, L1, set border to black)
+    Now comes a load of test code points that can be brough in by #defines
+SetAttractMode    
+    The real code starts now
+    Interrupts are disabled and the interrupt hanlder code is set up 
+    attract mode is run until a load commander is selected (Y/N) and then muisic stops by re-initialising audio
+Load Commander
+    If default is selected then that is loaded else its pulled from the save file, later on default will create the galaxies and load commander load current states.
+InitialiseMainLoop:
+    This initialilses the main loop code
+    Init Main Loop:
+        Clears the uiniverse slot list (a lookup table that holds which universe slots contain active objects)
+        Sets up which ship it due its slot in AI computation
+        Set Menu ID Max to 3
+        Makes space station friendly, marks as docked, sets up console refresh (radar is refred every X interations of main loop)
+        Generates stock marked for current system
+        Resets message queue
+        Starts up even timers
+        Clears miss jump flag
+        disables text mode input
+Main Loop
+    The main loop code is handled by code in the game engine 
+    It works as follows:
+        Select Maths Bank functions (as they will be used here a fair bit)
+        call random number generator
+        Update the player's laser counters, cool down and display
+        If ECM us running call that subroutine
+        Update warp engine cool down
+        Scan keyboard
+InputBlockChecker
+        Here is the first self modifying code, ld a,XX is modifed to be 00 (OK) or 01 (jump to Skip Input Handlers)
+        If input is not blocked
+            if TextInputMode, skiup Input Handers
+            Call the ViewKeyTest 
+            Call test for pause mode
+            if game is paused jump straight back to Main Loop as we are done
+            Scan for movement keys directly from keyboard bank
+            Handle Movement is reading self modified code
+                Fetch the address of the cursor routine written to CallCursorRoutine's call 
+                if its 0 then there is no cursor input allowed and jump to TestAreWeDocked
+                Check to see if we have a mission loaded and call that module (currently not implemented)
+                Handle Back Select - This is a self modifying block linked to Call Cursor Routine, so they both determine where input is processed. This is because view ports, menus,status pages all encapsulate their own code
+            now we call into SkipInputHandlers
+SkipInputHandlers
+    
+Process Warp
+
+Spawn Object

@@ -909,6 +909,7 @@ TidyRotation:       IFNDEF FORCE_TIDY
                         ret     nz                          ; when counter matches slot number tidy stops it doing all tidies on same iteration
                     ENDIF
                     IFNDEF BYPASS_TIDY
+                        MMUSelectMathsBankedFns
                         call    TidyVectorsIX
                     ENDIF
                         ret
@@ -1661,7 +1662,7 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
                     ENDIF
                         ret 
 ;............................................................  
-.ExplodingCloud:        break
+.ExplodingCloud:        ;break
                         call    ProcessNodes
                         call    UnivAcknowledExploding      ; acknowledge ship exploding
 .UpdateCloudCounter:    ld      a,(UBnKCloudCounter)        ; counter += 4 until > 255

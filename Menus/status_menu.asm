@@ -152,7 +152,7 @@ STAT_expand_name:       ld      a,(hl)
     DISPLAY "TODO GetStatMissileCount:    ld      a,("
 ;----------------------------------------------------------------------------------------------------------------------------------	
 GetStatFuelLevel:       ld		a,(Fuel)
-                        ld		de,txt_fuel_level
+                        ld		de,txt_stat_fuel_level
                         ld	c, -100
                         call	.Num1
                         ld	c,-10
@@ -198,7 +198,7 @@ draw_STAT_maintext:
                         ld      de,txt_stat_condition_val
                         call    STAT_copy_str_hl_to_de
 .DisplayFuel:           call	GetStatFuelLevel
-                        ld		hl, txt_fuel_level
+                        ld		hl, txt_stat_fuel_level
                         ld		a,(hl)
                         cp		'0'
                         jr		nz,.DoneFuel
@@ -495,6 +495,13 @@ STAT_pos_col			equ $0040
 STAT_cash_amount    	DS 10
 STAT_cash_UoM           DB " Cr",0
 
+ConditionName1      DB "Docked",0
+ConditionName2      DB "Green",0
+ConditionName3      DB "Yellow",0
+ConditionName4      DB "Red",0
+
+ConditionNameIdx    DW ConditionName1,ConditionName2,ConditionName3,ConditionName4
+ConditionNameIdxLen EQU $ - ConditionNameIdx
                         
 stat_copy_to_name:      ld      hl,GalaxyExpandedName
                         ld      bc,30

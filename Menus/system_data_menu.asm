@@ -103,6 +103,64 @@ SDM_print_boiler_text:
                         pop         bc          ; remainder of lines in loop
                         djnz        .BoilerTextLoop
                         ret
+;----------------------------------------------------------------------------------------------------------------------------------	
+
+; As per display but shifts final digit by 1 and puts in "." for 1 decimal place
+SDM_DispDEIXtoIY1DP:        call    SDM_DispDEIXtoIY
+                        ld      a,(IY+0)
+                        ld      (IY+1),a
+                        ld      a,"."
+                        ld      (IY+0),a
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------	
+SDM_DispDEIXtoIY:   ld (.SDMclcn32z),ix
+                        ld (.SDMclcn32zIX),de
+                        ld ix,.SDMclcn32t+36
+                        ld b,9
+                        ld c,0
+.SDMclcn321:            ld a,'0'
+                        or a
+.SDMclcn322:            ld e,(ix+0)
+                        ld d,(ix+1)
+                        ld hl,(.SDMclcn32z)
+                        sbc hl,de
+                        ld (.SDMclcn32z),hl
+                        ld e,(ix+2)
+                        ld d,(ix+3)
+                        ld hl,(.SDMclcn32zIX)
+                        sbc hl,de
+                        ld (.SDMclcn32zIX),hl
+                        jr c,.SDMclcn325
+                        inc c
+                        inc a
+                        jr .SDMclcn322
+.SDMclcn325:            ld e,(ix+0)
+                        ld d,(ix+1)
+                        ld hl,(.SDMclcn32z)
+                        add hl,de
+                        ld (.SDMclcn32z),hl
+                        ld e,(ix+2)
+                        ld d,(ix+3)
+                        ld hl,(.SDMclcn32zIX)
+                        adc hl,de
+                        ld (.SDMclcn32zIX),hl
+                        ld de,-4
+                        add ix,de
+                        inc c
+                        dec c
+                        jr z,.SDMclcn323
+                        ld (iy+0),a
+                        inc iy
+.SDMclcn323:            djnz .SDMclcn321
+                        ld a,(.SDMclcn32z)
+                        add A,'0'
+                        ld (iy+0),a
+                        ld (iy+1),0
+                        ret
+.SDMclcn32t             dw 1,0,     10,0,     100,0,     1000,0,       10000,0
+                        dw $86a0,1, $4240,$0f, $9680,$98, $e100,$05f5, $ca00,$3b9a
+.SDMclcn32z             ds 2
+.SDMclcn32zIX           ds 2                            
 ;----------------------------------------------------------------------------------------------------------------------------------
 PlanetLeftJustifyLoop:  ld      a,(hl)
                         cp      "0"
@@ -169,7 +227,7 @@ draw_system_data_menu:  MMUSelectLayer1
 .CalcDistance:          ld      ix,(Distance)
                         ld      de,0
                         ld      iy,distance_value
-                        call    DispDEIXtoIY1DP
+                        call    SDM_DispDEIXtoIY1DP
 .AddDistUoM             push    iy
                         pop     hl
                         inc     hl
@@ -203,7 +261,7 @@ draw_system_data_menu:  MMUSelectLayer1
                         ld      ixl,a
                         ld      de,0
                         ld      iy,population_value
-                        call    DispDEIXtoIY1DP
+                        call    SDM_DispDEIXtoIY1DP
 .AddUoM:                push    iy
                         pop     hl
                         inc     hl
@@ -221,7 +279,7 @@ draw_system_data_menu:  MMUSelectLayer1
                         pop     ix
                         ld      de,0
                         ld      iy,productivity_value
-                        call    DispDEIXtoIY
+                        call    SDM_DispDEIXtoIY
 .AddProdUoM:            push    iy
                         pop     hl
                         ld      de,productivity_uom
@@ -235,7 +293,7 @@ draw_system_data_menu:  MMUSelectLayer1
                         pop     ix
                         ld      de,0
                         ld      iy,radius_value
-                        call    DispDEIXtoIY
+                        call    SDM_DispDEIXtoIY
 .AddRadiusUoM:          push    iy
                         pop     hl
                         ld      de,radius_uom

@@ -42,7 +42,9 @@ CursorLeft          equ %00100000
 CursorRight         equ %00010000
 CursorHome          equ %00001000
 CursorRecenter      equ %00000100
-
+; Menu Colours
+txt_status_colour		equ $FF
+txt_highlight_colour    equ $D0
 ; Intro Screen
 TitleShip			equ	$8C
 RotationUnity		equ $60

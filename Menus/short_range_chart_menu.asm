@@ -15,6 +15,61 @@ copy_str_hl_to_de:          ld      a,(hl)
                             jp      nz,copy_str_hl_to_de
                             ret
 ;----------------------------------------------------------------------------------------------------------------------------------
+SRM_DispDEIXtoIY:       ld (.SRMclcn32z),ix
+                        ld (.SRMclcn32zIX),de
+                        ld ix,.SRMclcn32t+36
+                        ld b,9
+                        ld c,0
+.SRMclcn321:            ld a,'0'
+                        or a
+.SRMclcn322:            ld e,(ix+0)
+                        ld d,(ix+1)
+                        ld hl,(.SRMclcn32z)
+                        sbc hl,de
+                        ld (.SRMclcn32z),hl
+                        ld e,(ix+2)
+                        ld d,(ix+3)
+                        ld hl,(.SRMclcn32zIX)
+                        sbc hl,de
+                        ld (.SRMclcn32zIX),hl
+                        jr c,.SRMclcn325
+                        inc c
+                        inc a
+                        jr .SRMclcn322
+.SRMclcn325:            ld e,(ix+0)
+                        ld d,(ix+1)
+                        ld hl,(.SRMclcn32z)
+                        add hl,de
+                        ld (.SRMclcn32z),hl
+                        ld e,(ix+2)
+                        ld d,(ix+3)
+                        ld hl,(.SRMclcn32zIX)
+                        adc hl,de
+                        ld (.SRMclcn32zIX),hl
+                        ld de,-4
+                        add ix,de
+                        inc c
+                        dec c
+                        jr z,.SRMclcn323
+                        ld (iy+0),a
+                        inc iy
+.SRMclcn323:            djnz .SRMclcn321
+                        ld a,(.SRMclcn32z)
+                        add A,'0'
+                        ld (iy+0),a
+                        ld (iy+2),0
+                        ld      a,(IY+0)
+                        ld      (IY+1),a
+                        ld      a,"."
+                        ld      (IY+0),a
+                        inc     IY
+                        inc     IY
+                        ret
+.SRMclcn32t             dw 1,0,     10,0,     100,0,     1000,0,       10000,0
+                        dw $86a0,1, $4240,$0f, $9680,$98, $e100,$05f5, $ca00,$3b9a
+.SRMclcn32z             ds 2
+.SRMclcn32zIX           ds 2
+;----------------------------------------------------------------------------------------------------------------------------------
 ; draws chart and keeps a local cache of pixel position to chart position
 SRM_galactic_chart:         MMUSelectLayer1                         ; initialise display
                             call  l1_cls                            ; .
@@ -443,7 +498,7 @@ srm_calc_distance:      ld      a,(Galaxy)                                      
                         ld      ix,(Distance)
                         ld      de,0
                         ld      iy,srm_distance_val
-                        call    DispDEIXtoIY                                    ; use DEIX as distance and write to string at location IY
+                        call    SRM_DispDEIXtoIY                                ; use DEIX as distance and write to string at location IY
                         push    iy
                         pop     hl                                              ; hl = iy
                         ld      de,srm_distance_val

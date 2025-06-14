@@ -82,8 +82,14 @@ HLequHLmulDE2sc:        ld      a,d
 AequDmulEdiv256u:   mul     de
                     ld	a,d				; we get only the high byte which is like doing a /256 if we think of a as low
                     ret
-; DELC = HL.E by .D leading Sign (replaces mulHLEbyDSigned)
-DELCequHLEmulDs:    ld      a,d                 ; get sign from d
+; DE.LC = HL.E by .D leading Sign (replaces mulHLEbyDSigned)
+DELCequHLEmulDs:    call    DEHLequHLEmulDs     ; Retained for backwards compatibility until swapped 
+                    ld      c,l                 ; to DEHLequHLEmulDs in all code
+                    ld      l,h
+                    ret
+ 
+; DE.HL = HL.E by .D leading Sign (replaces mulHLEbyDSigned)
+DEHLequHLEmulDs:    ld      a,d                 ; get sign from d
                     xor     h                   ; xor with h to get resultant sign
                     and     SignOnly8Bit        ; .
                     ld      iyh,a               ; iyh = copy of sign
@@ -100,12 +106,11 @@ DELCequHLEmulDs:    ld      a,d                 ; get sign from d
                     ld      d,e
                     ld      e,h
                     ld      h,l
-                    ld      l,d
-                    
-                    call    DEHLequEHLmulAu
+                    ld      l,d                    
+                    call    DEHLequEHLmulAu     
                     ld      a,d
                     or      iyh                 ;
-                    ld      d,a
+                    ld      d,a                 ; d is set , now need to shift about HL into LC (later we will change calls)
                     ret
 .ResultZero:        ZeroA
                     ld      d,a
@@ -113,16 +118,17 @@ DELCequHLEmulDs:    ld      a,d                 ; get sign from d
                     ld      l,a
                     ld      c,a
                     ret
-                    
-; adehl = ehl * a , we will simplify this down to ehl * a (or d?)         
-DEHLequEHLmulAu:    ld      b,0 ; N/A ld      b,d                       ; relocate DE
+
+ 
+; adehl = ehl * a , we will simplify this down to ehl * a (or d?)      
+DEHLequEHLmulAu:    ;ld      b,0 ; N/A ld      b,d                       ; relocate DE
                     ld      c,e                 ; x2
                     ld      e,l                 ; x0
                     ld      d,a                 ; y0
                     mul     de                  ; de = y0*x0
                     ex      af,af               ; save y0 'accumulator
-                    ld      l,e                 ;'p0
-                    ld      a,d                 ;'p1 carry
+                    ld      l,e                 ; l = p0
+                    ld      a,d                 ; a = p1 carry
                     ex      af,af               ; get back y0
                     ld      e,h                 ; x1
                     ld      d,a                 ; y0
@@ -130,16 +136,17 @@ DEHLequEHLmulAu:    ld      b,0 ; N/A ld      b,d                       ; reloca
                     ex      af,af               ; get back carry
                     add     a,e                 ; h = carry + LSW of y0 & x1
                     ld      h,a                 ; .
-                    ld      a,d                 ;'p2 carry
+                    ld      a,d                 ; a = p2 carry
                     ex      af,af               ; get back y0
-                    ld      e,c
-                    ld      d,a
-                    mul     de                  ; y0*x2
+                    ld      e,c                 ; y0*x2
+                    ld      d,a                 ; .
+                    mul     de                  ; .
                     ex      af,af               ; get back p2 carry
                     adc     a,e                 ; and add LWS of y0*x2
-                    ld      e,a                 ; now we have 
-                    adc     a,0                 ; finally get carry and sign into iyh
-                    ld      d,a
+                    ld      e,a                 ; e = p3 so its set
+                    ld      a,d
+                    adc     a,0                 ; and set d to the carry bit if there was one
+                    ld      d,a                 ; d = carry, so the result is DEHL
                     ret
 ; ahl = hl * e simplified 16x8 muliplication
 AHLequHLmulE:       ld      d,h                 ; x1

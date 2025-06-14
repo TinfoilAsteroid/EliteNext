@@ -287,6 +287,7 @@ UpdatePlanetTracking:   call    SaveMMU6                            ; save curre
 ;.. Get distance ...................................................
                         call    UnivDistanceToTarget                ; Determine if ship is in safe zone of planet, 
                         jp      c,.MoveToDockingPhase               ; if close enough to planet move to docking phase
+                        MMUSelectMathsBankedFns
                         call    NormalseUnivTarget                  ; now in the target normalise it to work out direction
 .NegateDirection:       FlipSignMem UBnKTargetXPosSgn                ; negate vector so it points opposite direction
                         FlipSignMem UBnKTargetXPosSgn                ; we have already negated the dot product above
@@ -309,6 +310,7 @@ UpdateSunTracking:      call    SaveMMU6
                         call    VectorUnivtoIY                      ; get Univ Target vector to planet - ship position
                         call    UnivDistanceToTarget                ; Determine if ship is in safe zone of planet, 
                         jp      c,UnivMoveToJump                    ; if close enough to sun then jump (i.e. destrouy object but use flash of light)
+                        MMUSelectMathsBankedFns
                         call    NormalseUnivTarget                  ; now in teh target normalise it to work out direction
 .NegateDirection:       FlipSignMem UBnKTargetXPosSgn                ; negate vector so it points opposite direction
                         FlipSignMem UBnKTargetXPosSgn                ; we have already negated the dot product above

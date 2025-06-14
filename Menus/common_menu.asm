@@ -14,5 +14,4 @@ txt_cash_amount			DB "XXXXXXXXXX",0
 txt_cash_decimal        DB "."
 txt_cash_fraction       DB "X Cr",0
 
-txt_status_colour		equ $FF
-txt_highlight_colour    equ $D0
+

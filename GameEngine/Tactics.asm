@@ -42,6 +42,7 @@ UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
                   ;     ld      hl,TidyCounter
                   ;    dec     (hl)
                   ; IFDEF USE_NORMALISE_IX
+                  ;     MMUSelectMathsBankedFns
                   ;    call     z,TidyVectorsIX
                   ; ELSE
                   ;    call     z,TidyUbnK  ;TODO SEE IF THIS IS AN ISSUE"

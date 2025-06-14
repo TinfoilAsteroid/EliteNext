@@ -1,19 +1,12 @@
-StatusLaserName1    DB  "Pulse",0
-StatusLaserName2    DB  "Beam",0
-StatusLaserName3    DB  "Military",0
-StatusLaserName4    DB  "Mining",0
-StatusLaserName5    DB  "Custom",0
+;StatusLaserName1    DB  "Pulse",0
+;StatusLaserName2    DB  "Beam",0
+;StatusLaserName3    DB  "Military",0
+;StatusLaserName4    DB  "Mining",0
+;StatusLaserName5    DB  "Custom",0
+;
+;StatusLaserNameIdx  DW  StatusLaserName1,StatusLaserName2,StatusLaserName3,StatusLaserName4,StatusLaserName5
+;StatusLaserNameIdxLen EQU $ - StatusLaserNameIdx
 
-StatusLaserNameIdx  DW  StatusLaserName1,StatusLaserName2,StatusLaserName3,StatusLaserName4,StatusLaserName5
-StatusLaserNameIdxLen EQU $ - StatusLaserNameIdx
-
-ConditionName1      DB "Docked",0
-ConditionName2      DB "Green",0
-ConditionName3      DB "Yellow",0
-ConditionName4      DB "Red",0
-
-ConditionNameIdx    DW ConditionName1,ConditionName2,ConditionName3,ConditionName4
-ConditionNameIdxLen EQU $ - ConditionNameIdx
 
 StatusDiagrams      DB "ABOUSEITILETSTONLONUTHNOALLEXEGEZACEBISOUSESARMAINDIREA?ERATENBERALAVETIEDORQUANTEISRION",0
 

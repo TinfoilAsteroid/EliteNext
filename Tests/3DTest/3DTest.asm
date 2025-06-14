@@ -120,6 +120,7 @@ TestVec6:               DW  $3450, $2450, $3E00, $0, $0, $0, $0, $0
 TestTidy:               MMUSelectMathsBankedFns
                         MMUSelectUniverseN 0
                         ld          hl,TestMatrix1: ld de, UBnkrotmatSidevX : ld bc, 2 * 9 : ldir
+                        MMUSelectMathsBankedFns
                         call        TidyVectorsIX
                         break
                         ld          hl,TestMatrix2: ld de, UBnkrotmatSidevX : ld bc, 2 * 9 : ldir

@@ -25,18 +25,19 @@ fixedS23_8_divs:    ld      a,b               ; prep by saving off sign bit befo
                     ShiftBHLRight1             ;
                     ShiftCDERight1             ;
                     jp      .shiftRight24Loop  ;
+.ShiftRight16:
 .ShiftRight16Loop:  ld      a,h                ; scale now just HL and DE
                     or      d                  ; .
                     and     $80                ; .
                     jp      z,.ShiftComplete   ; .
                     ShiftHLRight1              ; .
                     ShiftDERight1              ; .
-                    jp       ShiftRight16Loop  ; . 
+                    jp      .ShiftRight16Loop  ; . 
 .ShiftComplete:     set     0,c                ; fast way to ensure BC is at least not zero, in this case 0.0039 which means we can never have divide by 0
 .checkZeroDivide:   ld      a,h                ; use the result is zero from below to save some code space
                     or      a                  ; .
                     jp      z,BC_Div_DE_88.resultIsZero ; as this already zeros A we can use it
-                    call    BC_Div_DE_88NegateDE ; now we can just fall into a fixed S7.8 but after all the inital checks have been done
+                    call    BC_Div_DE_88.NegateDE ; now we can just fall into a fixed S7.8 but after all the inital checks have been done
                     ld      a,h                ; now shift result from HL to AHL
                     and     $80                ; so A only holds sign bit
                     ld      h,l                ; 
@@ -77,10 +78,10 @@ BC_Div_DE_88:
                     jr c,.divideOverflow
 .prepRemainder:     ld      l,b                 ; h is already 0 from overflow Check so now hl = 0b
                     ld      a,c                 ; and a = c
-                    call div_S88_sub
+                    call    div_S88_sub
                     ld      c,a
                     ld      a,b      ;A is now 0
-                    call div_S88_sub
+                    call    div_S88_sub
 .CheckRounding:     add     hl,hl; if 2HL+DE>=0, increment result to round.
                     add     hl,de
                     ld      h,c

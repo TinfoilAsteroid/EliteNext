@@ -68,7 +68,8 @@ UpdateUniverseObjects:  xor     a
         ENDIF
                             DISPLAY "TODO: Make all 4 of these 1 call"
 .ProperUpdate:          call    TidyRotation                                        ; determine if its tidy time within the universe model
-                        call    ApplyMyRollAndPitch                                 ; Apply our ship movement to universe object
+                        call    MyRollAndPitch24Bit;ApplyMyRollAndPitch             ; Apply our ship movement to universe object
+                        call    MySpeed24Bit
                         call    ApplyShipRollAndPitch                               ; Apply ships own movement to universe object
                         call    ApplyShipSpeed                                      ; Apply ships speed to universe object
                         call    UpdateSpeedAndPitch                                 ; update based on rates of speed roll and pitch accelleration/decelleration
@@ -90,6 +91,7 @@ UpdateUniverseObjects:  xor     a
                         ; So it is a candiate to test docking. Now we do the position and angle checks
 ;.. else we are just colliding and have to handle that
 .CollisionCheck:        ld      a,iyl
+                        jp      .PostCollisionTest ; DEBUG SKIP TEST
                         JumpIfAEqNusng ShipTypeStation, .HaveCollided               ; stations dont check bit 6
                         JumpIfAEqNusng ShipTypeMissile, .PostCollisionTest          ; Missile collisions are done in the tactics code
 .VeryCloseCheck:        VeryCloseCheck                                              ; bit 6 is still too far
@@ -108,7 +110,7 @@ UpdateUniverseObjects:  xor     a
 .NoRoom:                ClearSlotMem    SelectedUniverseSlot                        ; we only need to clear slot list as univ ship is now junk
                         jp      .PostCollisionTest
 ; ... Generic collision
-.HaveCollided:          break
+.HaveCollided:          ;break
                         JumpIfMemLTNusng DELTA, 5, .SmallBump
 .BigBump:               ld      a,(UBnKEnergy)                                      ; get energy level which gives us an approximate to size and health
                         SetCarryFlag    
@@ -176,6 +178,7 @@ UpdateUniverseObjects:  xor     a
 ;.CheckForTidy:          ld      a,(TidyCounter)
 ;                        ld      hl,SelectedUniverseSlot
 ;                        cp      (hl)
+;                        MMUSelectMathsBankedFns
 ;                        call    z,TidyVectorsIX
                         call    UpdateShip                                      ; we do it this way top avoid double calling
                         jp      .DoneAICheck                                    ; ai if the ai slot to process = missile type
@@ -269,6 +272,25 @@ DrawForwardShips:       xor     a
                         ret   
                         
                         
+;----------------------------------------------------------------------------------------------------------------------------------                    
+; Set initial ship position as X,Y,Z 000,000,03B4
+SetInitialShipPosition: ld      hl,$0000
+                        ld      (UBnKxlo),hl
+                        ld      hl,$0000
+                        ld      (UBnKylo),hl
+                        ld      hl,$03B4
+                        ld      (UBnKzlo),hl
+                        xor     a
+                        ld      (UBnKxsgn),a
+                        ld      (UBnKysgn),a
+                        ld      (UBnKzsgn),a
+            DISPLAY "TODO:  call    Reset TODO"
+                        call	InitialiseOrientation            ;#00;
+                        ld      a,1
+                        ld      (DELTA),a
+                        ld      hl,4
+                        ld      (DELTA4),hl
+                        ret    
 ;..................................................................................................................................
                         
 TestForNextShip:        MacroIsKeyPressed c_Pressed_Quit
@@ -296,6 +318,6 @@ TestForNextShip:        MacroIsKeyPressed c_Pressed_Quit
                         ld      a,b
                         call    CopyShipToUniverse
                         call    SetInitialShipPosition
-                        call    DEBUGSETNODES                        
+                        ;call    DEBUGSETNODES                        
                         ret
                         

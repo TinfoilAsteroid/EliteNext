@@ -97,6 +97,7 @@
 ;    DEFINE   SKIPATTRACT
     ; DEFINE DEBUGMISSILETEST 1
     ; DEFINE DEBUGLINEDRAW 1
+    ; DEFINE MESSAGETRACING 1
      DEFINE  LASER_V2    1
  CSPECTMAP eliteN.map
  OPT --zxnext=cspect --syntax=a --reversepop
@@ -250,9 +251,12 @@ EliteNextStartup:       di
                         SetBorder   $FF
 .InitialiseL2:          MMUSelectLayer2
                         call 		l2_initialise
-.InitialisingMessage:   MessageAt   0,0,InitialiseMessage
+.InitialisingMessage:
+                    IFDEF MESSAGETRACING
+                        MessageAt   0,0,InitialiseMessage
                         SetBorder   $01
                         MessageAt   0,8,LoadingSpritesMessage
+                    ENDIF
                         ZeroA
                         ld          (LoadCounter),a
 .StreamSpriteData:      MMUSelectSpriteBank
@@ -280,8 +284,11 @@ DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks
                         MMUSelectLayer2
                         SetBorder   $07
 ;
-InitialiseGalaxies:     MessageAt   0,24,InitialisingGalaxies
+InitialiseGalaxies: 
+                    IFDEF MESSAGETRACING
+                        MessageAt   0,24,InitialisingGalaxies
                         break
+                    ENDIF
                         call		ResetUniv                       ; Reset ship data
                         call        ResetGalaxy                     ; Reset each galaxy copying in code
                         call        SeedAllGalaxies
@@ -530,9 +537,11 @@ InitialiseMainLoop:     call    InitMainLoop
 ;..Update Universe Objects.........................................................................................................
                         INCLUDE "./GameEngine/UpdateUniverseObjects.asm"
 ;----------------------------------------------------------------------------------------------------------------------------------
+                    IFDEF MESSAGETRACING
 InitialiseMessage       DB "Intialising",0
 LoadingSpritesMessage   DB "LoadingSprites",0
 InitialisingGalaxies    DB "IntiailisingGalaxies",0
+                    ENDIF
 LoadCounter             DB 0
 SpriteProgress          DB "*",0
 ;----------------------------------------------------------------------------------------------------------------------------------
@@ -597,12 +606,13 @@ GetStationVectorToWork: ld      hl,UBnKxlo
                         srl     b
                         or      b
                         ld      (XX15VecZ),a         ; note this is now a signed highbyte                        
+                        MMUSelectMathsBankedFns
                         call    normaliseXX1596S7 
                         ret                          ; will return with a holding Vector Z
 
 ;TidyCounter             DB  0
 
-            INCLUDE "./debugMatrices.asm"
+            ;INCLUDE "./debugMatrices.asm"
 
 
 ; Need this table to handle differnet events 
@@ -631,24 +641,7 @@ InitialiseFrontView:    ld      a,(ScreenKeyFront+1)
                         INCLUDE "./GameEngine/SetScreenA.asm"
                         INCLUDE "./GameEngine/ViewKeyTest.asm"
 ;----------------------------------------------------------------------------------------------------------------------------------                    
-; Set initial ship position as X,Y,Z 000,000,03B4
-SetInitialShipPosition: ld      hl,$0000
-                        ld      (UBnKxlo),hl
-                        ld      hl,$0000
-                        ld      (UBnKylo),hl
-                        ld      hl,$03B4
-                        ld      (UBnKzlo),hl
-                        xor     a
-                        ld      (UBnKxsgn),a
-                        ld      (UBnKysgn),a
-                        ld      (UBnKzsgn),a
-            DISPLAY "TODO:  call    Reset TODO"
-                        call	InitialiseOrientation            ;#00;
-                        ld      a,1
-                        ld      (DELTA),a
-                        ld      hl,4
-                        ld      (DELTA4),hl
-                        ret    
+; Set initial ship position as X,Y,Z 000,000,03B4 - Moved to UpodateUniverseObjects.asm
 
 ; Checks to see if current ship swapped in is in our sights
 ; we don;t need to deal with planets or sun as they have their own memory bank
@@ -741,6 +734,7 @@ XX12PVarSign3		DB 0
     ;INCLUDE "./Maths/asm_multiply.asm"
     DISPLAY ">Loading S78 Maths routines"
     INCLUDE "./MathsFPS78/asm_multiply_S78.asm"
+    INCLUDE "./Maths24/asm_addition24.asm"
     INCLUDE "./Maths/asm_square.asm"
     INCLUDE "./Maths/asm_sine.asm"
     INCLUDE "./Maths/asm_sqrt.asm"
@@ -751,8 +745,6 @@ XX12PVarSign3		DB 0
     INCLUDE "./Maths/asm_divide.asm"
     INCLUDE "./Maths/asm_unitvector.asm"
     INCLUDE "./Maths/compare16.asm"
-    INCLUDE "./Maths/normalise96.asm"
-    INCLUDE "./Maths/binary_to_decimal.asm"
     INCLUDE "./Maths/asm_AequAdivQmul96.asm"
     INCLUDE "./Maths/Utilities/AequAmulQdiv256-FMLTU.asm"
     ;INCLUDE "./Maths/Utilities/PRequSpeedDivZZdiv8-DV42-DV42IYH.asm"
@@ -766,14 +758,14 @@ XX12PVarSign3		DB 0
 
     include "./Universe/Ships/CopyRotMattoXX15.asm"
     include "./Universe/Ships/CopyXX15toRotMat.asm"
-    INCLUDE "./Maths/asm_tidy.asm"
+
     ;INCLUDE "./Maths/Utilities/LL28AequAmul256DivD.asm"    
     ;INCLUDE "./Maths/Utilities/XAequMinusXAPplusRSdiv96-TIS1.asm"
 
     INCLUDE "./GameEngine/Tactics.asm"
     INCLUDE "./Hardware/drive_access.asm"
 
-    INCLUDE "./Menus/common_menu.asm"
+    ;INCLUDE "./Menus/common_menu.asm"
 MainNonBankedCodeEnd:
     DISPLAY "Main Non Banked Code Ends at ",$
 ;-- END OF MAIN NON BANKED CODE ---------------------------------------------------------
@@ -1308,8 +1300,7 @@ GALAXYDATABlock7:   DB $FF
                     INCLUDE "./Hardware/keyboard.asm"
                     DISPLAY "Keyboard ",BankKeyboard," - Bytes free ",/D, $2000 - ($-KeyboardAddr), " - BankKeyboard"
                     ASSERT $-KeyboardAddr <8912, Bank code leaks over 8K boundary
-; Bank 101  -----------------------------------------------------------------------------------------------------------------------
-                    SLOT    SoundAddr
+; Bank 101  -----------------------------------------------------------
                     PAGE    BankSound
                     ORG SoundAddr, BankSound             
                     INCLUDE "./Hardware/sound.asm"
@@ -1319,7 +1310,13 @@ GALAXYDATABlock7:   DB $FF
                     SLOT    MathsBankedFnsAddr
                     PAGE    BankMathsBankedFns
                     ORG     MathsBankedFnsAddr,BankMathsBankedFns
+                    DISPLAY "*** ./Maths/MathsBankedFns.asm  - BankMathsBankedFns"
                     INCLUDE "./Maths/MathsBankedFns.asm"
+                    DISPLAY "*** ./Maths/asm_tidy.asm - BankMathsBankedFns"
+                    INCLUDE "./Maths/asm_tidy.asm"
+                    DISPLAY "*** ./Maths/normalise96.asm - BankMathsBankedFns"
+                    INCLUDE "./Maths/normalise96.asm"
+                    ;INCLUDE "./Maths/binary_to_decimal.asm"
                     DISPLAY "Bank ",BankMathsBankedFns," - Bytes free ",/D, $2000 - ($-MathsBankedFnsAddr), " - BankMathsBankedFns"
                     ASSERT $-MathsBankedFnsAddr <8912, Bank code leaks over 8K boundary
 ; Bank 103  -----------------------------------------------------------------------------------------------------------------------

@@ -30,7 +30,7 @@ Div24by24:              ld b,a
                         push ix
                         pop de
                         ret
-                        
+    IFDEF Div24by24ASigned_USED
 Div24by24ASigned:       ld      iyh,a
                         and     SignMask8Bit
                         call    Div24by24
@@ -41,7 +41,9 @@ Div24by24ASigned:       ld      iyh,a
                         ld      c,a
                         pop     af
                         ret
-                        
+    ENDIF              
+    IFDEF Div24by24LeadSign_USED
+
                         ; CDE = AHL/CDE, AHL = remainder
 Div24by24LeadSign:      ld      iyh,a           ; Preserve signed in IYL
                         xor     c               ; flip sign if negative
@@ -60,7 +62,7 @@ Div24by24LeadSign:      ld      iyh,a           ; Preserve signed in IYL
                         ld      c,a             ; 
                         ld      a,iyh           ; sort sign of a
                         ret
-                        
+    ENDIF          
 ; --------------------------------------------------------------
 ;divdide by 16 using undocumented instrunctions
 ;Input: BC = Dividend, DE = Divisor, HL = 0

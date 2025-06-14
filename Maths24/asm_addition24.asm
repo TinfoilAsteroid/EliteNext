@@ -26,17 +26,20 @@ AHLequBHLplusCDE:       ld      a,b                          ; if b sign and c s
                         ret
 .OppositeSigns:         bit     7,b                         ; if BHL was negative then
                         jp      nz,.CDEMinusBHL             ; its CDE - BHL
-.BHLMinusCDE:           ex      hl,de                       ; it must be BHL - CDE  so we swap registers and just treat it as CDE-BHL
+.BHLMinusCDE:           res     7,c
+                        ex      hl,de                       ; it must be BHL - CDE  so we swap registers and just treat it as CDE-BHL
                         ld      a,b                         ; and we have to use a when swapping b and c
                         ld      b,c                         ; .
                         ld      c,a                         ; .
-.CDEMinusBHL:           ClearCarryFlag                      ; now its just common CDE-BHL
+.CDEMinusBHL:           res     7,b
+                        ClearCarryFlag                      ; now its just common CDE-BHL
                         ld      a,c                         ; a= c - b
                         sbc     b
                         ex      hl,de                       ; hl = DE-hl by swapping them round
                         sbc     hl,de                       ; now AHL is result
                         ret     nc                          ; if there was no carry then we are good
-.CDEFlipSign:           or      %10000000                   ; as CDE-BHL became negative we flip the lead bit of A
+.CDEFlipSign:           NegAHL                              ; as CDE-BHL became negative we make result lead sign negativce
+                        or      %10000000                   ; flip the lead bit of A
                         ret
 SwapViaA:               MACRO   r1, r2
                         ld      a,r1
@@ -50,13 +53,28 @@ AHLequHLAddCarryAViaDE: MACRO
                         add     hl,de                       ; .
                         adc     a,a                         ; .
                         ENDM
-
+; variants on AHLequBHLplusCDE
+; AHL = BHL+DEC Lead Sign bit
+AHLequBHLplusDEC:       ld      a,d                         ; d = e (saving d)
+                        ld      d,e                         ; .
+                        ld      e,c                         ; e = c
+                        ld      c,a                         ; c = d (orginal value)
+                        jp      AHLequBHLplusCDE
+                        
 ; AHL = BHL-CDE Lead Sign bit
-; here we just fip C sign and call add
 AHLequBHLminusCDE:      ld      a,c
                         xor     %10000000
                         ld      c,a
                         jp      AHLequBHLplusCDE
+ 
+; variant on above for simplifying post multiply           ; d = e (saving d)
+AHLequBHLminusDEC:      ld      a,d                        ; .
+                        or      %10000000                  ; but we also flip the sign on the saved D
+                        ld      d,e                        ; .
+                        ld      e,c                        ; e = c
+                        ld      c,a                        ; c = d (orginal value)
+                        jp      AHLequBHLplusCDE
+                        
 ; If it will fit
 ;  HLBC = BHL * CDE  Lead Sign bit, carry Clear
 ; else
