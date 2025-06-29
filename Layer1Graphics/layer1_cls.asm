@@ -38,9 +38,20 @@ l1_cls_to_a:            ld		hl,	$4000
                         call	memfill_dma
                         ret
 
+l1_attr_line_d_to_a:    ld      hl, $5800
+                        ld      e,32
+                        mul     de
+                        add     hl,de
+                        ld      b,32
+.fillLoop:              ld      (hl),a
+                        inc     hl
+                        djnz    .fillLoop
+                        ret
+                        
+
 l1_attr_cls_2DlinesA:   ld		hl,	$5800
                         ld      e,32
-                        mul
+                        mul     de
                         add     hl,de
                         ld		de, 32 * 2
                         call	memfill_dma

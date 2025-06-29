@@ -1,0 +1,1986 @@
+# file opened: d24test.asm
+  1   0000                              DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
+  2   0000                              DISPLAY "d24test test"
+  3   0000                              DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
+  4   0000
+  5   0000
+  6   0000                  DEFINE DEBUGMODE 1
+  7   0000                  DEVICE ZXSPECTRUMNEXT
+  8   0000                  SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
+  9   0000                  ;DEFINE  TESTING_MATHS_DIVIDE 1
+ 10   0000                  DEFINE  TESTING_ROLL_PITCH 1
+ 11   0000               CSPECTMAP d24test.map
+ 12   0000               OPT --zxnext=cspect --syntax=a --reversepop
+ 13   0000                              DEFINE  SOUNDPACE 3
+ 14   0000              ;                DEFINE  ENABLE_SOUND 1
+ 15   0000                             DEFINE     MAIN_INTERRUPTENABLE 1
+ 16   0000              ;               DEFINE INTERRUPT_BLOCKER 1
+ 17   0000              DEBUGSEGSIZE   equ 1
+ 18   0000              DEBUGLOGSUMMARY equ 1
+ 19   0000              ;DEBUGLOGDETAIL equ 1
+ 20   0000
+ 21   0000              ;----------------------------------------------------------------------------------------------------------------------------------
+ 22   0000              ; Game Defines
+ 23   0000              ScreenLocal      EQU 0
+ 24   0000              ScreenGalactic   EQU ScreenLocal + 1
+ 25   0000              ScreenMarket     EQU ScreenGalactic + 1
+ 26   0000              ScreenMarketDsp  EQU ScreenMarket + 1
+ 27   0000              ScreenStatus     EQU ScreenMarketDsp + 1
+ 28   0000              ScreenInvent     EQU ScreenStatus + 1
+ 29   0000              ScreenPlanet     EQU ScreenInvent + 1
+ 30   0000              ScreenEquip      EQU ScreenPlanet + 1
+ 31   0000              ScreenLaunch     EQU ScreenEquip + 1
+ 32   0000              ScreenFront      EQU ScreenLaunch + 1
+ 33   0000              ScreenAft        EQU ScreenFront+1
+ 34   0000              ScreenLeft       EQU ScreenAft+1
+ 35   0000              ScreenRight      EQU ScreenLeft+1
+ 36   0000              ScreenDocking    EQU ScreenRight+1
+ 37   0000              ScreenHyperspace EQU ScreenDocking+1
+ 38   0000              ;----------------------------------------------------------------------------------------------------------------------------------
+ 39   0000              ; Colour Defines
+ 40   0000              SignMask8Bit		equ %01111111
+ 41   0000              SignMask16Bit		equ %0111111111111111
+ 42   0000              SignOnly8Bit		equ $80
+ 43   0000              SignOnly16Bit		equ $8000
+ 44   0000
+ 45   0000              Bit7Only            equ %10000000
+ 46   0000              Bit6Only            equ %01000000
+ 47   0000              Bit5Only            equ %00100000
+ 48   0000              Bit4Only            equ %00010000
+ 49   0000              Bit3Only            equ %00001000
+ 50   0000              Bit2Only            equ %00000100
+ 51   0000              Bit1Only            equ %00000010
+ 52   0000              Bit0Only            equ %00000001
+ 53   0000              Bit7Clear           equ %01111111
+ 54   0000              Bit6Clear           equ %10111111
+ 55   0000              Bit5Clear           equ %11011111
+ 56   0000              Bit4Clear           equ %11101111
+ 57   0000              Bit3Clear           equ %11110111
+ 58   0000              Bit2Clear           equ %11111011
+ 59   0000              Bit1Clear           equ %11111101
+ 60   0000              Bit0Clear           equ %11111110
+ 61   0000              ConstPi				equ $80
+ 62   0000              ConstNorm           equ 197
+ 63   0000
+ 64   0000
+ 65   0000
+ 66   0000                                      INCLUDE "../../Macros/jumpMacros.asm"
+# file opened: jumpMacros.asm
+  1+  0000              JumpIfHLNegative:       MACRO target
+  2+  0000 ~                                    bit     7,h
+  3+  0000 ~                                    jp      nz,target
+  4+  0000                                      ENDM
+  5+  0000
+  6+  0000              JumpIfPositive:	        MACRO target
+  7+  0000 ~                                    jp		p, target
+  8+  0000                                      ENDM
+  9+  0000
+ 10+  0000              JumpIfNegative:	        MACRO target
+ 11+  0000 ~                                    jp		m, target
+ 12+  0000                                      ENDM
+ 13+  0000
+ 14+  0000
+ 15+  0000              JumpIfUnderflow:	    MACRO target
+ 16+  0000 ~                                    jp		po, target
+ 17+  0000                                      ENDM
+ 18+  0000
+ 19+  0000              JumpIfOverflow:	        MACRO target
+ 20+  0000 ~                                    jp		po, target
+ 21+  0000                                      ENDM
+ 22+  0000
+ 23+  0000
+ 24+  0000              JumpIfNotZero:	        MACRO target
+ 25+  0000 ~                                    jp	nz,target
+ 26+  0000                                      ENDM
+ 27+  0000
+ 28+  0000              JumpIfZero:	            MACRO target
+ 29+  0000 ~                                    jp	z,target
+ 30+  0000                                      ENDM
+ 31+  0000
+ 32+  0000              ;.. Bit routines
+ 33+  0000              JumpOnLeadSignSet:      MACRO   reg, target
+ 34+  0000 ~                                    ld      a,reg
+ 35+  0000 ~                                    and     SignOnly8Bit
+ 36+  0000 ~                                    jp      nz,target
+ 37+  0000                                      ENDM
+ 38+  0000
+ 39+  0000              JumpOnLeadSignClear:    MACRO   reg, target
+ 40+  0000 ~                                    ld      a,reg
+ 41+  0000 ~                                    and     SignOnly8Bit
+ 42+  0000 ~                                    jp      z,target
+ 43+  0000                                      ENDM
+ 44+  0000
+ 45+  0000              JumpOnLeadSignSetA:     MACRO   target
+ 46+  0000 ~                                    and     SignOnly8Bit
+ 47+  0000 ~                                    jp      nz,target
+ 48+  0000                                      ENDM
+ 49+  0000
+ 50+  0000              JumpOnLeadSignClearA:   MACRO   target
+ 51+  0000 ~                                    and     SignOnly8Bit
+ 52+  0000 ~                                    jp      z,target
+ 53+  0000                                      ENDM
+ 54+  0000
+ 55+  0000              JumpOnMemBitSet:        MACRO mem, bitnbr, target
+ 56+  0000 ~                                    ld      a,(mem)
+ 57+  0000 ~                                    bit 	bitnbr,a
+ 58+  0000 ~                                    jp      nz,target
+ 59+  0000                                      ENDM
+ 60+  0000
+ 61+  0000              JumpOnMemBitClear:      MACRO mem, bitnbr, target
+ 62+  0000 ~                                    ld      a,(mem)
+ 63+  0000 ~                                    bit 	bitnbr,a
+ 64+  0000 ~                                    jp      z,target
+ 65+  0000                                      ENDM
+ 66+  0000
+ 67+  0000
+ 68+  0000              JumpOnABitSet:          MACRO   bitnbr, target
+ 69+  0000 ~                                    bit 	bitnbr, a
+ 70+  0000 ~                                    jp      nz,target
+ 71+  0000                                      ENDM
+ 72+  0000
+ 73+  0000              JumpOnABitClear:        MACRO   bitnbr, target
+ 74+  0000 ~                                    bit 	bitnbr, a
+ 75+  0000 ~                                    jp      z,target
+ 76+  0000                                      ENDM
+ 77+  0000
+ 78+  0000              JumpOnABit5Set:         MACRO   target
+ 79+  0000 ~                                    and     Bit5Only
+ 80+  0000 ~                                    jp      nz,target
+ 81+  0000                                      ENDM
+ 82+  0000
+ 83+  0000              JumpOnABit5Clear:       MACRO   target
+ 84+  0000 ~                                    and     Bit5Only
+ 85+  0000 ~                                    jp      z,target
+ 86+  0000                                      ENDM
+ 87+  0000
+ 88+  0000              JumpOnBitMaskSet:       MACRO   bitmask, target
+ 89+  0000 ~                                    and     bitmask
+ 90+  0000 ~                                    jp      nz,target
+ 91+  0000                                      ENDM
+ 92+  0000
+ 93+  0000              JumpOnBitMaskClear:     MACRO   bitmask, target
+ 94+  0000 ~                                    and     bitmask
+ 95+  0000 ~                                    jp      z,target
+ 96+  0000                                      ENDM
+ 97+  0000
+ 98+  0000              JumpOnMemBitMaskSet:    MACRO   mem, bitmask, target
+ 99+  0000 ~                                    ld      a,(mem)
+100+  0000 ~                                    and     bitmask
+101+  0000 ~                                    jp      nz,target
+102+  0000                                      ENDM
+103+  0000
+104+  0000              JumpOnMemBitMaskClear:  MACRO   mem, bitmask, target
+105+  0000 ~                                    ld      a,(mem)
+106+  0000 ~                                    and     bitmask
+107+  0000 ~                                    jp      z,target
+108+  0000                                      ENDM
+109+  0000
+110+  0000              JumpOnBitSet:           MACRO  reg, bitnbr, target
+111+  0000 ~                                    bit 	bitnbr,reg
+112+  0000 ~                                    jp      nz,target
+113+  0000                                      ENDM
+114+  0000
+115+  0000              JumpOnBitClear:         MACRO  reg, bitnbr, target
+116+  0000 ~                                    bit 	bitnbr,reg
+117+  0000 ~                                    jp      z,target
+118+  0000                                      ENDM
+119+  0000
+120+  0000              ; Comparison Routines
+121+  0000              JumpIfAGTEusng:         MACRO
+122+  0000 ~                                    jp		nc,target
+123+  0000                                      ENDM
+124+  0000
+125+  0000              JumpIfAGTENusng:        MACRO reg,target
+126+  0000 ~                                    cp     reg
+127+  0000 ~                                    jp		nc,target
+128+  0000                                      ENDM
+129+  0000
+130+  0000              JumpIfAGTEMemusng:      MACRO mem,target
+131+  0000 ~                                    ld      hl,mem
+132+  0000 ~                                    cp      (hl)
+133+  0000 ~                                    jp		nc,target
+134+  0000                                      ENDM
+135+  0000              JumpIfMemGTENusng:      MACRO mem, value, target
+136+  0000 ~                                    ld     a,(mem)
+137+  0000 ~                                    cp     value
+138+  0000 ~                                    jp	  nc,target
+139+  0000                                      ENDM
+140+  0000
+141+  0000              JumpIfMemGTEMemusng:    MACRO mem, address, target
+142+  0000 ~                                    ld   a,(mem)
+143+  0000 ~                                    ld   hl,address
+144+  0000 ~                                    cp   (hl)
+145+  0000 ~                                    jp	  nc,target
+146+  0000                                      ENDM
+147+  0000
+148+  0000              JumpIfMemEqMemusng:     MACRO mem, address, target
+149+  0000 ~                                    ld   a,(mem)
+150+  0000 ~                                    ld   hl,address
+151+  0000 ~                                    cp   (hl)
+152+  0000 ~                                    jp	  z,target
+153+  0000                                      ENDM
+154+  0000
+155+  0000              JumpIfMemNeMemusng:     MACRO mem, address, target
+156+  0000 ~                                    ld   a,(mem)
+157+  0000 ~                                    ld   hl,address
+158+  0000 ~                                    cp   (hl)
+159+  0000 ~                                    jp	  nz,target
+160+  0000                                      ENDM
+161+  0000
+162+  0000              JumpIfMemTrue:          MACRO mem, target
+163+  0000 ~                                    ld      a,(mem)
+164+  0000 ~                                    and     a
+165+  0000 ~                                    jp      z, target
+166+  0000                                      ENDM
+167+  0000
+168+  0000              JumpIfMemFalse:         MACRO mem, target
+169+  0000 ~                                    ld      a,(mem)
+170+  0000 ~                                    and     a
+171+  0000 ~                                    jp      nz, target
+172+  0000                                      ENDM
+173+  0000
+174+  0000              JumpIfATrue:            MACRO target
+175+  0000 ~                                    and     a
+176+  0000 ~                                    jp      z, target
+177+  0000                                      ENDM
+178+  0000
+179+  0000              JumpIfAFalse:           MACRO target
+180+  0000 ~                                    and     a
+181+  0000 ~                                    jp      nz, target
+182+  0000                                      ENDM
+183+  0000
+184+  0000              JumpIfANotFalse:        MACRO target
+185+  0000 ~                                    cp      $FF
+186+  0000 ~                                    jp      nz, target
+187+  0000                                      ENDM
+188+  0000
+189+  0000              ;-- Less than Macros -------------------------------------------
+190+  0000              JumpIfALTMemHLusng:     MACRO target
+191+  0000 ~                                    cp    (hl)
+192+  0000 ~                                    jp	  c,target
+193+  0000                                      ENDM
+194+  0000
+195+  0000              JumpIfRegLTE:           MACRO   reg, value, target
+196+  0000 ~                                    ld      a,reg
+197+  0000 ~                                    cp      value
+198+  0000 ~                                    jp	    z,target
+199+  0000 ~                                    jp		c, target
+200+  0000                                      ENDM
+201+  0000
+202+  0000              JumpIfALTMemusng:       MACRO mem,target
+203+  0000 ~                                    ld      hl,mem
+204+  0000 ~                                    cp      (hl)
+205+  0000 ~                                    jp		c,target
+206+  0000                                      ENDM
+207+  0000
+208+  0000
+209+  0000              JumpIfALTusng:          MACRO target
+210+  0000 ~                                    jp		c,target
+211+  0000                                      ENDM
+212+  0000
+213+  0000              JumpIfALTNusng:         MACRO value, target
+214+  0000 ~                                    cp      value
+215+  0000 ~                                    jp		c, target
+216+  0000                                      ENDM
+217+  0000
+218+  0000              JumpIfALTNsigned:       MACRO   value, target
+219+  0000 ~                                    cp      value
+220+  0000 ~                                    jp      m,.SignSet
+221+  0000 ~            .SignClear:             jp      pe,target       ; Sign (0), P/V (1)
+222+  0000 ~                                    jp      .CheckComplete  ; Sign (1), P/V (0)
+223+  0000 ~            .SignSet:               jp      po,target
+224+  0000 ~            .CheckComplete:
+225+  0000                                      ENDM
+226+  0000
+227+  0000              JumpIfMemLTNusng:       MACRO mem, value, target
+228+  0000 ~                                    ld      a,(mem)
+229+  0000 ~                                    cp      value
+230+  0000 ~                                    jp	  c,target
+231+  0000                                      ENDM
+232+  0000
+233+  0000              JumpIfMemLTMemusng:     MACRO mem, value, target
+234+  0000 ~                                    ld    a,(mem)
+235+  0000 ~                                    ld    hl,value
+236+  0000 ~                                    cp    (hl)
+237+  0000 ~                                    jp	  c,target
+238+  0000                                      ENDM
+239+  0000              ;-- ------------------------------------------------------------
+240+  0000              JumpIfAGTENsigned       MACRO   value, target
+241+  0000 ~                                    cp      value
+242+  0000 ~                                    jp      m,.SignSet
+243+  0000 ~            .SignClear:             jp      po,target       ; Sign (0), P/V (0)
+244+  0000 ~                                    jp      .CheckComplete  ; Sign (1), P/V (1)
+245+  0000 ~            .SignSet:               jp      pe,target
+246+  0000 ~            .CheckComplete:
+247+  0000                                      ENDM
+248+  0000
+249+  0000              JumpIfMemEqNusng:       MACRO mem,value,target
+250+  0000 ~                                    ld  a,(mem)
+251+  0000 ~                                    cp  value
+252+  0000 ~                                    jp  z,target
+253+  0000                                      ENDM
+254+  0000
+255+  0000              JumpIfMemNeNusng:       MACRO mem,value,target
+256+  0000 ~                                    ld  a,(mem)
+257+  0000 ~                                    cp  value
+258+  0000 ~                                    jp  nz,target
+259+  0000                                      ENDM
+260+  0000
+261+  0000              JumpIfMemZero:          MACRO mem,target
+262+  0000 ~                                    ld  a,(mem)
+263+  0000 ~                                    and a
+264+  0000 ~                                    jp  z,target
+265+  0000                                      ENDM
+266+  0000
+267+  0000              JumpIfMemNotZero:       MACRO mem,target
+268+  0000 ~                                    ld  a,(mem)
+269+  0000 ~                                    and a
+270+  0000 ~                                    jp  nz,target
+271+  0000                                      ENDM
+272+  0000
+273+  0000              JumpIfANENusng:         MACRO value, target
+274+  0000 ~                                    cp     value
+275+  0000 ~                                    jp      nz,target
+276+  0000                                      ENDM
+277+  0000
+278+  0000              JumpIfANEquNusng:       MACRO value, target
+279+  0000 ~                                    cp     value
+280+  0000 ~                                    jp     z,target
+281+  0000                                      ENDM
+282+  0000
+283+  0000              JumpIfANEMemusng:       MACRO  value, target
+284+  0000 ~                                    ld    hl,value
+285+  0000 ~                                    cp    (hl)
+286+  0000 ~                                    jp      nz,target
+287+  0000                                      ENDM
+288+  0000
+289+  0000              JumpIfAEqNusng:         MACRO value, target
+290+  0000 ~                                    cp     value
+291+  0000 ~                                    jp      z,target
+292+  0000                                      ENDM
+293+  0000
+294+  0000              JumpIfAIsZero:	        MACRO target
+295+  0000 ~                                    and     a   ; cp 0 - changed to and a for optimisation but affects other flags
+296+  0000 ~                                    jp	    z, target
+297+  0000                                      ENDM
+298+  0000
+299+  0000              JumpIfRegIsNotZero:     MACRO   reg, target
+300+  0000 ~                                    ld      a,reg
+301+  0000 ~                                    and     a
+302+  0000 ~                                    jp	    nz,target
+303+  0000                                      ENDM
+304+  0000
+305+  0000
+306+  0000              JumpIfAIsNotZero:       MACRO target
+307+  0000 ~                                    and     a
+308+  0000 ~                                    jp	    nz,target
+309+  0000                                      ENDM
+310+  0000
+311+  0000              JumpIfMemIsNotZero:     MACRO value, target
+312+  0000 ~                                    ld      a,(value)
+313+  0000 ~                                    and     a
+314+  0000 ~                                    jp	    nz,target
+315+  0000                                      ENDM
+316+  0000              IfResultZeroGoto:	    MACRO target
+317+  0000 ~                                    jp	z,target
+318+  0000                                      ENDM
+319+  0000
+320+  0000              IfResultNotZeroGoto:    MACRO target
+321+  0000 ~                                    jp	nz,target
+322+  0000                                      ENDM
+323+  0000
+# file closed: jumpMacros.asm
+ 67   0000                                      INCLUDE "../../Macros/MathsMacros.asm"
+# file opened: MathsMacros.asm
+  1+  0000              ZeroA:		            MACRO
+  2+  0000 ~                                    xor a
+  3+  0000                                      ENDM
+  4+  0000              ; sets z flag is HL less than 255 else sets it to nz (note opposite of GT127)
+  5+  0000              IsHLGT255:              MACRO
+  6+  0000 ~                                    bit     7,h
+  7+  0000 ~                                    ret     z
+  8+  0000 ~                                    ld      a,h
+  9+  0000 ~                                    and     a
+ 10+  0000                                      ENDM
+ 11+  0000
+ 12+  0000              ; Sets z flat if HL = 255 else sets it to nz
+ 13+  0000              IsHLEqu255:             MACRO
+ 14+  0000 ~                                    ld      a,h
+ 15+  0000 ~                                    and     a               ; if its non zero then it can't be 255
+ 16+  0000 ~                                    ret     nz
+ 17+  0000 ~                                    ld      a,l
+ 18+  0000 ~                                    inc     a               ; if it was 255 the inc will set it to zero
+ 19+  0000                                      ENDM
+ 20+  0000
+ 21+  0000              ; Sets Z flag if GT 127 else nz
+ 22+  0000              IsHLGT127:              MACRO
+ 23+  0000 ~                                    bit     7,h             ; -ve?
+ 24+  0000 ~                                    jr      nz,.DoneCheck
+ 25+  0000 ~                                    ld      a,h             ; +ve > 256?
+ 26+  0000 ~                                    and     a
+ 27+  0000 ~                                    jr      nz,.DoneCheck
+ 28+  0000 ~                                    ld      a,l
+ 29+  0000 ~                                    and     $80             ; this will set z to false if bit 7 set and clear lower bits
+ 30+  0000 ~                                    cp      $80             ; this will set z to true if bit 7 set
+ 31+  0000 ~            .DoneCheck:
+ 32+  0000                                      ENDM
+ 33+  0000
+ 34+  0000              ReturnIfHLGT127:        MACRO
+ 35+  0000 ~                                    bit     7,h             ; -ve?
+ 36+  0000 ~                                    jr      nz,.DoneCheck   ; forces check complete
+ 37+  0000 ~                                    ld      a,h             ; +ve > 256?
+ 38+  0000 ~                                    and     a               ;
+ 39+  0000 ~                                    ret     nz              ; forces a return
+ 40+  0000 ~                                    bit     7,l             ; bit 7 of lower set?
+ 41+  0000 ~                                    ret     nz              ; forces a return
+ 42+  0000 ~            .DoneCheck:
+ 43+  0000                                      ENDM
+ 44+  0000
+ 45+  0000              IsDEGT127:              MACRO
+ 46+  0000 ~                                    bit     7,d
+ 47+  0000 ~                                    jr      nz,.DoneCheck
+ 48+  0000 ~                                    ld      a,d
+ 49+  0000 ~                                    jr      nz,.DoneCheck
+ 50+  0000 ~                                    ld      a,e
+ 51+  0000 ~                                    and     $80
+ 52+  0000 ~            .DoneCheck:
+ 53+  0000                                      ENDM
+ 54+  0000
+ 55+  0000              ABSa2c:                 MACRO
+ 56+  0000 ~                                    bit     7,a
+ 57+  0000 ~                                    jp      z,.DoneABSa
+ 58+  0000 ~                                    neg
+ 59+  0000 ~            .DoneABSa:
+ 60+  0000                                      ENDM
+ 61+  0000
+ 62+  0000              DEEquSquareA:           MACRO
+ 63+  0000 ~                                    ld  d,a
+ 64+  0000 ~                                    ld  e,a
+ 65+  0000 ~                                    mul de
+ 66+  0000                                      ENDM
+ 67+  0000
+ 68+  0000              ApplyMyRollToVector:    MACRO angle, vectorX, vectorY
+ 69+  0000 ~                                    ldCopyByte angle,varQ               ; Set Q = a = alpha (the roll angle to rotate through)
+ 70+  0000 ~                                    ldCopy2Byte vectorY, varR           ; RS =  nosev_y
+ 71+  0000 ~                                    ldCopyByte  vectorX, varP           ; set P to nosevX lo (may be redundant)
+ 72+  0000 ~                                    ld a,(vectorX+1)                    ; Set A = -nosev_x_hi
+ 73+  0000 ~                                    xor $80                             ;
+ 74+  0000 ~                                    call  madXAequQmulAaddRS            ; Set (A X) = Q * A + (S R) = = alpha * -nosev_x_hi + nosev_y
+ 75+  0000 ~                                    ld  (vectorY),de                    ; nosev_y = nosev_y - alpha * nosev_x_hi
+ 76+  0000 ~                                    ldCopy2Byte vectorX, varR           ; Set (S R) = nosev_x
+ 77+  0000 ~                                    ld  a,(vectorY+1)                   ;  Set A = nosev_y_hi
+ 78+  0000 ~                                    call madXAequQmulAaddRS             ; Set (A X) = Q * A + (S R)
+ 79+  0000 ~                                    ld  (vectorX),de                    ; nosev_x = nosev_x + alpha * nosev_y_hi
+ 80+  0000                                      ENDM
+ 81+  0000
+ 82+  0000              SignedHLTo2C:           MACRO
+ 83+  0000 ~                                    bit     7,h
+ 84+  0000 ~                                    jr      z,.Done2c
+ 85+  0000 ~                                    ld      a,h
+ 86+  0000 ~                                    and     SignMask8Bit
+ 87+  0000 ~                                    ld      h,a
+ 88+  0000 ~                                    NegHL
+ 89+  0000 ~            .Done2c:
+ 90+  0000                                      ENDM
+ 91+  0000
+ 92+  0000              MemSignedTo2C:          MACRO   memfrom
+ 93+  0000 ~                                    ld      hl,(memfrom)
+ 94+  0000 ~                                    bit     7,h
+ 95+  0000 ~                                    jr      z,.Done2c
+ 96+  0000 ~                                    ld      a,h
+ 97+  0000 ~                                    and     SignMask8Bit
+ 98+  0000 ~                                    ld      h,a
+ 99+  0000 ~            .Done2c:                ld      (memfrom),hl
+100+  0000                                      ENDM
+101+  0000
+102+  0000
+103+  0000                  ;returns result in H
+104+  0000              EDiv10Inline:           MACRO
+105+  0000 ~                                    ld      d,0
+106+  0000 ~                                    ld      hl,de
+107+  0000 ~                                    add     hl,hl
+108+  0000 ~                                    add     hl,de
+109+  0000 ~                                    add     hl,hl
+110+  0000 ~                                    add     hl,hl
+111+  0000 ~                                    add     hl,de
+112+  0000 ~                                    add     hl,hl
+113+  0000                                      ENDM
+114+  0000
+115+  0000              cpHLDE:                 MACRO
+116+  0000 ~                                    push    hl
+117+  0000 ~                                    and     a
+118+  0000 ~                                    sbc     hl,de
+119+  0000 ~                                    pop     hl
+120+  0000                                      ENDM
+121+  0000
+122+  0000              cpABSDEHL:              MACRO
+123+  0000 ~                                    push     hl,,de
+124+  0000 ~                                    ld      a,h
+125+  0000 ~                                    and     $7F
+126+  0000 ~                                    ld      h,a
+127+  0000 ~                                    ld      a,d
+128+  0000 ~                                    and     $7F
+129+  0000 ~                                    ld      d,a
+130+  0000 ~                                    ex      de,hl
+131+  0000 ~                                    sbc     hl,de
+132+  0000 ~                                    pop     hl,,de
+133+  0000                                      ENDM
+134+  0000
+135+  0000              ; Simple are they both the same setting z if they are
+136+  0000              ; tehcicall this works but it measn the final ret z is alwys done
+137+  0000              ; so jp needs to be to a target
+138+  0000              cpHLEquDE:              MACRO   passedCheck
+139+  0000 ~                                    ld      a,h
+140+  0000 ~                                    cp      d
+141+  0000 ~                                    jp      nz, passedCheck
+142+  0000 ~                                    ld      a,l
+143+  0000 ~                                    cp      e
+144+  0000 ~            .NoTheSame:
+145+  0000                                      ENDM
+146+  0000
+147+  0000              cpHLEquBC:              MACRO   passedCheck
+148+  0000 ~                                    ld      a,h
+149+  0000 ~                                    cp      b
+150+  0000 ~                                    jp      nz, passedCheck
+151+  0000 ~                                    ld      a,l
+152+  0000 ~                                    cp      c
+153+  0000 ~            .NoTheSame:
+154+  0000                                      ENDM
+155+  0000
+156+  0000              cpDEEquBC:              MACRO   passedCheck
+157+  0000 ~                                    ld      a,d
+158+  0000 ~                                    cp      b
+159+  0000 ~                                    jp      nz, passedCheck
+160+  0000 ~                                    ld      a,e
+161+  0000 ~                                    cp      c
+162+  0000 ~            .NoTheSame:
+163+  0000                                      ENDM
+164+  0000              ; Simple version just sets carry if HL < DE reset, does an initial compare for z
+165+  0000              cpHLDELeadSign:         MACRO
+166+  0000 ~                                    ld      a,h
+167+  0000 ~                                    cp      d
+168+  0000 ~                                    jr      nz,.FullCompare
+169+  0000 ~                                    ld      a,l
+170+  0000 ~                                    cp      e
+171+  0000 ~                                    ret     z
+172+  0000 ~            .FullCompare:           ld      a,h
+173+  0000 ~                                    xor     d
+174+  0000 ~                                    and     $80
+175+  0000 ~                                    jr      nz,.OppositeSigns   ; If opposite signs is a simple sign test
+176+  0000 ~                                    ld      a,h                 ; same signs so a little simpler
+177+  0000 ~                                    and     $80
+178+  0000 ~                                    jp      z,cpHLDE            ; if h is positive then both are positive by here so just cpHLDE
+179+  0000 ~                                    jp      cpABSDEHL           ; else we have to do ABScpDEHL
+180+  0000 ~            .OppositeSigns:         ld      a,h
+181+  0000 ~                                    and     $80
+182+  0000 ~                                    and     $80
+183+  0000 ~                                    jp      z,.HLGTDE
+184+  0000 ~            .HLLTDE:                SetCarryFlag
+185+  0000 ~                                    ret
+186+  0000 ~            .HLGTDE:                ClearCarryFlag
+187+  0000 ~                                    ret
+188+  0000                                      ENDM
+189+  0000
+190+  0000              ;Unsigned
+191+  0000              ;If HL == DE, then Z flag is set.
+192+  0000              ;If HL != DE, then Z flag is reset.
+193+  0000              ;If HL <  DE, then C flag is set.
+194+  0000              ;If HL >= DE, then C flag is reset.
+195+  0000              ;
+196+  0000              ;Signed
+197+  0000              ;If HL == DE, then Z flag is set.
+198+  0000              ;If HL != DE, then Z flag is reset.
+199+  0000              ;If HL <  DE, then S and P/V are different.
+200+  0000              ;If HL >= DE, then S and P/V are the same.
+201+  0000
+202+  0000
+203+  0000              N0equN1byN2div256:      MACRO param1,param2,param3
+204+  0000 ~                                    ld      a,param3                        ;
+205+  0000 ~                                    ld      e,a                         ; use e as var Q = value of XX15 [n] lo
+206+  0000 ~                                    ld      a,param2                        ; A = XX16 element
+207+  0000 ~                                    ld      d,a
+208+  0000 ~                                    mul
+209+  0000 ~                                    ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low
+210+  0000 ~                                    ld      (param1),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
+211+  0000                                      ENDM
+212+  0000
+213+  0000              AequN1xorN2:            MACRO  param1,param2
+214+  0000 ~                                    ld      a,(param1)
+215+  0000 ~                                    xor     param2
+216+  0000                                      ENDM
+217+  0000
+218+  0000              SpeedMulAxis:           MACRO   speedreg, axis
+219+  0000 ~                                    ld      e,speedreg
+220+  0000 ~                                    ld      hl,(axis)
+221+  0000 ~                                    ld      a,h
+222+  0000 ~                                    ClearSignBitA
+223+  0000 ~                                    ld      d,a
+224+  0000 ~                                    mul     de
+225+  0000 ~                                    ld      a,h
+226+  0000 ~                                    SignBitOnlyA
+227+  0000 ~                                    ld      b,a;ld      c,a
+228+  0000 ~                                    ld      h,d;ld      e,d
+229+  0000 ~                                    ld      c,0;ld      d,0
+230+  0000                                      ENDM
+231+  0000
+232+  0000              ; Adds speed (8 bit) to vertex (24 bit signed)
+233+  0000              AddSpeedToVert:         MACRO   vertex
+234+  0000 ~                                    ld      de,(vertex+1)
+235+  0000 ~                                    ld      a,(vertex)
+236+  0000 ~                                    ld      l,a
+237+  0000 ~                                    call    AddBCHtoDELsigned               ; DEL = DEL + BCH
+238+  0000 ~                                    ld      a,l
+239+  0000 ~                                    ld      (vertex),a
+240+  0000 ~                                    ld      (vertex+1),de
+241+  0000                                      ENDM
+# file closed: MathsMacros.asm
+ 68   0000                                      INCLUDE "../../Macros/ShiftMacros.asm"
+# file opened: ShiftMacros.asm
+  1+  0000              ShiftIYRight1: MACRO
+  2+  0000 ~                           ld   a,iyh
+  3+  0000 ~                           srl  a
+  4+  0000 ~                           ld   iyh,a
+  5+  0000 ~                           ld   a,iyl
+  6+  0000 ~                           rra
+  7+  0000 ~                           ld   iyl,a
+  8+  0000                             ENDM
+  9+  0000
+ 10+  0000              ShiftIXRight1: MACRO
+ 11+  0000 ~                           ld   a,ixh
+ 12+  0000 ~                           srl  a
+ 13+  0000 ~                           ld   ixh,a
+ 14+  0000 ~                           ld   a,ixl
+ 15+  0000 ~                           rra
+ 16+  0000 ~                           ld   ixl,a
+ 17+  0000                             ENDM
+ 18+  0000
+ 19+  0000              ShiftIXhHLRight1: MACRO
+ 20+  0000 ~                           ld  a,ixh
+ 21+  0000 ~                           srl a
+ 22+  0000 ~                           ld  ixh,a
+ 23+  0000 ~                           rr  h
+ 24+  0000 ~                           rr  l
+ 25+  0000                             ENDM
+ 26+  0000
+ 27+  0000              ShiftIYhDERight1: MACRO
+ 28+  0000 ~                           ld  a,iyh
+ 29+  0000 ~                           srl a
+ 30+  0000 ~                           ld  iyh,a
+ 31+  0000 ~                           rr  d
+ 32+  0000 ~                           rr  e
+ 33+  0000                             ENDM
+ 34+  0000
+ 35+  0000              ShiftIYlBCRight1: MACRO
+ 36+  0000 ~                           ld  a,iyl
+ 37+  0000 ~                           srl a
+ 38+  0000 ~                           ld  iyl,a
+ 39+  0000 ~                           rr  b
+ 40+  0000 ~                           rr  c
+ 41+  0000                             ENDM
+ 42+  0000
+ 43+  0000              ShiftIXlBCRight1: MACRO
+ 44+  0000 ~                           ld  a,ixl
+ 45+  0000 ~                           srl a
+ 46+  0000 ~                           ld  ixl,a
+ 47+  0000 ~                           rr  b
+ 48+  0000 ~                           rr  c
+ 49+  0000                             ENDM
+ 50+  0000
+ 51+  0000              ShiftHLRight1: MACRO
+ 52+  0000 ~                           srl h
+ 53+  0000 ~                           rr  l
+ 54+  0000                             ENDM
+ 55+  0000
+ 56+  0000              ShiftBHLRight1:MACRO
+ 57+  0000 ~                           srl b
+ 58+  0000 ~                           rr h
+ 59+  0000 ~                           rr  l
+ 60+  0000                             ENDM
+ 61+  0000
+ 62+  0000              ShiftCDERight1:MACRO
+ 63+  0000 ~                           srl c
+ 64+  0000 ~                           rr  d
+ 65+  0000 ~                           rr  e
+ 66+  0000                             ENDM
+ 67+  0000
+ 68+  0000
+ 69+  0000              SRAHLRight1: MACRO
+ 70+  0000 ~                           sra h
+ 71+  0000 ~                           rr  l
+ 72+  0000                             ENDM
+ 73+  0000
+ 74+  0000              ShiftDERight1: MACRO
+ 75+  0000 ~                           srl d
+ 76+  0000 ~                           rr  e
+ 77+  0000                             ENDM
+ 78+  0000
+ 79+  0000              ShiftBCRight1: MACRO
+ 80+  0000 ~                           srl b
+ 81+  0000 ~                           rr  c
+ 82+  0000                             ENDM
+ 83+  0000
+ 84+  0000
+ 85+  0000              ShiftHLDiv8:   MACRO
+ 86+  0000 ~                           srl h
+ 87+  0000 ~                           rr  l
+ 88+  0000 ~                           srl h
+ 89+  0000 ~                           rr  l
+ 90+  0000 ~                           srl h
+ 91+  0000 ~                           rr  l
+ 92+  0000                             ENDM
+ 93+  0000
+ 94+  0000              ShiftBHLLeft1:  MACRO
+ 95+  0000 ~                            sla l
+ 96+  0000 ~                            rl  h
+ 97+  0000 ~                            rl  b
+ 98+  0000                              ENDM
+ 99+  0000
+100+  0000              ShiftCDELeft1:  MACRO
+101+  0000 ~                            sla e
+102+  0000 ~                            rl  d
+103+  0000 ~                            rl  c
+104+  0000                              ENDM
+105+  0000
+106+  0000              ShiftHLLeft1:  MACRO    ; 16 T states
+107+  0000 ~                           sla l
+108+  0000 ~                           rl  h
+109+  0000                             ENDM
+110+  0000
+111+  0000              ShiftDELeft1:  MACRO    ; 16 T states
+112+  0000 ~                           sla e
+113+  0000 ~                           rl  d
+114+  0000                             ENDM
+115+  0000
+116+  0000              BarrelHLLeft3: MACRO
+117+  0000 ~                           ex       de,hl   ; 4   43 T states vs 32 for doing ShiftHL Twice, so need at least 3 Shifts
+118+  0000 ~                           push     bc      ; 10
+119+  0000 ~                           ld       b,3     ; 7
+120+  0000 ~                           bsrl     de,b    ; 8
+121+  0000 ~                           pop      bc      ; 10
+122+  0000 ~                           ex       de,hl   ; 4
+123+  0000                             ENDM
+124+  0000
+125+  0000              BarrelHLRight3: MACRO
+126+  0000 ~                           ex       de,hl   ; 4   43 T states vs 32 for doing ShiftHL Twice, so need at least 3 Shifts
+127+  0000 ~                           push     bc      ; 10
+128+  0000 ~                           ld       b,3     ; 7
+129+  0000 ~                           bsrl     de,b    ; 8
+130+  0000 ~                           pop      bc      ; 10
+131+  0000 ~                           ex       de,hl   ; 4
+132+  0000                             ENDM
+133+  0000
+134+  0000              RollBCLeft1:   MACRO    ; 16 T states
+135+  0000 ~                           rl  c
+136+  0000 ~                           rl  b
+137+  0000                             ENDM
+138+  0000
+139+  0000              RollDELeft1:   MACRO    ; 16 T states
+140+  0000 ~                           rl  e
+141+  0000 ~                           rl  d
+142+  0000                             ENDM
+143+  0000
+144+  0000              ShiftBCLeft1:  MACRO    ; 16 T states
+145+  0000 ~                           sla c
+146+  0000 ~                           rl  b
+147+  0000                             ENDM
+148+  0000
+149+  0000              ShiftLeftMem:       MACRO   reg
+150+  0000 ~                                ld      hl,reg
+151+  0000 ~                                sla     (hl)
+152+  0000                                  ENDM
+153+  0000
+154+  0000
+155+  0000
+156+  0000              ShiftMem16Right1:   MACRO memaddr
+157+  0000 ~                                ld    hl,(memaddr)
+158+  0000 ~                                srl   h
+159+  0000 ~                                rr    l
+160+  0000 ~                                ld    (memaddr),hl
+161+  0000                                  ENDM
+162+  0000
+163+  0000              ShiftMem8Right1:    MACRO memaddr
+164+  0000 ~                                ld      a,(memaddr)
+165+  0000 ~                                srl     a
+166+  0000 ~                                ld      (memaddr),a
+167+  0000                                  ENDM
+168+  0000
+169+  0000
+170+  0000              ShiftMem8Left1A:    MACRO memaddr
+171+  0000 ~                                ld      a,(memaddr)
+172+  0000 ~                                sla     a
+173+  0000 ~                                ld      (memaddr),a
+174+  0000                                  ENDM
+175+  0000
+# file closed: ShiftMacros.asm
+ 69   0000                                      INCLUDE "../../Macros/NegateMacros.asm"
+# file opened: NegateMacros.asm
+  1+  0000
+  2+  0000              macronegate16hl:	MACRO
+  3+  0000 ~            					xor 	a
+  4+  0000 ~            					sub 	l
+  5+  0000 ~            					ld 		l,a
+  6+  0000 ~            					sbc 	a,a
+  7+  0000 ~            					sub 	h
+  8+  0000 ~            					ld 		h,a
+  9+  0000              					ENDM
+ 10+  0000
+ 11+  0000
+ 12+  0000              macroAbsHL:         MACRO
+ 13+  0000 ~                                bit     7,h
+ 14+  0000 ~                                jp      z,.alreadyABS
+ 15+  0000 ~            					xor 	a
+ 16+  0000 ~            					sub 	l
+ 17+  0000 ~            					ld 		l,a
+ 18+  0000 ~            					sbc 	a,a
+ 19+  0000 ~            					sub 	h
+ 20+  0000 ~            					ld 		h,a
+ 21+  0000 ~            .alreadyABS:
+ 22+  0000                                  ENDM
+ 23+  0000
+ 24+  0000              macronegate16de:	MACRO
+ 25+  0000 ~            					xor 	a
+ 26+  0000 ~                                sub 	e
+ 27+  0000 ~                                ld 		e,a
+ 28+  0000 ~                                sbc 	a,a
+ 29+  0000 ~                                sub 	d
+ 30+  0000 ~                                ld 		d,a
+ 31+  0000              					ENDM
+ 32+  0000
+ 33+  0000              macronegate16bc:	MACRO
+ 34+  0000 ~            					xor 	a
+ 35+  0000 ~                                sub 	c
+ 36+  0000 ~                                ld 		c,a
+ 37+  0000 ~                                sbc 	a,a
+ 38+  0000 ~                                sub 	b
+ 39+  0000 ~                                ld 		b,a
+ 40+  0000              					ENDM
+ 41+  0000
+ 42+  0000              macronegate16ix:	MACRO
+ 43+  0000 ~            					xor 	a
+ 44+  0000 ~                                sub 	ixl
+ 45+  0000 ~                                ld 		ixl,a
+ 46+  0000 ~                                sbc 	a,a
+ 47+  0000 ~                                sub 	ixh
+ 48+  0000 ~                                ld 		ixh,a
+ 49+  0000              					ENDM
+ 50+  0000
+ 51+  0000
+ 52+  0000              NegIY:			    MACRO
+ 53+  0000 ~                                xor a
+ 54+  0000 ~                                sub iyl
+ 55+  0000 ~                                ld iyl,a
+ 56+  0000 ~                                sbc a,a
+ 57+  0000 ~                                sub iyh
+ 58+  0000 ~                                ld iyh,a
+ 59+  0000                                  ENDM
+ 60+  0000
+ 61+  0000              NegHL:			    MACRO
+ 62+  0000 ~                                xor     a
+ 63+  0000 ~                                sub     l
+ 64+  0000 ~                                ld      l,a
+ 65+  0000 ~                                sbc     a,a
+ 66+  0000 ~                                sub     h
+ 67+  0000 ~                                ld      h,a
+ 68+  0000                                  ENDM
+ 69+  0000
+ 70+  0000              NegAHL:			    MACRO
+ 71+  0000 ~                                ld      b,a         ; save a in b
+ 72+  0000 ~                                xor     a           ; l = 0 - l
+ 73+  0000 ~                                sub     l
+ 74+  0000 ~                                ld      l,a
+ 75+  0000 ~                                sbc     a,a         ; h = 0 - h
+ 76+  0000 ~                                sub     h
+ 77+  0000 ~                                ld      h,a
+ 78+  0000 ~                                sbc     a,a         ; a= 0 - b
+ 79+  0000 ~                                sub     b
+ 80+  0000                                  ENDM
+ 81+  0000
+ 82+  0000              NegDE:			    MACRO
+ 83+  0000 ~                                xor a
+ 84+  0000 ~                                sub e
+ 85+  0000 ~                                ld e,a
+ 86+  0000 ~                                sbc a,a
+ 87+  0000 ~                                sub d
+ 88+  0000 ~                                ld d,a
+ 89+  0000                                  ENDM
+ 90+  0000
+ 91+  0000              NegBC:			    MACRO
+ 92+  0000 ~                                xor a
+ 93+  0000 ~                                sub c
+ 94+  0000 ~                                ld c,a
+ 95+  0000 ~                                sbc a,a
+ 96+  0000 ~                                sub  b
+ 97+  0000 ~                                ld b,a
+ 98+  0000                                  ENDM
+ 99+  0000
+100+  0000              NegH                MACRO
+101+  0000 ~                                ld      a,h
+102+  0000 ~                                neg
+103+  0000 ~                                ld      h,a
+104+  0000                                  ENDM
+105+  0000
+106+  0000              NegD                MACRO
+107+  0000 ~                                ld      a,d
+108+  0000 ~                                neg
+109+  0000 ~                                ld      d,a
+110+  0000                                  ENDM
+111+  0000
+112+  0000              NegB                MACRO
+113+  0000 ~                                ld      a,b
+114+  0000 ~                                neg
+115+  0000 ~                                ld      b,a
+116+  0000                                  ENDM
+117+  0000
+# file closed: NegateMacros.asm
+ 70   0000                                      INCLUDE "../../Macros/carryFlagMacros.asm"
+# file opened: carryFlagMacros.asm
+  1+  0000
+  2+  0000              SetCarryFlag:           MACRO
+  3+  0000 ~                                    scf
+  4+  0000                                      ENDM
+  5+  0000
+  6+  0000              ClearCarryFlag:	        MACRO
+  7+  0000 ~                                    or a
+  8+  0000                                      ENDM
+  9+  0000
+ 10+  0000              FlipCarryFlag:          MACRO
+ 11+  0000 ~                                    ccf
+ 12+  0000                                      ENDM
+ 13+  0000
+# file closed: carryFlagMacros.asm
+ 71   0000              ;----------------------------------------------------------------------------------------------------------------------------------
+ 72   0000              ; Total screen list
+ 73   0000              ; Local Chart
+ 74   0000              ; Galactic Chart
+ 75   0000              ; Market Prices
+ 76   0000              ; Inventory
+ 77   0000              ; Comander status
+ 78   0000              ; System Data
+ 79   0000              ; Mission Briefing
+ 80   0000              ; missio completion
+ 81   0000              ; Docked  Menu (only place otehr than pause you can load and save)
+ 82   0000              ; Pause Menu (only place you can load from )
+ 83   0000              ; byint and selling equipment
+ 84   0000              ; bying and selling stock
+ 85   0000              TopOfStack              equ $5CCB ;$6100
+ 86   0000
+ 87   0000                                      ORG $5DCB;      $6200
+ 88   5DCB F3           EliteNextStartup:       di
+ 89   5DCC FD 00                                break
+ 90   5DCE FD 21 FD 5D                          ld      iy,Test1
+ 91   5DD2 06 06                                ld      b,6
+ 92   5DD4 FD E5 C5     .testloop:              push    iy,,bc
+ 93   5DD7 CD 5D 5E                             call    TestDiv
+ 94   5DDA C1 FD E1                             pop     iy,,bc
+ 95   5DDD FD E5 E1                             ld      hl,iy
+ 96   5DE0 3E 10                                ld      a,$10
+ 97   5DE2 ED 31                                add     hl,a
+ 98   5DE4 E5 FD E1                             ld      iy,hl
+ 99   5DE7 10 EB                                djnz    .testloop
+100   5DE9 FD 00                                break
+101   5DEB
+102   5DEB 00 00        ErrorCount:             DW  0
+103   5DED
+104   5DED 00 00 00...  MultiplyResult:         DS  16  ; reserve 6 bytes for maths result, little endian rest is padding for console display alignment
+105   5DFD
+106   5DFD                                       ;  Dividend.....  Divisor...... Filler....Result...........................                                                                           E H  L    B  C
+107   5DFD 80 25 00 00  Test1:                  DB $80, $25, $00, $00, $04, $00, $00, $00, $60, $09, $00, $00, $00, $00, $00, $11 ; 37.5 / 4 = 9.375
+107   5E01 04 00 00 00
+107   5E05 60 09 00 00
+107   5E09 00 00 00 11
+108   5E0D 80 25 00 00  Test2:                  DB $80, $25, $00, $00, $04, $80, $00, $00, $55, $08, $00, $00, $00, $00, $00, $11 ; 37.5 / 4.5 = 8.3333
+108   5E11 04 80 00 00
+108   5E15 55 08 00 00
+108   5E19 00 00 00 11
+109   5E1D 80 7F 00 80  Test3:                  DB $80, $7F, $00, $80, $02, $00, $00, $00, $00, $33, $00, $00, $00, $00, $00, $11 ; 128.5 / 2.5 = 51
+109   5E21 02 00 00 00
+109   5E25 00 33 00 00
+109   5E29 00 00 00 11
+110   5E2D 40 7F 00 40  Test4:                  DB $40, $7F, $00, $40, $05, $00, $00, $00, $00, $00, $18, $00, $00, $00, $00, $11 ; 127.25/5.25=24.238
+110   5E31 05 00 00 00
+110   5E35 00 00 18 00
+110   5E39 00 00 00 11
+111   5E3D 80 F7 00 80  Test5:                  DB $80, $F7, $00, $80, $0A, $00, $00, $00, $00, $00, $0c, $00, $00, $00, $00, $11 ; -119.5/10.5=-11.3809
+111   5E41 0A 00 00 00
+111   5E45 00 00 0C 00
+111   5E49 00 00 00 11
+112   5E4D FF 03 00 00  Test6:                  DB $FF, $03, $00, $00, $8A, $10, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11 ; 3.996 / -10 = -0.3996
+112   5E51 8A 10 00 00
+112   5E55 00 00 00 00
+112   5E59 00 00 00 11
+113   5E5D
+114   5E5D
+115   5E5D FD 6E 01 FD  TestDiv:                ld      hl,(iy+1)           ; dehl = X0
+115   5E61 66 02
+116   5E63 EB                                   ex      de,hl
+117   5E64 FD 7E 00                             ld      a,(iy+0)
+118   5E67 67                                   ld      h,a                 ; .
+119   5E68 2E 00                                ld      l,0
+120   5E6A D9                                   exx                         ; de'hl' = X
+121   5E6B FD 6E 03 FD                          ld      hl,(iy+3)           ; dehl = 0Y
+121   5E6F 66 04
+122   5E71 FD 7E 05                             ld      a,(iy+5)            ;
+123   5E74 5F                                   ld      e,a                 ;
+124   5E75 16 00                                ld      d,0
+125   5E77 D9                                   exx                         ; dehl correct way round
+126   5E78 FD 00                                break
+127   5E7A CD D9 5E                             call    divu32              ; BH.L by CD.E putting result in BCDE.HL
+128   5E7D D9                                   exx                         ; so now we have l'de.h to consdier                     ; we only care about lde'.h' in the resul
+129   5E7E 7C                                   ld      a,h                 ; we only care about lde'.h' in the resul
+130   5E7F FD 77 0B                             ld      (iy+$0B),a          ; .
+131   5E82 FD 73 0C FD                          ld      (iy+$0C),de         ; .
+131   5E86 72 0D
+132   5E88 D9                                   exx
+133   5E89 7D                                   ld      a,l
+134   5E8A FD 77 0E                             ld      (iy+$0E),a          ; and finally l
+135   5E8D FD 7E 07     .CheckResult:           ld      a,(iy+$07)
+136   5E90 47                                   ld      b,a
+137   5E91 FD 7E 0B                             ld      a,(iy+$0B)
+138   5E94 B8                                   cp      b
+139   5E95 C2 BF 5E                             jp      nz,.Fail
+140   5E98
+141   5E98 FD 7E 08                             ld      a,(iy+$08)
+142   5E9B 47                                   ld      b,a
+143   5E9C FD 7E 0C                             ld      a,(iy+$0C)
+144   5E9F B8                                   cp      b
+145   5EA0 C2 BF 5E                             jp      nz,.Fail
+146   5EA3
+147   5EA3 FD 7E 09                             ld      a,(iy+$09)
+148   5EA6 47                                   ld      b,a
+149   5EA7 FD 7E 0D                             ld      a,(iy+$0D)
+150   5EAA B8                                   cp      b
+151   5EAB C2 BF 5E                             jp      nz,.Fail
+152   5EAE
+153   5EAE FD 7E 0A                             ld      a,(iy+$0A)
+154   5EB1 47                                   ld      b,a
+155   5EB2 FD 7E 0E                             ld      a,(iy+$0E)
+156   5EB5 B8                                   cp      b
+157   5EB6 C2 BF 5E                             jp      nz,.Fail
+158   5EB9
+159   5EB9 3E FF                                ld      a,$FF
+160   5EBB FD 77 0F                             ld      (iy+$0F),a
+161   5EBE C9                                   ret
+162   5EBF 3E 00        .Fail:                  ld      a,$00
+163   5EC1 FD 77 0F                             ld      (iy+$0F),a
+164   5EC4 21 EB 5D                             ld      hl,ErrorCount
+165   5EC7 34                                   inc     (hl)
+166   5EC8 C9                                   ret
+167   5EC9
+168   5EC9
+169   5EC9              ;--------------------------------------------------------------------------------------
+170   5EC9                  INCLUDE	"../../Maths24/asm_divide24.asm"
+# file opened: asm_divide24.asm
+  1+  5EC9              ; unsigned division dehl = dehl / dehl' dehl' = remainder carry clear,  div  by 0 = carry set everyhthing else untouched
+  2+  5EC9
+  3+  5EC9              ; ahl  = EHL/DBC CARRY OVERFLOW FLAG
+  4+  5EC9              ; dehl = dehl / dehjl'
+  5+  5EC9
+  6+  5EC9              divu32smallloop         MACRO
+  7+  5EC9 ~
+  8+  5EC9 ~                                    exx
+  9+  5EC9 ~                                    rl      c                 ; bcbc << 1
+ 10+  5EC9 ~                                    rl      b
+ 11+  5EC9 ~                                    exx
+ 12+  5EC9 ~                                    rl      c
+ 13+  5EC9 ~                                    rla
+ 14+  5EC9 ~
+ 15+  5EC9 ~                                    exx
+ 16+  5EC9 ~                                    adc     hl,hl            ; hlhl << 1
+ 17+  5EC9 ~                                    exx
+ 18+  5EC9 ~                                    adc     hl,hl
+ 19+  5EC9 ~
+ 20+  5EC9 ~                                    exx
+ 21+  5EC9 ~                                    sbc     hl,de            ; if hlhl > dede
+ 22+  5EC9 ~                                    exx
+ 23+  5EC9 ~                                    sbc     hl,de
+ 24+  5EC9 ~                                    jr nc,  .skip_loop        ;   hlhl -= dede
+ 25+  5EC9 ~
+ 26+  5EC9 ~                                    exx                  ;
+ 27+  5EC9 ~                                    add     hl,de
+ 28+  5EC9 ~                                    exx
+ 29+  5EC9 ~                                    adc     hl,de
+ 30+  5EC9 ~            .skip_loop:             ccf
+ 31+  5EC9                                      ENDM
+ 32+  5EC9
+ 33+  5EC9
+ 34+  5EC9              ; dehl = dehl' / dehl in our case it will be S78.0/ 0S78.0 to give us 0S78.0
+ 35+  5EC9 D9           divs32swap:             exx                     ;
+ 36+  5ECA 7B           divs32:                 ld      a,e             ; get sign bit from divisor
+ 37+  5ECB D9                                   exx                     ; swap to get dividend sign bit
+ 38+  5ECC AA                                   xor     d               ; .
+ 39+  5ECD D9                                   exx                     ; then swap back for normal compute
+ 40+  5ECE E6 80                                and     $80             ; but we can then save sign bit to stack
+ 41+  5ED0 F5                                   push    af              ; .
+ 42+  5ED1 CD D9 5E                             call    divu32          ; perform divide
+ 43+  5ED4 F1                                   pop     af              ; get sign bit
+ 44+  5ED5 B3                                   or      e               ; as result will be in ehl that we want
+ 45+  5ED6 5F                                   ld      e,a             ; we ignore d reg
+ 46+  5ED7 C9                                   ret
+ 47+  5ED8
+ 48+  5ED8 D9           divu32swap:             exx
+ 49+  5ED9              ; dehl = dehl' / dehl in our case it will be 78.80 / 078.8 to give us 078.8
+ 50+  5ED9 7A           divu32:                 ld a,d
+ 51+  5EDA B3                                   or e
+ 52+  5EDB B4                                   or h
+ 53+  5EDC B5                                   or l
+ 54+  5EDD CA A1 62                             jp z, divide_by_zero
+ 55+  5EE0                 ; try to reduce the division
+ 56+  5EE0              begin:
+ 57+  5EE0 AF                                   xor     a
+ 58+  5EE1 E5                                   push    hl
+ 59+  5EE2 D9                                   exx
+ 60+  5EE3 44 4D                                ld      bc,hl
+ 61+  5EE5 E1                                   pop     hl
+ 62+  5EE6 D5                                   push    de
+ 63+  5EE7 EB                                   ex      de,hl
+ 64+  5EE8 6F                                   ld      l,a
+ 65+  5EE9 67                                   ld      h,a
+ 66+  5EEA D9                                   exx
+ 67+  5EEB C1                                   pop     bc
+ 68+  5EEC 6F                                   ld      l,a
+ 69+  5EED 67                                   ld      h,a
+ 70+  5EEE
+ 71+  5EEE              l1_small_divu_32_32x32: ; dede' = 32-bit divisor, bcbc' = 32-bit dividend, hlhl' = 0
+ 72+  5EEE 78                                   ld      a,b
+ 73+  5EEF             > divu32smallloop
+ 73+  5EEF             >
+ 73+  5EEF D9          >                        exx
+ 73+  5EF0 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  5EF2 CB 10       >                        rl      b
+ 73+  5EF4 D9          >                        exx
+ 73+  5EF5 CB 11       >                        rl      c
+ 73+  5EF7 17          >                        rla
+ 73+  5EF8             >
+ 73+  5EF8 D9          >                        exx
+ 73+  5EF9 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  5EFB D9          >                        exx
+ 73+  5EFC ED 6A       >                        adc     hl,hl
+ 73+  5EFE             >
+ 73+  5EFE D9          >                        exx
+ 73+  5EFF ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  5F01 D9          >                        exx
+ 73+  5F02 ED 52       >                        sbc     hl,de
+ 73+  5F04 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  5F06             >
+ 73+  5F06 D9          >                        exx                  ;
+ 73+  5F07 19          >                        add     hl,de
+ 73+  5F08 D9          >                        exx
+ 73+  5F09 ED 5A       >                        adc     hl,de
+ 73+  5F0B 3F          >.skip_loop:             ccf
+ 73+  5F0C             > divu32smallloop
+ 73+  5F0C             >
+ 73+  5F0C D9          >                        exx
+ 73+  5F0D CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  5F0F CB 10       >                        rl      b
+ 73+  5F11 D9          >                        exx
+ 73+  5F12 CB 11       >                        rl      c
+ 73+  5F14 17          >                        rla
+ 73+  5F15             >
+ 73+  5F15 D9          >                        exx
+ 73+  5F16 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  5F18 D9          >                        exx
+ 73+  5F19 ED 6A       >                        adc     hl,hl
+ 73+  5F1B             >
+ 73+  5F1B D9          >                        exx
+ 73+  5F1C ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  5F1E D9          >                        exx
+ 73+  5F1F ED 52       >                        sbc     hl,de
+ 73+  5F21 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  5F23             >
+ 73+  5F23 D9          >                        exx                  ;
+ 73+  5F24 19          >                        add     hl,de
+ 73+  5F25 D9          >                        exx
+ 73+  5F26 ED 5A       >                        adc     hl,de
+ 73+  5F28 3F          >.skip_loop:             ccf
+ 73+  5F29             > divu32smallloop
+ 73+  5F29             >
+ 73+  5F29 D9          >                        exx
+ 73+  5F2A CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  5F2C CB 10       >                        rl      b
+ 73+  5F2E D9          >                        exx
+ 73+  5F2F CB 11       >                        rl      c
+ 73+  5F31 17          >                        rla
+ 73+  5F32             >
+ 73+  5F32 D9          >                        exx
+ 73+  5F33 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  5F35 D9          >                        exx
+ 73+  5F36 ED 6A       >                        adc     hl,hl
+ 73+  5F38             >
+ 73+  5F38 D9          >                        exx
+ 73+  5F39 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  5F3B D9          >                        exx
+ 73+  5F3C ED 52       >                        sbc     hl,de
+ 73+  5F3E 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  5F40             >
+ 73+  5F40 D9          >                        exx                  ;
+ 73+  5F41 19          >                        add     hl,de
+ 73+  5F42 D9          >                        exx
+ 73+  5F43 ED 5A       >                        adc     hl,de
+ 73+  5F45 3F          >.skip_loop:             ccf
+ 73+  5F46             > divu32smallloop
+ 73+  5F46             >
+ 73+  5F46 D9          >                        exx
+ 73+  5F47 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  5F49 CB 10       >                        rl      b
+ 73+  5F4B D9          >                        exx
+ 73+  5F4C CB 11       >                        rl      c
+ 73+  5F4E 17          >                        rla
+ 73+  5F4F             >
+ 73+  5F4F D9          >                        exx
+ 73+  5F50 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  5F52 D9          >                        exx
+ 73+  5F53 ED 6A       >                        adc     hl,hl
+ 73+  5F55             >
+ 73+  5F55 D9          >                        exx
+ 73+  5F56 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  5F58 D9          >                        exx
+ 73+  5F59 ED 52       >                        sbc     hl,de
+ 73+  5F5B 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  5F5D             >
+ 73+  5F5D D9          >                        exx                  ;
+ 73+  5F5E 19          >                        add     hl,de
+ 73+  5F5F D9          >                        exx
+ 73+  5F60 ED 5A       >                        adc     hl,de
+ 73+  5F62 3F          >.skip_loop:             ccf
+ 73+  5F63             > divu32smallloop
+ 73+  5F63             >
+ 73+  5F63 D9          >                        exx
+ 73+  5F64 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  5F66 CB 10       >                        rl      b
+ 73+  5F68 D9          >                        exx
+ 73+  5F69 CB 11       >                        rl      c
+ 73+  5F6B 17          >                        rla
+ 73+  5F6C             >
+ 73+  5F6C D9          >                        exx
+ 73+  5F6D ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  5F6F D9          >                        exx
+ 73+  5F70 ED 6A       >                        adc     hl,hl
+ 73+  5F72             >
+ 73+  5F72 D9          >                        exx
+ 73+  5F73 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  5F75 D9          >                        exx
+ 73+  5F76 ED 52       >                        sbc     hl,de
+ 73+  5F78 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  5F7A             >
+ 73+  5F7A D9          >                        exx                  ;
+ 73+  5F7B 19          >                        add     hl,de
+ 73+  5F7C D9          >                        exx
+ 73+  5F7D ED 5A       >                        adc     hl,de
+ 73+  5F7F 3F          >.skip_loop:             ccf
+ 73+  5F80             > divu32smallloop
+ 73+  5F80             >
+ 73+  5F80 D9          >                        exx
+ 73+  5F81 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  5F83 CB 10       >                        rl      b
+ 73+  5F85 D9          >                        exx
+ 73+  5F86 CB 11       >                        rl      c
+ 73+  5F88 17          >                        rla
+ 73+  5F89             >
+ 73+  5F89 D9          >                        exx
+ 73+  5F8A ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  5F8C D9          >                        exx
+ 73+  5F8D ED 6A       >                        adc     hl,hl
+ 73+  5F8F             >
+ 73+  5F8F D9          >                        exx
+ 73+  5F90 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  5F92 D9          >                        exx
+ 73+  5F93 ED 52       >                        sbc     hl,de
+ 73+  5F95 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  5F97             >
+ 73+  5F97 D9          >                        exx                  ;
+ 73+  5F98 19          >                        add     hl,de
+ 73+  5F99 D9          >                        exx
+ 73+  5F9A ED 5A       >                        adc     hl,de
+ 73+  5F9C 3F          >.skip_loop:             ccf
+ 73+  5F9D             > divu32smallloop
+ 73+  5F9D             >
+ 73+  5F9D D9          >                        exx
+ 73+  5F9E CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  5FA0 CB 10       >                        rl      b
+ 73+  5FA2 D9          >                        exx
+ 73+  5FA3 CB 11       >                        rl      c
+ 73+  5FA5 17          >                        rla
+ 73+  5FA6             >
+ 73+  5FA6 D9          >                        exx
+ 73+  5FA7 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  5FA9 D9          >                        exx
+ 73+  5FAA ED 6A       >                        adc     hl,hl
+ 73+  5FAC             >
+ 73+  5FAC D9          >                        exx
+ 73+  5FAD ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  5FAF D9          >                        exx
+ 73+  5FB0 ED 52       >                        sbc     hl,de
+ 73+  5FB2 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  5FB4             >
+ 73+  5FB4 D9          >                        exx                  ;
+ 73+  5FB5 19          >                        add     hl,de
+ 73+  5FB6 D9          >                        exx
+ 73+  5FB7 ED 5A       >                        adc     hl,de
+ 73+  5FB9 3F          >.skip_loop:             ccf
+ 73+  5FBA             > divu32smallloop
+ 73+  5FBA             >
+ 73+  5FBA D9          >                        exx
+ 73+  5FBB CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  5FBD CB 10       >                        rl      b
+ 73+  5FBF D9          >                        exx
+ 73+  5FC0 CB 11       >                        rl      c
+ 73+  5FC2 17          >                        rla
+ 73+  5FC3             >
+ 73+  5FC3 D9          >                        exx
+ 73+  5FC4 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  5FC6 D9          >                        exx
+ 73+  5FC7 ED 6A       >                        adc     hl,hl
+ 73+  5FC9             >
+ 73+  5FC9 D9          >                        exx
+ 73+  5FCA ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  5FCC D9          >                        exx
+ 73+  5FCD ED 52       >                        sbc     hl,de
+ 73+  5FCF 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  5FD1             >
+ 73+  5FD1 D9          >                        exx                  ;
+ 73+  5FD2 19          >                        add     hl,de
+ 73+  5FD3 D9          >                        exx
+ 73+  5FD4 ED 5A       >                        adc     hl,de
+ 73+  5FD6 3F          >.skip_loop:             ccf
+ 73+  5FD7             > divu32smallloop
+ 73+  5FD7             >
+ 73+  5FD7 D9          >                        exx
+ 73+  5FD8 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  5FDA CB 10       >                        rl      b
+ 73+  5FDC D9          >                        exx
+ 73+  5FDD CB 11       >                        rl      c
+ 73+  5FDF 17          >                        rla
+ 73+  5FE0             >
+ 73+  5FE0 D9          >                        exx
+ 73+  5FE1 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  5FE3 D9          >                        exx
+ 73+  5FE4 ED 6A       >                        adc     hl,hl
+ 73+  5FE6             >
+ 73+  5FE6 D9          >                        exx
+ 73+  5FE7 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  5FE9 D9          >                        exx
+ 73+  5FEA ED 52       >                        sbc     hl,de
+ 73+  5FEC 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  5FEE             >
+ 73+  5FEE D9          >                        exx                  ;
+ 73+  5FEF 19          >                        add     hl,de
+ 73+  5FF0 D9          >                        exx
+ 73+  5FF1 ED 5A       >                        adc     hl,de
+ 73+  5FF3 3F          >.skip_loop:             ccf
+ 73+  5FF4             > divu32smallloop
+ 73+  5FF4             >
+ 73+  5FF4 D9          >                        exx
+ 73+  5FF5 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  5FF7 CB 10       >                        rl      b
+ 73+  5FF9 D9          >                        exx
+ 73+  5FFA CB 11       >                        rl      c
+ 73+  5FFC 17          >                        rla
+ 73+  5FFD             >
+ 73+  5FFD D9          >                        exx
+ 73+  5FFE ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  6000 D9          >                        exx
+ 73+  6001 ED 6A       >                        adc     hl,hl
+ 73+  6003             >
+ 73+  6003 D9          >                        exx
+ 73+  6004 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  6006 D9          >                        exx
+ 73+  6007 ED 52       >                        sbc     hl,de
+ 73+  6009 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  600B             >
+ 73+  600B D9          >                        exx                  ;
+ 73+  600C 19          >                        add     hl,de
+ 73+  600D D9          >                        exx
+ 73+  600E ED 5A       >                        adc     hl,de
+ 73+  6010 3F          >.skip_loop:             ccf
+ 73+  6011             > divu32smallloop
+ 73+  6011             >
+ 73+  6011 D9          >                        exx
+ 73+  6012 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  6014 CB 10       >                        rl      b
+ 73+  6016 D9          >                        exx
+ 73+  6017 CB 11       >                        rl      c
+ 73+  6019 17          >                        rla
+ 73+  601A             >
+ 73+  601A D9          >                        exx
+ 73+  601B ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  601D D9          >                        exx
+ 73+  601E ED 6A       >                        adc     hl,hl
+ 73+  6020             >
+ 73+  6020 D9          >                        exx
+ 73+  6021 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  6023 D9          >                        exx
+ 73+  6024 ED 52       >                        sbc     hl,de
+ 73+  6026 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  6028             >
+ 73+  6028 D9          >                        exx                  ;
+ 73+  6029 19          >                        add     hl,de
+ 73+  602A D9          >                        exx
+ 73+  602B ED 5A       >                        adc     hl,de
+ 73+  602D 3F          >.skip_loop:             ccf
+ 73+  602E             > divu32smallloop
+ 73+  602E             >
+ 73+  602E D9          >                        exx
+ 73+  602F CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  6031 CB 10       >                        rl      b
+ 73+  6033 D9          >                        exx
+ 73+  6034 CB 11       >                        rl      c
+ 73+  6036 17          >                        rla
+ 73+  6037             >
+ 73+  6037 D9          >                        exx
+ 73+  6038 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  603A D9          >                        exx
+ 73+  603B ED 6A       >                        adc     hl,hl
+ 73+  603D             >
+ 73+  603D D9          >                        exx
+ 73+  603E ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  6040 D9          >                        exx
+ 73+  6041 ED 52       >                        sbc     hl,de
+ 73+  6043 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  6045             >
+ 73+  6045 D9          >                        exx                  ;
+ 73+  6046 19          >                        add     hl,de
+ 73+  6047 D9          >                        exx
+ 73+  6048 ED 5A       >                        adc     hl,de
+ 73+  604A 3F          >.skip_loop:             ccf
+ 73+  604B             > divu32smallloop
+ 73+  604B             >
+ 73+  604B D9          >                        exx
+ 73+  604C CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  604E CB 10       >                        rl      b
+ 73+  6050 D9          >                        exx
+ 73+  6051 CB 11       >                        rl      c
+ 73+  6053 17          >                        rla
+ 73+  6054             >
+ 73+  6054 D9          >                        exx
+ 73+  6055 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  6057 D9          >                        exx
+ 73+  6058 ED 6A       >                        adc     hl,hl
+ 73+  605A             >
+ 73+  605A D9          >                        exx
+ 73+  605B ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  605D D9          >                        exx
+ 73+  605E ED 52       >                        sbc     hl,de
+ 73+  6060 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  6062             >
+ 73+  6062 D9          >                        exx                  ;
+ 73+  6063 19          >                        add     hl,de
+ 73+  6064 D9          >                        exx
+ 73+  6065 ED 5A       >                        adc     hl,de
+ 73+  6067 3F          >.skip_loop:             ccf
+ 73+  6068             > divu32smallloop
+ 73+  6068             >
+ 73+  6068 D9          >                        exx
+ 73+  6069 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  606B CB 10       >                        rl      b
+ 73+  606D D9          >                        exx
+ 73+  606E CB 11       >                        rl      c
+ 73+  6070 17          >                        rla
+ 73+  6071             >
+ 73+  6071 D9          >                        exx
+ 73+  6072 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  6074 D9          >                        exx
+ 73+  6075 ED 6A       >                        adc     hl,hl
+ 73+  6077             >
+ 73+  6077 D9          >                        exx
+ 73+  6078 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  607A D9          >                        exx
+ 73+  607B ED 52       >                        sbc     hl,de
+ 73+  607D 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  607F             >
+ 73+  607F D9          >                        exx                  ;
+ 73+  6080 19          >                        add     hl,de
+ 73+  6081 D9          >                        exx
+ 73+  6082 ED 5A       >                        adc     hl,de
+ 73+  6084 3F          >.skip_loop:             ccf
+ 73+  6085             > divu32smallloop
+ 73+  6085             >
+ 73+  6085 D9          >                        exx
+ 73+  6086 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  6088 CB 10       >                        rl      b
+ 73+  608A D9          >                        exx
+ 73+  608B CB 11       >                        rl      c
+ 73+  608D 17          >                        rla
+ 73+  608E             >
+ 73+  608E D9          >                        exx
+ 73+  608F ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  6091 D9          >                        exx
+ 73+  6092 ED 6A       >                        adc     hl,hl
+ 73+  6094             >
+ 73+  6094 D9          >                        exx
+ 73+  6095 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  6097 D9          >                        exx
+ 73+  6098 ED 52       >                        sbc     hl,de
+ 73+  609A 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  609C             >
+ 73+  609C D9          >                        exx                  ;
+ 73+  609D 19          >                        add     hl,de
+ 73+  609E D9          >                        exx
+ 73+  609F ED 5A       >                        adc     hl,de
+ 73+  60A1 3F          >.skip_loop:             ccf
+ 73+  60A2             > divu32smallloop
+ 73+  60A2             >
+ 73+  60A2 D9          >                        exx
+ 73+  60A3 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  60A5 CB 10       >                        rl      b
+ 73+  60A7 D9          >                        exx
+ 73+  60A8 CB 11       >                        rl      c
+ 73+  60AA 17          >                        rla
+ 73+  60AB             >
+ 73+  60AB D9          >                        exx
+ 73+  60AC ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  60AE D9          >                        exx
+ 73+  60AF ED 6A       >                        adc     hl,hl
+ 73+  60B1             >
+ 73+  60B1 D9          >                        exx
+ 73+  60B2 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  60B4 D9          >                        exx
+ 73+  60B5 ED 52       >                        sbc     hl,de
+ 73+  60B7 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  60B9             >
+ 73+  60B9 D9          >                        exx                  ;
+ 73+  60BA 19          >                        add     hl,de
+ 73+  60BB D9          >                        exx
+ 73+  60BC ED 5A       >                        adc     hl,de
+ 73+  60BE 3F          >.skip_loop:             ccf
+ 73+  60BF             > divu32smallloop
+ 73+  60BF             >
+ 73+  60BF D9          >                        exx
+ 73+  60C0 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  60C2 CB 10       >                        rl      b
+ 73+  60C4 D9          >                        exx
+ 73+  60C5 CB 11       >                        rl      c
+ 73+  60C7 17          >                        rla
+ 73+  60C8             >
+ 73+  60C8 D9          >                        exx
+ 73+  60C9 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  60CB D9          >                        exx
+ 73+  60CC ED 6A       >                        adc     hl,hl
+ 73+  60CE             >
+ 73+  60CE D9          >                        exx
+ 73+  60CF ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  60D1 D9          >                        exx
+ 73+  60D2 ED 52       >                        sbc     hl,de
+ 73+  60D4 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  60D6             >
+ 73+  60D6 D9          >                        exx                  ;
+ 73+  60D7 19          >                        add     hl,de
+ 73+  60D8 D9          >                        exx
+ 73+  60D9 ED 5A       >                        adc     hl,de
+ 73+  60DB 3F          >.skip_loop:             ccf
+ 73+  60DC             > divu32smallloop
+ 73+  60DC             >
+ 73+  60DC D9          >                        exx
+ 73+  60DD CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  60DF CB 10       >                        rl      b
+ 73+  60E1 D9          >                        exx
+ 73+  60E2 CB 11       >                        rl      c
+ 73+  60E4 17          >                        rla
+ 73+  60E5             >
+ 73+  60E5 D9          >                        exx
+ 73+  60E6 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  60E8 D9          >                        exx
+ 73+  60E9 ED 6A       >                        adc     hl,hl
+ 73+  60EB             >
+ 73+  60EB D9          >                        exx
+ 73+  60EC ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  60EE D9          >                        exx
+ 73+  60EF ED 52       >                        sbc     hl,de
+ 73+  60F1 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  60F3             >
+ 73+  60F3 D9          >                        exx                  ;
+ 73+  60F4 19          >                        add     hl,de
+ 73+  60F5 D9          >                        exx
+ 73+  60F6 ED 5A       >                        adc     hl,de
+ 73+  60F8 3F          >.skip_loop:             ccf
+ 73+  60F9             > divu32smallloop
+ 73+  60F9             >
+ 73+  60F9 D9          >                        exx
+ 73+  60FA CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  60FC CB 10       >                        rl      b
+ 73+  60FE D9          >                        exx
+ 73+  60FF CB 11       >                        rl      c
+ 73+  6101 17          >                        rla
+ 73+  6102             >
+ 73+  6102 D9          >                        exx
+ 73+  6103 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  6105 D9          >                        exx
+ 73+  6106 ED 6A       >                        adc     hl,hl
+ 73+  6108             >
+ 73+  6108 D9          >                        exx
+ 73+  6109 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  610B D9          >                        exx
+ 73+  610C ED 52       >                        sbc     hl,de
+ 73+  610E 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  6110             >
+ 73+  6110 D9          >                        exx                  ;
+ 73+  6111 19          >                        add     hl,de
+ 73+  6112 D9          >                        exx
+ 73+  6113 ED 5A       >                        adc     hl,de
+ 73+  6115 3F          >.skip_loop:             ccf
+ 73+  6116             > divu32smallloop
+ 73+  6116             >
+ 73+  6116 D9          >                        exx
+ 73+  6117 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  6119 CB 10       >                        rl      b
+ 73+  611B D9          >                        exx
+ 73+  611C CB 11       >                        rl      c
+ 73+  611E 17          >                        rla
+ 73+  611F             >
+ 73+  611F D9          >                        exx
+ 73+  6120 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  6122 D9          >                        exx
+ 73+  6123 ED 6A       >                        adc     hl,hl
+ 73+  6125             >
+ 73+  6125 D9          >                        exx
+ 73+  6126 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  6128 D9          >                        exx
+ 73+  6129 ED 52       >                        sbc     hl,de
+ 73+  612B 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  612D             >
+ 73+  612D D9          >                        exx                  ;
+ 73+  612E 19          >                        add     hl,de
+ 73+  612F D9          >                        exx
+ 73+  6130 ED 5A       >                        adc     hl,de
+ 73+  6132 3F          >.skip_loop:             ccf
+ 73+  6133             > divu32smallloop
+ 73+  6133             >
+ 73+  6133 D9          >                        exx
+ 73+  6134 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  6136 CB 10       >                        rl      b
+ 73+  6138 D9          >                        exx
+ 73+  6139 CB 11       >                        rl      c
+ 73+  613B 17          >                        rla
+ 73+  613C             >
+ 73+  613C D9          >                        exx
+ 73+  613D ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  613F D9          >                        exx
+ 73+  6140 ED 6A       >                        adc     hl,hl
+ 73+  6142             >
+ 73+  6142 D9          >                        exx
+ 73+  6143 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  6145 D9          >                        exx
+ 73+  6146 ED 52       >                        sbc     hl,de
+ 73+  6148 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  614A             >
+ 73+  614A D9          >                        exx                  ;
+ 73+  614B 19          >                        add     hl,de
+ 73+  614C D9          >                        exx
+ 73+  614D ED 5A       >                        adc     hl,de
+ 73+  614F 3F          >.skip_loop:             ccf
+ 73+  6150             > divu32smallloop
+ 73+  6150             >
+ 73+  6150 D9          >                        exx
+ 73+  6151 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  6153 CB 10       >                        rl      b
+ 73+  6155 D9          >                        exx
+ 73+  6156 CB 11       >                        rl      c
+ 73+  6158 17          >                        rla
+ 73+  6159             >
+ 73+  6159 D9          >                        exx
+ 73+  615A ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  615C D9          >                        exx
+ 73+  615D ED 6A       >                        adc     hl,hl
+ 73+  615F             >
+ 73+  615F D9          >                        exx
+ 73+  6160 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  6162 D9          >                        exx
+ 73+  6163 ED 52       >                        sbc     hl,de
+ 73+  6165 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  6167             >
+ 73+  6167 D9          >                        exx                  ;
+ 73+  6168 19          >                        add     hl,de
+ 73+  6169 D9          >                        exx
+ 73+  616A ED 5A       >                        adc     hl,de
+ 73+  616C 3F          >.skip_loop:             ccf
+ 73+  616D             > divu32smallloop
+ 73+  616D             >
+ 73+  616D D9          >                        exx
+ 73+  616E CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  6170 CB 10       >                        rl      b
+ 73+  6172 D9          >                        exx
+ 73+  6173 CB 11       >                        rl      c
+ 73+  6175 17          >                        rla
+ 73+  6176             >
+ 73+  6176 D9          >                        exx
+ 73+  6177 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  6179 D9          >                        exx
+ 73+  617A ED 6A       >                        adc     hl,hl
+ 73+  617C             >
+ 73+  617C D9          >                        exx
+ 73+  617D ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  617F D9          >                        exx
+ 73+  6180 ED 52       >                        sbc     hl,de
+ 73+  6182 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  6184             >
+ 73+  6184 D9          >                        exx                  ;
+ 73+  6185 19          >                        add     hl,de
+ 73+  6186 D9          >                        exx
+ 73+  6187 ED 5A       >                        adc     hl,de
+ 73+  6189 3F          >.skip_loop:             ccf
+ 73+  618A             > divu32smallloop
+ 73+  618A             >
+ 73+  618A D9          >                        exx
+ 73+  618B CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  618D CB 10       >                        rl      b
+ 73+  618F D9          >                        exx
+ 73+  6190 CB 11       >                        rl      c
+ 73+  6192 17          >                        rla
+ 73+  6193             >
+ 73+  6193 D9          >                        exx
+ 73+  6194 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  6196 D9          >                        exx
+ 73+  6197 ED 6A       >                        adc     hl,hl
+ 73+  6199             >
+ 73+  6199 D9          >                        exx
+ 73+  619A ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  619C D9          >                        exx
+ 73+  619D ED 52       >                        sbc     hl,de
+ 73+  619F 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  61A1             >
+ 73+  61A1 D9          >                        exx                  ;
+ 73+  61A2 19          >                        add     hl,de
+ 73+  61A3 D9          >                        exx
+ 73+  61A4 ED 5A       >                        adc     hl,de
+ 73+  61A6 3F          >.skip_loop:             ccf
+ 73+  61A7             > divu32smallloop
+ 73+  61A7             >
+ 73+  61A7 D9          >                        exx
+ 73+  61A8 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  61AA CB 10       >                        rl      b
+ 73+  61AC D9          >                        exx
+ 73+  61AD CB 11       >                        rl      c
+ 73+  61AF 17          >                        rla
+ 73+  61B0             >
+ 73+  61B0 D9          >                        exx
+ 73+  61B1 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  61B3 D9          >                        exx
+ 73+  61B4 ED 6A       >                        adc     hl,hl
+ 73+  61B6             >
+ 73+  61B6 D9          >                        exx
+ 73+  61B7 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  61B9 D9          >                        exx
+ 73+  61BA ED 52       >                        sbc     hl,de
+ 73+  61BC 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  61BE             >
+ 73+  61BE D9          >                        exx                  ;
+ 73+  61BF 19          >                        add     hl,de
+ 73+  61C0 D9          >                        exx
+ 73+  61C1 ED 5A       >                        adc     hl,de
+ 73+  61C3 3F          >.skip_loop:             ccf
+ 73+  61C4             > divu32smallloop
+ 73+  61C4             >
+ 73+  61C4 D9          >                        exx
+ 73+  61C5 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  61C7 CB 10       >                        rl      b
+ 73+  61C9 D9          >                        exx
+ 73+  61CA CB 11       >                        rl      c
+ 73+  61CC 17          >                        rla
+ 73+  61CD             >
+ 73+  61CD D9          >                        exx
+ 73+  61CE ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  61D0 D9          >                        exx
+ 73+  61D1 ED 6A       >                        adc     hl,hl
+ 73+  61D3             >
+ 73+  61D3 D9          >                        exx
+ 73+  61D4 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  61D6 D9          >                        exx
+ 73+  61D7 ED 52       >                        sbc     hl,de
+ 73+  61D9 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  61DB             >
+ 73+  61DB D9          >                        exx                  ;
+ 73+  61DC 19          >                        add     hl,de
+ 73+  61DD D9          >                        exx
+ 73+  61DE ED 5A       >                        adc     hl,de
+ 73+  61E0 3F          >.skip_loop:             ccf
+ 73+  61E1             > divu32smallloop
+ 73+  61E1             >
+ 73+  61E1 D9          >                        exx
+ 73+  61E2 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  61E4 CB 10       >                        rl      b
+ 73+  61E6 D9          >                        exx
+ 73+  61E7 CB 11       >                        rl      c
+ 73+  61E9 17          >                        rla
+ 73+  61EA             >
+ 73+  61EA D9          >                        exx
+ 73+  61EB ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  61ED D9          >                        exx
+ 73+  61EE ED 6A       >                        adc     hl,hl
+ 73+  61F0             >
+ 73+  61F0 D9          >                        exx
+ 73+  61F1 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  61F3 D9          >                        exx
+ 73+  61F4 ED 52       >                        sbc     hl,de
+ 73+  61F6 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  61F8             >
+ 73+  61F8 D9          >                        exx                  ;
+ 73+  61F9 19          >                        add     hl,de
+ 73+  61FA D9          >                        exx
+ 73+  61FB ED 5A       >                        adc     hl,de
+ 73+  61FD 3F          >.skip_loop:             ccf
+ 73+  61FE             > divu32smallloop
+ 73+  61FE             >
+ 73+  61FE D9          >                        exx
+ 73+  61FF CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  6201 CB 10       >                        rl      b
+ 73+  6203 D9          >                        exx
+ 73+  6204 CB 11       >                        rl      c
+ 73+  6206 17          >                        rla
+ 73+  6207             >
+ 73+  6207 D9          >                        exx
+ 73+  6208 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  620A D9          >                        exx
+ 73+  620B ED 6A       >                        adc     hl,hl
+ 73+  620D             >
+ 73+  620D D9          >                        exx
+ 73+  620E ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  6210 D9          >                        exx
+ 73+  6211 ED 52       >                        sbc     hl,de
+ 73+  6213 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  6215             >
+ 73+  6215 D9          >                        exx                  ;
+ 73+  6216 19          >                        add     hl,de
+ 73+  6217 D9          >                        exx
+ 73+  6218 ED 5A       >                        adc     hl,de
+ 73+  621A 3F          >.skip_loop:             ccf
+ 73+  621B             > divu32smallloop
+ 73+  621B             >
+ 73+  621B D9          >                        exx
+ 73+  621C CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  621E CB 10       >                        rl      b
+ 73+  6220 D9          >                        exx
+ 73+  6221 CB 11       >                        rl      c
+ 73+  6223 17          >                        rla
+ 73+  6224             >
+ 73+  6224 D9          >                        exx
+ 73+  6225 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  6227 D9          >                        exx
+ 73+  6228 ED 6A       >                        adc     hl,hl
+ 73+  622A             >
+ 73+  622A D9          >                        exx
+ 73+  622B ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  622D D9          >                        exx
+ 73+  622E ED 52       >                        sbc     hl,de
+ 73+  6230 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  6232             >
+ 73+  6232 D9          >                        exx                  ;
+ 73+  6233 19          >                        add     hl,de
+ 73+  6234 D9          >                        exx
+ 73+  6235 ED 5A       >                        adc     hl,de
+ 73+  6237 3F          >.skip_loop:             ccf
+ 73+  6238             > divu32smallloop
+ 73+  6238             >
+ 73+  6238 D9          >                        exx
+ 73+  6239 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  623B CB 10       >                        rl      b
+ 73+  623D D9          >                        exx
+ 73+  623E CB 11       >                        rl      c
+ 73+  6240 17          >                        rla
+ 73+  6241             >
+ 73+  6241 D9          >                        exx
+ 73+  6242 ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  6244 D9          >                        exx
+ 73+  6245 ED 6A       >                        adc     hl,hl
+ 73+  6247             >
+ 73+  6247 D9          >                        exx
+ 73+  6248 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  624A D9          >                        exx
+ 73+  624B ED 52       >                        sbc     hl,de
+ 73+  624D 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  624F             >
+ 73+  624F D9          >                        exx                  ;
+ 73+  6250 19          >                        add     hl,de
+ 73+  6251 D9          >                        exx
+ 73+  6252 ED 5A       >                        adc     hl,de
+ 73+  6254 3F          >.skip_loop:             ccf
+ 73+  6255             > divu32smallloop
+ 73+  6255             >
+ 73+  6255 D9          >                        exx
+ 73+  6256 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  6258 CB 10       >                        rl      b
+ 73+  625A D9          >                        exx
+ 73+  625B CB 11       >                        rl      c
+ 73+  625D 17          >                        rla
+ 73+  625E             >
+ 73+  625E D9          >                        exx
+ 73+  625F ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  6261 D9          >                        exx
+ 73+  6262 ED 6A       >                        adc     hl,hl
+ 73+  6264             >
+ 73+  6264 D9          >                        exx
+ 73+  6265 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  6267 D9          >                        exx
+ 73+  6268 ED 52       >                        sbc     hl,de
+ 73+  626A 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  626C             >
+ 73+  626C D9          >                        exx                  ;
+ 73+  626D 19          >                        add     hl,de
+ 73+  626E D9          >                        exx
+ 73+  626F ED 5A       >                        adc     hl,de
+ 73+  6271 3F          >.skip_loop:             ccf
+ 73+  6272             > divu32smallloop
+ 73+  6272             >
+ 73+  6272 D9          >                        exx
+ 73+  6273 CB 11       >                        rl      c                 ; bcbc << 1
+ 73+  6275 CB 10       >                        rl      b
+ 73+  6277 D9          >                        exx
+ 73+  6278 CB 11       >                        rl      c
+ 73+  627A 17          >                        rla
+ 73+  627B             >
+ 73+  627B D9          >                        exx
+ 73+  627C ED 6A       >                        adc     hl,hl            ; hlhl << 1
+ 73+  627E D9          >                        exx
+ 73+  627F ED 6A       >                        adc     hl,hl
+ 73+  6281             >
+ 73+  6281 D9          >                        exx
+ 73+  6282 ED 52       >                        sbc     hl,de            ; if hlhl > dede
+ 73+  6284 D9          >                        exx
+ 73+  6285 ED 52       >                        sbc     hl,de
+ 73+  6287 30 05       >                        jr nc,  .skip_loop        ;   hlhl -= dede
+ 73+  6289             >
+ 73+  6289 D9          >                        exx                  ;
+ 73+  628A 19          >                        add     hl,de
+ 73+  628B D9          >                        exx
+ 73+  628C ED 5A       >                        adc     hl,de
+ 73+  628E 3F          >.skip_loop:             ccf
+ 74+  628F
+ 75+  628F D9                                   exx
+ 76+  6290 CB 11                                rl c
+ 77+  6292 CB 10                                rl b
+ 78+  6294 D9                                   exx
+ 79+  6295 CB 11                                rl c
+ 80+  6297 17                                   rla
+ 81+  6298
+ 82+  6298                 ; quotient  = acbc'
+ 83+  6298                 ; remainder = hlhl'
+ 84+  6298
+ 85+  6298 E5                                   push    hl
+ 86+  6299 D9                                   exx
+ 87+  629A D1                                   pop     de
+ 88+  629B C5                                   push    bc
+ 89+  629C D9                                   exx
+ 90+  629D E1                                   pop     hl
+ 91+  629E 59                                   ld      e,c
+ 92+  629F 57                                   ld      d,a
+ 93+  62A0
+ 94+  62A0 C9                                   ret
+ 95+  62A1
+ 96+  62A1
+ 97+  62A1
+ 98+  62A1              divide_by_zero:
+ 99+  62A1
+100+  62A1                                  SetCarryFlag
+100+  62A1 37          >                        scf
+101+  62A2 C9                               ret
+102+  62A3
+# file closed: asm_divide24.asm
+171   62A3
+172   62A3
+173   62A3
+174   62A3
+175   62A3                  SAVENEX OPEN "d24test.nex", EliteNextStartup , TopOfStack
+176   62A3                  SAVENEX CFG  0,0,0,1
+177   62A3                  SAVENEX AUTO
+178   62A3                  SAVENEX CLOSE
+179   62A3
+180   62A3
+# file closed: d24test.asm

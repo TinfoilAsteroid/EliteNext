@@ -15,6 +15,9 @@
     DEFINE  MAINLOOP_MODEL_RENDER    1
    ; DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
     DEFINE  MAINLOOP_WARP_ENABLED 1
+   ; used to block ship spawning whilst debugging
+    DEFINE  SPAWN_SHIP_DISABLED 1
+    DEFINE  BODY_DIAGNOSTICS 1
 ;.................................................................................................................................    
 ; Main loop
 ;   bank in Maths
@@ -201,6 +204,45 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
 .UpdatePlanet:          IFDEF   MAINLOOP_PLANET_RENDER
                             MMUSelectPlanet
                             call    PlanetUpdateAndRender
+                        ENDIF
+                        IFDEF  BODY_DIAGNOSTICS
+                            MMUSelectLayer1
+                            ld      a,$47
+                            ld      d,1
+                            call    l1_attr_line_d_to_a
+                            ld      a,$47
+                            ld      d,2
+                            call    l1_attr_line_d_to_a
+                            ld      a,$47
+                            ld      d,3
+                            call    l1_attr_line_d_to_a
+                            MMUSelectPlanet
+                            ld      a,(P_BnKxlo)
+                            ld      hl,(P_BnKxhi)
+                            ld      de,$0103
+                            call    l1_print_s24_hex_at_char: ; prints 16 bit lead sign hex value in HLA at char pos DE
+                            ld      a,(P_BnKylo)
+                            ld      hl,(P_BnKyhi)
+                            ld      de,$0203
+                            call    l1_print_s24_hex_at_char: ; prints 16 bit lead sign hex value in HLA at char pos DE
+                            ld      a,(P_BnKzlo)
+                            ld      hl,(P_BnKzhi)
+                            ld      de,$0303
+                            call    l1_print_s24_hex_at_char: ; prints 16 bit lead sign hex value in HLA at char pos DE
+                            MMUSelectSun
+                            ld      a,(SBnKxlo)
+                            ld      hl,(SBnKxhi)
+                            ld      de,$010C
+                            call    l1_print_s24_hex_at_char: ; prints 16 bit lead sign hex value in HLA at char pos DE
+                            ld      a,(SBnKylo)
+                            ld      hl,(SBnKyhi)
+                            ld      de,$020C
+                            call    l1_print_s24_hex_at_char: ; prints 16 bit lead sign hex value in HLA at char pos DE
+                            ld      a,(SBnKzlo)
+                            ld      hl,(SBnKzhi)
+                            ld      de,$030C
+                            call    l1_print_s24_hex_at_char: ; prints 16 bit lead sign hex value in HLA at char pos DE
+                            MMUSelectSun
                         ENDIF
 ;..Later this will be done via self modifying code to load correct stars routine for view..........................................
 DrawDustForwards:       ld     a,$DF

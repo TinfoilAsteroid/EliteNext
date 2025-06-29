@@ -730,11 +730,14 @@ XX12PVarSign3		DB 0
 ;INCLUDE "Tables/inwk_table.asm" This is no longer needed as we will write to univer object bank
 ; Include all maths libraries to test assembly   
     INCLUDE "./Maths/asm_AddDEToCash.asm"
-    INCLUDE "./Maths/DIVD3B2.asm"
+;    INCLUDE "./Maths/DIVD3B2.asm"
     ;INCLUDE "./Maths/asm_multiply.asm"
+    DISPLAY ">24 bit mulitply routine, currently not bank 0 safe"
+    INCLUDE "./Maths24/asm_mul24_notbank0safe.asm"
     DISPLAY ">Loading S78 Maths routines"
     INCLUDE "./MathsFPS78/asm_multiply_S78.asm"
-    INCLUDE "./Maths24/asm_addition24.asm"
+ DISPLAY "Moved 24 bit maths to bank 0"
+ ;INCLUDE "./Maths24/asm_addition24.asm"
     INCLUDE "./Maths/asm_square.asm"
     INCLUDE "./Maths/asm_sine.asm"
     INCLUDE "./Maths/asm_sqrt.asm"
@@ -742,7 +745,6 @@ XX12PVarSign3		DB 0
     INCLUDE "./Maths/SineTable.asm"
     INCLUDE "./Maths/ArcTanTable.asm"
     INCLUDE "./Maths/negate16.asm"
-    INCLUDE "./Maths/asm_divide.asm"
     INCLUDE "./Maths/asm_unitvector.asm"
     INCLUDE "./Maths/compare16.asm"
     INCLUDE "./Maths/asm_AequAdivQmul96.asm"
@@ -1310,6 +1312,12 @@ GALAXYDATABlock7:   DB $FF
                     SLOT    MathsBankedFnsAddr
                     PAGE    BankMathsBankedFns
                     ORG     MathsBankedFnsAddr,BankMathsBankedFns
+                    DISPLAY "*** Maths24 - BankMathsBankedFns"
+                    INCLUDE "./Maths24/asm_addition24.asm"
+                    INCLUDE "./Maths24/asm_divide24.asm"
+                    INCLUDE "./Maths24/asm_divide_helpers.asm"
+                    DISPLAY ">Multiply is currently not bank 0 safe"
+            ;        INCLUDE "./Maths24/asm_multiply24.asm"
                     DISPLAY "*** ./Maths/MathsBankedFns.asm  - BankMathsBankedFns"
                     INCLUDE "./Maths/MathsBankedFns.asm"
                     DISPLAY "*** ./Maths/asm_tidy.asm - BankMathsBankedFns"
@@ -1320,12 +1328,14 @@ GALAXYDATABlock7:   DB $FF
                     DISPLAY "Bank ",BankMathsBankedFns," - Bytes free ",/D, $2000 - ($-MathsBankedFnsAddr), " - BankMathsBankedFns"
                     ASSERT $-MathsBankedFnsAddr <8912, Bank code leaks over 8K boundary
 ; Bank 103  -----------------------------------------------------------------------------------------------------------------------
+    IFDEF RASPBERRYPIMATHS
                     SLOT    PIFnsAddr
                     PAGE    BankPIFns
                     ORG     PIFnsAddr,BankPIFns
                     INCLUDE "./PI/PIFns.asm"
                     DISPLAY "Bank ",BankPIFns," - Bytes free ",/D, $2000 - ($-PIFnsAddr), " - BankPIFns"
                     ASSERT $-PIFnsAddr <8912, Bank code leaks over 8K boundary
+    ENDIF
     SAVENEX OPEN "EliteN.nex", EliteNextStartup , TopOfStack
     SAVENEX CFG  0,0,0,1
     SAVENEX AUTO

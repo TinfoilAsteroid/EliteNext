@@ -14,7 +14,8 @@ asm_tis2:
 	ex de,hl		
 	ld a,(varQ)
 	ld c,a
-	call asm_div16
+    MMUSelectMathsBankedFns
+	call div_hl_div_c; asm_div16
 	pop af
 	and $80
 	or l

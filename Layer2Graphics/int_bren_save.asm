@@ -121,6 +121,7 @@ HLEquMidX:              ld      hl,(l2_X1)
                         ld      ix,de               ; .
                         ld      iy,hl               ; .
 ;                       BC = DX/DY as 8.8           ; .
+                        MMUSelectMathsBankedFns
                         call    BC_Div_DE; DEequDEDivBC; DE is the result HL is the remainder
                         ld      a,b                 ; if DE is 8 bit only
                         and     a                   ; .
@@ -137,6 +138,7 @@ HLEquMidX:              ld      hl,(l2_X1)
                         ld      (l2_integer2),hl    ; .
 .CalcRemainderFraction: ld      bc,(l2_dxRemainder) ; dXRemainder = TRUNC((dxRemainder)/DY)*256
                         ld      de,(l2_DY)          ; .
+                        MMUSelectMathsBankedFns
                         call    BC_Div_DE           ; BC, remainder in HL
                         ld      (l2_dXRemainderAdj),bc
                         ld      (l2_dxRemainder2),hl

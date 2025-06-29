@@ -159,6 +159,7 @@ StarProcessLoop:        push    bc                                  ; save count
                         inc     a                                   ; so it is at least some dust movement
 .NormalSpeed:           ld      b,a                                 ;
                         ld      c,0                                 ; bc = delta * 256
+                        MMUSelectMathsBankedFns
                         call    BC_Div_DE                           ; BC = Speed/Z , HL = remainder
                         ShiftHLRight1
                         ShiftHLRight1                               ; hl = remainder/2 so now 64 * speed / zhi
@@ -345,7 +346,8 @@ ProjectStarXToScreen:   ld      c,(iy+0)
                         ld      l,a
                         and     $7F
                         ld      b,a
-                        call    DIV16BCDivDEUNDOC
+                        MMUSelectMathsBankedFns
+                        call    BC_Div_DE   ; replaces  call    DIV16BCDivDEUNDOC
                         ld      a,l
                         JumpOnBitSet a,7,StarXNegativePoint             ; LL62 up, -ve Xdist, RU screen onto XX3 heap
 ;StarXPositivePoint:									; x was positive result
@@ -368,7 +370,8 @@ ProjectStarYToScreen:   ld          b,(iy+2)
                         ld          l,a
                         and         $7F
                         ld          b,a
-                        call        DIV16BCDivDEUNDOC
+                        MMUSelectMathsBankedFns
+                        call        BC_Div_DE   ; replaces call        DIV16BCDivDEUNDOC
                         ld          a,l                                 ; XX15+2 \ sign of X dist
                         JumpOnBitSet a,7,StarNegativeYPoint             ; LL62 up, -ve Xdist, RU screen onto XX3 heap top of screen is Y = 0
                     ;StarPositiveYPoint:									; Y is positive so above the centre line

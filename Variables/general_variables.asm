@@ -53,6 +53,8 @@ SLSP 		DW	0				; &03B0 \ SLSP \ ship lines pointer
 
 ;UNIV		DS FreeListSize*2	; Array of Universe Pointers
 ;HULLINDEX	DS ShipTypeSize*2	; hull index for table at XX21= &F XX21-1,Y
+;Maths Support
+MultiplyResult:         DS  6  ; reserve 6 bytes for maths result, little endian rest is padding for console display alignment
 
 ; Present System Variables
 

@@ -1,0 +1,1124 @@
+; unsigned division dehl = dehl / dehl' dehl' = remainder carry clear,  div  by 0 = carry set everyhthing else untouched
+;------------------------------------------------------------------------------------------------
+divu_32_32x32:          exx                         ; flip to dehl'/dehl as that is what is expected
+                        jp      l_fast_divu_32_32x32
+;------------------------------------------------------------------------------------------------
+divu_32_32x24:          ld      d,e
+                        ld      b,h
+                        ld      c,l
+                        jp      l0_fast_divu_32_32x24
+;------------------------------------------------------------------------------------------------                        
+divu_32_32x16:         ; dehl'/ bc
+
+                        push    bc
+                        exx
+                        pop     bc
+                        
+                        jp l0_fast_divu_32_32x16
+;------------------------------------------------------------------------------------------------
+divu_32_32x8:           ; dehl / c
+   
+                        call l0_fast_divu_32_32x8
+   
+                        exx
+                        
+                        ld l,a
+                        xor a
+                        ld h,a
+                        ld e,a
+                        ld d,a
+                        
+                        exx
+                        
+                        ret
+                        
+
+
+divu_32_32x8:
+divu_32_32x8
+divu_32_32x24
+divu_32_32x16
+divu_32_24x24
+divu_32_24x24
+divu_32_24x16
+
+divu_24_24x16
+divu_24_16x24
+divu_24_16x16
+
+;------------------------------------------------------------------------------------------------                        
+divu_32_24x24:          ; ehl / dbc'
+
+                        ld a,e
+                        push hl
+                        
+                        exx
+                            
+                        pop hl
+                        ld e,a
+                        
+                        call l0_fast_divu_24_24x24
+                        
+                        push bc
+                        push de
+                        
+                        ld e,a
+                        xor a
+                        ld d,a
+                        
+                        exx
+                        
+                        pop hl
+                        pop de
+                        
+                        ld d,a
+                        
+                        exx
+                        ret
+                        
+divu_32_24x16:          ; ehl / bc
+                        
+                        call l0_fast_divu_24_24x16
+                        
+                        push de
+                        
+                        exx
+                        
+                        pop hl
+                        ld de,0
+                        
+                        exx
+                        
+                        ld e,a
+                        ld d,0
+                        
+                        ret                        
+
+;------------------------------------------------------------------------------------------------                                                
+divu_32_24x8:           ; ehl / c
+   
+                        call l0_fast_divu_24_24x8
+                        
+                        ld c,a
+                        ld a,e
+                        ld e,c
+                        
+                        ret                       
+;------------------------------------------------------------------------------------------------                                                
+divu_24_16x24:          ; hl / dbc
+   
+                        inc d
+                        dec d
+                        jr nz, result_zero
+;------------------------------------------------------------------------------------------------                                                
+divu_24_16x16:          ; hl / bc
+
+                        ld e,c
+                        ld d,b
+                        
+                        call l0_fast_divu_16_16x16
+                        
+                        ; ahl = quotient
+                        ;  de = remainder
+                        
+                        ld c,a
+                        ret
+;------------------------------------------------------------------------------------------------                                                
+divu_24_24x16:          ; ehl / bc
+                        
+                        call l0_fast_divu_24_24x16
+                        
+                        ; ahl = quotient
+                        ;  de = remainder
+                        
+                        ld c,0
+                        ret   
+
+
+
+
+
+
+
+   
+
+; dehl =  ehl/dehl'
+
+; dehl = dehl / dehl'
+l_fast_divu_32_32x32:   ld      a,d
+                        or      e
+                        or      h
+                        or      l
+                        jp      z, divide_by_zero
+l0_fast_divu_32_32x32:  ld      a,d                 ; try to reduce the division
+                        or      a
+                        jp      z, divu_32_32x24
+                        
+                        exx                         ; perform dehl/dehl'
+                        
+                        inc     d
+                        dec     d
+                        jp      z, result_zero
+   
+                        exx                         ; perform dehl/dehl'
+   
+                        push    hl
+                        push    de
+                        
+                        exx                         ; perform dehl/dehl'
+                        
+                        pop     bc
+                        ex      de,hl
+                        sbc     hl,bc
+                        add     hl,bc
+                        
+                        pop     bc
+                        ex      de,hl
+                        
+                        jp      c, result_zero
+                        jr      nz, begin
+                        
+                        sbc     hl,bc
+                        add     hl,bc
+                        
+                        jp      c, result_zero
+                        jr nz, begin
+   
+                        sbc     hl,bc
+                        add     hl,bc
+                        
+                        jp c,   result_zero
+
+begin:                  ld      a,e
+                        push    hl
+                        
+                        exx
+                        
+                        ex      de,hl
+                        ex      (sp),hl
+                        ld      l,h
+                        ld      h,a
+                        
+                        exx
+                        
+                        ld      a,l
+                        ld      l,d
+                        ld      h,0
+                        pop     de
+eliminate_lead_zeros:
+
+loop_z0:                add a,a
+                            
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        
+                        inc h
+                        dec h
+                        jr nz, loop_00
+
+loop_z1:                add a,a
+                        inc a
+                        
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        
+                        inc h
+                        dec h
+                        jr nz, loop_10
+
+loop_z2:                add a,a
+                        inc a
+                        
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        
+                        inc h
+                        dec h
+                        jr nz, loop_20
+
+loop_z3:                add a,a
+                        inc a
+                        
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        
+                        inc h
+                        dec h
+                        jr nz, loop_30
+
+loop_z4:                add a,a
+                        inc a
+                        
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        
+                        inc h
+                        dec h
+                        jr nz, loop_40
+
+loop_z5:                add a,a
+                        inc a
+                        
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        
+                        inc h
+                        dec h
+                        jr nz, loop_50
+
+loop_z6:                add a,a
+                        inc a
+                        
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        
+                        inc h
+                        dec h
+                        jp nz, loop_60
+
+                        scf
+                        jp loop_7
+
+; general divide loop
+loop_00:                exx
+                        sbc hl,de
+                        exx
+                        sbc hl,de
+                        
+                        jr nc, loop_1
+                        
+                        exx
+                        add hl,de
+                        exx
+                        adc hl,de
+   
+loop_1:                 adc a,a
+
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+
+loop_10:                exx
+                        sbc hl,de
+                        exx
+                        sbc hl,de
+                        
+                        jr nc, loop_2
+                        
+                        exx
+                        add hl,de
+                        exx
+                        adc hl,de
+   
+loop_2:                 adc a,a
+   
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+
+loop_20                 exx
+                        sbc hl,de
+                        exx
+                        sbc hl,de
+                        
+                        jr nc, loop_3
+                        
+                        exx
+                        add hl,de
+                        exx
+                        adc hl,de
+   
+loop_3:                 adc a,a
+   
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+
+loop_30:                exx
+                        sbc hl,de
+                        exx
+                        sbc hl,de
+                        
+                        jr nc, loop_4
+                        
+                        exx
+                        add hl,de
+                        exx
+                        adc hl,de
+   
+loop_4:                 adc a,a
+                        
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+
+loop_40:                exx
+                        sbc hl,de
+                        exx
+                        sbc hl,de
+                        
+                        jr nc, loop_5
+                        
+                        exx
+                        add hl,de
+                        exx
+                        adc hl,de
+   
+loop_5:                 adc a,a
+                        
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+
+loop_50:                exx
+                        sbc hl,de
+                        exx
+                        sbc hl,de
+                        
+                        jr nc, loop_6
+                        
+                        exx
+                        add hl,de
+                        exx
+                        adc hl,de
+   
+loop_6:                 adc a,a
+                        
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+
+loop_60:                exx
+                        sbc hl,de
+                        exx
+                        sbc hl,de
+                        
+                        jr nc, loop_7
+                        
+                        exx
+                        add hl,de
+                        exx
+                        adc hl,de
+   
+loop_7:                 adc a,a
+                        
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        
+                        exx
+                        sbc hl,de
+                        exx
+                        sbc hl,de
+                        
+                        jr nc, exit_loop
+                        
+                        exx
+                        add hl,de
+                        exx
+                        adc hl,de
+
+exit_loop:
+
+                        ; form last quotient bit
+                        
+                        adc a,a
+                            
+                        ;    a = ~quotient
+                        ; hlhl'= remainder
+                        
+                        cpl
+                        
+                        push hl
+                        exx
+                        pop de
+                        exx
+                        
+                        ld l,a
+                        xor a
+                        ld h,a
+                        
+                        ld e,h
+                        ld d,h
+                        
+                        ; dehl = quotient
+                        ; dehl'= remainder
+                        
+                        ret
+
+
+                        
+                        
+   
+l0_fast_divu_32_32x24:   ; try to reduce the division
+
+                        inc d
+                        dec d
+                        jr z, divu_32_32x16
+                        
+                        exx
+                        
+                        inc d
+                        dec d
+                        jr z, divu_32_24x24
+                        
+                        ; dehl = dividend >= $ 01 00 00 00
+                        ;  dbc'= divisor  >= $    01 00 00
+                        ;
+                        ; the results of the first sixteen
+                        ; iterations are known
+                        ;
+                        ; inside the loop the computation is
+                        ; hl'[*]/cde, ahl = remainder
+                        ; so initialize as if sixteen iterations done
+                        
+                        push de
+                        exx
+                        pop hl
+                        ld e,c
+                        ld c,d
+                        ld d,b
+                        xor a
+
+                        ld b,2
+
+loop_00:
+
+                        exx
+                        add hl,hl
+                        exx
+                        adc hl,hl
+                        
+                        jr c, loop_10
+                        
+                        exx
+                        add hl,hl
+                        inc l
+                        exx
+                        adc hl,hl
+                        
+                        jr c, loop_20
+                        
+                        exx
+                        add hl,hl
+                        inc l
+                        exx
+                        adc hl,hl
+                        
+                        jr c, loop_30
+                        
+                        exx
+                        add hl,hl
+                        inc l
+                        exx
+                        adc hl,hl
+                        
+                        jp c, loop_40
+                        
+                        exx
+                        add hl,hl
+                        inc l
+                        exx
+                        adc hl,hl
+                        
+                        jp c, loop_50
+                        
+                        exx
+                        add hl,hl
+                        inc l
+                        exx
+                        adc hl,hl
+                        
+                        jp c, loop_60
+                        
+                        exx
+                        add hl,hl
+                        inc l
+                        exx
+                        adc hl,hl
+                        
+                        jp c, loop_70
+                        
+                        scf
+                        jp loop_7
+
+loop_100:
+
+                        or a
+                        sbc hl,de
+                        sbc a,c
+                        or a
+                        jp loop_1
+
+loop_200:
+
+                        or a
+                        sbc hl,de
+                        sbc a,c
+                        or a
+                        jp loop_2
+
+   ; general divide loop
+
+loop_0:
+
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+
+loop_10:
+
+                        rla
+                        jr c, loop_100
+                        
+                        sbc hl,de
+                        sbc a,c
+                        jr nc, loop_1
+                        add hl,de
+                        adc a,c
+
+loop_1:
+
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+
+loop_20:
+
+                        rla
+                        jr c, loop_200
+                        
+                        sbc hl,de
+                        sbc a,c
+                        jr nc, loop_2
+                        add hl,de
+                        adc a,c
+
+loop_2:
+
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        
+loop_30:
+
+                        rla
+                        jr c, loop_300
+                        
+                        sbc hl,de
+                        sbc a,c
+                        jr nc, loop_3
+                        add hl,de
+                        adc a,c
+
+loop_3:
+
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+
+loop_40:
+
+                        rla
+                        jr c, loop_400
+                        
+                        sbc hl,de
+                        sbc a,c
+                        jr nc, loop_4
+                        add hl,de
+                        adc a,c
+
+loop_4:
+
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+
+loop_50:
+
+                        rla
+                        jr c, loop_500
+                        
+                        sbc hl,de
+                        sbc a,c
+                        jr nc, loop_5
+                        add hl,de
+                        adc a,c
+
+loop_5:
+
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+
+loop_60:
+
+                        rla
+                        jr c, loop_600
+                        
+                        sbc hl,de
+                        sbc a,c
+                        jr nc, loop_6
+                        add hl,de
+                        adc a,c
+
+loop_6:
+
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+
+loop_70:
+
+                        rla
+                        jr c, loop_700
+                        
+                        sbc hl,de
+                        sbc a,c
+                        jr nc, loop_7
+                        add hl,de
+                        adc a,c
+
+loop_7:
+
+                        exx
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        rla
+                        jr c, loop_800
+                        
+                        sbc hl,de
+                        sbc a,c
+                        jr nc, loop_8
+                        add hl,de
+                        adc a,c
+
+loop_8:
+
+;;   djnz loop_0
+
+                        dec b
+                        jp nz, loop_0
+                        
+                        ;   hl'=~quotient with one more shift
+                        ;  ahl = remainder
+                        
+                        ld e,a
+                        ld d,0
+                        
+                        exx
+                        
+                        adc hl,hl
+                        
+                        ld a,l
+                        cpl
+                        ld l,a
+                        ld a,h
+                        cpl
+                        ld h,a
+                        
+                        xor a
+                        ld e,a
+                        ld d,a
+                        
+                        ret
+
+loop_300:
+
+                        or a
+                        sbc hl,de
+                        sbc a,c
+                        or a
+                        jp loop_3
+
+loop_400:
+
+                        or a
+                        sbc hl,de
+                        sbc a,c
+                        or a
+                        jp loop_4
+
+loop_500:
+
+                        or a
+                        sbc hl,de
+                        sbc a,c
+                        or a
+                        jp loop_5
+   
+loop_600:
+
+                        or a
+                        sbc hl,de
+                        sbc a,c
+                        or a
+                        jp loop_6
+
+loop_700:
+
+                        or a
+                        sbc hl,de
+                        sbc a,c
+                        or a
+                        jp loop_7
+
+loop_800:
+
+                        or a
+                        sbc hl,de
+                        sbc a,c
+                        or a
+                        jp loop_8
+
+
+
+l0_fast_divu_32_32x16:
+
+                        ; try to reduce the division
+                        
+                        inc b
+                        dec b
+                        jr z, divu_32_32x8
+                        
+                        inc d
+                        dec d
+                        jr z, divu_32_24x16
+                        
+                        ; dehl >= $ 01 00 00 00
+                        ;   bc >= $       01 00
+                        ;
+                        ; the results of the first eight
+                        ; iterations of the division loop are known
+                        ;
+                        ; inside the loop the computation is
+                        ; hl'a[*]/ de, hl = remainder
+                        ; so initialize as if eight iterations done
+                        
+                        ld a,l
+                        ld l,d
+                        ld d,e
+                        ld e,h
+                        ld h,0
+                        push de
+                        exx
+                        pop hl
+                        exx
+                        ld e,c
+                        ld d,b
+                        
+                        ld b,3
+                        
+                        exx
+                        add a,a
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        inc h
+                        dec h
+                        jr nz, loop_000
+                        
+                        exx
+                        add a,a
+                        inc a
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        inc h
+                        dec h
+                        jr nz, loop_111
+                        
+                        exx
+                        add a,a
+                        inc a
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        inc h
+                        dec h
+                        jr nz, loop_222
+                        
+                        exx
+                        add a,a
+                        inc a
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        inc h
+                        dec h
+                        jr nz, loop_333
+                        
+                        exx
+                        add a,a
+                        inc a
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        inc h
+                        dec h
+                        jr nz, loop_444
+                        
+                        exx
+                        add a,a
+                        inc a
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        inc h
+                        dec h
+                        jr nz, loop_555
+                        
+                        exx
+                        add a,a
+                        inc a
+                        adc hl,hl
+                        exx
+                        adc hl,hl
+                        inc h
+                        dec h
+                        jr nz, loop_666
+                        
+                        scf
+                        jp loop_7
+                        
+loop_00:
+
+   or a
+   sbc hl,de
+   or a
+   jp loop_1
+
+   ; general divide loop
+
+loop_0:
+
+   exx
+   adc a,a
+   adc hl,hl
+   exx
+   adc hl,hl
+   jr c, loop_00
+
+loop_000:
+
+   sbc hl,de
+   jr nc, loop_1
+   add hl,de
+
+loop_1:
+
+   exx
+   adc a,a
+   adc hl,hl
+   exx
+   adc hl,hl
+   jr c, loop_11
+
+loop_111:
+
+   sbc hl,de
+   jr nc, loop_2
+   add hl,de
+
+loop_2:
+
+   exx
+   adc a,a
+   adc hl,hl
+   exx
+   adc hl,hl
+   jr c, loop_22
+
+loop_222:
+
+   sbc hl,de
+   jr nc, loop_3
+   add hl,de
+
+loop_3:
+
+   exx
+   adc a,a
+   adc hl,hl
+   exx
+   adc hl,hl
+   jr c, loop_33
+
+loop_333:
+
+   sbc hl,de
+   jr nc, loop_4
+   add hl,de
+
+loop_4:
+
+   exx
+   adc a,a
+   adc hl,hl
+   exx
+   adc hl,hl
+   jr c, loop_44
+
+loop_444:
+
+   sbc hl,de
+   jr nc, loop_5
+   add hl,de
+
+loop_5:
+
+   exx
+   adc a,a
+   adc hl,hl
+   exx
+   adc hl,hl
+   jr c, loop_55
+
+loop_555:
+
+   sbc hl,de
+   jr nc, loop_6
+   add hl,de
+
+loop_6:
+
+   exx
+   adc a,a
+   adc hl,hl
+   exx
+   adc hl,hl
+   jr c, loop_66
+
+loop_666:
+
+   sbc hl,de
+   jr nc, loop_7
+   add hl,de
+
+loop_7:
+
+   exx
+   adc a,a
+   adc hl,hl
+   exx
+   adc hl,hl
+   jr c, loop_77
+   
+   sbc hl,de
+   jr nc, loop_8
+   add hl,de
+
+loop_8:
+
+   djnz loop_0
+   
+   ; hl = remainder, hl'a=~quotient with one more shift left
+
+   ld e,b
+   ld d,b
+   
+   exx
+   
+   rla
+   adc hl,hl
+
+   ld d,$ff
+   ld e,h
+   ld h,l
+   ld l,a
+
+   or a
+   jp l_cpl_dehl
+
+loop_11:
+
+   or a
+   sbc hl,de
+   or a
+   jp loop_2
+
+loop_22:
+
+   or a
+   sbc hl,de
+   or a
+   jp loop_3
+
+loop_33:
+
+   or a
+   sbc hl,de
+   or a
+   jp loop_4
+
+loop_44:
+
+   or a
+   sbc hl,de
+   or a
+   jp loop_5
+
+loop_55:
+
+   or a
+   sbc hl,de
+   or a
+   jp loop_6
+
+loop_66:
+
+   or a
+   sbc hl,de
+   or a
+   jp loop_7
+
+loop_77:
+
+   or a
+   sbc hl,de
+   or a
+   jp loop_8
+
+
+
+divu_32_32x8
+
+
+divu_32_24x16
+
+
+
+divide_by_zero:
+   
+                    SetCarryFlag
+                    ret
+

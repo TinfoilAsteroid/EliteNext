@@ -8,11 +8,9 @@
 ; 1 bank per universe object. Its a waste of a lot of memory but really
 ; simple that way. Each bank will be 8K and swapped on 8K slot 7 $E000 to $FFFF
 ; This means each gets its own line list, inwork etc
-
-; "Runtime Ship Data paged into in Bank 7"
-;                      0123456789ABCDEF
-StartOfSun:        DB "Sun Data ......."
+; MACROS
 ; NOTE we can cheat and pre allocate segs just using a DS for now
+;---------------------------------------------------------------------------------------------------------------------------------
 CheckRowHLOnScreen:     MACRO   failtarget
                         ld      a,h                             ; is h byte set, i.e > 256 or < 0
                         and     a                               ; .
@@ -31,6 +29,33 @@ IYEquRowN:              MACRO   rowValue                        ; set up iy as t
                         push    hl
                         pop     iy
                         ENDM
+                        
+SunBankDraw:            MACRO
+.drawLoop               ld      a,(hl)
+                        ld      c,a                     ; c = left column
+                        inc     hl
+                        ld      d,(hl)                  ; d = right col
+                        inc     hl                      ; now ready for next linel
+                        push    hl,,bc
+                        cp      d                       ; if both points are the same then no line (we will ignore single pixel as it can't happen at this stage other than tips of circles)
+                        IfResultZeroGoto .NoLineDraw
+                        ld      a,d                     ; get right col back
+                        sub     c                       ; subtract left so a = length
+                        inc     a                       ; so its at least 1 , TODO add cp jr c logic in dma routine so that it does non dma if line < x 
+                        call    z, .FixWidth
+                        ld      d,a                     ; de = length (e - d)
+                        ld      e,216                   ; yellow
+                        call    l2_draw_horz_dma        ; draw without bank switch
+.NoLineDraw:            pop     hl,,bc
+                        inc     b
+                        dec     iyh
+                        IfResultNotZeroGoto  .drawLoop
+                        ENDM
+                        
+;---------------------------------------------------------------------------------------------------------------------------------
+; "Runtime Ship Data paged into in Bank 7"
+;                      0123456789ABCDEF
+StartOfSun:        DB "Sun Data ......."
 ;   \ -> & 565D \ See ship data files chosen and loaded after flight code starts running.
 ; Universe map substibute for INWK
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
@@ -127,31 +152,8 @@ WarpSunFurther:         ld      hl,SBnKzsgn
                        
 .SunNoDraw:             SetCarryFlag                    ; ship is behind so do not draw, so we don't care abour draw as dot
                         ret
-                        
-SunBankDraw:            MACRO
-.drawLoop               ld      a,(hl)
-                        ld      c,a                     ; c = left column
-                        inc     hl
-                        ld      d,(hl)                  ; d = right col
-                        inc     hl                      ; now ready for next linel
-                        push    hl,,bc
-                        cp      d                       ; if both points are the same then no line (we will ignore single pixel as it can't happen at this stage other than tips of circles)
-                        IfResultZeroGoto .NoLineDraw
-                        ld      a,d                     ; get right col back
-                        sub     c                       ; subtract left so a = length
-                        inc     a                       ; so its at least 1 , TODO add cp jr c logic in dma routine so that it does non dma if line < x 
-                        call    z, .FixWidth
-                        ld      d,a                     ; de = length (e - d)
-                        ld      e,216                   ; yellow
-                        call    l2_draw_horz_dma        ; draw without bank switch
-.NoLineDraw:            pop     hl,,bc
-                        inc     b
-                        dec     iyh
-                        IfResultNotZeroGoto  .drawLoop
-                        ENDM
 
-
-                        
+                       
 SunDraw:                MMUSelectLayer2
 .OptimiseStartPos:      ld      a,(MinYOffset)
                         JumpIfAIsZero .OffsetIsZero     ; if offset is 0 then just initate as normal
@@ -656,7 +658,8 @@ SunAHLequAHLDivCDE:     ld      b,a                         ; save a reg
                         JumpIfAIsNotZero   .resultIsZero
                         ld      c,e
                         ld      e,l
-                        call    E_Div_C
+                        MMUSelectMathsBankedFns
+                        call    div_e_div_c
                         ld      l,a
                         ZeroA
                         ld      h,a
@@ -819,7 +822,7 @@ SunUpdateCompass:       ld      a,(SBnKxsgn)
                         ld      (SunCompassY),hl
                         ret
                         
-                   ; could probabyl set a variable say "varGood", default as 1 then set to 0 if we end up with a good calulation?? may not need it as we draw here     
+; could probabyl set a variable say "varGood", default as 1 then set to 0 if we end up with a good calulation?? may not need it as we draw here     
 SunUpdateAndRender:     call    SunApplyMyRollAndPitch
 .CheckDrawable:         ld      a,(SBnKzsgn)
                         JumpIfAGTENusng 48,  SunUpdateCompass ; at a distance over 48 its too far away

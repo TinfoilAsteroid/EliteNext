@@ -561,7 +561,8 @@ PlanetAHLequAHLDivCDE:  ld      b,a                         ; save a reg
                         JumpIfAIsNotZero   .resultIsZero
                         ld      c,e
                         ld      e,l
-                        call    E_Div_C
+                        MMUSelectMathsBankedFns
+                        call    div_e_div_c
                         ld      l,a
                         ZeroA
                         ld      h,a

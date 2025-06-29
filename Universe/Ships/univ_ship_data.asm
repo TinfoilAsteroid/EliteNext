@@ -1253,6 +1253,7 @@ ProjectNodeToScreen:
         ld          hl,varQ
         cp          (hl)                                ; Q
         JumpIfALTusng DoSmallAngle                      ; LL69 if xdist < zdist hop over jmp to small x angle
+        MMUSelectMathsBankedFns
         call        RequAmul256divQ;RequAdivQ                           ; LL61  \ visit up  R = A/Q = x/z
         jp          SkipSmallAngle                      ; LL65  \ hop over small xangle
 DoSmallAngle:                                           ; small x angle
@@ -1311,6 +1312,7 @@ SmallYPoint:
         jp          SkipYScale                          ; LL68 hop over small y yangle
 SmallYHop:
 LL67:                                                   ; Arrive from LL66 above if XX15+3 < Q \ small yangle
+        MMUSelectMathsBankedFns
         call        RequAmul256divQ                     ; LL28  \ BFRDIV R=A*256/Q byte for remainder of division
 SkipYScale:
 LL68:                                                   ; both carry on, also arrive from LL66, yscaled based on z
@@ -1522,6 +1524,7 @@ PlotAllNodes:           ld      a,(VertexCtX6Addr)               ; get Hull byte
 .GetActualVertexCount:  ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
                         ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
                         ld      d,6
+                        MMUSelectMathsBankedFns
                         call    asm_div8                         ; asm_div8 C_Div_D - C is the numerator, D is the denominator, A is the remainder, B is 0, C is the result of C/D,D,E,H,L are not changed"
                         ld      b,c                              ; c = number of vertices
                         ld      iy,UBnkNodeArray
@@ -1575,6 +1578,7 @@ ProcessNodes:           ZeroA
 GetActualVertexCount:   ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
                         ld      c,a                              ; XX20 also c = number of vertices * 6 (or XX20)
                         ld      d,6
+                        MMUSelectMathsBankedFns
                         call    asm_div8                         ; asm_div8 C_Div_D - C is the numerator, D is the denominator, A is the remainder, B is 0, C is the result of C/D,D,E,H,L are not changed"
                         ld      b,c                              ; c = number of vertices
                         ld      iy,UBnkNodeArray
@@ -1692,6 +1696,7 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
         ELSE
                         ld      d,a                         ;
                         ld      e,0                         ;
+                        MMUSelectMathsBankedFns
                         call    DEequDEDivBC                ; de = cloud counter * 256 / z distance
                         ld      a,d                         ; if radius >= 28
         ENDIF

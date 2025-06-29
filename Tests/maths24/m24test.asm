@@ -85,7 +85,7 @@ TopOfStack              equ $5CCB ;$6100
 EliteNextStartup:       di
                         break
                         ld      iy,Test1
-                        ld      b,11
+                        ld      b,15
 .testloop:              push    iy,,bc
                         call    TestMult
                         pop     iy,,bc
@@ -97,46 +97,118 @@ EliteNextStartup:       di
                         break
 
 ErrorCount:             DW  0
+
+MultiplyResult:         DS  16  ; reserve 6 bytes for maths result, little endian rest is padding for console display alignment
+
       
                         ;  X............  Y............   Fill Expected (hlbc)...  Actual............  Pass/Fail
                         ;   0    1    2    3    4    5    6    7,   8,   9,   A,   B,   C,   D,   E,   F
-Test1:                   DB $00, $FA, $C0, $00, $4B, $00, $00, $49, $76, $40, $00, $00, $00, $00, $00, $11
-Test2:                   DB $04, $00, $C0, $00, $00, $C0, $00, $03, $00, $90, $00, $00, $00, $00, $00, $11
-Test3:                   DB $00, $FA, $B3, $00, $4B, $00, $00, $49, $72, $80, $00, $00, $00, $00, $00, $11
-Test4:                   DB $00, $4D, $6E, $00, $4D, $6E, $00, $17, $6B, $67, $00, $00, $00, $00, $00, $11
-Test5:                   DB $00, $73, $00, $00, $D7, $00, $00, $60, $95, $00, $00, $00, $00, $00, $00, $11
-Test6:                   DB $0B, $00, $00, $00, $00, $C0, $00, $08, $40, $00, $00, $00, $00, $00, $00, $11
-Test7:                   DB $02, $54, $40, $00, $0E, $80, $00, $21, $C5, $A0, $00, $00, $00, $00, $00, $11
-Test8:                   DB $00, $00, $C0, $00, $02, $00, $00, $00, $01, $80, $00, $00, $00, $00, $00, $11
-Test9:                   DB $00, $00, $40, $00, $02, $00, $00, $00, $00, $80, $00, $00, $00, $00, $00, $11
-TestA:                   DB $05, $06, $80, $00, $02, $00, $00, $0A, $0D, $00, $00, $00, $00, $00, $00, $11
-TestB:                   DB $04, $00, $C0, $00, $00, $C0, $00, $03, $00, $90, $00, $00, $00, $00, $00, $11
-                       
-                        ;  Dividend.....  Divisor......                                                                             E H  L    B  C
+Test1:                   DB $C0, $FA, $00, $00, $4B, $00, $00, $40, $76, $49, $00, $00, $00, $00, $00, $11 ;
+Test2:                   DB $C0, $00, $04, $C0, $00, $00, $00, $90, $00, $03, $00, $00, $00, $00, $00, $11
+Test3:                   DB $B3, $FA, $00, $00, $4B, $00, $00, $71, $72, $49, $00, $00, $00, $00, $00, $11 ; 250.6692 * 75 = 18802.44
+Test4:                   DB $6E, $4D, $00, $6E, $4B, $00, $00, $7F, $D0, $16, $00, $00, $00, $00, $00, $11 ; 77.4296875 * 75.4296875 = 5840.497131
+Test5:                   DB $00, $73, $00, $00, $D7, $00, $00, $00, $95, $60, $00, $00, $00, $00, $00, $11
+Test6:                   DB $00, $00, $0B, $C0, $00, $00, $00, $00, $40, $08, $00, $00, $00, $00, $00, $11
+Test7:                   DB $40, $54, $02, $80, $0E, $00, $00, $A0, $C5, $21, $00, $00, $00, $00, $00, $11
+Test8:                   DB $C0, $00, $00, $00, $02, $00, $00, $80, $01, $00, $00, $00, $00, $00, $00, $11
+Test9:                   DB $40, $00, $00, $00, $02, $00, $00, $80, $00, $00, $00, $00, $00, $00, $00, $11
+TestA:                   DB $80, $06, $05, $00, $02, $00, $00, $00, $0D, $0A, $00, $00, $00, $00, $00, $11
+TestB:                   DB $C0, $00, $04, $C0, $00, $00, $00, $90, $00, $03, $00, $00, $00, $00, $00, $11
+TestC:                   DB $C0, $00, $04, $C0, $00, $04, $00, $90, $00, $06, $10, $00, $00, $00, $00, $11
+TestD:                   DB $40, $00, $02, $80, $00, $00, $00, $20, $00, $01, $00, $00, $00, $00, $00, $11
+TestE:                   DB $C0, $00, $04, $80, $61, $00, $00, $20, $49, $86, $01, $00, $00, $00, $00, $11
+TestF:                   DB $66, $12, $06, $80, $61, $00, $00, $D9, $01, $50, $02, $00, $00, $00, $00, $11
 
-
-TestMult:               ld      hl,(iy+0)           ; bhl = X
+TestMult64:             ld      hl,(iy+0)           ; dehl = X
                         ld      a,(iy+2)            ; .
-                        ld      b,a                 ; .
-                        ld      de,(iy+3)           ; cde = Y
+                        ld      e,a                 ; .
+                        ld      d,0
+                        exx                         ; de'hl' = X
+                        ld      hl,(iy+3)           ; dehl = Y
                         ld      a,(iy+5)            ;
-                        ld      c,a                 ;
-                        call    BCDEHLequBHLmulCDEs ; BCDEHL = result is BCDE.HL
-                        ld      a,h                 ; save result but we only care about de.h
+                        ld      e,a                 ;
+                        ld      d,0
+                        exx
+                        call    mul24
+                        ;call    mulu_64             ; result of dehl de'hl' = dehl * dehl' 
+                        exx                         ; so now we have l'de.h to consdier                     ; we only care about lde'.h' in the resul
+                        ld      a,h                 ; we only care about lde'.h' in the resul
                         ld      (iy+$0B),a          ; .
                         ld      (iy+$0C),de         ; .
+                        exx
+                        ld      a,l
+                        ld      (iy+$0E),a          ; and finally l
 .CheckResult:           ld      a,(iy+$07)
-                        cp      c
-                        jp      nz,.Fail
-                        ld      a,(iy+$08)
+                        ld      b,a
+                        ld      a,(iy+$0B)
                         cp      b
                         jp      nz,.Fail
+                        
+                        ld      a,(iy+$08)
+                        ld      b,a
+                        ld      a,(iy+$0C)
+                        cp      b
+                        jp      nz,.Fail
+                        
                         ld      a,(iy+$09)
-                        cp      l
+                        ld      b,a
+                        ld      a,(iy+$0D)
+                        cp      b
                         jp      nz,.Fail
+                        
                         ld      a,(iy+$0A)
-                        cp      h
+                        ld      b,a
+                        ld      a,(iy+$0E)
+                        cp      b
                         jp      nz,.Fail
+                        
+                        ld      a,$FF
+                        ld      (iy+$0F),a
+                        ret
+.Fail:                  ld      a,$00
+                        ld      (iy+$0F),a
+                        ld      hl,ErrorCount
+                        inc     (hl)
+                        ret
+
+
+TestMult:               ld      hl,(iy+0)           ; dehl = X
+                        ld      a,(iy+2)            ; .
+                        ld      b,a                 ; .
+                        ld      de,(iy+3)           ; dehl = Y
+                        ld      a,(iy+5)            ;
+                        ld      c,a                 ;
+                        break
+                        call    mul24               ; BH.L by CD.E putting result in BCDE.HL
+                        ld      a,h
+                        ld      (iy+$0B),a          ; .
+                        ld      (iy+$0C),de         ; .
+                        ZeroA
+                        ld      (iy+$0E),a          ; and finally l
+.CheckResult:           ld      a,(iy+$07)
+                        ld      b,a
+                        ld      a,(iy+$0B)
+                        cp      b
+                        jp      nz,.Fail
+                        
+                        ld      a,(iy+$08)
+                        ld      b,a
+                        ld      a,(iy+$0C)
+                        cp      b
+                        jp      nz,.Fail
+                        
+                        ld      a,(iy+$09)
+                        ld      b,a
+                        ld      a,(iy+$0D)
+                        cp      b
+                        jp      nz,.Fail
+                        
+                        ld      a,(iy+$0A)
+                        ld      b,a
+                        ld      a,(iy+$0E)
+                        cp      b
+                        jp      nz,.Fail
+                        
                         ld      a,$FF
                         ld      (iy+$0F),a
                         ret

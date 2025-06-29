@@ -1,0 +1,2491 @@
+# file opened: rp24test.asm
+  1   0000                              DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
+  2   0000                              DISPLAY "rp24test test"
+  3   0000                              DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
+  4   0000
+  5   0000
+  6   0000                  DEFINE DEBUGMODE 1
+  7   0000                  DEVICE ZXSPECTRUMNEXT
+  8   0000                  SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
+  9   0000                  ;DEFINE  TESTING_MATHS_DIVIDE 1
+ 10   0000               CSPECTMAP rp24test.map
+ 11   0000               OPT --zxnext=cspect --syntax=a --reversepop
+ 12   0000                             DEFINE     MAIN_INTERRUPTENABLE 1
+ 13   0000              DEBUGSEGSIZE   equ 1
+ 14   0000              DEBUGLOGSUMMARY equ 1
+ 15   0000
+ 16   0000
+ 17   0000              ;----------------------------------------------------------------------------------------------------------------------------------
+ 18   0000              ; Game Defines
+ 19   0000              ScreenLocal      EQU 0
+ 20   0000              ScreenGalactic   EQU ScreenLocal + 1
+ 21   0000              ScreenMarket     EQU ScreenGalactic + 1
+ 22   0000              ScreenMarketDsp  EQU ScreenMarket + 1
+ 23   0000              ScreenStatus     EQU ScreenMarketDsp + 1
+ 24   0000              ScreenInvent     EQU ScreenStatus + 1
+ 25   0000              ScreenPlanet     EQU ScreenInvent + 1
+ 26   0000              ScreenEquip      EQU ScreenPlanet + 1
+ 27   0000              ScreenLaunch     EQU ScreenEquip + 1
+ 28   0000              ScreenFront      EQU ScreenLaunch + 1
+ 29   0000              ScreenAft        EQU ScreenFront+1
+ 30   0000              ScreenLeft       EQU ScreenAft+1
+ 31   0000              ScreenRight      EQU ScreenLeft+1
+ 32   0000              ScreenDocking    EQU ScreenRight+1
+ 33   0000              ScreenHyperspace EQU ScreenDocking+1
+ 34   0000              ;----------------------------------------------------------------------------------------------------------------------------------
+ 35   0000              ; Colour Defines
+ 36   0000              SignMask8Bit		equ %01111111
+ 37   0000              SignMask16Bit		equ %0111111111111111
+ 38   0000              SignOnly8Bit		equ $80
+ 39   0000              SignOnly16Bit		equ $8000
+ 40   0000
+ 41   0000              Bit7Only            equ %10000000
+ 42   0000              Bit6Only            equ %01000000
+ 43   0000              Bit5Only            equ %00100000
+ 44   0000              Bit4Only            equ %00010000
+ 45   0000              Bit3Only            equ %00001000
+ 46   0000              Bit2Only            equ %00000100
+ 47   0000              Bit1Only            equ %00000010
+ 48   0000              Bit0Only            equ %00000001
+ 49   0000              Bit7Clear           equ %01111111
+ 50   0000              Bit6Clear           equ %10111111
+ 51   0000              Bit5Clear           equ %11011111
+ 52   0000              Bit4Clear           equ %11101111
+ 53   0000              Bit3Clear           equ %11110111
+ 54   0000              Bit2Clear           equ %11111011
+ 55   0000              Bit1Clear           equ %11111101
+ 56   0000              Bit0Clear           equ %11111110
+ 57   0000              ConstPi				equ $80
+ 58   0000              ConstNorm           equ 197
+ 59   0000
+ 60   0000
+ 61   0000
+ 62   0000                                      INCLUDE "../../Macros/jumpMacros.asm"
+# file opened: jumpMacros.asm
+  1+  0000              JumpIfHLNegative:       MACRO target
+  2+  0000 ~                                    bit     7,h
+  3+  0000 ~                                    jp      nz,target
+  4+  0000                                      ENDM
+  5+  0000
+  6+  0000              JumpIfPositive:	        MACRO target
+  7+  0000 ~                                    jp		p, target
+  8+  0000                                      ENDM
+  9+  0000
+ 10+  0000              JumpIfNegative:	        MACRO target
+ 11+  0000 ~                                    jp		m, target
+ 12+  0000                                      ENDM
+ 13+  0000
+ 14+  0000
+ 15+  0000              JumpIfUnderflow:	    MACRO target
+ 16+  0000 ~                                    jp		po, target
+ 17+  0000                                      ENDM
+ 18+  0000
+ 19+  0000              JumpIfOverflow:	        MACRO target
+ 20+  0000 ~                                    jp		po, target
+ 21+  0000                                      ENDM
+ 22+  0000
+ 23+  0000
+ 24+  0000              JumpIfNotZero:	        MACRO target
+ 25+  0000 ~                                    jp	nz,target
+ 26+  0000                                      ENDM
+ 27+  0000
+ 28+  0000              JumpIfZero:	            MACRO target
+ 29+  0000 ~                                    jp	z,target
+ 30+  0000                                      ENDM
+ 31+  0000
+ 32+  0000              ;.. Bit routines
+ 33+  0000              JumpOnLeadSignSet:      MACRO   reg, target
+ 34+  0000 ~                                    ld      a,reg
+ 35+  0000 ~                                    and     SignOnly8Bit
+ 36+  0000 ~                                    jp      nz,target
+ 37+  0000                                      ENDM
+ 38+  0000
+ 39+  0000              JumpOnLeadSignClear:    MACRO   reg, target
+ 40+  0000 ~                                    ld      a,reg
+ 41+  0000 ~                                    and     SignOnly8Bit
+ 42+  0000 ~                                    jp      z,target
+ 43+  0000                                      ENDM
+ 44+  0000
+ 45+  0000              JumpOnLeadSignSetA:     MACRO   target
+ 46+  0000 ~                                    and     SignOnly8Bit
+ 47+  0000 ~                                    jp      nz,target
+ 48+  0000                                      ENDM
+ 49+  0000
+ 50+  0000              JumpOnLeadSignClearA:   MACRO   target
+ 51+  0000 ~                                    and     SignOnly8Bit
+ 52+  0000 ~                                    jp      z,target
+ 53+  0000                                      ENDM
+ 54+  0000
+ 55+  0000              JumpOnMemBitSet:        MACRO mem, bitnbr, target
+ 56+  0000 ~                                    ld      a,(mem)
+ 57+  0000 ~                                    bit 	bitnbr,a
+ 58+  0000 ~                                    jp      nz,target
+ 59+  0000                                      ENDM
+ 60+  0000
+ 61+  0000              JumpOnMemBitClear:      MACRO mem, bitnbr, target
+ 62+  0000 ~                                    ld      a,(mem)
+ 63+  0000 ~                                    bit 	bitnbr,a
+ 64+  0000 ~                                    jp      z,target
+ 65+  0000                                      ENDM
+ 66+  0000
+ 67+  0000
+ 68+  0000              JumpOnABitSet:          MACRO   bitnbr, target
+ 69+  0000 ~                                    bit 	bitnbr, a
+ 70+  0000 ~                                    jp      nz,target
+ 71+  0000                                      ENDM
+ 72+  0000
+ 73+  0000              JumpOnABitClear:        MACRO   bitnbr, target
+ 74+  0000 ~                                    bit 	bitnbr, a
+ 75+  0000 ~                                    jp      z,target
+ 76+  0000                                      ENDM
+ 77+  0000
+ 78+  0000              JumpOnABit5Set:         MACRO   target
+ 79+  0000 ~                                    and     Bit5Only
+ 80+  0000 ~                                    jp      nz,target
+ 81+  0000                                      ENDM
+ 82+  0000
+ 83+  0000              JumpOnABit5Clear:       MACRO   target
+ 84+  0000 ~                                    and     Bit5Only
+ 85+  0000 ~                                    jp      z,target
+ 86+  0000                                      ENDM
+ 87+  0000
+ 88+  0000              JumpOnBitMaskSet:       MACRO   bitmask, target
+ 89+  0000 ~                                    and     bitmask
+ 90+  0000 ~                                    jp      nz,target
+ 91+  0000                                      ENDM
+ 92+  0000
+ 93+  0000              JumpOnBitMaskClear:     MACRO   bitmask, target
+ 94+  0000 ~                                    and     bitmask
+ 95+  0000 ~                                    jp      z,target
+ 96+  0000                                      ENDM
+ 97+  0000
+ 98+  0000              JumpOnMemBitMaskSet:    MACRO   mem, bitmask, target
+ 99+  0000 ~                                    ld      a,(mem)
+100+  0000 ~                                    and     bitmask
+101+  0000 ~                                    jp      nz,target
+102+  0000                                      ENDM
+103+  0000
+104+  0000              JumpOnMemBitMaskClear:  MACRO   mem, bitmask, target
+105+  0000 ~                                    ld      a,(mem)
+106+  0000 ~                                    and     bitmask
+107+  0000 ~                                    jp      z,target
+108+  0000                                      ENDM
+109+  0000
+110+  0000              JumpOnBitSet:           MACRO  reg, bitnbr, target
+111+  0000 ~                                    bit 	bitnbr,reg
+112+  0000 ~                                    jp      nz,target
+113+  0000                                      ENDM
+114+  0000
+115+  0000              JumpOnBitClear:         MACRO  reg, bitnbr, target
+116+  0000 ~                                    bit 	bitnbr,reg
+117+  0000 ~                                    jp      z,target
+118+  0000                                      ENDM
+119+  0000
+120+  0000              ; Comparison Routines
+121+  0000              JumpIfAGTEusng:         MACRO
+122+  0000 ~                                    jp		nc,target
+123+  0000                                      ENDM
+124+  0000
+125+  0000              JumpIfAGTENusng:        MACRO reg,target
+126+  0000 ~                                    cp     reg
+127+  0000 ~                                    jp		nc,target
+128+  0000                                      ENDM
+129+  0000
+130+  0000              JumpIfAGTEMemusng:      MACRO mem,target
+131+  0000 ~                                    ld      hl,mem
+132+  0000 ~                                    cp      (hl)
+133+  0000 ~                                    jp		nc,target
+134+  0000                                      ENDM
+135+  0000              JumpIfMemGTENusng:      MACRO mem, value, target
+136+  0000 ~                                    ld     a,(mem)
+137+  0000 ~                                    cp     value
+138+  0000 ~                                    jp	  nc,target
+139+  0000                                      ENDM
+140+  0000
+141+  0000              JumpIfMemGTEMemusng:    MACRO mem, address, target
+142+  0000 ~                                    ld   a,(mem)
+143+  0000 ~                                    ld   hl,address
+144+  0000 ~                                    cp   (hl)
+145+  0000 ~                                    jp	  nc,target
+146+  0000                                      ENDM
+147+  0000
+148+  0000              JumpIfMemEqMemusng:     MACRO mem, address, target
+149+  0000 ~                                    ld   a,(mem)
+150+  0000 ~                                    ld   hl,address
+151+  0000 ~                                    cp   (hl)
+152+  0000 ~                                    jp	  z,target
+153+  0000                                      ENDM
+154+  0000
+155+  0000              JumpIfMemNeMemusng:     MACRO mem, address, target
+156+  0000 ~                                    ld   a,(mem)
+157+  0000 ~                                    ld   hl,address
+158+  0000 ~                                    cp   (hl)
+159+  0000 ~                                    jp	  nz,target
+160+  0000                                      ENDM
+161+  0000
+162+  0000              JumpIfMemTrue:          MACRO mem, target
+163+  0000 ~                                    ld      a,(mem)
+164+  0000 ~                                    and     a
+165+  0000 ~                                    jp      z, target
+166+  0000                                      ENDM
+167+  0000
+168+  0000              JumpIfMemFalse:         MACRO mem, target
+169+  0000 ~                                    ld      a,(mem)
+170+  0000 ~                                    and     a
+171+  0000 ~                                    jp      nz, target
+172+  0000                                      ENDM
+173+  0000
+174+  0000              JumpIfATrue:            MACRO target
+175+  0000 ~                                    and     a
+176+  0000 ~                                    jp      z, target
+177+  0000                                      ENDM
+178+  0000
+179+  0000              JumpIfAFalse:           MACRO target
+180+  0000 ~                                    and     a
+181+  0000 ~                                    jp      nz, target
+182+  0000                                      ENDM
+183+  0000
+184+  0000              JumpIfANotFalse:        MACRO target
+185+  0000 ~                                    cp      $FF
+186+  0000 ~                                    jp      nz, target
+187+  0000                                      ENDM
+188+  0000
+189+  0000              ;-- Less than Macros -------------------------------------------
+190+  0000              JumpIfALTMemHLusng:     MACRO target
+191+  0000 ~                                    cp    (hl)
+192+  0000 ~                                    jp	  c,target
+193+  0000                                      ENDM
+194+  0000
+195+  0000              JumpIfRegLTE:           MACRO   reg, value, target
+196+  0000 ~                                    ld      a,reg
+197+  0000 ~                                    cp      value
+198+  0000 ~                                    jp	    z,target
+199+  0000 ~                                    jp		c, target
+200+  0000                                      ENDM
+201+  0000
+202+  0000              JumpIfALTMemusng:       MACRO mem,target
+203+  0000 ~                                    ld      hl,mem
+204+  0000 ~                                    cp      (hl)
+205+  0000 ~                                    jp		c,target
+206+  0000                                      ENDM
+207+  0000
+208+  0000
+209+  0000              JumpIfALTusng:          MACRO target
+210+  0000 ~                                    jp		c,target
+211+  0000                                      ENDM
+212+  0000
+213+  0000              JumpIfALTNusng:         MACRO value, target
+214+  0000 ~                                    cp      value
+215+  0000 ~                                    jp		c, target
+216+  0000                                      ENDM
+217+  0000
+218+  0000              JumpIfALTNsigned:       MACRO   value, target
+219+  0000 ~                                    cp      value
+220+  0000 ~                                    jp      m,.SignSet
+221+  0000 ~            .SignClear:             jp      pe,target       ; Sign (0), P/V (1)
+222+  0000 ~                                    jp      .CheckComplete  ; Sign (1), P/V (0)
+223+  0000 ~            .SignSet:               jp      po,target
+224+  0000 ~            .CheckComplete:
+225+  0000                                      ENDM
+226+  0000
+227+  0000              JumpIfMemLTNusng:       MACRO mem, value, target
+228+  0000 ~                                    ld      a,(mem)
+229+  0000 ~                                    cp      value
+230+  0000 ~                                    jp	  c,target
+231+  0000                                      ENDM
+232+  0000
+233+  0000              JumpIfMemLTMemusng:     MACRO mem, value, target
+234+  0000 ~                                    ld    a,(mem)
+235+  0000 ~                                    ld    hl,value
+236+  0000 ~                                    cp    (hl)
+237+  0000 ~                                    jp	  c,target
+238+  0000                                      ENDM
+239+  0000              ;-- ------------------------------------------------------------
+240+  0000              JumpIfAGTENsigned       MACRO   value, target
+241+  0000 ~                                    cp      value
+242+  0000 ~                                    jp      m,.SignSet
+243+  0000 ~            .SignClear:             jp      po,target       ; Sign (0), P/V (0)
+244+  0000 ~                                    jp      .CheckComplete  ; Sign (1), P/V (1)
+245+  0000 ~            .SignSet:               jp      pe,target
+246+  0000 ~            .CheckComplete:
+247+  0000                                      ENDM
+248+  0000
+249+  0000              JumpIfMemEqNusng:       MACRO mem,value,target
+250+  0000 ~                                    ld  a,(mem)
+251+  0000 ~                                    cp  value
+252+  0000 ~                                    jp  z,target
+253+  0000                                      ENDM
+254+  0000
+255+  0000              JumpIfMemNeNusng:       MACRO mem,value,target
+256+  0000 ~                                    ld  a,(mem)
+257+  0000 ~                                    cp  value
+258+  0000 ~                                    jp  nz,target
+259+  0000                                      ENDM
+260+  0000
+261+  0000              JumpIfMemZero:          MACRO mem,target
+262+  0000 ~                                    ld  a,(mem)
+263+  0000 ~                                    and a
+264+  0000 ~                                    jp  z,target
+265+  0000                                      ENDM
+266+  0000
+267+  0000              JumpIfMemNotZero:       MACRO mem,target
+268+  0000 ~                                    ld  a,(mem)
+269+  0000 ~                                    and a
+270+  0000 ~                                    jp  nz,target
+271+  0000                                      ENDM
+272+  0000
+273+  0000              JumpIfANENusng:         MACRO value, target
+274+  0000 ~                                    cp     value
+275+  0000 ~                                    jp      nz,target
+276+  0000                                      ENDM
+277+  0000
+278+  0000              JumpIfANEquNusng:       MACRO value, target
+279+  0000 ~                                    cp     value
+280+  0000 ~                                    jp     z,target
+281+  0000                                      ENDM
+282+  0000
+283+  0000              JumpIfANEMemusng:       MACRO  value, target
+284+  0000 ~                                    ld    hl,value
+285+  0000 ~                                    cp    (hl)
+286+  0000 ~                                    jp      nz,target
+287+  0000                                      ENDM
+288+  0000
+289+  0000              JumpIfAEqNusng:         MACRO value, target
+290+  0000 ~                                    cp     value
+291+  0000 ~                                    jp      z,target
+292+  0000                                      ENDM
+293+  0000
+294+  0000              JumpIfAIsZero:	        MACRO target
+295+  0000 ~                                    and     a   ; cp 0 - changed to and a for optimisation but affects other flags
+296+  0000 ~                                    jp	    z, target
+297+  0000                                      ENDM
+298+  0000
+299+  0000              JumpIfRegIsNotZero:     MACRO   reg, target
+300+  0000 ~                                    ld      a,reg
+301+  0000 ~                                    and     a
+302+  0000 ~                                    jp	    nz,target
+303+  0000                                      ENDM
+304+  0000
+305+  0000
+306+  0000              JumpIfAIsNotZero:       MACRO target
+307+  0000 ~                                    and     a
+308+  0000 ~                                    jp	    nz,target
+309+  0000                                      ENDM
+310+  0000
+311+  0000              JumpIfMemIsNotZero:     MACRO value, target
+312+  0000 ~                                    ld      a,(value)
+313+  0000 ~                                    and     a
+314+  0000 ~                                    jp	    nz,target
+315+  0000                                      ENDM
+316+  0000              IfResultZeroGoto:	    MACRO target
+317+  0000 ~                                    jp	z,target
+318+  0000                                      ENDM
+319+  0000
+320+  0000              IfResultNotZeroGoto:    MACRO target
+321+  0000 ~                                    jp	nz,target
+322+  0000                                      ENDM
+323+  0000
+# file closed: jumpMacros.asm
+ 63   0000                                      INCLUDE "../../Macros/MathsMacros.asm"
+# file opened: MathsMacros.asm
+  1+  0000              ZeroA:		            MACRO
+  2+  0000 ~                                    xor a
+  3+  0000                                      ENDM
+  4+  0000              ; sets z flag is HL less than 255 else sets it to nz (note opposite of GT127)
+  5+  0000              IsHLGT255:              MACRO
+  6+  0000 ~                                    bit     7,h
+  7+  0000 ~                                    ret     z
+  8+  0000 ~                                    ld      a,h
+  9+  0000 ~                                    and     a
+ 10+  0000                                      ENDM
+ 11+  0000
+ 12+  0000              ; Sets z flat if HL = 255 else sets it to nz
+ 13+  0000              IsHLEqu255:             MACRO
+ 14+  0000 ~                                    ld      a,h
+ 15+  0000 ~                                    and     a               ; if its non zero then it can't be 255
+ 16+  0000 ~                                    ret     nz
+ 17+  0000 ~                                    ld      a,l
+ 18+  0000 ~                                    inc     a               ; if it was 255 the inc will set it to zero
+ 19+  0000                                      ENDM
+ 20+  0000
+ 21+  0000              ; Sets Z flag if GT 127 else nz
+ 22+  0000              IsHLGT127:              MACRO
+ 23+  0000 ~                                    bit     7,h             ; -ve?
+ 24+  0000 ~                                    jr      nz,.DoneCheck
+ 25+  0000 ~                                    ld      a,h             ; +ve > 256?
+ 26+  0000 ~                                    and     a
+ 27+  0000 ~                                    jr      nz,.DoneCheck
+ 28+  0000 ~                                    ld      a,l
+ 29+  0000 ~                                    and     $80             ; this will set z to false if bit 7 set and clear lower bits
+ 30+  0000 ~                                    cp      $80             ; this will set z to true if bit 7 set
+ 31+  0000 ~            .DoneCheck:
+ 32+  0000                                      ENDM
+ 33+  0000
+ 34+  0000              ReturnIfHLGT127:        MACRO
+ 35+  0000 ~                                    bit     7,h             ; -ve?
+ 36+  0000 ~                                    jr      nz,.DoneCheck   ; forces check complete
+ 37+  0000 ~                                    ld      a,h             ; +ve > 256?
+ 38+  0000 ~                                    and     a               ;
+ 39+  0000 ~                                    ret     nz              ; forces a return
+ 40+  0000 ~                                    bit     7,l             ; bit 7 of lower set?
+ 41+  0000 ~                                    ret     nz              ; forces a return
+ 42+  0000 ~            .DoneCheck:
+ 43+  0000                                      ENDM
+ 44+  0000
+ 45+  0000              IsDEGT127:              MACRO
+ 46+  0000 ~                                    bit     7,d
+ 47+  0000 ~                                    jr      nz,.DoneCheck
+ 48+  0000 ~                                    ld      a,d
+ 49+  0000 ~                                    jr      nz,.DoneCheck
+ 50+  0000 ~                                    ld      a,e
+ 51+  0000 ~                                    and     $80
+ 52+  0000 ~            .DoneCheck:
+ 53+  0000                                      ENDM
+ 54+  0000
+ 55+  0000              ABSa2c:                 MACRO
+ 56+  0000 ~                                    bit     7,a
+ 57+  0000 ~                                    jp      z,.DoneABSa
+ 58+  0000 ~                                    neg
+ 59+  0000 ~            .DoneABSa:
+ 60+  0000                                      ENDM
+ 61+  0000
+ 62+  0000              DEEquSquareA:           MACRO
+ 63+  0000 ~                                    ld  d,a
+ 64+  0000 ~                                    ld  e,a
+ 65+  0000 ~                                    mul de
+ 66+  0000                                      ENDM
+ 67+  0000
+ 68+  0000              ApplyMyRollToVector:    MACRO angle, vectorX, vectorY
+ 69+  0000 ~                                    ldCopyByte angle,varQ               ; Set Q = a = alpha (the roll angle to rotate through)
+ 70+  0000 ~                                    ldCopy2Byte vectorY, varR           ; RS =  nosev_y
+ 71+  0000 ~                                    ldCopyByte  vectorX, varP           ; set P to nosevX lo (may be redundant)
+ 72+  0000 ~                                    ld a,(vectorX+1)                    ; Set A = -nosev_x_hi
+ 73+  0000 ~                                    xor $80                             ;
+ 74+  0000 ~                                    call  madXAequQmulAaddRS            ; Set (A X) = Q * A + (S R) = = alpha * -nosev_x_hi + nosev_y
+ 75+  0000 ~                                    ld  (vectorY),de                    ; nosev_y = nosev_y - alpha * nosev_x_hi
+ 76+  0000 ~                                    ldCopy2Byte vectorX, varR           ; Set (S R) = nosev_x
+ 77+  0000 ~                                    ld  a,(vectorY+1)                   ;  Set A = nosev_y_hi
+ 78+  0000 ~                                    call madXAequQmulAaddRS             ; Set (A X) = Q * A + (S R)
+ 79+  0000 ~                                    ld  (vectorX),de                    ; nosev_x = nosev_x + alpha * nosev_y_hi
+ 80+  0000                                      ENDM
+ 81+  0000
+ 82+  0000              SignedHLTo2C:           MACRO
+ 83+  0000 ~                                    bit     7,h
+ 84+  0000 ~                                    jr      z,.Done2c
+ 85+  0000 ~                                    ld      a,h
+ 86+  0000 ~                                    and     SignMask8Bit
+ 87+  0000 ~                                    ld      h,a
+ 88+  0000 ~                                    NegHL
+ 89+  0000 ~            .Done2c:
+ 90+  0000                                      ENDM
+ 91+  0000
+ 92+  0000              MemSignedTo2C:          MACRO   memfrom
+ 93+  0000 ~                                    ld      hl,(memfrom)
+ 94+  0000 ~                                    bit     7,h
+ 95+  0000 ~                                    jr      z,.Done2c
+ 96+  0000 ~                                    ld      a,h
+ 97+  0000 ~                                    and     SignMask8Bit
+ 98+  0000 ~                                    ld      h,a
+ 99+  0000 ~            .Done2c:                ld      (memfrom),hl
+100+  0000                                      ENDM
+101+  0000
+102+  0000
+103+  0000                  ;returns result in H
+104+  0000              EDiv10Inline:           MACRO
+105+  0000 ~                                    ld      d,0
+106+  0000 ~                                    ld      hl,de
+107+  0000 ~                                    add     hl,hl
+108+  0000 ~                                    add     hl,de
+109+  0000 ~                                    add     hl,hl
+110+  0000 ~                                    add     hl,hl
+111+  0000 ~                                    add     hl,de
+112+  0000 ~                                    add     hl,hl
+113+  0000                                      ENDM
+114+  0000
+115+  0000              cpHLDE:                 MACRO
+116+  0000 ~                                    push    hl
+117+  0000 ~                                    and     a
+118+  0000 ~                                    sbc     hl,de
+119+  0000 ~                                    pop     hl
+120+  0000                                      ENDM
+121+  0000
+122+  0000              cpABSDEHL:              MACRO
+123+  0000 ~                                    push     hl,,de
+124+  0000 ~                                    ld      a,h
+125+  0000 ~                                    and     $7F
+126+  0000 ~                                    ld      h,a
+127+  0000 ~                                    ld      a,d
+128+  0000 ~                                    and     $7F
+129+  0000 ~                                    ld      d,a
+130+  0000 ~                                    ex      de,hl
+131+  0000 ~                                    sbc     hl,de
+132+  0000 ~                                    pop     hl,,de
+133+  0000                                      ENDM
+134+  0000
+135+  0000              ; Simple are they both the same setting z if they are
+136+  0000              ; tehcicall this works but it measn the final ret z is alwys done
+137+  0000              ; so jp needs to be to a target
+138+  0000              cpHLEquDE:              MACRO   passedCheck
+139+  0000 ~                                    ld      a,h
+140+  0000 ~                                    cp      d
+141+  0000 ~                                    jp      nz, passedCheck
+142+  0000 ~                                    ld      a,l
+143+  0000 ~                                    cp      e
+144+  0000 ~            .NoTheSame:
+145+  0000                                      ENDM
+146+  0000
+147+  0000              cpHLEquBC:              MACRO   passedCheck
+148+  0000 ~                                    ld      a,h
+149+  0000 ~                                    cp      b
+150+  0000 ~                                    jp      nz, passedCheck
+151+  0000 ~                                    ld      a,l
+152+  0000 ~                                    cp      c
+153+  0000 ~            .NoTheSame:
+154+  0000                                      ENDM
+155+  0000
+156+  0000              cpDEEquBC:              MACRO   passedCheck
+157+  0000 ~                                    ld      a,d
+158+  0000 ~                                    cp      b
+159+  0000 ~                                    jp      nz, passedCheck
+160+  0000 ~                                    ld      a,e
+161+  0000 ~                                    cp      c
+162+  0000 ~            .NoTheSame:
+163+  0000                                      ENDM
+164+  0000              ; Simple version just sets carry if HL < DE reset, does an initial compare for z
+165+  0000              cpHLDELeadSign:         MACRO
+166+  0000 ~                                    ld      a,h
+167+  0000 ~                                    cp      d
+168+  0000 ~                                    jr      nz,.FullCompare
+169+  0000 ~                                    ld      a,l
+170+  0000 ~                                    cp      e
+171+  0000 ~                                    ret     z
+172+  0000 ~            .FullCompare:           ld      a,h
+173+  0000 ~                                    xor     d
+174+  0000 ~                                    and     $80
+175+  0000 ~                                    jr      nz,.OppositeSigns   ; If opposite signs is a simple sign test
+176+  0000 ~                                    ld      a,h                 ; same signs so a little simpler
+177+  0000 ~                                    and     $80
+178+  0000 ~                                    jp      z,cpHLDE            ; if h is positive then both are positive by here so just cpHLDE
+179+  0000 ~                                    jp      cpABSDEHL           ; else we have to do ABScpDEHL
+180+  0000 ~            .OppositeSigns:         ld      a,h
+181+  0000 ~                                    and     $80
+182+  0000 ~                                    and     $80
+183+  0000 ~                                    jp      z,.HLGTDE
+184+  0000 ~            .HLLTDE:                SetCarryFlag
+185+  0000 ~                                    ret
+186+  0000 ~            .HLGTDE:                ClearCarryFlag
+187+  0000 ~                                    ret
+188+  0000                                      ENDM
+189+  0000
+190+  0000              ;Unsigned
+191+  0000              ;If HL == DE, then Z flag is set.
+192+  0000              ;If HL != DE, then Z flag is reset.
+193+  0000              ;If HL <  DE, then C flag is set.
+194+  0000              ;If HL >= DE, then C flag is reset.
+195+  0000              ;
+196+  0000              ;Signed
+197+  0000              ;If HL == DE, then Z flag is set.
+198+  0000              ;If HL != DE, then Z flag is reset.
+199+  0000              ;If HL <  DE, then S and P/V are different.
+200+  0000              ;If HL >= DE, then S and P/V are the same.
+201+  0000
+202+  0000
+203+  0000              N0equN1byN2div256:      MACRO param1,param2,param3
+204+  0000 ~                                    ld      a,param3                        ;
+205+  0000 ~                                    ld      e,a                         ; use e as var Q = value of XX15 [n] lo
+206+  0000 ~                                    ld      a,param2                        ; A = XX16 element
+207+  0000 ~                                    ld      d,a
+208+  0000 ~                                    mul
+209+  0000 ~                                    ld      a,d                         ; we get only the high byte which is like doing a /256 if we think of a as low
+210+  0000 ~                                    ld      (param1),a                      ; Q         ; result variable = XX16[n] * XX15[n]/256
+211+  0000                                      ENDM
+212+  0000
+213+  0000              AequN1xorN2:            MACRO  param1,param2
+214+  0000 ~                                    ld      a,(param1)
+215+  0000 ~                                    xor     param2
+216+  0000                                      ENDM
+217+  0000
+218+  0000              SpeedMulAxis:           MACRO   speedreg, axis
+219+  0000 ~                                    ld      e,speedreg
+220+  0000 ~                                    ld      hl,(axis)
+221+  0000 ~                                    ld      a,h
+222+  0000 ~                                    ClearSignBitA
+223+  0000 ~                                    ld      d,a
+224+  0000 ~                                    mul     de
+225+  0000 ~                                    ld      a,h
+226+  0000 ~                                    SignBitOnlyA
+227+  0000 ~                                    ld      b,a;ld      c,a
+228+  0000 ~                                    ld      h,d;ld      e,d
+229+  0000 ~                                    ld      c,0;ld      d,0
+230+  0000                                      ENDM
+231+  0000
+232+  0000              ; Adds speed (8 bit) to vertex (24 bit signed)
+233+  0000              AddSpeedToVert:         MACRO   vertex
+234+  0000 ~                                    ld      de,(vertex+1)
+235+  0000 ~                                    ld      a,(vertex)
+236+  0000 ~                                    ld      l,a
+237+  0000 ~                                    call    AddBCHtoDELsigned               ; DEL = DEL + BCH
+238+  0000 ~                                    ld      a,l
+239+  0000 ~                                    ld      (vertex),a
+240+  0000 ~                                    ld      (vertex+1),de
+241+  0000                                      ENDM
+# file closed: MathsMacros.asm
+ 64   0000                                      INCLUDE "../../Macros/ShiftMacros.asm"
+# file opened: ShiftMacros.asm
+  1+  0000              ShiftIYRight1: MACRO
+  2+  0000 ~                           ld   a,iyh
+  3+  0000 ~                           srl  a
+  4+  0000 ~                           ld   iyh,a
+  5+  0000 ~                           ld   a,iyl
+  6+  0000 ~                           rra
+  7+  0000 ~                           ld   iyl,a
+  8+  0000                             ENDM
+  9+  0000
+ 10+  0000              ShiftIXRight1: MACRO
+ 11+  0000 ~                           ld   a,ixh
+ 12+  0000 ~                           srl  a
+ 13+  0000 ~                           ld   ixh,a
+ 14+  0000 ~                           ld   a,ixl
+ 15+  0000 ~                           rra
+ 16+  0000 ~                           ld   ixl,a
+ 17+  0000                             ENDM
+ 18+  0000
+ 19+  0000              ShiftIXhHLRight1: MACRO
+ 20+  0000 ~                           ld  a,ixh
+ 21+  0000 ~                           srl a
+ 22+  0000 ~                           ld  ixh,a
+ 23+  0000 ~                           rr  h
+ 24+  0000 ~                           rr  l
+ 25+  0000                             ENDM
+ 26+  0000
+ 27+  0000              ShiftIYhDERight1: MACRO
+ 28+  0000 ~                           ld  a,iyh
+ 29+  0000 ~                           srl a
+ 30+  0000 ~                           ld  iyh,a
+ 31+  0000 ~                           rr  d
+ 32+  0000 ~                           rr  e
+ 33+  0000                             ENDM
+ 34+  0000
+ 35+  0000              ShiftIYlBCRight1: MACRO
+ 36+  0000 ~                           ld  a,iyl
+ 37+  0000 ~                           srl a
+ 38+  0000 ~                           ld  iyl,a
+ 39+  0000 ~                           rr  b
+ 40+  0000 ~                           rr  c
+ 41+  0000                             ENDM
+ 42+  0000
+ 43+  0000              ShiftIXlBCRight1: MACRO
+ 44+  0000 ~                           ld  a,ixl
+ 45+  0000 ~                           srl a
+ 46+  0000 ~                           ld  ixl,a
+ 47+  0000 ~                           rr  b
+ 48+  0000 ~                           rr  c
+ 49+  0000                             ENDM
+ 50+  0000
+ 51+  0000              ShiftHLRight1: MACRO
+ 52+  0000 ~                           srl h
+ 53+  0000 ~                           rr  l
+ 54+  0000                             ENDM
+ 55+  0000
+ 56+  0000              ShiftBHLRight1:MACRO
+ 57+  0000 ~                           srl b
+ 58+  0000 ~                           rr h
+ 59+  0000 ~                           rr  l
+ 60+  0000                             ENDM
+ 61+  0000
+ 62+  0000              ShiftCDERight1:MACRO
+ 63+  0000 ~                           srl c
+ 64+  0000 ~                           rr  d
+ 65+  0000 ~                           rr  e
+ 66+  0000                             ENDM
+ 67+  0000
+ 68+  0000
+ 69+  0000              SRAHLRight1: MACRO
+ 70+  0000 ~                           sra h
+ 71+  0000 ~                           rr  l
+ 72+  0000                             ENDM
+ 73+  0000
+ 74+  0000              ShiftDERight1: MACRO
+ 75+  0000 ~                           srl d
+ 76+  0000 ~                           rr  e
+ 77+  0000                             ENDM
+ 78+  0000
+ 79+  0000              ShiftBCRight1: MACRO
+ 80+  0000 ~                           srl b
+ 81+  0000 ~                           rr  c
+ 82+  0000                             ENDM
+ 83+  0000
+ 84+  0000
+ 85+  0000              ShiftHLDiv8:   MACRO
+ 86+  0000 ~                           srl h
+ 87+  0000 ~                           rr  l
+ 88+  0000 ~                           srl h
+ 89+  0000 ~                           rr  l
+ 90+  0000 ~                           srl h
+ 91+  0000 ~                           rr  l
+ 92+  0000                             ENDM
+ 93+  0000
+ 94+  0000              ShiftBHLLeft1:  MACRO
+ 95+  0000 ~                            sla l
+ 96+  0000 ~                            rl  h
+ 97+  0000 ~                            rl  b
+ 98+  0000                              ENDM
+ 99+  0000
+100+  0000              ShiftCDELeft1:  MACRO
+101+  0000 ~                            sla e
+102+  0000 ~                            rl  d
+103+  0000 ~                            rl  c
+104+  0000                              ENDM
+105+  0000
+106+  0000              ShiftHLLeft1:  MACRO    ; 16 T states
+107+  0000 ~                           sla l
+108+  0000 ~                           rl  h
+109+  0000                             ENDM
+110+  0000
+111+  0000              ShiftDELeft1:  MACRO    ; 16 T states
+112+  0000 ~                           sla e
+113+  0000 ~                           rl  d
+114+  0000                             ENDM
+115+  0000
+116+  0000              BarrelHLLeft3: MACRO
+117+  0000 ~                           ex       de,hl   ; 4   43 T states vs 32 for doing ShiftHL Twice, so need at least 3 Shifts
+118+  0000 ~                           push     bc      ; 10
+119+  0000 ~                           ld       b,3     ; 7
+120+  0000 ~                           bsrl     de,b    ; 8
+121+  0000 ~                           pop      bc      ; 10
+122+  0000 ~                           ex       de,hl   ; 4
+123+  0000                             ENDM
+124+  0000
+125+  0000              BarrelHLRight3: MACRO
+126+  0000 ~                           ex       de,hl   ; 4   43 T states vs 32 for doing ShiftHL Twice, so need at least 3 Shifts
+127+  0000 ~                           push     bc      ; 10
+128+  0000 ~                           ld       b,3     ; 7
+129+  0000 ~                           bsrl     de,b    ; 8
+130+  0000 ~                           pop      bc      ; 10
+131+  0000 ~                           ex       de,hl   ; 4
+132+  0000                             ENDM
+133+  0000
+134+  0000              RollBCLeft1:   MACRO    ; 16 T states
+135+  0000 ~                           rl  c
+136+  0000 ~                           rl  b
+137+  0000                             ENDM
+138+  0000
+139+  0000              RollDELeft1:   MACRO    ; 16 T states
+140+  0000 ~                           rl  e
+141+  0000 ~                           rl  d
+142+  0000                             ENDM
+143+  0000
+144+  0000              ShiftBCLeft1:  MACRO    ; 16 T states
+145+  0000 ~                           sla c
+146+  0000 ~                           rl  b
+147+  0000                             ENDM
+148+  0000
+149+  0000              ShiftLeftMem:       MACRO   reg
+150+  0000 ~                                ld      hl,reg
+151+  0000 ~                                sla     (hl)
+152+  0000                                  ENDM
+153+  0000
+154+  0000
+155+  0000
+156+  0000              ShiftMem16Right1:   MACRO memaddr
+157+  0000 ~                                ld    hl,(memaddr)
+158+  0000 ~                                srl   h
+159+  0000 ~                                rr    l
+160+  0000 ~                                ld    (memaddr),hl
+161+  0000                                  ENDM
+162+  0000
+163+  0000              ShiftMem8Right1:    MACRO memaddr
+164+  0000 ~                                ld      a,(memaddr)
+165+  0000 ~                                srl     a
+166+  0000 ~                                ld      (memaddr),a
+167+  0000                                  ENDM
+168+  0000
+169+  0000
+170+  0000              ShiftMem8Left1A:    MACRO memaddr
+171+  0000 ~                                ld      a,(memaddr)
+172+  0000 ~                                sla     a
+173+  0000 ~                                ld      (memaddr),a
+174+  0000                                  ENDM
+175+  0000
+# file closed: ShiftMacros.asm
+ 65   0000                                      INCLUDE "../../Macros/NegateMacros.asm"
+# file opened: NegateMacros.asm
+  1+  0000
+  2+  0000              macronegate16hl:	MACRO
+  3+  0000 ~            					xor 	a
+  4+  0000 ~            					sub 	l
+  5+  0000 ~            					ld 		l,a
+  6+  0000 ~            					sbc 	a,a
+  7+  0000 ~            					sub 	h
+  8+  0000 ~            					ld 		h,a
+  9+  0000              					ENDM
+ 10+  0000
+ 11+  0000
+ 12+  0000              macroAbsHL:         MACRO
+ 13+  0000 ~                                bit     7,h
+ 14+  0000 ~                                jp      z,.alreadyABS
+ 15+  0000 ~            					xor 	a
+ 16+  0000 ~            					sub 	l
+ 17+  0000 ~            					ld 		l,a
+ 18+  0000 ~            					sbc 	a,a
+ 19+  0000 ~            					sub 	h
+ 20+  0000 ~            					ld 		h,a
+ 21+  0000 ~            .alreadyABS:
+ 22+  0000                                  ENDM
+ 23+  0000
+ 24+  0000              macronegate16de:	MACRO
+ 25+  0000 ~            					xor 	a
+ 26+  0000 ~                                sub 	e
+ 27+  0000 ~                                ld 		e,a
+ 28+  0000 ~                                sbc 	a,a
+ 29+  0000 ~                                sub 	d
+ 30+  0000 ~                                ld 		d,a
+ 31+  0000              					ENDM
+ 32+  0000
+ 33+  0000              macronegate16bc:	MACRO
+ 34+  0000 ~            					xor 	a
+ 35+  0000 ~                                sub 	c
+ 36+  0000 ~                                ld 		c,a
+ 37+  0000 ~                                sbc 	a,a
+ 38+  0000 ~                                sub 	b
+ 39+  0000 ~                                ld 		b,a
+ 40+  0000              					ENDM
+ 41+  0000
+ 42+  0000              macronegate16ix:	MACRO
+ 43+  0000 ~            					xor 	a
+ 44+  0000 ~                                sub 	ixl
+ 45+  0000 ~                                ld 		ixl,a
+ 46+  0000 ~                                sbc 	a,a
+ 47+  0000 ~                                sub 	ixh
+ 48+  0000 ~                                ld 		ixh,a
+ 49+  0000              					ENDM
+ 50+  0000
+ 51+  0000
+ 52+  0000              NegIY:			    MACRO
+ 53+  0000 ~                                xor a
+ 54+  0000 ~                                sub iyl
+ 55+  0000 ~                                ld iyl,a
+ 56+  0000 ~                                sbc a,a
+ 57+  0000 ~                                sub iyh
+ 58+  0000 ~                                ld iyh,a
+ 59+  0000                                  ENDM
+ 60+  0000
+ 61+  0000              NegHL:			    MACRO
+ 62+  0000 ~                                xor     a
+ 63+  0000 ~                                sub     l
+ 64+  0000 ~                                ld      l,a
+ 65+  0000 ~                                sbc     a,a
+ 66+  0000 ~                                sub     h
+ 67+  0000 ~                                ld      h,a
+ 68+  0000                                  ENDM
+ 69+  0000
+ 70+  0000              NegAHL:			    MACRO
+ 71+  0000 ~                                ld      b,a         ; save a in b
+ 72+  0000 ~                                xor     a           ; l = 0 - l
+ 73+  0000 ~                                sub     l
+ 74+  0000 ~                                ld      l,a
+ 75+  0000 ~                                sbc     a,a         ; h = 0 - h
+ 76+  0000 ~                                sub     h
+ 77+  0000 ~                                ld      h,a
+ 78+  0000 ~                                sbc     a,a         ; a= 0 - b
+ 79+  0000 ~                                sub     b
+ 80+  0000                                  ENDM
+ 81+  0000
+ 82+  0000              NegDE:			    MACRO
+ 83+  0000 ~                                xor a
+ 84+  0000 ~                                sub e
+ 85+  0000 ~                                ld e,a
+ 86+  0000 ~                                sbc a,a
+ 87+  0000 ~                                sub d
+ 88+  0000 ~                                ld d,a
+ 89+  0000                                  ENDM
+ 90+  0000
+ 91+  0000              NegBC:			    MACRO
+ 92+  0000 ~                                xor a
+ 93+  0000 ~                                sub c
+ 94+  0000 ~                                ld c,a
+ 95+  0000 ~                                sbc a,a
+ 96+  0000 ~                                sub  b
+ 97+  0000 ~                                ld b,a
+ 98+  0000                                  ENDM
+ 99+  0000
+100+  0000              NegH                MACRO
+101+  0000 ~                                ld      a,h
+102+  0000 ~                                neg
+103+  0000 ~                                ld      h,a
+104+  0000                                  ENDM
+105+  0000
+106+  0000              NegD                MACRO
+107+  0000 ~                                ld      a,d
+108+  0000 ~                                neg
+109+  0000 ~                                ld      d,a
+110+  0000                                  ENDM
+111+  0000
+112+  0000              NegB                MACRO
+113+  0000 ~                                ld      a,b
+114+  0000 ~                                neg
+115+  0000 ~                                ld      b,a
+116+  0000                                  ENDM
+117+  0000
+# file closed: NegateMacros.asm
+ 66   0000                                      INCLUDE "../../Macros/carryFlagMacros.asm"
+# file opened: carryFlagMacros.asm
+  1+  0000
+  2+  0000              SetCarryFlag:           MACRO
+  3+  0000 ~                                    scf
+  4+  0000                                      ENDM
+  5+  0000
+  6+  0000              ClearCarryFlag:	        MACRO
+  7+  0000 ~                                    or a
+  8+  0000                                      ENDM
+  9+  0000
+ 10+  0000              FlipCarryFlag:          MACRO
+ 11+  0000 ~                                    ccf
+ 12+  0000                                      ENDM
+ 13+  0000
+# file closed: carryFlagMacros.asm
+ 67   0000              ;----------------------------------------------------------------------------------------------------------------------------------
+ 68   0000              ; Total screen list
+ 69   0000              ; Local Chart
+ 70   0000              ; Galactic Chart
+ 71   0000              ; Market Prices
+ 72   0000              ; Inventory
+ 73   0000              ; Comander status
+ 74   0000              ; System Data
+ 75   0000              ; Mission Briefing
+ 76   0000              ; missio completion
+ 77   0000              ; Docked  Menu (only place otehr than pause you can load and save)
+ 78   0000              ; Pause Menu (only place you can load from )
+ 79   0000              ; byint and selling equipment
+ 80   0000              ; bying and selling stock
+ 81   0000
+ 82   0000              TopOfStack              equ $5CCB ;$6100
+ 83   0000
+ 84   0000                                      ORG $5DCB;      $6200
+ 85   5DCB F3           EliteNextStartup:       di
+ 86   5DCC FD 00                                break
+ 87   5DCE 3E 00                                ld      a,0
+ 88   5DD0 32 F9 5E                             ld      (Roll),a
+ 89   5DD3 3E 08                                ld      a,8
+ 90   5DD5 F6 80                                or      $80
+ 91   5DD7 32 FA 5E                             ld      (Pitch),a
+ 92   5DDA FD 21 09 5E                          ld      iy,Test1
+ 93   5DDE 06 0F                                ld      b,15
+ 94   5DE0 FD E5 C5     .testloop:              push    iy,,bc
+ 95   5DE3 CD FB 5E                             call    TestRollPitch
+ 96   5DE6 C1 FD E1                             pop     iy,,bc
+ 97   5DE9 FD E5 E1                             ld      hl,iy
+ 98   5DEC 3E 10                                ld      a,$10
+ 99   5DEE ED 31                                add     hl,a
+100   5DF0 E5 FD E1                             ld      iy,hl
+101   5DF3 10 EB                                djnz    .testloop
+102   5DF5 FD 00                                break
+103   5DF7
+104   5DF7 00 00        ErrorCount:             DW  0
+105   5DF9
+106   5DF9 00 00 00...  MultiplyResult:         DS  16  ; reserve 6 bytes for maths result, little endian rest is padding for console display alignment
+107   5E09
+108   5E09
+109   5E09                                      ;  X.............  Y............  Z............                               Pass/Fail
+110   5E09                                      ;   0    1    2    3    4    5    6    7,   8,   9,   A,   B,   C,   D,   E,   F
+111   5E09                                      ; result X Y Z
+112   5E09                                      ;  10   11   12   13   14   15   16   17   18   10   1A   1B   1C   1D   1E   1F
+113   5E09 00 00 00 00  Test1:                  DB $00, $00, $00, $00, $00, $00, $00, $BC, $02, $00, $00, $00, $00, $00, $00, $11 ;
+113   5E0D 00 00 00 BC
+113   5E11 02 00 00 00
+113   5E15 00 00 00 11
+114   5E19 00 00 00 E0  Test2:                  DB $00, $00, $00, $E0, $15, $00, $00, $BC, $02, $00, $00, $00, $00, $00, $00, $11
+114   5E1D 15 00 00 BC
+114   5E21 02 00 00 00
+114   5E25 00 00 00 11
+115   5E29 00 00 00 CF  Test3:                  DB $00, $00, $00, $CF, $46, $82, $F0, $8C, $81, $00, $00, $00, $00, $00, $00, $11 ; 250.6692 * 75 = 18802.44
+115   5E2D 46 82 F0 8C
+115   5E31 81 00 00 00
+115   5E35 00 00 00 11
+116   5E39 00 00 00 00  Test4:                  DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11 ; 77.4296875 * 75.4296875 = 5840.497131
+116   5E3D 00 00 00 00
+116   5E41 00 00 00 00
+116   5E45 00 00 00 11
+117   5E49 00 00 00 00  Test5:                  DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11
+117   5E4D 00 00 00 00
+117   5E51 00 00 00 00
+117   5E55 00 00 00 11
+118   5E59 00 00 00 00  Test6:                  DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11
+118   5E5D 00 00 00 00
+118   5E61 00 00 00 00
+118   5E65 00 00 00 11
+119   5E69 00 00 00 00  Test7:                  DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11
+119   5E6D 00 00 00 00
+119   5E71 00 00 00 00
+119   5E75 00 00 00 11
+120   5E79 00 00 00 00  Test8:                  DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11
+120   5E7D 00 00 00 00
+120   5E81 00 00 00 00
+120   5E85 00 00 00 11
+121   5E89 00 00 00 00  Test9:                  DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11
+121   5E8D 00 00 00 00
+121   5E91 00 00 00 00
+121   5E95 00 00 00 11
+122   5E99 00 00 00 00  TestA:                  DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11
+122   5E9D 00 00 00 00
+122   5EA1 00 00 00 00
+122   5EA5 00 00 00 11
+123   5EA9 00 00 00 00  TestB:                  DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11
+123   5EAD 00 00 00 00
+123   5EB1 00 00 00 00
+123   5EB5 00 00 00 11
+124   5EB9 00 00 00 00  TestC:                  DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11
+124   5EBD 00 00 00 00
+124   5EC1 00 00 00 00
+124   5EC5 00 00 00 11
+125   5EC9 00 00 00 00  TestD:                  DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11
+125   5ECD 00 00 00 00
+125   5ED1 00 00 00 00
+125   5ED5 00 00 00 11
+126   5ED9 00 00 00 00  TestE:                  DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11
+126   5EDD 00 00 00 00
+126   5EE1 00 00 00 00
+126   5EE5 00 00 00 11
+127   5EE9 00 00 00 00  TestF:                  DB $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11
+127   5EED 00 00 00 00
+127   5EF1 00 00 00 00
+127   5EF5 00 00 00 11
+128   5EF9 00           Roll                    DB 0
+129   5EFA 00           Pitch                   DB 0
+130   5EFB
+131   5EFB FD 00        TestRollPitch:          break
+132   5EFD FD E5 DD E1                          ld      ix,iy               ; set IX up with X Y and Z
+133   5F01 CD 0E 5F                             call    ApplyRollAndPitchIX ;
+134   5F04 C9                                   ret
+135   5F05
+136   5F05
+137   5F05              ;	alpha = flight_roll / 256.0;
+138   5F05              ;	beta = flight_climb / 256.0;
+139   5F05              ;    k2 = y - alpha * x;
+140   5F05              ;	z = z + beta * k2;
+141   5F05              ;	y = k2 - z * beta;
+142   5F05              ;	x = x + alpha * y;
+143   5F05              ;divs32   dehl = dehl' / dehl in our case it will be S78.0/ 0S78.0 to give us 0S78.0
+144   5F05              ; IX 0 Xl 1 Xm 2 Xh 3 Yl 4 Ym 5 Yh 6 Zl 7 Zm 8 zh
+145   5F05 00 00 00     AlphaDecimal                DS  3   ; roll /256 as 24 bit 16.8
+146   5F08 00 00 00     BetaDecimal                 DS  3   ; pitch /256 as 24 bit 16.8
+147   5F0B 00 00 00     RPK2                        DS  3
+148   5F0E
+149   5F0E              RotEqeuRotDiv256            MACRO   Rotator, RotatorDecimal
+150   5F0E ~                                        ld      a,(Rotator)             ; Alpha = alpha / 256 signed
+151   5F0E ~                                        ld      b,a                     ; we strip lead sign bit off and move it to H
+152   5F0E ~                                        and     $7F                     ; .
+153   5F0E ~                                        ld      (RotatorDecimal),a      ; .
+154   5F0E ~                                        ld      a,b                     ; .
+155   5F0E ~                                        and     $80                     ; .
+156   5F0E ~                                        ld      hl,0                    ; .
+157   5F0E ~                                        or      h                       ; .
+158   5F0E ~                                        ld      h,a                     ; .
+159   5F0E ~                                        ld      (RotatorDecimal+1),hl   ; .
+160   5F0E                                          ENDM
+161   5F0E
+162   5F0E              SetBHLtoAlpha:              MACRO
+163   5F0E ~                                        ld      a,(AlphaDecimal+2)      ; set BHL to Beta
+164   5F0E ~                                        ld      b,a                     ;
+165   5F0E ~                                        ld      hl,(AlphaDecimal)       ;
+166   5F0E                                          ENDM
+167   5F0E
+168   5F0E              SetBHLtoBeta:               MACRO
+169   5F0E ~                                        ld      a,(BetaDecimal+2)       ; set BHL to Beta
+170   5F0E ~                                        ld      b,a                     ;
+171   5F0E ~                                        ld      hl,(BetaDecimal)        ;
+172   5F0E                                          ENDM
+173   5F0E
+174   5F0E              SetBHLtoK2:                 MACRO
+175   5F0E ~                                        ld      a,(RPK2+2)
+176   5F0E ~                                        ld      b,a                     ; bhl = K2
+177   5F0E ~                                        ld      hl,(RPK2)               ; .
+178   5F0E                                          ENDM
+179   5F0E              SetCDEtoX:                  MACRO
+180   5F0E ~                                        ld      c,(ix+2)
+181   5F0E ~                                        ld      de,(ix)
+182   5F0E                                          ENDM
+183   5F0E              SetCDEtoDEH                 MACRO
+184   5F0E ~                                        ld      c,d                     ; move DE.H into CD.E for multiply
+185   5F0E ~                                        ld      d,e                     ; .
+186   5F0E ~                                        ld      e,h                     ; .
+187   5F0E                                          ENDM
+188   5F0E              SetCDEtoAHL                 MACRO
+189   5F0E ~                                        ld      c,a                     ; move DE.H into CD.E for multiply
+190   5F0E ~                                        ex      de,hl
+191   5F0E                                          ENDM
+192   5F0E              SetBHLtoX:                  MACRO
+193   5F0E ~                                        ld      b,(ix+2)
+194   5F0E ~                                        ld      hl,(ix)
+195   5F0E                                          ENDM
+196   5F0E              SaveDEHToX:                 MACRO
+197   5F0E ~                                        ld      (ix+2),d                ; save DE.H into Zd
+198   5F0E ~                                        ld      (ix+1),e                ; .
+199   5F0E ~                                        ld      (ix),h                  ; .
+200   5F0E                                          ENDM
+201   5F0E              SaveAHLToX:                 MACRO
+202   5F0E ~                                        ld      (ix+2),a                ; save DE.H into Zd
+203   5F0E ~                                        ld      (ix+1),h                ; .
+204   5F0E ~                                        ld      (ix),l                  ; .
+205   5F0E                                          ENDM
+206   5F0E              SetCDEtoY:                  MACRO
+207   5F0E ~                                        ld      c,(ix+5)
+208   5F0E ~                                        ld      de,(ix+3)
+209   5F0E                                          ENDM
+210   5F0E              SetBHLtoY:                  MACRO
+211   5F0E ~                                        ld      b,(ix+5)
+212   5F0E ~                                        ld      hl,(ix+3)
+213   5F0E                                          ENDM
+214   5F0E              SaveDEHToY:                 MACRO
+215   5F0E ~                                        ld      (ix+5),d                ; save DE.H into Zd
+216   5F0E ~                                        ld      (ix+4),e                ; .
+217   5F0E ~                                        ld      (ix+3),h                ; .
+218   5F0E                                          ENDM
+219   5F0E              SaveAHLToY:                 MACRO
+220   5F0E ~                                        ld      (ix+5),a                ; save DE.H into Zd
+221   5F0E ~                                        ld      (ix+4),h                ; .
+222   5F0E ~                                        ld      (ix+3),l                ; .
+223   5F0E                                          ENDM
+224   5F0E              SetCDEtoZ:                  MACRO
+225   5F0E ~                                        ld      c,(ix+8)
+226   5F0E ~                                        ld      de,(ix+6)
+227   5F0E                                          ENDM
+228   5F0E              SetBHLtoZ:                  MACRO
+229   5F0E ~                                        ld      b,(ix+8)
+230   5F0E ~                                        ld      hl,(ix+6)
+231   5F0E                                          ENDM
+232   5F0E              SaveDEHToZ:                 MACRO
+233   5F0E ~                                        ld      (ix+8),d                ; save DE.H into Zd
+234   5F0E ~                                        ld      (ix+7),e                ; .
+235   5F0E ~                                        ld      (ix+6),h                ; .
+236   5F0E                                          ENDM
+237   5F0E              SaveAHLToZ:                 MACRO
+238   5F0E ~                                        ld      (ix+8),a                ; save DE.H into Zd
+239   5F0E ~                                        ld      (ix+7),h                ; .
+240   5F0E ~                                        ld      (ix+6),l                ; .
+241   5F0E                                          ENDM
+242   5F0E              ApplyRollAndPitchIX:        RotEqeuRotDiv256 Roll, AlphaDecimal  ; Alpha = alpha / 256 signed
+242   5F0E 3A F9 5E    >                            ld      a,(Roll)             ; Alpha = alpha / 256 signed
+242   5F11 47          >                            ld      b,a                     ; we strip lead sign bit off and move it to H
+242   5F12 E6 7F       >                            and     $7F                     ; .
+242   5F14 32 05 5F    >                            ld      (AlphaDecimal),a      ; .
+242   5F17 78          >                            ld      a,b                     ; .
+242   5F18 E6 80       >                            and     $80                     ; .
+242   5F1A 21 00 00    >                            ld      hl,0                    ; .
+242   5F1D B4          >                            or      h                       ; .
+242   5F1E 67          >                            ld      h,a                     ; .
+242   5F1F 22 06 5F    >                            ld      (AlphaDecimal+1),hl   ; .
+243   5F22
+244   5F22              CalcBetaDecimal:            RotEqeuRotDiv256 Pitch, BetaDecimal  ; Alpha = alpha / 256 signed
+244   5F22 3A FA 5E    >                            ld      a,(Pitch)             ; Alpha = alpha / 256 signed
+244   5F25 47          >                            ld      b,a                     ; we strip lead sign bit off and move it to H
+244   5F26 E6 7F       >                            and     $7F                     ; .
+244   5F28 32 08 5F    >                            ld      (BetaDecimal),a      ; .
+244   5F2B 78          >                            ld      a,b                     ; .
+244   5F2C E6 80       >                            and     $80                     ; .
+244   5F2E 21 00 00    >                            ld      hl,0                    ; .
+244   5F31 B4          >                            or      h                       ; .
+244   5F32 67          >                            ld      h,a                     ; .
+244   5F33 22 09 5F    >                            ld      (BetaDecimal+1),hl   ; .
+245   5F36                                          ; k2 = y - alpha * x;
+246   5F36 FD 00                                    break
+247   5F38              .StartK2Calc:               SetBHLtoAlpha                   ; HL.L = Alpha decimal
+247   5F38 3A 07 5F    >                            ld      a,(AlphaDecimal+2)      ; set BHL to Beta
+247   5F3B 47          >                            ld      b,a                     ;
+247   5F3C 2A 05 5F    >                            ld      hl,(AlphaDecimal)       ;
+248   5F3F                                          SetCDEtoX                       ; CD.E = X
+248   5F3F DD 4E 02    >                            ld      c,(ix+2)
+248   5F42 DD 5E 00 DD >                            ld      de,(ix)
+248   5F46 56 01       >
+249   5F48 CD A2 64     .CalcAlphaX                 call    mul24Signed             ; BH.L by CD.E putting result in BCDE.HL, we want to keep DE.H
+250   5F4B              .CalcK2:                    SetCDEtoDEH                     ; CD.E = Alpha * X
+250   5F4B 4A          >                            ld      c,d                     ; move DE.H into CD.E for multiply
+250   5F4C 53          >                            ld      d,e                     ; .
+250   5F4D 5C          >                            ld      e,h                     ; .
+251   5F4E                                          SetBHLtoY                       ; BH.L = Y
+251   5F4E DD 46 05    >                            ld      b,(ix+5)
+251   5F51 DD 6E 03 DD >                            ld      hl,(ix+3)
+251   5F55 66 04       >
+252   5F57 CD 17 60                                 call    AHLequBHLminusCDE       ; AHL = Y - (Alpha * X)
+253   5F5A 22 0B 5F     .WriteK2:                   ld      (RPK2),hl               ; RPK2 = K2
+254   5F5D 32 0D 5F                                 ld      (RPK2+2),a              ; .
+255   5F60                                          ; z = z + beta * k2;
+256   5F60              .StartZCalc:                SetCDEtoAHL                     ; CDE = K2 (previosly loaded to AH.L)
+256   5F60 4F          >                            ld      c,a                     ; move DE.H into CD.E for multiply
+256   5F61 EB          >                            ex      de,hl
+257   5F62                                          SetBHLtoBeta                    ; BH.L = Beta Decimal
+257   5F62 3A 0A 5F    >                            ld      a,(BetaDecimal+2)       ; set BHL to Beta
+257   5F65 47          >                            ld      b,a                     ;
+257   5F66 2A 08 5F    >                            ld      hl,(BetaDecimal)        ;
+258   5F69 CD A2 64     .CalcBetaK2:                call    mul24Signed             ; BH.L by CD.E putting result in BCDE.HL, we want to keep DE.H
+259   5F6C              .CalcNewZ:                  SetCDEtoDEH                     ; CD.E = Beta * K2 result
+259   5F6C 4A          >                            ld      c,d                     ; move DE.H into CD.E for multiply
+259   5F6D 53          >                            ld      d,e                     ; .
+259   5F6E 5C          >                            ld      e,h                     ; .
+260   5F6F                                          SetBHLtoZ                       ; BH.L = Z
+260   5F6F DD 46 08    >                            ld      b,(ix+8)
+260   5F72 DD 6E 06 DD >                            ld      hl,(ix+6)
+260   5F76 66 07       >
+261   5F78 CD CB 5F                                 call    AHLequBHLplusCDE        ; AH.L = Z + Beta * K2
+262   5F7B                                          SaveAHLToZ                      ; New Z= Z + Beta * K2
+262   5F7B DD 77 08    >                            ld      (ix+8),a                ; save DE.H into Zd
+262   5F7E DD 74 07    >                            ld      (ix+7),h                ; .
+262   5F81 DD 75 06    >                            ld      (ix+6),l                ; .
+263   5F84              .StartYCalc:                SetCDEtoAHL                     ; Set CD.E to New Z
+263   5F84 4F          >                            ld      c,a                     ; move DE.H into CD.E for multiply
+263   5F85 EB          >                            ex      de,hl
+264   5F86                                          SetBHLtoBeta                    ; Set BHL to Beta Decimal
+264   5F86 3A 0A 5F    >                            ld      a,(BetaDecimal+2)       ; set BHL to Beta
+264   5F89 47          >                            ld      b,a                     ;
+264   5F8A 2A 08 5F    >                            ld      hl,(BetaDecimal)        ;
+265   5F8D                                          ; y = k2 - z * beta;
+266   5F8D CD A2 64     .CalcBetaZ:                 call    mul24Signed             ; BH.L by CD.E putting result in BCDE.HL, we want to keep DE.H
+267   5F90              .CalcNewY:                  SetCDEtoDEH                     ; CD.E now holds Z*Beta
+267   5F90 4A          >                            ld      c,d                     ; move DE.H into CD.E for multiply
+267   5F91 53          >                            ld      d,e                     ; .
+267   5F92 5C          >                            ld      e,h                     ; .
+268   5F93                                          SetBHLtoK2                      ; BH.L = K2
+268   5F93 3A 0D 5F    >                            ld      a,(RPK2+2)
+268   5F96 47          >                            ld      b,a                     ; bhl = K2
+268   5F97 2A 0B 5F    >                            ld      hl,(RPK2)               ; .
+269   5F9A CD 17 60                                 call    AHLequBHLminusCDE       ; AH.L = K2 - Z*Beta
+270   5F9D              .WriteNewY:                 SaveAHLToY                      ; New Y= K2 - Z*Beta
+270   5F9D DD 77 05    >                            ld      (ix+5),a                ; save DE.H into Zd
+270   5FA0 DD 74 04    >                            ld      (ix+4),h                ; .
+270   5FA3 DD 75 03    >                            ld      (ix+3),l                ; .
+271   5FA6                                          ;	x = x + alpha * y;
+272   5FA6              .StartXCalc:                SetCDEtoAHL                     ; CD.E = Y
+272   5FA6 4F          >                            ld      c,a                     ; move DE.H into CD.E for multiply
+272   5FA7 EB          >                            ex      de,hl
+273   5FA8                                          SetBHLtoAlpha                   ; BH.L = Alpha Decimal
+273   5FA8 3A 07 5F    >                            ld      a,(AlphaDecimal+2)      ; set BHL to Beta
+273   5FAB 47          >                            ld      b,a                     ;
+273   5FAC 2A 05 5F    >                            ld      hl,(AlphaDecimal)       ;
+274   5FAF CD A2 64     .CalcAlphaY                 call    mul24Signed             ; DE.H = Y * Alpha
+275   5FB2              .CalcNewX:                  SetCDEtoDEH                     ; CD.E = Y * Alpha
+275   5FB2 4A          >                            ld      c,d                     ; move DE.H into CD.E for multiply
+275   5FB3 53          >                            ld      d,e                     ; .
+275   5FB4 5C          >                            ld      e,h                     ; .
+276   5FB5                                          SetBHLtoX                       ; BH.L = X
+276   5FB5 DD 46 02    >                            ld      b,(ix+2)
+276   5FB8 DD 6E 00 DD >                            ld      hl,(ix)
+276   5FBC 66 01       >
+277   5FBE CD CB 5F                                 call    AHLequBHLplusCDE        ; DE.H = X + Alpha*y
+278   5FC1              .WriteNewX:                 SaveAHLToX                      ; NewX = X * Alpha*Y
+278   5FC1 DD 77 02    >                            ld      (ix+2),a                ; save DE.H into Zd
+278   5FC4 DD 74 01    >                            ld      (ix+1),h                ; .
+278   5FC7 DD 75 00    >                            ld      (ix),l                  ; .
+279   5FCA C9                                       ret
+280   5FCB
+281   5FCB              ;	x = x + alpha * y;
+282   5FCB
+283   5FCB
+284   5FCB              ;--------------------------------------------------------------------------------------
+285   5FCB                  INCLUDE	"../../Maths24/asm_addition24.asm"
+# file opened: asm_addition24.asm
+  1+  5FCB              ; Addition---------------------------------------------------
+  2+  5FCB              ; BAHL = BHL+CDE Lead Sign bit - If overflows AHL then carry will be set resulting in B holding sign and rest of value, else AHL holds value
+  3+  5FCB              ; in reality will we aim for all values being S14.8 so bit 15 is always clear for overflow
+  4+  5FCB 78           AHLequBHLplusCDE:       ld      a,b                          ; if b sign and c sign were different then bit 7 of a will be 1 which means
+  5+  5FCC E6 80                                and     $80                          ; Signs are opposite there fore we can subtract to get difference
+  6+  5FCE A9                                   xor     c                            ;
+  7+  5FCF                                      JumpIfNegative .OppositeSigns        ;
+  7+  5FCF FA F0 5F    >                        jp		m, .OppositeSigns
+  8+  5FD2 78           .SameSigns:             ld      a,b                          ; if they are both negative
+  9+  5FD3 B1                                   or      c                            ; then we can do an add but also set the sign bit
+ 10+  5FD4                                      JumpIfNegative .BothNegative         ; optimisation so we can just do simple add if both positive
+ 10+  5FD4 FA DF 5F    >                        jp		m, .BothNegative
+ 11+  5FD7 ED 5A        .BothPositive:          adc     hl,de                        ; both positive so a will already be zero
+ 12+  5FD9 78                                   ld      a,b                          ; a = b + c + an carry from HL + DE
+ 13+  5FDA 89                                   adc     c                            ;
+ 14+  5FDB D0                                   ret     nc                           ; fi there was no carry then we are good
+ 15+  5FDC 06 01        .OverFlowPositive:      ld      b,1                          ; if we overflow from +BHL +  +CDE then we already have sign cleared in A and only 1 bit to roll into B + no sign bit
+ 16+  5FDE C9                                   ret
+ 17+  5FDF CB B8        .BothNegative:          res     7,b                          ; clear sign bits for both values
+ 18+  5FE1 CB B9                                res     7,c                          ; .
+ 19+  5FE3 ED 5A                                adc     hl,de                        ; now behave like they are both positive
+ 20+  5FE5 78                                   ld      a,b
+ 21+  5FE6 89                                   adc     c
+ 22+  5FE7 DA ED 5F                             jp      c,.OverFlowNegative          ; if there was carry we need to overflow into b
+ 23+  5FEA F6 80                                or      %10000000                    ; set bit 7 of A for negative
+ 24+  5FEC C9                                   ret
+ 25+  5FED 06 81        .OverFlowNegative:      ld      b,%10000001                  ; carry over the bit but also set the sign bit
+ 26+  5FEF C9                                   ret
+ 27+  5FF0 CB 78        .OppositeSigns:         bit     7,b                         ; if BHL was negative then
+ 28+  5FF2 C2 FB 5F                             jp      nz,.CDEMinusBHL             ; its CDE - BHL
+ 29+  5FF5 CB B9        .BHLMinusCDE:           res     7,c
+ 30+  5FF7 EB                                   ex      hl,de                       ; it must be BHL - CDE  so we swap registers and just treat it as CDE-BHL
+ 31+  5FF8 78                                   ld      a,b                         ; and we have to use a when swapping b and c
+ 32+  5FF9 41                                   ld      b,c                         ; .
+ 33+  5FFA 4F                                   ld      c,a                         ; .
+ 34+  5FFB CB B8        .CDEMinusBHL:           res     7,b
+ 35+  5FFD                                      ClearCarryFlag                      ; now its just common CDE-BHL
+ 35+  5FFD B7          >                        or a
+ 36+  5FFE 79                                   ld      a,c                         ; a= c - b
+ 37+  5FFF 98                                   sbc     b
+ 38+  6000 EB                                   ex      hl,de                       ; hl = DE-hl by swapping them round
+ 39+  6001 ED 52                                sbc     hl,de                       ; now AHL is result
+ 40+  6003 D0                                   ret     nc                          ; if there was no carry then we are good
+ 41+  6004              .CDEFlipSign:           NegAHL                              ; as CDE-BHL became negative we make result lead sign negativce
+ 41+  6004 47          >                    ld      b,a         ; save a in b
+ 41+  6005 AF          >                    xor     a           ; l = 0 - l
+ 41+  6006 95          >                    sub     l
+ 41+  6007 6F          >                    ld      l,a
+ 41+  6008 9F          >                    sbc     a,a         ; h = 0 - h
+ 41+  6009 94          >                    sub     h
+ 41+  600A 67          >                    ld      h,a
+ 41+  600B 9F          >                    sbc     a,a         ; a= 0 - b
+ 41+  600C 90          >                    sub     b
+ 42+  600D F6 80                                or      %10000000                   ; flip the lead bit of A
+ 43+  600F C9                                   ret
+ 44+  6010              SwapViaA:               MACRO   r1, r2
+ 45+  6010 ~                                    ld      a,r1
+ 46+  6010 ~                                    ld      r1,r2
+ 47+  6010 ~                                    ld      r2,a
+ 48+  6010                                      ENDM
+ 49+  6010              AHLequHLAddCarryAViaDE: MACRO
+ 50+  6010 ~                                    ld      d,0                         ; de = P1 carry
+ 51+  6010 ~                                    ld      e,a                         ; .
+ 52+  6010 ~                                    xor     a                           ; Clear carry and prep a for P2 carry
+ 53+  6010 ~                                    add     hl,de                       ; .
+ 54+  6010 ~                                    adc     a,a                         ; .
+ 55+  6010                                      ENDM
+ 56+  6010              ; variants on AHLequBHLplusCDE
+ 57+  6010              ; AHL = BHL+DEC Lead Sign bit
+ 58+  6010 7A           AHLequBHLplusDEC:       ld      a,d                         ; d = e (saving d)
+ 59+  6011 53                                   ld      d,e                         ; .
+ 60+  6012 59                                   ld      e,c                         ; e = c
+ 61+  6013 4F                                   ld      c,a                         ; c = d (orginal value)
+ 62+  6014 C3 CB 5F                             jp      AHLequBHLplusCDE
+ 63+  6017
+ 64+  6017              ; AHL = BHL-CDE Lead Sign bit
+ 65+  6017 79           AHLequBHLminusCDE:      ld      a,c
+ 66+  6018 EE 80                                xor     %10000000
+ 67+  601A 4F                                   ld      c,a
+ 68+  601B C3 CB 5F                             jp      AHLequBHLplusCDE
+ 69+  601E
+ 70+  601E              ; variant on above for simplifying post multiply           ; d = e (saving d)
+ 71+  601E 7A           AHLequBHLminusDEC:      ld      a,d                        ; .
+ 72+  601F F6 80                                or      %10000000                  ; but we also flip the sign on the saved D
+ 73+  6021 53                                   ld      d,e                        ; .
+ 74+  6022 59                                   ld      e,c                        ; e = c
+ 75+  6023 4F                                   ld      c,a                        ; c = d (orginal value)
+ 76+  6024 C3 CB 5F                             jp      AHLequBHLplusCDE
+ 77+  6027
+ 78+  6027              ; If it will fit
+ 79+  6027              ;  HLBC = BHL * CDE  Lead Sign bit, carry Clear
+ 80+  6027              ; else
+ 81+  6027              ;  AHLBC = BHL * CDE Lead sign bit , carry set
+ 82+  6027              ; performs p0 = x0*y0                               L*E
+ 83+  6027              ;          p1 = x1*y0 + x0*y1 + p0 carry            H*E + D*L
+ 84+  6027              ;          p2 = x2*y0 + x0*y2 + x1*y1 + p1 carry    B*E + L*C + H*D
+ 85+  6027              ;          p3 = x2*y1 + x1 * y2 + p2 carry          B*D + H*C
+ 86+  6027              ;          p4 = x2* y2                              B*C
+ 87+  6027              ; reverse order for stack retrival                                                                                              B H L  C D E
+ 88+  6027              ; performs p4 = x2* y2                              B*C                B*C                     leave as is           BHL*CDE   020305 01040A 0201            02                  P4 = 2
+ 89+  6027              ;          p3 = x2*y1 + x1 * y2 + p2 carry          B*D + H*C          Swap B<>E and C<>L      E*D + H * L           EHC*LDB    E H C  L D B 0204 0301       08+03 = 0B          P3 = B
+ 90+  6027              ;          p2 = x2*y0 + x0*y2 + x1*y1 + p1 carry    E*B + C*L + H*D    Swap B<>D and C<>H      E*D + H * L + C * B   ECH*LBD    E C H  L B D 020A 0501 0304  14+05+0C=25         P2 = 25
+ 91+  6027              ;          p1 = x1*y0 + x0*y1                       C*D + H*B          Swap C<>E and L<>B      E*D + H * L           CEH*BLD    C E H  B L D 030A 0504       1E+14 = 32          P1 = 32 carry = 0
+ 92+  6027              ;          p0 = x0*y0                               C*B                Swap E,H, ex hl,de in calc                    CHE*BDL                 050A            32                  P0 = 32 Carry = 0
+ 93+  6027 78           HLBCequBHLmulCDE:       ld      a,b                         ; multiply is simpler as same signs is always positive
+ 94+  6028 A9                                   xor     c                           ; opposite is always negative
+ 95+  6029 E6 80                                and     $80                         ; .
+ 96+  602B F5           .SaveSign:              push    af                          ; save a to the stack that will now hold 0 or $80,
+ 97+  602C CB B8        .ClearSignBits:         res     7,b
+ 98+  602E CB B9                                res     7,c
+ 99+  6030 C5           .PrepP4:                push    bc                          ; save registers for p4 = x2*y2 p3 carry > BC = x0 y0
+100+  6031              .PrepP3:                SwapViaA b,e                        ; save registers for p3  = x2*y1 + x1*y2 + p2 carry
+100+  6031 78          >                        ld      a,b
+100+  6032 43          >                        ld      b,e
+100+  6033 5F          >                        ld      e,a
+101+  6034                                      SwapViaA c,l
+101+  6034 79          >                        ld      a,c
+101+  6035 4D          >                        ld      c,l
+101+  6036 6F          >                        ld      l,a
+102+  6037 D5 E5                                push    de,,hl                      ; DE = X2 Y1 HL = X1 Y2
+103+  6039              .PrepP2:                SwapViaA d,b                         ; save registers for p2  = x2*y0 + x0*y2 + x1*y1 + p1 carry
+103+  6039 7A          >                        ld      a,d
+103+  603A 50          >                        ld      d,b
+103+  603B 47          >                        ld      b,a
+104+  603C                                      SwapViaA c,h
+104+  603C 79          >                        ld      a,c
+104+  603D 4C          >                        ld      c,h
+104+  603E 67          >                        ld      h,a
+105+  603F D5 E5 C5                             push    de,,hl,,bc                  ; save registers for p1 = x1*y0 + x0*y1 + p0 carry
+106+  6042              .PrepP1:                SwapViaA c,e
+106+  6042 79          >                        ld      a,c
+106+  6043 4B          >                        ld      c,e
+106+  6044 5F          >                        ld      e,a
+107+  6045                                      SwapViaA l,b
+107+  6045 7D          >                        ld      a,l
+107+  6046 68          >                        ld      l,b
+107+  6047 47          >                        ld      b,a
+108+  6048 D5 E5                                push    de,,hl
+109+  604A              .PrepP0:                SwapViaA e,h                        ; we don't care about original values now as they are on the stack
+109+  604A 7B          >                        ld      a,e
+109+  604B 5C          >                        ld      e,h
+109+  604C 67          >                        ld      h,a
+110+  604D ED 30        .CalcP0:                mul     de                          ; de = x0 * y0 no need for carry logic as even FF*FF = FE01
+111+  604F 42 4B                                ld      bc,de                       ; so b = P0 carry,c = P0
+112+  6051 D1           .CalcP1:                pop     de                          ; get P1 components off stack
+113+  6052 ED 30                                mul     de                          ; hl = x1*y0
+114+  6054 EB                                   ex      de,hl                       ; so de = P1c P1 b =P0c P0
+115+  6055 AF           .AddP0Carry:            xor     a                           ; hl = x1*y0 + P0 carry
+116+  6056 16 00                                ld      d,0                         ; .
+117+  6058 58                                   ld      e,b                         ; .
+118+  6059 19                                   add     hl,de                       ; .
+119+  605A 8F                                   adc     a,a                         ; a = carry
+120+  605B D1                                   pop     de
+121+  605C ED 30                                mul     de                          ; de = x0*y1
+122+  605E A7                                   and     a                           ; clear carry flag whilst retaining a
+123+  605F 19                                   add     hl,de                       ; hl = x1*y0 + x0*y1
+124+  6060 CE 00        .CalcP1Carry:           adc     a,0                         ;
+125+  6062 84                                   add     h                           ; a = P1 carry
+126+  6063 45                                   ld      b,l                         ; A = P1 carry bc = P1 P0
+127+  6064 D1           .CalcP2:                pop     de                          ; we pull in bc later directly into de
+128+  6065 ED 30                                mul     de                          ; hl = x2*y0
+129+  6067 EB                                   ex      hl,de                       ; .
+130+  6068              .AddP1Carry:            AHLequHLAddCarryAViaDE
+130+  6068 16 00       >                        ld      d,0                         ; de = P1 carry
+130+  606A 5F          >                        ld      e,a                         ; .
+130+  606B AF          >                        xor     a                           ; Clear carry and prep a for P2 carry
+130+  606C 19          >                        add     hl,de                       ; .
+130+  606D 8F          >                        adc     a,a                         ; .
+131+  606E D1           .CalcP2Pt2:             pop     de                          ; de = x0*y2
+132+  606F ED 30                                mul     de                          ; .
+133+  6071 A7                                   and     a                           ; Clear carry preserve a
+134+  6072 19                                   add     hl,de                       ; hl = x2*y0 + x0*y2
+135+  6073 8F                                   adc     a,a                         ; a = new carry
+136+  6074 D1           .CalcP2Pt3:             pop     de                          ; de = x1*y1
+137+  6075 ED 30                                mul     de                          ; .
+138+  6077 A7                                   and     a                           ; hl = x2*y0 + x0*y2 + x1*y1, preserve carry flag
+139+  6078 19                                   add     hl,de                       ; so we have hl = P2c P2 BC = P1P1
+140+  6079 CE 00        .CalcP2Carry:           adc     a,0                         ; A = calc carry + P2 carry in h
+141+  607B 84                                   add     a,h                         ; l = P2 bc = P1 P0
+142+  607C 5D                                   ld      e,l                         ; ixl = l (via e as you can't do hl to ix direct)
+143+  607D DD 6B        .SaveP2:                ld      ixl,e                       ; a = P2 carry ixl:bc = P2 P1 P0
+144+  607F D1           .CalcP3                 pop     de                          ; hl = x2*y1
+145+  6080 ED 30                                mul     de                          ; .
+146+  6082 EB                                   ex      de,hl                       ; .
+147+  6083              .AddP2Carry:            AHLequHLAddCarryAViaDE
+147+  6083 16 00       >                        ld      d,0                         ; de = P1 carry
+147+  6085 5F          >                        ld      e,a                         ; .
+147+  6086 AF          >                        xor     a                           ; Clear carry and prep a for P2 carry
+147+  6087 19          >                        add     hl,de                       ; .
+147+  6088 8F          >                        adc     a,a                         ; .
+148+  6089 D1           .CalcP3Pt2:             pop     de                          ; de =  x1*y2
+149+  608A ED 30                                mul     de                          ; .
+150+  608C A7                                   and     a                           ; Clear carry preserve a
+151+  608D 19                                   add     hl,de                       ; hl = x2*y1 + x1*y2
+152+  608E CE 00                                adc     a,0                         ; a = new carry for P3, l = p3
+153+  6090 84                                   add     a,h                         ; .
+154+  6091 5D           .SaveP3:                ld      e,l                         ; load ixh via e
+155+  6092 DD 63                                ld      ixh,e                       ; so we now have a = P3 carry ix P3P2 bc = P1P0
+156+  6094 D1           .CalcP4:                pop     de                          ; de = x2* y2 + P3 carry
+157+  6095 ED 30                                mul     de                          ; .
+158+  6097 EB                                   ex      de,hl                       ;
+159+  6098              .AddP3Carry:            AHLequHLAddCarryAViaDE              ; hl ix bc = P5P4 P3P2 P1P0
+159+  6098 16 00       >                        ld      d,0                         ; de = P1 carry
+159+  609A 5F          >                        ld      e,a                         ; .
+159+  609B AF          >                        xor     a                           ; Clear carry and prep a for P2 carry
+159+  609C 19          >                        add     hl,de                       ; .
+159+  609D 8F          >                        adc     a,a                         ; .
+160+  609E 7D           .RecoverSignBit:        ld      a,l                         ; Is P4 populated,
+161+  609F A7                                   and     a
+162+  60A0 CA A9 60                             jp      z,.P3toP0                   ; if not then we have result P3P2P1P0
+163+  60A3 F1           .P4toP0:                pop     af                          ; else return with AHLBC
+164+  60A4 B5                                   or      l
+165+  60A5 DD E5 E1                             ld      hl,ix
+166+  60A8 C9                                   ret
+167+  60A9 F1           .P3toP0:                pop     af
+168+  60AA DD E5 E1                             ld      hl,ix                       ; move P2P2 into hl
+169+  60AD B4                                   or      h
+170+  60AE 67                                   ld      h,a
+171+  60AF AF                                   xor     a                           ; return result in hlbc with CarryClear
+172+  60B0 C9                                   ret
+173+  60B1
+174+  60B1 F1           ResultIsZero:           pop     af                          ; get rid of unwanted sign bits
+175+  60B2 4B                                   ld      c,e                         ; CDE = EHL as remainder
+176+  60B3 EB                                   ex      hl,de
+177+  60B4 AF                                   xor     a                           ; result AHL = $0
+178+  60B5 67                                   ld      h,a
+179+  60B6 6F                                   ld      l,a                         ; .
+180+  60B7 C9                                   ret
+181+  60B8
+182+  60B8 F1           DivideByZero:           pop     af                          ; get rid of unwanted sign bits
+183+  60B9 4B                                   ld      c,e                         ; CDE = EHL as remainder
+184+  60BA EB                                   ex      hl,de
+185+  60BB 3E FF                                ld      a,$FF                       ; result AHL = $FFFFFF
+186+  60BD 21 FF FF                             ld      hl,$FFFF                    ; .
+187+  60C0                                      SetCarryFlag                        ; and carry set
+187+  60C0 37          >                        scf
+188+  60C1 C9                                   ret
+189+  60C2
+190+  60C2
+191+  60C2              ; AHL = EHL / DBC  Lead Sign bit; CDE = remainder carry clear, divide by 0 gives AHL $FFFFFF, carry set
+192+  60C2 7B           AHLequEHLdivDBC:        ld      a,e                         ; divide is simpler as same signs is always positive
+193+  60C3 AA                                   xor     d                           ; opposite is always negative
+194+  60C4 E6 80                                and     $80                         ; .
+195+  60C6 F5           .SaveSign:              push    af                          ; save a to the stack that will now hold 0 or $80,
+196+  60C7 CB BB        .ClearSignBits:         res     7,e
+197+  60C9 CB BA                                res     7,d
+198+  60CB 7A           .CheckDivideByZero:     ld      a,d
+199+  60CC B0                                   or      b
+200+  60CD B1                                   or      c
+201+  60CE 28 E8                                jr      z,DivideByZero
+202+  60D0                                      ;DEBUG jp      Perform_24x24   ; forece 24 bit
+203+  60D0              ; Now determine the scale down, e.g. can we do smaller divides than just 24x24
+204+  60D0              ; Patterns              24x24 OK                         1C
+205+  60D0              ;                       24x16 OK                         1E
+206+  60D0              ;                       24x8  OK                         1F
+207+  60D0              ;                       16x24 0                          1I
+208+  60D0              ;                       16x16 OK                         1J
+209+  60D0              ;                       16x8  OK                         1L
+210+  60D0              ;                       8x24  0                          1N
+211+  60D0              ;                       8x16  0                          1N
+212+  60D0              ;                       8x8   OK                         1O
+213+  60D0              ; flow is               check if its 24 / ?              1A
+214+  60D0              ;                       Y > test 24/24                   1B
+215+  60D0              ;                           Y > Perform 24x24            1C
+216+  60D0              ;                           N > Check   24x16            1D
+217+  60D0              ;                               Y > Perform 24x16        1E
+218+  60D0              ;                               N > Perform 24x8         1F
+219+  60D0              ;                       N > test 16/ ?                   1G
+220+  60D0              ;                           Y > Check 16/24              1H
+221+  60D0              ;                               Y > Result 0             1I
+222+  60D0              ;                               N > Check 16/16          1J
+223+  60D0              ;                                   Y > Perform 16/16    1K
+224+  60D0              ;                                   N > Perform 16/8     1L
+225+  60D0              ;                           N > Check 08/24 or 08/16     1M
+226+  60D0              ;                               Y > Result is 0          1N
+227+  60D0              ;                               N > Perform 8/8          1O
+228+  60D0 1C           .ValidDivide:           inc     e
+229+  60D1 1D                                   dec     e
+230+  60D2 20 1E                                jr      nz,Try_24xAnything         ; its at least ehl / something
+231+  60D4 24           .Test_16x:              inc     h
+232+  60D5 25                                   dec     h
+233+  60D6 20 0D                                jr      nz, .Try_16xAnything        ; its at least hl / something
+234+  60D8 14           .Try_8xAnything:        inc     d
+235+  60D9 15                                   dec     d
+236+  60DA C2 B1 60                             jp      nz, ResultIsZero            ; its l / dbc which is always zero
+237+  60DD 05                                   dec     b
+238+  60DE 04                                   inc     b
+239+  60DF C2 B1 60                             jp      nz, ResultIsZero            ; its l / bc which is always zero
+240+  60E2 C3 3C 64                             jp      Perform_8x8
+240+  60E5                               ; its l/b
+241+  60E5 14           .Try_16xAnything:       inc     d
+242+  60E6 15                                   dec     d
+243+  60E7 C2 B1 60                             jp      nz, ResultIsZero            ; its hl / dbc which is always zero
+244+  60EA 05                                   dec     b
+245+  60EB 04                                   inc     b
+246+  60EC C2 7C 63                             jp      nz, Perform_16x16           ; its hl/bc
+247+  60EF C3 CB 63                             jp      Perform_16x8                ; so it must be hl/c
+248+  60F2              ;--------------------------------------------------------------------------------------------------
+249+  60F2              ; Div 24x24 iteration
+250+  60F2
+251+  60F2              ;--------------------------------------------------------------------------------------------------
+252+  60F2              ; AHL = EHL/DBC, EHL > DBC both >= 01 00 00
+253+  60F2                  DISPLAY "24x24 Actual internal result currently is 0L.D so need to rationalise it to AHL"
+254+  60F2                  DISPLAY "Working on one 24x24 only"
+255+  60F2                  DISPLAY "In effect 24x24 where E and D are both > 0 means e/d"
+256+  60F2              Try_24xAnything:        ;inc     d
+257+  60F2                                      ;dec     d
+258+  60F2                                      ;jp      nz,Perform_24x24           ; if d was not zero then its ehl/dbc
+259+  60F2                                      ;ld      a,b
+260+  60F2                                      ;and     $80
+261+  60F2                                      ;dec     b
+262+  60F2                                      ;inc     b
+263+  60F2                                      ;jp      z,Perform_24x8              ; if b was zero then its ehl/00c
+264+  60F2                                      ;jp      Perform_24x16               ; else it leaves us with ehl/0bc
+265+  60F2              ; {er
+266+  60F2 7B           Perform_24x24:          ld      a,e                         ; EHL => HLE  AHL
+267+  60F3 5D                                   ld      e,l                         ;             AHE
+268+  60F4 6C                                   ld      l,h                         ;             ALE
+269+  60F5 67                                   ld      h,a                         ;             HLE
+270+  60F6 AF                                   xor     a                           ;             A = 0 Celar carry flag
+271+  60F7              .eliminateLeadingZeros:
+272+  60F7 CB 13        .loop_00:               rl e                                ; HLE << 1
+273+  60F9 ED 6A                                adc hl,hl                           ;
+274+  60FB 38 36                                jr c, .loop_10                      ; if HLE bit 7 was set prior to shift goto loop_10  HLE was %1XXXXXXX XXXXXXXX XXXXXXX
+275+  60FD CB 13                                rl e                                ; (HLE << 1) + 1
+276+  60FF 1C                                   inc e                               ;
+277+  6100 ED 6A                                adc hl,hl                           ;
+278+  6102 38 3B                                jr c, .loop_20                      ; if HLE bit 6 was set prior to shift goto loop_20  HLE was %01XXXXXX XXXXXXXX XXXXXXX
+279+  6104 CB 13                                rl e                                ; (HLE << 1) + 1
+280+  6106 1C                                   inc e                               ;
+281+  6107 ED 6A                                adc hl,hl                           ;
+282+  6109 38 40                                jr c, .loop_30                      ; if HLE bit 5 was set prior to shift goto loop_30  HLE was %001XXXXX XXXXXXXX XXXXXXX
+283+  610B CB 13                                rl e                                ; (HLE << 1) + 1
+284+  610D 1C                                   inc e                               ;
+285+  610E ED 6A                                adc hl,hl                           ;
+286+  6110 38 45                                jr c, .loop_40                      ; if HLE bit 4 was set prior to shift goto loop_40  HLE was %0001XXXX XXXXXXXX XXXXXXX
+287+  6112 CB 13                                rl e                                ; (HLE << 1) + 1
+288+  6114 1C                                   inc e                               ;
+289+  6115 ED 6A                                adc hl,hl                           ;
+290+  6117 38 4A                                jr c, .loop_50                      ; if HLE bit 3 was set prior to shift goto loop_50  HLE was %00001XXX XXXXXXXX XXXXXXX
+291+  6119 CB 13                                rl e                                ; (HLE << 1) + 1
+292+  611B 1C                                   inc e                               ;
+293+  611C ED 6A                                adc hl,hl                           ;
+294+  611E 38 4F                                jr c, .loop_60                      ; if HLE bit 2 was set prior to shift goto loop_50  HLE was %000001XX XXXXXXXX XXXXXXX
+295+  6120 CB 13                                rl e                                ; (HLE << 1) + 1
+296+  6122 1C                                   inc e                               ;
+297+  6123 ED 6A                                adc hl,hl                           ;
+298+  6125 38 54                                jr c, .loop_70                      ; if HLE bit 1 was set prior to shift goto loop_50  HLE was %0000001X XXXXXXXX XXXXXXX
+299+  6127 37                                   scf                                 ; set carry and jump to loop 7 as bit 0 of HLE must have been set
+300+  6128 CB 13                                rl e                                ; (HLE << 1) + 1
+301+  612A 1C                                   inc e                               ;
+302+  612B ED 6A                                adc hl,hl                           ;
+303+  612D 38 58                                jr c, .loop_80                      ; if HLE bit 0 was set prior to shift goto loop_50  HLE was %0000001X XXXXXXXX XXXXXXX
+304+  612F 37                                   scf                                 ; set carry and jump to loop 7 as bit 0 of HLE must have been set
+305+  6130 C3 83 61                             jp .loop_7
+306+  6133 17           .loop_10:               rla                                 ; A = A *2 + carry from  HLE * 2 (on first pass A = 0)
+307+  6134 ED 42                                sbc hl,bc                           ; AHL = AHL - DBC
+308+  6136 9A                                   sbc a,d                             ;
+309+  6137 30 02                                jr nc, .loop_1                      ; if AHL is negative
+310+  6139 09                                   add hl,bc                           ;   revert AHL back to prior value
+311+  613A 8A                                   adc a,d                             ;   .
+312+  613B CB 13        .loop_1:                rl e                                ; else
+313+  613D ED 6A                                adc hl,hl                           ;   HLE = HLE * 2
+314+  613F 17           .loop_20:               rla                                 ; A = carry from  HLE * 2
+315+  6140 ED 42                                sbc hl,bc                           ; AHL = AHL - DBC
+316+  6142 9A                                   sbc a,d                             ;
+317+  6143 30 02                                jr nc, .loop_2                       ; if AHL is negative
+318+  6145 09                                   add hl,bc                           ;   revert AHL back to prior value
+319+  6146 8A                                   adc a,d                             ;   .
+320+  6147 CB 13        .loop_2:                rl e                                ; else
+321+  6149 ED 6A                                adc hl,hl                           ;   AHL = HLE = HLE * 2
+322+  614B 17           .loop_30:               rla                                 ;   . (also AHL = HLE = HLE * 2 from entry point above if skipping lead zeros)
+323+  614C ED 42                                sbc hl,bc                           ; AHL = AHL - DBC
+324+  614E 9A                                   sbc a,d                             ;
+325+  614F 30 02                                jr nc, .loop_3                       ; if AHL is negative
+326+  6151 09                                   add hl,bc                           ;   revert AHL back to prior value
+327+  6152 8A                                   adc a,d                             ;   .
+328+  6153 CB 13        .loop_3:                rl e                                ; else
+329+  6155 ED 6A                                adc hl,hl                           ;   AHL = HLE = HLE * 2
+330+  6157 17           .loop_40:               rla                                 ;   . (also AHL = HLE = HLE * 2 from entry point above if skipping lead zeros)
+331+  6158 ED 42                                sbc hl,bc                           ; AHL = AHL - DBC
+332+  615A 9A                                   sbc a,d                             ;
+333+  615B 30 02                                jr nc, .loop_4                       ; if AHL is negative
+334+  615D 09                                   add hl,bc                           ;   revert AHL back to prior value
+335+  615E 8A                                   adc a,d                             ;   .
+336+  615F CB 13        .loop_4:                rl e                                ; else
+337+  6161 ED 6A                                adc hl,hl                           ;   AHL = HLE = HLE * 2
+338+  6163 17           .loop_50:               rla                                 ;   . (also AHL = HLE = HLE * 2 from entry point above if skipping lead zeros)
+339+  6164 ED 42                                sbc hl,bc                           ; AHL = AHL - DBC
+340+  6166 9A                                   sbc a,d                             ;
+341+  6167 30 02                                jr nc, .loop_5                       ; if AHL is negative
+342+  6169 09                                   add hl,bc                           ;   revert AHL back to prior value
+343+  616A 8A                                   adc a,d                             ;   .
+344+  616B CB 13        .loop_5:                rl e                                ; else
+345+  616D ED 6A                                adc hl,hl                           ;   AHL = HLE = HLE * 2
+346+  616F 17           .loop_60:               rla                                 ;   . (also AHL = HLE = HLE * 2 from entry point above if skipping lead zeros)
+347+  6170 ED 42                                sbc hl,bc                           ; AHL = AHL - DBC
+348+  6172 9A                                   sbc a,d                             ;
+349+  6173 30 02                                jr nc, .loop_6                       ; if AHL is negative
+350+  6175 09                                   add hl,bc                           ;   revert AHL back to prior value
+351+  6176 8A                                   adc a,d                             ;   .
+352+  6177 CB 13        .loop_6:                rl e                                ; else
+353+  6179 ED 6A                                adc hl,hl                           ;   AHL = HLE = HLE * 2
+354+  617B 17           .loop_70:               rla                                 ;   . (also AHL = HLE = HLE * 2 from entry point above if skipping lead zeros)
+355+  617C ED 42                                sbc hl,bc                           ; AHL = AHL - DBC
+356+  617E 9A                                   sbc a,d                             ;
+357+  617F 30 02                                jr nc, .loop_7                       ; if AHL is negative
+358+  6181 09                                   add hl,bc                           ;   revert AHL back to prior value
+359+  6182 8A                                   adc a,d                             ;   .
+360+  6183 CB 13        .loop_7:                rl e                                ; else
+361+  6185 ED 6A                                adc hl,hl                           ;   AHL = HLE = HLE * 2
+362+  6187 17           .loop_80:               rla                                 ;   . (also AHL = HLE = HLE * 2 from entry point above if skipping lead zeros)
+363+  6188 ED 42                                sbc hl,bc                           ; AHL = AHL - DBC
+364+  618A 9A                                   sbc a,d                             ;
+365+  618B 30 02                                jr nc, .loop_8                       ; if AHL is negative
+366+  618D 09                                   add hl,bc                           ;   revert AHL back to prior value
+367+  618E 8A                                   adc a,d                             ;   .
+368+  618F CB 13        .loop_8:                rl e                                ; else
+369+  6191 ED 6A                                adc hl,hl                           ;   AHL = HLE = HLE * 2
+370+  6193
+371+  6193
+372+  6193
+373+  6193 17                                   rla                                 ;   . (also AHL = HLE = HLE * 2 from entry point above if skipping lead zeros)
+374+  6194 ED 42                                sbc hl,bc                           ; AHL = AHL - DBC
+375+  6196 9A                                   sbc a,d                             ;
+376+  6197 30 02                                jr nc, .exit_loop                    ; if AHL is negative
+377+  6199 09                                   add hl,bc                           ;   revert AHL back to prior value
+378+  619A 8A                                   adc a,d                             ;   .
+379+  619B              ; quotient  = ~e[hl'] remainder =  ahl  one more shift left on quotient
+380+  619B EB           .exit_loop:             ex de,hl                            ; ADE = AHL  HL = DE
+381+  619C 4F                                   ld c,a                              ; CDE = ADE
+382+  619D 7D                                   ld a,l                              ; L = (L*2) * -1 (as we reach here via jr nc then carry is 0
+383+  619E 17                                   rla                                 ; .
+384+  619F 2F                                   cpl                                 ; .
+385+  61A0 6F                                   ld l,a                              ; .
+386+  61A1 AF                                   xor a                               ; h = 0
+387+  61A2 67                                   ld h,a
+388+  61A3 C3 78 63                             jp      HandleSign
+389+  61A6              ;-----------------------------------------------------------------------------------------------------
+390+  61A6              ; AHL = HLE/BC, where A is always 0 return EHL > DBC EHL >= 01 00 00 DBC >= 00 01 00
+391+  61A6              ; inside loop computation is ehl / c  hl = remainder
+392+  61A6 50           Perform_24x16:          ld      d,b                         ; HLE/BC => HLE/DC
+393+  61A7 7B                                   ld      a,e                         ;           HLA/DC
+394+  61A8 59                                   ld      e,c                         ;           HLA/DE
+395+  61A9 4D                                   ld      c,l                         ;           HCA/DE
+396+  61AA 6F                                   ld      l,a                         ;           HCL/DE
+397+  61AB 7C                                   ld      a,h                         ;           ACL/DE
+398+  61AC 26 00                                ld      h,0                         ;           ACL/DE
+399+  61AE 06 02                                ld      b,2                         ;           ACB/DE (B = 2)
+400+  61B0 CB 11        .eliminateLeadingZeros: rl c
+401+  61B2 17                                   rla
+402+  61B3 ED 6A                                adc hl,hl
+403+  61B5 24                                   inc h
+404+  61B6 25                                   dec h
+405+  61B7 20 47                                jr nz, .loop_00
+406+  61B9 CB 11                                rl c
+407+  61BB 0C                                   inc c
+408+  61BC 17                                   rla
+409+  61BD ED 6A                                adc hl,hl
+410+  61BF 24                                   inc h
+411+  61C0 25                                   dec h
+412+  61C1 20 49                                jr nz, .loop_11
+413+  61C3 CB 11                                rl c
+414+  61C5 0C                                   inc c
+415+  61C6 17                                   rla
+416+  61C7 ED 6A                                adc hl,hl
+417+  61C9 24                                   inc h
+418+  61CA 25                                   dec h
+419+  61CB 20 4B                                jr nz, .loop_22
+420+  61CD CB 11                                rl c
+421+  61CF 0C                                   inc c
+422+  61D0 17                                   rla
+423+  61D1 ED 6A                                adc hl,hl
+424+  61D3 24                                   inc h
+425+  61D4 25                                   dec h
+426+  61D5 20 4D                                jr nz, .loop_33
+427+  61D7 CB 11                                rl c
+428+  61D9 0C                                   inc c
+429+  61DA 17                                   rla
+430+  61DB ED 6A                                adc hl,hl
+431+  61DD 24                                   inc h
+432+  61DE 25                                   dec h
+433+  61DF 20 4F                                jr nz, .loop_44
+434+  61E1 CB 11                                rl c
+435+  61E3 0C                                   inc c
+436+  61E4 17                                   rla
+437+  61E5 ED 6A                                adc hl,hl
+438+  61E7 24                                   inc h
+439+  61E8 25                                   dec h
+440+  61E9 20 51                                jr nz, .loop_55
+441+  61EB CB 11                                rl c
+442+  61ED 0C                                   inc c
+443+  61EE 17                                   rla
+444+  61EF ED 6A                                adc hl,hl
+445+  61F1 24                                   inc h
+446+  61F2 25                                   dec h
+447+  61F3 20 53                                jr nz, .loop_66
+448+  61F5 37                                   scf
+449+  61F6 C3 4D 62                             jp .loop_7
+450+  61F9 CB 11        .loop_0:                rl c
+451+  61FB 17                                   rla
+452+  61FC ED 6A                                adc hl,hl
+453+  61FE 38 68                                jr c, .loop_000
+454+  6200 ED 52        .loop_00:               sbc hl,de
+455+  6202 30 01                                jr nc, .loop_1
+456+  6204 19                                   add hl,de
+457+  6205 CB 11        .loop_1:                rl c
+458+  6207 17                                   rla
+459+  6208 ED 6A                                adc hl,hl
+460+  620A 38 63                                jr c, .loop_111
+461+  620C ED 52        .loop_11:               sbc hl,de
+462+  620E 30 01                                jr nc, .loop_2
+463+  6210 19                                   add hl,de
+464+  6211 CB 11        .loop_2:                rl c
+465+  6213 17                                   rla
+466+  6214 ED 6A                                adc hl,hl
+467+  6216 38 5E                                jr c, .loop_222
+468+  6218 ED 52        .loop_22:               sbc hl,de
+469+  621A 30 01                                jr nc, .loop_3
+470+  621C 19                                   add hl,de
+471+  621D CB 11        .loop_3:                rl c
+472+  621F 17                                   rla
+473+  6220 ED 6A                                adc hl,hl
+474+  6222 38 59                                jr c, .loop_333
+475+  6224 ED 52        .loop_33:               sbc hl,de
+476+  6226 30 01                                jr nc, .loop_4
+477+  6228 19                                   add hl,de
+478+  6229 CB 11        .loop_4:                rl c
+479+  622B 17                                   rla
+480+  622C ED 6A                                adc hl,hl
+481+  622E 38 54                                jr c, .loop_444
+482+  6230 ED 52        .loop_44:               sbc hl,de
+483+  6232 30 01                                jr nc, .loop_5
+484+  6234 19                                   add hl,de
+485+  6235 CB 11        .loop_5:                rl c
+486+  6237 17                                   rla
+487+  6238 ED 6A                                adc hl,hl
+488+  623A 38 4F                                jr c, .loop_555
+489+  623C ED 52        .loop_55:               sbc hl,de
+490+  623E 30 01                                jr nc, .loop_6
+491+  6240 19                                   add hl,de
+492+  6241 CB 11        .loop_6:                rl c
+493+  6243 17                                   rla
+494+  6244 ED 6A                                adc hl,hl
+495+  6246 38 4A                                jr c, .loop_666
+496+  6248 ED 52        .loop_66:               sbc hl,de
+497+  624A 30 01                                jr nc, .loop_7
+498+  624C 19                                   add hl,de
+499+  624D CB 11        .loop_7:                rl c
+500+  624F 17                                   rla
+501+  6250 ED 6A                                adc hl,hl
+502+  6252 38 45                                jr c, .loop_777
+503+  6254 ED 52        .loop_77:               sbc hl,de
+504+  6256 30 01                                jr nc, .loop_8
+505+  6258 19                                   add hl,de
+506+  6259 10 9E        .loop_8:                djnz .loop_0
+507+  625B CB 11        .exit_loop:             rl c
+508+  625D 17                                   rla
+509+  625E                                      ; ac = ~quotient, hl = remainder
+510+  625E EB                                   ex de,hl
+511+  625F 2F                                   cpl
+512+  6260 67                                   ld h,a
+513+  6261 79                                   ld a,c
+514+  6262 2F                                   cpl
+515+  6263 6F                                   ld l,a
+516+  6264 AF                                   xor a
+517+  6265 C3 78 63                             jp      HandleSign
+518+  6268 B7           .loop_000:              or a
+519+  6269 ED 52                                sbc hl,de
+520+  626B B7                                   or a
+521+  626C C3 05 62                             jp .loop_1
+522+  626F B7           .loop_111:              or a
+523+  6270 ED 52                                sbc hl,de
+524+  6272 B7                                   or a
+525+  6273 C3 11 62                             jp .loop_2
+526+  6276 B7           .loop_222:              or a
+527+  6277 ED 52                                sbc hl,de
+528+  6279 B7                                   or a
+529+  627A C3 1D 62                             jp .loop_3
+530+  627D B7           .loop_333:              or a
+531+  627E ED 52                                sbc hl,de
+532+  6280 B7                                   or a
+533+  6281 C3 29 62                             jp .loop_4
+534+  6284 B7           .loop_444:              or a
+535+  6285 ED 52                                sbc hl,de
+536+  6287 B7                                   or a
+537+  6288 C3 35 62                             jp .loop_5
+538+  628B B7           .loop_555:              or a
+539+  628C ED 52                                sbc hl,de
+540+  628E B7                                   or a
+541+  628F C3 41 62                             jp .loop_6
+542+  6292 B7           .loop_666:              or a
+543+  6293 ED 52                                sbc hl,de
+544+  6295 B7                                   or a
+545+  6296 C3 4D 62                             jp .loop_7
+546+  6299 B7           .loop_777:              or a
+547+  629A ED 52                                sbc hl,de
+548+  629C B7                                   or a
+549+  629D C3 59 62                             jp .loop_8
+550+  62A0              ;-----------------------------------------------------------------------------------------------------
+551+  62A0              ; AHL = HLE/BC, where A is always 0 return EHL > DBC EHL >= 01 00 00 DBC >= 00 00 01
+552+  62A0              ; inside loop computation is abc/de, hl = remainder
+553+  62A0              ; EHL: = EHL/C
+554+  62A0              ;so currerntly thsi can't hadnle c > 127 so need to understand lead sign at lower bit levels on c
+555+  62A0              ;so could just do 24 bit and process lead zeros in h and hope that is enough? or have a special case
+556+  62A0              ;for collapsing lead zeros in dbc too
+557+  62A0 79           Perform_24x8:           ld      a,c
+558+  62A1 E6 80                                and     $80
+559+  62A3 CA CC 62                             jp      z,Perform_24x7
+560+  62A6 DD 26 18                             ld      ixh,24              ; from ehl/c to ABC/E
+561+  62A9 7B                                   ld      a,e
+562+  62AA 44                                   ld      b,h
+563+  62AB 51                                   ld      d,c
+564+  62AC 4D                                   ld      c,l
+565+  62AD 5A                                   ld      e,d
+566+  62AE 16 00                                ld      d,0
+567+  62B0 21 00 00                             ld      hl,0                ;
+568+  62B3                                      ; with c being 8 bit we need to do
+569+  62B3 CB 21        .loop1:                 sla     c                   ; unroll 24 times
+570+  62B5 CB 10                                rl      b                   ; ...
+571+  62B7 17                                   rla                         ; ...
+572+  62B8 ED 6A                                adc     hl,hl               ; ...
+573+  62BA ED 52                                sbc     hl,de               ; ...
+574+  62BC 30 02                                jr      nc,.Skip1           ; ...
+575+  62BE 19                                   add     hl,de               ; ...
+576+  62BF 0D                                   dec     c                   ; ...
+577+  62C0 DD 25        .Skip1:                 dec     ixh
+578+  62C2 FD 00                                break
+579+  62C4 C2 B3 62                             jp      nz,.loop1
+580+  62C7 FD 00                                break
+581+  62C9 C3 78 63                             jp      HandleSign
+582+  62CC 06 18        Perform_24x7:           ld b,24
+583+  62CE AF                                   xor a
+584+  62CF 29           .loop1:                 add hl,hl
+585+  62D0 CB 13                                rl e
+586+  62D2 17                                   rla
+587+  62D3                                      ;rl d
+588+  62D3                                      ;rla
+589+  62D3 B9                                   cp c
+590+  62D4 38 02                                jr c, .Skip1
+591+  62D6 91                                   sub c
+592+  62D7 2C                                   inc l
+593+  62D8 10 F5        .Skip1:                 djnz .loop1
+594+  62DA FD 00                                break
+595+  62DC C3 78 63                             jp      HandleSign
+596+  62DF
+597+  62DF                 ;   a = remainder
+598+  62DF                 ; ehl = quotient
+599+  62DF
+600+  62DF 4F              ld c,a
+601+  62E0 7B              ld a,e
+602+  62E1 59              ld e,c
+603+  62E2 50              ld d,b
+604+  62E3
+605+  62E3 B7              or a
+606+  62E4 C9              ret
+607+  62E5
+608+  62E5
+609+  62E5              ;.slow32x8:              ld      d,h ; do dehl / c
+610+  62E5              ;                        ld      e,l
+611+  62E5              ;                        ld      h,e
+612+  62E5              ;                        ld      l,0
+613+  62E5              ;                        xor     a
+614+  62E5              ;.looping:               ld b,2
+615+  62E5              ;.loop_11:               add hl,hl
+616+  62E5              ;                        rl e
+617+  62E5              ;                        rl d
+618+  62E5              ;.loop_01:               rla
+619+  62E5              ;                        jr c, .loop_02
+620+  62E5              ;                        cp c
+621+  62E5              ;                        jr c, .loop_03
+622+  62E5              ;.loop_02:               sub c
+623+  62E5              ;                        inc l
+624+  62E5              ;.loop_03:               djnz .loop_11
+625+  62E5 B7                                   or a
+626+  62E6              ; result dehl = 32-bit quotient
+627+  62E6              ;.slow:                  ld      b,24
+628+  62E6              ;.loop_11:               add     hl,hl
+629+  62E6              ;                        rl      e
+630+  62E6              ;.loop_01:               rla
+631+  62E6              ;                        jr      c, .loop_02
+632+  62E6              ;                        cp      c
+633+  62E6              ;                        jr      c, .loop_03
+634+  62E6              ;.loop_02:               sub 01010c
+635+  62E6              ;                        inc 01010l
+636+  62E6              ;.loop_03:               djnz .loop_11
+637+  62E6              ;                        ld c,a
+638+  62E6              ;                        ld a,e
+639+  62E6              ;                        ld e,c
+640+  62E6              ;                        ld d,b
+641+  62E6              ;                        or a
+642+  62E6 C3 78 63                             jp      HandleSign
+643+  62E9
+644+  62E9 AF           DEBUG:                        xor     a                           ;             A = 0 Clear carry flag
+645+  62EA 06 03                                ld b,3
+646+  62EC              .eliminateLeadingZeros:
+647+  62EC 29           .loop_00:               add hl,hl
+648+  62ED CB 13                                rl e
+649+  62EF 38 2B                                jr c, .loop_10
+650+  62F1 29                                   add hl,hl
+651+  62F2 CB 13                                rl e
+652+  62F4 38 31                                jr c, .loop_20
+653+  62F6 29                                   add hl,hl
+654+  62F7 CB 13                                rl e
+655+  62F9 38 37                                jr c, .loop_30
+656+  62FB 29                                   add hl,hl
+657+  62FC CB 13                                rl e
+658+  62FE 38 3D                                jr c, .loop_40
+659+  6300 29                                   add hl,hl
+660+  6301 CB 13                                rl e
+661+  6303 38 43                                jr c, .loop_50
+662+  6305 29                                   add hl,hl
+663+  6306 CB 13                                rl e
+664+  6308 38 49                                jr c, .loop_60
+665+  630A 29                                   add hl,hl
+666+  630B CB 13                                rl e
+667+  630D 38 4F                                jr c, .loop_70
+668+  630F 29                                   add hl,hl
+669+  6310 CB 13                                rl e
+670+  6312 17                                   rla
+671+  6313 B9                                   cp c
+672+  6314 38 02                                jr c, .loop_80
+673+  6316 91                                   sub c
+674+  6317 2C                                   inc l
+675+  6318 05           .loop_80:               dec b
+676+  6319                 ; general divide loop
+677+  6319 29           .loop_0:                add     hl,hl
+678+  631A CB 13                                rl      e
+679+  631C 17           .loop_10:               rla
+680+  631D 38 03                                jr      c, .loop_101
+681+  631F B9                                   cp      c
+682+  6320 38 02                                jr      c, .loop_1
+683+  6322 91           .loop_101:              sub     c
+684+  6323 2C                                   inc     l
+685+  6324 29           .loop_1:                add     hl,hl
+686+  6325 CB 13                                rl      e
+687+  6327 17           .loop_20:               rla
+688+  6328 38 03                                jr      c, .loop_201
+689+  632A B9                                   cp      c
+690+  632B 38 02                                jr      c, .loop_2
+691+  632D 91           .loop_201:              sub     c
+692+  632E 2C                                   inc     l
+693+  632F 29           .loop_2:                add     hl,hl
+694+  6330 CB 13                                rl      e
+695+  6332 17           .loop_30:               rla
+696+  6333 38 03                                jr      c, .loop_301
+697+  6335 B9                                   cp      c
+698+  6336 38 02                                jr      c, .loop_3
+699+  6338 91           .loop_301:              sub     c
+700+  6339 2C                                   inc     l
+701+  633A 29           .loop_3:                add     hl,hl
+702+  633B CB 13                                rl      e
+703+  633D 17           .loop_40:               rla
+704+  633E 38 03                                jr      c, .loop_401
+705+  6340 B9                                   cp      c
+706+  6341 38 02                                jr      c, .loop_4
+707+  6343 91           .loop_401:              sub     c
+708+  6344 2C                                   inc     l
+709+  6345 29           .loop_4:                add     hl,hl
+710+  6346 CB 13                                rl      e
+711+  6348 17           .loop_50:               rla
+712+  6349 38 03                                jr      c, .loop_501
+713+  634B B9                                   cp      c
+714+  634C 38 02                                jr      c, .loop_5
+715+  634E 91           .loop_501:              sub     c
+716+  634F 2C                                   inc     l
+717+  6350 29           .loop_5:                add     hl,hl
+718+  6351 CB 13                                rl      e
+719+  6353 17           .loop_60:               rla
+720+  6354 38 03                                jr      c, .loop_601
+721+  6356 B9                                   cp      c
+722+  6357 38 02                                jr      c, .loop_6
+723+  6359 91           .loop_601:              sub     c
+724+  635A 2C                                   inc     l
+725+  635B 29           .loop_6:                add     hl,hl
+726+  635C CB 13                                rl      e
+727+  635E 17           .loop_70:               rla
+728+  635F 38 03                                jr      c, .loop_701
+729+  6361 B9                                   cp      c
+730+  6362 38 02                                jr      c, .loop_7
+731+  6364 91           .loop_701:              sub     c
+732+  6365 2C                                   inc     l
+733+  6366 29           .loop_7:                add     hl,hl
+734+  6367 CB 13                                rl      e
+735+  6369 17                                   rla
+736+  636A 38 03                                jr      c, .loop_801
+737+  636C B9                                   cp      c
+738+  636D 38 02                                jr      c, .loop_8
+739+  636F 91           .loop_801:              sub     c
+740+  6370 2C                                   inc     l
+741+  6371 10 A6        .loop_8:                djnz    .loop_0
+742+  6373 4F           .exit_loop:             ld      c,a
+743+  6374 7B                                   ld      a,e
+744+  6375 59                                   ld      e,c
+745+  6376 50                                   ld      d,b
+746+  6377 B7                                   or      a
+747+  6378 47           HandleSign:             ld      b,a ; save the a value      ; now deal with prior sign
+748+  6379 F1                                   pop     af
+749+  637A B0                                   or      b                           ; now a holds saved sign and b result so now lead sign S15.8
+750+  637B C9                                   ret
+751+  637C              ;-----------------------------------------------------------------------------------------------------
+752+  637C              ; AHL = HL/BC, EHL > DBC both >= 00 01 00
+753+  637C 50 59        Perform_16x16:          ld      de,bc                       ; get to AHL= 0HL/0BC
+754+  637E 7D                                   ld      a,l                         ;hl >= $1000 de >= $1000 so max quotient is 255
+755+  637F 6C                                   ld      l,h                         ; which means the loop computation is a[c] / de hl = remainder
+756+  6380 26 00                                ld      h,0                         ; so we can initialise as if 8 iterations are done
+757+  6382              ; unrolling divide 8 time, eliminating leading zeros is only marginal gain
+758+  6382 17           .loop_0:                rla
+759+  6383 ED 6A                                adc     hl,hl
+760+  6385 ED 52        .loop_00:               sbc     hl,de
+761+  6387 30 01                                jr      nc, .loop_1
+762+  6389 19                                   add     hl,de
+763+  638A 17           .loop_1:                rla
+764+  638B ED 6A                                adc     hl,hl
+765+  638D ED 52        .loop_11:               sbc     hl,de
+766+  638F 30 01                                jr      nc, .loop_2
+767+  6391 19                                   add     hl,de
+768+  6392 17           .loop_2:                rla
+769+  6393 ED 6A                                adc     hl,hl
+770+  6395 ED 52        .loop_22:               sbc     hl,de
+771+  6397 30 01                                jr      nc, .loop_3
+772+  6399 19                                   add     hl,de
+773+  639A 17           .loop_3:                rla
+774+  639B ED 6A                                adc     hl,hl
+775+  639D ED 52        .loop_33:               sbc     hl,de
+776+  639F 30 01                                jr      nc, .loop_4
+777+  63A1 19                                   add     hl,de
+778+  63A2 17           .loop_4:                rla
+779+  63A3 ED 6A                                adc     hl,hl
+780+  63A5 ED 52        .loop_44:               sbc     hl,de
+781+  63A7 30 01                                jr      nc, .loop_5
+782+  63A9 19                                   add     hl,de
+783+  63AA              .loop_5:
+784+  63AA 17                                   rla
+785+  63AB ED 6A                                adc     hl,hl
+786+  63AD              .loop_55:
+787+  63AD ED 52                                sbc     hl,de
+788+  63AF 30 01                                jr      nc, .loop_6
+789+  63B1 19                                   add     hl,de
+790+  63B2              .loop_6:
+791+  63B2 17                                   rla
+792+  63B3 ED 6A                                adc     hl,hl
+793+  63B5              .loop_66:
+794+  63B5 ED 52                                sbc     hl,de
+795+  63B7 30 01                                jr      nc, .loop_7
+796+  63B9 19                                   add     hl,de
+797+  63BA              .loop_7:
+798+  63BA 17                                   rla
+799+  63BB ED 6A                                adc     hl,hl
+800+  63BD ED 52        .loop_77:               sbc     hl,de
+801+  63BF 30 01                                jr      nc, .exit_loop
+802+  63C1 19                                   add     hl,de
+803+  63C2 17           .exit_loop:             rla                ; a = ~quotient, hl = remainder
+804+  63C3 2F                                   cpl
+805+  63C4 5F                                   ld      e,a
+806+  63C5 AF                                   xor     a
+807+  63C6 57                                   ld      d,a
+808+  63C7 EB                                   ex      de,hl
+809+  63C8 C3 78 63                             jp      HandleSign
+810+  63CB              ;-----------------------------------------------------------------------------------------------------
+811+  63CB              ; AHL = HL/C, where A is always 0 return EHL > DBC both >= 00 01 00, internally does HL/E
+812+  63CB 59           Perform_16x8:           ld      e,c                          ; get to AHL= 0HL/00C
+813+  63CC AF                                   xor a
+814+  63CD 57                                   ld      d,a
+815+  63CE 06 02                                ld      b,2
+816+  63D0 29           .loop_00:               add     hl,hl                       ; eliminate leading zeroes
+817+  63D1 38 1B                                jr      c, .loop_10
+818+  63D3 29                                   add     hl,hl
+819+  63D4 38 21                                jr      c, .loop_20
+820+  63D6 29                                   add     hl,hl
+821+  63D7 38 27                                jr      c, .loop_30
+822+  63D9 29                                   add     hl,hl
+823+  63DA 38 2D                                jr      c, .loop_40
+824+  63DC 29                                   add     hl,hl
+825+  63DD 38 33                                jr      c, .loop_50
+826+  63DF 29                                   add     hl,hl
+827+  63E0 38 39                                jr      c, .loop_60
+828+  63E2 29                                   add     hl,hl
+829+  63E3 38 3F                                jr      c, .loop_70
+830+  63E5 29                                   add     hl,hl
+831+  63E6 17                                   rla
+832+  63E7 BB                                   cp      e
+833+  63E8 38 02                                jr      c, .loop_80
+834+  63EA 93                                   sub     e
+835+  63EB 2C                                   inc     l
+836+  63EC 05           .loop_80:               dec     b
+837+  63ED 29           .loop_0:                add     hl,hl
+838+  63EE 17           .loop_10:               rla
+839+  63EF 38 03                                jr      c, .loop_101
+840+  63F1 BB                                   cp      e
+841+  63F2 38 02                                jr      c, .loop_1
+842+  63F4 93           .loop_101:              sub     e
+843+  63F5 2C                                   inc     l
+844+  63F6 29           .loop_1:                add     hl,hl
+845+  63F7 17           .loop_20:               rla
+846+  63F8 38 03                                jr      c, .loop_201
+847+  63FA BB                                   cp      e
+848+  63FB 38 02                                jr      c, .loop_2
+849+  63FD 93           .loop_201:              sub     e
+850+  63FE 2C                                   inc     l
+851+  63FF 29           .loop_2:                add     hl,hl
+852+  6400 17           .loop_30:               rla
+853+  6401 38 03                                jr      c, .loop_301
+854+  6403 BB                                   cp      e
+855+  6404 38 02                                jr      c, .loop_3
+856+  6406 93           .loop_301:              sub     e
+857+  6407 2C                                   inc     l
+858+  6408 29           .loop_3:                add     hl,hl
+859+  6409 17           .loop_40:               rla
+860+  640A 38 03                                jr      c, .loop_401
+861+  640C BB                                   cp      e
+862+  640D 38 02                                jr      c, .loop_4
+863+  640F 93           .loop_401:              sub     e
+864+  6410 2C                                   inc     l
+865+  6411 29           .loop_4:                add     hl,hl
+866+  6412 17           .loop_50:               rla
+867+  6413 38 03                                jr      c, .loop_501
+868+  6415 BB                                   cp      e
+869+  6416 38 02                                jr      c, .loop_5
+870+  6418 93           .loop_501:               sub     e
+871+  6419 2C                                   inc     l
+872+  641A 29           .loop_5:                 add     hl,hl
+873+  641B 17           .loop_60:                rla
+874+  641C 38 03                                jr      c, .loop_601
+875+  641E BB                                   cp      e
+876+  641F 38 02                                jr      c, .loop_6
+877+  6421 93           .loop_601:               sub     e
+878+  6422 2C                                   inc     l
+879+  6423 29           .loop_6:                 add     hl,hl
+880+  6424 17           .loop_70:                rla
+881+  6425 38 03                                jr      c, .loop_701
+882+  6427 BB                                   cp      e
+883+  6428 38 02                                jr      c, .loop_7
+884+  642A 93           .loop_701:               sub     e
+885+  642B 2C                                   inc     l
+886+  642C 29           .loop_7:                 add     hl,hl
+887+  642D 17                                   rla
+888+  642E 38 03                                jr      c, .loop_801
+889+  6430 BB                                   cp      e
+890+  6431 38 02                                jr      c, .loop_8
+891+  6433 93           .loop_801:               sub     e
+892+  6434 2C                                   inc     l
+893+  6435 10 B6        .loop_8:                 djnz    .loop_0
+894+  6437              .exit_loop:              ;AHL = quotient CDE = remainder
+895+  6437 5F                                   ld e,a
+896+  6438 AF                                   xor a
+897+  6439 C3 78 63                             jp      HandleSign
+898+  643C              ;-----------------------------------------------------------------------------------------------------
+899+  643C              ; AHL = L/C, where A is always 0 return EHL > DBC both >= 00 01 00, internally does L/E
+900+  643C AF           Perform_8x8:            xor     a
+901+  643D 57                                   ld      d,a
+902+  643E 67                                   ld      h,a
+903+  643F 59                                   ld      e,c
+904+  6440 CB 25        .loop_00:               sla     l
+905+  6442 38 1B                                jr      c, .loop_10
+906+  6444 CB 25                                sla     l
+907+  6446 38 1F                                jr      c, .loop_20
+908+  6448 CB 25                                sla     l
+909+  644A 38 23                                jr      c, .loop_30
+910+  644C CB 25                                sla     l
+911+  644E 38 27                                jr      c, .loop_40
+912+  6450 CB 25                                sla     l
+913+  6452 38 2B                                jr      c, .loop_50
+914+  6454 CB 25                                sla     l
+915+  6456 38 2F                                jr      c, .loop_60
+916+  6458 CB 25                                sla     l
+917+  645A 38 33                                jr      c, .loop_70
+918+  645C C3 95 64                             jp      .loop_17
+919+  645F 17           .loop_10:               rla
+920+  6460 BB                                   cp      e
+921+  6461 38 02                                jr      c, .loop_11
+922+  6463 93                                   sub     e
+923+  6464 2C                                   inc     l
+924+  6465 CB 25        .loop_11:               sla     l
+925+  6467 17           .loop_20:               rla
+926+  6468 BB                                   cp      e
+927+  6469 38 02                                jr      c, .loop_12
+928+  646B 93                                   sub     e
+929+  646C 2C                                   inc     l
+930+  646D CB 25        .loop_12:               sla     l
+931+  646F 17           .loop_30:               rla
+932+  6470 BB                                   cp      e
+933+  6471 38 02                                jr      c, .loop_13
+934+  6473 93                                   sub     e
+935+  6474 2C                                   inc     l
+936+  6475 CB 25        .loop_13:               sla     l
+937+  6477 17           .loop_40:               rla
+938+  6478 BB                                   cp      e
+939+  6479 38 02                                jr      c, .loop_14
+940+  647B 93                                   sub     e
+941+  647C 2C                                   inc     l
+942+  647D CB 25        .loop_14:               sla     l
+943+  647F 17           .loop_50:               rla
+944+  6480 BB                                   cp      e
+945+  6481 38 02                                jr      c, .loop_15
+946+  6483 93                                   sub     e
+947+  6484 2C                                   inc     l
+948+  6485 CB 25        .loop_15:               sla     l
+949+  6487 17           .loop_60:               rla
+950+  6488 BB                                   cp      e
+951+  6489 38 02                                jr      c, .loop_16
+952+  648B 93                                   sub     e
+953+  648C 2C                                   inc     l
+954+  648D CB 25        .loop_16:               sla     l
+955+  648F 17           .loop_70:               rla
+956+  6490 BB                                   cp      e
+957+  6491 38 02                                jr      c, .loop_17
+958+  6493 93                                   sub     e
+959+  6494 2C                                   inc     l
+960+  6495 CB 25        .loop_17:               sla     l
+961+  6497 17                                   rla
+962+  6498 BB                                   cp      e
+963+  6499 38 02                                jr      c, .exit_loop
+964+  649B 93                                   sub     e
+965+  649C 2C                                   inc     l
+966+  649D              .exit_loop:
+967+  649D                                      ; a = remainder
+968+  649D                                      ; l = quotient
+969+  649D 5F                                   ld      e,a
+970+  649E AF                                   xor     a
+971+  649F C3 78 63                             jp      HandleSign
+972+  64A2
+973+  64A2              ;
+974+  64A2              ; AHL = 24bit at IX + 24 bit at IY
+975+  64A2
+976+  64A2              ; AHL = 24bit at IX - 24 bit at IY
+977+  64A2
+978+  64A2              ; BAHL = 24bit at IX * 24 bit at IY  Lead Sign bit
+979+  64A2
+980+  64A2              ; AHL = 24bit at IX / 24 bit at IY  Lead Sign bit
+981+  64A2
+# file closed: asm_addition24.asm
+286   64A2                  INCLUDE	"../../Maths24/asm_mul24_notbank0safe.asm"
+# file opened: asm_mul24_notbank0safe.asm
+  1+  64A2              ;   For divide
+  2+  64A2              ;   Split BHL/CDE into
+  3+  64A2              ;         BCDE.HL = HL/CD + BCDE.HL = BHL*1/E
+  4+  64A2              ;         ; for 24 bit divide
+  5+  64A2              ;         ; if both BC are non zero, to BH.0/CD.0
+  6+  64A2              ;         ; if CD = 0 do BH.L/00.L
+  7+  64A2              ;         ; if B = 0 & C != 0 then result is B*256/C >> 8
+  8+  64A2              ; Table B   H   L   C   D   E                                    HLD.E
+  9+  64A2              ;       !   !   !   !   !   !       BH.0/CD.0 (16/16) => HL/DE  =>00D.0
+ 10+  64A2              ;       !   !   !   0   !   !       BH.0/D.0 (16/8)      BHL/DE =>0LD.0 (result << 8)
+ 11+  64A2              ;       0   !   !   !   !   !       0
+ 12+  64A2              ;       0   !   !   0   !   !       H.L/D.E (16 bit)  => HL/DE  =>00D.E (result >> 8)
+ 13+  64A2              ;       0   !   !   0   0   !       H.L/0.E (16 bit)  => HL/DE  =>00D.E (result >> 8)
+ 14+  64A2              ;       0   0   !   !   !   !       0
+ 15+  64A2              ;       0   0   !   0   !   !       0
+ 16+  64A2              ;       0   0   !   0   0   !       00.L/00.E
+ 17+  64A2              ;       0   0   0   X   X   X       0
+ 18+  64A2              ;       X   X   X   0   0   0       carry set
+ 19+  64A2              ; Fixed  24 bit maths S48.16 = BDE * AHL where A=S BCDE=48 HL=16, used by other routines which drop unneeded bytes
+ 20+  64A2              ;  X 2 1 0 Y 2 1 0
+ 21+  64A2              ;    B H L   C D E
+ 22+  64A2              ; 24 bit multiply
+ 23+  64A2              ; start with lower and help with add sequence           ; all with carry flag (as lower case target reg)
+ 24+  64A2              ;        L *     E   X0mulY0 1>> 1>>  shift >> 16       ;     HL = L * E
+ 25+  64A2              ;        L *   D     Y1mulX0 0   1>>  shift >> 8        ;   DEHL = 00HL  + 0[L*D]0
+ 26+  64A2              ;      H   *     E   X1mulY0 0   1>>  shift >> 8        ;   DEHL = DEHL  + 0[H*E]0 = DEH + 0[H*E]
+ 27+  64A2              ;    B     *     E   X2mulY0 1<< 1>>  shift 0           ;  CDE   = 0DE   + 0[B*E]
+ 28+  64A2              ;        L * C       Y2mulX0 1<< 1>>  shift 0           ;  CDE   = CDE   + 0[L*C]
+ 29+  64A2              ;      H   *   D     X1mulY1 0   0    shift 0           ;  CDE   = CDE   + 0[H*D]
+ 30+  64A2              ;    B     *   D     X2mulY1 1<< 0<<  shift << 8        ; BCD    = 0CD   + 0[B*D]
+ 31+  64A2              ;      H   * C       Y2mulX1 1<< 0    shift << 8        ; BCD    = 0CD   + 0[H*C]
+ 32+  64A2              ;    B     * C       X2mulY2 1<< 1<<  shift <<16        ; BC     = BC    + [B*C]
+ 33+  64A2              ; 16 bit multiply
+ 34+  64A2              ; start with lower and help with add sequence           ; all with carry flag (as lower case target reg)
+ 35+  64A2              ;        L *     E   X0mulY0 1>> 1>>  shift >> 16       ;     HL = L * E
+ 36+  64A2              ;        L *   D     Y1mulX0 0   1>>  shift >> 8        ;   DEHL = 00HL  + 0[L*D]0
+ 37+  64A2              ;      H   *     E   X1mulY0 0   1>>  shift >> 8        ;   DEHL = DEHL  + 0[H*E]0 = DEH + 0[H*E]
+ 38+  64A2              ;      H   *   D     X1mulY1 0   0    shift 0           ;  CDE   = CDE   + 0[H*D]
+ 39+  64A2              ;                                                       ; Result BCDE.HL
+ 40+  64A2
+ 41+  64A2              ; so in our calcs we have
+ 42+  64A2              ;     bhl  *  cde
+ 43+  64A2              ;     HLD1    HLD2
+ 44+  64A2              ; which maps to bytes 5 4 3 2 1 0
+ 45+  64A2              ;  D1 * D2                    X X  1    de = l * e   (D1 * D2)
+ 46+  64A2              ;  L1 * D2                  X X    2    hl = h * e   (L1 * D2)  e = d, d = 0 add hl,de and move carry to a (result ahl)
+ 47+  64A2              ;  D1 * L2                  X X    3    de = l * d   (D1 * L2)  add hl,de and adc a,0                      (result ahl) with l being final ".h" A is starter for e so we now have l spare
+ 48+  64A2              ;  D1 * H2                X X      4    de = l * c   (D1 * H2)
+ 49+  64A2              ;  L1 * L2                X X      5    hl = h * d   (L1 * L2)
+ 50+  64A2              ;  H1 * D2                X X      6    bc = b * e   (H1 * D2)  add hl,de,bc, a (from previous carry)      (result ahl) with l being final "e." h is starter for d and a is starter for c
+ 51+  64A2              ;  L1 * H2              X X        7    de = h * c   (L1 * H2)
+ 52+  64A2              ;  H1 * L2              X X        8    bc = b * d   (H1 * L2)  add de,bc, ah                              (result ahl) with l being final "d"  h is starter for c and a is starter for b
+ 53+  64A2              ;  H1 * H2            X X          9    bc = b * c   (H1 * H2)  add bc,ah,c                                (result ahl) with hl being
+ 54+  64A2              ;                     b c d e h l for result we only care about cde.h
+ 55+  64A2              ;signed muliply
+ 56+  64A2                  DISPLAY "TO DO - add leading sign to mul24"
+ 57+  64A2                  DISPLAY "TO DO - Optimisae mul24 for leading 0's to do 8.8 x 8.8"
+ 58+  64A2                  DISPLAY "NOT BANK0 SAFE"
+ 59+  64A2              ;BH.L by CD.E putting result in BCDE.HL and put the resullt in MulitplyResults then puyll teh actual result to BCDE.HL
+ 60+  64A2 78           mul24Signed:            ld      a,b
+ 61+  64A3 A9                                   xor     c
+ 62+  64A4 E6 80                                and     $80
+ 63+  64A6 F5                                   push    af
+ 64+  64A7 CB B8                                res     7,b
+ 65+  64A9 CB B9                                res     7,c
+ 66+  64AB 78           .TestForZero:           ld      a,b
+ 67+  64AC B4                                   or      h
+ 68+  64AD B5                                   or      l
+ 69+  64AE CA BE 64                             jp      z,.resultIsZero
+ 70+  64B1 79                                   ld      a,c
+ 71+  64B2 B2                                   or      d
+ 72+  64B3 B3                                   or      e
+ 73+  64B4 CA BE 64                             jp      z,.resultIsZero
+ 74+  64B7 CD C5 64                             call    mul24
+ 75+  64BA F1                                   pop     af
+ 76+  64BB B2                                   or      d
+ 77+  64BC 57                                   ld      d,a
+ 78+  64BD C9                                   ret
+ 79+  64BE F1           .resultIsZero:          pop     af
+ 80+  64BF 11 00 00                             ld      de,0
+ 81+  64C2 26 00                                ld      h,0
+ 82+  64C4 C9                                   ret
+ 83+  64C5
+ 84+  64C5 7A           mul24:                  ld      a,d                 ; preserve L2 for later
+ 85+  64C6 55                                   ld      d,l
+ 86+  64C7 ED 53 F6 64                          ld      (.mul24_1+1),de     ; write to D1 * D2 calc 1
+ 87+  64CB 54                                   ld      d,h
+ 88+  64CC ED 53 03 65                          ld      (.mul24_2+1),de     ; write to L1 * D2 calc 2
+ 89+  64D0 50                                   ld      d,b
+ 90+  64D1 ED 53 27 65                          ld      (.mul24_6+1),de     ; write to H1 * D2 calc 6
+ 91+  64D5 57                                   ld      d,a                 ; get back L2
+ 92+  64D6 5D                                   ld      e,l
+ 93+  64D7 ED 53 0B 65                          ld      (.mul24_3+1),de     ; (D1 * L2)   3
+ 94+  64DB 5C                                   ld      e,h
+ 95+  64DC ED 53 1F 65                          ld      (.mul24_5+1),de     ; (L1 * L2)   5
+ 96+  64E0 58                                   ld      e,b
+ 97+  64E1 ED 53 3C 65                          ld      (.mul24_8+1),de     ; (H1 * L2)   8
+ 98+  64E5 50 59                                ld      de,bc
+ 99+  64E7 ED 53 49 65                          ld      (.mul24_9+1),de     ; (H1 * H2)   9
+100+  64EB 55                                   ld      d,l
+101+  64EC ED 53 17 65                          ld      (.mul24_4+1),de     ; (D1 * H2)   4
+102+  64F0 54                                   ld      d,h
+103+  64F1 ED 53 34 65                          ld      (.mul24_7+1),de     ; (L1 * H2)   7
+104+  64F5 11 00 00     .mul24_1:               ld      de,$0000            ; D1 * D2 for lowest 16 bites
+105+  64F8 ED 30                                mul     de
+106+  64FA ED 53 F9 5D                          ld      (MultiplyResult),de ; save result as we have a completed byte 0 of result
+107+  64FE 6A                                   ld      l,d                 ; now we have thbe shifed result for step 2
+108+  64FF 26 00                                ld      h,0                 ;
+109+  6501                                      ZeroA                       ; clear accumulator for carry bit
+109+  6501 AF          >                        xor a
+110+  6502 11 00 00     .mul24_2:               ld      de,$0000            ; L1 * D2
+111+  6505 ED 30                                mul     de
+112+  6507 19                                   add     hl,de               ; hl = (L1 * D2) + (D1*D2)high byte with a carry
+113+  6508 CE 00                                adc     a,0                 ; a holds carry incase of any overflow
+114+  650A 11 00 00     .mul24_3:               ld      de,$0000            ; now add in D1 * L2
+115+  650D ED 30                                mul     de                  ; so we have a completed byte 1 of result
+116+  650F 19                                   add     hl,de               ;
+117+  6510 8F                                   adc     a,a                 ; So now we hbave byte 1 complete and ahl holding current bytes 321
+118+  6511 22 FA 5D                             ld      (MultiplyResult+1),hl; save byte 1 (in l) of result
+119+  6514 6C                                   ld      l,h                 ; prep carry over for step 4
+120+  6515 67                                   ld      h,a                 ; .
+121+  6516 11 00 00     .mul24_4:               ld      de,$0000            ; now (D1 * H2)
+122+  6519 ED 30                                mul     de                  ; .
+123+  651B                                      ZeroA
+123+  651B AF          >                        xor a
+124+  651C 19                                   add     hl,de               ; and bring in carry over from step 3
+125+  651D 8F                                   adc     a,a                 ; so ahl is the result
+126+  651E 11 00 00     .mul24_5:               ld      de,$0000            ; now (D1 * H2)
+127+  6521 ED 30                                mul     de                  ; .
+128+  6523 B7                                   or      a                   ; clear carry flag
+129+  6524 19                                   add     hl,de               ; and bring in carry over from step 4
+130+  6525 8F                                   adc     a,a                 ; so ahl is the result
+131+  6526 11 00 00     .mul24_6:               ld      de,$0000            ; now (D1 * H2)
+132+  6529 ED 30                                mul     de                  ; .
+133+  652B B7                                   or      a                   ; clear carry flag
+134+  652C 19                                   add     hl,de               ; and bring in carry over from step 5
+135+  652D 8F                                   adc     a,a                 ; so ahl is the result of bytes 654
+136+  652E 22 FB 5D                             ld      (MultiplyResult+2),hl; save byte 2 (in l) of result
+137+  6531 6C                                   ld      l,h                 ; prep carry over for step 7
+138+  6532 67                                   ld      h,a                 ; .
+139+  6533 11 00 00     .mul24_7:               ld      de,$0000            ; now (D1 * H2)
+140+  6536 ED 30                                mul     de                  ; .
+141+  6538 B7                                   or      a                   ; clear carry flag
+142+  6539 19                                   add     hl,de               ; and bring in carry over from step 6
+143+  653A 8F                                   adc     a,a                 ; so ahl is the result
+144+  653B 11 00 00     .mul24_8:               ld      de,$0000            ; now (D1 * H2)
+145+  653E ED 30                                mul     de                  ; .
+146+  6540 B7                                   or      a                   ; clear carry flag
+147+  6541 19                                   add     hl,de               ; and bring in carry over from step 7
+148+  6542 8F                                   adc     a,a                 ; so ahl is the result
+149+  6543 22 FC 5D                             ld      (MultiplyResult+3),hl; save byte 3 (in l) of result
+150+  6546 6C                                   ld      l,h                 ; prep carry over for step 8
+151+  6547 67                                   ld      h,a                 ; .
+152+  6548 11 00 00     .mul24_9:               ld      de,$0000            ; now (D1 * H2)
+153+  654B ED 30                                mul     de                  ; .
+154+  654D 19                                   add     hl,de               ; and bring in carry over from step 7
+155+  654E 8F                                   adc     a,a                 ; so ahl is the result
+156+  654F 22 FD 5D                             ld      (MultiplyResult+4),hl; save bytes 4 5 of result
+157+  6552 2A F9 5D                             ld      hl,(MultiplyResult)
+158+  6555 ED 5B FB 5D                          ld      de,(MultiplyResult+2)
+159+  6559 ED 4B FD 5D                          ld      bc,(MultiplyResult+4)
+160+  655D C9                                   ret
+161+  655E
+# file closed: asm_mul24_notbank0safe.asm
+287   655E
+288   655E                  SAVENEX OPEN "rp24test.nex", EliteNextStartup , TopOfStack
+289   655E                  SAVENEX CFG  0,0,0,1
+290   655E                  SAVENEX AUTO
+291   655E                  SAVENEX CLOSE
+292   655E
+293   655E
+# file closed: rp24test.asm

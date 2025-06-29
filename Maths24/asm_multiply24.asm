@@ -1,314 +1,439 @@
-;   For divide
-;   Split BHL/CDE into 
-;         BCDE.HL = HL/CD + BCDE.HL = BHL*1/E
-;         ; for 24 bit divide
-;         ; if both BC are non zero, to BH.0/CD.0
-;         ; if CD = 0 do BH.L/00.L
-;         ; if B = 0 & C != 0 then result is B*256/C >> 8
-; Table B   H   L   C   D   E                                    HLD.E
-;       !   !   !   !   !   !       BH.0/CD.0 (16/16) => HL/DE  =>00D.0
-;       !   !   !   0   !   !       BH.0/D.0 (16/8)      BHL/DE =>0LD.0 (result << 8)
-;       0   !   !   !   !   !       0  
-;       0   !   !   0   !   !       H.L/D.E (16 bit)  => HL/DE  =>00D.E (result >> 8)
-;       0   !   !   0   0   !       H.L/0.E (16 bit)  => HL/DE  =>00D.E (result >> 8)
-;       0   0   !   !   !   !       0
-;       0   0   !   0   !   !       0
-;       0   0   !   0   0   !       00.L/00.E
-;       0   0   0   X   X   X       0
-;       X   X   X   0   0   0       carry set
-; Fixed  24 bit maths S48.16 = BDE * AHL where A=S BCDE=48 HL=16, used by other routines which drop unneeded bytes
-;  X 2 1 0 Y 2 1 0
-;    B H L   C D E                   
-; 24 bit multiply
-; start with lower and help with add sequence           ; all with carry flag (as lower case target reg)
-;        L *     E   X0mulY0 1>> 1>>  shift >> 16       ;     HL = L * E
-;        L *   D     Y1mulX0 0   1>>  shift >> 8        ;   DEHL = 00HL  + 0[L*D]0
-;      H   *     E   X1mulY0 0   1>>  shift >> 8        ;   DEHL = DEHL  + 0[H*E]0 = DEH + 0[H*E]
-;    B     *     E   X2mulY0 1<< 1>>  shift 0           ;  CDE   = 0DE   + 0[B*E]
-;        L * C       Y2mulX0 1<< 1>>  shift 0           ;  CDE   = CDE   + 0[L*C]
-;      H   *   D     X1mulY1 0   0    shift 0           ;  CDE   = CDE   + 0[H*D]
-;    B     *   D     X2mulY1 1<< 0<<  shift << 8        ; BCD    = 0CD   + 0[B*D]
-;      H   * C       Y2mulX1 1<< 0    shift << 8        ; BCD    = 0CD   + 0[H*C]
-;    B     * C       X2mulY2 1<< 1<<  shift <<16        ; BC     = BC    + [B*C]
-; 16 bit multiply
-; start with lower and help with add sequence           ; all with carry flag (as lower case target reg)
-;        L *     E   X0mulY0 1>> 1>>  shift >> 16       ;     HL = L * E
-;        L *   D     Y1mulX0 0   1>>  shift >> 8        ;   DEHL = 00HL  + 0[L*D]0
-;      H   *     E   X1mulY0 0   1>>  shift >> 8        ;   DEHL = DEHL  + 0[H*E]0 = DEH + 0[H*E]
-;      H   *   D     X1mulY1 0   0    shift 0           ;  CDE   = CDE   + 0[H*D]
-;                                                       ; Result BCDE.HL
+;; perform dehl & de'hl' with d and d' always being 0
+;mulu_48:    ld bc,hl                    ; prep de'de bc'bc
+;            push de                     ;  
+;            exx                         ;
+;            pop bc                      ;
+;            push hl                     ;
+;            exx                         ;
+;            pop de                      ;
+;            ; perform multipication as 0e'de * 0c'bc
+;mulu_64debc:exx                         ; save material for the byte p7 p6 = x3*y3 + p5 carry
+;            ld h,d
+;            ld l,b
+;            push hl                     ;'x3 y3                                 SP + 1 X
+;
+;            
+;            ld l,c                      ; save material for the byte p5 = x3*y2 + x2*y3 + p4 carry
+;            push hl                     ;'x3 y2                                 SP + 2 X
+;            ld h,b
+;            ld l,e
+;            push hl                     ;'y3 x2                                 SP + 3 X
+;        
+;            
+;            ld h,e                      ; save material for the byte p4 = x3*y1 + x2*y2 + x1*y3 + p3 carry
+;            ld l,c
+;            push hl                     ;'x2 y2                                 SP + 4
+;            ld h,d
+;            ld l,b
+;            push hl                     ;'x3 y3                                 SP + 5 X
+;            exx                         ; Now we have the alternate register pairs we can start optimising by binning off d' and b' calculations
+;            
+;            ld l,b
+;            ld h,d
+;            push hl                     ; x1 y1                                 SP + 6
+;        
+;            
+;            push bc                     ; save material for the byte p3 = x3*y0 + x2*y1 + x1*y2 + x0*y3 + p2 carry y1 y0
+;            exx                         ;'
+;            push de                     ;'x3 x2                                 SP + 7 X
+;            push bc                     ;'y3 y2                                 SP + 8 X
+;            exx                         ;
+;            push de                     ; x1 x0                                 SP + 9
+;        
+;
+;            exx                         ; save material for the byte p2 = x2*y0 + x0*y2 + x1*y1 + p1 carry start of 32_32x32
+;            ld h,e
+;            ld l,c
+;            push hl                     ;'x2 y2                                 SP + 10
+;        
+;            exx                         ;
+;            ld h,e
+;            ld l,c
+;            push hl                     ; x0 y0                                 SP + 11
+;        
+;
+;            ;                           
+;        
+;            ld h,d                      ; start of 32_16x16          p1 = x1*y0 + x0*y1 + p0 carry  p0 = x0*y0
+;            ld l,b
+;            push hl                     ; x1 y1                                 SP + 12
+;        
+;            ld h,d                      ; x1
+;            ld d,b                      ; y1
+;            ld l,c                      ; y0
+;            ld b,e                      ; x0 
+;            mul de                       ; bc = x0 y0 de = y1 x0 hl = x1 y0 stack = x1 y1, y1*x0
+;            ex de,hl
+;            mul de                      ; x1*y0
+;            
+;            xor a                       ; zero A
+;            add hl,de                   ; sum cross products p2 p1
+;            adc a,a                     ; capture carry p3
+;            
+;            ld e,c                      ; x0
+;            ld d,b                      ; y0
+;            mul de                      ; y0*x0
+;            
+;            ld b,a                      ; carry from cross products
+;            ld c,h                      ; LSB of MSW from cross products
+;            
+;            ld a,d
+;            add a,l
+;            ld h,a
+;            ld l,e                      ; LSW in HL p1 p0
+;            
+;            pop de                      ;                                       SP + 11
+;            mul de                      ; x1*y1
+;            
+;            ex de,hl
+;            adc hl,bc                   ; HL = interim MSW p3 p2
+;            ex de,hl                    ; DEHL = 32_16x16
+;            
+;            push de                     ; stack interim p3 p2                   SP + 12
+;            
+;
+;            exx                         ; continue doing the p2 byte
+;            pop bc                      ;'recover interim p3 p2                 SP + 11
+;            
+;            pop hl                      ;'x0 y0                                 SP + 10
+;            pop de                      ;'x2 y2                                 SP + 9
+;            ld a,h
+;            ld h,d
+;            ld d,a
+;            mul de                      ;'x0*y2
+;            ex de,hl
+;            mul de                      ;'x2*y0
+;            
+;            xor a
+;            add hl,bc
+;            adc a,a                     ;'capture carry p4
+;            add hl,de
+;            adc a,0                     ;'capture carry p4
+;            
+;            push hl                     ;                                       SP + 10
+;            exx
+;            pop de                      ; save p2 in E'                         SP + 9
+;            exx                         ;'
+;            
+;            ld c,h                      ;'promote BC p4 p3
+;            ld b,a 
+;
+;            pop hl                      ; start doing the p3 byte, 'x1 x0       SP + 9
+;            pop de                      ;'y3 y2                                 SP + 8 X
+;            ld a,h
+;            ld h,d
+;            ld d,a
+;            mul de                      ;'y3*x0                                        X
+;            ex de,hl
+;            mul de                      ;'x1*y2
+;        
+;            xor a                       ;'zero A
+;            add hl,de                   ;'p4 p3
+;            adc a,a                     ;'p5
+;            add hl,bc                   ;'p4 p3
+;            adc a,0
+;            ld b,h
+;            ld c,l
+;            ex af,af
+;        
+;            pop hl                      ;'x3 x2                                 SP + 7 X
+;            pop de                      ;'y1 y0                                 SP + 6
+;            ld a,h
+;            ld h,d
+;            ld d,a
+;            mul de                      ;'x3*y0                                        X
+;            ex de,hl
+;            mul de                      ;'y1*x2
+;        
+;            ex af,af
+;            add hl,de                   ;'p4 p3
+;            adc a,0                     ;'p5
+;            add hl,bc                   ;'p4 p3
+;            adc a,0                     ;'p5
+;        
+;            push hl                     ;'leave final p3 in L                   SP + 7
+;            exx                         ; 
+;            pop bc                      ;                                       SP + 6
+;            ld d,c                      ; put final p3 in D
+;            exx                         ;'low 32bits in DEHL
+;        
+;            ld c,h                      ;'prepare BC for next cycle
+;            ld b,a                      ;'promote BC p5 p4
+;
+;            ; start doing the p4 byte
+;        
+;            pop hl                      ;'x1 y1                                 SP + 5
+;            pop de                      ;'x3 y3                                 SP + 4 X
+;            ld a,h
+;            ld h,d
+;            ld d,a
+;            mul de                      ;'x1*y3                                        X
+;            ex de,hl
+;            mul de                      ;'x3*y1
+;        
+;        
+;            xor a                       ;'zero A
+;            add hl,de                   ;'p5 p4
+;            adc a,a                     ;'p6
+;            add hl,bc                   ;'p5 p4
+;            adc a,0                     ;'p6
+;        
+;            pop de                      ;'x2 y2                                 SP + 3
+;            mul de                      ;'x2*y2
+;        
+;            add hl,de                   ;'p5 p4
+;            adc a,0                     ;'p6
+;        
+;            ld c,l                      ;'final p4 byte in C
+;            ld l,h                      ;'prepare HL for next cycle
+;            ld h,a                      ;'promote HL p6 p5
+;
+;            ; start doing the p5 byte
+;        
+;            pop de                      ;'y3 x2                                 SP + 2 X
+;            mul de                      ;'y3*x2                                        X
+;        
+;            xor a                       ;'zero A
+;            add hl,de                   ;'p6 p5
+;            adc a,a                     ;'p7
+;        
+;            pop de                      ;'x3 y2                                 SP + 1
+;            mul de                      ;'x3*y2
+;        
+;            add hl,de                   ;'p6 p5
+;            adc a,0                     ;'p7
+;        
+;            ld b,l                      ;'final p5 byte in B
+;            ld l,h                      ;'prepare HL for next cycle
+;            ld h,a                      ;'promote HL p7 p6
+;        
+;            ; start doing the p6 p7 bytes
+;            pop de                      ;'y3 x3                                 SP + 0
+;            mul de                      ;'y3*x3
+;        
+;            add hl,de                   ;'p7 p6
+;            ex de,hl                    ;'p7 p6
+;            ld h,b                      ;'p5
+;            ld l,c                      ;'p4
+;        
+;            ret                         ;'exit  : DEHL DEHL' = 64-bit product
 
-; most likley optimisation will be the value is 8.8 so we can quickly eliminate this
-; then will be a 0.8 when we are doing things like docking so objects will be close and large
-; 8.0 will be unlikley so we will just optimise on 78.8, 8.8, 0.8 
-; we can also optimise code size if only one side is 08.8 etc by swapping over BHL and CDE as needed
-BCDEHLequBHLmulCDEs:    ld      a,b
-                        xor     c
-                        and     0x80
-                        res     7,b                     ; clear sign bits
-                        res     7,c                     ; res does not affect flags
-                        jp      z,BCDEHLequBHLmulCDEu   ; can just jp as is also sets A to 0 for sign
-.BCDEHLNegative:        call    BCDEHLequBHLmulCDEu     ; do unsigned maths
-                        ld      a,0x80                  ; set a = sign bit
-                        set     7,b                     ; and set sign bit on b
-                        ret
+; dehl dehl' = dehl * dehl' 
+mulu_64:    ld bc,hl                    ; prep de'de bc'bc
+            push de                     ;  
+            exx                         ;
+            pop bc                      ;
+            push hl                     ;
+            exx                         ;
+            pop de                      ;
+mulu_64debc:exx                         ; save material for the byte p7 p6 = x3*y3 + p5 carry
+            ld h,d
+            ld l,b
+            push hl                     ;'x3 y3
 
-BCDEHLequBHLmulCDEu:    ZeroA
-                        or      b
-                        jp      z,.X2Zero               ; first pass check X2 = 0?
-.X2checkY2:             ZeroA                           ; now check Y2 = 0?
-                        or      c
-                        jp      z,BCDEHLequ24mul24u     ;  fro nwo ignore optimsation X2 is non 0, Y2 is zero eliminating 3 mulitplies
-.Do24BitMul:            jp      BCDEHLequ24mul24u       ; X2 and Y2 are non zero so in most cases it will be a regular 78.8 x 78.8 so just do 24 bit mul
-.X2Zero:                or      c
-                        jp      z,.checkFor8BitMul      ; X2 and Y2 are both 0 eliminating 5 multiplies with 8.8 now check for 0.8                      
-.Do16Bitmul24Bit:       jp      BCDEHLequ24mul24u       ; for now ignore optimisation X2 is zero Y2 is non zero eliminating 3 muliplies                 
-.checkFor8BitMul:       or      h
-.Do16BitMul:            jp      nz, BCHLDEequ16mul16u   ; X1 is non zero so we will assume Y1 is also non zero and do a 16 bit muliply
-.X2X1Zero:              or      d                           
-.Do8BitMul              jp      z, BCHLDEequ8mul8u      ; X1 and Y1 are both zero so its now just a simple mul de
-                        ; else we fall into a 16 bit multiply
-BCHLDEequ16mul16u:         
-.PrepSelfModifying:     ld      a,l
-                        ld      (.Y1mulX0L+1),a         ; Y1mulX0 L (we can skip X0mulY0 as we will already have L)
-                        ld      a,d
-                        ld      (.Y1mulX0D+1),a         ; Y1mulX0 D
-                        ld      (.X1mulY1D+1),a         ; X1mulY1 D
-                        ld      a,e
-                        ld      (.X1mulY0E+1),a         ; X1mulY0 E (we can skip X0mulY0 as we will already have E)
-                        ld      a,b
-                        ld      a,h
-                        ld      (.X1mulY0+1),a          ; X1mulY0 H
-                        ld      (.X1mulY1H+1),a         ; X1mulY1 H
-                        ; now we don't have to worry about setting up multiplies, just the adds and result
-                        ; we can freely use AF, BC, HL, IX, IY and alternate registers
-.X0mulY0 :              ld      d,l                     ; HL = L * E
-                        mul     de                      ; .
-                        ex      de,hl                   ; .
-.Y1mulX0:                                               ; [L*D]
-.Y1mulX0D:              ld      d,0x00
-.Y1mulX0L:              ld      e,0x00                  ; DE = L * D
-                        mul     de                      ;
-                        ; DEHL = 00HL  + 0[L*D]0        ; as 0FF+FF0 is a 3 byte result + carry bit
-.AHLequ0HLaddDE0:       ex      de,hl                   ; AHL = [L*D][0], DE = [0][L*E]
-                        ZeroA                           ; A = 0 and clear carry Flag 
-                        ld      a,h                     ; .
-                        ld      h,l                     ; .
-                        ld      l,0                     ; .
-                        adc     hl,de                   ; carryHL  = L0 + DE
-                        adc     a,0                     ; <cary>A = H+carry so <carry>AHL = [L*D][0] + [0][L*E]
-                        ld      e,a                     ; .
-                        ld      a,0                     ; .
-                        adc     a,a                     ; . *as a is 0 we can do this and save 3 T states
-                        ld      d,0                     ; now DEHL = [L*D][0] + [0][L*E]
-                        exx                             ; now 'DEHL = [L*D][0] + [0][L*E]
-.X1mulY0:               ; [H*E]
-.X1mulY0H:              ld      d,0x00
-.X1mulY0E:              ld      e,0x00
-                        mul     de                      ; DE = [H * E]
-                        ;break
-                        ; DEHL = DEHL + 0[H*E]0 = DEH + 0[H*E] or  <carry>HL += E0 <carry?> DE += 0H + carry
-                        push    de                      ; Stack + 1
-                        exx                             ; DEHL = previous [0][L*D][0] + [00][L*E]
-                        pop     bc                      ; Stack + 0
-                        ClearCarryFlag                  ; 'DEHL = DEHL + [00]BC (or [0][H*E][0]
-                        ld      a,b                     ; copy b as we need it again
-                        ld      b,c                     ; now bc = E[0] from calc above
-                        ld      c,0                     ; .
-                        adc     hl,bc                   ; HL += E[0] from calc above
-                        ld      b,0                     ; bc = [0]D from calc above
-                        ld      c,a                     ; 
-                        ex      de,hl                   ; get de into HL for add
-                        adc     hl,bc                   ;
-                        ex      de,hl                   ; get DEHL back into correct order
-                        ld      bc,0                    ; as we don't have X2Y2 we just set BC to 0
-                        exx                             ; now P3 P2 are loaded with working values, 'HL holds P1 P0 that are now fixed values
-.X1mulY1:               ; [H*D]
-.X1mulY1H:              ld      d,0x00                  ; X2mulY0 H
-.X1mulY1D:              ld      e,0x00                  ; X2mulY0 E
-                        mul     de
-                        ;  CDE   = CDE   + [H*D]
-                        push    de                      ; Stack + 1 swap in results
-                        exx                             ; BC = [H*D]
-                        pop     bc                      ; Stack + 0
-                        ex      de,hl                   ; DE = DE + [H*D]
-                        ZeroA                           ; A = 0 and clear carry Flag
-                        adc     hl,bc                   ; .
-                        ex      de,hl                   ; get HL and DE back to correct positions (we may leave them like this later for optimisation but debug first)
-                        adc     a,c                     ; a += c + carry
-                        ld      c,a                     ; so now we have 'CDE.HL as results
-                        ZeroA                           ; assume sign in A is positive
-                        ld      b,0                     ; and we need b to be 0
-                        ret
+            
+            ld l,c                      ; save material for the byte p5 = x3*y2 + x2*y3 + p4 carry
+            push hl                     ;'x3 y2
+            ld h,b
+            ld l,e
+            push hl                     ;'y3 x2
+        
+            
+            ld h,e                      ; save material for the byte p4 = x3*y1 + x2*y2 + x1*y3 + p3 carry
+            ld l,c
+            push hl                     ;'x2 y2
+            ld h,d
+            ld l,b
+            push hl                     ;'x3 y3
+            exx                         ;
+            ld l,b
+            ld h,d
+            push hl                     ; x1 y1
+        
+            
+            push bc                     ; ; save material for the byte p3 = x3*y0 + x2*y1 + x1*y2 + x0*y3 + p2 carry y1 y0
+            exx                         ;'
+            push de                     ;'x3 x2
+            push bc                     ;'y3 y2
+            exx                         ;
+            push de                     ; x1 x0
+        
 
-                        ; 8 bit multiply
-BCHLDEequ8mul8u:        ld      d,l                     ; so now BCHLDE = 00L * 00D 
-                        mul     de                      ; so we just do L*D which loads de
-                        ex      de,hl
-                        ZeroA                           ; and set BCHL to 0
-                        ld      b,a
-                        ld      c,a
-                        ld      d,a
-                        ld      e,a
-                        ret
+            exx                         ; save material for the byte p2 = x2*y0 + x0*y2 + x1*y1 + p1 carry start of 32_32x32
+            ld h,e
+            ld l,c
+            push hl                     ;'x2 y2
+        
+            exx                         ;
+            ld h,e
+            ld l,c
+            push hl                     ; x0 y0
+        
 
-BCDEHLequ24mul24u:    
-.PrepSelfModifying:     ld      a,l
-                        ld      (.Y1mulX0L+1),a         ; Y1mulX0 L (we can skip X0mulY0 as we will already have L)
-                        ld      (.Y2mulX0L+1),a         ; Y2mulX0 L
-                        ld      a,d
-                        ld      (.Y1mulX0D+1),a         ; Y1mulX0 D
-                        ld      (.X1mulY1D+1),a         ; X1mulY1 D
-                        ld      (.X2mulY1D+1),a         ; X2mulY1 D
-                        ld      a,e
-                        ld      (.X1mulY0E+1),a         ; X1mulY0 E (we can skip X0mulY0 as we will already have E)
-                        ld      (.X2mulY0E+1),a         ; X2mulY0 E
-                        ld      a,b
-                        ld      (.X2mulY0B+1),a         ; X2mulY0 B
-                        ld      (.X2mulY1B+1),a         ; X2mulY1 B
-                        ld      (.X2mulY2B+1),a         ; X2mulY2 B
-                        ld      a,h
-                        ld      (.X1mulY0+1),a          ; X1mulY0 H
-                        ld      (.Y2mulX1H+1),a         ; Y2mulX1 H
-                        ld      (.X1mulY1H+1),a         ; X1mulY1 H
-                        ld      a,c
-                        ld      (.Y2mulX0C+1),a         ; Y2mulX0 C
-                        ld      (.Y2mulX1C+1),a         ; Y2mulX1 C
-                        ld      (.X2mulY2C+1),a         ; X2mulY2 C
-                        ; now we don't have to worry about setting up multiplies, just the adds and result
-                        ; we can freely use AF, BC, HL, IX, IY and alternate registers
-.X0mulY0 :              ld      d,l                     ; HL = L * E
-                        mul     de                      ; .
-                        ex      de,hl                   ; .
-.Y1mulX0:                                               ; [L*D]
-.Y1mulX0D:              ld      d,0x00
-.Y1mulX0L:              ld      e,0x00                  ; DE = L * D
-                        mul     de                      ;
-                        ; DEHL = 00HL  + 0[L*D]0        ; as 0FF+FF0 is a 3 byte result + carry bit
-.AHLequ0HLaddDE0:       ex      de,hl                   ; AHL = [L*D][0], DE = [0][L*E]
-                        ZeroA                           ; A = 0 and clear carry Flag 
-                        ld      a,h                     ; .
-                        ld      h,l                     ; .
-                        ld      l,0                     ; .
-                        adc     hl,de                   ; carryHL  = L0 + DE
-                        adc     a,0                     ; <cary>A = H+carry so <carry>AHL = [L*D][0] + [0][L*E]
-                        ld      e,a                     ; .
-                        ld      a,0                     ; .
-                        adc     a,a                     ; . *as a is 0 we can do this and save 3 T states
-                        ld      d,0                     ; now DEHL = [L*D][0] + [0][L*E]
-                        exx                             ; now 'DEHL = [L*D][0] + [0][L*E]
-.X1mulY0:               ; [H*E]
-.X1mulY0H:              ld      d,0x00
-.X1mulY0E:              ld      e,0x00
-                        mul     de                      ; DE = [H * E]
-                        ;break
-                        ; DEHL = DEHL + 0[H*E]0 = DEH + 0[H*E] or  <carry>HL += E0 <carry?> DE += 0H + carry
-                        push    de                      ; Stack + 1
-                        exx                             ; DEHL = previous [0][L*D][0] + [00][L*E]
-                        pop     bc                      ; Stack + 0
-                        ClearCarryFlag                  ; 'DEHL = DEHL + [00]BC (or [0][H*E][0]
-                        ld      a,b                     ; copy b as we need it again
-                        ld      b,c                     ; now bc = E[0] from calc above
-                        ld      c,0                     ; .
-                        adc     hl,bc                   ; HL += E[0] from calc above
-                        ld      b,0                     ; bc = [0]D from calc above
-                        ld      c,a                     ; 
-                        ex      de,hl                   ; get de into HL for add
-                        adc     hl,bc                   ;
-                        ex      de,hl                   ; get DEHL back into correct order
-                        exx                             ; now P3 P2 are loaded with working values, 'HL holds P1 P0 that are now fixed values
-.X2mulY0                ; [B*E]
-.X2mulY0B:              ld      d,0x00                  ; X2mulY0 B
-.X2mulY0E:              ld      e,0x00                  ; X2mulY0 E
-                        mul     de
-                        ;  CDE   = DE   + [B*E]
-                        push    de                      ; swap in results Stack + 1
-                        exx                             ; BC = [B*E]
-                        pop     bc                      ; Stack + 0
-                        ex      de,hl                   ; DE = DE + [B*E]
-                        ZeroA                           ; A = 0 and clear carry Flag
-                        adc     hl,bc                   ; .
-                        ex      de,hl                   ; get HL and DE back to correct positions (we may leave them like this later for optimisation but debug first)
-                        adc     a,a                     ; a += 0 + carry
-                        ld      c,a                     ; so now we have 'CDE.HL as results
-                        exx                             ; .
-.Y2mulX0:               ; [L*C]
-.Y2mulX0C:              ld      d,0x00                  ; X2mulY0 C
-.Y2mulX0L:              ld      e,0x00                  ; X2mulY0 L
-                        mul     de
-                        ;  CDE   = CDE   + [L*C]
-                        push    de                      ; Stack + 1 swap in results
-                        exx                             ; BC = [L*C]
-                        pop     bc                      ; Stack + 0
-                        ex      de,hl                   ; DE = DE + [L*C]
-                        ZeroA                           ; A = 0 and clear carry Flag
-                        adc     hl,bc                   ; .
-                        ex      de,hl                   ; get HL and DE back to correct positions (we may leave them like this later for optimisation but debug first)
-                        adc     a,c                     ; a += c + carry
-                        ld      c,a                     ; so now we have 'CDE.HL as results
-                        exx                             ; .
-.X1mulY1:               ; [H*D]
-.X1mulY1H:              ld      d,0x00                  ; X2mulY0 H
-.X1mulY1D:              ld      e,0x00                  ; X2mulY0 E
-                        mul     de
-                        ;  CDE   = CDE   + [H*D]
-                        push    de                      ; Stack + 1 swap in results
-                        exx                             ; BC = [H*D]
-                        pop     bc                      ; Stack + 0
-                        ex      de,hl                   ; DE = DE + [H*D]
-                        ZeroA                           ; A = 0 and clear carry Flag
-                        adc     hl,bc                   ; .
-                        ex      de,hl                   ; get HL and DE back to correct positions (we may leave them like this later for optimisation but debug first)
-                        adc     a,c                     ; a += c + carry
-                        ld      c,a                     ; so now we have 'CDE.HL as results
-                        exx                             ; .
-.X2mulY1:               ; [B*D]
-.X2mulY1B               ld      d,0x00                  ; X2mulY2 B
-.X2mulY1D:              ld      e,0x00                  ; X2mulY0 E    
-                        mul     de
-                        ; BCD    = CD   + [B*D]         now is startes to get more tricky as we are spanning register pairs
-                        push    de                      ; Stack + 1 swap in results
-                        exx                             ; BC = [H*D]
-                        ld      ix,hl                   ; preserve HL during calculations
-                        ld      h,c                     ;
-                        ld      l,d                     ;
-                        pop     bc                      ;
-                        ZeroA                           ; A = 0 and clear carry Flag
-                        adc     hl,bc                   ; .
-                        ld      c,h
-                        ld      d,l
-                        adc     a,a                     ; a += c + carry
-                        ld      b,a                     ; so now we have 'BCDE.HL as results
-                        exx                             ; .                     
-.Y2mulX1:               ; [H*C]
-.Y2mulX1C:              ld      d,0x00                  ; X2mulY0 E
-.Y2mulX1H:              ld      e,0x00                  ; X2mulY0 E
-                        mul     de
-                        ; BCD    = CD   + [H*C]
-                        push    de                      ; Stack + 1 swap in results
-                        exx                             ; BC = [H*C]
-                        ld      h,c
-                        ld      l,d
-                        pop     bc                      ; Stack + 0
-                        ZeroA                           ; A = 0 and clear carry Flag
-                        adc     hl,bc                   ; .
-                        ld      c,h
-                        ld      d,l
-                        adc     a,a                     ; a += c + carry
-                        ld      b,a                     ; so now we have 'BCDE.HL as results
-                        push    bc                      ; get bc on stack for final add Stack + 1
-                        exx                             ; .
-.X2mulY2:               ; [B*C]
-.X2mulY2B               ld      d,0x00                  ; X2mulY2 B
-.X2mulY2C               ld      e,0x00                  ; X2mulY2 C
-                        mul     de
-                        ; BC     = BC   + [B*C]
-                        pop     hl                      ; Get Saved BC into HL
-                        add     hl,de                   ; hl = bc + [B*C]
-                        push    hl                      ; and save on stack to read into bc
-                        exx                             ; get back result
-                        ld      hl,ix                   ; restore hl we saved earlier
-                        pop     bc                      ; now we have 'BCDE.HL as final result
-                        ZeroA                           ; assume sign in A is positive
-                        ret
+            ;                           
+        
+            ld h,d                      ; start of 32_16x16          p1 = x1*y0 + x0*y1 + p0 carry  p0 = x0*y0
+            ld l,b
+            push hl                     ; x1 y1
+        
+            ld h,d                      ; x1
+            ld d,b                      ; y1
+            ld l,c                      ; y0
+            ld b,e                      ; x0 
+            mul de                       ; bc = x0 y0 de = y1 x0 hl = x1 y0 stack = x1 y1, y1*x0
+            ex de,hl
+            mul de                      ; x1*y0
+            
+            xor a                       ; zero A
+            add hl,de                   ; sum cross products p2 p1
+            adc a,a                     ; capture carry p3
+            
+            ld e,c                      ; x0
+            ld d,b                      ; y0
+            mul de                      ; y0*x0
+            
+            ld b,a                      ; carry from cross products
+            ld c,h                      ; LSB of MSW from cross products
+            
+            ld a,d
+            add a,l
+            ld h,a
+            ld l,e                      ; LSW in HL p1 p0
+            
+            pop de
+            mul de                      ; x1*y1
+            
+            ex de,hl
+            adc hl,bc                   ; HL = interim MSW p3 p2
+            ex de,hl                    ; DEHL = 32_16x16
+            
+            push de                     ; stack interim p3 p2
+            
+
+            exx                         ; continue doing the p2 byte
+            pop bc                      ;'recover interim p3 p2
+            
+            pop hl                      ;'x0 y0
+            pop de                      ;'x2 y2
+            ld a,h
+            ld h,d
+            ld d,a
+            mul de                      ;'x0*y2
+            ex de,hl
+            mul de                      ;'x2*y0
+            
+            xor a
+            add hl,bc
+            adc a,a                     ;'capture carry p4
+            add hl,de
+            adc a,0                     ;'capture carry p4
+            
+            push hl
+            exx
+            pop de                      ; save p2 in E'
+            exx                         ;'
+            
+            ld c,h                      ;'promote BC p4 p3
+            ld b,a 
+
+            pop hl                      ; start doing the p3 byte, 'x1 x0
+            pop de                      ;'y3 y2
+            ld a,h
+            ld h,d
+            ld d,a
+            mul de                      ;'y3*x0
+            ex de,hl
+            mul de                      ;'x1*y2
+        
+            xor a                       ;'zero A
+            add hl,de                   ;'p4 p3
+            adc a,a                     ;'p5
+            add hl,bc                   ;'p4 p3
+            adc a,0
+            ld b,h
+            ld c,l
+            ex af,af
+        
+            pop hl                      ;'x3 x2
+            pop de                      ;'y1 y0
+            ld a,h
+            ld h,d
+            ld d,a
+            mul de                      ;'x3*y0
+            ex de,hl
+            mul de                      ;'y1*x2
+        
+            ex af,af
+            add hl,de                   ;'p4 p3
+            adc a,0                     ;'p5
+            add hl,bc                   ;'p4 p3
+            adc a,0                     ;'p5
+        
+            push hl                     ;'leave final p3 in L   
+            exx                         ; 
+            pop bc
+            ld d,c                      ; put final p3 in D
+            exx                         ;'low 32bits in DEHL
+        
+            ld c,h                      ;'prepare BC for next cycle
+            ld b,a                      ;'promote BC p5 p4
+
+            ; start doing the p4 byte
+        
+            pop hl                      ;'x1 y1
+            pop de                      ;'x3 y3
+            ld a,h
+            ld h,d
+            ld d,a
+            mul de                      ;'x1*y3
+            ex de,hl
+            mul de                      ;'x3*y1
+        
+        
+            xor a                       ;'zero A
+            add hl,de                   ;'p5 p4
+            adc a,a                     ;'p6
+            add hl,bc                   ;'p5 p4
+            adc a,0                     ;'p6
+        
+            pop de                      ;'x2 y2
+            mul de                      ;'x2*y2
+        
+            add hl,de                   ;'p5 p4
+            adc a,0                     ;'p6
+        
+            ld c,l                      ;'final p4 byte in C
+            ld l,h                      ;'prepare HL for next cycle
+            ld h,a                      ;'promote HL p6 p5
+
+            ; start doing the p5 byte
+        
+            pop de                      ;'y3 x2
+            mul de                      ;'y3*x2
+        
+            xor a                       ;'zero A
+            add hl,de                   ;'p6 p5
+            adc a,a                     ;'p7
+        
+            pop de                      ;'x3 y2
+            mul de                      ;'x3*y2
+        
+            add hl,de                   ;'p6 p5
+            adc a,0                     ;'p7
+        
+            ld b,l                      ;'final p5 byte in B
+            ld l,h                      ;'prepare HL for next cycle
+            ld h,a                      ;'promote HL p7 p6
+        
+            ; start doing the p6 p7 bytes
+            pop de                      ;'y3 x3
+            mul de                      ;'y3*x3
+        
+            add hl,de                   ;'p7 p6
+            ex de,hl                    ;'p7 p6
+            ld h,b                      ;'p5
+            ld l,c                      ;'p4
+        
+            ret                         ;'exit  : DEHL DEHL' = 64-bit product
+
 

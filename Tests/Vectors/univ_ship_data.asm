@@ -672,6 +672,7 @@ ProjectNodeToScreen:
         ld          hl,varQ
         cp          (hl)                                ; Q
         JumpIfALTusng DoSmallAngle                      ; LL69 if xdist < zdist hop over jmp to small x angle
+        MMUSelectMathsBankedFns
         call        RequAmul256divQ; RequAdivQ                           ; LL61  \ visit up  R = A/Q = x/z
         jp          SkipSmallAngle                      ; LL65  \ hop over small xangle
 DoSmallAngle:                                           ; small x angle
@@ -726,10 +727,12 @@ ProcessYPoint:
         cp          (hl)                                ; Q
         JumpIfALTusng SmallYHop                         ; if ydist < zdist hop to small yangle
 SmallYPoint:        
+        MMUSelectMathsBankedFns
         call        RequAmul256divQ;RequAdivQ                           ; LL61  \ else visit up R = A/Q = y/z
         jp          SkipYScale                          ; LL68 hop over small y yangle
 SmallYHop:
 LL67:                                                   ; Arrive from LL66 above if XX15+3 < Q \ small yangle
+        MMUSelectMathsBankedFns
         call        RequAmul256divQ                     ; LL28  \ BFRDIV R=A*256/Q byte for remainder of division
 SkipYScale:
 LL68:                                                   ; both carry on, also arrive from LL66, yscaled based on z
