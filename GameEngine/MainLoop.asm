@@ -216,6 +216,10 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
                             ld      a,$47
                             ld      d,3
                             call    l1_attr_line_d_to_a
+                            ld      d,4
+                            call    l1_attr_line_d_to_a
+                            ld      d,5
+                            call    l1_attr_line_d_to_a
                             MMUSelectPlanet
                             ld      a,(P_BnKxlo)
                             ld      hl,(P_BnKxhi)
@@ -228,6 +232,14 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
                             ld      a,(P_BnKzlo)
                             ld      hl,(P_BnKzhi)
                             ld      de,$0303
+                            call    l1_print_s24_hex_at_char: ; prints 16 bit lead sign hex value in HLA at char pos DE
+                            ld      a,(AlphaDecimal)
+                            ld      hl,(AlphaDecimal+1)
+                            ld      de,$0403
+                            call    l1_print_s24_hex_at_char: ; prints 16 bit lead sign hex value in HLA at char pos DE
+                            ld      a,(BetaDecimal)
+                            ld      hl,(BetaDecimal+1)
+                            ld      de,$0503
                             call    l1_print_s24_hex_at_char: ; prints 16 bit lead sign hex value in HLA at char pos DE
                             MMUSelectSun
                             ld      a,(SBnKxlo)

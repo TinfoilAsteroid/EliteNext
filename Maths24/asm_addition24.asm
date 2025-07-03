@@ -1,46 +1,80 @@
-; Addition---------------------------------------------------
-; BAHL = BHL+CDE Lead Sign bit - If overflows AHL then carry will be set resulting in B holding sign and rest of value, else AHL holds value
-; in reality will we aim for all values being S14.8 so bit 15 is always clear for overflow
-AHLequBHLplusCDE:       ld      a,b                          ; if b sign and c sign were different then bit 7 of a will be 1 which means
-                        and     $80                          ; Signs are opposite there fore we can subtract to get difference
-                        xor     c                            ;
-                        JumpIfNegative .OppositeSigns        ;
-.SameSigns:             ld      a,b                          ; if they are both negative
-                        or      c                            ; then we can do an add but also set the sign bit
-                        JumpIfNegative .BothNegative         ; optimisation so we can just do simple add if both positive
-.BothPositive:          adc     hl,de                        ; both positive so a will already be zero
-                        ld      a,b                          ; a = b + c + an carry from HL + DE
-                        adc     c                            ;
-                        ret     nc                           ; fi there was no carry then we are good
-.OverFlowPositive:      ld      b,1                          ; if we overflow from +BHL +  +CDE then we already have sign cleared in A and only 1 bit to roll into B + no sign bit
-                        ret
-.BothNegative:          res     7,b                          ; clear sign bits for both values
-                        res     7,c                          ; .
-                        adc     hl,de                        ; now behave like they are both positive
+; Bodge 2';s c
+AHLequBHLplusCDE:       ld      a,b                             ; if BHL is negative
+                        bit     7,b                             ; then 
+                        jp      z,.CheckCDE                     ;
+.NegBHL:                ;ld      a,b                             ; clear sign bit
+                        ;and     $80                             ; and 2's c BHL
+                        res     7,b
+                        NegBHL                                  ;
+                        ;ld      b,a                             ;
+.CheckCDE               bit     7,c                             ; if CDE is negative
+                        jp      z,.PerformAdd                   ;
+.NegCDE:               ;push    af,,hl                          ;
+                        ;ld      a,c                             ; set up AHL as CDE
+                        ;ex      de,hl                           ; preserving old HL 
+                        res     7,c
+                        NegCDE                                  ; in DE
+                        ;ld      c,a                             ; then negate
+                        ;ex      de,hl                           ; and restore
+                        ;pop     af,,hl                          ; BHL
+.PerformAdd:            ClearCarryFlag
+                        adc     hl,de
                         ld      a,b
                         adc     c
-                        jp      c,.OverFlowNegative          ; if there was carry we need to overflow into b
-                        or      %10000000                    ; set bit 7 of A for negative
+                        bit     7,a
+                        ret     z
+                        NegAHL
+                        or      $80
                         ret
-.OverFlowNegative:      ld      b,%10000001                  ; carry over the bit but also set the sign bit
-                        ret
-.OppositeSigns:         bit     7,b                         ; if BHL was negative then
-                        jp      nz,.CDEMinusBHL             ; its CDE - BHL
-.BHLMinusCDE:           res     7,c
-                        ex      hl,de                       ; it must be BHL - CDE  so we swap registers and just treat it as CDE-BHL
-                        ld      a,b                         ; and we have to use a when swapping b and c
-                        ld      b,c                         ; .
-                        ld      c,a                         ; .
-.CDEMinusBHL:           res     7,b
-                        ClearCarryFlag                      ; now its just common CDE-BHL
-                        ld      a,c                         ; a= c - b
-                        sbc     b
-                        ex      hl,de                       ; hl = DE-hl by swapping them round
-                        sbc     hl,de                       ; now AHL is result
-                        ret     nc                          ; if there was no carry then we are good
-.CDEFlipSign:           NegAHL                              ; as CDE-BHL became negative we make result lead sign negativce
-                        or      %10000000                   ; flip the lead bit of A
-                        ret
+;;-;-- Addition---------------------------------------------------
+;;-; BAHL = BHL+CDE Lead Sign bit - If overflows AHL then carry will be set resulting in B holding sign and rest of value, else AHL holds value
+;;-; in reality will we aim for all values being S14.8 so bit 15 is always clear for overflow
+;;-AHLequBHLplusCDEX:       ld      a,b                          ; if b sign and c sign were different then bit 7 of a will be 1 which means
+;;-                        and     $80                          ; Signs are opposite there fore we can subtract to get difference
+;;-                        xor     c                            ;
+;;-                        JumpIfNegative .OppositeSigns        ;
+;;-.SameSigns:             ld      a,b                          ; if they are both negative
+;;-                        or      c                            ; then we can do an add but also set the sign bit
+;;-                        JumpIfNegative .BothNegative         ; optimisation so we can just do simple add if both positive
+;;-                        ;-------Perform Both Positive Add ----
+;;-.BothPositive:          adc     hl,de                        ; both positive so a will already be zero, OR will hnave cleared carry
+;;-                        ld      a,b                          ; a = b + c + an carry from HL + DE
+;;-                        adc     c                            ;
+;;-                        ret     nc                           ; if there was no carry then we are good
+;;-                        ;-------Done Both Positive Add -------
+;;-.OverFlowPositive:      ld      b,1                          ; if we overflow from +BHL +  +CDE then we already have sign cleared in A and only 1 bit to roll into B + no sign bit
+;;-                        ret
+;;-                        ;-------Perform Both Negative Add ----
+;;-.BothNegative:          res     7,b                          ; clear sign bits for both values
+;;-                        res     7,c                          ; .
+;;-                        adc     hl,de                        ; now behave like they are both positive
+;;-                        ld      a,b
+;;-                        adc     c
+;;-                        jp      c,.OverFlowNegative          ; if there was carry we need to overflow into b
+;;-                        or      %10000000                    ; set bit 7 of A for negative
+;;-                        ret
+;;-                        ;-------Done Both Negative Add -------
+;;-.OverFlowNegative:      ld      b,%10000001                  ; carry over the bit but also set the sign bit
+;;-                        ret
+;;-.OppositeSigns:         bit     7,b                          ; if BHL was negative then CDE is positive
+;;-                        jp      nz,.CDEMinusBHL              ; so perform CDE - BHL
+;;-                        ;-------Prep BHL - CDE (CDE -ve)------
+;;-.BHLMinusCDE:           res     7,c                          ; we have just one subtract routine 
+;;-                        ex      hl,de                        ; so we swap registers and just treat it as CDE-BHL
+;;-                        ld      a,b                          ; and we have to use a when swapping b and c
+;;-                        ld      b,c                          ; .
+;;-                        ld      c,a                          ; .
+;;-                        ;-------Perform CDE - BHL (BHL -ve)---
+;;-.CDEMinusBHL:           res     7,b                          ; B is now ABS (B) 
+;;-                        ClearCarryFlag                       ; now its just common CDE-BHL
+;;-                        ex      hl,de                        ; hl = de-hl by swapping them round
+;;-                        sbc     hl,de                        ; 
+;;-                        ld      a,c                          ; a= c - b
+;;-                        sbc     b                            ; now AHL is result
+;;-                        ret     nc                           ; if there was no carry then we are good and it didn't end up 2's c
+;;-.CDEFlipSign:           NegAHL                               ; as CDE-BHL became negative we make result lead sign negativce
+;;-                        or      %10000000                    ; flip the lead bit of A
+;;-                        ret
 SwapViaA:               MACRO   r1, r2
                         ld      a,r1
                         ld      r1,r2

@@ -39,12 +39,23 @@ SunBetaMulZ                 DB $00,$00, $00, $00
 SunBetaMulY                 DB $00,$00, $00, $00
 SunK2                       DS 3
 
-SunApplyMyRollAndPitch: 	ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
-.CheckForRoll:              and		a
-							call	nz,Sun_Roll
-.CheckForPitch:				ld		a,(BETA)
-							and		a
-							call	nz,Sun_Pitch
+;	alpha = flight_roll / 256.0;
+;	beta = flight_climb / 256.0;
+;    k2 = y - alpha * x;
+;	z = z + beta * k2;
+;	y = k2 - z * beta;
+;	x = x + alpha * y;
+;divs32   dehl = dehl' / dehl in our case it will be S78.0/ 0S78.0 to give us 0S78.0
+
+SunApplyMyRollAndPitch:     ld      ix,SBnKxlo                  ; base location of position as 24 bit
+                            MMUSelectMathsBankedFns
+                            call    ApplyRollAndPitchIX
+;SunApplyMyRollAndPitch: 	ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
+;.CheckForRoll:              and		a
+;							call	nz,Sun_Roll
+;.CheckForPitch:				ld		a,(BETA)
+;							and		a
+;							call	nz,Sun_Pitch
 .ApplySpeed:            	ld      a,(DELTA)                   ; BCH = - Delta
 							ReturnIfAIsZero
 							ld      c,0                         ;

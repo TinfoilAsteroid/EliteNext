@@ -92,8 +92,8 @@ JSTY                    DB  0               ; Joystick analog
 BET1 					DB	0               ; 2B        lower7 magnitude	
 BET2                    DB  0               ;            climb sign
 BET2FLIP				DB	0				; 7C		BET 2 pitch Sign negated
-BET1MAXC                DB  31              ; max climb
-BET1MAXD                DB  -31             ; max dive
+BET1MAXC                DB  8; 31              ; max climb
+BET1MAXD                DB  -8; -31             ; max dive
 XC						DB	0               ; 2C
 YC						DB 	0               ; 2D
 ;... ECM logic. If another ship adds ECM then we just set the loop A and B to starting values so they overlap
@@ -104,8 +104,11 @@ ALPHA					DB	0				; 8D        Alpha with bit 7 sign
 ALP1					DB 	0				; 31		ALP1	ABS Alpha
 ALP2					DB  0				; 32		ALP2	Roll Sign
 ALP2FLIP				DB  0				; 33		ALP2	negated roll sign
-ALP1MAXR                DB  31               ;   Maximum roll, added becuase we may allow different ship types
-ALP1MAXL                DB  -31             ;   Maximum roll, added becuase we may allow different ship types
+ALP1MAXR                DB  8 ; 31              ;   Maximum roll, added becuase we may allow different ship types
+ALP1MAXL                DB  -8; -31             ;   Maximum roll, added becuase we may allow different ship types
+AlphaDecimal            DS  3               ; roll /256 as 24 bit 16.8
+BetaDecimal             DS  3               ; pitch /256 as 24 bit 16.8
+RPK2                    DS  3               ; Roll pitch tgemporary holding for K2
 
 
 ;-- Message handler -----------------------------------------------------------------------------------------------------------------

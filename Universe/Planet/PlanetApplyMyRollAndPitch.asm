@@ -15,12 +15,23 @@ PlanetK2                   DS 3
 
 ; Gets values backwards, is it 24 bit safe?
 
-PlanetApplyMyRollAndPitch: 	ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
-.CheckForRoll:              and		a
-							call	nz,Planet_Roll
-.CheckForPitch:				ld		a,(BETA)
-							and		a
-							call	nz,Planet_Pitch
+PlanetApplyMyRollAndPitch: 	ld      ix,P_BnKxlo                  ; base location of position as 24 bit
+                            MMUSelectMathsBankedFns
+                            call    ApplyRollAndPitchIX
+                            ld      a,(P_BnKzhi+1)
+                            ld      b,a
+                            ld      a,(P_BnKyhi+1)
+                            or      b
+                            and     $7E ; bit 0 is ok so ignore that
+                            jp      z,.skipBreak
+                            break
+.skipBreak                  pop     af                              
+;                            ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
+;.CheckForRoll:              and		a
+;							call	nz,Planet_Roll
+;.CheckForPitch:				ld		a,(BETA)
+;							and		a
+;							call	nz,Planet_Pitch
 .ApplySpeed:            	ld      a,(DELTA)                   ; BCH = - Delta
 							ReturnIfAIsZero
 							ld      c,0                         ;

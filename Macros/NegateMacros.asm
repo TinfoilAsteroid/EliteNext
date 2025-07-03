@@ -67,34 +67,68 @@ NegHL:			    MACRO
                     ld      h,a
                     ENDM
 
-NegAHL:			    MACRO
-                    ld      b,a         ; save a in b
-                    xor     a           ; l = 0 - l
-                    sub     l   
+NegBHL:             MACRO
+                    ld      a,l
+                    cpl
+                    add     a,1
                     ld      l,a
-                    sbc     a,a         ; h = 0 - h
-                    sub     h
+                    ld      a,h
+                    cpl
+                    adc     a,0
                     ld      h,a
-                    sbc     a,a         ; a= 0 - b
-                    sub     b                            
+                    ld      a,b
+                    cpl
+                    adc     a,0
+                    ld      b,a
                     ENDM
 
+NegCDE:             MACRO
+                    ld      a,e
+                    cpl
+                    add     a,1
+                    ld      e,a
+                    ld      a,d
+                    cpl
+                    adc     a,0
+                    ld      d,a
+                    ld      a,c
+                    cpl
+                    adc     a,0
+                    ld      c,a
+                    ENDM
+                    
+NegAHL:			    MACRO
+                    ld      b,a
+                    ld      a,l
+                    cpl
+                    add     a,1
+                    ld      l,a
+                    ld      a,h
+                    cpl
+                    adc     a,0
+                    ld      h,a
+                    ld      a,b
+                    cpl
+                    adc     a,0
+                    ENDM
+
+
 NegDE:			    MACRO
-                    xor a
-                    sub e
-                    ld e,a
-                    sbc a,a
-                    sub d
-                    ld d,a
+                    xor     a
+                    sub     e
+                    ld      e,a
+                    sbc     a,a
+                    sub     d
+                    ld      d,a
                     ENDM
 
 NegBC:			    MACRO
-                    xor a
-                    sub c
-                    ld c,a
-                    sbc a,a
-                    sub  b
-                    ld b,a
+                    xor     a
+                    sub     c
+                    ld      c,a
+                    sbc     a,a
+                    sub     b
+                    ld      b,a
                     ENDM
 
 NegH                MACRO
