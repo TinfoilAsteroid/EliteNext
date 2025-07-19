@@ -10,6 +10,13 @@ UBnKysgn                    DB  0                       ; INWK +5
 UBnKzlo                     DB  0                       ; INWK +6
 UBnKzhi                     DB  0                       ; INWK +7
 UBnKzsgn                    DB  0                       ; INWK +8
+UBnkCompassX                DW  0                       ; Compass offset
+UBnkCompassY                DW  0                       ; Compass offset
+UBnkRadarX                  DW  0                       ; Radar offset
+UBnkRadarY                  DW  0                       ; Radar offset
+UBnkNormalX                 DW  0                       ; Normalised Position
+UBnKNormalY                 DW  0                       ; Normalised Position
+UBnkNormalZ                 DW  0                       ; Normalised Position
 ;-Rotation Matrix of Ship----------------------------------------------------------------------------------------------------------
 ; Rotation data is stored as lohi, but only 15 bits with 16th bit being  a sign bit. Note this is NOT 2'c compliment
 ; Note they seem to have to be after camera position not quite found why yet, can only assume it does an iy or ix indexed copy? Bu oddly does not affect space station.

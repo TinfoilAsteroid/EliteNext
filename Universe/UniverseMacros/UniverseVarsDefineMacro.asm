@@ -97,6 +97,12 @@ prefix1?_BnKzhi                     DB  0                       ; INWK +7
 prefix1?_BnKzsgn                    DB  0                       ; INWK +8
 prefix1?_CompassX                   DW  0
 prefix1?_CompassY                   DW  0
+prefix1?_RadarX                     DW  0
+prefix1?_RadarY                     DW  0
+prefix1?_BnkNormRoot                DS  3                       ; 3 bytes for normnalisation
+prefix1?_BnkNormalX                 DW  0                       ; Normalised Position
+prefix1?_BnKNormalY                 DW  0                       ; Normalised Position
+prefix1?_BnkNormalZ                 DW  0                       ; Normalised Position
 prefix1?_BnKElipseCenterX           DW  0
 prefix1?_BnKElipseCenterY           DW  0
 prefix1?_BnKElipseRadiusU           DW  0

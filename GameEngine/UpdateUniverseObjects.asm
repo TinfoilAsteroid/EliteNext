@@ -68,8 +68,8 @@ UpdateUniverseObjects:  xor     a
         ENDIF
                             DISPLAY "TODO: Make all 4 of these 1 call"
 .ProperUpdate:          call    TidyRotation                                        ; determine if its tidy time within the universe model
-                        call    MyRollAndPitch24Bit;ApplyMyRollAndPitch             ; Apply our ship movement to universe object
-                        call    MySpeed24Bit
+                        call    ShipApplyMyRollAndPitch;MyRollAndPitch24Bit;ApplyMyRollAndPitch             ; Apply our ship movement to universe object
+                        ;call    MySpeed24Bit
                         call    ApplyShipRollAndPitch                               ; Apply ships own movement to universe object
                         call    ApplyShipSpeed                                      ; Apply ships speed to universe object
                         call    UpdateSpeedAndPitch                                 ; update based on rates of speed roll and pitch accelleration/decelleration

@@ -90,7 +90,7 @@ EliteNextStartup:       di
                         ld      iy,Test1
                         ld      b,6
 .testloop:              push    iy,,bc
-                        call    TestDiv
+                        call    TestDiv24
                         pop     iy,,bc
                         ld      hl,iy
                         ld      a,$10
@@ -112,6 +112,51 @@ Test5:                  DB $80, $F7, $00, $80, $0A, $00, $00, $00, $00, $00, $0c
 Test6:                  DB $FF, $03, $00, $00, $8A, $10, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11 ; 3.996 / -10 = -0.3996 
 
 
+TestDiv24:              ld      hl,(iy+0)           ; dehl = X0
+                        ld      a,(iy+2)
+                        ld      de,(iy+3)           ; dehl = 0Y
+                        ld      c,(iy+5)            ;
+                        break
+                        call    divs24              ; dehl' / dehl result in BCDE.HL
+                        ld      (iy+$0B),hl         ; .
+                        ld      (iy+$0D),de         ; .
+                        exx
+                        ld      a,l
+                        ld      (iy+$0E),a          ; and finally l
+.CheckResult:           ld      a,(iy+$07)
+                        ld      b,a
+                        ld      a,(iy+$0B)
+                        cp      b
+                        jp      nz,.Fail
+                        
+                        ld      a,(iy+$08)
+                        ld      b,a
+                        ld      a,(iy+$0C)
+                        cp      b
+                        jp      nz,.Fail
+                        
+                        ld      a,(iy+$09)
+                        ld      b,a
+                        ld      a,(iy+$0D)
+                        cp      b
+                        jp      nz,.Fail
+                        
+                        ld      a,(iy+$0A)
+                        ld      b,a
+                        ld      a,(iy+$0E)
+                        cp      b
+                        jp      nz,.Fail
+                        
+                        ld      a,$FF
+                        ld      (iy+$0F),a
+                        ret
+.Fail:                  ld      a,$00
+                        ld      (iy+$0F),a
+                        ld      hl,ErrorCount
+                        inc     (hl)
+                        ret
+
+
 TestDiv:                ld      hl,(iy+1)           ; dehl = X0
                         ex      de,hl
                         ld      a,(iy+0)
@@ -124,7 +169,7 @@ TestDiv:                ld      hl,(iy+1)           ; dehl = X0
                         ld      d,0
                         exx                         ; dehl correct way round
                         break
-                        call    divu32              ; BH.L by CD.E putting result in BCDE.HL
+                        call    divu32              ; dehl' / dehl result in BCDE.HL
                         exx                         ; so now we have l'de.h to consdier                     ; we only care about lde'.h' in the resul
                         ld      a,h                 ; we only care about lde'.h' in the resul
                         ld      (iy+$0B),a          ; .

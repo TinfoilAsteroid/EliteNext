@@ -5,6 +5,13 @@
 ; 3. y = K2 - beta * z
 ; 4. x = x + alpha * y
 
+ShipApplyMyRollAndPitch:    ld      ix,UBnKxlo                  ; base location of position as 24 bit
+                            MMUSelectMathsBankedFns
+                            call    ApplyRollAndPitchIX
+							ret
+
+
+
     IFDEF USE_24BIT_ROLL_AND_PITCH
 UBnK24BitAlphaMulX      DB $00,$00, $00, $00
 UBnK24BitAlphaMulY      DB $00,$00, $00, $00

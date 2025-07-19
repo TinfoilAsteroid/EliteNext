@@ -254,7 +254,19 @@ CheckConsoleReDraw:     ld      hl,ConsoleRefreshCounter
                             ld      hl,(SBnKzhi)
                             ld      de,$030C
                             call    l1_print_s24_hex_at_char: ; prints 16 bit lead sign hex value in HLA at char pos DE
-                            MMUSelectSun
+                            MMUSelectSpaceStation
+                            ld      a,(UBnKxlo)
+                            ld      hl,(UBnKxhi)
+                            ld      de,$0114
+                            call    l1_print_s24_hex_at_char: ; prints 16 bit lead sign hex value in HLA at char pos DE
+                            ld      a,(UBnKylo)
+                            ld      hl,(UBnKyhi)
+                            ld      de,$0214
+                            call    l1_print_s24_hex_at_char: ; prints 16 bit lead sign hex value in HLA at char pos DE
+                            ld      a,(UBnKzlo)
+                            ld      hl,(UBnKzhi)
+                            ld      de,$0314
+                            call    l1_print_s24_hex_at_char: ; prints 16 bit lead sign hex value in HLA at char pos DE
                         ENDIF
 ;..Later this will be done via self modifying code to load correct stars routine for view..........................................
 DrawDustForwards:       ld     a,$DF

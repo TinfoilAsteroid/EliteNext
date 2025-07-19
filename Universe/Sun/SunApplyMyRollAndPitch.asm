@@ -50,24 +50,6 @@ SunK2                       DS 3
 SunApplyMyRollAndPitch:     ld      ix,SBnKxlo                  ; base location of position as 24 bit
                             MMUSelectMathsBankedFns
                             call    ApplyRollAndPitchIX
-;SunApplyMyRollAndPitch: 	ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
-;.CheckForRoll:              and		a
-;							call	nz,Sun_Roll
-;.CheckForPitch:				ld		a,(BETA)
-;							and		a
-;							call	nz,Sun_Pitch
-.ApplySpeed:            	ld      a,(DELTA)                   ; BCH = - Delta
-							ReturnIfAIsZero
-							ld      c,0                         ;
-							ld      h,a                         ; 
-							ld      b,$80                       ;
-							ld      de,(SBnKzhi)                ; DEL = z position
-							ld      a,(SBnKzlo)                 ; .
-							ld      l,a                         ; .
-							call    AddBCHtoDELsigned           ; update speed
-							ld      (SBnKzhi),DE                ; write back to zpos
-							ld      a,l
-							ld      (SBnKzlo),a                ;
 							ret
 ; Performs minsky rotation
 ; Joystick left          Joystick right

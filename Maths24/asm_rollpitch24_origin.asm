@@ -1,4 +1,4 @@
-RotEqeuRotDiv256            MACRO   Rotator, RotatorDecimal
+RotEquRotDiv256             MACRO   Rotator, RotatorDecimal
                             ld      a,(Rotator)             ; Alpha = alpha / 256 signed 
                             bit     7,a                     ; determine if its + or -
                             ld      hl,0                    ; .
@@ -7,6 +7,13 @@ RotEqeuRotDiv256            MACRO   Rotator, RotatorDecimal
                             ld      h,$80                   ; 
 .RotPositive:               ld      (RotatorDecimal),a      ; .
                             ld      (RotatorDecimal+1),hl   ; .
+                            ENDM
+                            
+CDEEquDeltaDiv256           MACRO   SpeedDelta
+                            ld      a,(SpeedDelta)          ; Speed = Delta / 256 signed 
+.SpeedRelative:             ld      d,$00                   ; 
+                            ld      e,a
+.RotPositive:               ld      c,$80                   ; .
                             ENDM
                             
 SetBHLtoAlpha:              MACRO
@@ -26,22 +33,36 @@ SetBHLtoK2:                 MACRO
                             ld      b,a                     ; bhl = K2
                             ld      hl,(RPK2)               ; .
                             ENDM
+                            
 SetCDEtoX:                  MACRO
                             ld      c,(ix+2)
                             ld      de,(ix)
                             ENDM
+                            
 SetCDEtoDEH                 MACRO
                             ld      c,d                     ; move DE.H into CD.E for multiply
                             ld      d,e                     ; .
                             ld      e,h                     ; .
-                            ENDM         
+                            ENDM   
+                            
 SetCDEtoAHL                 MACRO
                             ld      c,a                     ; move DE.H into CD.E for multiply
                             ex      de,hl
                             ENDM   
+                            
+SetCDEtoDelta:              MACRO
+                            ld      a,(DeltaDecimal+2)      ; set BHL to Beta
+                            ld      b,a                     ;
+                            ld      hl,(DeltaDecimal)       ;
+                            ENDM
+                                
 SetBHLtoX:                  MACRO
                             ld      b,(ix+2)
                             ld      hl,(ix)
+                            ENDM
+SetCDEtoX:                  MACRO
+                            ld      c,(ix+2)
+                            ld      de,(ix)
                             ENDM
 SaveDEHToX:                 MACRO
                             ld      (ix+2),d                ; save DE.H into Zd
@@ -91,8 +112,10 @@ SaveAHLToZ:                 MACRO
                             ENDM                               
                                 DISPLAY "Later oprimise to do decimal calc in main loop"
                                 DISPLAY "Also update compasses"
-ApplyRollAndPitchIX:        RotEqeuRotDiv256 ALPHA, AlphaDecimal  ; Alpha = alpha / 256 signed             
-CalcBetaDecimal:            RotEqeuRotDiv256 BETA, BetaDecimal  ; Alpha = alpha / 256 signed
+; Apply roll and pitch takes 3 24 bit X, Y, Z and applies player roll, pitch and speed
+; for readability all steps are done via macros
+ApplyRollAndPitchIX:        RotEquRotDiv256 ALPHA, AlphaDecimal  ; Alpha = alpha / 256 signed             
+.CalcBetaDecimal:           RotEquRotDiv256 BETA,  BetaDecimal  ; Alpha = alpha / 256 signed
                             ; k2 = y - alpha * x;
 .StartK2Calc:               SetBHLtoAlpha                   ; HL.L = Alpha decimal
                             SetCDEtoX                       ; CD.E = X
@@ -126,4 +149,8 @@ CalcBetaDecimal:            RotEqeuRotDiv256 BETA, BetaDecimal  ; Alpha = alpha 
                             SetBHLtoX                       ; BH.L = X
                             call    AHLequBHLplusCDE        ; DE.H = X + Alpha*y
 .WriteNewX:                 SaveAHLToX                      ; NewX = X * Alpha*Y
+.SetDeltaDecimal:           CDEEquDeltaDiv256 DELTA         ; set CDE t
+.ApplySpeed:                SetBHLtoZ
+                            call    AHLequBHLplusCDE
+                            SaveAHLToZ
                             ret

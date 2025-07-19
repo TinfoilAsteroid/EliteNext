@@ -8,5 +8,11 @@ SBnKysgn                    DB  0                       ; INWK +5
 SBnKzlo                     DB  0                       ; INWK +6
 SBnKzhi                     DB  0                       ; INWK +7
 SBnKzsgn                    DB  0                       ; INWK +8
-SunCompassX                 DW  0
-SunCompassY                 DW  0
+SCompassX                   DW  0
+SCompassY                   DW  0
+SRadarX                     DW  0
+SRadarY                     DW  0
+SBnkNormRoot                DS  3                       ; 3 bytes for normnalisation
+SBnkNormalX                 DW  0                       ; Normalised Position
+SBnKNormalY                 DW  0                       ; Normalised Position
+SBnkNormalZ                 DW  0                       ; Normalised Position

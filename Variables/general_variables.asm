@@ -108,6 +108,7 @@ ALP1MAXR                DB  8 ; 31              ;   Maximum roll, added becuase 
 ALP1MAXL                DB  -8; -31             ;   Maximum roll, added becuase we may allow different ship types
 AlphaDecimal            DS  3               ; roll /256 as 24 bit 16.8
 BetaDecimal             DS  3               ; pitch /256 as 24 bit 16.8
+DeltaDecimal            DS  3               ; pitch /256 as 24 bit 16.8
 RPK2                    DS  3               ; Roll pitch tgemporary holding for K2
 
 

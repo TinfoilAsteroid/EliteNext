@@ -1,0 +1,268 @@
+
+
+; takes a 3x24 bit vector and normalilses them, this is done by taking the ABS values scaling down into a maxioum of a 15 bit number
+
+; gets high bytes of vector at IX
+
+; sets h = abs x sign, l = abs y sgn d and a to abs z|y|x sgn
+SetAHLDToABSXYZSgn      MACRO
+                        ld      a,(ix+2)
+                        and     $7F
+                        ld      h,a
+                        ld      a,(ix+5)
+                        and     $7F
+                        ld      l,a
+                        ld      a,(ix+8)
+                        and     $7F
+                        ld      d,a
+                        or      h
+                        or      l
+                        ENDM
+
+SetDEAtoABSX:           MACRO
+                        ld      de,(ix+1)
+                        ld      a,(ix+0)
+                        res     7,d
+                        ENDM
+
+SetDEAtoABSY:           MACRO
+                        ld      de,(ix+4)
+                        ld      a,(ix+3)
+                        res     7,d
+                        ENDM                        
+
+SetDEAtoABSZ:           MACRO
+                        ld      de,(ix+7)
+                        ld      a,(ix+6)
+                        res     7,d
+                        ENDM
+                        
+SetHLtoABSXHiLo:        MACRO
+                        ld      hl,(ix)
+                        ENDM
+                        
+SetDEtoABSYHiLo:        MACRO
+                        ld      de,(ix+3)
+                        ENDM
+
+SetBCtoABSZHiLo:        MACRO
+                        ld      bc,(ix+6)
+                        ENDM
+
+SetHLtoABSXSgnHi:       MACRO
+                        ld      hl,(ix+1)
+                        ld      a, h
+                        and     $7F
+                        ld      h,a
+                        ENDM
+                       
+SetDEtoABSYSgnHi:       MACRO
+                        ld      de,(ix+4)
+                        ld      a, d
+                        and     $7F
+                        ld      d,a
+                        ENDM
+                        
+SetBCtoABSZSgnHi:       MACRO
+                        ld      bc,(ix+7)
+                        ld      a, b
+                        and     $7F
+                        ld      b,a
+                        ENDM
+                        
+SetNormXToHL:           MACRO
+                        ld     (ix+20),hl
+                        ENDM
+                        
+SetNormXToDE:           MACRO
+                        ld     (ix+20),de
+                        ENDM
+                        
+SetNormYToDE:           MACRO
+                        ld     (ix+22),de
+                        ENDM
+                        
+SetNormZToBC:           MACRO
+                        ld     (ix+24),bc
+                        ENDM
+                        
+SetNormZToDE:           MACRO
+                        ld     (ix+24),de
+                        ENDM                        
+
+PrepScale:              MACRO                       ;setg [A IYH] to or'ed all bytes of ABS X,Y,Z
+                        ld      a,h                 
+                        or      d
+                        or      c
+                        ld      iyh,a
+                        ld      a,l
+                        or      e
+                        or      c
+                        or      1                   ; we can never have a status where hl,de,bc are 0 but we will force bit 1 to be safe
+                        ENDM
+                        
+CalculateScale:         MACRO
+                        ld      iyl,a
+                        exx                         ; save off registers so we can use altgernates for barrel shift calc
+                        ld      b,0             
+                        ld      de,iy               ; moving iy to de for faster bit and shift operations
+                        ; as we ABS then bit 7 can never have been set anmd we want to stop after setting bit 6 so max range is 16129 (127 ^ 2)
+.ScaleLoop:             bit     6,d                 ; this loop will find the minium number of shifts requried
+                        jp      nz,.DoneShift       ; if bit 6 is set then we have done enough shifts
+                        ShiftDELeft1
+                        inc     b
+                        jp      .ScaleLoop
+.DoneShift              ld      a,b                 ; b is all we are interestred in so save it in IYL
+                        exx                         ; now we have the vector coords recovered
+                        ENDM
+ScaleY:                 MACRO
+                        ld      b,a                 ; shift de
+                        bsrl    de,b
+                        ENDM
+ScaleX:                 MACRO                       ; as b is already loaded we can just swap over de,hl and do the shift
+                        ex      de,hl
+                        bsrl    de,b
+                        ENDM
+ScaleZ:                 MACRO                       ; as b is already loaded we can just swap over de,hl and do the shift
+                        push    de                  ; we need DE spare
+                        ld      de,bc
+                        ld      b,a
+                        bsrl    de,b
+                        ld      bc,de
+                        pop     de
+                        ENDM    
+SquareX:                MACRO
+                        ex      de,hl
+                        mul     de
+                        ex      de,hl
+                        ENDM
+SquareY:                MACRO
+                        mul     de
+                        ENDM
+SquareZ:                MACRO
+                        ld      de,bc
+                        mul     de                  ; d * e
+                        ENDM
+                        
+Normalise24:            ld      b,0                 ; B = 0
+                        SetAHLDToABSXYZSgn          ; get ABS X,Y,Z Sign into H L D and set a to X|Y|Z (abs values), will also set or flags
+                        jp      z,.HiLoOnly         ; if z is set then there is no pre shifting required as XYZ signs are all zero 
+.signnormloop:          inc     b                   ; else we have to count now many bits we need to barrel shift sign and high down
+                        srl     a
+                        jp      nz, .signnormloop
+.signshiftdone:         ld      a,b
+                        cp      8                   ; first optimisation, if b = 8 then copy xyz (hi lo) to normal xyz
+                        jp      z,.SgnHiOnly
+                        ; we actually scale up in the calculation
+                        ; take sgn hi lo and scale up so sgn bit 6 is set as per scaling
+                        ; then go into SgnHiOnly for normalisation
+                        ; so we get in sgn , hi, low and scale 8-b iterations left
+                        ; we can do that by a barrel shift left on sgn hi
+                        ; shift low in a loop, then or low with hi so we only have to loop on an 8 bit shift
+.ScaleDown:             ld      a,7                  ; b = 7 - b so the result is ABS(S15)
+                        sub     b                    ;
+                        ld      b,a
+                        ld      c,b
+                        
+                        
+                        change all this to do:
+                            take sgn bytes
+                            or togeher, 
+                            if 0 then
+                                take hi bytes
+                                or together
+                                if 0 then 
+                                    scale lo bytes to 7 bit
+                                    take result
+                                else
+                                    scale hi + lo to 15 bits
+                                    take result high byte
+                            else
+                                scale sgn + hi to 15 bits
+                                take result high byte 
+                        
+                        
+.ScaleDownXLoop:        SetDEAtoABSX
+                        ShiftDEALeft1
+                        djnz    .ScaleDownXLoop
+                        SetNormXToDE
+                        ld      b,c
+.ScaleDownYLoop:        SetDEAtoABSY
+                        ShiftDEALeft1
+                        djnz    .ScaleDownYLoop
+                        SetNormYToDE
+                        ld      b,c
+.ScaleDownYLoop:        SetDEAtoABSZ
+                        ShiftDEALeft1
+                        djnz    .ScaleDownZLoop
+                        SetNormZToDE                        
+                        jp      .performNorm
+                        
+.SgnHiOnly:             SetHLtoABSXSgnHi
+                        SetDEtoABSYSgnHi
+                        SetBCtoABSXSgnHi
+                        jp      .loadNorm
+.HiLoOnly:              SetHLtoABSXHiLo             ; this will likley be most common so we don't
+                        SetDEtoABSYHiLo             ; do the JP and just fall into performNorm
+                        SetBCtoABSZHiLo
+.loadNorm:              SetNormXToHL
+                        SetNormYToDE
+                        SetNormZToBC
+.performNorm:                        
+; iyl = b
+                        ; if b = 0 then then we can work on 16t bit values
+                        ;   hl = abs (x hi lo)
+                        ;   de = abs (y hi lo)
+                        ;   bc = abs (z hi lo)
+                        ; else
+                        ;   hl = abs (x sign hi)
+                        ;   de = abs (y sign hi)
+                        ;   bc = abs (z sign hi)
+                        ld      a,h
+                        or      l
+                        or      d
+.highnormloop:          jp      z,.highshiftdone    ; now shift down to a 15 bit value
+                        inc     b
+                        srl     a
+                        jp      .highnormloop
+.highshiftdone:         ; if we came in here with b = 0 there were no shifts so we have to scale up by 8 
+                        ; using the decimal, then scale to 6 bits
+                        ; we need to hold the effective shift, now its a -ve number to indicate scale down at the end
+                        ; * we can optimise scaling depending on if it scaled sign/hi/low
+                        
+
+
+                        
+                        
+normaliseIX:            SetHLtoABSX
+                        SetDEtoABSY
+                        SetBCtoABSZ
+.CalculateRootValue:    PrepScale
+                        CalculateScale              ; returns with a holding shfits required
+                        or      a                   ; if its 0 shift then sklip scale
+                        jp      z,.SkipScale
+                        push    bc                  ; save bc as this is needed for barrel shifts
+                        ScaleY
+                        ScaleX
+                        pop     bc                  ; now get back z ready for scale
+                        ScaleZ                      ; now we have HL = ABS scaled X, DE = ABS scaled Y & BC = Scaled Z
+                        ex      af,af'              ; save scale in a'
+.SkipScale:             ld      c,b                 ; we convert to 8 bit so b = c =|Z|
+                        ld      e,d                 ; we convert to 8 bit so d = e =|Y|
+                        ld      l,h                 ; we convert to 8 bit so h = l =|X|
+                        SquareY
+                        SquareX                     ; after this de = x^2 and hl = y^2
+                        add     hl,de               ; now hl = x^2 + y^2
+                        SquareZ
+                        add     hl,de               ; now hl = x^2 + y^2 + z^2
+                        call    sqrtHL              ; A= sqrt (HL)
+.PostScale:             ld      de,0
+                        ld      l,a
+                        ex      af,af'              ; retrieve scaling factor
+                        ld      b,a
+                        bsla    de,b                ; de is shifted root
+.SaveRoot:              ld      (ix+18),de
+                        xor     a
+                        ld      (ix+17),a
+                        break
+                        ret

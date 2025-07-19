@@ -1317,6 +1317,7 @@ GALAXYDATABlock7:   DB $FF
                     INCLUDE "./Maths24/asm_divide24.asm"
                     INCLUDE "./Maths24/asm_divide_helpers.asm"
                     INCLUDE "./Maths24/asm_rollpitch24_origin.asm"
+                    INCLUDE "./Maths24/asm_compass24.asm"
                     DISPLAY ">Multiply is currently not bank 0 safe"
             ;        INCLUDE "./Maths24/asm_multiply24.asm"
                     DISPLAY "*** ./Maths/MathsBankedFns.asm  - BankMathsBankedFns"

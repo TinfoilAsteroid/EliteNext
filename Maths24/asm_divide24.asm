@@ -33,23 +33,29 @@ divu32smallloop         MACRO
 
 ;INPUTS: ahl = dividend cde = divisor
 ;OUTPUTS: cde = quotient ahl = remainder
-    DISPLAY "Needs ficxing for proper S15.8"
-Div24by24:              push    de
-                        push    hl
-                        push    bc
-                        exx
-                        pop     de
+; AHL = AHL/CDE
+    DISPLAY "Needs ficxing for proper S15.8 result"
+divs24:                 ld      b,a             ; preserve dividend sign
+                        xor     c               ; now a holds sign bit
+                        and     $80             ; 
+                        ex      af,af'          ; save sign bit
+                        res     7,b             ; now force an ABS divide
+                        res     7,c
+                        push    bc,,de          ; save divisor
+.prepdivisor:           ld      d,b             ; prep DEHL'
+                        ld      e,h             ; which trashes divisor
+                        ld      h,l             ; .
+                        ld      l,0             ; .
+                        exx                     ; now save it over into dehl;
+                        pop     de,,hl          ; force 0cde into dehl
                         ld      d,0
-                        pop     hl
-                        exx
-                        pop     hl
-                        ld      d,0
-                        ld      e,0
-                        jp      divs32
-                        
+                        call    divu32          ; bcde.hl = dehl' / dehl
+                        ex      af,af'          ; get sign back
+                        or      d               ; set de.h to signed divide
+                        ret
         
-; dehl = dehl' / dehl in our case it will be S78.0/ 0S78.0 to give us 0S78.0
 divs32swap:             exx                     ;
+; dehl = dehl' / dehl in our case it will be S78.0/ 0S78.0 to give us 0S78.0
 divs32:                 ld      a,e             ; get sign bit from divisor
                         exx                     ; swap to get dividend sign bit
                         xor     d               ; .
@@ -109,37 +115,6 @@ l1_small_divu_32_32x32: ; dede' = 32-bit divisor, bcbc' = 32-bit dividend, hlhl'
                         ld      d,a
                         
                         ret
-
-Amul256DivQ:            ld      hl,varQ                 ; CMP Q                  \ If A >= Q, then the answer will not fit in one byte,
-                        ld      c,(hl)                  ; using c as Q var
-                        cp      c
-                        FlipCarryFlag
-                        jp      c, .LL2_6502            ; BCS LL2                \ so jump to LL2 to return 255
-                        ld      b,$FE                   ; LDX #%11111110         \ Set R to have bits 1-7 set, so we can rotate through 7 loop iterations, getting a 1 each time, and then we use b as Rvar
-.LL31_6502:             sla     a                       ; ASL A                  \ Shift A to the left
-                        jp      c,.LL29_6502            ; BCS LL29               \ If bit 7 of A was set, then jump straight to the subtraction
-                        FlipCarryFlag                   ;                          If A < N, then C flag is set.
-                        JumpIfALTNusng c, .LL31_SKIPSUB_6502 ; CMP Q              \ If A < Q, skip the following subtraction
-                                                        ; BCC P%+4
-                        sub     c                       ; SBC Q                  \ A >= Q, so set A = A - Q
-                        ClearCarryFlag
-.LL31_SKIPSUB_6502:     FlipCarryFlag
-                        rl      b                       ; ROL R                  \ Rotate the counter in R to the left, and catch the result bit into bit 0 (which will be a 0 if we didn't do the subtraction, or 1 if we did)
-                        jp      c, .LL31_6502           ; BCS LL31               \ If we still have set bits in R, loop back to LL31 to do the next iteration of 7
-                        ld      a,b
-                        ld      (varR),a
-                        ret                             ; RTS                    \ R left with remainder of division
-.LL29_6502:             sub     c                       ; SBC Q                  \ A >= Q, so set A = A - Q
-                        SetCarryFlag                    ; SEC                    \ Set the C flag to rotate into the result in R
-                        rl      b                       ; ROL R                  \ Rotate the counter in R to the left, and catch the result bit into bit 0 (which will be a 0 if we didn't do the subtraction, or 1 if we did)
-                        jp      c, .LL31_6502           ; BCS LL31               \ If we still have set bits in R, loop back to LL31 to do the next iteration of 7
-                        ld      a,b                     ; RTS                    \ Return from the subroutine with R containing the
-                        ld      (varR),a                ; .
-                        ret                             ; .                      \ remainder of the division
-.LL2_6502:              ld      a,$FF                   ; LDA #255               \ The division is very close to 1, so return the closest
-                        ld      (varR),a                ; STA R                  \ possible answer to 256, i.e. R = 255
-                        SetCarryFlag                    ; we failed so need carry flag set
-                        ret                             ; RTS                    \ Return from the subroutine
 
 
 divide_by_zero:

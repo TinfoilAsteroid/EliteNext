@@ -18,32 +18,6 @@ PlanetK2                   DS 3
 PlanetApplyMyRollAndPitch: 	ld      ix,P_BnKxlo                  ; base location of position as 24 bit
                             MMUSelectMathsBankedFns
                             call    ApplyRollAndPitchIX
-                            ld      a,(P_BnKzhi+1)
-                            ld      b,a
-                            ld      a,(P_BnKyhi+1)
-                            or      b
-                            and     $7E ; bit 0 is ok so ignore that
-                            jp      z,.skipBreak
-                            break
-.skipBreak                  pop     af                              
-;                            ld      a,(ALPHA)                   ; no roll or pitch, no calc needed
-;.CheckForRoll:              and		a
-;							call	nz,Planet_Roll
-;.CheckForPitch:				ld		a,(BETA)
-;							and		a
-;							call	nz,Planet_Pitch
-.ApplySpeed:            	ld      a,(DELTA)                   ; BCH = - Delta
-							ReturnIfAIsZero
-							ld      c,0                         ;
-							ld      h,a                         ; 
-							ld      b,$80                       ;
-							ld      de,(P_BnKzhi)                ; DEL = z position
-							ld      a,(P_BnKzlo)                 ; .
-							ld      l,a                         ; .
-							call    AddBCHtoDELsigned           ; update speed
-							ld      (P_BnKzhi),DE                ; write back to zpos
-							ld      a,l
-							ld      (P_BnKzlo),a                ;
 							ret
 
 ; Performs minsky rotation
