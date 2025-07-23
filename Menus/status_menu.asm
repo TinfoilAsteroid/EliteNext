@@ -335,11 +335,11 @@ draw_status_menu:       MMUSelectLayer1
                         ld      c,$C0
                         call    l2_draw_horz_line_320           ;b = row; hl = col, de = length, c = color"
                         call    draw_STAT_maintext
-                        break
+                        ;break
 .equipment              call    STAT_buffer_list
                         ld      b,19
                         ld      ix,status_equipment_list
-                        break
+                        ;break
                         ;call    draw_STAT_items
                         call    STAT_print_boiler_text
                         ret

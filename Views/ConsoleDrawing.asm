@@ -717,76 +717,6 @@ UpscaleSunPosition:     ld      de,(SBnKzhi)                ; de = abs z & save 
                         or      e
                         ld      e,a
                         ret
-
-
-UpdateCompassSun:       MMUSelectSun
-                        call    ScaleSunPos                 ; get as 7 bit signed
-                        push    bc,,hl,,de                  ; +3 save to stack Y, X and Z scaled and signed hihg = sign, low = 7 bit value
-.normaliseYSqr:         ld      d,c                         ; bc = y ^ 2 
-                        ld      e,c                         ; .
-                        mul                                 ; .
-                        ld      bc,de                       ; .
-.normaliseXSqr:         ld      d,l                         ; hl = x ^ 2
-                        ld      e,l                         ; .
-                        mul                                 ; .
-                        ex      de,hl                       ; .
-.normaliseZSqr:         pop     de                          ; +2 get Z saved from stack so now stack contains Y Z X
-                        ld      d,e                         ; de = z ^ 
-                        mul                                 ; .
-.normaliseSqrt:         add     hl,de                       ; de = x^2 + y^2 + z^2
-                        add     hl,bc                       ; .
-                        ex      de,hl                       ; .
-                        call    asm_sqrt                    ; (Q) = hl = sqrt (x^2 + y^2 + x^2)
-                        ; if h <> 0 then more difficult
-                        ld      d,l                         ; iyl = q
-                        ld      iyl,d                       ; .
-.NormaliseX:            pop     hl                          ; +1 get back hl x scaled
-                        ld      a,h                         ; c = sign
-                        and     SignOnly8Bit                ; .
-                        ld      c,a                         ; .
-                        push    bc                          ; +2 save bc temporarily as it will get altered
-                        ld      a,l                         ; a = 8 bit abs z
-                        call    AequAdivQmul96ABS           ; e = a /q * 96 (d was already loaded with q)
-                        ld      e,a                         ; .
-                        EDiv10Inline                        ; a = e / 10
-                        ld      a,h                         ; .
-                        pop     bc                          ; +1 retrieve bc
-                        cp      0                           ; if result in h was 0 then done 
-                        jr      z,.DoneNormX                ; in case we end up with - 0
-                        bit     7,c                         ; if sign is negative then 2'c value
-                        jr      z,.DoneNormX 
-                        neg
-.DoneNormX:             ld      ixh,a                       ; ixh = (signed 2's c x /q * 96) / 10
-.NormaliseY:            ld      d,iyl                       ; d = q
-                        pop     hl                          ; +0 hl y scaled
-                        ld      a,h                         ; c = sign
-                        and     SignOnly8Bit                ; .
-                        ld      c,a                         ; .
-                        push    bc                          ; +1 save sign to stack
-                        ld      a,l                         ; a = 8 bit signed z
-                        call    AequAdivQmul96ABS           ; .
-                        ld      e,a                         ; a = e / 10
-                        EDiv10Inline                        ; .
-                        ld      a,h                         ; retrieve sign
-                        pop     bc                          ; +1 retrieve sign
-                        cp      0
-                        jr      z,.DoneNormY                ; in case we end up with - 0
-                        bit     7,c                         ; if sign is negative then 2'c value
-                        jr      z,.DoneNormY
-                        neg                                 ;
-.DoneNormY:             ld      b,a                         ; result from Y
-                        ld      c,ixh                       ; x = saved X
-                        call    LimitCompassBC
-.SetSprite:             MMUSelectSpriteBank
-                        call    compass_sun_move
-                        ld      a,(SBnKzsgn)
-                        bit     7,a
-                        jr      nz,.SunBehind
-.SunInfront:            call    show_compass_sun_infront
-                        ret
-.SunBehind:             call    show_compass_sun_behind                        
-                        ret
-
 ; takes B = Y and C = X, limits to +/-16 in each direction
 LimitCompassBC:         ld      a,b
                         JumpIfALTNsigned -14, .ClampBNeg16
@@ -803,7 +733,20 @@ LimitCompassBC:         ld      a,b
                         ret
 .ClampCPos16:           ld      c,14
                         ret
-
+UpdateCompassSun:       MMUSelectSun
+                        MMUSelectMathsBankedFns
+                        ld      ix,SBnKDataBlock
+                        SetBCCompassYX
+                        MMUSelectSpriteBank
+                        call    compass_sun_move
+                        ld      a,(SBnKzsgn)
+                        bit     7,a
+                        jr      nz,.SunBehind
+.SunInfront:            call    show_compass_sun_infront
+                        ret
+.SunBehind:             call    show_compass_sun_behind                        
+                        ret
+                        
 UpdateCompassPlanet:    MMUSelectPlanet
                         call    ScalePlanetPos              ; get as 7 bit signed
                         push    bc,,hl,,de                  ; save to stack Y, Z, X and copy of X scaled and signed hihg = sign, low = 7 bit value

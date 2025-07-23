@@ -64,6 +64,7 @@ ConstNorm           equ 197
                         INCLUDE "../../Macros/ShiftMacros.asm"
                         INCLUDE "../../Macros/NegateMacros.asm"                        
                         INCLUDE "../../Macros/carryFlagMacros.asm"
+                        INCLUDE "../../Macros/UniverseObjectPosMacros.asm"
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Total screen list
 ; Local Chart
@@ -119,59 +120,6 @@ TestD:                   DB $40, $00, $02, $80, $00, $00, $00, $20, $00, $01, $0
 TestE:                   DB $C0, $00, $04, $80, $61, $00, $00, $20, $49, $86, $01, $00, $00, $00, $00, $11
 TestF:                   DB $66, $12, $06, $80, $61, $00, $00, $D9, $01, $50, $02, $00, $00, $00, $00, $11
 
-TestMult64:             ld      hl,(iy+0)           ; dehl = X
-                        ld      a,(iy+2)            ; .
-                        ld      e,a                 ; .
-                        ld      d,0
-                        exx                         ; de'hl' = X
-                        ld      hl,(iy+3)           ; dehl = Y
-                        ld      a,(iy+5)            ;
-                        ld      e,a                 ;
-                        ld      d,0
-                        exx
-                        call    mul24
-                        ;call    mulu_64             ; result of dehl de'hl' = dehl * dehl' 
-                        exx                         ; so now we have l'de.h to consdier                     ; we only care about lde'.h' in the resul
-                        ld      a,h                 ; we only care about lde'.h' in the resul
-                        ld      (iy+$0B),a          ; .
-                        ld      (iy+$0C),de         ; .
-                        exx
-                        ld      a,l
-                        ld      (iy+$0E),a          ; and finally l
-.CheckResult:           ld      a,(iy+$07)
-                        ld      b,a
-                        ld      a,(iy+$0B)
-                        cp      b
-                        jp      nz,.Fail
-                        
-                        ld      a,(iy+$08)
-                        ld      b,a
-                        ld      a,(iy+$0C)
-                        cp      b
-                        jp      nz,.Fail
-                        
-                        ld      a,(iy+$09)
-                        ld      b,a
-                        ld      a,(iy+$0D)
-                        cp      b
-                        jp      nz,.Fail
-                        
-                        ld      a,(iy+$0A)
-                        ld      b,a
-                        ld      a,(iy+$0E)
-                        cp      b
-                        jp      nz,.Fail
-                        
-                        ld      a,$FF
-                        ld      (iy+$0F),a
-                        ret
-.Fail:                  ld      a,$00
-                        ld      (iy+$0F),a
-                        ld      hl,ErrorCount
-                        inc     (hl)
-                        ret
-
-
 TestMult:               ld      hl,(iy+0)           ; dehl = X
                         ld      a,(iy+2)            ; .
                         ld      b,a                 ; .
@@ -179,7 +127,7 @@ TestMult:               ld      hl,(iy+0)           ; dehl = X
                         ld      a,(iy+5)            ;
                         ld      c,a                 ;
                         break
-                        call    mul24               ; BH.L by CD.E putting result in BCDE.HL
+                        call    mul24               ; dehl dehl' = dehl * dehl' 
                         ld      a,h
                         ld      (iy+$0B),a          ; .
                         ld      (iy+$0C),de         ; .
@@ -220,7 +168,7 @@ TestMult:               ld      hl,(iy+0)           ; dehl = X
 
 ;--------------------------------------------------------------------------------------
     INCLUDE	"../../Maths24/asm_multiply24.asm"
-
+    INCLUDE "../../Maths24/asm_mul24_notbank0safe.asm"
     SAVENEX OPEN "m24test.nex", EliteNextStartup , TopOfStack
     SAVENEX CFG  0,0,0,1
     SAVENEX AUTO

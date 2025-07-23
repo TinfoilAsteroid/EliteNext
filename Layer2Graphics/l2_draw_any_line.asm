@@ -891,7 +891,7 @@ l2_draw_elite_line:     ;.......................................................
                         ld      a,h
                         and     a
                         jp      nz,.noBreak
-.DoBreak:               break
+.DoBreak:               ;break
 .noBreak:                       
                         ld      hl,(y1)                         ; if (y1 > y2)
                         ld      de,(y2)                         ; .

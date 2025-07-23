@@ -64,6 +64,7 @@ ConstNorm           equ 197
                         INCLUDE "../../Macros/ShiftMacros.asm"
                         INCLUDE "../../Macros/NegateMacros.asm"                        
                         INCLUDE "../../Macros/carryFlagMacros.asm"
+                        INCLUDE "../../Macros/UniverseObjectPosMacros.asm"
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Total screen list
 ; Local Chart

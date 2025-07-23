@@ -25,7 +25,7 @@ SetScreenA:             JumpIfAGTENusng ScreenCount, InvalidScreenBlock
                         MMUSelectScreenA
                         ld      a,(ix+5)                        ; Screen Map Byte 5 & 6 - Function for display initialisation
                         ld      (ScreenUpdateAddr+1),a          ; .
-                        ld      a,(ix+6)                     c   ; .
+                        ld      a,(ix+6)                        ; .
                         ld      (ScreenUpdateAddr+2),a          ; .
                         ld      a,(ix+7)                        ; Screen Map Byte 7 & 8 - Main loop update routine
                         ld      (ScreenLoopJP+1),a              ; .

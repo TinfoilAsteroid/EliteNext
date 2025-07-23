@@ -541,7 +541,8 @@ PlanetAHLequAHLDivCDE:  ld      b,a                         ; save a reg
                         ret
 ; AHL = ahl/cde, this could be a genuine 24 bit divide
 ; if AHL is large and cde small then the value will be big so will be off screen so we can risk 16 bit divide
-.divideAHLbyCDE:        call    Div24by24
+.divideAHLbyCDE:        MMUSelectMathsBankedFns
+                        call    AHLequAHLDivCDE;            Div24by24
                         ex      hl,de                         ; ahl is result
                         ld      a,c                           ; ahl is result
                         ClearCarryFlag

@@ -174,7 +174,7 @@ UpdateUniverseObjects:  xor     a
                         SetMemFalse    SetStationHostileFlag
                         ret
 ;.. For Missiles AI is updated every cycle
-.UpdateMissile:         break                                                   ; Missile AI to add later for now we just fall into UpdateShip
+.UpdateMissile:         ;break                                                   ; Missile AI to add later for now we just fall into UpdateShip
 ;.CheckForTidy:          ld      a,(TidyCounter)
 ;                        ld      hl,SelectedUniverseSlot
 ;                        cp      (hl)

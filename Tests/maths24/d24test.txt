@@ -982,176 +982,436 @@
  12+  0000                                      ENDM
  13+  0000
 # file closed: carryFlagMacros.asm
- 71   0000              ;----------------------------------------------------------------------------------------------------------------------------------
- 72   0000              ; Total screen list
- 73   0000              ; Local Chart
- 74   0000              ; Galactic Chart
- 75   0000              ; Market Prices
- 76   0000              ; Inventory
- 77   0000              ; Comander status
- 78   0000              ; System Data
- 79   0000              ; Mission Briefing
- 80   0000              ; missio completion
- 81   0000              ; Docked  Menu (only place otehr than pause you can load and save)
- 82   0000              ; Pause Menu (only place you can load from )
- 83   0000              ; byint and selling equipment
- 84   0000              ; bying and selling stock
- 85   0000              TopOfStack              equ $5CCB ;$6100
- 86   0000
- 87   0000                                      ORG $5DCB;      $6200
- 88   5DCB F3           EliteNextStartup:       di
- 89   5DCC FD 00                                break
- 90   5DCE FD 21 FD 5D                          ld      iy,Test1
- 91   5DD2 06 06                                ld      b,6
- 92   5DD4 FD E5 C5     .testloop:              push    iy,,bc
- 93   5DD7 CD 5D 5E                             call    TestDiv24
- 94   5DDA C1 FD E1                             pop     iy,,bc
- 95   5DDD FD E5 E1                             ld      hl,iy
- 96   5DE0 3E 10                                ld      a,$10
- 97   5DE2 ED 31                                add     hl,a
- 98   5DE4 E5 FD E1                             ld      iy,hl
- 99   5DE7 10 EB                                djnz    .testloop
-100   5DE9 FD 00                                break
-101   5DEB
-102   5DEB 00 00        ErrorCount:             DW  0
-103   5DED
-104   5DED 00 00 00...  MultiplyResult:         DS  16  ; reserve 6 bytes for maths result, little endian rest is padding for console display alignment
-105   5DFD
-106   5DFD                                       ;  Dividend.....  Divisor...... Filler....Result...........................                                                                           E H  L    B  C
-107   5DFD 80 25 00 00  Test1:                  DB $80, $25, $00, $00, $04, $00, $00, $00, $60, $09, $00, $00, $00, $00, $00, $11 ; 37.5 / 4 = 9.375
-107   5E01 04 00 00 00
-107   5E05 60 09 00 00
-107   5E09 00 00 00 11
-108   5E0D 80 25 00 00  Test2:                  DB $80, $25, $00, $00, $04, $80, $00, $00, $55, $08, $00, $00, $00, $00, $00, $11 ; 37.5 / 4.5 = 8.3333
-108   5E11 04 80 00 00
-108   5E15 55 08 00 00
-108   5E19 00 00 00 11
-109   5E1D 80 7F 00 80  Test3:                  DB $80, $7F, $00, $80, $02, $00, $00, $00, $00, $33, $00, $00, $00, $00, $00, $11 ; 128.5 / 2.5 = 51
-109   5E21 02 00 00 00
-109   5E25 00 33 00 00
-109   5E29 00 00 00 11
-110   5E2D 40 7F 00 40  Test4:                  DB $40, $7F, $00, $40, $05, $00, $00, $00, $00, $00, $18, $00, $00, $00, $00, $11 ; 127.25/5.25=24.238
-110   5E31 05 00 00 00
-110   5E35 00 00 18 00
-110   5E39 00 00 00 11
-111   5E3D 80 F7 00 80  Test5:                  DB $80, $F7, $00, $80, $0A, $00, $00, $00, $00, $00, $0c, $00, $00, $00, $00, $11 ; -119.5/10.5=-11.3809
-111   5E41 0A 00 00 00
-111   5E45 00 00 0C 00
-111   5E49 00 00 00 11
-112   5E4D FF 03 00 00  Test6:                  DB $FF, $03, $00, $00, $8A, $10, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11 ; 3.996 / -10 = -0.3996
-112   5E51 8A 10 00 00
-112   5E55 00 00 00 00
-112   5E59 00 00 00 11
-113   5E5D
+ 71   0000                                      INCLUDE "../../Macros/UniverseObjectPosMacros.asm"
+# file opened: UniverseObjectPosMacros.asm
+  1+  0000              ; Universe position data manipulation
+  2+  0000              ;------------------------------------------------------------------------------
+  3+  0000              ; Sets IYH to sign bits, bit 7 = x, bit 6 = y bit 5 = z
+  4+  0000              SetIYHToSignBits:       MACRO
+  5+  0000 ~                                    ld      a,(ix+8)                ; get Z sign
+  6+  0000 ~                                    and     $80                     ; and shift it via A into IYH bit 7
+  7+  0000 ~                                    sra     a                       ;
+  8+  0000 ~                                    ld      iyh,a                   ;
+  9+  0000 ~                                    ld      a,(ix+5)                ; get Y sign
+ 10+  0000 ~                                    and     $80                     ; and shift it via A into IYH bit 7
+ 11+  0000 ~                                    or      iyh                     ; which moves Z into IYH bit 6
+ 12+  0000 ~                                    sra     a                       ;
+ 13+  0000 ~                                    ld      iyh,a                   ;
+ 14+  0000 ~                                    ld      a,(ix+2)                ; get X sign
+ 15+  0000 ~                                    and     $80                     ; and shift it via A into IYH bit 7
+ 16+  0000 ~                                    or      iyh                     ; which moves Y into IYH bit 6 and Z into IYH bit 5
+ 17+  0000 ~                                    ld      iyh,a                   ;
+ 18+  0000                                      ENDM
+ 19+  0000              ;------------------------------------------------------------------------------
+ 20+  0000              ; gets high bytes of vector at IX
+ 21+  0000              ; sets h = abs x sign, l = abs y sgn d and a to abs z|y|x sgn
+ 22+  0000              SetAHLDToABSXYZSgn      MACRO
+ 23+  0000 ~                                    ld      a,(ix+2)
+ 24+  0000 ~                                    and     $7F
+ 25+  0000 ~                                    ld      h,a
+ 26+  0000 ~                                    ld      a,(ix+5)
+ 27+  0000 ~                                    and     $7F
+ 28+  0000 ~                                    ld      l,a
+ 29+  0000 ~                                    ld      a,(ix+8)
+ 30+  0000 ~                                    and     $7F
+ 31+  0000 ~                                    ld      d,a
+ 32+  0000 ~                                    or      h
+ 33+  0000 ~                                    or      l
+ 34+  0000                                      ENDM
+ 35+  0000              ;------------------------------------------------------------------------------
+ 36+  0000              SetAHLDToABSXYZHi       MACRO
+ 37+  0000 ~                                    ld      a,(ix+1)
+ 38+  0000 ~                                    ld      h,a
+ 39+  0000 ~                                    ld      a,(ix+4)
+ 40+  0000 ~                                    ld      l,a
+ 41+  0000 ~                                    ld      a,(ix+7)
+ 42+  0000 ~                                    ld      d,a
+ 43+  0000 ~                                    or      h
+ 44+  0000 ~                                    or      l
+ 45+  0000                                      ENDM
+ 46+  0000              ;------------------------------------------------------------------------------
+ 47+  0000              SetAHLDToABSXYZLo       MACRO
+ 48+  0000 ~                                    ld      a,(ix+0)
+ 49+  0000 ~                                    ld      h,a
+ 50+  0000 ~                                    ld      a,(ix+3)
+ 51+  0000 ~                                    ld      l,a
+ 52+  0000 ~                                    ld      a,(ix+6)
+ 53+  0000 ~                                    ld      d,a
+ 54+  0000 ~                                    or      h
+ 55+  0000 ~                                    or      l
+ 56+  0000                                      ENDM
+ 57+  0000              ;------------------------------------------------------------------------------
+ 58+  0000              SetBHLtoX:              MACRO
+ 59+  0000 ~                                    ld      b,(ix+2)
+ 60+  0000 ~                                    ld      hl,(ix)
+ 61+  0000                                      ENDM
+ 62+  0000              ;------------------------------------------------------------------------------
+ 63+  0000              SetCDEtoX:              MACRO
+ 64+  0000 ~                                    ld      c,(ix+2)
+ 65+  0000 ~                                    ld      de,(ix)
+ 66+  0000                                      ENDM
+ 67+  0000              ;------------------------------------------------------------------------------
+ 68+  0000              SaveDEHToX:             MACRO
+ 69+  0000 ~                                    ld      (ix+2),d                ; save DE.H into Zd
+ 70+  0000 ~                                    ld      (ix+1),e                ; .
+ 71+  0000 ~                                    ld      (ix),h                  ; .
+ 72+  0000                                      ENDM
+ 73+  0000              ;------------------------------------------------------------------------------
+ 74+  0000              SaveAHLToX:             MACRO
+ 75+  0000 ~                                    ld      (ix+2),a                ; save DE.H into Zd
+ 76+  0000 ~                                    ld      (ix+1),h                ; .
+ 77+  0000 ~                                    ld      (ix),l                  ; .
+ 78+  0000                                      ENDM
+ 79+  0000              ;------------------------------------------------------------------------------
+ 80+  0000              SetCDEtoY:              MACRO
+ 81+  0000 ~                                    ld      c,(ix+5)
+ 82+  0000 ~                                    ld      de,(ix+3)
+ 83+  0000                                      ENDM
+ 84+  0000              ;------------------------------------------------------------------------------
+ 85+  0000              SetBHLtoY:              MACRO
+ 86+  0000 ~                                    ld      b,(ix+5)
+ 87+  0000 ~                                    ld      hl,(ix+3)
+ 88+  0000                                      ENDM
+ 89+  0000              ;------------------------------------------------------------------------------
+ 90+  0000              SaveDEHToY:             MACRO
+ 91+  0000 ~                                    ld      (ix+5),d                ; save DE.H into Zd
+ 92+  0000 ~                                    ld      (ix+4),e                ; .
+ 93+  0000 ~                                    ld      (ix+3),h                ; .
+ 94+  0000                                      ENDM
+ 95+  0000              ;------------------------------------------------------------------------------
+ 96+  0000              SaveAHLToY:             MACRO
+ 97+  0000 ~                                    ld      (ix+5),a                ; save DE.H into Zd
+ 98+  0000 ~                                    ld      (ix+4),h                ; .
+ 99+  0000 ~                                    ld      (ix+3),l                ; .
+100+  0000                                      ENDM
+101+  0000              ;------------------------------------------------------------------------------
+102+  0000              SetCDEtoZ:              MACRO
+103+  0000 ~                                    ld      c,(ix+8)
+104+  0000 ~                                    ld      de,(ix+6)
+105+  0000                                      ENDM
+106+  0000              ;------------------------------------------------------------------------------
+107+  0000              SetBHLtoZ:              MACRO
+108+  0000 ~                                    ld      b,(ix+8)
+109+  0000 ~                                    ld      hl,(ix+6)
+110+  0000                                      ENDM
+111+  0000              ;------------------------------------------------------------------------------
+112+  0000              SaveDEHToZ:             MACRO
+113+  0000 ~                                    ld      (ix+8),d                ; save DE.H into Zd
+114+  0000 ~                                    ld      (ix+7),e                ; .
+115+  0000 ~                                    ld      (ix+6),h                ; .
+116+  0000                                      ENDM
+117+  0000              ;------------------------------------------------------------------------------
+118+  0000              SaveAHLToZ:             MACRO
+119+  0000 ~                                    ld      (ix+8),a                ; save DE.H into Zd
+120+  0000 ~                                    ld      (ix+7),h                ; .
+121+  0000 ~                                    ld      (ix+6),l                ; .
+122+  0000                                      ENDM
+123+  0000              ;------------------------------------------------------------------------------
+124+  0000              SetDEAtoABSX:           MACRO
+125+  0000 ~                                    ld      de,(ix+1)
+126+  0000 ~                                    ld      a,(ix+0)
+127+  0000 ~                                    res     7,d
+128+  0000                                      ENDM
+129+  0000              ;------------------------------------------------------------------------------
+130+  0000              SetDEAtoABSY:           MACRO
+131+  0000 ~                                    ld      de,(ix+4)
+132+  0000 ~                                    ld      a,(ix+3)
+133+  0000 ~                                    res     7,d
+134+  0000                                      ENDM
+135+  0000              ;------------------------------------------------------------------------------
+136+  0000              SetDEAtoABSZ:           MACRO
+137+  0000 ~                                    ld      de,(ix+7)
+138+  0000 ~                                    ld      a,(ix+6)
+139+  0000 ~                                    res     7,d
+140+  0000                                      ENDM
+141+  0000              ;------------------------------------------------------------------------------
+142+  0000              SetHLtoABSXHiLo:        MACRO
+143+  0000 ~                                    ld      hl,(ix)
+144+  0000                                      ENDM
+145+  0000              ;------------------------------------------------------------------------------
+146+  0000              SetDEtoABSYHiLo:        MACRO
+147+  0000 ~                                    ld      de,(ix+3)
+148+  0000                                      ENDM
+149+  0000              ;------------------------------------------------------------------------------
+150+  0000              SetBCtoABSZHiLo:        MACRO
+151+  0000 ~                                    ld      bc,(ix+6)
+152+  0000                                      ENDM
+153+  0000              ;------------------------------------------------------------------------------
+154+  0000              SetHLtoABSXSgnHi:       MACRO
+155+  0000 ~                                    ld      hl,(ix+1)
+156+  0000 ~                                    ld      a, h
+157+  0000 ~                                    and     $7F
+158+  0000 ~                                    ld      h,a
+159+  0000                                      ENDM
+160+  0000              ;------------------------------------------------------------------------------
+161+  0000              SetDEtoABSYSgnHi:       MACRO
+162+  0000 ~                                    ld      de,(ix+4)
+163+  0000 ~                                    ld      a, d
+164+  0000 ~                                    and     $7F
+165+  0000 ~                                    ld      d,a
+166+  0000                                      ENDM
+167+  0000              ;------------------------------------------------------------------------------
+168+  0000              SetBCtoABSZSgnHi:       MACRO
+169+  0000 ~                                    ld      bc,(ix+7)
+170+  0000 ~                                    ld      a, b
+171+  0000 ~                                    and     $7F
+172+  0000 ~                                    ld      b,a
+173+  0000                                      ENDM
+174+  0000              ;------------------------------------------------------------------------------
+175+  0000              SetNormXToHL:           MACRO
+176+  0000 ~                                    ld     (ix+20),hl
+177+  0000                                      ENDM
+178+  0000              ;------------------------------------------------------------------------------
+179+  0000              SetNormX96ToDE:         MACRO
+180+  0000 ~                                    ld     (ix+20),de
+181+  0000                                      ENDM
+182+  0000              ;------------------------------------------------------------------------------
+183+  0000              SetNormY96ToDE:         MACRO
+184+  0000 ~                                    ld     (ix+22),de
+185+  0000                                      ENDM
+186+  0000              ;------------------------------------------------------------------------------
+187+  0000              SetNormZ96ToBC:         MACRO
+188+  0000 ~                                    ld     (ix+24),bc
+189+  0000                                      ENDM
+190+  0000              ;------------------------------------------------------------------------------
+191+  0000              SetNormZ96ToDE:         MACRO
+192+  0000 ~                                    ld     (ix+24),de
+193+  0000                                      ENDM
+194+  0000              ;------------------------------------------------------------------------------
+195+  0000              ; IYH holds sign bits so we need bit 7 for x
+196+  0000              SetABSNormXToDE:        MACRO
+197+  0000 ~            .skipSign:              ld     (ix+26),de
+198+  0000                                      ENDM
+199+  0000              ;------------------------------------------------------------------------------
+200+  0000              ; IYH holds sign bits so we need bit 6 for y
+201+  0000              SetABSNormYToDE:        MACRO
+202+  0000 ~                                    ld     (ix+28),de
+203+  0000                                      ENDM
+204+  0000              ;------------------------------------------------------------------------------
+205+  0000              ; IYH holds sign bits so we need bit 5 for z
+206+  0000              SetABSNormZToBC:        MACRO
+207+  0000 ~                                    ld     (ix+30),bc
+208+  0000                                      ENDM
+209+  0000              ;------------------------------------------------------------------------------
+210+  0000              ; IYH holds sign bits so we need bit 5 for z
+211+  0000              SetABSNormZToDE:        MACRO
+212+  0000 ~                                    ld     (ix+30),de
+213+  0000                                      ENDM
+214+  0000              ;------------------------------------------------------------------------------
+215+  0000              NormXMul96:             MACRO
+216+  0000 ~                                    ld      e,a
+217+  0000 ~                                    ld      d,96
+218+  0000 ~                                    mul     de
+219+  0000 ~                                    ld      a,d                 ; is norm 0,
+220+  0000 ~                                    or      e                   ; if so we can skip
+221+  0000 ~                                    jp      z,.DoneNorm96X      ; sign check
+222+  0000 ~                                    ld      a,(ix+2)            ;
+223+  0000 ~                                    and     $80                 ;
+224+  0000 ~                                    or      d
+225+  0000 ~                                    ld      d,a
+226+  0000 ~            .DoneNorm96X:
+227+  0000                                      ENDM
+228+  0000              ;------------------------------------------------------------------------------
+229+  0000              NormYMul96:             MACRO
+230+  0000 ~                                    ld      e,a
+231+  0000 ~                                    ld      d,96
+232+  0000 ~                                    mul     de
+233+  0000 ~                                    ld      a,d                 ; is norm 0,
+234+  0000 ~                                    or      e                   ; if so we can skip
+235+  0000 ~                                    jp      z,.DoneNorm96Y      ; sign check
+236+  0000 ~                                    ld      a,(ix+5)            ;
+237+  0000 ~                                    and     $80                 ;
+238+  0000 ~                                    or      d
+239+  0000 ~                                    ld      d,a
+240+  0000 ~            .DoneNorm96Y:
+241+  0000                                      ENDM
+242+  0000              ;------------------------------------------------------------------------------
+243+  0000              NormZMul96:             MACRO
+244+  0000 ~                                    ld      e,a
+245+  0000 ~                                    ld      d,96
+246+  0000 ~                                    mul     de
+247+  0000 ~                                    ld      a,d                 ; is norm 0,
+248+  0000 ~                                    or      e                   ; if so we can skip
+249+  0000 ~                                    jp      z,.DoneNorm96Z      ; sign check
+250+  0000 ~                                    ld      a,(ix+8)            ;
+251+  0000 ~                                    and     $80                 ;
+252+  0000 ~                                    or      d
+253+  0000 ~                                    ld      d,a
+254+  0000 ~            .DoneNorm96Z:
+255+  0000                                      ENDM
+256+  0000              ;------------------------------------------------------------------------------
+257+  0000
+# file closed: UniverseObjectPosMacros.asm
+ 72   0000              ;----------------------------------------------------------------------------------------------------------------------------------
+ 73   0000              ; Total screen list
+ 74   0000              ; Local Chart
+ 75   0000              ; Galactic Chart
+ 76   0000              ; Market Prices
+ 77   0000              ; Inventory
+ 78   0000              ; Comander status
+ 79   0000              ; System Data
+ 80   0000              ; Mission Briefing
+ 81   0000              ; missio completion
+ 82   0000              ; Docked  Menu (only place otehr than pause you can load and save)
+ 83   0000              ; Pause Menu (only place you can load from )
+ 84   0000              ; byint and selling equipment
+ 85   0000              ; bying and selling stock
+ 86   0000              TopOfStack              equ $5CCB ;$6100
+ 87   0000
+ 88   0000                                      ORG $5DCB;      $6200
+ 89   5DCB F3           EliteNextStartup:       di
+ 90   5DCC FD 00                                break
+ 91   5DCE FD 21 FD 5D                          ld      iy,Test1
+ 92   5DD2 06 06                                ld      b,6
+ 93   5DD4 FD E5 C5     .testloop:              push    iy,,bc
+ 94   5DD7 CD 5D 5E                             call    TestDiv24
+ 95   5DDA C1 FD E1                             pop     iy,,bc
+ 96   5DDD FD E5 E1                             ld      hl,iy
+ 97   5DE0 3E 10                                ld      a,$10
+ 98   5DE2 ED 31                                add     hl,a
+ 99   5DE4 E5 FD E1                             ld      iy,hl
+100   5DE7 10 EB                                djnz    .testloop
+101   5DE9 FD 00                                break
+102   5DEB
+103   5DEB 00 00        ErrorCount:             DW  0
+104   5DED
+105   5DED 00 00 00...  MultiplyResult:         DS  16  ; reserve 6 bytes for maths result, little endian rest is padding for console display alignment
+106   5DFD
+107   5DFD                                       ;  Dividend.....  Divisor...... Filler....Result...........................                                                                           E H  L    B  C
+108   5DFD 80 25 00 00  Test1:                  DB $80, $25, $00, $00, $04, $00, $00, $00, $60, $09, $00, $00, $00, $00, $00, $11 ; 37.5 / 4 = 9.375
+108   5E01 04 00 00 00
+108   5E05 60 09 00 00
+108   5E09 00 00 00 11
+109   5E0D 80 25 00 00  Test2:                  DB $80, $25, $00, $00, $04, $80, $00, $00, $55, $08, $00, $00, $00, $00, $00, $11 ; 37.5 / 4.5 = 8.3333
+109   5E11 04 80 00 00
+109   5E15 55 08 00 00
+109   5E19 00 00 00 11
+110   5E1D 80 7F 00 80  Test3:                  DB $80, $7F, $00, $80, $02, $00, $00, $00, $00, $33, $00, $00, $00, $00, $00, $11 ; 128.5 / 2.5 = 51
+110   5E21 02 00 00 00
+110   5E25 00 33 00 00
+110   5E29 00 00 00 11
+111   5E2D 40 7F 00 40  Test4:                  DB $40, $7F, $00, $40, $05, $00, $00, $00, $00, $00, $18, $00, $00, $00, $00, $11 ; 127.25/5.25=24.238
+111   5E31 05 00 00 00
+111   5E35 00 00 18 00
+111   5E39 00 00 00 11
+112   5E3D 80 F7 00 80  Test5:                  DB $80, $F7, $00, $80, $0A, $00, $00, $00, $00, $00, $0c, $00, $00, $00, $00, $11 ; -119.5/10.5=-11.3809
+112   5E41 0A 00 00 00
+112   5E45 00 00 0C 00
+112   5E49 00 00 00 11
+113   5E4D FF 03 00 00  Test6:                  DB $FF, $03, $00, $00, $8A, $10, $00, $00, $00, $00, $00, $00, $00, $00, $00, $11 ; 3.996 / -10 = -0.3996
+113   5E51 8A 10 00 00
+113   5E55 00 00 00 00
+113   5E59 00 00 00 11
 114   5E5D
-115   5E5D FD 6E 00 FD  TestDiv24:              ld      hl,(iy+0)           ; dehl = X0
-115   5E61 66 01
-116   5E63 FD 7E 02                             ld      a,(iy+2)
-117   5E66 FD 5E 03 FD                          ld      de,(iy+3)           ; dehl = 0Y
-117   5E6A 56 04
-118   5E6C FD 4E 05                             ld      c,(iy+5)            ;
-119   5E6F FD 00                                break
-120   5E71 CD 2D 5F                             call    divs24              ; dehl' / dehl result in BCDE.HL
-121   5E74 FD 75 0B FD                          ld      (iy+$0B),hl         ; .
-121   5E78 74 0C
-122   5E7A FD 73 0D FD                          ld      (iy+$0D),de         ; .
-122   5E7E 72 0E
-123   5E80 D9                                   exx
-124   5E81 7D                                   ld      a,l
-125   5E82 FD 77 0E                             ld      (iy+$0E),a          ; and finally l
-126   5E85 FD 7E 07     .CheckResult:           ld      a,(iy+$07)
-127   5E88 47                                   ld      b,a
-128   5E89 FD 7E 0B                             ld      a,(iy+$0B)
-129   5E8C B8                                   cp      b
-130   5E8D C2 B7 5E                             jp      nz,.Fail
-131   5E90
-132   5E90 FD 7E 08                             ld      a,(iy+$08)
-133   5E93 47                                   ld      b,a
-134   5E94 FD 7E 0C                             ld      a,(iy+$0C)
-135   5E97 B8                                   cp      b
-136   5E98 C2 B7 5E                             jp      nz,.Fail
-137   5E9B
-138   5E9B FD 7E 09                             ld      a,(iy+$09)
-139   5E9E 47                                   ld      b,a
-140   5E9F FD 7E 0D                             ld      a,(iy+$0D)
-141   5EA2 B8                                   cp      b
-142   5EA3 C2 B7 5E                             jp      nz,.Fail
-143   5EA6
-144   5EA6 FD 7E 0A                             ld      a,(iy+$0A)
-145   5EA9 47                                   ld      b,a
-146   5EAA FD 7E 0E                             ld      a,(iy+$0E)
-147   5EAD B8                                   cp      b
-148   5EAE C2 B7 5E                             jp      nz,.Fail
-149   5EB1
-150   5EB1 3E FF                                ld      a,$FF
-151   5EB3 FD 77 0F                             ld      (iy+$0F),a
-152   5EB6 C9                                   ret
-153   5EB7 3E 00        .Fail:                  ld      a,$00
-154   5EB9 FD 77 0F                             ld      (iy+$0F),a
-155   5EBC 21 EB 5D                             ld      hl,ErrorCount
-156   5EBF 34                                   inc     (hl)
-157   5EC0 C9                                   ret
-158   5EC1
+115   5E5D
+116   5E5D FD 6E 00 FD  TestDiv24:              ld      hl,(iy+0)           ; dehl = X0
+116   5E61 66 01
+117   5E63 FD 7E 02                             ld      a,(iy+2)
+118   5E66 FD 5E 03 FD                          ld      de,(iy+3)           ; dehl = 0Y
+118   5E6A 56 04
+119   5E6C FD 4E 05                             ld      c,(iy+5)            ;
+120   5E6F FD 00                                break
+121   5E71 CD 2D 5F                             call    divs24              ; dehl' / dehl result in BCDE.HL
+122   5E74 FD 75 0B FD                          ld      (iy+$0B),hl         ; .
+122   5E78 74 0C
+123   5E7A FD 73 0D FD                          ld      (iy+$0D),de         ; .
+123   5E7E 72 0E
+124   5E80 D9                                   exx
+125   5E81 7D                                   ld      a,l
+126   5E82 FD 77 0E                             ld      (iy+$0E),a          ; and finally l
+127   5E85 FD 7E 07     .CheckResult:           ld      a,(iy+$07)
+128   5E88 47                                   ld      b,a
+129   5E89 FD 7E 0B                             ld      a,(iy+$0B)
+130   5E8C B8                                   cp      b
+131   5E8D C2 B7 5E                             jp      nz,.Fail
+132   5E90
+133   5E90 FD 7E 08                             ld      a,(iy+$08)
+134   5E93 47                                   ld      b,a
+135   5E94 FD 7E 0C                             ld      a,(iy+$0C)
+136   5E97 B8                                   cp      b
+137   5E98 C2 B7 5E                             jp      nz,.Fail
+138   5E9B
+139   5E9B FD 7E 09                             ld      a,(iy+$09)
+140   5E9E 47                                   ld      b,a
+141   5E9F FD 7E 0D                             ld      a,(iy+$0D)
+142   5EA2 B8                                   cp      b
+143   5EA3 C2 B7 5E                             jp      nz,.Fail
+144   5EA6
+145   5EA6 FD 7E 0A                             ld      a,(iy+$0A)
+146   5EA9 47                                   ld      b,a
+147   5EAA FD 7E 0E                             ld      a,(iy+$0E)
+148   5EAD B8                                   cp      b
+149   5EAE C2 B7 5E                             jp      nz,.Fail
+150   5EB1
+151   5EB1 3E FF                                ld      a,$FF
+152   5EB3 FD 77 0F                             ld      (iy+$0F),a
+153   5EB6 C9                                   ret
+154   5EB7 3E 00        .Fail:                  ld      a,$00
+155   5EB9 FD 77 0F                             ld      (iy+$0F),a
+156   5EBC 21 EB 5D                             ld      hl,ErrorCount
+157   5EBF 34                                   inc     (hl)
+158   5EC0 C9                                   ret
 159   5EC1
-160   5EC1 FD 6E 01 FD  TestDiv:                ld      hl,(iy+1)           ; dehl = X0
-160   5EC5 66 02
-161   5EC7 EB                                   ex      de,hl
-162   5EC8 FD 7E 00                             ld      a,(iy+0)
-163   5ECB 67                                   ld      h,a                 ; .
-164   5ECC 2E 00                                ld      l,0
-165   5ECE D9                                   exx                         ; de'hl' = X
-166   5ECF FD 6E 03 FD                          ld      hl,(iy+3)           ; dehl = 0Y
-166   5ED3 66 04
-167   5ED5 FD 7E 05                             ld      a,(iy+5)            ;
-168   5ED8 5F                                   ld      e,a                 ;
-169   5ED9 16 00                                ld      d,0
-170   5EDB D9                                   exx                         ; dehl correct way round
-171   5EDC FD 00                                break
-172   5EDE CD 58 5F                             call    divu32              ; dehl' / dehl result in BCDE.HL
-173   5EE1 D9                                   exx                         ; so now we have l'de.h to consdier                     ; we only care about lde'.h' in the resul
-174   5EE2 7C                                   ld      a,h                 ; we only care about lde'.h' in the resul
-175   5EE3 FD 77 0B                             ld      (iy+$0B),a          ; .
-176   5EE6 FD 73 0C FD                          ld      (iy+$0C),de         ; .
-176   5EEA 72 0D
-177   5EEC D9                                   exx
-178   5EED 7D                                   ld      a,l
-179   5EEE FD 77 0E                             ld      (iy+$0E),a          ; and finally l
-180   5EF1 FD 7E 07     .CheckResult:           ld      a,(iy+$07)
-181   5EF4 47                                   ld      b,a
-182   5EF5 FD 7E 0B                             ld      a,(iy+$0B)
-183   5EF8 B8                                   cp      b
-184   5EF9 C2 23 5F                             jp      nz,.Fail
-185   5EFC
-186   5EFC FD 7E 08                             ld      a,(iy+$08)
-187   5EFF 47                                   ld      b,a
-188   5F00 FD 7E 0C                             ld      a,(iy+$0C)
-189   5F03 B8                                   cp      b
-190   5F04 C2 23 5F                             jp      nz,.Fail
-191   5F07
-192   5F07 FD 7E 09                             ld      a,(iy+$09)
-193   5F0A 47                                   ld      b,a
-194   5F0B FD 7E 0D                             ld      a,(iy+$0D)
-195   5F0E B8                                   cp      b
-196   5F0F C2 23 5F                             jp      nz,.Fail
-197   5F12
-198   5F12 FD 7E 0A                             ld      a,(iy+$0A)
-199   5F15 47                                   ld      b,a
-200   5F16 FD 7E 0E                             ld      a,(iy+$0E)
-201   5F19 B8                                   cp      b
-202   5F1A C2 23 5F                             jp      nz,.Fail
-203   5F1D
-204   5F1D 3E FF                                ld      a,$FF
-205   5F1F FD 77 0F                             ld      (iy+$0F),a
-206   5F22 C9                                   ret
-207   5F23 3E 00        .Fail:                  ld      a,$00
-208   5F25 FD 77 0F                             ld      (iy+$0F),a
-209   5F28 21 EB 5D                             ld      hl,ErrorCount
-210   5F2B 34                                   inc     (hl)
-211   5F2C C9                                   ret
-212   5F2D
+160   5EC1
+161   5EC1 FD 6E 01 FD  TestDiv:                ld      hl,(iy+1)           ; dehl = X0
+161   5EC5 66 02
+162   5EC7 EB                                   ex      de,hl
+163   5EC8 FD 7E 00                             ld      a,(iy+0)
+164   5ECB 67                                   ld      h,a                 ; .
+165   5ECC 2E 00                                ld      l,0
+166   5ECE D9                                   exx                         ; de'hl' = X
+167   5ECF FD 6E 03 FD                          ld      hl,(iy+3)           ; dehl = 0Y
+167   5ED3 66 04
+168   5ED5 FD 7E 05                             ld      a,(iy+5)            ;
+169   5ED8 5F                                   ld      e,a                 ;
+170   5ED9 16 00                                ld      d,0
+171   5EDB D9                                   exx                         ; dehl correct way round
+172   5EDC FD 00                                break
+173   5EDE CD 58 5F                             call    divu32              ; dehl' / dehl result in BCDE.HL
+174   5EE1 D9                                   exx                         ; so now we have l'de.h to consdier                     ; we only care about lde'.h' in the resul
+175   5EE2 7C                                   ld      a,h                 ; we only care about lde'.h' in the resul
+176   5EE3 FD 77 0B                             ld      (iy+$0B),a          ; .
+177   5EE6 FD 73 0C FD                          ld      (iy+$0C),de         ; .
+177   5EEA 72 0D
+178   5EEC D9                                   exx
+179   5EED 7D                                   ld      a,l
+180   5EEE FD 77 0E                             ld      (iy+$0E),a          ; and finally l
+181   5EF1 FD 7E 07     .CheckResult:           ld      a,(iy+$07)
+182   5EF4 47                                   ld      b,a
+183   5EF5 FD 7E 0B                             ld      a,(iy+$0B)
+184   5EF8 B8                                   cp      b
+185   5EF9 C2 23 5F                             jp      nz,.Fail
+186   5EFC
+187   5EFC FD 7E 08                             ld      a,(iy+$08)
+188   5EFF 47                                   ld      b,a
+189   5F00 FD 7E 0C                             ld      a,(iy+$0C)
+190   5F03 B8                                   cp      b
+191   5F04 C2 23 5F                             jp      nz,.Fail
+192   5F07
+193   5F07 FD 7E 09                             ld      a,(iy+$09)
+194   5F0A 47                                   ld      b,a
+195   5F0B FD 7E 0D                             ld      a,(iy+$0D)
+196   5F0E B8                                   cp      b
+197   5F0F C2 23 5F                             jp      nz,.Fail
+198   5F12
+199   5F12 FD 7E 0A                             ld      a,(iy+$0A)
+200   5F15 47                                   ld      b,a
+201   5F16 FD 7E 0E                             ld      a,(iy+$0E)
+202   5F19 B8                                   cp      b
+203   5F1A C2 23 5F                             jp      nz,.Fail
+204   5F1D
+205   5F1D 3E FF                                ld      a,$FF
+206   5F1F FD 77 0F                             ld      (iy+$0F),a
+207   5F22 C9                                   ret
+208   5F23 3E 00        .Fail:                  ld      a,$00
+209   5F25 FD 77 0F                             ld      (iy+$0F),a
+210   5F28 21 EB 5D                             ld      hl,ErrorCount
+211   5F2B 34                                   inc     (hl)
+212   5F2C C9                                   ret
 213   5F2D
-214   5F2D              ;--------------------------------------------------------------------------------------
-215   5F2D                  INCLUDE	"../../Maths24/asm_divide24.asm"
+214   5F2D
+215   5F2D              ;--------------------------------------------------------------------------------------
+216   5F2D                  INCLUDE	"../../Maths24/asm_divide24.asm"
 # file opened: asm_divide24.asm
   1+  5F2D              ; unsigned division dehl = dehl / dehl' dehl' = remainder carry clear,  div  by 0 = carry set everyhthing else untouched
   2+  5F2D
@@ -1188,7 +1448,7 @@
  33+  5F2D
  34+  5F2D              ;INPUTS: ahl = dividend cde = divisor
  35+  5F2D              ;OUTPUTS: cde = quotient ahl = remainder
- 36+  5F2D              ; AHL = AHL/CDE
+ 36+  5F2D              ;  = AHL/CDE
  37+  5F2D                  DISPLAY "Needs ficxing for proper S15.8 result"
  38+  5F2D 47           divs24:                 ld      b,a             ; preserve dividend sign
  39+  5F2E A9                                   xor     c               ; now a holds sign bit
@@ -2078,14 +2338,14 @@
 123+  6321 C9                               ret
 124+  6322
 # file closed: asm_divide24.asm
-216   6322
 217   6322
 218   6322
 219   6322
-220   6322                  SAVENEX OPEN "d24test.nex", EliteNextStartup , TopOfStack
-221   6322                  SAVENEX CFG  0,0,0,1
-222   6322                  SAVENEX AUTO
-223   6322                  SAVENEX CLOSE
-224   6322
+220   6322
+221   6322                  SAVENEX OPEN "d24test.nex", EliteNextStartup , TopOfStack
+222   6322                  SAVENEX CFG  0,0,0,1
+223   6322                  SAVENEX AUTO
+224   6322                  SAVENEX CLOSE
 225   6322
+226   6322
 # file closed: d24test.asm

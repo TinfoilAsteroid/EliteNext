@@ -100,10 +100,12 @@ prefix1?_CompassY                   DW  0
 prefix1?_RadarX                     DW  0
 prefix1?_RadarY                     DW  0
 prefix1?_BnkNormRoot                DS  3                       ; 3 bytes for normnalisation
-prefix1?_BnkNormalX                 DW  0                       ; Normalised Position
-prefix1?_BnKNormalY                 DW  0                       ; Normalised Position
-prefix1?_BnkNormalZ                 DW  0                       ; Normalised Position
-prefix1?_BnKElipseCenterX           DW  0
+prefix1?_BnkNormalX96               DW  0                       ; INWK +20 Normalised Position
+prefix1?_BnKNormalY96               DW  0                       ; INWK +22 Normalised Position
+prefix1?_BnkNormalZ96               DW  0                       ; INWK +24 Normalised Position
+prefix1?_BnkNormalX                 DW  0                       ; INWK +26 Normalised Position
+prefix1?_BnKNormalY                 DW  0                       ; INWK +28 Normalised Position
+prefix1?_BnkNormalZ                 DW  0                       ; INWK +30 Normalised Positionprefix1?_BnKElipseCenterX           DW  0
 prefix1?_BnKElipseCenterY           DW  0
 prefix1?_BnKElipseRadiusU           DW  0
 prefix1?_BnKElipseRadiusV           DW  0

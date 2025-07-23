@@ -19,6 +19,8 @@ draw_front_calc_alpha:  ld      b,a
 .NotIncreasedDamp:      ld      (ALP1),a
                         or      c
                         ld      (ALPHA),a                           ; a = signed bit alph1
+                        xor     $80                                 ; slip sign bit for S7
+                        ld      (ALPHAFLIP), a                      ; set negative version
 .RestartDampenRoll:     ld      hl,dampenRcounter
                         ld      (hl),dampenRate
                         ret
@@ -42,6 +44,8 @@ draw_front_calc_beta:   ld      b,a
 .NotIncreasedDamp:      ld      (BET1),a
                         or      c
                         ld      (BETA),a                            ; a = signed bit bet1
+                        xor     $80                                 ; slip sign bit for S7
+                        ld      (BETAFLIP), a                       ; set negative version
 .RestartDampenPitch:    ld      hl,dampenPcounter          ; TODO mach dampen rates ship properies by having teh $20 as a ship config
                         ld      (hl),dampenRate
                         ret

@@ -609,9 +609,9 @@ Perform_24x8:           ld      a,c
                         add     hl,de               ; ...
                         dec     c                   ; ...
 .Skip1:                 dec     ixh
-                        break
+                        ;break
                         jp      nz,.loop1
-                        break
+                        ;break
                         jp      HandleSign
 Perform_24x7:           ld b,24
                         xor a
@@ -625,7 +625,7 @@ Perform_24x7:           ld b,24
                         sub c
                         inc l
 .Skip1:                 djnz .loop1
-                        break
+                        ;break
                         jp      HandleSign
 
    ;   a = remainder

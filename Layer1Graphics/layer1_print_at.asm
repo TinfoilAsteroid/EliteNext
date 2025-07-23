@@ -27,11 +27,11 @@ l1_print_at_char     :  sla     d       ; Convert D from char to pixel
                         sla     e       ; Convert E from char to pixel
                         sla     e
                         sla     e
-l1_print_at:            
+l1_print_at:                            ; print string at hl to pixel address DE (YX)
 .PrintLoop:             ld		a,(hl)
                         cp		0
                         ret		z
-                        CallIfAGTENusng " ", l1_print_char
+                        CallIfAGTENusng " ", l1_print_char  ; all characters space and upwards
                         inc		hl							; move 1 message character right
                         ld		a,e
                         add		a,8
@@ -197,6 +197,24 @@ l1_print_82c_hex_at_char: ld    ix,HexS8Char
                           neg
 .NoNeg:                   call  l1_buffer_hex_8_at_ix
                           ld    hl,HexS8Char           ; by here de is still unaffected
+                          call  l1_print_at_char
+                          ret
+; prints 8 bit 2s compliment value in hl at char pos DE
+l1_print_162c_hex_at_char:ld    ix,HexS16Char
+                          ld    a,h                     ; check sign bit
+                          call  l1_buffer_sign_at_ix
+                          inc   ix                      ; move to actual digits
+                          ld    a,h                     ; get a back
+                          bit   7,a                     ; and negate if negative
+                          jp    z,.NoNeg
+                          NegHL
+                          ld    a,h
+.NoNeg:                   call  l1_buffer_hex_8_at_ix
+                          inc   ix
+                          inc   ix
+                          ld    a,l
+                          call  l1_buffer_hex_8_at_ix
+                          ld    hl,HexS16Char          ; by here de is still unaffected
                           call  l1_print_at_char
                           ret
 

@@ -581,7 +581,7 @@ DivideSXX18By2:         ld      hl,SBnKDrawCam0xLo
 ;            INCLUDE "./Universe/SunApplyShipRollAndPitch.asm"
 
 SunOnScreen             DB 0
-cLineArrayPtr            DW 0
+;LineArrayPtr            DW 0
 LineCount               DB 0
 RaggedSize              DB 0
 MinYOffset              DB 0
@@ -613,58 +613,58 @@ SunVarT                 DS 1
 ;      else
 ;        divide l by e
 ;
-SunAHLequAHLDivCDE:     ld      b,a                         ; save a reg
-                        ld      a,c                         ; check for divide by zero
-                        or      d                           ; .
-                        or      e                           ; .
-                        JumpIfZero      .divideByZero       ; .
-                        ld      a,b                         ; get a back
-                        JumpIfAIsNotZero    .divideAHLbyCDE
-.AIsZero:               ld      a,h
-                        JumpIfAIsNotZero    .divideHLbyDE
-.HIsZero:               ld      a,l
-                        JumpIfAIsNotZero    .divideLbyE
-.resultIsZero:          ZeroA
-                        ld      h,a                        ; result is zero so set hlde
-                        ld      l,a                        ; result is zero so set hlde
-                        ld      de,hl
-                        ClearCarryFlag
-                        ret
-.divideByZero:          ld      a,$FF
-                        ld      h,a
-                        ld      l,a
-                        ld      de,hl
-                        SetCarryFlag
-; AHL = ahl/cde, this could be a genuine 24 bit divide
-; if AHL is large and cde small then the value will be big so will be off screen so we can risk 16 bit divide
-.divideAHLbyCDE:        call    Div24by24
-                        ex      hl,de                         ; ahl is result
-                        ld      a,c                           ; ahl is result
-                        ClearCarryFlag
-
-                        ret 
-; AHL = 0hl/0de as A is zero
-.divideHLbyDE:          ld      a,c                         ;'if c = 0 then result must be zero
-                        JumpIfAIsNotZero   .resultIsZero
-                        ld      bc,hl
-                        call    BC_Div_DE                   ; BC = HL/DE
-                        ld      hl,bc
-                        ZeroA                               ; so we can set A to Zero
-                        ClearCarryFlag
-                        ret
-; AHL = 00l/00e as A and H are zero
-.divideLbyE:            ld      a,c                         ; if d = 0 then result must be zero
-                        or      d
-                        JumpIfAIsNotZero   .resultIsZero
-                        ld      c,e
-                        ld      e,l
-                        MMUSelectMathsBankedFns
-                        call    div_e_div_c
-                        ld      l,a
-                        ZeroA
-                        ld      h,a
-                        ClearCarryFlag
-                        ret      
+;;;DEPRECATED;;;SunAHLequAHLDivCDE:     ld      b,a                         ; save a reg
+;;;DEPRECATED;;;                        ld      a,c                         ; check for divide by zero
+;;;DEPRECATED;;;                        or      d                           ; .
+;;;DEPRECATED;;;                        or      e                           ; .
+;;;DEPRECATED;;;                        JumpIfZero      .divideByZero       ; .
+;;;DEPRECATED;;;                        ld      a,b                         ; get a back
+;;;DEPRECATED;;;                        JumpIfAIsNotZero    .divideAHLbyCDE
+;;;DEPRECATED;;;.AIsZero:               ld      a,h
+;;;DEPRECATED;;;                        JumpIfAIsNotZero    .divideHLbyDE
+;;;DEPRECATED;;;.HIsZero:               ld      a,l
+;;;DEPRECATED;;;                        JumpIfAIsNotZero    .divideLbyE
+;;;DEPRECATED;;;.resultIsZero:          ZeroA
+;;;DEPRECATED;;;                        ld      h,a                        ; result is zero so set hlde
+;;;DEPRECATED;;;                        ld      l,a                        ; result is zero so set hlde
+;;;DEPRECATED;;;                        ld      de,hl
+;;;DEPRECATED;;;                        ClearCarryFlag
+;;;DEPRECATED;;;                        ret
+;;;DEPRECATED;;;.divideByZero:          ld      a,$FF
+;;;DEPRECATED;;;                        ld      h,a
+;;;DEPRECATED;;;                        ld      l,a
+;;;DEPRECATED;;;                        ld      de,hl
+;;;DEPRECATED;;;                        SetCarryFlag
+;;;DEPRECATED;;;; AHL = ahl/cde, this could be a genuine 24 bit divide
+;;;DEPRECATED;;;; if AHL is large and cde small then the value will be big so will be off screen so we can risk 16 bit divide
+;;;DEPRECATED;;;.divideAHLbyCDE:        call    Div24by24
+;;;DEPRECATED;;;                        ex      hl,de                         ; ahl is result
+;;;DEPRECATED;;;                        ld      a,c                           ; ahl is result
+;;;DEPRECATED;;;                        ClearCarryFlag
+;;;DEPRECATED;;;
+;;;DEPRECATED;;;                        ret 
+;;;DEPRECATED;;;; AHL = 0hl/0de as A is zero
+;;;DEPRECATED;;;.divideHLbyDE:          ld      a,c                         ;'if c = 0 then result must be zero
+;;;DEPRECATED;;;                        JumpIfAIsNotZero   .resultIsZero
+;;;DEPRECATED;;;                        ld      bc,hl
+;;;DEPRECATED;;;                        call    BC_Div_DE                   ; BC = HL/DE
+;;;DEPRECATED;;;                        ld      hl,bc
+;;;DEPRECATED;;;                        ZeroA                               ; so we can set A to Zero
+;;;DEPRECATED;;;                        ClearCarryFlag
+;;;DEPRECATED;;;                        ret
+;;;DEPRECATED;;;; AHL = 00l/00e as A and H are zero
+;;;DEPRECATED;;;.divideLbyE:            ld      a,c                         ; if d = 0 then result must be zero
+;;;DEPRECATED;;;                        or      d
+;;;DEPRECATED;;;                        JumpIfAIsNotZero   .resultIsZero
+;;;DEPRECATED;;;                        ld      c,e
+;;;DEPRECATED;;;                        ld      e,l
+;;;DEPRECATED;;;                        MMUSelectMathsBankedFns
+;;;DEPRECATED;;;                        call    div_e_div_c
+;;;DEPRECATED;;;                        ld      l,a
+;;;DEPRECATED;;;                        ZeroA
+;;;DEPRECATED;;;                        ld      h,a
+;;;DEPRECATED;;;                        ClearCarryFlag
+;;;DEPRECATED;;;                        ret      
 
 
 ; Needs tuning for registers vs memroy
@@ -767,7 +767,8 @@ SunProcessVertex:       ld      b,a                         ; save sign byte
                         ld      a,b                         ; restore sign byte
                         ld      iyl,a                       ; save sign
                         ClearSignBitA
-                        call SunAHLequAHLDivCDE             ; AHL = AHL/CDE unsigned
+                        MMUSelectMathsBankedFns
+                        call AHLequAHLDivCDE                ; AHL = AHL/CDE unsigned
 .CheckPosOnScreenX:     JumpIfAIsNotZero .IsOffScreen         ; if A has a value then its way too large regardless of sign
                         JumpOnLeadSignSet h, .IsOffScreen      ; or bit 7 set of h
                         ld      a,h
@@ -811,28 +812,18 @@ SunCalculateRadius:     ld      bc,(SBnKzlo)                ; DBC = z position
                         ld      e,a                         ; as later code expects it to be in e
                         ret    
 
-; Shorter version when sun does not need to be processed to screen                        
-SunUpdateCompass:       ld      a,(SBnKxsgn)
-                        ld      hl,(SBnKxlo)
-                        call    SunProcessVertex  
-                        ld      (SunCompassX),hl
-                        ld      a,(SBnKysgn)
-                        ld      hl,(SBnKylo)
-                        call    SunProcessVertex
-                        ld      (SunCompassY),hl
-                        ret
-                        
+                       
 ; could probabyl set a variable say "varGood", default as 1 then set to 0 if we end up with a good calulation?? may not need it as we draw here     
 SunUpdateAndRender:     call    SunApplyMyRollAndPitch
 .CheckDrawable:         ld      a,(SBnKzsgn)
-                        JumpIfAGTENusng 48,  SunUpdateCompass ; at a distance over 48 its too far away
+                        ReturnIfAGTENusng 48                ; at a distance over 48 its too far away
                         ld      hl,SBnKzhi                  ; if the two high bytes are zero then its too close
                         or      (hl)
-                        JumpIfAIsZero       SunUpdateCompass
+                        ReturnIfAIsZero
 .calculateX:            ld      a,(SBnKxsgn)
                         ld      hl,(SBnKxlo)
                         call    SunProcessVertex            ; now returns carry set for failure
-                        ld      (SunCompassX),hl
+;;;DEPRECATED;;;                        ld      (SunCompassX),hl
                         ret     c
 .calculatedX:           ld      e,ScreenCenterX
                         ld      d,0
@@ -843,7 +834,7 @@ SunUpdateAndRender:     call    SunApplyMyRollAndPitch
 .calculateY:            ld      a,(SBnKysgn)
                         ld      hl,(SBnKylo)
                         call    SunProcessVertex            ; now returns carry set for failure
-                        ld      (SunCompassY),hl
+;;;DEPRECATED;;;                        ld      (SunCompassY),hl
                         ret     c
 .calculatedY:           ld      e,ScreenCenterY
                         ld      d,0

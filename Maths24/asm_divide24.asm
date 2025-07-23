@@ -30,10 +30,15 @@ divu32smallloop         MACRO
 .skip_loop:             ccf
                         ENDM
 
-
+AHLequAHLDivCDE:        call    divs24          ; results in de.h
+                        ld      l,h
+                        ld      h,e
+                        ld      a,d
+                        ret
+                        
 ;INPUTS: ahl = dividend cde = divisor
 ;OUTPUTS: cde = quotient ahl = remainder
-; AHL = AHL/CDE
+;  = AHL/CDE
     DISPLAY "Needs ficxing for proper S15.8 result"
 divs24:                 ld      b,a             ; preserve dividend sign
                         xor     c               ; now a holds sign bit

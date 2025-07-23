@@ -92,6 +92,7 @@ JSTY                    DB  0               ; Joystick analog
 BET1 					DB	0               ; 2B        lower7 magnitude	
 BET2                    DB  0               ;            climb sign
 BET2FLIP				DB	0				; 7C		BET 2 pitch Sign negated
+BETAFLIP                DB  0
 BET1MAXC                DB  8; 31              ; max climb
 BET1MAXD                DB  -8; -31             ; max dive
 XC						DB	0               ; 2C
@@ -104,6 +105,7 @@ ALPHA					DB	0				; 8D        Alpha with bit 7 sign
 ALP1					DB 	0				; 31		ALP1	ABS Alpha
 ALP2					DB  0				; 32		ALP2	Roll Sign
 ALP2FLIP				DB  0				; 33		ALP2	negated roll sign
+ALPHAFLIP               DB  0
 ALP1MAXR                DB  8 ; 31              ;   Maximum roll, added becuase we may allow different ship types
 ALP1MAXL                DB  -8; -31             ;   Maximum roll, added becuase we may allow different ship types
 AlphaDecimal            DS  3               ; roll /256 as 24 bit 16.8

@@ -169,6 +169,7 @@ ScreenHyperspace EQU ScreenDocking+1
                         INCLUDE "./Macros/print_text_macros.asm"
                         INCLUDE "./Universe/UniverseMacros/asm_linedraw.asm"
                         INCLUDE "./Universe/UniverseMacros/UniverseVarsDefineMacro.asm"
+                        INCLUDE "./Macros/UniverseObjectPosMacros.asm"
                         INCLUDE "./Tables/message_queue_macros.asm"
                         INCLUDE "./Variables/general_variables_macros.asm"
                         INCLUDE "./Variables/UniverseSlot_macros.asm"
@@ -287,7 +288,7 @@ DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks
 InitialiseGalaxies: 
                     IFDEF MESSAGETRACING
                         MessageAt   0,24,InitialisingGalaxies
-                        break
+                        ;break
                     ENDIF
                         call		ResetUniv                       ; Reset ship data
                         call        ResetGalaxy                     ; Reset each galaxy copying in code
@@ -298,7 +299,7 @@ InitialiseGalaxies:
                         call		l1_cls
                         SetBorder   $00
 TESTCODEPOINT1:      IFDEF TESTGALAXYCHART
-                        break
+                        ;break
                         MMUSelectMenuGalCht
                         call        draw_g_chart
 .testGalaxyChartLoop:   MMUSelectKeyboard
@@ -312,10 +313,10 @@ TESTCODEPOINT1:      IFDEF TESTGALAXYCHART
                         jp          .testGalaxyChartLoop
                     ENDIF                 
 TESTCODEPOINT2:     IFDEF TESTSHORTRANGECHART
-                        break
+                        ;break
                         MMUSelectMenuShrCht
                         call        draw_s_chart
-                        break
+                        ;break
 .testGalaxyChartLoop:   MMUSelectKeyboard
                         call        scan_keyboard
                         MMUSelectMenuShrCht
@@ -327,10 +328,10 @@ TESTCODEPOINT2:     IFDEF TESTSHORTRANGECHART
                         jp          .testGalaxyChartLoop
                     ENDIF                 
 TESTCODEPOINT3:     IFDEF TESTSYSTEMMENU
-                        break
+                        ;break
                         MMUSelectMenuSystem
                         call        draw_s_data
-                        break
+                        ;break
 .testMenuSystemLoop:    MMUSelectKeyboard
                         call        scan_keyboard
                         MMUSelectMenuSystem
@@ -345,7 +346,7 @@ TESTCODEPOINT4:     IFDEF TESTMARKETROMENU
                         
                         MMUSelectMenuMarket
                         call        draw_mkt_data
-                        break
+                        ;break
 .testMenuMktLoop:       MMUSelectKeyboard
                         call        scan_keyboard
                         MMUSelectMenuMarket
@@ -356,13 +357,13 @@ TESTCODEPOINT5:     IFDEF TESTSTATUSMENU
                         ;break
                         MMUSelectMenuStatus
                         call        draw_stat_menu
-                        break
+                        ;break
 .testMenuStatLoop:      jp          .testMenuStatLoop
                     ENDIF         
 TESTCODEPOINT6:     IFDEF TESTINVENTORYMENU
                         MMUSelectMenuInvent
                         call        draw_inv_menu
-                        break
+                        ;break
 .testMenuInvLoop:       jp          .testMenuInvLoop
                     ENDIF         
 TESTCODEPOINT7:     IFDEF TESTMUL
@@ -375,15 +376,15 @@ TESTCODEPOINT7:     IFDEF TESTMUL
                         ld      c,(ix+3)
                         ld      d,(ix+4)
                         ld      e,(ix+5)
-                        break
+                        ;break
                         call    BCDEHLequBHLmulCDEs; BCDEHLequBHLmulCDEu 
-                        break
+                        ;break
                         pop     hl,,bc
                         ld      a,6
                         add     hl,a
                         ld      ix,hl
                         djnz    .MathsLoop1
-                        break
+                        ;break
 ;                                                                            B C D E H L
 .DataSet:               DB 0x80, 0x50, 0x80, 0x00, 0x50, 0x80    ; Result    800019504000 Pass            
 ;.DataSet:               DB 0x00, 0x50, 0x80, 0x00, 0x50, 0x80    ; Result    000019504000 Pass            
@@ -1318,6 +1319,8 @@ GALAXYDATABlock7:   DB $FF
                     INCLUDE "./Maths24/asm_divide_helpers.asm"
                     INCLUDE "./Maths24/asm_rollpitch24_origin.asm"
                     INCLUDE "./Maths24/asm_compass24.asm"
+                    INCLUDE "./Maths24/asm_normalise24.asm"
+                    INCLUDE "./Maths24/asm_sqrt24.asm"
                     DISPLAY ">Multiply is currently not bank 0 safe"
             ;        INCLUDE "./Maths24/asm_multiply24.asm"
                     DISPLAY "*** ./Maths/MathsBankedFns.asm  - BankMathsBankedFns"

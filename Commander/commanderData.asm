@@ -137,7 +137,7 @@ defaultCommander:       ldCopyStringLen defaultName, CommanderName, 8
                         inc     hl
                         djnz    .ClearFittedLoop
                         SetAFalse
-                        break
+                        ;break
                         ld      (EquipmentFitted+EQ_FRONT_BEAM),a
                         ld		(MissionData),a					   ;The Plan/Mission
                         ld      a,3                                ; a = 0 = pulse laser

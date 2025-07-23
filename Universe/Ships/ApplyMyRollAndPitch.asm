@@ -7,7 +7,9 @@
 
 ShipApplyMyRollAndPitch:    ld      ix,UBnKxlo                  ; base location of position as 24 bit
                             MMUSelectMathsBankedFns
-                            call    ApplyRollAndPitchIX
+                            call    ApplyMyRollAndPitchIX
+                            call    Normalise24IX
+                            call    UpdateCompassIX
 							ret
 
 

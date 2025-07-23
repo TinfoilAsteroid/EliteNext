@@ -34,11 +34,7 @@ SetBHLtoK2:                 MACRO
                             ld      hl,(RPK2)               ; .
                             ENDM
                             
-SetCDEtoX:                  MACRO
-                            ld      c,(ix+2)
-                            ld      de,(ix)
-                            ENDM
-                            
+
 SetCDEtoDEH                 MACRO
                             ld      c,d                     ; move DE.H into CD.E for multiply
                             ld      d,e                     ; .
@@ -56,65 +52,12 @@ SetCDEtoDelta:              MACRO
                             ld      hl,(DeltaDecimal)       ;
                             ENDM
                                 
-SetBHLtoX:                  MACRO
-                            ld      b,(ix+2)
-                            ld      hl,(ix)
-                            ENDM
-SetCDEtoX:                  MACRO
-                            ld      c,(ix+2)
-                            ld      de,(ix)
-                            ENDM
-SaveDEHToX:                 MACRO
-                            ld      (ix+2),d                ; save DE.H into Zd
-                            ld      (ix+1),e                ; .
-                            ld      (ix),h                  ; .
-                            ENDM
-SaveAHLToX:                 MACRO
-                            ld      (ix+2),a                ; save DE.H into Zd
-                            ld      (ix+1),h                ; .
-                            ld      (ix),l                  ; .
-                            ENDM
-SetCDEtoY:                  MACRO
-                            ld      c,(ix+5)
-                            ld      de,(ix+3)
-                            ENDM
-SetBHLtoY:                  MACRO
-                            ld      b,(ix+5)
-                            ld      hl,(ix+3)
-                            ENDM
-SaveDEHToY:                 MACRO
-                            ld      (ix+5),d                ; save DE.H into Zd
-                            ld      (ix+4),e                ; .
-                            ld      (ix+3),h                ; .
-                            ENDM
-SaveAHLToY:                 MACRO
-                            ld      (ix+5),a                ; save DE.H into Zd
-                            ld      (ix+4),h                ; .
-                            ld      (ix+3),l                ; .
-                            ENDM
-SetCDEtoZ:                  MACRO
-                            ld      c,(ix+8)
-                            ld      de,(ix+6)
-                            ENDM
-SetBHLtoZ:                  MACRO
-                            ld      b,(ix+8)
-                            ld      hl,(ix+6)
-                            ENDM
-SaveDEHToZ:                 MACRO
-                            ld      (ix+8),d                ; save DE.H into Zd
-                            ld      (ix+7),e                ; .
-                            ld      (ix+6),h                ; .
-                            ENDM
-SaveAHLToZ:                 MACRO
-                            ld      (ix+8),a                ; save DE.H into Zd
-                            ld      (ix+7),h                ; .
-                            ld      (ix+6),l                ; .
-                            ENDM                               
+                              
                                 DISPLAY "Later oprimise to do decimal calc in main loop"
                                 DISPLAY "Also update compasses"
 ; Apply roll and pitch takes 3 24 bit X, Y, Z and applies player roll, pitch and speed
 ; for readability all steps are done via macros
-ApplyRollAndPitchIX:        RotEquRotDiv256 ALPHA, AlphaDecimal  ; Alpha = alpha / 256 signed             
+ApplyMyRollAndPitchIX:      RotEquRotDiv256 ALPHAFLIP, AlphaDecimal  ; Alpha = alpha / 256 signed             
 .CalcBetaDecimal:           RotEquRotDiv256 BETA,  BetaDecimal  ; Alpha = alpha / 256 signed
                             ; k2 = y - alpha * x;
 .StartK2Calc:               SetBHLtoAlpha                   ; HL.L = Alpha decimal
