@@ -1,6 +1,4 @@
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
-
-
 SBnKxlo                     DB  0                       ; INWK+ 0
 SBnKxhi                     DB  0                       ; there are hi medium low as some times these are 24 bit
 SBnKxsgn                    DB  0                       ; INWK +2

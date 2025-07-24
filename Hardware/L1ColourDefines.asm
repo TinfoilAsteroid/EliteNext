@@ -1,4 +1,4 @@
-             
+        
 L1ColourInkBlack        EQU %00000000
 L1ColourInkBlue         EQU %00000001
 L1ColourInkRed          EQU %00000010

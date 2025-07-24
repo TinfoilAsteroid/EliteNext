@@ -14,6 +14,7 @@ UBnkCompassX                DW  0                       ; Compass offset
 UBnkCompassY                DW  0                       ; Compass offset
 UBnkRadarX                  DW  0                       ; Radar offset
 UBnkRadarY                  DW  0                       ; Radar offset
+UBnkNormRoot                DS  3                       ; INWK +17 (11) 3 bytes for normnalisation
 UBnkNormalX96               DW  0                       ; INWK +20 Normalised Position
 UBnKNormalY96               DW  0                       ; INWK +22 Normalised Position
 UBnkNormalZ96               DW  0                       ; INWK +24 Normalised Position

@@ -17,9 +17,9 @@
     DEFINE  MAINLOOP_WARP_ENABLED 1
    ; used to block ship spawning whilst debugging
     DEFINE  SPAWN_SHIP_DISABLED 1
-    DEFINE  PLANET_DIAGNOSTICS 1
-    DEFINE  SUN_DIAGNOSTICS 1
-    DEFINE  STATION_DIAGNOSTICS 1
+;    DEFINE  PLANET_DIAGNOSTICS 1
+;    DEFINE  SUN_DIAGNOSTICS 1
+;    DEFINE  STATION_DIAGNOSTICS 1
 ;.................................................................................................................................    
 ; Main loop
 ;   bank in Maths

@@ -66,8 +66,8 @@ UpdateUniverseObjects:  xor     a
         IFDEF   CLIPDEBUG                                                           ; if we are debugging clipping then skip all update code
                             jp      .CheckExploding
         ENDIF
-                            DISPLAY "TODO: Make all 4 of these 1 call"
-.ProperUpdate:          call    TidyRotation                                        ; determine if its tidy time within the universe model
+                            DISPLAY "TODO: FIX TIDY Make all 4 of these 1 call"
+.ProperUpdate:          ;call    TidyRotation                                        ; determine if its tidy time within the universe model
                         call    ShipApplyMyRollAndPitch;MyRollAndPitch24Bit;ApplyMyRollAndPitch             ; Apply our ship movement to universe object
                         ;call    MySpeed24Bit
                         call    ApplyShipRollAndPitch                               ; Apply ships own movement to universe object

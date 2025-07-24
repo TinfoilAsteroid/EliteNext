@@ -1,4 +1,5 @@
 
+    DISPLAY "TODO: get rid of planet position macros and do as per sun and ship"
 ;- DEBUG CODE
                         IFDEF BLINEDEBUG
 TestBLINE:              ld  a,$FF

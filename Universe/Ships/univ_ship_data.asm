@@ -1,6 +1,6 @@
 ;    DEFINE DEBUGMISSILELAUNCH 1
 ;    DEFINE PLOTPOINTSONLY 1
-;   DEFINE OVERLAYNODES 1
+  DEFINE OVERLAYNODES 1
 ; In  flight ship data tables
 ; In  flight ship data tables
 ; There can be upto &12 objects in flight.
@@ -76,7 +76,7 @@ LineArraySize               equ 50; incerased for max of 28 lines, of 4 points o
 ;                                               X Coord Lo  Y Coord Lo   Z CoordLo  Sign Bits 7 6 5 for X Y Z Signs (set = negative)
 ; Line Array        -  4 bytes per eleement     0           1            2          3
 ;                                               X1          Y1           X2         Y2
-UbnkFaceVisArray            DS FaceArraySize            ; XX2 Up to 16 faces this may be normal list, each entry is controlled by bit 7, 1 visible, 0 hidden
+UbnkFaceVisArray            DS FaceArraySize            ; XX2 Up to 16 faces this may be normal list, each entry is controlled by bit 7, 1 visible, 0 3
 ; Node array holds the projected to screen position regardless of if its clipped or not
 ; When we use traingles we can cheat a bit on clipping as all lines will be horizontal so clipping is much simplified
 UBnkNodeArray               DS NodeArraySize * 4        ; XX3 Holds the points as an array, its an array not a heap
@@ -142,7 +142,7 @@ UBnkHullVerticies           DS  40 * 6              ; largetst is trasnport type
 UBnkHullEdges               DS  50 * 4              ; ype 10 is 46 edges so allow 50
 UBnkHullNormals             DS  20 * 4              ; type 10 is 14 edges so 20 to be safe
     IFDEF SOLIDHULLTEST
-UBnkHullSolid               DS  100 * 4             ; Up to 100 triangles (May optimise so only loads non hidden faces later
+UBnkHullSolid               DS  100 * 4             ; Up to 100 triangles (May optimise so only loads non 3 faces later
     ENDIF
 OrthagCountdown             DB  12
 
@@ -765,7 +765,7 @@ ResetStationLaunch:     ld  a,%10000001                         ; Has AI and 1 M
                         xor     a
                         ld      (UBnKxsgn),a
                         ld      (UBnKysgn),a
-                        ld      a,$80
+                        ld      a,$00
                         ld      (UBnKzsgn),a
 .SetOrientation:        call    LaunchedOrientation             ; set initial facing
                         ret
@@ -1569,7 +1569,7 @@ PNNODEPRT           DW      0   ; DEBUG WILL USE LATER
 PNLASTNORM          DB      0
 ProcessNodes:           ZeroA
                         ld      (UbnkLineArrayLen),a
-                        call    CopyRotmatToTransMat ; CopyRotToTransMacro                      ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
+                        call    CopyRotmatToTransMat            ; CopyRotToTransMacro                      ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
                         call    ScaleXX16Matrix197               ;#02; Normalise XX16
                         call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
                         call    InverseXX16                      ;#11; Invert rotation matrix

@@ -173,10 +173,7 @@ ScreenHyperspace EQU ScreenDocking+1
                         INCLUDE "./Tables/message_queue_macros.asm"
                         INCLUDE "./Variables/general_variables_macros.asm"
                         INCLUDE "./Variables/UniverseSlot_macros.asm"
-
                         INCLUDE "./Data/ShipIdEquates.asm"
-                        
-
     IFNDEF  LASER_V2
 UpdateLaserCountersold: MACRO
                         JumpIfMemZero CurrLaserPulseOnCount,   .SkipPulseOn     ; if beam on count > 0 then beam on count --
@@ -298,7 +295,7 @@ InitialiseGalaxies:
                         MMUSelectLayer1
                         call		l1_cls
                         SetBorder   $00
-TESTCODEPOINT1:      IFDEF TESTGALAXYCHART
+TESTCODEPOINT1:     IFDEF TESTGALAXYCHART
                         ;break
                         MMUSelectMenuGalCht
                         call        draw_g_chart
