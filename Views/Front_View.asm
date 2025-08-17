@@ -277,7 +277,7 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         ld      (JSTX),a
                         call    draw_front_calc_alpha
                         jp      .TestDivePressed                    ; when pressing ignore damper
-.TestRightPressed:       ld      hl,(addr_Pressed_RollRight)
+.TestRightPressed:      ld      hl,(addr_Pressed_RollRight)
                         ld      a,(hl)
                         JumpIfAIsZero   .DampenRoll
                         ld      a,(JSTX)                            ; have we maxed out Joystick?

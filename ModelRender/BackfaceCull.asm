@@ -1,6 +1,6 @@
 ;    DEFINE DEBUGDRAWDISTANCE 1
     DEFINE CHECKDOTSHIPDATA  1
-    DEFINE DEBUGFORCEFACEDRAW 1
+;    DEFINE DEBUGFORCEFACEDRAW 1
 CurrentNormIdx  DB 0
 ; SomeFacesVisible:   
 ; EE29:             
@@ -36,7 +36,39 @@ CurrentNormIdx  DB 0
 ;
 
 
+XX12EquNodeDotXX16:					         		; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vector is 16-bit x,y,z **** ACTUALLY XX16 is value in low sign bit in high
+;...X cell
+		ld		hl,UBnkTransmatSidevX     			; process orientation matrix row 0
+        call    XX12ProcessOneRow                   ; hl = result, a = sign
+		ld		b,a                                 ; b = sign
+		ld		a,h                                 ; a = high byte
+		or		b
+		ld		(UBnkXX12xSign),a					; a = result with sign in bit 7
+		ld		a,l                                 ; the result will be in the lower byte now
+        ld      (UBnkXX12xLo),a						; that is result done for
+;...Y cell
+		ld		hl,UBnkTransmatRoofvX     			; process orientation matrix row 1
+        call    XX12ProcessOneRow
+		ld		b,a
+		ld		a,h
+;		ld		a,l
+		or		b
+		ld		(UBnkXX12ySign),a					; a = result with sign in bit 7
+		ld		a,l                                 ; the result will be in the lower byte now
+        ld      (UBnkXX12yLo),a						; that is result done for
+;...Z cell
+		ld		hl,UBnkTransmatNosevX     			; process orientation matrix row 1
+        call    XX12ProcessOneRow
+		ld		b,a
+        ld		a,h
+;		ld		a,l
+		or		b
+		ld		(UBnkXX12zSign),a					; a = result with sign in bit 7
+		ld		a,l                                 ; the result will be in the lower byte now
+        ld      (UBnkXX12zLo),a						; that is result done for
+        ret
 
+ 
 ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then we have scaled XX18
                         JumpIfAIsZero .ScaleDone            ; 
                         ld      hl,(UBnkDrawCam0xLo)        ; pull postition into registers

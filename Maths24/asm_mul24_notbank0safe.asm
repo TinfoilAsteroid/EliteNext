@@ -158,3 +158,98 @@ mul24:                  ld      a,d                 ; preserve L2 for later
                         ld      de,(MultiplyResult+2)
                         ld      bc,(MultiplyResult+4)
                         ret
+
+; so in our calcs we have
+;     HL  *  DE
+;     LD1    LD2    
+; which maps to bytes 5 4 3 2 1 0
+;  D1 * D2                    X X  1    de = l * e   (D1 * D2)
+;  L1 * D2                  X X    2    hl = h * e   (L1 * D2)  e = d, d = 0 add hl,de and move carry to a (result ahl)
+;  D1 * L2                  X X    3    de = l * d   (D1 * L2)  add hl,de and adc a,0                      (result ahl) with l being final ".h" A is starter for e so we now have l spare 
+;  L1 * L2                X X      5    hl = h * d   (L1 * L2)
+
+; multiplication of two 16-bit numbers into a 32-bit product
+;
+; enter : de = 16-bit multiplicand = y
+;         hl = 16-bit multiplicand = x
+;
+; exit  : bc = 16-bit product
+;         carry reset, we want the eh results.
+;
+; uses  : af, bc, de, hl
+mul16Signed:            ld      a,h                 ; get target sign value on a'
+                        xor     d                   ; .
+                        and     $80                 ; .
+                        ex      af,af'              ; .
+                        res     7,h                 ; de and hl are now ABS
+                        res     7,d                 ; .
+.TestForZero:           ld      a,h                 ; if either are 0 then result is zero
+                        or      l                   ; .
+                        jp      z,.resultIsZero     ; .
+                        ld      a,d                 ; .
+                        or      e                   ; .
+                        jp      z,.resultIsZero     ; .
+                        call    mul16               ; DE.HL = D.E * H.L
+                        ex      af,af'              ; get back sign bit
+                        or      e                   ; .
+                        ld      d,a                 ;
+                        ld      e,h
+                        ret                         ; done
+.resultIsZero:          ld      de,0
+                        ret
+
+
+mul16:                  ld b,l                      ; x0
+                        ld c,e                      ; y0
+                        ld e,l                      ; x0
+                        ld l,d
+                        push hl                     ; x1 y1
+                        ld l,c                      ; y0
+; bc = x0 y0, de = y1 x0,  hl = x1 y0,  stack = x1 y1
+                        mul de                      ; y1*x0
+                        ex de,hl
+                        mul de                      ; x1*y0
+                        
+                        xor a                       ; zero A
+                        add hl,de                   ; sum cross products p2 p1
+                        adc a,a                     ; capture carry p3
+                        
+                        ld e,c                      ; x0
+                        ld d,b                      ; y0
+                        mul de                      ; y0*x0
+                        
+                        ld b,a                      ; carry from cross products
+                        ld c,h                      ; LSB of MSW from cross products
+                        
+                        ld a,d
+                        add a,l
+                        ld h,a
+                        ld l,e                      ; LSW in HL p1 p0
+                        
+                        pop de
+                        mul de                      ; x1*y1
+                        
+                        ex de,hl
+                        adc hl,bc
+                        ex de,hl                    ; de = final MSW
+                        
+                        ret
+                        
+; Perfoms D*E where both are S7, results in S15 value
+mul8Signed:             ld      a,d
+                        xor     e
+                        and     $80
+                        push    af
+                        res     7,d
+                        res     7,e
+.TestForZero:           ld      a,d
+                        or      e
+                        jp      z,.resultIsZero
+                        mul     de                  ; perform D*E on 7 bit values
+                        pop     af
+                        or      d                   ; bring back lead sign into d
+                        ld      d,a
+                        ret
+.resultIsZero:          pop     af
+                        ld      de,0
+                        ret

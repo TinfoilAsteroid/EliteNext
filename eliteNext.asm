@@ -99,6 +99,7 @@
     ; DEFINE DEBUGLINEDRAW 1
     ; DEFINE MESSAGETRACING 1
      DEFINE  LASER_V2    1
+     ;DEFINE  DEBUG_SHIP_MOVEMENT 1
  CSPECTMAP eliteN.map
  OPT --zxnext=cspect --syntax=a --reversepop
                 DEFINE  SOUNDPACE 3
@@ -1317,13 +1318,14 @@ GALAXYDATABlock7:   DB $FF
                     INCLUDE "./Maths24/asm_rollpitch24_origin.asm"
                     INCLUDE "./Maths24/asm_compass24.asm"
                     INCLUDE "./Maths24/asm_normalise24.asm"
+                    INCLUDE "./Maths24/asm_tidy24.asm"
                     INCLUDE "./Maths24/asm_sqrt24.asm"
                     DISPLAY ">Multiply is currently not bank 0 safe"
             ;        INCLUDE "./Maths24/asm_multiply24.asm"
                     DISPLAY "*** ./Maths/MathsBankedFns.asm  - BankMathsBankedFns"
                     INCLUDE "./Maths/MathsBankedFns.asm"
-                    DISPLAY "*** ./Maths/asm_tidy.asm - BankMathsBankedFns"
-                    INCLUDE "./Maths/asm_tidy.asm"
+                    DISPLAY "*** removed ./Maths/asm_tidy.asm - BankMathsBankedFns"
+                    ;INCLUDE "./Maths/asm_tidy.asm"
                     DISPLAY "*** ./Maths/normalise96.asm - BankMathsBankedFns"
                     INCLUDE "./Maths/normalise96.asm"
                     ;INCLUDE "./Maths/binary_to_decimal.asm"

@@ -752,7 +752,26 @@ CreateTarget:           MMUSelectUniverseN  2
                         call    UnivInitRuntime
                         call    UnivSetSpawnPosition
                         ret
+               
 
+;------------------------------------------------------------
+; extension to AddBCHtoDELsigned
+; takes ix as the address of the values to load into DEL
+;       iy as the address of the values to load into BCH
+; subtracts iy from ix leaving result in del
+SubDELequAtIXMinusAtIY24Signed:
+                        ld      l,(ix+0)            ; del = ix (sign hi lo)
+                        ld      e,(ix+1)            ; .
+                        ld      d,(ix+2)            ; .
+                        ld      h,(iy+0)            ; bch = -iy (sign, hi, lo)
+                        ld      c,(iy+1)            ; .
+                        ld      a,(iy+2)            ; .
+                        xor     SignOnly8Bit        ; . this is where we flip sign to make add subtract
+                        ld      b,a                 ; .
+                        push    iy                  ; save iy as add function changes is
+                        call    AddBCHtoDELsigned   ; perform del += bch which as we flipped bch sign means (ix [210] -= iy [210])
+                        pop     iy                  ; get iy back
+                        ret
 ;----------------------------------------------------------------------------------------------------------------------------------                    
 ; Display Stats - go for 320 mode to test code
 ; Left side                         Right Side

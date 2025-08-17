@@ -8,6 +8,18 @@ RotEquRotDiv256             MACRO   Rotator, RotatorDecimal
 .RotPositive:               ld      (RotatorDecimal),a      ; .
                             ld      (RotatorDecimal+1),hl   ; .
                             ENDM
+
+Rot16EquRotDiv256           MACRO   Rotator, RotatorDecimal
+                            ld      a,(Rotator)             ; Alpha = alpha / 256 signed 
+                            bit     7,a                     ; determine if its + or -
+                            ld      hl,0                    ; .
+                            jp      z,.RotPositive          ;
+.RotNegative:               res     7,a                     ; 
+                            ld      h,$80                   ; uses only 16 bits of rotator decimal, sign + 8 bit value
+.RotPositive:               ld      l,a                     ;
+                            ld      (RotatorDecimal),hl     ; .
+                            ENDM
+
                             
 CDEEquDeltaDiv256           MACRO   SpeedDelta
                             ld      a,(SpeedDelta)          ; Speed = Delta / 256 signed 
@@ -28,13 +40,25 @@ SetBHLtoBeta:               MACRO
                             ld      hl,(BetaDecimal)        ;
                             ENDM
 
+SetHLtoAlpha16:             MACRO
+                            ld      hl,(AlphaDecimal)       ;
+                            ENDM
+                            
+SetHLtoBeta16:              MACRO
+                            ld      hl,(BetaDecimal)        ;
+                            ENDM
+
+
 SetBHLtoK2:                 MACRO
                             ld      a,(RPK2+2)
                             ld      b,a                     ; bhl = K2
                             ld      hl,(RPK2)               ; .
                             ENDM
                             
-
+SetHLtoMatK2:               MACRO
+                            ld      hl,(RPK2)               ; .
+                            ENDM
+                            
 SetCDEtoDEH                 MACRO
                             ld      c,d                     ; move DE.H into CD.E for multiply
                             ld      d,e                     ; .
@@ -55,10 +79,10 @@ SetCDEtoDelta:              MACRO
                               
                                 DISPLAY "Later oprimise to do decimal calc in main loop"
                                 DISPLAY "Also update compasses"
-; Apply roll and pitch takes 3 24 bit X, Y, Z and applies player roll, pitch and speed
+; Apply roll (alpha) and pitch (beta) takes 3 24 bit X, Y, Z and applies player roll, pitch and speed
 ; for readability all steps are done via macros
 ApplyMyRollAndPitchIX:      RotEquRotDiv256 ALPHAFLIP, AlphaDecimal  ; Alpha = alpha / 256 signed             
-.CalcBetaDecimal:           RotEquRotDiv256 BETA,  BetaDecimal  ; Alpha = alpha / 256 signed
+.CalcBetaDecimal:           RotEquRotDiv256 BETA,  BetaDecimal  ; Beta = beta / 256 signed
                             ; k2 = y - alpha * x;
 .StartK2Calc:               SetBHLtoAlpha                   ; HL.L = Alpha decimal
                             SetCDEtoX                       ; CD.E = X
@@ -97,3 +121,40 @@ ApplyMyRollAndPitchIX:      RotEquRotDiv256 ALPHAFLIP, AlphaDecimal  ; Alpha = a
                             call    AHLequBHLplusCDE
                             SaveAHLToZ
                             ret
+                            
+ApplyMyRollAndPitchMatIX:   Rot16EquRotDiv256  ALPHA, AlphaDecimal               ; Alpha = alpha / 256 signed  16 bit            
+.CalcBetaDecimal:           Rot16EquRotDiv256  BETAFLIP,  BetaDecimal                ; Beta = beta / 256 signed     16 bit
+                            ; k2 = y - alpha * x;
+.StartK2Calc:               SetHLtoAlpha16                  ; HL.L = Alpha decimal
+                            SetDEtoMatX                     ; CD.E = X
+.CalcAlphaX                 call    mul16Signed             ; D.E = H.L * D.E 
+.CalcK2:                   ; ld      de,bc                   ; CD.E = Alpha * X
+                            SetHLtoMatY                     ; BH.L = Y
+                            call    HLequHLminusDE          ; AHL = Y - (Alpha * X)
+.WriteK2:                   ld      (RPK2),hl               ; RPK2 = K2
+                            ; z = z + beta * k2;
+.StartZCalc:                ex      de,hl                   ; DE = K2 (previosly loaded to AH.L)
+                            SetHLtoBeta16                   ; BH.L = Beta Decimal
+.CalcBetaK2:                call    mul16Signed             ; D.E = H.L * D.E
+.CalcNewZ:                  ;ld      de,bc                  ; D.E = Beta * K2 result
+                            SetHLtoMatZ                     ; H.L = Z
+                            call    HLequHLplusDE           ; H.L = Z + Beta * K2
+                            SaveHLToMatZ                    ; New Z= Z + Beta * K2
+.StartYCalc:                ex      de,hl                   ; Set D.E to New Z
+                            SetHLtoBeta16                   ; Set HL to Beta Decimal
+                            ; y = k2 - z * beta;
+.CalcBetaZ:                 call    mul16Signed             ; D.E = H.L * D.E
+.CalcNewY:                  ;ld      de,bc                  ; D.E now holds Z*Beta
+                            SetHLtoMatK2                    ; BH.L = K2
+                            call    HLequHLminusDE          ; AH.L = K2 - Z*Beta
+.WriteNewY:                 SaveHLToMatY                    ; New Y= K2 - Z*Beta
+                            ;	x = x + alpha * y;                            
+.StartXCalc:                ex      de,hl                   ; D.E = Y 
+                            SetHLtoAlpha16                  ; BH.L = Alpha Decimal
+.CalcAlphaY                 call    mul16Signed             ; D.E = H.L * D.E
+.CalcNewX:                  ;ld      de,bc                  ; D.E = Y * Alpha
+                            SetHLtoMatX                     ; BH.L = X
+                            call    HLequHLplusDE           ; DE.H = X + Alpha*y
+.WriteNewX:                 SaveHLToMatX                    ; NewX = X * Alpha*Y
+                            ret
+ 

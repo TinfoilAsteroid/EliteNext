@@ -99,6 +99,48 @@ div_a256_div_c:         ld      d,0
                         call    BC_Div_DE
                         ret
 
+div_de_div_bc_signed:   ld      a,d
+                        or      b
+                        and     $80
+                        ex      af,af'          ; save sign bit
+                        res     7,d
+                        res     7,b
+                        ld      a,d
+                        or      e
+                        jp      z,  .ResultIsZero
+                        ld      a,b
+                        or      c
+                        jp      nz, .OKtoDivide
+                        ld      c,1
+.OKtoDivide:            call    DEequDEDivBC    ; get back sign and set as needed
+                        ex      af,af'          ; 
+                        or      d               ; 
+                        ld      d,a             ; 
+                        ret
+.ResultIsZero:          ld      de,0
+                        ret
+
+div_de_div_96_signed:   ld      a,d
+                        or      b
+                        and     $80
+                        ex      af,af'          ; save sign bit
+                        res     7,d
+                        res     7,b
+                        ld      a,d
+                        or      e
+                        jp      z,  .ResultIsZero
+                        ld      a,b
+                        or      c
+                        jp      nz, .OKtoDivide
+                        ld      c,1
+.OKtoDivide:            call    DEequDEDivBC    ; get back sign and set as needed
+                        ex      af,af'          ; 
+                        or      d               ; 
+                        ld      d,a             ; 
+                        ret
+.ResultIsZero:          ld      de,0
+                        ret
+
 ;Inputs: DE is the numerator, BC is the divisor
 ;;Outputs: DE is the result
 ;;         A is a copy of E

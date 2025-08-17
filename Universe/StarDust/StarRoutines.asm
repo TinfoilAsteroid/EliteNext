@@ -181,7 +181,7 @@ StarProcessLoop:        push    bc                                  ; save count
                         and     $80                                 ;
                         or      d                                   ; set sign bit in d
                         ld      d,a                                 ;
-                        call    ADDHLDESignedV4                  ; x = x + (x hi/256 * Q)
+                        call    addHLDES15                          ; x = x + (x hi/256 * Q)
                         ld      a,h
                         and     $7F
                         JumpIfAGTENusng $70, ResetStar
@@ -196,7 +196,7 @@ StarProcessLoop:        push    bc                                  ; save count
                         and     $80                                 ;
                         or      d                                   ; set sign bit in d
                         ld      d,a                                 ;
-                        call    ADDHLDESignedV4                  ; y = y + (x hi/256 * Q)
+                        call    addHLDES15                          ; y = y + (x hi/256 * Q)
                         ld      a,h
                         and     $7F
                         JumpIfAGTENusng $60, ResetStar
@@ -252,7 +252,7 @@ StarProcessLoop:        push    bc                                  ; save count
                         or      d
                         ld      d,a                                 ; de = signed alpha & y high / 256
                         ld      hl,(iy+2)                           ; h = iy+1, l = iy+0
-                        call    ADDHLDESignedV4                  ; we are usign add, so may need to fip sign?
+                        call    addHLDES15                          ; we are usign add, so may need to fip sign?
                         ld      (iy+2),hl
 .NoRoll:                ld      a,(BET1)
                         cp      0
@@ -269,7 +269,7 @@ StarProcessLoop:        push    bc                                  ; save count
                         or      d
                         ld      d,a                                 ; de = - (2 * ((BETA & Yhi) ^ 2))
                         ld      hl,(iy+2)
-                        call    ADDHLDESignedV4
+                        call    addHLDES15
                         ld      (iy+2),hl
 ; now work out screen pos
 ; Note two optimistations, write to layer 2 - we get a free removal via double buffer cls

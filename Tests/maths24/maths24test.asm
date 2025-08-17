@@ -261,6 +261,114 @@ TestMult:               ld      hl,(iy+0)
     INCLUDE	"../../Maths24/asm_addition24.asm"
 
 
+AHLequHLAddCarryAViaDE: MACRO
+                        ld      d,0                         ; de = P1 carry
+                        ld      e,a                         ; .
+                        xor     a                           ; Clear carry and prep a for P2 carry
+                        add     hl,de                       ; .
+                        adc     a,a                         ; .
+                        ENDM
+; variants on AHLequBHLplusCD
+; If it will fit
+;  HLBC = BHL * CDE  Lead Sign bit, carry Clear
+; else
+;  AHLBC = BHL * CDE Lead sign bit , carry set
+; performs p0 = x0*y0                               L*E
+;          p1 = x1*y0 + x0*y1 + p0 carry            H*E + D*L
+;          p2 = x2*y0 + x0*y2 + x1*y1 + p1 carry    B*E + L*C + H*D
+;          p3 = x2*y1 + x1 * y2 + p2 carry          B*D + H*C
+;          p4 = x2* y2                              B*C
+; reverse order for stack retrival                                                                                              B H L  C D E
+; performs p4 = x2* y2                              B*C                B*C                     leave as is           BHL*CDE   020305 01040A 0201            02                  P4 = 2
+;          p3 = x2*y1 + x1 * y2 + p2 carry          B*D + H*C          Swap B<>E and C<>L      E*D + H * L           EHC*LDB    E H C  L D B 0204 0301       08+03 = 0B          P3 = B
+;          p2 = x2*y0 + x0*y2 + x1*y1 + p1 carry    E*B + C*L + H*D    Swap B<>D and C<>H      E*D + H * L + C * B   ECH*LBD    E C H  L B D 020A 0501 0304  14+05+0C=25         P2 = 25
+;          p1 = x1*y0 + x0*y1                       C*D + H*B          Swap C<>E and L<>B      E*D + H * L           CEH*BLD    C E H  B L D 030A 0504       1E+14 = 32          P1 = 32 carry = 0
+;          p0 = x0*y0                               C*B                Swap E,H, ex hl,de in calc                    CHE*BDL                 050A            32                  P0 = 32 Carry = 0
+SwapViaA:               MACRO   r1, r2
+                        ld      a,r1
+                        ld      r1,r2
+                        ld      r2,a
+                        ENDM
+HLBCequBHLmulCDE:       ld      a,b                         ; multiply is simpler as same signs is always positive
+                        xor     c                           ; opposite is always negative
+                        and     $80                         ; .
+.SaveSign:              push    af                          ; save a to the stack that will now hold 0 or $80,
+.ClearSignBits:         res     7,b
+                        res     7,c
+.PrepP4:                push    bc                          ; save registers for p4 = x2*y2 p3 carry > BC = x0 y0
+.PrepP3:                SwapViaA b,e                        ; save registers for p3  = x2*y1 + x1*y2 + p2 carry
+                        SwapViaA c,l
+                        push    de,,hl                      ; DE = X2 Y1 HL = X1 Y2
+.PrepP2:                SwapViaA d,b                         ; save registers for p2  = x2*y0 + x0*y2 + x1*y1 + p1 carry
+                        SwapViaA c,h
+                        push    de,,hl,,bc                  ; save registers for p1 = x1*y0 + x0*y1 + p0 carry
+.PrepP1:                SwapViaA c,e
+                        SwapViaA l,b
+                        push    de,,hl
+.PrepP0:                SwapViaA e,h                        ; we don't care about original values now as they are on the stack
+.CalcP0:                mul     de                          ; de = x0 * y0 no need for carry logic as even FF*FF = FE01
+                        ld      bc,de                       ; so b = P0 carry,c = P0
+.CalcP1:                pop     de                          ; get P1 components off stack
+                        mul     de                          ; hl = x1*y0
+                        ex      de,hl                       ; so de = P1c P1 b =P0c P0
+.AddP0Carry:            xor     a                           ; hl = x1*y0 + P0 carry
+                        ld      d,0                         ; .
+                        ld      e,b                         ; .
+                        add     hl,de                       ; .
+                        adc     a,a                         ; a = carry
+                        pop     de
+                        mul     de                          ; de = x0*y1
+                        and     a                           ; clear carry flag whilst retaining a
+                        add     hl,de                       ; hl = x1*y0 + x0*y1
+.CalcP1Carry:           adc     a,0                         ;
+                        add     h                           ; a = P1 carry
+                        ld      b,l                         ; A = P1 carry bc = P1 P0
+.CalcP2:                pop     de                          ; we pull in bc later directly into de
+                        mul     de                          ; hl = x2*y0
+                        ex      hl,de                       ; .
+.AddP1Carry:            AHLequHLAddCarryAViaDE
+.CalcP2Pt2:             pop     de                          ; de = x0*y2
+                        mul     de                          ; .
+                        and     a                           ; Clear carry preserve a
+                        add     hl,de                       ; hl = x2*y0 + x0*y2
+                        adc     a,a                         ; a = new carry
+.CalcP2Pt3:             pop     de                          ; de = x1*y1
+                        mul     de                          ; .
+                        and     a                           ; hl = x2*y0 + x0*y2 + x1*y1, preserve carry flag
+                        add     hl,de                       ; so we have hl = P2c P2 BC = P1P1
+.CalcP2Carry:           adc     a,0                         ; A = calc carry + P2 carry in h
+                        add     a,h                         ; l = P2 bc = P1 P0
+                        ld      e,l                         ; ixl = l (via e as you can't do hl to ix direct)
+.SaveP2:                ld      ixl,e                       ; a = P2 carry ixl:bc = P2 P1 P0
+.CalcP3                 pop     de                          ; hl = x2*y1
+                        mul     de                          ; .
+                        ex      de,hl                       ; .
+.AddP2Carry:            AHLequHLAddCarryAViaDE
+.CalcP3Pt2:             pop     de                          ; de =  x1*y2
+                        mul     de                          ; .
+                        and     a                           ; Clear carry preserve a
+                        add     hl,de                       ; hl = x2*y1 + x1*y2
+                        adc     a,0                         ; a = new carry for P3, l = p3
+                        add     a,h                         ; .
+.SaveP3:                ld      e,l                         ; load ixh via e
+                        ld      ixh,e                       ; so we now have a = P3 carry ix P3P2 bc = P1P0
+.CalcP4:                pop     de                          ; de = x2* y2 + P3 carry
+                        mul     de                          ; .
+                        ex      de,hl                       ;
+.AddP3Carry:            AHLequHLAddCarryAViaDE              ; hl ix bc = P5P4 P3P2 P1P0
+.RecoverSignBit:        ld      a,l                         ; Is P4 populated,
+                        and     a
+                        jp      z,.P3toP0                   ; if not then we have result P3P2P1P0
+.P4toP0:                pop     af                          ; else return with AHLBC
+                        or      l
+                        ld      hl,ix
+                        ret
+.P3toP0:                pop     af
+                        ld      hl,ix                       ; move P2P2 into hl
+                        or      h
+                        ld      h,a
+                        xor     a                           ; return result in hlbc with CarryClear
+                        ret
 
 
     SAVENEX OPEN "maths24test.nex", EliteNextStartup , TopOfStack

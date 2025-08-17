@@ -129,6 +129,12 @@ ldBCatHL:               MACRO
                         inc     hl
                         ENDM
 
+ldDEatHL:               MACRO
+                        ld      e,(hl)
+                        inc     hl
+                        ld      d,(hl)
+                        ENDM
+
 ldhlde:			        MACRO
                         ld		h,d
                         ld		l,e

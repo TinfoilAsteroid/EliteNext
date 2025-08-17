@@ -65,250 +65,48 @@ ADDHLDESignBC:          ld      a,b
                         xor     SignOnly8Bit                ; flip sign bit
                         ret   
     DISPLAY "TODO: Check if ADDHLDESignedV4 is deprecated by AddDEtoHLSigned"
-ADDHLDESignedV4:        ld      a,h
-                        and     SignOnly8Bit
-                        ld      b,a                         ;save sign bit in b
-                        xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means 
-                        JumpIfNegative .ADDHLDEOppSGN       ;Signs are opposite there fore we can subtract to get difference
-.ADDHLDESameSigns:      ld      a,b
-                        or      d
-                        JumpIfNegative .ADDHLDESameNeg      ; optimisation so we can just do simple add if both positive
-                        add     hl,de
-                        ret
-.ADDHLDESameNeg:        ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
-                        and     SignMask8Bit                ; we could check the value of b for optimisation
-                        ld      h,a
-                        ld      a,d
-                        and     SignMask8Bit
-                        ld      d,a
-                        add     hl,de
-                        ld      a,SignOnly8Bit
-                        DISPLAY "TODO:  dont bother with overflow for now"
-                        or      h                           ; now set bit for negative value, we won't bother with overflow for now TODO
-                        ld      h,a
-                        ret
-.ADDHLDEOppSGN:         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit                     ; here HL and DE are opposite 
-                        and     SignMask8Bit                ; we could check the value of b for optimisation
-                        ld      h,a
-                        ld      a,d
-                        and     SignMask8Bit
-                        ld      d,a
-                        ClearCarryFlag
-                        sbc     hl,de
-                        jr      c,.ADDHLDEOppInvert
-.ADDHLDEOppSGNNoCarry:  ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
-                        or      h
-                        ld      h,a                         ; set the previou sign value
-                        ret
-.ADDHLDEOppInvert:      NegHL                                                   ; we need to flip the sign and 2'c the Hl result
-                        ld      a,b
-                        xor     SignOnly8Bit                ; flip sign bit
-                        or      h
-                        ld      h,a                         ; recover sign
-                        ret 
- 
-;------------------------------------------------------------
-; extension to AddBCHtoDELsigned
-; takes ix as the address of the values to load into DEL
-;       iy as the address of the values to load into BCH
-AddAtIXtoAtIY24Signed:  ld      l,(ix+0)            ; del = ix (sign hi lo)
-                        ld      e,(ix+1)            ; .
-                        ld      d,(ix+2)            ; .
-                        ld      h,(iy+0)            ; bch = iy (sign, hi, lo)
-                        ld      c,(iy+1)            ; .
-                        ld      b,(iy+2)            ; .
-                        push    iy                  ; save iy as add function changes is
-                        call    AddBCHtoDELsigned   ; Perform del += bch
-                        pop     iy                  ; get iy back
-                        ld      (ix+0),l            ; put result into (ix)
-                        ld      (ix+1),e            ; .
-                        ld      (ix+2),d            ; .
-                        ret                       
-;------------------------------------------------------------
-; DEL = @IX + @IY 24 bit signed
-AddDELequAtIXPlusIY24Signed:   
-                        ld      l,(ix+0)            ; del = ix (sign hi lo)
-                        ld      e,(ix+1)            ; .
-                        ld      d,(ix+2)            ; .
-                        ld      h,(iy+0)            ; bch = iy (sign, hi, lo)
-                        ld      c,(iy+1)            ; .
-                        ld      b,(iy+2)            ; .
-                        push    iy                  ; save iy as add function changes is
-                        call    AddBCHtoDELsigned   ; Perform del += bch
-                        pop     iy                  ; get iy back
-                        ret                   
-;------------------------------------------------------------
-; extension to AddBCHtoDELsigned
-; takes ix as the address of the values to load into DEL
-;       iy as the address of the values to load into BCH
-; subtracts iy from ix putting result in ix
-; DEL = @IX - @IY 24 bit signed
-SubAtIXtoAtIY24Signed:  ld      l,(ix+0)            ; del = ix (sign hi lo)
-                        ld      e,(ix+1)            ; .
-                        ld      d,(ix+2)            ; .
-                        ld      h,(iy+0)            ; bch = -iy (sign, hi, lo)
-                        ld      c,(iy+1)            ; .
-                        ld      a,(iy+2)            ; .
-                        xor     SignOnly8Bit        ; . this is where we flip sign to make add subtract
-                        ld      b,a                 ; .
-                        push    iy                  ; save iy as add function changes is
-                        call    AddBCHtoDELsigned   ; perform del += bch which as we flipped bch sign means (ix [210] -= iy [210])
-                        pop     iy                  ; get iy back
-                        ld      (ix+0),l            ; put result into (ix)
-                        ld      (ix+1),e            ; .
-                        ld      (ix+2),d            ; .
-                        ret
-;------------------------------------------------------------
-; extension to AddBCHtoDELsigned
-; takes ix as the address of the values to load into DEL
-;       iy as the address of the values to load into BCH
-; subtracts iy from ix leaving result in del
-SubDELequAtIXMinusAtIY24Signed:
-                        ld      l,(ix+0)            ; del = ix (sign hi lo)
-                        ld      e,(ix+1)            ; .
-                        ld      d,(ix+2)            ; .
-                        ld      h,(iy+0)            ; bch = -iy (sign, hi, lo)
-                        ld      c,(iy+1)            ; .
-                        ld      a,(iy+2)            ; .
-                        xor     SignOnly8Bit        ; . this is where we flip sign to make add subtract
-                        ld      b,a                 ; .
-                        push    iy                  ; save iy as add function changes is
-                        call    AddBCHtoDELsigned   ; perform del += bch which as we flipped bch sign means (ix [210] -= iy [210])
-                        pop     iy                  ; get iy back
-                        ret
-;------------------------------------------------------------
-;tested mathstestsun2
-; DEL = DEL - BCH signed, uses BC, DE, HL, IY, A
-; Just flips sign on b then performs add
-SubBCHfromDELsigned:    ld      a,b
-                        xor     SignOnly8Bit
-                        ld      b,a
-; DEL = DEL + BCH signed, uses BC, DE, HL, IY, A
-AddBCHtoDELsigned:      ld      a,b                 ; Are the values both the same sign?
-                        xor     d                   ; .
-                        and     SignOnly8Bit        ; .
-                        jr      nz,.SignDifferent   ; .
-.SignSame:              ld      a,b                 ; if they are then we only need 1 signe
-                        and     SignOnly8Bit        ; so store it in iyh
-                        ld      iyh,a               ;
-                        ld      a,b                 ; bch = abs bch
-                        and     SignMask8Bit        ; .
-                        ld      b,a                 ; .
-                        ld      a,d                 ; del = abs del
-                        and     SignMask8Bit        ; .
-                        ld      d,a                 ; .
-                        ld      a,h                 ; l = h + l
-                        add     l                   ; .
-                        ld      l,a                 ; . 
-                        ld      a,c                 ; e = e + c + carry
-                        adc     e                   ; .
-                        ld      e,a                 ; .
-                        ld      a,b                 ; d = b + d + carry (signed)
-                        adc     d                   ; 
-                        or      iyh                 ; d = or back in sign bit
-                        ld      d,a                 ; 
-                        ret                         ; done
-.SignDifferent:         ld      a,b                 ; bch = abs bch
-                        ld      iyh,a               ; iyh = b sign
-                        and     SignMask8Bit        ; .
-                        ld      b,a                 ; .
-                        ld      a,d                 ; del = abs del
-                        ld      iyl,a               ; iyl = d sign
-                        and     SignMask8Bit        ; .
-                        ld      d,a                 ; .
-                        push    hl                  ; save hl
-                        ld      hl,bc               ; hl = bc - de, if bc < de then there is a carry
-                        sbc     hl,de               ;
-                        pop     hl                  ;
-                        jr      c,.BCHltDEL
-                        jr      nz,.DELltBCH        ; if the result was not zero then DEL > BCH
-.BCeqDE:                ld      a,h                 ; if the result was zero then check lowest bits
-                        JumpIfALTNusng l,.BCHltDEL
-                        jr      nz,.DELltBCH
-; The same so its just zero
-.BCHeqDEL:              xor     a                  ; its just zero
-                        ld      d,a                ; .
-                        ld      e,a                ; .
-                        ld      l,a                ; .
-                        ret                        ; .
-;BCH is less than DEL so its DEL - BCH the sort out sign
-.BCHltDEL:              ld      a,l                ; l = l - h                      ; ex
-                        sub     h                  ; .                              ;   01D70F DEL
-                        ld      l,a                ; .                              ;  -000028 BCH
-                        ld      a,e                ; e = e - c - carry              ;1. 
-                        sbc     c                  ; .                              ;
-                        ld      e,a                ; .                              ;
-                        ld      a,d                ; d = d - b - carry              ;
-                        sbc     b                  ; .                              ;
-                        ld      d,a                ; .                              ;
-                        ld      a,iyl              ; as d was larger, take d sign
-                        and     SignOnly8Bit       ;
-                        or      d                  ;
-                        ld      d,a                ;
-                        ret
-.DELltBCH:              ld      a,h                ; l = h - l
-                        sub     l                  ;
-                        ld      l,a                ;
-                        ld      a,c                ; e = c - e - carry
-                        sbc     e                  ;
-                        ld      e,a                ;
-                        ld      a,b                ; d = b - d - carry
-                        sbc     d                  ;
-                        ld      d,a                ;
-                        ld      a,iyh              ; as b was larger, take b sign into d
-                        and     SignOnly8Bit       ;
-                        or      d                  ;
-                        ld      d,a                ;
-                        ret
-;-----------------------------------------------------------------------------------------------------------
-; Subtract Functions
-;...subtract routines
-; we could cheat, flip the sign of DE and just add but its not very optimised
-subHLDES15:             ld      a,h
-                        and     SignOnly8Bit
-                        ld      b,a                         ;save sign bit in b
-                        xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means 
-                        JumpIfNegative .SUBHLDEOppSGN        ;Signs are opposite therefore we can add
-.SUBHLDESameSigns:      ld      a,b
-                        or      d
-                        JumpIfNegative .SUBHLDESameNeg       ; optimisation so we can just do simple add if both positive
-                        ClearCarryFlag
-                        sbc     hl,de
-                        JumpIfNegative .SUBHLDESameOvrFlw            
-                        ret
-.SUBHLDESameNeg:        ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
-                        and     SignMask8Bit                ; we could check the value of b for optimisation
-                        ld      h,a
-                        ld      a,d
-                        and     SignMask8Bit
-                        ld      d,a
-                        ClearCarryFlag
-                        sbc     hl,de
-                        JumpIfNegative .SUBHLDESameOvrFlw            
-                                            DISPLAY "TODO:  don't bother with overflow for now"
-                        ld      a,h                         ; now set bit for negative value, we won't bother with overflow for now TODO
-                        or      SignOnly8Bit
-                        ld      h,a
-                        ret
-.SUBHLDESameOvrFlw:     NegHL
-                        ld      a,b
-                        xor     SignOnly8Bit                ; flip sign bit
-                        or      h
-                        ld      h,a                         ; recover sign
-                        ret         
-.SUBHLDEOppSGN:         or      a
-                        ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
-                        and     SignMask8Bit                ; we could check the value of b for optimisation
-                        ld      h,a
-                        ld      a,d
-                        and     SignMask8Bit
-                        ld      d,a     
-                        add     hl,de
-                        ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
-                        or      h
-                        ld      h,a                         ; set the previou sign value
-                        ret
-;------------------------------------------------------------------------------------------------
+;DEPRECATEDADDHLDESignedV4:        ld      a,h
+;DEPRECATED                        and     SignOnly8Bit
+;DEPRECATED                        ld      b,a                         ;save sign bit in b
+;DEPRECATED                        xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means 
+;DEPRECATED                        JumpIfNegative .ADDHLDEOppSGN       ;Signs are opposite there fore we can subtract to get difference
+;DEPRECATED.ADDHLDESameSigns:      ld      a,b
+;DEPRECATED                        or      d
+;DEPRECATED                        JumpIfNegative .ADDHLDESameNeg      ; optimisation so we can just do simple add if both positive
+;DEPRECATED                        add     hl,de
+;DEPRECATED                        ret
+;DEPRECATED.ADDHLDESameNeg:        ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
+;DEPRECATED                        and     SignMask8Bit                ; we could check the value of b for optimisation
+;DEPRECATED                        ld      h,a
+;DEPRECATED                        ld      a,d
+;DEPRECATED                        and     SignMask8Bit
+;DEPRECATED                        ld      d,a
+;DEPRECATED                        add     hl,de
+;DEPRECATED                        ld      a,SignOnly8Bit
+;DEPRECATED                        DISPLAY "TODO:  dont bother with overflow for now"
+;DEPRECATED                        or      h                           ; now set bit for negative value, we won't bother with overflow for now TODO
+;DEPRECATED                        ld      h,a
+;DEPRECATED                        ret
+;DEPRECATED.ADDHLDEOppSGN:         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit                     ; here HL and DE are opposite 
+;DEPRECATED                        and     SignMask8Bit                ; we could check the value of b for optimisation
+;DEPRECATED                        ld      h,a
+;DEPRECATED                        ld      a,d
+;DEPRECATED                        and     SignMask8Bit
+;DEPRECATED                        ld      d,a
+;DEPRECATED                        ClearCarryFlag
+;DEPRECATED                        sbc     hl,de
+;DEPRECATED                        jr      c,.ADDHLDEOppInvert
+;DEPRECATED.ADDHLDEOppSGNNoCarry:  ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
+;DEPRECATED                        or      h
+;DEPRECATED                        ld      h,a                         ; set the previou sign value
+;DEPRECATED                        ret
+;DEPRECATED.ADDHLDEOppInvert:      NegHL                                                   ; we need to flip the sign and 2'c the Hl result
+;DEPRECATED                        ld      a,b
+;DEPRECATED                        xor     SignOnly8Bit                ; flip sign bit
+;DEPRECATED                        or      h
+;DEPRECATED                        ld      h,a                         ; recover sign
+;DEPRECATED                        ret 
+
 ;-- checks to see if a postition is in range of another, e.g. missile hit
 ;-- ix = ship position    - pointer to xyz vector as 3 bytes per element
 ;-- oy = misisle position - pointer to xyz vector as 3 bytes per element

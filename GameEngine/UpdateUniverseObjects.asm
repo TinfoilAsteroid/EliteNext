@@ -61,13 +61,17 @@ UpdateUniverseObjects:  xor     a
                             jr      nz,.ProperUpdate                                ; 
         ENDIF
         IFDEF   DEBUG_SHIP_MOVEMENT
+                            ;break
 .DebugUpdate:               call    FixStationPos                                   ; if we are debugging space station code                  
         ENDIF
         IFDEF   CLIPDEBUG                                                           ; if we are debugging clipping then skip all update code
                             jp      .CheckExploding
         ENDIF
                             DISPLAY "TODO: FIX TIDY Make all 4 of these 1 call"
-.ProperUpdate:          ;call    TidyRotation                                        ; determine if its tidy time within the universe model
+.ProperUpdate:          MMUSelectMathsBankedFns
+                        ld      ix,UBnkrotmat
+                        CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, TidyOrientation  ; determine if its tidy time within the universe model
+                        ;break
                         call    ShipApplyMyRollAndPitch;MyRollAndPitch24Bit;ApplyMyRollAndPitch             ; Apply our ship movement to universe object
                         ;call    MySpeed24Bit
                         call    ApplyShipRollAndPitch                               ; Apply ships own movement to universe object
@@ -218,8 +222,8 @@ RestorePosition:        push    hl,,de,,bc,,af
                         jr      nz,.DoneSave
                         ;break
                         ld      hl, SaveUBNK
-                        ld      de, UBnKxlo
                         ld      bc, 3*3
+                        ld      de, UBnKxlo
                         ldir
 .DoneSave:              pop     hl,,de,,bc,,af
                         ret

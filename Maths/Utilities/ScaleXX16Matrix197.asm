@@ -1,12 +1,14 @@
+;Scale 
+;   Get 
+
+
+
 ScaleXX16Matrix197:     
         IFDEF LOGMATHS
                         ld		b,9                 ; Interate though all 9 matrix elements
-                        ld		hl,UBnkTransmatSidev ; within XX16 (transmat)
+                        ld		hl,UBnkTransmatSidev; within XX16 (transmat)
                         MMUSelectMathsTables
-.ScaleXX16Loop:         ld		e,(hl)              ; set DE = matrix value              ;
-                        inc		hl                  ;
-                        ld		a,(hl)              ;
-                        ld		d,a                 ;
+.ScaleXX16Loop:         ldDEatHL                    ; set DE = matrix value              ;
                         and     SignOnly8Bit        ; A holds high still to we can strip out sign bit
                         ld		ixl,a				; retain for sign bit
                         ShiftDELeft1				; carry now holds sign bit and DE = De * 2, this will in effect strip off the sign bit automatically
@@ -16,7 +18,6 @@ ScaleXX16Matrix197:
                         call    AEquAmul256Div197Log;
                         pop		hl
                         dec     hl                  ; move back to low byte
-                        ld      (hl),a              ; save result in low byte as we want to preserve high byte sign    
                         inc     hl                  ; move back to high byte  
                         ld      a,ixl
                         ld      (hl),a              ; write back just sign bit

@@ -1,6 +1,6 @@
 ;    DEFINE DEBUGMISSILELAUNCH 1
 ;    DEFINE PLOTPOINTSONLY 1
-  DEFINE OVERLAYNODES 1
+  ;DEFINE OVERLAYNODES 1
 ; In  flight ship data tables
 ; In  flight ship data tables
 ; There can be upto &12 objects in flight.
@@ -729,6 +729,7 @@ ShipCargoType:          ld      a,(ShipTypeAddr)
                         ret
 .EscapePod:             ld      a,SlavesIndex
                         ret
+
         IFDEF DEBUG_SHIP_MOVEMENT
 FixStationPos:          ld      hl, DebugPos
                         ld      de, UBnKxlo
@@ -736,15 +737,18 @@ FixStationPos:          ld      hl, DebugPos
                         ldir
                         ld      hl,DebugRotMat
                         ld      de, UBnkrotmatSidevX
-                        ld      bc,6*3
+                        ld      bc,3*2*3
                         ldir
                         ret
         ENDIF
         IFDEF DEBUG_SHIP_MOVEMENT
-DebugPos:               DB $00,$00,$00,$92,$01,$00,$7E,$04,$00                        
-DebugRotMat:            DB $37,$88,$9A,$DC,$1B,$F7
-DebugRotMat1:           DB $DF,$6D,$2A,$07,$C1,$83
-DebugRotMat2:           DB $00,$80,$4A,$9B,$AA,$D8                     
+DebugPos:               DB $00,$00,$00,$0F,$00,$00,$94,$02,$00                        
+DebugRotMat:            DB $C7,$E0,$3E,$91,$00,$00
+DebugRotMat1:           DB $3E,$11,$C7,$E0,$00,$00
+DebugRotMat2:           DB $00,$00,$00,$00,$00,$60                     
+;DebugRotMat:            DB $AF,$64,$2E,$07,$00,$00
+;DebugRotMat1:           DB $2E,$87,$AF,$64,$00,$00
+;DebugRotMat2:           DB $00,$80,$00,$80,$00,$60                     
         ENDIF
 
 ; --------------------------------------------------------------                        
@@ -765,7 +769,7 @@ ResetStationLaunch:     ld  a,%10000001                         ; Has AI and 1 M
                         xor     a
                         ld      (UBnKxsgn),a
                         ld      (UBnKysgn),a
-                        ld      a,$00
+                        ld      a,$80
                         ld      (UBnKzsgn),a
 .SetOrientation:        call    LaunchedOrientation             ; set initial facing
                         ret
@@ -1010,7 +1014,7 @@ XX12EquXX15DotProductXX16:
 ;--------------------------------------------------------------------------------------------------------
                         include "./Maths/Utilities/DotProductXX12XX15.asm"
 ;--------------------------------------------------------------------------------------------------------
-; scale Normal. IXL is xReg and A is loaded with XX17 holds the scale factor to apply
+; scale Normal. IXL is xReg and A is loaded with XX17 holds the scale factor to 3
 ; Not Used in code      include "Universe/Ships/ScaleNormal.asm"
 ;--------------------------------------------------------------------------------------------------------
                         include "./Universe/Ships/ScaleObjectDistance.asm"
@@ -1139,9 +1143,7 @@ SetAndMopX:
         ld          (UBnKxlo),hl                       ; XX15+0
 FinishedThisNodeX:
 
-LL53:
-
-        ldCopyByte  UBnKysgn,UbnkYPointSign           ; UBnkXSgn => XX15+2 x sign
+LL53:   ldCopyByte  UBnKysgn,UbnkYPointSign           ; UBnkXSgn => XX15+2 x sign
         ld          bc,(UBnkXX12yLo)                   ; c = lo, b = sign   XX12XLoSign
         xor         b                                   ; a = UBnkKxsgn (or XX15+2) here and b = XX12xsign,  XX12+1 \ rotated xnode h                                                                             ;;;           a = a XOR XX12+1                              XCALC
         jp          m,NodeNegativeY                                                                                                                                                            ;;;           if sign is +ve                        ::LL52   XCALC
@@ -1568,7 +1570,8 @@ PNVERTEXPTR         DW      0   ; DEBUG WILL USE LATER
 PNNODEPRT           DW      0   ; DEBUG WILL USE LATER
 PNLASTNORM          DB      0
 ProcessNodes:           ZeroA
-                        ld      (UbnkLineArrayLen),a
+                        ld      (UbnkLineArrayLen),a     
+                        ; LL9 (Part 3 of 12) 
                         call    CopyRotmatToTransMat            ; CopyRotToTransMacro                      ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
                         call    ScaleXX16Matrix197               ;#02; Normalise XX16
                         call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18

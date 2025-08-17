@@ -539,7 +539,27 @@ Test_Pitch:				ld      a,(BETA)                   ; get roll value
 						call	AddAtIXtoAtIY24Signed	
 						ret                        
 ;..................................................................................................................................
-
+;------------------------------------------------------------
+; extension to AddBCHtoDELsigned
+; takes ix as the address of the values to load into DEL
+;       iy as the address of the values to load into BCH
+; subtracts iy from ix putting result in ix
+; DEL = @IX - @IY 24 bit signed
+SubAtIXtoAtIY24Signed:  ld      l,(ix+0)            ; del = ix (sign hi lo)
+                        ld      e,(ix+1)            ; .
+                        ld      d,(ix+2)            ; .
+                        ld      h,(iy+0)            ; bch = -iy (sign, hi, lo)
+                        ld      c,(iy+1)            ; .
+                        ld      a,(iy+2)            ; .
+                        xor     SignOnly8Bit        ; . this is where we flip sign to make add subtract
+                        ld      b,a                 ; .
+                        push    iy                  ; save iy as add function changes is
+                        call    AddBCHtoDELsigned   ; perform del += bch which as we flipped bch sign means (ix [210] -= iy [210])
+                        pop     iy                  ; get iy back
+                        ld      (ix+0),l            ; put result into (ix)
+                        ld      (ix+1),e            ; .
+                        ld      (ix+2),d            ; .
+                        ret
 Plus10:                 DB 10,0,0
 Minus10:                DB 10,0,$80
 

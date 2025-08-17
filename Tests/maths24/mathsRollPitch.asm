@@ -202,7 +202,13 @@ varRS                   DB  0
     INCLUDE	"../../MathsFPS78/asm_divide_S78.asm"
     INCLUDE	"../../Maths24/asm_addition24.asm"
 
-
+; AHL = BHL+DEC Lead Sign bit
+AHLequBHLplusDEC:       ld      a,d                         ; d = e (saving d)
+                        ld      d,e                         ; .
+                        ld      e,c                         ; e = c
+                        ld      c,a                         ; c = d (orginal value)
+                        jp      AHLequBHLplusCDE
+                        
 
 
     SAVENEX OPEN "mathsRollPitch.nex", EliteNextStartup , TopOfStack

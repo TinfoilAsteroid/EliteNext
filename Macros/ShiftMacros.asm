@@ -103,6 +103,12 @@ ShiftCDELeft1:  MACRO
                 rl  c
                 ENDM
 
+ShiftDEALeft1:  MACRO
+                sla a
+                rl  e
+                rl  d
+                ENDM
+                
 ShiftHLLeft1:  MACRO    ; 16 T states
                sla l
                rl  h

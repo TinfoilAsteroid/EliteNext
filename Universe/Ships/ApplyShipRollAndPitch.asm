@@ -19,9 +19,9 @@ ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)
                         ld      (univRAT2Val),a
                         or      c                       ; make S7 again after dampening
                         ld      (UBnKRotZCounter),a     ; Update Rotation Counter
-.PitchSAxes:            ld	    hl,UBnkrotmatRoofvX; UBnkrotmatSidevY
+.PitchSAxes:            ld	    hl,UBnkrotmatRoofvX     ; UBnkrotmatSidevY
                         ld	    (varAxis1),hl
-                        ld	    hl,UBnkrotmatNosevX; UBnkrotmatSidevZ	
+                        ld	    hl,UBnkrotmatNosevX     ; UBnkrotmatSidevZ	
                         ld	    (varAxis2),hl
                         call    MVS5RotateAxis
 .PitchRAxes:            ld	    hl,UBnkrotmatRoofvY	
@@ -68,9 +68,15 @@ ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)
                         call    MVS5RotateAxis
                         ret
 
-
-
-; Roate around axis
+; Rotate around axis, IX and IY hold axis to rotate
+; so the axis x1 points to roofv  x , y or z
+;             x2           nosev or sidev  x, y or z
+;   Axis1 = Axis1 * (1 - 1/512)  + Axis2 / 16
+;   Axis2 = Axis2 * (1 - 1/512)  - Axis1 / 16
+; var RAT2 gives direction  
+; for pitch x we come in with Axis1 = roofv_x and Axis2 = nosev_x
+ DISPLAY "TODO change to rotate IXIY axis"
+; Rotate around axis
 ; varAxis1 and varAxis2 point to the address of the axis to rotate
 ; so the axis x1 points to roofv  x , y or z
 ;             x2           nosev or sidev  x, y or z
@@ -129,7 +135,7 @@ MVS5RotateAxis:         ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                         pop     hl              ; get back RS POP ID 1
     ;ex     de,hl           ; swapping around so hl = AP and de = SR , shoud not matter though as its an add
 ;-now DE = (roofaxis/512) hl - abs(nosevaxis) --------------------------------------------------------------------------------
-                        call    ADDHLDESignedV4 ; do add using hl and de
+                        call    addHLDES15 ; do add using hl and de
                         push    hl              ; we use stack to represent var K here now varK = Nosev axis /16 + (1 - 1/512) * roofv axis PUSH ID 2
 ;-push to stack nosev axis + roofvaxis /512  which is what roofv axis will be ------------------------------------------------  
 ;-- Set up SR = 1 - 1/512 * nosev-----------------------

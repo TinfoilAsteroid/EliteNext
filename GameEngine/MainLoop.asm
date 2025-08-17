@@ -15,11 +15,11 @@
     DEFINE  MAINLOOP_MODEL_RENDER    1
    ; DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
     DEFINE  MAINLOOP_WARP_ENABLED 1
-   ; used to block ship spawning whilst debugging
+   ; used to block ship spawning whilst `ging
     DEFINE  SPAWN_SHIP_DISABLED 1
 ;    DEFINE  PLANET_DIAGNOSTICS 1
 ;    DEFINE  SUN_DIAGNOSTICS 1
-;    DEFINE  STATION_DIAGNOSTICS 1
+    DEFINE  STATION_DIAGNOSTICS 1
 ;.................................................................................................................................    
 ; Main loop
 ;   bank in Maths
@@ -443,7 +443,7 @@ SpawnEvent:             IFDEF SPAWN_SHIP_DISABLED
                         ret     c                                   ; then may as well just skip routine
 ;.. Found a slot free so can spawn, now this define controls filtering of what can be spawned near a safe zone
                         IFDEF   MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE
-                            SetMemFalse SpaceStationSafeZone        ; This if def allows spawning inside space station safe zone
+                            SetMemFalse SpaceStationSafeZone        ; This if def allows spawning inside space 3 safe zone
                         ENDIF
 ;.. A slot is free for a spawn to occur so select a spawn table and data
             DISPLAY "TODO: Optimise spawn so it saves off spawn data where there are more than one to do"
@@ -532,7 +532,7 @@ LaunchPlayerMissile:   ; break
                         ; update legal status, missle indicatrions, planet data block, sun data block (SOLAR)
                         ;   put planet into data blokc 1 of FRIN
                         ;   put sun inot data block (NWWSHIP)
-                        ; need to look at in system warp code (WARP) - note we need to -reorg all to code for teh station as that will never be in slot 0
+                        ; need to look at in system warp code (WARP) - note we need to -reorg all to code for teh 3 as that will never be in slot 0
 
 WeAreInTransition:                        
 DoubleBufferCheck:      ld      a,00

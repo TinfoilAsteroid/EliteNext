@@ -1,3 +1,52 @@
+; ix = pointer to orientation matrix (XX15)
+; ix data structure needs to be
+;       X          y            Z
+; side +00 , +01   +02 , +03    +04 , +05
+; roof +06 , +07   +08 , +09    +10 , +11
+; nose +12 , +13   +14 , +15    +16 , +17
+TidyOrientation:push    ix
+.TidyNose:      ld      hl,ix                   ; point ix to nosev
+                ld      a,12                    ; .
+                add     hl,a                    ; .
+                ld      ix,hl                   ; .
+                call    Normalise24IX           ; normalise orientation for nosev
+.TidyRoof:      ld      a,(ix+12)
+                and     %01100000
+                jp      z,.NotNosevX
+;-------------- Process Nose Roof --------------;
+.DivideByNosevX:pop     ix
+                ld      d,(ix+13)               ; roofv_y = -(nosev_x * roofv_x + nosev_y * roofv_y) / nosev_z
+                ld      e,(ix+07)
+                call    mul8Signed              ; HL =  high of nnosev_x * roofv_x
+                ex      de,hl                   ;
+                ld      d,(ix+15)               ; DE =  high of nosev_y * roofv_y
+                ld      e,(ix+09)               ;
+                call    mul8Signed              ; bc = HL * DE (S7.8)
+                pop     hl                      ; get nosev_x * roofv_x  calc back
+                call    HLequHLplusDE           ; de = new roofv_y temp value predivide
+                ex      de,hl                   ; .
+                ld      bc,$0060
+                call    div_de_div_bc_signed    ; divide by 96
+                break
+                ;divide by ix +16
+                ;negate result
+                jp      .DoneRoof
+
+.NotNosevX:     pop     ix
+                ld      a,(ix+14)
+                and     %01100000
+                jp      z,.NotNosevY
+.DivideByNosevY:pop     ix                      ; roofv_z = -(nosev_x * roofv_x + nosev_z * roofv_z) / nosev_y
+
+.NotNosevY:                                     ; roofv_x = -(nosev_y * roofv_y + nosev_z * roofv_z) / nosev_x
+.DoneRoof:      push    ix
+.TidyNose:      ld      hl,ix                   ; point ix to roof
+                ld      a,6                   ; .
+                add     hl,a                    ; .
+                ld      ix,hl                   ; .
+                call    Normalise24IX           ; normalise orientation for roof
+;-------------- Process Nose Side --------------;
+                
 ; d = vector 1 e = vector 2 h = vector3 l = vector 4 b = vector 5
 ; performs (d*e + h*l) / b and puts the result in de where e is 0
 TidyCalc:       push    bc

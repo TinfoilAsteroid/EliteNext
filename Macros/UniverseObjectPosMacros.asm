@@ -26,6 +26,65 @@ POS_NORMYOFFSET             EQU 28 ; 1C
 POS_NORMYHIOFFSET           EQU 29 ;
 POS_NORMZOFFSET             EQU 30 ; 1E
 POS_NORMZHIOFFSET           EQU 31 ;
+
+POS_MAT_XOFFSET         EQU     00
+POS_MAT_YOFFSET         EQU     02
+POS_MAT_ZOFFSET         EQU     04
+POS_MAT_SIDEVX          EQU     00
+POS_MAT_SIDEVXHI        EQU     01
+POS_MAT_SIDEVY          EQU     02
+POS_MAT_SIDEVYHI        EQU     03
+POS_MAT_SIDEVZ          EQU     04
+POS_MAT_SIDEVZHI        EQU     05
+POS_MAT_ROOFVX          EQU     06
+POS_MAT_ROOFVXHI        EQU     07
+POS_MAT_ROOFVY          EQU     08
+POS_MAT_ROOFVYHI        EQU     09
+POS_MAT_ROOFVZ          EQU     10
+POS_MAT_ROOFVZHI        EQU     11
+POS_MAT_NOSEVX          EQU     12
+POS_MAT_NOSEVXHI        EQU     13
+POS_MAT_NOSEVY          EQU     14
+POS_MAT_NOSEVYHI        EQU     15
+POS_MAT_NOSEVZ          EQU     16
+POS_MAT_NOSEVZHI        EQU     17
+
+SetDEtoMatX:            MACRO
+                        ld      de,(ix+POS_MAT_XOFFSET)
+                        ENDM
+                        
+SetHLtoMatX:            MACRO
+                        ld      hl,(ix+POS_MAT_XOFFSET)
+                        ENDM
+                        
+SetDEtoMatY:            MACRO
+                        ld      de,(ix+POS_MAT_YOFFSET)
+                        ENDM
+
+SetHLtoMatY:            MACRO
+                        ld      hl,(ix+POS_MAT_YOFFSET)
+                        ENDM
+                        
+SetDEtoMatZ:            MACRO
+                        ld      de,(ix+POS_MAT_ZOFFSET)
+                        ENDM
+                        
+SetHLtoMatZ:            MACRO
+                        ld      hl,(ix+POS_MAT_ZOFFSET)
+                        ENDM
+
+SaveHLToMatX:           MACRO
+                        ld      (ix+POS_MAT_XOFFSET),hl
+                        ENDM
+                        
+SaveHLToMatY:           MACRO
+                        ld      (ix+POS_MAT_YOFFSET),hl
+                        ENDM
+                        
+SaveHLToMatZ:           MACRO
+                        ld      (ix+POS_MAT_ZOFFSET),hl
+                        ENDM
+                                                                               
 ;------------------------------------------------------------------------------
 ; Sets IYH to sign bits, bit 7 = x, bit 6 = y bit 5 = z
 SetIYHToSignBits:       MACRO
