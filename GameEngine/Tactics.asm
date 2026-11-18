@@ -57,7 +57,6 @@ UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
                         ;jp      nz,.SkipBreak
                         ;break                       
 .SkipBreak:            ld       a,(ShipTypeAddr)
-                                   DISPLAY "TODO: capture duff jumps"
                        ReturnIfAGTEusng ShipAiJumpTableMax              ; TODO capture duff jumps whilst debugging in case a new shjip type code is added
                        ld       hl,ShipAIJumpTable
                        add      hl,a
@@ -125,10 +124,6 @@ MakeHostile:            ld      a,(ShipNewBitsAddr)                     ; Check 
 .SetNewbHostile:        call    SetShipHostile
                         ret
 
-            DISPLAY "TODO: Missile Did Hit Us"
-;----------------------------------------------------------------------------------------------------------------------------------
-MissileDidHitUs:        ret ; TODO
-
 ;----------------------------------------------------------------------------------------------------------------------------------
 PlayerHitByMissile:     MMUSelectLayer1
                         ld      a,L1ColourInkCyan
@@ -145,15 +140,7 @@ PlayerHitByMissile:     MMUSelectLayer1
 .HitRear:               ld      a,(AftShield)
                         call    ApplyDamage
                         ld      (AftShield),a  
-                                    DISPLAY "TODO: Set up blast radius"
                         ret; TODO , do hit set up blast radius etc
-;----------------------------------------------------------------------------------------------------------------------------------
-MissileHitShipA:        MMUSelectLayer1
-                        ld      a,L1ColourInkRed
-                        call    l1_set_border
-                        call    UnivExplodeShip
-                                    DISPLAY "TODO:  hit ship do explosion"
-                        ret; TODO hit ship do explosion, check for near by and if player is near and missile type logic, e.g. AP or HE
 ;----------------------------------------------------------------------------------------------------------------------------------
 SetStationHostile:      call    IsSpaceStationPresent                   ; only if present
                         ret     c
@@ -166,107 +153,91 @@ SetStationHostile:      call    IsSpaceStationPresent                   ; only i
                         ret
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-CheckMissileBlastInit:  ZeroA
-                        ld      (CurrentMissileCheck),a
-                        ld      hl,UBnKxlo                      ; Copy Blast Coordinates
-                        ld      bc,12                           ; and Damage stats
-                        ld      de,MissileXPos
-                        ldir
-                        ZeroA                                   ; we have processd enque request
-                        ld      (UBnKMissleHitToProcess),a      ; 
-                        call    CheckIfBlastHitUs               ; If we are in Range
-                        call    c, MissileDidHitUs              ; Then we get hit
-                        ret
-                        
-;----------------------------------------------------------------------------------------------------------------------------------
-; Check to see if missile is in range
-;;ReadyfordeletionposttestCheckPointRange:        MACRO   ShipPos, ShipSign, MissilePos, MissileSign
-;;Readyfordeletionposttest                        ld      a,(MissilePos)                      ; check X Coord
-;;Readyfordeletionposttest                        ld      hl,(ShipSign)
-;;Readyfordeletionposttest                        xor     (hl)
-;;Readyfordeletionposttest                        and     SignOnly8Bit
-;;Readyfordeletionposttest                        ld      hl,(ShipPos)
-;;Readyfordeletionposttest                        ld      de,(MissilePos)
-;;Readyfordeletionposttest                        jr      z,.SignsDiffernt
-;;Readyfordeletionposttest.XSame:                 and     a
-;;Readyfordeletionposttest                        sbc     hl,de                               ; distance = Ship X - Missile X
-;;Readyfordeletionposttest                        JumpIfPositive      .CheckDiff              ; if result was -ve 
-;;Readyfordeletionposttest                        NegHL
-;;Readyfordeletionposttest                        jp      .CheckDiff
-;;Readyfordeletionposttest.SignsDiffernt:         add     hl,de
-;;Readyfordeletionposttest                        ReturnIfNegative                            ; if we overflowed then return
-;;Readyfordeletionposttest.CheckDiff:             ld      a,h                                 ; if we have an h outside blast raidus
-;;Readyfordeletionposttest                        ReturnIfANotZero
-;;Readyfordeletionposttest                        ld      a,l
-;;Readyfordeletionposttest                        and     a
-;;Readyfordeletionposttest                        ReturnIfAGTEMemusng   CurrentMissileBlastRange
-;;Readyfordeletionposttest                        ENDM
-;...................................................................                        
-; We only do one test per loop for spreading the load of work                        
-CheckMissileBlastLoop:  ld      a,(CurrentMissileCheck)
-                        ReturnIfAGTENusng   UniverseSlotListSize
-                        ld      iyl,a
-                        inc     a                                   ; update for next slot so re can fast return on distance checks
-                        ld      (CurrentMissileCheck),a
-                        ReturnIfSlotAEmpty
-                        call    IsSpaceStationPresent               ; If its a station its imune to missiles
-                        ret     c                                   ; if we have a special mission to kill a staion then its type won't be space station for game logic
-                        ld      a,(UBnKexplDsp)                     ; Don't explode a ship twice
-                        and     ShipExploding                       ;
-                        ReturnIfNotZero                             ;
-                        ld      a,(CurrentMissileBlastRange)
-                        ld      iyh,a                               ; iyh = missile blast depending on type
-.CheckRange:            ld      a,iyl                               ; now page in universe data
-                        MMUSelectUniverseA      
-                        ld      ix,UBnKxlo
-                        ld      iy,MissileXPos
+; Missile blast (splash damage). Call with the exploding missile's bank paged in (it must already be flagged exploding so it
+; skips itself). Applies UBnKMissileBlastDamage to us and to every ship with |distance| < UBnKMissileBlastRange on every axis.
+; The range is a fraction in 1/256ths (S15.8 lo byte, so 0.0 to 0.996), e.g. 51 = 0.2. Space stations are immune.
+; MissileDirectHitSlot (slot, MissileHitPlayer or MissileNoDirectHit) is skipped as a direct hit has already been damaged
+; The missile bank (SelectedUniverseSlot) is paged back in on exit. Preserves ix and iy.
+MissileBlast:           push    ix,,iy
+                        ld      hl,UBnKxlo                          ; copy blast position
+                        ld      de,MissileXPos                      ; .
+                        ld      bc,3*3                              ; .
+                        ldir                                        ; .
+                        ld      hl,UBnKMissileBlastRange            ; and blast stats (range, damage, detonate range and damage)
+                        ld      de,CurrentMissileBlastRange         ; .
+                        ld      bc,4                                ; .
+                        ldir                                        ; .
+.CheckPlayer:           ld      a,(MissileDirectHitSlot)            ; were we hit directly
+                        cp      MissileHitPlayer                    ; .
+                        jr      z,.SkipPlayer                       ; .
+                        call    BlastInRangeOfPlayer                ; are we in the blast
+                        call    c,PlayerHitByMissile                ; .
+.SkipPlayer:            ZeroA                                       ; check every universe slot
+.SlotLoop:              ld      (CurrentMissileCheck),a             ; .
+                        ld      hl,MissileDirectHitSlot             ; skip the ship hit directly
+                        cp      (hl)                                ; .
+                        jp      z,.NextSlot                         ; .
+                        JumpIfSlotAEmpty .NextSlot                  ; .
+                        ld      a,(CurrentMissileCheck)             ; page in the ship
+                        MMUSelectUniverseA                          ; .
+                        IsShipExploding                             ; already exploding (this includes the missile itself)
+                        jp      nz,.NextSlot                        ; .
+                        ld      a,(UBnKexplDsp)                     ; or destroyed
+                        and     %10100000                           ; .
+                        jp      nz,.NextSlot                        ; .
+                        ld      a,(ShipTypeAddr)                    ; stations are immune
+                        cp      ShipTypeStation                     ; .
+                        jp      z,.NextSlot                         ; .
+                        ld      ix,UBnKxlo                          ; is it in blast range
+                        ld      iy,MissileXPos                      ; .
                         MMUSelectMathsBankedFns : call CheckInCollisionRange
-                        ;CheckPointRange UBnKxlo, UBnKxsgn, MissileXPos, MissileXSgn  ; its a square but its good enough
-                        ;CheckPointRange UBnKylo, UBnKysgn, MissileYPos, MissileYSgn
-                        ;CheckPointRange UBnKzlo, UBnKzsgn, MissileZPos, MissileZSgn
-                        ret     nc                                  ; no collision means no carry
-                        call    ShipMissileBlast                    ; Ship hit by missile blast
-                        ret                                         ; we are done
-;...................................................................
-CheckIfBlastHitUs:      ld      a,(UBnKMissileBlastRange)
-                        ld      c,a
-                        jp      MissileHitUsCheckPos
-;...................................................................                        
-CheckIfMissileHitUs:    ld      a,(UBnKMissileDetonateRange)
-                        ld      c,a
-;...................................................................
-MissileHitUsCheckPos:   ld      hl, (UBnKxlo)                       ; to check for us collision
-                        ld      de, (UBnKylo)                       ; we can cheat as a missile will only ever be
-                        ld      bc, (UBnKzlo)                       ; 16 bit + sign bit in sign byte
-                        ld      a,h
-                        or      d
-                        or      b
-.PrepForNoHit:          ClearCarryFlag
-                        ReturnIfNotZero
-.PrepForHit:            SetCarryFlag
+                        call    c,ShipMissileBlast                  ; reduce energy and explode if exhausted
+.NextSlot:              ld      a,(CurrentMissileCheck)
+                        inc     a
+                        cp      UniverseSlotListSize
+                        jp      c,.SlotLoop
+                        ld      a,(SelectedUniverseSlot)            ; page the missile back in
+                        MMUSelectUniverseA                          ; .
+                        pop     ix,,iy
                         ret
-                        
-                        ZeroA
-                        or      h
-                        ClearCarryFlag
-                        ReturnIfNotZero                             ; will return with carry clear if way far away
-                        ld      a,l
-                        ReturnIfAGTENusng    c                      ; return no carry if x far
-.CheckY:                ld      hl,(UBnKylo)
-                        ZeroA
-                        or      l
-                        ClearCarryFlag
-                        ReturnIfNotZero                             ; will return with carry clear if way far away
-                        ld      a,l
-                        ReturnIfAGTENusng    c                      ; return no carry if y far
-.CheckZ:                ld      hl,(UBnKzlo)
-                        ZeroA
-                        or      l
-                        ClearCarryFlag
-                        ReturnIfNotZero                             ; will return with carry clear if way far away
-                        ld      a,l
-                        ReturnIfAGTENusng    c                      ; return no carry if z far
-.ItsAHit:               SetCarryFlag                                ; So must have hit
+;...................................................................
+; Carry set if the missile (paged in, S15.8 position relative to us) is |d| < CurrentMissileBlastRange (1/256ths) on every
+; axis, i.e. integer part 0 and fraction (lo byte) < range
+BlastInRangeOfPlayer:   ld      a,(CurrentMissileBlastRange)
+                        ld      c,a
+                        ld      hl,UBnKxlo
+                        ld      b,3
+.AxisLoop:              ld      a,(hl)                              ; lo byte = fraction
+                        cp      c                                   ; .
+                        ret     nc                                  ; >= range so out of range, carry clear
+                        inc     hl                                  ; hi byte = integer bits 0-7 must be 0
+                        ld      a,(hl)                              ; .
+                        and     a                                   ; .
+                        ret     nz                                  ; and clears carry
+                        inc     hl                                  ; sign byte, integer bits 8-14 must be 0
+                        ld      a,(hl)                              ; .
+                        and     SignMask8Bit                        ; .
+                        ret     nz                                  ; and clears carry
+                        inc     hl                                  ; next axis lo byte
+                        djnz    .AxisLoop
+                        scf
+                        ret
+;...................................................................
+; Carry set if the missile is |d| < 1.0 from us on every axis, i.e. S15.8 integer part 0 (hi and sign bits 0-6, as BBC)
+MissileHitUsCheckPos:   ld      a,(UBnKxsgn)
+                        ld      hl,UBnKysgn
+                        or      (hl)
+                        ld      hl,UBnKzsgn
+                        or      (hl)
+                        and     SignMask8Bit                        ; integer bits 8-14 of each axis
+                        ld      hl,UBnKxhi
+                        or      (hl)
+                        ld      hl,UBnKyhi
+                        or      (hl)
+                        ld      hl,UBnKzhi
+                        or      (hl)                                ; or clears carry
+                        ret     nz                                  ; too far, carry clear
+                        scf                                         ; hit
                         ret
 
 SelectMissileBank:      MACRO
@@ -403,7 +374,6 @@ DebugTacticsCopy:
 
                         ret
                         ENDIF
-    DISPLAY "TODO: Remove all this as its moved to maths banked fns"
 ;TacticsVarResult        DW 0                        
 XX12EquTacticsDotNosev: call    CopyRotNoseToTacticsMat
 XX12EquTacticsDotHL:    ld      hl,TacticsRotMatX; UBnkTransmatNosevX    ; ROTMATX HI
@@ -595,7 +565,6 @@ CalcTargetVector:       ld      de,(TacticsTargetX)                        ; get
 ; Moved to Maths Bank                        SignBitOnlyMem TacticsVectorZ+2     ;  its worth it)
 ; Moved to Maths Bank                        ret
 
-            DISPLAY "TODO: TactivtsPosMinus Target"
 ;TODOcall    TacticsPosMinusTarget              ; calculate vector to target
 ;;TODO                        check range
 ;;TODO                        if target has ecm then 7% chance it will active, reduce target energy (i.e. damage)

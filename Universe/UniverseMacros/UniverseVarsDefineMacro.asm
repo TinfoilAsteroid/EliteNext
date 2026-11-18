@@ -56,7 +56,6 @@ prefix1?_BnKPlotXHeap               DS  $82			   ; &0EC0	    \ LSX2 bline buffer
 prefix1?_BnKPlotYHeap               DS  $82            ; &0F0E	    \ LSY2
     ENDIF
 prefix1?_BnKPlotIndex               DB  0
-    DISPLAY "TODO can we remove this and just use BnkCNT = 0 as the same thing?"
 prefix1?_BnKFlag					DB  0
 
 ; Post clipping the results are now 8 bit

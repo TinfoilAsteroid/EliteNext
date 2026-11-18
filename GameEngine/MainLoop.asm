@@ -130,7 +130,7 @@ HandleMovement:         ld      a,(CallCursorRoutine+2)
 HandleMissionLogic:     ld      a,$00                                                   ; if we have a bank then we have a mission
                         and     a                                                       ;
                         jp      z,HandleBankSelect                                      ;
-.MissionLogic:          DISPLAY "TODO Add MMUSelectMissionBankA"                                          ; so select mission bank
+.MissionLogic:    ; so select mission bank
 MissionJump:            call    $0000                                                   ; and call custom logic routined
 ;.. Handle displaying correct screen ..............................................................................................
 HandleBankSelect:       ld      a,$00
@@ -361,7 +361,6 @@ InitialiseLocalUniverse:ld      a,(Galaxy)                      ; DEBUG as galax
                         ForceTransition ScreenFront            ; This will also trigger stars 
                         ld      a,$00
                         ld      (ExtraVesselsCounter),a
-                        DISPLAY "TODO: Check callers as they may be doign this as a duplicate"
                         ld      (DockedFlag),a
                         call    GalaxyGenerateDesc             ; bc  holds new system to generate system
                         call    copy_working_to_system         ; and propogate copies of seeds
@@ -392,7 +391,6 @@ WeHaveCompletedHJump:   call    InitialiseLocalUniverse
                         call    CreateSun                      ; create the local sun and set position based on seed
                         MMUSelectPlanet
                         call    CreatePlanet
-            DISPLAY "TODO:  GENEATE SUB AND PLANET POS"
 ;TODO                        call    generateSunAndPlanetPos        ; uses current carry state too
 ;TODO.CreateSun:             call    SetSunSlot
 ; PROBABLY NOT NEEDED NOW                      MMUSelectShipBank1
@@ -436,7 +434,6 @@ LoopEventTriggered:     ; for now just do spawn
     
 ;--- Handle spawn event --------------------------------------------
 SpawnEvent:             IFDEF SPAWN_SHIP_DISABLED
-                            DISPLAY "TODO: Disabled spawing for diagnostics"
                             ret
                         ENDIF
                         ;break
@@ -447,11 +444,8 @@ SpawnEvent:             IFDEF SPAWN_SHIP_DISABLED
                             SetMemFalse SpaceStationSafeZone        ; This if def allows spawning inside space 3 safe zone
                         ENDIF
 ;.. A slot is free for a spawn to occur so select a spawn table and data
-            DISPLAY "TODO: Optimise spawn so it saves off spawn data where there are more than one to do"
-            DISPLAY "TODO: Optimise spawn and counts down in loop to avoid a stall where it spawns 3 ships on one game cycle"
 .SpawnIsPossible:       call    SelectSpawnTable                    ; ix = correct row in spawn table, indexed on the random value found on FreeSpaceSpawnTableLow
 .GetSpawnDetails:       call    SelectSpawnTableData                ; get table data, b = max ships to spawm, de = rank table address, hl = address of spawn handler code                  
-            DISPLAY "TODO: Check spawn code as some refers to HL address, a refers to ship number but its not a ship number e.g. in test it was E1"
 .CheckIfInvalid:        ld      a,b                                 ; if b was 0 then its a count of 0 so no spawn
                         or      a                                   ; .
                         ret     z                                   ; .                            
@@ -508,7 +502,6 @@ LaunchEnemyFighter:     ld      a,10
 LaunchPlayerMissile:   ; break
                         call    FindNextFreeSlotInC                 ; Check if we have a slot free
                         jr      c,.MissileMissFire                  ; give a miss fire indicator as we have no slots
-            DISPLAY "TODO: FOR NOW ONLY 1 MISSILE TYPE"
 .LaunchGood:            ld      a,0                                 ; TODO For now only 1 missile type
                         GetByteAInTable ShipMissileTable            ; swap in missile data
                         call    SpawnShipTypeA                      ; spawn the ship
@@ -518,7 +511,6 @@ LaunchPlayerMissile:   ; break
                         ClearMissileTargetting                      ; reset targetting
                         ld      hl, NbrMissiles
                         dec     (hl)
-            DISPLAY "TODO: handle removal of missile from inventory and console"
                         ret
 .MissileMissFire:       ClearMissileTargetting
                         ret ; TODO bing bong noise misfire message

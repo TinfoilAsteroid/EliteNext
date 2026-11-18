@@ -1,6 +1,9 @@
 eliteN.txt
 eliteN.map
-clipTst.txt
-clipTst.map
 cspect.log
 
+
+eliteN.sym
+__pycache__/
+EliteNHW.sym
+EliteNHW.txt

@@ -67,7 +67,6 @@ UpdateUniverseObjects:  xor     a
         IFDEF   CLIPDEBUG                                                           ; if we are debugging clipping then skip all update code
                             jp      .CheckExploding
         ENDIF
-                            DISPLAY "TODO: FIX TIDY Make all 4 of these 1 call"
 .ProperUpdate:          MMUSelectMathsBankedFns
                         ld      ix,UBnkrotmat
                         CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, TidyOrientation  ; determine if its tidy time within the universe model
@@ -124,7 +123,6 @@ UpdateUniverseObjects:  xor     a
                         jp      .ApplyDamage    
 .SmallBump:             ld      a,(DELTA)                                           ; if out ship speed < 5 then set damage to 
                         ld      b,a 
-                DISPLAY "TODO: det target too"  
                         call    DamageShip                                          ; dent target too  TODO make damge totally proportional to speed
                         jp      .ApplyDamage    
 .ApplyDamage:           call    SetSpeedZero    
@@ -242,7 +240,6 @@ DrawForwardShips:       xor     a
                         IFDEF ROTATIONDEBUG
                             call    SavePosition
                         ENDIF
-                                     DISPLAY "TODO: Tune this"
 .ProcessUnivShip:       call    ProcessShip          ; The whole explosion logic is now encapsulated in process ship ;TODO TUNE THIS   ;; call    ProcessUnivShip
 ; Debris still appears on radar                        
                         IFDEF ROTATIONDEBUG
@@ -257,11 +254,9 @@ DrawForwardShips:       xor     a
                         CallIfMemTrue ConsoleRedrawFlag,UpdateScannerShip ; Always update ship positions when consoel redraw is flagged                    
 .ProcessedDrawShip:     ld      a,(CurrentShipUniv)
                         inc     a
-                        DISPLAY "TO DO - Add all ships back to radar"
                         ;   DEBUGGING SHIPS RENDERING
                         JumpIfALTNusng   UniverseSlotListSize, .DrawShipLoop
 .DrawSunCompass:        MMUSelectSun
-                        DISPLAY "TODO: Change update to only run with ConsoleRedrawFlag"
                         call    UpdateCompassSun                ; Always update the sun position
                         call    UpdateScannerSun                ; Always attempt to put the sun on the scanner 
 .CheckPlanetCompass:    ;JumpIfMemFalse SpaceStationSafeZone, .DrawStationCompass
@@ -291,7 +286,6 @@ SetInitialShipPosition: ld      hl,$0000
                         ld      (UBnKxsgn),a
                         ld      (UBnKysgn),a
                         ld      (UBnKzsgn),a
-            DISPLAY "TODO:  call    Reset TODO"
                         call	InitialiseOrientation            ;#00;
                         ld      a,1
                         ld      (DELTA),a

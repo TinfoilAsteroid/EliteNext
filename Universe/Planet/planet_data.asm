@@ -1,5 +1,4 @@
 
-    DISPLAY "TODO: get rid of planet position macros and do as per sun and ship"
 ;- DEBUG CODE
                         IFDEF BLINEDEBUG
 TestBLINE:              ld  a,$FF
@@ -73,8 +72,8 @@ StartOfPlanet:     DB "Planet Data....."
 ; Universe map substibute for INWK
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
 P_BnKDataBlock:
-                        ;INCLUDE "./Universe/Planet/PlanetPosVars.asm"
-                        ;INCLUDE "./Universe/Planet/PlanetRotationMatrixVars.asm"
+                        ;INCLUDE "./Universe/Planet/Unused/PlanetPosVars.asm"
+                        ;INCLUDE "./Universe/Planet/Unused/PlanetRotationMatrixVars.asm"
                         ;INCLUDE "./Universe/Planet/PlanetAIRuntimeData.asm"
                             UnivPosVarsMacro P
                         ; ; Not needed as we don't rotate planets and suns    UnivRotationVarsMacro P
@@ -709,7 +708,6 @@ PlanetUpdateAndRender:  call    PlanetApplyMyRollAndPitch    ; not needed for so
 .Project                call    ProjectPlanet                ; Project the planet/sun onto the screen, returning the centre's coordinates in K3(1 0) and K4(1 0)
 .CalcRadius:            call    PlanetCalculateRadius
                         DISPLAY "ASSMEBLING WITH SOLID PLANETS"
-                        DISPLAY "TODO, pick colour based on galaxy map"
                         ld      hl,(P_centreX)
                         ld      de,(P_centreY)
                         ld      a,(P_Radius)
@@ -1001,7 +999,6 @@ PlanetDraw:             IFDEF BLINEDEBUG
 .CalcRadius:            call    PlanetCalculateRadius
                 IFDEF   PLANETSARESOLID
                         DISPLAY "ASSMEBLING WITH SOLID PLANETS"
-                        DISPLAY "TODO, pick colour based on galaxy map"
                         ld      hl,(P_centreX)
                         ld      de,(P_centreY)
                         ld      a,(P_Radius)
@@ -1013,10 +1010,7 @@ PlanetDraw:             IFDEF BLINEDEBUG
                          
                 ELSE
 
-                        DISPLAY "TODO: calculate STP step based on planet size"
 ; Note we don't to the planet type check as hitting here its always a planet                        
-                        DISPLAY "TODO:set color green"
-                        DISPLAY "TODO:draw circle (do we draw solid??)"
                         ld      hl, (P_centreX)
                         ld      de,(P_centreY)
                         ld      a,(P_Radius)
@@ -1024,14 +1018,12 @@ PlanetDraw:             IFDEF BLINEDEBUG
                         ld      b,$FF
                         MMUSelectLayer2
                         call    l2_draw_clipped_circle
-                        DISPLAY "TODO: Add check to see if on screen rather than checkign clipped Circle"
                         ;ret     c                           ; circle failure means exit
                         DISPLAY "DONE: REmoved check for Planet Radius high as its already done win calculate radius"
                         ;ReturnIfMemNotZero    P_RadiusHigh   ; if planet raidus < 256 draw meridians or craters
 .DrawFeatures:          ;ld      a,(P_RadiusHigh)
                         ;and     a
                         ;ret     nz
-                        DISPLAY "TODO: Need logic to generate Planet Type"
 .DetermineFeature:      ld      a,(P_BnKShipType)              
                         cp      PlanetTypeMeridian
                         jp      nz,DrawPlanetCrater
@@ -1044,11 +1036,9 @@ DrawPlanetMeridian:     ld      a,(P_Radius)                 ; we only pull low 
                         call    CalcNoseYDivNoseZ  :  call  P_BCmulRadius           : ld      (P_BnKUy),bc
                         call    CalcRoofXDivRoofZ  :  call  P_BCmulRadius           : ld      (P_BnKVx),bc
                         call    CalcRoofYDivRoofZ  :  call  P_BCmulRadius           : ld      (P_BnKVy),bc
-                        DISPLAY "TODO: PCNT2Debug"
                         xor     a
                         ld      (P_BnKCNT2),a
                         call    DrawMeridian                ;--- Drawn first Meridian                        
-                        DISPLAY "TODO: Debug whilst sorting meridain"
                         ret
 ;--- Start Second Meridian             
                         ld      a,(P_BnKrotmatNosevZ)       ; Set P = -nosev_z_hi
@@ -1062,7 +1052,6 @@ DrawPlanetMeridian:     ld      a,(P_Radius)                 ; we only pull low 
                         call    CalcNoseYDivNoseZ  :  call  P_BCmulRadius           : ld      (P_BnKUy),bc
                         call    CalcSideXDivSideZ  :  call  P_BCmulRadius           : ld      (P_BnKVx),bc
                         call    CalcSideYDivSideZ  :  call  P_BCmulRadius           : ld      (P_BnKVy),bc                                
-                        DISPLAY "TODO: PCNT2Debug"
                         xor     a
                         ld      (P_BnKCNT2),a
                         jp      DrawMeridian
@@ -1097,14 +1086,11 @@ DrawPlanetCrater:       ld      a,(P_BnKrotmatRoofvZ+1)      ; a= roofz hi
 ; TGT - target segment count                            $00
 ; CNT2 - starting segment                               $0D
 ; Now uses (Word) P_BnKCx, Cy, (Byte) Ux, Uy, Vx, Vy
-                        DISPLAY "TODO move code back in that was pulled outof BLINE"
 DrawMeridian:           ld      a,63                        ; Set TGT = 31, so we only draw half an ellipse
                         ld      (P_BnKTGT),a                ; and fall into DrawElipse
-                        DISPLAY "TODO DEBUG STP Default of 1"
                         ld      a,1
                         ld      (P_BnKSTP),a
 ;PLS22
-                        DISPLAY "TODO: Sort out sign byte for uxuy vxvy in calling code"
 ; Set counter to 0 and reset flags--------------------------
 DrawElipse:
 .Initialise:            ZeroA
@@ -1320,9 +1306,6 @@ BLINE_HL:               ;ld      de,(P_varK4)        ; Set K6(3 2) = (T X) + K4(
 ; First time in we are just establinshign first position point, then we can exit
 .BL5:                   inc     a                   ; Flag is &FF so this is the first call to BLINE so increment FLAG to set it to 0
                         ld      (P_BnKFlag),a       ; so we just save the first point and don't plot it
-                        DISPLAY "TODO, set up proper variables, hold variables for previous X Y, we don't need ball heap"
-                        DISPLAY "TODO, created a plot xy heap to store for debugging purposes, delete once not needed"
-                        DISPLAY "TODO, need flag for start which is probably CNT being 0?"
                         IFDEF   MERIDANLINEDEBUG
                         ZeroA
                         ld      (P_BnKPlotIndex),a  ; Initialise line list
@@ -1336,8 +1319,8 @@ BLINE_HL:               ;ld      de,(P_varK4)        ; Set K6(3 2) = (T X) + K4(
                         ;ld      de,(PLINEx2)        ; LL145 above, so we swap (X1, Y1) and (X2, Y2) back
                         ;ld      (PLINEx1),de        ; again
                         ;ld      (PLINEx2),hl        ; .
-.BL9:                   DISPLAY "TODO  Removed BnKLSP, check fine"
-.BL8:                   DISPLAY "TODO  Removed BnKLSP, check fine"
+.BL9:
+.BL8:
                         ;ld      a,(P_BnKPlotIndex) ; Set Line Stack Pointer to be the same as Plot Index)
                         ;ld      (P_BnKLSP),a        
                         ld      hl,(P_PrevXPos)     ; set line X2 to PLINEx2
@@ -1350,15 +1333,12 @@ BLINE_HL:               ;ld      de,(P_varK4)        ; Set K6(3 2) = (T X) + K4(
                         ld      (P_XX1210),hl
 .CLipLine:              call    P_LL145_6502        ; Clip  line from (X1, Y1) to (X2, Y2), loads to X1,Y1,X2,Y2 P_XX1510 as bytes                        ld      bc,(XX1510)
                         jr      c,.LineTotallyClipped
-                        DISPLAY "TODO what was the Ld de for?"
 ;                        ld      de,(XX1532)
-                        DISPLAY "TODO SORT OUT PROPER PLANET COLOR"
 .DrawLine:              ld      a,$CC               
                         ld      bc,(P_XX15PlotX1)
                         ld      de,(P_XX15PlotX2)
                         MMUSelectLayer2
                         call    l2_draw_any_line
-                        DISPLAY "TODO removed check for starting line segments again as we draw direct"
 ;                        ld      a,(P_XX13)          ; If XX13 is non-zero, jump up to BL5 to add a &FF marker to the end of the line heap. XX13 is non-zero
 ;                        and     a                   ; after the call to the clipping routine LL145 above if the end of the line was clipped, meaning the next line
 ;                        jp      z,.BL5              ; sent to BLINE can't join onto the end but has to start a new segment, and that's what inserting the &FF marker does                        

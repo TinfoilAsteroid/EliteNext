@@ -45,7 +45,6 @@ AequAmulQdiv256u:   ld      d,a
                     ld      a,d
                     ret
 
-    DISPLAY "TODO replace this with non memory access version"
 HLequSRmulQdiv256:  ;X.Y=x1 lo.S*M/256  	\ where M/256 is gradient replaces HLequSRmulQdiv256
                     ld      hl,(varRS)
                     ld      a,(varQ)

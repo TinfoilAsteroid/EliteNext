@@ -287,7 +287,6 @@ mulDEbyLSigned:         push    bc,,hl,,de
                         pop     bc                  ; clear up stack
                         ret
 
-    DISPLAY "TODO: TEST"
 mulDEbyHLSigned:        ld  a,d                     ; de = abs de
                         ld  b,a                     ;
                         and     $7F                 ; .

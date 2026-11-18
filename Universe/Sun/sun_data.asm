@@ -61,7 +61,7 @@ StartOfSun:        DB "Sun Data ......."
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
 SBnKDataBlock:
                         INCLUDE "./Universe/Sun/SunPosVars.asm"
-; Not needed as we don't rotate planets and suns                        INCLUDE "./Universe/Sun/SunRotationMatrixVars.asm"
+; Not needed as we don't rotate planets and suns                        INCLUDE "./Universe/Sun/Unused/SunRotationMatrixVars.asm"
                         INCLUDE "./Universe/Sun/SunAIRuntimeData.asm"
 
 

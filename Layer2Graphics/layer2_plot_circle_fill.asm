@@ -40,7 +40,6 @@ l2_draw_circle_fill:    ld		a,e
                         ld 		a,d
                         add 	a,ixh
                         ld		b,a
-                                    DISPLAY "TODO: add double x calc"
                         ;; TODO ADD DOUBLE X CALC
                         push	de
                         ld		d,ixl
@@ -113,7 +112,6 @@ l2_draw_clipped_circle_filled:
                     JumpIfAEqNusng  1, .circleSinglepixel
                     ld		(.Plot1Y+1),de					; save origin into DE and HL
                     ld      (.Plot1X+1),hl                  ; .
-                    DISPLAY "TODO : IXH and IXL need to be 16 bit and in IX and IY"
                     ld		ixh,a							; ixh = x = raidus 
                     ld		ixl,0						    ; ixl = y = error 
 .calcd:	            ld		h,0                             ; hl = radius

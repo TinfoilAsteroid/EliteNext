@@ -86,6 +86,11 @@ DMA_WRITE_REGISTER_COMMAND   equ $bb
 DMA_BURST                    equ $cd
 DMA_CONTINUOUS               equ $ad
 ZXN_DMA_PORT                 equ $6b
+; DMA+ (zxnDDMA, core 3.03.00, port $6B only): Documentation/ZXNDDMA.md. Only in REAL_HARDWARE builds: CSpect
+; has no DMA+, and a core without it takes the follow bytes as register writes
+DDMA_MODE                    equ $df    ; then the flags (each $DF sets them all)
+DDMA_FILL_VALUE              equ $f7    ; then the value
+DDMA_FLAG_FILL               equ %00001000  ; no reads, every byte the fill value: twice as fast as a fixed source
 
 
 COLOUR_TRANSPARENT			 equ $E3

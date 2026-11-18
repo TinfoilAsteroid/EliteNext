@@ -52,7 +52,6 @@ ADDHLDESignBC:          ld      a,b
                         ret
 .ADDHLDEsBCSameNeg:      add     hl,de
                         ld      a,b
-                        DISPLAY "TODO: don't bother with overflow for now"
                         or      c                           ; now set bit for negative value, we won't bother with overflow for now TODO
                         ret
 .ADDHLDEsBCOppSGN:      ClearCarryFlag
@@ -64,7 +63,6 @@ ADDHLDESignBC:          ld      a,b
                         ld      a,b
                         xor     SignOnly8Bit                ; flip sign bit
                         ret   
-    DISPLAY "TODO: Check if ADDHLDESignedV4 is deprecated by AddDEtoHLSigned"
 ;DEPRECATEDADDHLDESignedV4:        ld      a,h
 ;DEPRECATED                        and     SignOnly8Bit
 ;DEPRECATED                        ld      b,a                         ;save sign bit in b
@@ -108,40 +106,38 @@ ADDHLDESignBC:          ld      a,b
 ;DEPRECATED                        ret 
 
 ;-- checks to see if a postition is in range of another, e.g. missile hit
-;-- ix = ship position    - pointer to xyz vector as 3 bytes per element
-;-- oy = misisle position - pointer to xyz vector as 3 bytes per element
-;-- sets carry if in blast range, else not carry
-;-- blast range will always be an 8 bit value
-CheckInCollisionRange:  
-.CheckXDistance:        call    SubDELequAtIXMinusAtIY24Signed ; get distance between x coordinates
-                        ld      a,d                 ; check abs distance
-                        and     SignMask8Bit        ; if high bytes are set
-                        or      e                   ; then no hit
-                        jp      nz,.NoCollision     ; if high bytes are set no collision
-                        ld      a,l
-                        JumpIfAGTEMemusng  CurrentMissileBlastRange ,.NoCollision
-.CheckYDistance:        ld      bc,3                ; move ix and iy
-                        add     ix,bc               ; on 3 bytes
-                        add     iy,bc               ;
-                        call    SubDELequAtIXMinusAtIY24Signed ; get distance between x coordinates
-                        ld      a,d                 ; check abs distance
-                        and     SignMask8Bit        ; if high bytes are set
-                        or      e                   ; then no hit
-                        jp      nz,.NoCollision     ; if high bytes are set no collision
-                        ld      a,l
-                        JumpIfAGTEMemusng  CurrentMissileBlastRange ,.NoCollision
-.CheckZDistance:        ld      bc,3                ; move ix and iy
-                        add     ix,bc               ; on 3 bytes
-                        add     iy,bc               ;
-                        call    SubDELequAtIXMinusAtIY24Signed ; get distance between x coordinates
-                        ld      a,d                 ; check abs distance
-                        and     SignMask8Bit        ; if high bytes are set
-                        or      e                   ; then no hit
-                        jp      nz,.NoCollision     ; if high bytes are set no collision
-                        ld      a,l
-                        JumpIfAGTEMemusng  CurrentMissileBlastRange ,.NoCollision
+;-- ix = ship position    - pointer to S15.8 xyz vector as 3 bytes per element (lo, hi, sign)
+;-- iy = missile position - pointer to S15.8 xyz vector as 3 bytes per element
+;-- sets carry if |ix - iy| < CurrentMissileBlastRange (1/256ths, 0.0 to 0.996) on every axis, else not carry
+;-- AddBCHtoDELsigned does not detect overflow: with opposite signs |ix| + |iy| >= 32768.0 carries into the sign bit and
+;-- could look close. That needs one of them >= 16384.0 (sign byte bit 6) and the distance is then far beyond any blast
+;-- range, so opposite signs with bit 6 set in either is treated as out of range. ix and iy are advanced by 9 on a hit
+CheckInCollisionRange:  ld      b,3
+.AxisLoop:              push    bc
+                        ld      a,(ix+2)            ; opposite signs?
+                        xor     (iy+2)              ; .
+                        jp      p,.NoOverflow       ; .
+                        ld      a,(ix+2)            ; and either >= 16384.0
+                        or      (iy+2)              ; .
+                        and     $40                 ; .
+                        jr      nz,.NoCollisionPop  ; then too far apart (and the subtract could overflow)
+.NoOverflow:            call    SubDELequAtIXMinusAtIY24Signed ; del = ix - iy, S15.8
+                        ld      a,d                 ; integer bits 8-14 set
+                        and     SignMask8Bit        ; .
+                        or      e                   ; or integer bits 0-7
+                        jr      nz,.NoCollisionPop  ; then no collision
+                        ld      a,l                 ; fraction
+                        ld      hl,CurrentMissileBlastRange
+                        cp      (hl)
+                        jr      nc,.NoCollisionPop  ; >= range so no collision
+                        pop     bc
+                        ld      de,3                ; next axis
+                        add     ix,de               ; .
+                        add     iy,de               ; .
+                        djnz    .AxisLoop
 .CollisionDetected:     SetCarryFlag                ; collision in blast range
                         ret
+.NoCollisionPop:        pop     bc
 .NoCollision:           ClearCarryFlag              ; no collision in blast range
                         ret
 
@@ -316,7 +312,7 @@ VectorUnivtoIY:     ld      ix,UBnKxlo                      ; target x = iy [x] 
 ;------------------------------------------------------------
 ; Takes the UBnKTarget position and works out if its ready for a docking routine or jump
 ; returns carry flag if move to docking else leaves carry unset
-UnivDistanceToTarget:DISPLAY "TODO : WRITE CODE FOR UnivDistanceToTarget"
+UnivDistanceToTarget:
                     ClearCarryFlag                              ; for now clear carry flag so its not at target
                     ret
 ;------------------------------------------------------------

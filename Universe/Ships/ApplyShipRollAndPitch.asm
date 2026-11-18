@@ -5,7 +5,7 @@
 ; x and z counters are proper 2's c values
 ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)
                         cp      $FF
-                        jr      z,.PitchSAxes
+                        jr      z,.InfinitePitch
 .splitAndDampenZ:       ld      b,a                     ; preserve S7 counter
                         and     SignMask8Bit            ; if abs (Rotz) is 0 then skip pitch
                         jp      z,.ProcessRoll  
@@ -19,6 +19,9 @@ ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)
                         ld      (univRAT2Val),a
                         or      c                       ; make S7 again after dampening
                         ld      (UBnKRotZCounter),a     ; Update Rotation Counter
+                        jr      .PitchSAxes
+.InfinitePitch:         ld      a,SignOnly8Bit          ; $FF is -ve, set direction else it is left from the previous ship
+                        ld      (univRAT2),a            ; .
 .PitchSAxes:            ld	    hl,UBnkrotmatRoofvX     ; UBnkrotmatSidevY
                         ld	    (varAxis1),hl
                         ld	    hl,UBnkrotmatNosevX     ; UBnkrotmatSidevZ	
@@ -36,7 +39,7 @@ ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)
                         call    MVS5RotateAxis
 .ProcessRoll:           ld      a,(UBnKRotXCounter)
                         cp      $FF
-                        jr      z,.RollSAxis
+                        jr      z,.InfiniteRoll
 .splitAndDampenX:       ld      b,a
                         and     SignMask8Bit            ; exit early is ABS = 0
                         and     a                       ; .
@@ -51,6 +54,9 @@ ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)
                         ld      (univRAT2Val),a
                         or      c                       ; make S7 again after dampening
                         ld      (UBnKRotXCounter),a
+                        jr      .RollSAxis
+.InfiniteRoll:          ld      a,SignOnly8Bit          ; $FF is -ve, set direction else it is left from the previous ship
+                        ld      (univRAT2),a            ; .
 .RollSAxis:           	ld	    hl,UBnkrotmatRoofvX; UBnkrotmatSidevX	
                         ld	    (varAxis1),hl
                         ld	    hl,UBnkrotmatSidevX; UBnkrotmatSidevY
@@ -75,7 +81,6 @@ ApplyShipRollAndPitch:  ld      a,(UBnKRotZCounter)
 ;   Axis2 = Axis2 * (1 - 1/512)  - Axis1 / 16
 ; var RAT2 gives direction  
 ; for pitch x we come in with Axis1 = roofv_x and Axis2 = nosev_x
- DISPLAY "TODO change to rotate IXIY axis"
 ; Rotate around axis
 ; varAxis1 and varAxis2 point to the address of the axis to rotate
 ; so the axis x1 points to roofv  x , y or z

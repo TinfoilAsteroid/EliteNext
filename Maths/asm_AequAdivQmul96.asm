@@ -36,10 +36,10 @@ TIS2:
                         ld			d,a							; d = varQ
                         ld			a,c							; recover a
 AequAdivDmul967Bit:     ld          c,a
-                        ld          a,d 
-                        sla         a       ; wipe sign bit
-                        ret         z       ; quick exit if dividing 0 as a will have the result of 0
-                        jr          nc, .OKToDivide
+                        ld          a,d
+                        and         a       ; quick exit if dividing by 0, result is 0
+                        ret         z       ; (was sla a / ret z which also exited with 0 for d = 128)
+                        jp          p, .OKToDivide ; d < 128 so no scaling needed
 .ScaleDown:             or          a       ; clear carry bit
                         srl         d       ; d >> 1 to get back to 7 bit value
                         ld          a,c

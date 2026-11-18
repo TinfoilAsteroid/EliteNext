@@ -144,7 +144,6 @@ CheckVisible:           ld      a,(UBnKzsgn)                 ; Is the ship behin
                         ENDIF
                         ret
                         
-                                    DISPLAY "TODO:remove all teh processing of rotmat to load craft to camera as its already been done"
 CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;   
                         ;break                          
                         call    CopyRotmatToTransMat        ; XX16 = UBNKRotMat    

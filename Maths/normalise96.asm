@@ -189,9 +189,43 @@ NormalseUnivTarget:     ld      a,(UBnKTargetXPos+2)
                         ld      (TacticsVectorX),a          ;
                         ret
 
-            DISPLAY "TODO: Missle AI only works on S15 spread over 24 bits, i.e. ignores Sign byte 7 bits"
 ;-- This norallises the Tactics vector in memory as much as possible, uses 16 bits 
-NormalizeTactics:       ld      hl, (TacticsVectorX)        ; pull XX15 into registers
+; hl -> sign byte of an S15.8 lead sign value (lo, hi, sign), halves the magnitude keeping the sign. Uses a, b, hl
+ShiftTacticsAxis24Right:ld      a,(hl)
+                        and     SignOnly8Bit
+                        ld      b,a                         ; b = sign
+                        ld      a,(hl)
+                        and     SignMask8Bit
+                        srl     a                           ; carry = bit 16 of magnitude
+                        ld      (hl),a                      ; ld does not change carry
+                        dec     hl
+                        rr      (hl)                        ; hi
+                        dec     hl
+                        rr      (hl)                        ; lo
+                        inc     hl
+                        inc     hl
+                        ld      a,(hl)                      ; put sign back
+                        or      b
+                        ld      (hl),a
+                        ret
+; Tactics vector is S15.8 lead sign (lo, hi, sign + integer bits 8-14). Only the direction matters so first halve all three
+; axes together until bits 8-14 of the sign bytes are clear, then the 16 bit scale below takes it down to 7 bits
+NormalizeTactics:
+.Scale24Loop:           ld      a,(TacticsVectorX+2)
+                        ld      hl,TacticsVectorY+2
+                        or      (hl)
+                        ld      hl,TacticsVectorZ+2
+                        or      (hl)
+                        and     SignMask8Bit
+                        jr      z,.Scale16
+                        ld      hl,TacticsVectorX+2
+                        call    ShiftTacticsAxis24Right
+                        ld      hl,TacticsVectorY+2
+                        call    ShiftTacticsAxis24Right
+                        ld      hl,TacticsVectorZ+2
+                        call    ShiftTacticsAxis24Right
+                        jr      .Scale24Loop
+.Scale16:               ld      hl, (TacticsVectorX)        ; pull XX15 into registers
                         ld      de, (TacticsVectorY)        ; .
                         ld      bc, (TacticsVectorZ)        ; .
 .ScaleLoop:             ld      a,h

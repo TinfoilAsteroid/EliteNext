@@ -68,7 +68,6 @@ AddCargoTypeD:          ld      hl,CargoTonnes
                         ld      d,a
                         add     hl,a
                         inc     (hl)
-                        DISPLAY "TODO UPDATE RUNNING TOTAL FOR CARGO"
                         ret
 
 CanWeScoopCargoD:       ld      a,d

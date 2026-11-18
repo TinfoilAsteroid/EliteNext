@@ -144,7 +144,6 @@ ShipIsBystander         equ Bit5Only   ;
 ShipIsCop               equ Bit6Only   ; 
 ShipHasEscapePod        equ Bit7Only   ;
 ShipHostileNewBitNbr    equ 2
-        DISPLAY "TODO: Add bravery based on rank, new bits and type of ship"
 
 ; UBnkaiatkecm
 ;Unused                 equ Bit0Only

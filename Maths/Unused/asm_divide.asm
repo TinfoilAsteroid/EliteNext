@@ -6,7 +6,6 @@ varQRS                 DS      4
 varAPP                 DS     3
 RvarDiv                DS     1
 
-                    DISPLAY "TODO:  neds rewrite of whoel DIDV3B2"
 ;; NEEDS REWRITE TODO OF WHOLE DIVD3B2
 ;; NEEDS REWRITE TODO
 
@@ -37,7 +36,6 @@ Requ256mulAdivQ_6502:
                         ld      b,a                     ; as we are using b as varR
                         SetCarryFlag                    ; we failed so need carry flag set
                         ret                             ; RTS                    \ Return from the subroutine
-               DISPLAY "TODO : Merge Requ256mulAdivQ_6502  RequAmul256divQ"
 ; Entry point if varQ is populated with demoninator
 RequAmul256divQ:	    
 BFRDIV:                 push	af
@@ -139,7 +137,6 @@ DVID3B:                 ld      a,(varP)                    ; LDA P             
                         and     $7F                         ; AND #%01111111         \ with positive numbers and we'll set the correct sign below, once all the maths is done
 ; We now shift (A P+1 P) left until A >= 64, counting the number of shifts in Y. This makes the top part of the division as large as possible, thus retaining as
 ; much accuracy as we can.  When we come to return the final result, we shift the result by the number of places in Y, and in the correct direction
-                        DISPLAY "TODO DVL9 and DVL6 move P and QRS into registers for faster shift"
 ;-- while A < 64 shift A P(1) P(0) -------------------------;
 .DVL9:                  cp      64                          ; CMP #64                \ If A >= 64, jump down to DV14
                         jp      nc, .DV14                   ; BCS DV14
@@ -187,7 +184,6 @@ DVID3B:                 ld      a,(varP)                    ; LDA P             
                         jp      z,.DV13                     ; Optimisation to save a second jump from DV12 to DV13
                         jp      p,.DV12                     ; BPL DV12
 ; If we get here then Y is negative, so we need to shift the result R to the left by Y places, and then set the correct sign for the result
-                        DISPLAY "TODO check oprimisation here for var r  in b"
                         ld      c,b
                         ld      a,(DIVD3B_SHIFT_REG)
                         ld      b,a

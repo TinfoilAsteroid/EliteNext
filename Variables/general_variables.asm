@@ -165,6 +165,7 @@ DELTA4                  equ                 DELT4Lo
 ;DEFUNCT, uses DELTA/ LAST_DELTAEngineSoundChanged:     DB  0
 SoundFxToEnqueue        DB  $FF             ; $FF No sound to enque,if it is $FF then next sound will not get enqued
 InterruptCounter        DB 0                ; simple marker updated once per IM2 event
+FrameCounter16          DW 0                ; 16 bit count of IM2 events (50Hz) while not paused, wraps after ~22 minutes, game timers e.g. missile lifespan
 
 				
 ; Not thise must be in this order else 16 bit fetches will fail
@@ -375,7 +376,8 @@ PlayerMisJump			DB	0				; $0341 witchspace misjump
 HyperSpaceFX			DB	0				; 0348 HFX (probabyl BBC specific
 ExtraVessels			DB	0				; 0349 EV Use d by cops, extra vessels still to spawn?
 Delay					DB	0				; 034A Delay general purpose eg. spawing EV or when printign messages
-CurrentMissileCheck:    DB  0               ; if > Universe Slot list then free for next missile
+CurrentMissileCheck:    DB  0               ; slot loop counter used by MissileBlast
+MissileDirectHitSlot:   DB  $FF             ; slot hit directly by the exploding missile, $FE = player, $FF = none (blast skips it)
 MessageForDestroyed		DB	0				; 034B Message flag for item + destroyed
 UniverseSlotListSize    equ	12
 UniverseSlotList        DS  UniverseSlotListSize

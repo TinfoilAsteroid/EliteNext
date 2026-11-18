@@ -10,7 +10,6 @@ galactic_hyper_sprite               equ galactic_cursor_sprite2+1    ; 03
 local_cursor_sprite                 equ galactic_hyper_sprite+1      ; 04
 local_cursor_sprite1                equ local_cursor_sprite+1        ; 05
 local_cursor_sprite2                equ local_cursor_sprite1+1       ; 06
-    DISPLAY "TODO SORT OUT SPRITE GAP-just code tidy, spacing is needed for local chart"
 local_hyper_sprite                  equ local_cursor_sprite2+5       ; 07
 local_hyper_sprite1                 equ local_hyper_sprite+1         ; 08
 local_hyper_sprite2                 equ local_hyper_sprite1+2        ; 09
@@ -416,7 +415,6 @@ StationScanCenterY          equ StationCompassTLY + 17
 
 ;-----------------------------------------------------------------------
 ; ">sprite_galactic_cursor BC = rowcol"    
-        DISPLAY "TODO : Compass positions, correct offsets for indicators, add in hide/show"
 ; " sprite_big BC = row, hl= col D = sprite nbr , E= , pattern"
 sprite_sun_compass:         ld      hl,sunCompositeData
                             ld      b,4
@@ -486,7 +484,6 @@ compass_sun_move:       ld      a,compass_sun
 ; write out X position bits 1 to 8
                         ld      a, SunScanCenterX - compass_offset ; adjust offset for effective centre of sprite
                         add     a,c
-                        DISPLAY "TODO - Add min max on X and Y"
                         nextreg SPRITE_PORT_ATTR0_REGISTER,a        ; Set up lower x cc
 ; write out Y position bits 1 to 8
                         ld      a, SunScanCenterY - compass_offset ; adjust offset for effective centre of sprite

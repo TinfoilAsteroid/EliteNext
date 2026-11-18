@@ -1,18 +1,31 @@
 
 l2_cls_byte	            DB 0
 ; ">DMA Command BLOCK"
-
-l2_fill                 DB DMA_DISABLE,  DMA_RESET, DMA_RESET_PORT_A_TIMING, DMA_RESET_PORT_B_TIMING ,DMA_WRO_BLOCK_PORTA_A2B_XFR
+; Fills 16K of Layer 2 (the third paged in at $0000) with l2_cls_byte. A REAL_HARDWARE build uses DMA+ fill mode:
+; no reads, so twice as fast (Documentation/ZXNDDMA.md); the plain build reads the fixed source byte each time
+l2_fill                 DB DMA_DISABLE,  DMA_RESET, DMA_RESET_PORT_A_TIMING, DMA_RESET_PORT_B_TIMING
+    IFDEF REAL_HARDWARE
+                        DB DDMA_FILL_VALUE
+l2_fill_value           DB 0
+                        DB DDMA_MODE, DDMA_FLAG_FILL
+    ENDIF
+                        DB DMA_WRO_BLOCK_PORTA_A2B_XFR
 l2_fill_astrt           DW l2_cls_byte
 l2_fill_length          DB $00,$40
                         DB DMA_WR1_P1FIXED_MEMORY ,DMA_WR2_P2INC_MEMORY ,DMA_WR4_CONT_MODE 
 l2_fill_bstrt           DB $00,$00
                         DB DMA_STOP_AT_END, DMA_LOAD, DMA_FORCE_READY, DMA_ENABLE
+    IFDEF REAL_HARDWARE
+                        DB DDMA_MODE, 0         ; fill mode off again for the next transfer
+    ENDIF
 l2_fill_cmd_len	        EQU $ - l2_fill
 
 ; ">l2_cls_dma_bank sets a bank to"  
 l2_cls_dma_bank:        
 .set_colour:            ld (l2_cls_byte),a
+    IFDEF REAL_HARDWARE
+                        ld (l2_fill_value),a
+    ENDIF
 .write_dma:             ld hl, l2_fill
                         ld b, l2_fill_cmd_len
                         ld	c,IO_DATAGEAR_DMA_PORT

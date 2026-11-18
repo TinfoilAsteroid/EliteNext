@@ -3,30 +3,36 @@
 
 MISSILEMAXACCEL         equ 3
 MISSILEMAXDECEL         equ -3
-MissileRangeLimit       equ 125                     ; missiles lose tracking and self destruct beyond +/-125 (integer part) on any axis
+MissileLifespan         equ 500                     ; frames at 50Hz (FrameCounter16) = 10 seconds, then the missile self destructs
+MissileHitPlayer        equ $FE                     ; MissileDirectHitSlot values other than a slot number
+MissileNoDirectHit      equ $FF                     ; .
                         ;DEFINE MISSILEBREAK
 ;.. Thsi version uses new kind logic
 ;... Now the tactics if current ship is the missile, when we enter this SelectedUniverseSlot holds slot of missile
+; Positions are S15.8 lead sign (lo = fraction, hi + sign byte bits 0-6 = 15 bit integer, sign byte bit 7 = sign).
+; The missile - target vector is S15.8 (saturating at +/-32767.996) and NormalizeTactics scales it down to S7
 MissileAIV3:            ;ld      a,(ShipAIEnabled)
-                        ;ReturnOnBitClear a, ShipAIEnabledBitNbr 
-                        IFDEF MISSILEDOHIT
-                            JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
-                        ENDIF
-.CheckMissileRange:     ld      hl,UBnKxlo                          ; beyond +/-125 on any axis the missile has lost tracking
-                        call    PositionBeyondMissileRange          ; so it self destructs as if by ECM; this also keeps every
-                        jp      c,.ECMIsActive                      ; position below 16 bits for the vector maths
+                        ;ReturnOnBitClear a, ShipAIEnabledBitNbr
+.IsAlreadyExploding:    IsShipExploding                             ; blast has already been applied when it exploded
+                        ret     nz                                  ; .
+.CheckLifespan:         ld      hl,(FrameCounter16)                 ; elapsed = now - launch frame (16 bit so wrap safe)
+                        ld      de,(UBnKMissileLaunchFrame)         ; .
+                        or      a                                   ; .
+                        sbc     hl,de                               ; .
+                        ld      de,MissileLifespan                  ; if elapsed >= lifespan then self destruct
+                        or      a                                   ; .
+                        sbc     hl,de                               ; .
+                        jp      nc,.ECMIsActive                     ; .
 .CheckForECM:           JumpIfMemNotZero ECMCountDown,.ECMIsActive  ; If ECM is running then kill the missile
 .IsMissileHostile:      IsShipHostile                               ; is missle attacking us?
                         JumpIfZero .MissileTargetingShip            ; Missile is friendly then z is set else targetting us
-.MissileTargetingPlayer:ld      hl, (UBnKxlo)                       ; check if missile in range of us
-                        ld      a,(UBnKMissileDetonateRange)
-                        ld      c,a                                 ; c holds detonation range
-                        call    MissileHitUsCheckPos
+.MissileTargetingPlayer:call    MissileHitUsCheckPos                ; within 1.0 of us on every axis
 .MissileNotHitUsYet:    jp      nc, .UpdateTargetingUsPos
-.MissleHitUs:           call    PlayerHitByMissile
-                        jp      .ECMIsActive                        ; we use ECM logic to destroy missile which eqneues is
+.MissleHitUs:           call    PlayerHitByMissile                  ; direct hit damages us (blast range is smaller than hit range)
+                        ld      a,MissileHitPlayer                  ; so the blast skips us
+                        jp      .DirectHitExplode                   ; explode
 .UpdateTargetingUsPos:  call    SetPlayerAsTarget
-                        call    CopyPosToVector
+                        call    CopyPosToVector                     ; vector = missile - us (us = 0,0,0), S15.8
                         ld      a,(SelectedUniverseSlot)            ; we will use this quite a lot with next bank switching
                         add     a,BankUNIVDATA0                     ; pre calculate add to optimise
                         ld      iyh,a
@@ -40,30 +46,26 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         ENDIF
 .SaveTargetBank:        ld      a,(UBnKMissileTarget)               ; target will be used a lot too
                         add     a,BankUNIVDATA0                     ; pre calculate add to optimise
-                        ld      iyl,a                               ; save target                        
+                        ld      iyl,a                               ; save target
                         IFDEF MISSILEDEBUG
                             ld  (TacticsTargetBank),a
                         ENDIF
+                        ld      a,(UBnKMissileTarget)               ; slot number for the empty check
 .IsMissleTargetGone:    JumpIfSlotAEmpty    .ECMIsActive            ; if the target was blown up then detonate
-;... Note we don't have to check for impact as we already have a loop doing that
 .SelectTargetShip:      SelectTargetBank
 .IsShipExploding:       IsShipExploding                             ; check exploding status
-                        jr      z,.CheckTargetRange                 ; as if exploding then the missile will also explode
+                        jr      z,.UpdateTargetingShipX             ; as if exploding then the missile will also explode
 .ShipIsExploding:       SelectMissileBank                           ; get missile back into memory
                         jp      .ECMIsActive
-.CheckTargetRange:      ld      hl,UBnKxlo                          ; target bank is paged in; a target beyond +/-125 means the
-                        call    PositionBeyondMissileRange          ; missile has lost lock and can not regain it, so it self
-                        jr      nc,.UpdateTargetingShipX            ; destructs; with both in range missile - target fits 16 bits
-                        SelectMissileBank
-                        jp      .ECMIsActive
 ;--- At this point we already have the target banked in ready for calculating vector
-; Tactics vector = missile - target
-.UpdateTargetingShipX:  ld      de,(UBnKxlo)                        ; get target ship X
+; Tactics vector = missile - target, S15.8: AHL = BHL + CDE with the target sign flipped
+.UpdateTargetingShipX:  MMUSelectMathsBankedFns                     ; for AHLequBHLplusCDE, universe banks are in a different slot
+                        ld      de,(UBnKxlo)                        ; get target ship X
                         ld      a,(UBnKxsgn)                        ; and flip sign so we have missile - target
                         IFDEF MISSILEDEBUG
                             ld  (TacticsTargetX),de
                             ld  (TacticsTargetX+2),a
-                        ENDIF                        
+                        ENDIF
                         FlipSignBitA
                         ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
                         SelectMissileBank
@@ -72,133 +74,132 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         IFDEF MISSILEDEBUG
                             ld  (TacticsMissileX),hl
                             ld  (TacticsMissileX+2),a
-                        ENDIF                        
+                        ENDIF
                         ld      b,a
-                        call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
+                        call    MissileVectorAdd                    ; AHL = BHL + CDE i.e. missile - target x (S15.8)
                         ld      (TacticsVectorX),hl
                         ld      (TacticsVectorX+2),a
 .UpdateTargetingShipY:  SelectTargetBank
-                        ld      de,(UBnKylo)                        ; get target ship X
+                        ld      de,(UBnKylo)                        ; get target ship Y
                         ld      a,(UBnKysgn)
                         IFDEF MISSILEDEBUG
                             ld  (TacticsTargetY),de
                             ld  (TacticsTargetY+2),a
-                        ENDIF                        
+                        ENDIF
                         FlipSignBitA
-                        ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+                        ld      c,a                                 ; get target ship y sign but * -1 as we are subtracting
                         SelectMissileBank
-                        ld      hl,(UBnKylo)                        ; get missile x
-                        ld      a,(UBnKysgn)                        ; get missile x sign
+                        ld      hl,(UBnKylo)                        ; get missile y
+                        ld      a,(UBnKysgn)                        ; get missile y sign
                         IFDEF MISSILEDEBUG
                             ld  (TacticsMissileY),hl
                             ld  (TacticsMissileY+2),a
-                        ENDIF                        
+                        ENDIF
                         ld      b,a
-                        call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
+                        call    MissileVectorAdd                    ; AHL = BHL + CDE i.e. missile - target y (S15.8)
                         ld      (TacticsVectorY),hl
                         ld      (TacticsVectorY+2),a
 .UpdateTargetingShipZ:  SelectTargetBank
-                        ld      de,(UBnKzlo)                        ; get target ship X
+                        ld      de,(UBnKzlo)                        ; get target ship Z
                         ld      a,(UBnKzsgn)
                         IFDEF MISSILEDEBUG
                             ld  (TacticsTargetZ),de
                             ld  (TacticsTargetZ+2),a
-                        ENDIF                        
+                        ENDIF
                         FlipSignBitA
-                        ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
+                        ld      c,a                                 ; get target ship z sign but * -1 as we are subtracting
                         SelectMissileBank
-                        ld      hl,(UBnKzlo)                        ; get missile x
-                        ld      a,(UBnKzsgn)                        ; get missile x sign
+                        ld      hl,(UBnKzlo)                        ; get missile z
+                        ld      a,(UBnKzsgn)                        ; get missile z sign
                         IFDEF MISSILEDEBUG
                             ld  (TacticsMissileZ),hl
                             ld  (TacticsMissileZ+2),a
-                        ENDIF                        
-                        
+                        ENDIF
                         ld      b,a
-                        call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
+                        call    MissileVectorAdd                    ; AHL = BHL + CDE i.e. missile - target z (S15.8)
                         ld      (TacticsVectorZ),hl
                         ld      (TacticsVectorZ+2),a
 ; by here missile in in memory and TacticsVector now holds distance
-; if or ABS all high bytes is <> 0
 .CheckDistance:         IFDEF MISSILEDOHIT
-                            ld      hl,(TacticsVectorX+1)              ; test if high bytes are set (value is assumed to be 24 bit, though calcs are only 16 so this is uneeded)
+                            ld      hl,(TacticsVectorX+1)              ; l = hi byte, h = sign byte of each axis
                             ld      a,h                                ; .
                             ld      de,(TacticsVectorY+1)              ; .
                             or      d                                  ; .
                             ld      bc,(TacticsVectorZ+1)              ; .
                             or      b                                  ; .
-                            ClearSignBitA                              ; .
+                            ClearSignBitA                              ; sign byte magnitude bits (integer bits 8-14)
                             JumpIfNotZero       .FarAway               ; .
-                            or      l                                    ; test for low byte bit 7, i.e high of 16 bit values
+                            or      l                                  ; hi bytes (integer bits 0-7), so a hit is |d| < 1.0 on every axis (as BBC)
                             or      e                                  ; .
                             or      c                                  ; .
                             JumpIfNotZero       .FarAway               ; .
                         ELSE
                             jp                  .FarAway
                         ENDIF
-; If we get here its close enough to detonate
-.CloseMissileExplode:   ld      a,(UBnKMissileTarget) 
-                        jp      MissileHitShipA
-            DISPLAY "TODO: far away ** TODO need to set memory read write on page 0"
+; If we get here its close enough to detonate (|d| < 1.0 on every axis). The blast range (0.2) is smaller than the hit
+; range so the target takes the detonate damage directly and MissileBlast skips it. A space station is immune but is angered
+.CloseMissileExplode:   ld      a,(UBnKMissileDetonateDamage)       ; missile is paged in, b = damage
+                        ld      b,a                                 ; .
+                        SelectTargetBank                            ; page in target (only uses a)
+                        ld      a,(ShipTypeAddr)                    ; .
+                        cp      ShipTypeStation                     ; .
+                        jr      z,.TargetIsStation                  ; .
+                        call    ShipTakeDamageB                     ; reduce energy, explode target if exhausted
+                        jr      .TargetHitDone                      ; .
+.TargetIsStation:       call    SetShipHostile                      ; .
+.TargetHitDone:         SelectMissileBank                           ; missile back in memory
+                        ld      a,(UBnKMissileTarget)               ; blast must not damage the target again
+                        jp      .DirectHitExplode                   ; and explode it
 .FarAway:               SelectTargetBank
                         JumpIfMemFalse      UBnKECMFitted, .NoECM                   ; if target has ECM and enough energy to use it
                         JumpIfMemLTNusng    UBnKEnergy,    ECMCounterMax, .NoECM    ; .
                         JumpIfMemIsNotZero   ECMCountDown, .NoECM                ; . ECM is already active
-.TestIfUsingECM:        ld      a,(RandomSeed2)                                             ; if random < 16
+.TestIfUsingECM:        call    doRandom                                                    ; if random < 16 (uses a c hl only)
                         JumpIfAGTENusng     16, .UpdateMissilePos                           ;   then fire ECM destroying missile
 ;. If we get here then target is still paged in to fire ECM
 .ZeroPageFireECM:       jp      FireECM                                             ; with an implicit return
 ;                       implicit ret
 ;. If we get here then target is still paged in with no ECM
 .NoECM:
-                      ;;;         ** can do 16 bit maths as we can take teh view that once a object/space station is 24 bit value away then 
-                      ;;;         ** targeting computer looses track and destructs missiles
-;--- Now we can actually update the missile AI                      
-.UpdateMissilePos:      ;break
-                        SelectMissileBank
-                        ;break
-                        ;call    ORTHOGALISE
+;--- Now we can actually update the missile AI
+.UpdateMissilePos:      SelectMissileBank
 .NormaliseDirection:    IFDEF MISSILEBREAK
                             ;break
                         ENDIF
                         MMUSelectMathsBankedFns
-                        call    NormalizeTactics                    ; Normalise vector down to 7 bit + sign byte (.TA19->TAS2)
+                        call    NormalizeTactics                    ; Normalise S15.8 vector down to 7 bit + sign byte (.TA19->TAS2)
                         IFDEF TACTICSDEBUG
                             call DebugTacticsCopy
                         ENDIF
-.NegateDirection:       FlipSignMem TacticsVectorX+2                ; negate vector in XX15 so it points opposite direction
-                        FlipSignMem TacticsVectorY+2                ; we have already negated the dot product above
-                        FlipSignMem TacticsVectorZ+2                ; .                         
+.NegateDirection:       FlipSignMem TacticsVectorX+2                ; negate vector so it is target - missile, i.e. points from
+                        FlipSignMem TacticsVectorY+2                ; the missile to the target; all dot products are taken after
+                        FlipSignMem TacticsVectorZ+2                ; this so +ve nose dot means facing the target
                         call    SeekingLogic
                         ret
-.ProcessMissileHit:     ld      a,(CurrentMissileCheck)
-                        ReturnIfAGTENusng UniverseSlotListSize  ; need to wait another loop
-.ActivateNewExplosion:  jp  CheckMissileBlastInit               ; initialise
-                        ; DUMMY RET get a free return by using jp
-.ECMIsActive:           call    UnivExplodeShip                 ; ECM detonates missile
-                        SetMemTrue  UBnKMissleHitToProcess      ; Enque an explosion
-                        jp      .ProcessMissileHit              ; lets see if we can enqueue now
-                        ; DUMMY RET get a free return as activenewexplosion does jp to init with a free ret
-
+;. Missile bank must be paged in. Explodes the missile and applies its blast to us and all ships in range. On entry to
+;. .DirectHitExplode a = slot that was hit directly ($FE = us) which has already been damaged so the blast skips it
+.ECMIsActive:           ld      a,MissileNoDirectHit                ; ECM or lifespan, nothing hit directly
+.DirectHitExplode:      ld      (MissileDirectHitSlot),a            ; .
+                        call    UnivExplodeShip                     ; detonate missile
+                        jp      MissileBlast                        ; splash damage, implicit ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-; hl -> 9 byte position (x, y, z each lo, hi, sign). Carry set if any axis is beyond +/-MissileRangeLimit, i.e. the integer
-; part (sign byte bits 0-6 : hi byte) is > 125. Destroys A, B, HL
-PositionBeyondMissileRange:
-                        ld      b,3
-.AxisLoop:              inc     hl                                  ; hl -> hi byte
-                        ld      a,(hl)
-                        inc     hl                                  ; hl -> sign byte
-                        cp      MissileRangeLimit + 1
-                        jr      nc,.Beyond                          ; integer part > 125
-                        ld      a,(hl)
-                        and     SignMask8Bit
-                        jr      nz,.Beyond                          ; integer part > 255
-                        inc     hl                                  ; next axis lo byte
-                        djnz    .AxisLoop
-                        or      a                                   ; in range, carry clear
+; AHL = BHL + CDE in S15.8 lead sign, saturating. AHLequBHLplusCDE does not detect overflow: with the same signs a magnitude
+; sum >= 32768.0 carries into bit 7 and flips the sign, which would point the missile the wrong way. Opposite signs can not
+; overflow. On overflow the result is clamped to B's sign with the maximum magnitude (direction is all that matters then).
+; Needs the maths banked fns paged in. Destroys C and DE, preserves B
+MissileVectorAdd:       ld      a,b
+                        xor     c
+                        jp      m,AHLequBHLplusCDE                  ; opposite signs, can not overflow, implicit ret
+                        call    AHLequBHLplusCDE
+                        ld      c,a                                 ; did the sign change
+                        xor     b                                   ; .
+                        ld      a,c                                 ; .
+                        ret     p                                   ; no so no overflow
+                        ld      a,b                                 ; overflow so saturate
+                        or      SignMask8Bit                        ; .
+                        ld      hl,$FFFF                            ; .
                         ret
-.Beyond:                scf
-                        ret
+
 ;----------------------------------------------------------------------------------------------------------------------------------
 SeekingLogic:           call    XX12EquTacticsDotNosev              ; SA = nose . XX15                           (     ->TAS3)
                         ld      (TacticsDotProduct1),a              ; CNT = A (high byte of dot product)
@@ -219,9 +220,11 @@ SimplifiedShipPitchv3:  ;break
                         xor     $80                                ; .
                         and     $80                                ; .
                         ld      h,a                                ; h  = flipped sign
+                        ld      a,(UBnKRAT2)                       ; b = turn threshold (RAT2, 4 for missiles as BBC)
+                        ld      b,a                                ; .
                         ld      a,l                                ; a = value * 2
                         sla     a                                  ;
-                        JumpIfAGTENusng 16, .skipPitchZero         ; if its > 16 then update pitch
+                        JumpIfAGTENusng b, .skipPitchZero          ; if |roof dot| * 2 >= RAT2 then update pitch
                         ld      a,(TacticsDotProduct1+1)           ; if the target is behind (nose dot negative) keep pitching,
                         and     $80                                ; else with the target near the tail the roof and side dots
                         jr      nz,.skipPitchZero                  ; stay under the threshold and the missile never turns round
@@ -232,7 +235,7 @@ SimplifiedShipPitchv3:  ;break
                             ld  (TacticsRotZ),a
                         ENDIF
                         ret
-.skipPitchZero:         ld      a,2
+.skipPitchZero:         ld      a,(UBnKRAT)                        ; pitch magnitude (RAT)
                         or      h
                         ld      (UBnKRotZCounter),a
                         IFDEF MISSILEDEBUG
@@ -267,10 +270,12 @@ SimplifiedShipRollv3:  ; ld      a,(UBnKRotXCounter)               ; get current
                         ;xor     h                                 ; b = flip against pitch sign
                         ;and     $80                               ; .
                         ;xor $80
-                        ld      b,a                                ; b = roof product
+                        ld      b,a                                ; b = roof product sign
+                        ld      a,(UBnKRAT2)                       ; c = turn threshold
+                        ld      c,a                                ; .
                         ld      a,l                                ; a = abs sidev  * 2
                         sla     a                                  ;
-                        JumpIfAGTENusng 16,.skipRollZero           ;
+                        JumpIfAGTENusng c,.skipRollZero            ; if |side dot| * 2 >= RAT2 then roll
                         ZeroA                                      ; if its zoer then set rotx to zero
                         or      b
                         ld      (UBnKRotXCounter),a
@@ -278,8 +283,8 @@ SimplifiedShipRollv3:  ; ld      a,(UBnKRotXCounter)               ; get current
                             ld  (TacticsRotX),a
                         ENDIF
                         ret
-.skipRollZero:          ld      a,2
-                        or      h
+.skipRollZero:          ld      a,(UBnKRAT)                        ; roll magnitude (RAT)
+                        or      h                                  ; sign = side sign xor roof sign (as BBC)
                         xor     b
                         ld      (UBnKRotXCounter),a
                         IFDEF MISSILEDEBUG
@@ -290,17 +295,19 @@ SimplifiedShipRollv3:  ; ld      a,(UBnKRotXCounter)               ; get current
 SimplifiedShipSpeedv3:  ld      hl,(TacticsDotProduct1)
                         ld      a,h
                         and     a
-                        jr      nz,.SlowDown
-                        ld      de,(TacticsDotProduct2)             ; dot product is +ve so heading at each other
-                        ld      a,l 
-                        JumpIfALTNusng  22,.SlowDown                                  ; nose dot product < 
+                        jr      nz,.SlowDown                        ; target behind
+                        ld      a,(UBnKCNT2)                        ; b = accelerate threshold (CNT2, 22 for missiles)
+                        ld      b,a                                 ; .
+                        ld      a,l                                 ; nose dot product +ve so facing target
+                        JumpIfALTNusng  b,.SlowDown                 ; nose dot product < CNT2 so not facing closely enough
 .Accelerate:            ld      a,3                                 ; else
                         ld      (UBnKAccel),a                       ;  accelleration = 3
                         IFDEF MISSILEDEBUG
                             ld  (TacticsSpeed),a
                         ENDIF                        
                         ret                                         ;  .
-.SlowDown:              JumpIfALTNusng 18, .NoSpeedChange
+.SlowDown:              ld      a,l                                 ; abs nose dot product (a held the sign byte on the -ve path)
+                        JumpIfALTNusng 18, .NoSpeedChange
 .Deccelerate:           ld      a,-2
                         ld      (UBnKAccel),a
                         IFDEF MISSILEDEBUG
@@ -314,58 +321,3 @@ SimplifiedShipSpeedv3:  ld      hl,(TacticsDotProduct1)
                         ENDIF
                         ret
 
-                        
-SimplifiedShipSpeedv3b:  call    GetDistance                         ;
-                        ld      a,h
-                        and     a
-                        ld      b,22
-                        jr      nz,.NotSlow
-.CloseSlowTest:         ld      a,l
-                        JumpIfAGTENusng 30, .NotSlow
-                        ld      b,60
-.NotSlow:               ld      hl,(TacticsDotProduct1)             ; if nosedir is negative (pointing the wrong way)
-                        ld      a,h                                 ; or nosedir < 22 (very far off)
-                        and     $80                                 ; do decelleration test
-                        jp      nz,.DecelTest                       ; .
-                        ld      a,l                                 ; .
-                        JumpIfALTNusng b, .DecelTest                ; .
-.Accelerate:            ld      a,3                                 ; else
-                        ld      (UBnKAccel),a                       ;  accelleration = 3
-                        IFDEF MISSILEDEBUG
-                            ld  (TacticsSpeed),a
-                        ENDIF                        
-                        ret                                         ;  .
-.DecelTest:             ld      a,l                                 ; if abs acelleration > 18
-                        JumpIfAGTENusng 18 ,.Deccelerate             ;    decelerate by 2 
-.NoSpeedChange:         ZeroA                                       ; else no change
-                        ld      (UBnKAccel),a
-                        IFDEF MISSILEDEBUG
-                            ld  (TacticsSpeed),a
-                        ENDIF
-                        ret
-.Deccelerate:           ld      a,-2
-                        ld      (UBnKAccel),a
-                        IFDEF MISSILEDEBUG
-                            ld  (TacticsSpeed),a
-                        ENDIF
-                        ret
-
-GetDistance:            ld      hl,(TacticsVectorX)
-                        ld      de,(TacticsVectorY)
-                        ld      bc,(TacticsVectorZ)
-                        ld      a,h
-                        and     $7F
-                        ld      h,a
-                        ld      a,b
-                        and     $7F
-                        ld      b,a
-                        ld      a,d
-                        and     $7F
-                        ld      d,a
-                        add     hl,bc
-                        add     hl,de
-                        ShiftHLRight1
-                        ShiftHLRight1
-                        ret
-                        
-                        

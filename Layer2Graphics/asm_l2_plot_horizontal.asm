@@ -95,7 +95,6 @@ l2_draw_horz_line_to:   ld 		a,d
 l2_draw_horz_line_320:  ld		a,d
                         or      e
 .zerolengthexit:        ret		z
-                        DISPLAY "TODO need 1 pixel logic"
 .longenoughtfordma:     push    hl,,bc                      ; copy row and colour to ixh and ixl
                         call    asm_l2_320_col_bank_select  ; Select the first bank to start writing to and adjust hl
 .bankSelected:          pop     bc                          ; get back row and colour

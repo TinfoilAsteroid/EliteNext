@@ -1085,7 +1085,6 @@ srm_distance_val        DS  6
 srm_fill_buffer_len     EQU 64
 srm_fill_buffer_record  EQU 3
 srm_fill_buffer_size    EQU srm_fill_buffer_record * srm_fill_buffer_len                          ; up to 32 labels topx topy lengthx spare
-            DISPLAY "TODO: space for occupied cells may mvoe to bit flags"
 srm_printed_text        DS  srm_fill_buffer_size                             ; space for occupied cells may move to bit flags later TODO
 srm_buffer_size         DB  0
 srm_star_cache          DS  (2+2+2)*30    ; Keeps a list of screen xy and chart xy

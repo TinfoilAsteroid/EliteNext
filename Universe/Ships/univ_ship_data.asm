@@ -237,7 +237,7 @@ ResetUbnkPosition:      ld      hl,UBnKxlo
                         djnz    .zeroLoop
                         ret
 ; --------------------------------------------------------------
-FireECM:                break
+FireECM:                ;break
                         ld      a,ECMCounterMax                 ; set ECM time
                         ld      (UBnKECMCountDown),a            ;
                         ld      a,(ECMCountDown)
@@ -248,7 +248,6 @@ FireECM:                break
 ; --------------------------------------------------------------
 RechargeEnergy:         ld      a,(UBnKEnergy)
                         ReturnIfAGTEMemusng EnergyAddr
-                DISPLAY "TODO: Add recharge rate logic for ship types"
                         inc     a       
                         ld      (UBnKEnergy),a
                         ret
@@ -331,15 +330,22 @@ UnivSetEnemyMissile:    ld      hl,NewLaunchUBnKX               ; Copy launch sh
                         ld      a,22
                         ld      (UBnKCNT2),a
                         MaxUnivSpeed                            ; and immediatley full speed (for now at least) TODO
-                        SetMemFalse UBnKMissleHitToProcess
                         call    UnivSetAIOnly
                         call    SetShipHostile
-.SetupPayload:          ld      a,150
+                        jp      UnivSetMissilePayload           ; implicit ret
+; --------------------------------------------------------------
+; Blast payload and launch time, common to all missiles
+; A hit is |d| < 1.0 on every axis and does the detonate damage to what was hit. The blast range is a fraction in 1/256ths
+; (0.0 to 0.996) and does the blast damage to anything else that close, 51 = 0.2
+MissileBlastRangeUnits  equ 51
+UnivSetMissilePayload:  ld      a,150
                         ld      (UBnKMissileBlastDamage),a
                         ld      (UBnKMissileDetonateDamage),a
-                        ld      a,5
+                        ld      a,MissileBlastRangeUnits
                         ld      (UBnKMissileBlastRange),a
                         ld      (UBnKMissileDetonateRange),a
+                        ld      hl,(FrameCounter16)             ; lifespan starts now
+                        ld      (UBnKMissileLaunchFrame),hl     ; .
                         ret
 ; --------------------------------------------------------------                        
 ; This sets the position of the current ship if its a player launched missile
@@ -365,18 +371,18 @@ UnivSetPlayerMissile:   call    InitialisePlayerMissileOrientation  ; Copy in Pl
                         ld      a,22
                         ld      (UBnKCNT2),a
                         MaxUnivSpeed                            ; and immediatley full speed (for now at least) TODO
-                        SetMemFalse UBnKMissleHitToProcess
                         call    UnivSetAIOnly
                         call    ClearShipHostile                ; its a player missile
-                        ret
+                        jp      UnivSetMissilePayload           ; implicit ret
 ; --------------------------------------------------------------
 ; this applies blast damage to ship
 ShipMissileBlast:       ld      a,(CurrentMissileBlastDamage)
                         ld      b,a
-                        ld      a,(UBnKEnergy)                   ; Reduce Energy
+; b = damage, reduces energy of paged in ship and explodes it if energy is exhausted
+ShipTakeDamageB:        ld      a,(UBnKEnergy)                   ; Reduce Energy
                         sub     b
-                        jp      UnivExplodeShip
-                        jr      UnivExplodeShip
+                        jp      c,UnivExplodeShip                ; energy < damage
+                        jp      z,UnivExplodeShip                ; energy = damage
                         ld      (UBnKEnergy),a
                         ret
 ; --------------------------------------------------------------
@@ -426,7 +432,7 @@ UnivClearAI:            ld      a,(UBnkaiatkecm)                ;  disable ship 
 
 ; --------------------------------------------------------------                        
 ; This sets the ship as a shower of explosiondwd, flags as killed and removes AI
-UnivExplodeShip:        break
+UnivExplodeShip:        ;break
                         ld      a,(UBnkaiatkecm)
                         or      ShipExploding | ShipKilled      ; Set Exlpoding flag and mark as just been killed
                         and     Bit7Clear                       ; Remove AI
@@ -653,8 +659,6 @@ UnivSpawnSpaceStationLaunched:
                         call    CopySpaceStationtoPlanetGlobal
                         call    ResetStationLaunch
                         ret
-                        DISPLAY "TODO:fall into SpaceStation Launch Position once startup fixed"
-                        DISPLAY "TODO: Fault is probably as maths for xyz is 16 bit and shoudl be 24"
 ; --------------------------------------------------------------
 SpaceStationLaunchPositon:
                         ld      hl,0
@@ -866,8 +870,8 @@ UnivInitRuntime:        ld      bc,UBnKRuntimeSize
 ;INPUTS:    bhl = dividend  cde = divisor where b and c are sign bytes
 ;OUTPUTS:   cahl = quotient cde = divisor
 ;--------------------------------------------------------------------------------------------------------
-                        ;include "./ModelRender/EraseOldLines-EE51.asm"
- ; OBSOLETE                       include "./ModelRender/TrimToScreenGrad-LL118.asm"
+                        ;include "./ModelRender/Unused/EraseOldLines-EE51.asm"
+ ; OBSOLETE                       include "./ModelRender/Unused/TrimToScreenGrad-LL118.asm"
                         include "./ModelRender/CLIP-LL145.asm"
 ;--------------------------------------------------------------------------------------------------------
                         include "./Universe/Ships/CopyRotmatToTransMat.asm"
@@ -912,7 +916,6 @@ SetAllFacesHiddenLoop:  ld      (hl),a
                         ret
 ;---------------------------------------------------------------------------------------------------------
 ;-- 
-    DISPLAY "TODO: Change to a tidy that checks for normal accuracy first"
 TidyRotation:       IFNDEF FORCE_TIDY    
                         ld      a,(UBnkTidyCounter)         ; loops every 16 iterations
                         dec     a                           ; and call is determined 
@@ -940,7 +943,7 @@ TidyRotation:       IFNDEF FORCE_TIDY
     DISPLAY "Tracing 3", $
 
                         include "Universe/Ships/NormaliseTransMat.asm"
-;;;                        include "Universe/Ships/NormaliseXX15.asm"
+;;;                        include "Universe/Ships/Unused/NormaliseXX15.asm"
 ;-LL91---------------------------------------------------------------------------------------------------
 
 ; Now we have
@@ -1025,7 +1028,7 @@ XX12EquXX15DotProductXX16:
                         include "./Maths/Utilities/DotProductXX12XX15.asm"
 ;--------------------------------------------------------------------------------------------------------
 ; scale Normal. IXL is xReg and A is loaded with XX17 holds the scale factor to 3
-; Not Used in code      include "Universe/Ships/ScaleNormal.asm"
+; Not Used in code      include "Universe/Ships/Unused/ScaleNormal.asm"
 ;--------------------------------------------------------------------------------------------------------
                         include "./Universe/Ships/ScaleObjectDistance.asm"
 ;--------------------------------------------------------------------------------------------------------

@@ -27,8 +27,6 @@ ShipEquipNameTable      DW  WordFuel,       0,              0,          0
                         DW  WordRight,      WordMilitary,   WordLaser,  0
 
 ShipEquipmentFullName           ;012345678901234567890
-    DISPLAY "TODO This coudl actually be used to dynamically build names of componets based on ship build"
-    DISPLAY "TODO then we only need 1 laser for each facing and build the name"
 EquipNameFuel:               DB "Fuel",0
 EquipNameMissile:            DB "Missile",0
 EquipNameLargeCargoBay       DB "Large Cargo Bay",0
@@ -71,7 +69,6 @@ EquipNameIndex:         DW  EquipNameFuel               , EquipNameMissile
                         DW  EquipNameLeftMilitaryLaser  , EquipNameRightMilitaryLaser
     
 ; This needs to be expanded to cater for all lasertypes, cloak etc
-    DISPLAY "TODO need to redo missiles as we need type in equipment as well as count, chagne save game to handle this"
 
 
 

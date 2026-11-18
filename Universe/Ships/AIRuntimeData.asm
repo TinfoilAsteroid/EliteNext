@@ -54,7 +54,7 @@ UBnKShipModelNbr            DB  0                       ; Ship Id with in the ba
 UBnKShipModelId             DB  0                       ; Absolute ship id
 ; -- Ship AI data
 ; -- Targetting runtime data
-UBnKMissleHitToProcess      DB  0                       ; This is used for enquing missle blasts as we can only do one missile at a time, could make it multi but neeed to smooth CPU usage
+UBnKMissleHitToProcess      DB  0                       ; no longer used (blasts are applied immediately by MissileBlast), kept so the layout does not move
 UBnKMissileTarget           DB  0                       ; This is the ship slot number for the target from 0 to n if the missile is not hostile to us, if the target is $FF then its us
 UBnKTargetXPos              DS  3                       ; target position for AI 
 UBnKTargetYPos              DS  3                       ; .
@@ -138,6 +138,7 @@ UBnKCloudRadius             DB  0                       ; cloud pixels
 UBnKHeadingToPlanetOrSun    DB  0                       ; 0 = undefined 1 = heading to planet 2 = heading to sun, if it reaches planet then will move to docking, if it heads to sun then will jump
 UBnKPosFrac                 DS  3                       ; x, y, z position below 1 raw unit (1/256), kept by ApplyMyRollAndPitchFracIX so
                                                         ; small roll / pitch steps on nearby ships are not lost to truncation
+UBnKMissileLaunchFrame      DW  0                       ; FrameCounter16 when a missile was launched, for its lifespan
 
 UBnKRuntimeSize             EQU $-UBnKStartOfRuntimeData
 ; Flags work as follows:

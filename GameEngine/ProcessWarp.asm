@@ -5,9 +5,7 @@ PlanetWarpPosition:     DS      3
 WarpSlotNumber:         DB      0
 ProcessWarp:            SetMemFalse     WarpPressed                     ; clear and acknowlege
                         JumpIfMemZero   WarpCooldown, .CheckMassLock    ; If warp drive is cool then warp
-                        DISPLAY "TODO Need logic for in system jump drive malfunction"
-.JumpDriveHot:          DISPLAY "TODO call bong jump drive hot"
-                        DISPLAY "TODO flash jump drive status icon"
+.JumpDriveHot:
                         jp      .TooHot                                 ; else warp is too hot so exit
 ;-- Mass locked if the space station, any ship, the sun or the planet is within 1.0 of us on every axis (WarpIsObjectClose)
 .CheckMassLock:         xor     a                                       ; every occupied universe slot: slot 0 is the space station

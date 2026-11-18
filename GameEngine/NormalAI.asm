@@ -276,10 +276,8 @@ ShipHeadingToUnivBody:  ld      a,(UBnKHeadingToPlanetOrSun)        ; do we have
                         cp      1
                         jp      nz, UpdateSunTracking               ; if its not 1 then must be sun
 ;.. Update tracking to planet.......................................
-            DISPLAY "TODO: Change this from move to planet to move to station as moving to planet is now superfluous"
 UpdatePlanetTracking:   call    SaveMMU6                            ; save current ship     
                         MMUSelectPlanet
-                            DISPLAY "TODO: Sort out targeting station not planet" 
                         call    CopyPlanettoGeneral                 ; get planet position
                         call    RestoreMMU6                         ; get current Universe Object back
                         ld      iy,PlanetXPos
@@ -295,10 +293,9 @@ UpdatePlanetTracking:   call    SaveMMU6                            ; save curre
                         jp      UnivSeekingLogic                     ; 
                         ; implicit ret
 ;.. If we are close enough moce to docking phase
-.MoveToDockingPhase:    DISPLAY "TODO: Add in transitiion to docking phase"
+.MoveToDockingPhase:
                         ret
 
-                         DISPLAY "TODO: Sort out random directio etc if needed" 
 ;.. Close enough to start docking ..................................
 
 
@@ -318,10 +315,9 @@ UpdateSunTracking:      call    SaveMMU6
                         jp      UnivSeekingLogic                     ; 
                         ret
                         
-                            DISPLAY "TODO: Sort out docking" 
 UnivDocking:            ret
 
-UnivMoveToJump:         DISPLAY "TODO: Add flash of light jump logic into ships. similar to explosion but just a star of random lines and no kill score"
+UnivMoveToJump:
                         ret
 
 UnivSeekingLogic:       call    TacticsDotNosev                     ; TacticsVarResult = nose . Target Vector                           (     ->TAS3)

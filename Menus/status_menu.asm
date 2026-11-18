@@ -149,7 +149,6 @@ STAT_expand_name:       ld      a,(hl)
                         jr      STAT_expand_name
 
 ;----------------------------------------------------------------------------------------------------------------------------------	
-    DISPLAY "TODO GetStatMissileCount:    ld      a,("
 ;----------------------------------------------------------------------------------------------------------------------------------	
 GetStatFuelLevel:       ld		a,(Fuel)
                         ld		de,txt_stat_fuel_level
@@ -252,7 +251,6 @@ STAT_buffer_list:       ld      hl,txt_equipment_01                         ; hl
                         ld      l,a                                         ;
                         ld      de,iy                                       ; de = target buffer
                         call    STAT_copy_str_hl_to_de
-                        DISPLAY "TODO - rewrite for all weapon types and set colour as per status"
                         ld      de,txt_equipment_len                        ; move to next output slot
                         add     iy,de                                       ;
                         pop     bc                        
@@ -435,7 +433,6 @@ status_equipment_list:  DB equipment1_pos_row   , low 008, high 008, $FF, low tx
                         DB equipment9_pos_row   , low 160, high 160, $FF, low txt_equipment_18           , high txt_equipment_18
                         DB equipment10_pos_row  , low 008, high 008, $FF, low txt_equipment_19           , high txt_equipment_19
                         
-    DISPLAY "TODO - IN ALL MENUS INITIALISE BOILER TEXT TO BLANKS IN CASE REDISPLAY IS POST A STATUS CHANGE"                        
 status_boiler_count     equ 12
 
 txt_stat_commander 			DB "COMMANDER",0

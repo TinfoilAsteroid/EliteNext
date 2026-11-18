@@ -1,46 +1,15 @@
 
-                DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
-                DISPLAY "MASTER TODO LIST"
-                DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
-                DISPLAY "TODO: Optimisation"
-                DISPLAY "TODO: Review spawn logic for crash"
-                DISPLAY "TODO: Add space station safe boundary indicator"
-                DISPLAY "TODO: Optimise apply my to planets and sun to consider if 24 bit can be doen using 16 bit if sgn is just a sign bit"
-                DISPLAY "TODO: Verify post hyper space"
-                DISPLAY "TODO: Why no count down text sometimes"
-                DISPLAY "TODO: Galaxy drive jump"
-                DISPLAY "TODO: Different missile types"
-                DISPLAY "TODO: Log divide maths"
-                DISPLAY "TODO: Optimise for solid fill"
-                DISPLAY "TODO: Load and save commander logic"
-                DISPLAY "TODO: chars and displays into 80 column mode"
-                DISPLAY "TODO: Mission coding"
-                DISPLAY "TODO: Improve laser code"
-                DISPLAY "TODO: Improve chart cursor code"
-                DISPLAY "TODO: Test joystick"
-                DISPLAY "TODO: Test exetended keys"
-                DISPLAY "TODO: Line drawing colour improvement"
-                DISPLAY "TODO: Remove meridian code"
-                DISPLAY "TODO: Sound FXs"
-                DISPLAY "TODO: Jump stop bong noise"
-                DISPLAY "TODO: Switch radar range functionality"
-                DISPLAY "TODO: Add in damage status displays"
-                DISPLAY "TODO: Bug random dissapearance of ship in front view after time"
-                DISPLAY "TODO: Bug random flattening of ship in front view after time"
-                DISPLAY "TODO: Bug random exploising of station in front view after time, seems to affect short distance out"
-                DISPLAY "TODO: System map, showing planet, sun, space station and ship position, flat map compress Z, perhaps a +/- height value, say +/- character for every + 40 on z sign?"
-                DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
-                DISPLAY "DONE: Clean up console and remove compasses"
-                DISPLAY "DONE: Re-Write of Tidy"
-                DISPLAY "DONE: Apply my Roll and Pitch to 24 bit"
-                DISPLAY "DONE: Move compases to border"
-                DISPLAY "DONE: Removed test harness code and moved to Test folder"
-                DISPLAY "-------------------------------------------------------------------------------------------------------------------------"
                 
 
 
     DEVICE ZXSPECTRUMNEXT
     SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
+; REAL_HARDWARE: the build for a real Next (sjasmplus -DREAL_HARDWARE, or build.bat hardware): the screen clear and
+; memfill_dma use DMA+ fill mode (core 3.03.00 or later, Documentation/ZXNDDMA.md) and the result is EliteNHW.nex.
+; CSpect has no DMA+, so the normal build (EliteN.nex) uses the plain zxnDMA only
+    IFDEF REAL_HARDWARE
+        DISPLAY "REAL_HARDWARE set: the build for a real Next (DMA+, core 3.03.00 or later), EliteNHW.nex"
+    ENDIF
     ;DEFINE  STARTUPDIAGS 1              ; use for displaying sprite data on start up for basic diagnostics
     DEFINE  DOUBLEBUFFER 1
     DEFINE  LATECLIPPING 1
@@ -450,7 +419,7 @@ GetStationVectorToWork: ld      hl,UBnKxlo
 
 ;TidyCounter             DB  0
 
-            ;INCLUDE "./debugMatrices.asm"
+            ;INCLUDE "./Unused/debugMatrices.asm"
 
 
 ; Need this table to handle differnet events 
@@ -466,8 +435,6 @@ ScreenTransitionForced  DB $FF
 
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-                        DISPLAY "TODO: Check collision detection as currently can destroy space station"
-                        DISPLAY "TODO: Docking works but bouncing off is wrong for space station"
     
 InitialiseCommander:    ld      a,(ScreenCmdr+1)
                         jp      SetScreenA
@@ -533,7 +500,7 @@ SeedGalaxy0Loop:        push    ix
                         jr      nz,SeedGalaxy0Loop
                         ret
             
-    ;include "./ModelRender/testdrawing.asm"
+    ;include "./ModelRender/Unused/testdrawing.asm"
     IFDEF SKIPATTRACT
         DISPLAY "NOT LOADING ATTRACT MODE CODE"
     ELSE
@@ -642,6 +609,13 @@ IM2Routine:             IFDEF INTERRUPT_BLOCKER
                         push    af,,bc,,de,,hl
                         ld      hl,InterruptCounter
                         inc     (hl)                        ; cycles each interrupt                    
+                        ld      a,(GamePaused)              ; 16 bit 50Hz frame counter for game timers
+                        and     a                           ; it stops while the game is paused
+                        jr      nz,.FrameCountPaused        ; .
+                        ld      hl,(FrameCounter16)         ; .
+                        inc     hl                          ; .
+                        ld      (FrameCounter16),hl         ; .
+.FrameCountPaused:
 IM2SoundHandler:        call    IM2Sound                    ; This is a self modifying code address to change the actual sound vector if we are doing special music e.g. intro or docking
                         pop    af,,bc,,de,,hl
                         ex      af,af'
@@ -1126,7 +1100,7 @@ GALAXYDATABlock7:   DB $FF
                     DISPLAY "*** ./Maths/MathsBankedFns.asm  - BankMathsBankedFns"
                     INCLUDE "./Maths/MathsBankedFns.asm"
                     DISPLAY "*** removed ./Maths/asm_tidy.asm - BankMathsBankedFns"
-                    ;INCLUDE "./Maths/asm_tidy.asm"
+                    ;INCLUDE "./Maths/Unused/asm_tidy.asm"
                     DISPLAY "*** ./Maths/normalise96.asm - BankMathsBankedFns"
                     INCLUDE "./Maths/normalise96.asm"
                     ;INCLUDE "./Maths/binary_to_decimal.asm"
@@ -1141,7 +1115,12 @@ GALAXYDATABlock7:   DB $FF
                     DISPLAY "Bank ",BankPIFns," - Bytes free ",/D, $2000 - ($-PIFnsAddr), " - BankPIFns"
                     ASSERT $-PIFnsAddr <8912, Bank code leaks over 8K boundary
     ENDIF
+    IFDEF REAL_HARDWARE
+    SAVENEX OPEN "EliteNHW.nex", EliteNextStartup , TopOfStack
+    SAVENEX CORE 3,3,0                              ; DMA+ needs core 3.03.00
+    ELSE
     SAVENEX OPEN "EliteN.nex", EliteNextStartup , TopOfStack
+    ENDIF
     SAVENEX CFG  0,0,0,1
     SAVENEX AUTO
     SAVENEX CLOSE

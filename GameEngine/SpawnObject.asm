@@ -16,7 +16,6 @@ SpawnMissileHandler:            ld      a,(UbnKShipUnivBankNbr)             ; sa
                                 dec     (hl)
                                 ret
 
-            DISPLAY "TODO: FOR NOW ONLY 1 MISSILE TYPE"
 SpawnPlayerMissileHandler:      ZeroA                                       ; TODO For now only 1 missile type
                                 GetByteAInTable ShipMissileTable            ; swap in missile data
                                 call    SpawnShipTypeA                      ; spawn the ship
@@ -27,7 +26,6 @@ SpawnPlayerMissileHandler:      ZeroA                                       ; TO
                                 ClearMissileTargetting                      ; reset targetting
                                 ld      hl, NbrMissiles
                                 dec     (hl)
-            DISPLAY "TODO: handle removal of missile from inventory and console"
                                 ret
 .MissileMissFire:               ClearMissileTargetting
                                 ret ; TODO bing bong noise misfire message
@@ -118,7 +116,6 @@ SpawnHostileCop:                ld      a,ShipID_Viper
                                 call    SpawnShipTypeA                      ; call rather than jump
                                 call    SetShipHostile                      ; as we have correct universe banked in now
                                 ret
-            DISPLAY "TODO: SPAWN TRADER"
 SpawnTrader:       ; TODO
 
 ; DEFUNCT?SpawnAHostileHunter:    ld      hl, ExtraVesselsCounter             ; prevent the next spawning
@@ -136,8 +133,6 @@ SpawnTrader:       ; TODO
 ; output b = maximum to spawn (0 means no spawn)
 ;        de = spawn table address (0 means no spawn)
 ;        iy = hl  = spawn handler routine address
-    DISPLAY "TODO: SelectSpawnTableData needs algorithim for selecting the spawn rank table based on commander, galaxy etc"
-    DISPLAY "TODO: SelectSpawnTableData for now only does basic 'A' table selection"
 SelectSpawnTableData:   
                         ;ld      a,(ix+1*SpawnTableSize)             ; Table Type, e.g. SpawnTypeTrader being an off set (SpaceStatoin = 0, Trader = 4 etc)
                         ;ld      hl,SpawnTypeHandlers                ; hl = the location in spawn hanlder routine look up table for the call address for setting up a spawn

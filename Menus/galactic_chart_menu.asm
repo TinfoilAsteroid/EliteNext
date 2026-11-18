@@ -405,7 +405,6 @@ l2_GCM_circle_320:          ld      a,e
                             ret
 
     ;INCLUDE "Menus/print_boiler_text_inlineInclude.asm"
-                DISPLAY "TODO: move cursor code"
 ; TODO MOVE CURSOR CODE
 
 ;----------------------------------------------------------------------------------------------------------------------------------

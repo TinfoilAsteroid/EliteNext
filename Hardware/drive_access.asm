@@ -71,9 +71,7 @@ fOpen:	                ld	    a,(DefaultDrive); default drive must be called bef
                         rst	    $08
                         db	    F_OPEN
                         ld      (FileHandle),a  ; make a local copy of last file opened
-                        jr      c,.FileOpenError
-                        ret
-.FileOpenError:         jp      .FileOpenError	
+                        ret                     ; carry set on error (a = error code), FileLoad / FileSave handle it
 
 ; *******************************************************************************************************
 ;	Function	refills the buffer map with card addresses for the file
@@ -321,7 +319,13 @@ FileSave:	            call    GetDefaultDrive		; need to do this each time?!?!?
                         jr	c,.error
                         pop	af			            ; get handle back
                         call	fClose			    ; close file
-.error:                 ret
+                        ret
+.error:                 pop     bc                  ; b = handle (pushed with af), the stack is balanced again
+                        push    af                  ; keep the error code and carry
+                        ld      a,b                 ; close the file
+                        call    fClose              ; .
+                        pop     af                  ; carry set, a = error code
+                        ret
 ;
 ; On error, display error code an lock up so we can see it
 ;

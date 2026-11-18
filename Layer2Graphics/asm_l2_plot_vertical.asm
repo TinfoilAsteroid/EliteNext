@@ -96,7 +96,6 @@ l2_draw_vert_line_to:   ld		a,b
 l2_draw_vert_line_320:  ZeroA
                         or      e
                         ret     z							; if its zero length then just return
-                        DISPLAY "TODO need 1 pixel logic"
                         push    bc
 .selectBank:            call    asm_l2_320_col_bank_select  ; select bank and load row into h
                         pop     bc

@@ -244,7 +244,7 @@ KeyCode_ExtGlactic      equ VK_GRAPH
 KeyCode_ExtLocal        equ VK_EXTCAPS
 KeyCode_ExtSystemJump   equ VK_EXTEND 
 
-Keys					DS	55          ; This is the list of key states for all the VK keys presssed i.e. VK_CAPS through to VK_B
+Keys					DS	56          ; key states for VK_CAPS (0) through VK_EXTEND (55): 40 matrix keys + 16 extended
 c_KeyBoardLen 			equ $ - Keys
 RawKeys					DS	10          ; increased for extended keys
 KeyAddrTab				DB	$FE, $FD, $FB, $F7, $EF, $DF, $BF, $7F

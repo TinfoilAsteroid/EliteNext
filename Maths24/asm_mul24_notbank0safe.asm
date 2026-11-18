@@ -53,8 +53,6 @@
 ;  H1 * H2            X X          9    bc = b * c   (H1 * H2)  add bc,ah,c                                (result ahl) with hl being
 ;                     b c d e h l for result we only care about cde.h
 ;signed muliply 
-    DISPLAY "TO DO - add leading sign to mul24"
-    DISPLAY "TO DO - Optimisae mul24 for leading 0's to do 8.8 x 8.8"
     DISPLAY "NOT BANK0 SAFE"
 ;BH.L by CD.E putting result in BCDE.HL and put the resullt in MulitplyResults then puyll teh actual result to BCDE.HL
 mul24Signed:            ld      a,b

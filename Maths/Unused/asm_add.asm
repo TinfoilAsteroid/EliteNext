@@ -87,7 +87,6 @@ ADDHLDEsBCSameSigns:    ld      a,b
                         ret
 ADDHLDEsBCSameNeg:      add     hl,de
                         ld      a,b
-                                            DISPLAY "TODO: don't bother with overflow for now"
                         or      c                           ; now set bit for negative value, we won't bother with overflow for now TODO
                         ret
 ADDHLDEsBCOppSGN:       ClearCarryFlag
@@ -118,7 +117,6 @@ ADDHLDESignedV4:        ld      a,h
                         ld      d,a
                         add     hl,de
                         ld      a,SignOnly8Bit
-                                        DISPLAY "TODO:  dont bother with overflow for now"
                         or      h                           ; now set bit for negative value, we won't bother with overflow for now TODO
                         ld      h,a
                         ret
@@ -191,7 +189,6 @@ ADDHLDESignedV4:        ld      a,h
                         
 ; 06 06 2022 not used
 ; HL = HL (signed) + A (unsigned), uses HL, DE, A
-        DISPLAY "TODO: AddAusngToHLsng not used"
 ;;;AddAusngToHLsng:        ld      d,a
 ;;;                        ld      e,h
 ;;;                        ld      a,h
@@ -205,7 +202,6 @@ ADDHLDESignedV4:        ld      a,h
 ;;;                        ret
 ; 06 06 2022 not used
 ; HL = A (unsigned) - HL (signed), uses HL, DE, BC, A
-        DISPLAY "TODO: HLEequAusngMinusHLsng not used"
 ;;;HLEequAusngMinusHLsng:  ld      b,h
 ;;;                        ld      c,a
 ;;;                        ld      a,b
@@ -301,7 +297,6 @@ AddBCHtoDELsigned:      ld      a,b                 ; Are the values both the sa
 
 ; 06 06 2022 not used                       
 ;BHL = AHL + DE where AHL = 16 bit + A sign and DE = 15 bit signed    
-        DISPLAY "TODO: AddAHLtoDEsigned not used"
 ;;;AddAHLtoDEsigned:       ld      b,a                     ; B = A , C = D (save sign bytes)
 ;;;                        ld      c,d                     ; .
 ;;;                        xor     c                       ; A = A xor C

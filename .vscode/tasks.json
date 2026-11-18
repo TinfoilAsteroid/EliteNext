@@ -7,7 +7,7 @@
             "label": "sjasmplus",
             "type": "shell",
             "command": "sjasmplus",
-            "args": ["--msg=all" ,"--color=auto", "--sld=eliteNext.sld", "--fullpath", "eliteNext.asm"
+            "args": ["--msg=all" ,"--color=auto", "--sld=eliteNext.sld", "--sym=eliteN.sym", "--fullpath", "eliteNext.asm"
             ],
            "problemMatcher": [],
             "group": {
