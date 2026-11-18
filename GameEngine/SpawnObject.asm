@@ -111,14 +111,12 @@ SpawnTypeMissionEventHandler:
 SpawnTypeDoNotSpawnHandler:     ret
 
 
-
 SpawnHostileCop:                ld      a,ShipID_Viper
                                 call    SpawnShipTypeA                      ; call rather than jump
                                 call    SetShipHostile                      ; as we have correct universe banked in now
                                 ret
 SpawnTrader:       ; TODO
 
-; DEFUNCT?SpawnAHostileHunter:    ld      hl, ExtraVesselsCounter             ; prevent the next spawning
 ; DEFUNCT?                        inc     (hl)                                ;
 ; DEFUNCT?                        and     3                                   ; a = random 0..3
 ; DEFUNCT?                        MMUSelectShipBank1
@@ -134,14 +132,6 @@ SpawnTrader:       ; TODO
 ;        de = spawn table address (0 means no spawn)
 ;        iy = hl  = spawn handler routine address
 SelectSpawnTableData:   
-                        ;ld      a,(ix+1*SpawnTableSize)             ; Table Type, e.g. SpawnTypeTrader being an off set (SpaceStatoin = 0, Trader = 4 etc)
-                        ;ld      hl,SpawnTypeHandlers                ; hl = the location in spawn hanlder routine look up table for the call address for setting up a spawn
-                        ;add     hl,a                                ; adjust for 2 * A to get the address of the respective spawn hanlder routine
-                        ;add     hl,a                                ; .
-                        ;ld      a,(hl)                              ; then get the address from that table into HL
-                        ;inc     hl                                  ; .
-                        ;ld      h,(hl)                              ; .
-                        ;ld      l,a                                 ; hl now is proper address
                         ld      b,(ix+2*SpawnTableSize)             ; Get Nbr of objects to  Spawn
                         ld      e,(ix+3*SpawnTableSize)             ; Spawn Rank Table Addr Low
                         ld      d,(ix+4*SpawnTableSize)             ; Spawn Rank Table Addr Hi
@@ -182,14 +172,6 @@ SelectSpawnType:        push    hl                                  ; save hl fo
                         ld      c,a                                 ; so now b = rank, c = type
                         ret                                         ; we are only selecting a candidate so no need for carry flag logic anymore
                         
-                        ;ld      a,(CurrentRank)                     ; are we experienced enough to face this ship
-                        ;JumpIfAGTENusng b, .GoodToSpawn             ; if current rank >= table rank, we are good
-;.TooLowRank:            ld      hl,iy
-;                        djnz    .SelectSpawnType                    ; 3 goes then fail out
-;.NoSpawn:               SetCarryFlag
-;                        ret
-;GoodToSpawn:           ClearCarryFlag                              ; carry is clear as we are 
-;                       ret
 
 ; Spawn table is in two halves. if we are within range X of space station we use the second table
 ; thsi means we coudl in theory drag a hunter / pirate or thargoid say into a space station zone

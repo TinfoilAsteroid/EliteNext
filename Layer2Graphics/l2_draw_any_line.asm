@@ -378,7 +378,9 @@ L2LVertical:            ld      a,d
                         djnz    .Run
                         ret
 
-; c = x1, b = y1, e = x2, d = y2, x1 <> x2 and y1 <> y2; drawn top to bottom
+; c = x1, b = y1, e = x2, d = y2, x1 <> x2 and y1 <> y2; drawn top to bottom. The loops are Z-Police's draw_line
+; (H:/OneDrive/ZPolice/city.asm): the error stays in A and the colour in C, the x step is patched in; here the Layer 2
+; bank changes at row 64 (port $123B thirds) where Z-Police's changes every 32 rows (MMU slot 0)
 L2LDiagonal:            ld      a,d
                         sub     b
                         jr      nc,.YOrdered
@@ -398,16 +400,15 @@ L2LDiagonal:            ld      a,d
                         neg
                         ld      e,L2L_OPCODE_DEC_L
 .XRight:                ld      (L2LDx),a
-                        ld      a,e                             ; patch x step and colour into both loops
+                        ld      a,e                             ; patch the x step into both loops
                         ld      (L2LXMajor.Step),a
                         ld      (L2LYMajor.Step),a
-                        ld      a,(line_gfx_colour)
-                        ld      (L2LXMajor+1),a
-                        ld      (L2LYMajor+1),a
                         ld      l,c
                         ld      a,b
-                        call    asm_l2_row_bank_select
+                        call    asm_l2_row_bank_select          ; (destroys bc)
                         ld      h,a                             ; hl = top pixel
+                        ld      a,(line_gfx_colour)
+                        ld      c,a                             ; c = colour
                         ld      a,(L2LDx)
                         ld      d,a                             ; d = dx
                         ld      a,(L2LDy)
@@ -417,46 +418,36 @@ L2LDiagonal:            ld      a,d
                         ld      b,d                             ; dx + 1 pixels, dx = 255 gives b = 0 = 256
                         inc     b
                         ld      a,d
-                        srl     a
-                        ld      c,a                             ; error = dx / 2
+                        srl     a                               ; error = dx / 2
                         jp      L2LXMajor
 .YMajor:                ld      b,e                             ; dy + 1 pixels
                         inc     b
                         ld      a,e
-                        srl     a
-                        ld      c,a                             ; error = dy / 2
+                        srl     a                               ; error = dy / 2
                         jp      L2LYMajor
 
-; hl = pixel, b = count, c = error, d = dx, e = dy
-L2LXMajor:              ld      (hl),0                          ; colour patched
+; hl = pixel, b = count, a = error, c = colour, d = dx, e = dy
+L2LXMajor:              ld      (hl),c
 .Step:                  inc     l                               ; inc l / dec l patched
-                        ld      a,c
                         sub     e
                         jr      nc,.NoY
+                        inc     h
+                        bit     6,h                             ; left the 64 row third?
+                        call    nz,L2LNextBank
                         add     a,d
-                        inc     h
-                        bit     6,h
-                        jr      nz,.NextBank
-.NoY:                   ld      c,a
-                        djnz    L2LXMajor
+.NoY:                   djnz    L2LXMajor
                         ret
-.NextBank:              call    L2LNextBank
-                        jr      .NoY
 
-L2LYMajor:              ld      (hl),0                          ; colour patched
+L2LYMajor:              ld      (hl),c
                         inc     h
-                        bit     6,h
-                        jr      nz,.NextBank
-.BankDone:              ld      a,c
+                        bit     6,h                             ; left the 64 row third?
+                        call    nz,L2LNextBank
                         sub     d
                         jr      nc,.NoX
-                        add     a,e
 .Step:                  inc     l                               ; inc l / dec l patched
-.NoX:                   ld      c,a
-                        djnz    L2LYMajor
+                        add     a,e
+.NoX:                   djnz    L2LYMajor
                         ret
-.NextBank:              call    L2LNextBank
-                        jr      .BankDone
 
 ; row 63 -> 64, the window only spans banks 0 and 1 so the next bank is always 1; preserves af, bc, de, l
 L2LNextBank:            push    af

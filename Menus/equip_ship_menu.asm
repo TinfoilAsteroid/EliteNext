@@ -295,8 +295,6 @@ eqshp_buffer_list:      ld      hl,eqship_display_buffer                    ; hl
                         ld      a,(ix+5)
                         ld      d,a                                         ; de = price
                         ld      ix,de
-                        ;push    de
-                        ;pop     ix
                         ld      de,0                                        ; deix = price
                         call    eqshp_DispDEIXtoIY                          ; print it to pos IY
                         ld      a," "

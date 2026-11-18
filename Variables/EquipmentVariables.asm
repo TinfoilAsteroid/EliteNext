@@ -8,7 +8,6 @@ CargoBaySize			DB	70				; 036E
 CargoRunningLoad        DB  0
 ;                           0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
 CargoTonnes             DB  0,0,0,0,0,0,0,0,0,0, 0, 0, 0, 0, 0, 0, 0
-;CargoTonnes		    DB	16,1,2,3,4,5,6,7,6,9,10,11,12,13,14,15			; 036F - 037F	QQ20
 SlaveCargoTonnes		equ CargoTonnes+3
 NarcoticsCargoTonnes	equ CargoTonnes+6
 FirearmsCargoTonnes		equ CargoTonnes+10

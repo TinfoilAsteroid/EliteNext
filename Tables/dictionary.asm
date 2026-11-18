@@ -101,7 +101,6 @@ WordInv                     DB  "Inv",0                ;98
 WordStock                   DB  "Stock",0              ;99
 WordEquip                   DB  "Equip",0              ;100
 WordShip                    DB  "Ship",0               ;101
-;WordMissile                 DB  "Missile",0            ;102
 WordHyperdrive              DB  "Hyperdrive",0
 WordMilitary                DB  "Military",0
 WordAdder                   DB  "Adder",0
@@ -151,7 +150,6 @@ WordRattler                 DB  "Rattler",0
 WordSpecies                 DB  "Species",0
 WordDescription             DB  "Description",0
 
-;ALIGN 2             ; This next table must start on an even address
 WordPtr             DW  WordDummy,          WordFront,        WordRight,        WordLeft        ;0-3
                     DW  WordRear,           WordLarge,        WordEscape,       WordPod         ;4-7
                     DW  WordCargo,          WordBay,          WordFuel,         WordScoops      ;8
@@ -304,7 +302,6 @@ expandTokenToString:    ld      hl,TextTokens           ; get the address of the
 .WordExpandLoop:        ld      a,(hl)
                         cp      0
                         jr      z,.AddSpace
-;.GetChar:  
                         ld      (de),a
                         inc     de
                         inc     hl

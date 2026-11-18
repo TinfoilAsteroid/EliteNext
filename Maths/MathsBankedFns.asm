@@ -63,47 +63,6 @@ ADDHLDESignBC:          ld      a,b
                         ld      a,b
                         xor     SignOnly8Bit                ; flip sign bit
                         ret   
-;DEPRECATEDADDHLDESignedV4:        ld      a,h
-;DEPRECATED                        and     SignOnly8Bit
-;DEPRECATED                        ld      b,a                         ;save sign bit in b
-;DEPRECATED                        xor     d                           ;if h sign and d sign were different then bit 7 of a will be 1 which means 
-;DEPRECATED                        JumpIfNegative .ADDHLDEOppSGN       ;Signs are opposite there fore we can subtract to get difference
-;DEPRECATED.ADDHLDESameSigns:      ld      a,b
-;DEPRECATED                        or      d
-;DEPRECATED                        JumpIfNegative .ADDHLDESameNeg      ; optimisation so we can just do simple add if both positive
-;DEPRECATED                        add     hl,de
-;DEPRECATED                        ret
-;DEPRECATED.ADDHLDESameNeg:        ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit
-;DEPRECATED                        and     SignMask8Bit                ; we could check the value of b for optimisation
-;DEPRECATED                        ld      h,a
-;DEPRECATED                        ld      a,d
-;DEPRECATED                        and     SignMask8Bit
-;DEPRECATED                        ld      d,a
-;DEPRECATED                        add     hl,de
-;DEPRECATED                        ld      a,SignOnly8Bit
-;DEPRECATED                        DISPLAY "TODO:  dont bother with overflow for now"
-;DEPRECATED                        or      h                           ; now set bit for negative value, we won't bother with overflow for now TODO
-;DEPRECATED                        ld      h,a
-;DEPRECATED                        ret
-;DEPRECATED.ADDHLDEOppSGN:         ld      a,h                         ; so if we enter here then signs are the same so we clear the 16th bit                     ; here HL and DE are opposite 
-;DEPRECATED                        and     SignMask8Bit                ; we could check the value of b for optimisation
-;DEPRECATED                        ld      h,a
-;DEPRECATED                        ld      a,d
-;DEPRECATED                        and     SignMask8Bit
-;DEPRECATED                        ld      d,a
-;DEPRECATED                        ClearCarryFlag
-;DEPRECATED                        sbc     hl,de
-;DEPRECATED                        jr      c,.ADDHLDEOppInvert
-;DEPRECATED.ADDHLDEOppSGNNoCarry:  ld      a,b                         ; we got here so hl > de therefore we can just take hl's previous sign bit
-;DEPRECATED                        or      h
-;DEPRECATED                        ld      h,a                         ; set the previou sign value
-;DEPRECATED                        ret
-;DEPRECATED.ADDHLDEOppInvert:      NegHL                                                   ; we need to flip the sign and 2'c the Hl result
-;DEPRECATED                        ld      a,b
-;DEPRECATED                        xor     SignOnly8Bit                ; flip sign bit
-;DEPRECATED                        or      h
-;DEPRECATED                        ld      h,a                         ; recover sign
-;DEPRECATED                        ret 
 
 ;-- checks to see if a postition is in range of another, e.g. missile hit
 ;-- ix = ship position    - pointer to S15.8 xyz vector as 3 bytes per element (lo, hi, sign)
@@ -420,6 +379,5 @@ CopyRotmatToUBnKTacticsMat: ld      de,UBnKTacticsRotMatX
                         ld      (de),a              ; set rot mat sign
                         ret
         ENDIF
-
 
 

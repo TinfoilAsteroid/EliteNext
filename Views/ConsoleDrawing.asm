@@ -616,49 +616,6 @@ SunShiftRight           MACRO   reglo, reghi, regsgn
                         ld      regsgn,a
                         ENDM
 
-;SunShiftPosTo15Bit:     ld      de,(SBnKzlo)
-;                        ld      a,(SBnKzsgn)
-;                        push    af
-;                        and     SignMask8Bit
-;                        ld      iyl,a
-;                        ld      hl,(SBnKxlo)
-;                        ld      a,(SBnKxsgn)
-;                        push    af
-;                        and     SignMask8Bit
-;                        ld      ixl,a
-;                        ld      bc,(SBnKylo)
-;                        ld      a,(SBnKysgn)
-;                        and     SignMask8Bit
-;                        push    af
-;                        ld      iyh,a
-;.ShiftLoop:             ld      a,iyh
-;                        or      iyl
-;                        or      ixl
-;                        jr      z,.ShiftBit15
-;.ShiftZ:                SunShiftRight iyl, d, e
-;.ShiftX:                SunShiftRight ixl, h, l
-;.ShiftY:                SunShiftRight ixh, b, c
-;                        jr      .ShipLoop
-;.ShiftBit15:            ld      a,iyh
-;                        or      iyl
-;                        or      ixl
-;                        jr      z,.CompletedShift
-;.ShiftZ:                SunShiftRight iyl, d, e
-;.ShiftX:                SunShiftRight ixl, h, l
-;.ShiftY:                SunShiftRight ixh, b, c             ; finally shift to 15 bits so we can get the sign back
-;.CompletedShift:        pop     af                          ; get ysgn
-;                        and     SignOnly8Bit
-;                        or      b
-;                        ld      b,a
-;                        pop     af                          ; get xsgn
-;                        and     SignOnly8Bit
-;                        or      h
-;                        ld      h,a                        
-;                        pop     af                          ; get zsgn
-;                        and     SignOnly8Bit
-;                        or      d
-;                        ld      d,a
-;                        ret
 ;                        
 ScalePlanetPos:         ld      de,(P_BnKzhi)               ; de = abs z & save sign on stack
                         ld      a,d                         ; .
@@ -1391,7 +1348,6 @@ RadarEdgeDotIX:         ld      (RadarEdgeColour),a
 ; Supports 24 bit xyz
 UpdateScannerShip:      ld      a,(UBnKexplDsp)             ; if bit 4 is clear then ship should not be drawn
                         bit     4,a                         ; .
-                        ;DEBUG ret     z                           ; .
                         ld      a,(ShipTypeAddr)            ; if its a planet or sun, do not display
                         bit     7,a
                         ret     nz

@@ -1,10 +1,4 @@
-;StatusLaserName1    DB  "Pulse",0
-;StatusLaserName2    DB  "Beam",0
-;StatusLaserName3    DB  "Military",0
-;StatusLaserName4    DB  "Mining",0
-;StatusLaserName5    DB  "Custom",0
 ;
-;StatusLaserNameIdx  DW  StatusLaserName1,StatusLaserName2,StatusLaserName3,StatusLaserName4,StatusLaserName5
 ;StatusLaserNameIdxLen EQU $ - StatusLaserNameIdx
 
 
@@ -36,7 +30,6 @@ RankingEQDeadly     EQU 7
 RankingEQElite      EQU 8
 RankingEQSkollob    EQU 9
 RankingEQNutter     EQU 10
-
 
 
 RankingNameIdx      dw RankingName1,RankingName2,RankingName3,RankingName4,RankingName5,RankingName6,RankingName7,RankingName8,RankingName9,RankingName10,RankingName11

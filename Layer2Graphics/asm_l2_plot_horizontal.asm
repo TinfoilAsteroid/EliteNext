@@ -82,7 +82,6 @@ l2_draw_horz_line_to:   ld 		a,d
                         ld		c,a
 .noswap:                ld		a,d
                         sub		c
-;                        dec		a							; so now its length not offset
                         ld		d,a
                         jr 		l2_draw_horz_line			; hijack routine and return statements
 .singlepixel:           ld		a,e

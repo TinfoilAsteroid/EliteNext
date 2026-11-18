@@ -1,12 +1,12 @@
-"""Run the regression tests: every Tests/test_*.py, at the same time (one
+"""Run the regression tests: every Tools/test_*.py, at the same time (one
 process each), on the built EliteN.nex.  Run by elitebuild.bat after
 assembling; or by hand:
 
-    python Tests/run_tests.py              all of them
-    python Tests/run_tests.py maths lines  only test_maths.py and test_lines.py
+    python Tools/run_tests.py              all of them
+    python Tools/run_tests.py maths lines  only test_maths.py and test_lines.py
 
 Prints each file's results as it finishes; the exit code is 1 if any test
-failed.  A file on its own: python Tests/test_maths.py [test name...].
+failed.  A file on its own: python Tools/test_maths.py [test name...].
 """
 import glob
 import os
@@ -15,8 +15,8 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-TESTS = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(TESTS)
+TOOLS = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(TOOLS)
 
 
 def run(path):
@@ -26,7 +26,7 @@ def run(path):
 
 
 def main():
-    files = sorted(glob.glob(os.path.join(TESTS, "test_*.py")))
+    files = sorted(glob.glob(os.path.join(TOOLS, "test_*.py")))
     want = sys.argv[1:]
     if want:
         files = [f for f in files if os.path.basename(f)[5:-3] in want or os.path.basename(f) in want]

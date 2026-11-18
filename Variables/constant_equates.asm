@@ -146,9 +146,6 @@ ShipHasEscapePod        equ Bit7Only   ;
 ShipHostileNewBitNbr    equ 2
 
 ; UBnkaiatkecm
-;Unused                 equ Bit0Only
-;Unused                 equ Bit1Only
-;Unused                 equ Bit2Only
 ShipIsDot               equ Bit3Only
 ShipKilled              equ Bit4Only    ; Ship has just been marked as killed so initiate cloud of debris
 ShipExploding           equ Bit5Only
@@ -157,7 +154,6 @@ ShipAIEnabled           equ Bit7Only   ;
 
 
 ; UBnkaiakecm 2
-;ShipAngryNewBitNbr      equ 4
 ShipExplosionDuration   equ 75         ; amount of frames an explosion lasts for
 ShipNotHostile          equ Bit2Clear   ;
 ShipIsNotDot            equ Bit3Clear

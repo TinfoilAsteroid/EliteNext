@@ -1,7 +1,7 @@
-"""Shared helpers for the emulator tests (Tests/test_*.py).
+"""Shared helpers for the emulator tests (Tools/test_*.py).
 
-Each test file runs on its own (python Tests/test_maths.py [test name...]) or
-from Tests/run_tests.py, which runs them all at once.  A test is a function
+Each test file runs on its own (python Tools/test_maths.py [test name...]) or
+from Tools/run_tests.py, which runs them all at once.  A test is a function
 test_NAME() that raises AssertionError (check()) when it fails; main() runs a
 file's tests and prints PASS or FAIL for each.
 
@@ -26,12 +26,13 @@ import tempfile
 import time
 import traceback
 
-TESTS = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(TESTS)
+TOOLS = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(TOOLS)
 NEX = os.path.join(ROOT, "EliteN.nex")
 SYMFILE = os.path.join(ROOT, "eliteN.sym")
 sys.path.insert(0, os.path.join(ROOT, "Tools"))
 import nexsim  # noqa: E402
+import sprite_writer  # noqa: E402
 
 FRAME_T = 28_000_000 // 50          # T-states per 50 Hz frame at 28 MHz
 RET = 0x5BFE                        # return address for call(): the printer buffer, never code
@@ -54,12 +55,13 @@ sym = load_sym()
 
 # --- the machine ------------------------------------------------------------
 class SD:
-    """A temporary SD card: copies of the files beside EliteN.nex that the
-    game reads (sprites, saves)."""
+    """A temporary SD card: the sprite pattern files written afresh by
+    Tools/sprite_writer.py, and copies of the saves beside EliteN.nex."""
 
     def __init__(self):
         self.root = tempfile.mkdtemp(prefix="elitetest_")
-        for pat in ("*.dat", "*.DAT", "*.SAV", "*.sav"):
+        sprite_writer.write(self.root)
+        for pat in ("*.SAV", "*.sav"):
             for f in glob.glob(os.path.join(ROOT, pat)):
                 shutil.copy(f, self.root)
 

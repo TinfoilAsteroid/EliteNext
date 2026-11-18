@@ -84,7 +84,6 @@ SRM_galactic_chart:         MMUSelectLayer1                         ; initialise
                             ld      a,SRM_cursor_dampen
                             ld      (SRM_cursor_dampen_timer),a
 .selectPresentSystem:       call    SRM_get_current_name
-;                            call    SRM_get_present_system
 .drawOuterBorder:           MMUSelectLayer2                         ; draw chart background graphics
                             call    l2_draw_menu_border
 .drawTextAreas:             ld      b,192
@@ -103,9 +102,6 @@ SRM_galactic_chart:         MMUSelectLayer1                         ; initialise
                             ld      (SRM_cursor_y),hl
                             call    SRM_draw_cursor
                         ; srm_position sthingsy
-;                            call    SRM_target_cursor
-;                            call    SRM_get_current_name
-;.getTargetName:             call    SRM_get_target_name
                             ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 SRM_get_current_name:       ld      a,(Galaxy)
@@ -135,7 +131,6 @@ SRM_bc_in_range_iy:         ClearCarryFlag
                             ret                                     ; set carry flag on failure
 ;----------------------------------------------------------------------------------------------------------------------------------
 SRM_plot_stars:             xor     a                               ; intiailise
-                            ;break
                             ld      (srm_star_cache_size),a         ; local copy of stars rendered
                             ld      (XSAV),a                        ; .
                             ld      ix,galaxy_data                  ; .
@@ -204,7 +199,6 @@ SRM_plot_stars:             xor     a                               ; intiailise
                             ld      (.StarCacheAddress+2),iy        ; .
                             pop     de
                             call    SRM_show_star_sprite            ; B = row, hl = col, d = radius, e = colour
-                       ; call    srm_get_name
                             MMUSelectLayer2
                             call    srm_label_system8bit
 .srmtoofar:                 pop     hl                              ; next seed
@@ -696,7 +690,6 @@ srm_label_system8bit:   call    copy_system_to_working  ; set up working seed
                         ret
 
                         
-                        
 ; hl = string pointer, returns b with length
 srm_string_len:         ld      b,a
 .FindLoop:              ld      a,(hl)
@@ -734,7 +727,6 @@ SRM_cursor_to_chart:    ld      hl,(SRM_cursor_x)               ; compensate for
                         add     hl,bc                           ; .
                         ld      b,l                             ; 
                         ld      c,e                             ; b = ypos c = xpos
-                        ;ld      bc,hl                          ; bc = (y on chart / 2)
                         ret
 
                         ; bc = chart row col absolute returns bc = screen row, hl = screen col
@@ -822,7 +814,6 @@ local_chart_cursors:    ld      a,(SRM_cursor_dampen_timer)             ; if tim
 srm_UpPressed:          push    af
                         ld     a,(SRM_cursor_y)
                         JumpIfAEqNusng   168, srm_BoundsLimit 
-                        ;break
                         inc    a
                         ld      (SRM_cursor_y),a
                         call    SRM_update_cursor
@@ -832,7 +823,6 @@ srm_UpPressed:          push    af
 srm_DownPressed:        push    af
                         ld     a,(SRM_cursor_y)
                         JumpIfAEqNusng   8, srm_BoundsLimit 
-                        ;break
                         dec    a
                         ld      (SRM_cursor_y),a
                         call    SRM_update_cursor
@@ -842,7 +832,6 @@ srm_DownPressed:        push    af
 srm_LeftPressed:        push    af
                         ld      a,(SRM_cursor_x)           ; can cheat and do 8 bit as we will never go beyond 80 and 240
                         JumpIfAEqNusng   64, srm_BoundsLimit 
-                        ;break
                         dec    a
                         ld      (SRM_cursor_x),a
                         call    SRM_update_cursor
@@ -852,7 +841,6 @@ srm_LeftPressed:        push    af
 srm_RightPressed:       push    af
                         ld      a,(SRM_cursor_x)           ; can cheat and do 8 bit as we will never go beyond 80 and 240
                         JumpIfAEqNusng   224, srm_BoundsLimit 
-                        ;break
                         inc    a
                         ld      (SRM_cursor_x),a
                         call    SRM_update_cursor
@@ -860,7 +848,6 @@ srm_RightPressed:       push    af
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 srm_HomePressed:        push    af
-                        ;break
                         ld      hl,srm_star_x_centre -15
                         ld      (SRM_cursor_x),hl
                         ld      hl,srm_star_y_centre -15
@@ -870,14 +857,8 @@ srm_HomePressed:        push    af
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 srm_RecenterPressed:    push    af
-                        ;break
 .GetCursorDistance:     call    srm_calc_cur_jumpable
                         jp      c,.TooFar
-                        ;ld      a,(Galaxy)      ; DEBUG as galaxy n is not working
-                        ;MMUSelectGalaxyA
-                        ;call    SRM_cursor_to_chart ; Convert cursor position to galactic chart position
-                        ;ld      (TargetSystemX),bc
-                        ;ld      bc,(TargetSystemX)
                         call    find_nearest_cache  ; find nearest system to galactic chart position
                         jp      c,.TooFar
                         ld      (TargetSystemX),bc  ; save galatic position to TargetSystemX
@@ -1030,7 +1011,6 @@ SRM_cursor_dampen_timer:    DB  0
 
 data_short_range_chart:     ;row  column low high  colr text address low high
 SRM_boiler_text             DB 002, low 064, high 064, $FF, low short_rg_chart_header,   high short_rg_chart_header
-
 
 
 short_rg_chart_header       DB "Galactic Chart:"

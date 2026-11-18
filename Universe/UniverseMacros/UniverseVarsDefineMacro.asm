@@ -327,7 +327,6 @@ prefix1?_InitRotMat:    ld      hl, 0
                         ld      (prefix1?_BnKrotmatNosevY),hl       ; set the zeroes
 ; Optimised as already have 0 in l
                         ld      h, $60	             				; 96 in hi byte
-                        ;ld      hl,1
                         ld      (prefix1?_BnKrotmatSidevX),hl
                         ld      (prefix1?_BnKrotmatRoofvY),hl
 ; Optimised as already have 0 in l

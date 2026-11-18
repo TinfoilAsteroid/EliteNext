@@ -161,9 +161,6 @@ MMUSelectSound:      MACRO
                      nextreg SoundMMU,		    BankSound
 					 ENDM
                      
-MMUSelectPIFns:      MACRO
-                     nextreg PIFnsMMU,          BankPIFns
-					 ENDM
                      
 
 SaveMMU6:           MACRO

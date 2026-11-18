@@ -63,60 +63,12 @@ l2way		db	0
 ; calculate deltaX, deltaY for line.
 ; calculate offsetY = TargetY - Y1
 ; calculate XTarget = X1 + (deltaX/deltaY) *  offsetY
-;;;l2DiagDeltaX    DW 0
-;;;l2_diagonal_getx:       ld		hl,0                            ;
-;;;                        ld      ixh,0                           ; flag byte clear
-;;;                        ld      (target_y),a                    ; save target
-;;;.calculateDeltaX:       ld      hl,(IY+4)
-;;;                        ld      de,(IY+0)
-;;;                        ClearCarryFlag
-;;;                        sbc     hl,de
-;;;                        ld      (l2DiagDeltaX),hl
-;;;.calculateDeltaY:       ld      hl,(IY+6)
-;;;                        ld      de,(IY+2)
-;;;                        ClearCarryFlag
-;;;                        sbc     hl,de
-;;;                        ld      (l2DiagDeltaY),hl
-;;;.ABSDx:                 ld      hl,(l2DiagDeltaX)
-;;;                        ld      a,h
-;;;                        and     $80
-;;;                        jr      nz,.DxPositive
-;;;.DxNegative:            macronegate16hl
-;;;.DxPositive:            ex      de,hl                               ; de = deltaX
-;;;                        ld      hl,(l2DiagDeltaY)
-;;;                        ld      a,h
-;;;                        and     $80
-;;;                        jr      nz,.DyPositive
-;;;.DyNegative:            macronegate16hl
-;;;.DyPositive:            
-;;;.ScaleLoop:             ld      a,h                                 ; At this point DX and DY are ABS values
-;;;                        or      d                                   ; .
-;;;                        jr      z,.ScaleDone                        ; .
-;;;                        ShiftDERight1                               ; .
-;;;                        ShiftHLRight1                               ; .
-;;;                        jr      .ScaleLoop                          ; scaled down Dx and Dy to 8 bit, Dy may have been;;                                                                                               negative
-;;;.ScaleDone:             ; hl = ABS DY, DE = ABS DX,  bc = Y1, ix = Y2,   note H and D will be zero    
-;;;.CalculateDelta:        ld      a,e                                 ; if DX < DY goto DX/DY 
-;;;                        JumpIfALTNusng l,.DXdivDY                   ; else do DY/DX
-;;;.DYdivDX:               ld      a,l                                 ;    A = DY
-;;;                        ld      d,e                                 ;    D = DX
-;;;                        call    AEquAmul256DivD                     ;    A = R = 256 * DY / DX
-;;;.SaveGradientDYDX:      ld      (Gradient),a
-;;;                        ld      a,ixh
-;;;                        or      16
-;;;                        ld      ixh,a                               ; 
-;;;                        jp      .ClipP1                             ;
-;;;.DXdivDY:               ld      a,e                                 ;    A = DX
-;;;                        ld      d,l                                 ;    D = DY
-;;;                        call    AEquAmul256DivD                     ;    A = R = 256 * DX / DY
-;;;.SaveGradientDXDY:      ld      (Gradient),a
 ;;;
 ;;;have X1 -> X 
 ;;;need deltaMidY = MidY - Y0
 ;;;                        X0 + (DeltaMY * Gradient) but if the graident is flipped then its X0+(deltaMY / Gradient)
 ;;;                        
 ;;;
-;;;.calculateDeltaY: 
 ;;;.calcualteDxDyOrDyDx
 ;;;.calculate
 ;;;                     
@@ -124,167 +76,14 @@ l2way		db	0
 ; use hl, de, bc, af, 
 ; no used yet ix iy
 ; can we do an ex for hl' and de' holding x and hl, de holding y?
-;;;l2_X0                   DW 0
-;;;l2_Y0                   DW 0
-;;;l2_X1                   DW 0
-;;;l2_Y1                   DW 0
-;;;l2_DX                   DW 0
-;;;l2_DY                   DW 0
-;;;l2_SX                   DW 0
-;;;l2_SY                   DW 0
-;;;l2_Error                DW 0
-;;;l2_E2                   DW 0
-;;;int_bren_save_Array1:   ld      hl,(l2_X1)          ; if X0 < X1
-;;;                        ld      de,(l2_X0)          ; calculate SX DX
-;;;                        ClearCarryFlag              ;
-;;;                        sbc     hl,de               ;
-;;;                        bit     7,h                 ;
-;;;                        jr      z,.DXPositive       ;
-;;;.DXNegative:            NegHL                       ;
-;;;                        ld      bc,-1               ;
-;;;                        jp      .DoneCalcDx         ;
-;;;.DXPositive:            ld      bc,1                ;
-;;;.DoneCalcDx:            ld      (l2_SX),bc          ;
-;;;                        ld      (l2_DX),hl          ;
-;;;.CalcDY:                ld      hl,(l2_Y1)          ; If Y1 < Y1
-;;;                        ld      de,(l2_Y0)          ; calculate SY DY 
-;;;                        ClearCarryFlag              ;
-;;;                        sbc     hl,de               ;
-;;;                        bit     7,h                 ;
-;;;                        jr      z,.DYPositive       ;
-;;;.DYNegative:            ld      bc,-1               ;
-;;;                        jp      .DoneCalcDx         ;
-;;;.DYPositive:            NegHL                       ;
-;;;                        ld      bc,1                ;
-;;;.DoneCalcDy:            ld      (l2_SY),bc          ;
-;;;                        ld      (l2_DY),hl      
-;;;.CalcError:             ld      hl,(l2_DX)
-;;;                        ld      de,(l2_DY)
-;;;                        add     hl,de
-;;;                        ld      (l2_Error),hl
-;;;.CalcLoop:              break
-;;;                        ld      hl,(l2_X0)          ; get X0 and Y0
-;;;.CheckYRange:           ld      de,(l2_Y0)
-;;;                        ld      a,d                 ; if Y > 127
-;;;                        and     a                   ; or Y is negative
-;;;                        jr      nz,.YOutOfRange     ; then we can skip the plot
-;;;                        ld      a,e                 ;
-;;;                        and     $80                 ;
-;;;                        jr      nz,.YOutOfRange     ;
-;;;.CheckXRange:           ld      a,h                 ; if X0 is negative 
-;;;                        and     a
-;;;                        jr      z,.XOKToPlot
-;;;                        and     $80
-;;;                        jr      z,.NotXNegative
-;;;.XNegative:             ld      a,0
-;;;                        jp      .ClipXDone
-;;;.NotXNegative:          ld      a,255
-;;;                        jp      .ClipXDone
-;;;.XOKToPlot:             ld      a,l                 ; no clip therefore we can just use l
-;;;.ClipXDone:             push    hl
-;;;                        push    af                  ; using the Y coordinate
-;;;                        ld      hl,l2targetArray1   ; plot the X value for this row
-;;;                        ld      a,e
-;;;                        add     hl,a
-;;;                        pop     af
-;;;                        ld      (hl),a
-;;;                        pop     hl
-;;;.YOutOfRange: ; At this point we have either plotted or its outside array range
-;;;                        ld      bc,(l2_X1)
-;;;.CheckEndXY:            cpHLEquBC .CheckEndXYOK     ; hl will equal X0 still by here
-;;;                        jp      nz,.x0x1Differ
-;;;.CheckEndXYOK:          ld      bc,(l2_Y1)
-;;;                        cpDEEquBC  .x0x1Differ      ; de will equal Y0 still by here
-;;;                        ret     z                   ; if they are both the same we are done
-;;;.x0x1Differ:
-;;;.SetError2:             ld      hl,(l2_Error)       ; e2 = 2 * error	
-;;;                        add     hl,hl               ; .
-;;;                        ld      (l2_E2),hl          ; .
-;;;.CheckE2gteDY:          ld      de,(l2_DY)          ; if e2 >= dy	
-;;;                        call    compare16HLDE       ; .
-;;;                        jp      pe, .E2DyParitySet
-;;;                        jp      m,  .E2ltDY         ; to get here overflow clear, so if m is set then HL<DE
-;;;                        jp      .E2gteDY
-;;;.E2DyParitySet:         jp      p,  .E2ltDY         ; if pe is set, then if sign is clear HL<DE
-;;;.E2gteDY:               ld      hl,(l2_X0)          ;      if x0 == x1 break		
-;;;                        ld      de,(l2_X1)          ;      .
-;;;                        cpHLEquDE .ErrorUpdateDY    ;      .
-;;;                        ret     z                   ;      .
-;;;.ErrorUpdateDY:         ld      hl,(l2_Error)       ;      error = error + dy	
-;;;                        ld      de,(l2_DY)          ;      .
-;;;                        add     hl,de               ;      .
-;;;                        ld      (l2_Error),hl       ;      .
-;;;.UpdateX0:              ld      hl,(l2_X0)          ;      x0 = x0 + sx
-;;;                        ld      bc,(l2_SX)          ;      .
-;;;                        add     hl,bc               ;      .
-;;;                        ld      (l2_X0),hl          ;      .
-;;;.E2ltDY:
-;;;.CheckE2lteDX:          ld      hl,(l2_E2)          ; if e2 <= dx
-;;;                        ld      de,(l2_DX)          ; as we can't do skip on e2>dx 
-;;;                        call    compare16HLDE       ; we will jump based on e2 <= dx
-;;;                        jp      z, .E2lteDX
-;;;                        jp      pe, .E2DxParitySet
-;;;                        jp      m,  .E2lteDX         ; to get here overflow clear, so if m is set then HL<DE
-;;;                        jp      .E2gteDx
-;;;.E2DxParitySet:         jp      p,  .E2lteDX   
-;;;                        jp      .E2gteDx
-;;;.E2lteDX:               ld      hl,(l2_Y0)          ;      .
-;;;                        ld      de,(l2_Y1)          ;      .
-;;;                        cpHLEquDE .ErrorUdpateDX    ;      .
-;;;                        ret     z                   ;      .
-;;;.ErrorUdpateDX:         ld      hl,(l2_Error)       ;      error = error + dx	
-;;;                        ld      de,(l2_DX)          ;      .
-;;;                        add     hl,de               ;      .
-;;;                        ld      (l2_Error),hl       ;      .                        
-;;;.UpdateY0:              ld      hl,(l2_Y0)          ;      x0 = x0 + sx
-;;;                        ld      bc,(l2_SY)          ;      .
-;;;                        add     hl,bc              ;      .
-;;;                        ld      (l2_Y0),hl         ;      .
-;;;.E2gteDx:               jp      .CalcLoop           ; repeat until we have a return
 
 ;;;;;;;; for this it myst always be sorted Y0 -> Y2   
 ;;;;;;;;; note we ca't use this to do x? as it will clip inherently
-;;;;;;;l2_save_diagnonal_signed_1:
-;;;;;;;                        ld		hl,0                            ;
-;;;;;;;                        ld		(l2deltaX),hl                   ;
-;;;;;;;                        ld		(l2deltaY),hl   
-;;;;;;;.CheckYOnScreen:        ld      de,(l2_commonTopY)
-;;;;;;;                        ld      hl,(l2_bottomY)
-;;;;;;;                        ld      a,d
-;;;;;;;                        and     h
-;;;;;;;                        and     $80
-;;;;;;;                        jr      nz,.OffScreen
 ;;;;;;;;...dy = y1 - y0                        
-;;;;;;;.CalcDeltaY:            ClearCarryFlag
-;;;;;;;                        sbc     hl,de                           ; now delta is signed, if its negative then something bad as gone wrong
-;;;;;;;                        ld      a,h
-;;;;;;;                        and     $80
-;;;;;;;                        jr      nz,.OffScreen
-;;;;;;;                        ld      (l2deltaY),hl                   ; Delta signed
-;;;;;;;CheckXOnScreen:         ld      de,(l2_leftX)
-;;;;;;;                        ld      hl,(l2_rightX)
-;;;;;;;                        ld      a,d
-;;;;;;;                        and     h
-;;;;;;;                        and     $80
-;;;;;;;                        jr      nz,.OffScreen
-;;;;;;;                        ClearCarryFlag
 ;;;;;;;;...dx = x1 - x0                        
-;;;;;;;.CalcDeltaX:            sbc     hl,de                           ; now delta is signed, could be negative
-;;;;;;;                        ld      (l2deltaX),hl                   ; Delta signed
-;;;;;;;                        ld      a,h
-;;;;;;;                        and     $80
-;;;;;;;                        jr      nz,.LeftToRight
 ;;;;;;;.RightToLeft:           set up instrnctin        
 ;;;;;;;.LeftToRight:           set up instrnctin                        
-;;;;;;;.setErr:									                    ;  LD H  := (D'-E')/2    round up if +ve or down if -ve
 ;;;;;;;,FracDYltDX:            ld		hl,(l2deltaY)					; Fraction = dY - dX
-;;;;;;;                        ld		de,(l2deltaX)
-;;;;;;;                        ClearCarryFlag	
-;;;;;;;                        sbc		hl,de							; sbc does not have an SBC IY so need to do this in HL
-;;;;;;;                        ex		de,hl
-;;;;;;;                        ld		iyh,d							; we will use IY reg for fractions
-;;;;;;;                        ld		iyl,e	
-;;;;;;;                        jp		p,.fracIsPositive
 ;;;;;;;
 ;;;;;;;plotLine(x0, y0, x1, y1)
 ;;;;;;;    dx = x1 - x0
@@ -301,71 +100,11 @@ l2way		db	0
 ;;;;;;;        D = D + 2*dy
 ;;;;;;;                                
 
-;;;;;.fracIsNegative:        NegIY
-;;;;;                        ShiftIYRight1
-;;;;;                        NegIY
-;;;;;                        jp		.SkipCalcInc					; so we have a negative frac
-;;;;;.fracIsPositive:        ShiftIYRight1
-;;;;;.SkipCalcInc:		                        			    	; As we loop, bc = to plot current XY
-;;;;;.preTargetArray:	    ld		hl,l2targetArray1               ; Assuming row 0
-;;;;;l2S_setTarget:	        ld		(l2targetPtr),hl
 ;;;;;                                                                ; set DE to current row
-;;;;;.S_Loop:			    ld		hl,(l2targetPtr)				; Insert into respective array
 ;;;;;                                                                ; calculate current row                                                                
 ;;;;;                                                                ; if current row >= 0
 ;;;;;                                                                ; write current X value in DE to (hl)
-;;;;;                        ld		a,b
-;;;;;                        add		hl,a
-;;;;;                        ld		(hl),c
-;;;;;l2S_CheckIfEnd:	        ld		a,ixh                           
-;;;;;                        JumpIfAGTENusng	  b,l2S_CheckXPos		; if Y1 < Y2 then continue regardless, when it hits Y2 then we must check X1 and X2
-;;;;;                        jp		l2S_Continue
-;;;;;l2S_CheckXPos:          ld      a,(l2S_adjustCol)
-;;;;;                        cp      l2inccstep; if we self modified to inc the we can do a cp e else its cp c
-;;;;;                        jr      z,.IncCP
-;;;;;.DecCP:                 ld      a,c
-;;;;;                        ReturnIfALTNusng ixl
-;;;;;                        ReturnIfAEqNusng ixl
-;;;;;                        jp      l2S_Continue
-;;;;;.IncCP:                 ld		a,c
-;;;;;                        ReturnIfAGTENusng ixl					; if X1 has reached or exceeded X2 then we are done
-;;;;;l2S_Continue:
-;;;;;l2S_HNegative:			ld		a,iyh
-;;;;;                        bit		7,a								; if its negative then we need to deal with delta Y, there is no bit n,iyh instrunction
-;;;;;                        jr		z,l2S_ErrNotNegative			;
-;;;;;l2S_ErrNegative:		ld		a,(l2deltaY)					; if its a negative error update X
-;;;;;                        ld		d,0
-;;;;;                        ld		e,a
-;;;;;                        add		iy,de							; add deltaY(unsinged) to l2fraction
-;;;;;l2S_adjustCol:          nop										; this is our inc/dec of X
-;;;;;                        jr		l2S_Loop							; repeat loop
-;;;;;l2S_ErrNotNegative:     ld		a,iyh
-;;;;;                        or		iyl
-;;;;;                        JumpIfAIsZero l2S_ErrZero					; if there is no error then goto zeroerror
-;;;;;l2S_ErrPositive:        ld      de,iy;  lddeiy								; if its a positive error then we update Y
-;;;;;                        ex		de,hl
-;;;;;                        ld		d,0
-;;;;;                        ld		a,(l2deltaX)
-;;;;;                        ld		e,a
-;;;;;                        ClearCarryFlag
-;;;;;                        sbc		hl,de
-;;;;;                        ex		de,hl
-;;;;;                        ld      iy,de;ldiyde
-;;;;;l2S_adjustRow:          inc		b								; move Y down by one
-;;;;;                        jr		l2S_Loop
-;;;;;l2S_ErrZero:            ld		hl,(l2deltaX)
-;;;;;                        ex		de,hl
-;;;;;                        ld		hl,(l2deltaY)
-;;;;;                        ClearCarryFlag
-;;;;;                        sbc		hl,de
-;;;;;                        ex		de,hl
-;;;;;                        ld      iy,de; ldiyde
-;;;;;l2S_adjustCol2:         nop										; update X and Y
-;;;;;                        inc		b
-;;;;;                        jr		l2S_Loop	
 ;;;;;
-;;;;;.OffScreen:             SetCarryFlag
-;;;;;                        ret
 ;;;;;
 ;;;;;
 
@@ -460,65 +199,9 @@ l2D_adjustCol2:         nop										; update X and Y
 ;----------------------------------------------------------------------------------------------------------------------------------
         ENDIF
 	
-;Loin:				; BBC version of line draw
 ;; ">l2_draw_diagonal, bc = y0,x0 de=y1,x1,a=color)"
-;	ld		(l2linecolor),a					; save colour as a reg gets used alot, coudl move this into interrupt flag and disable interrups
-;	ld		ixh,0							; ixh = s
-;	ld		iyh,0							; iyh = swap
-;	ld		l,0								; l will hold delta sign flags
-;LoinCalcDeltaX:	
-;	ld		a,e
-;	sub		c								; a = deltaX
-;	JumpIfPositive LoinPosDx
-;LoinNegDx:
-;	neg										; carry flag will indicate deltaX was negative
-;	ld		l,$80							; set bit 7 of l for negative
-;LoinPosDx:
-;	ld		ixl,a							; ixl = varP = deltaX
-;LoinCalcDeltaY:
-;	ld		a,d
-;	sub		b								; a= deltaY
-;	JumpIfPositive LoinPosDy
-;LoinNegDy:
-;	neg
-;	set		6,l								; set bit 6 of l for negative deltaY
-;LoinPosDy:
-;	ld		iyl,a							; iyl = varQ = deltaY
-;	JumpIfAGTENusng ixl, LoinSTPy			; if deltaY >= DeltaX then step along Y
-;LoinSTPx:									; step along X
-;	JumpOnBitClear l,7						; if l flags were clear then X2 < X2
-;LoinSTPxSwapCoords:
-;	dec		iyh								; swap flag now becomes FF
-;	ld		a,l								; save l flags
-;	ex		de,hl							; save de to hl
-;	lddebc									; Point2 = point1
-;	ldbchl									; Point1 = point2 that was saved
-;	ld		l,a								; get back l flags
-;LoinSTPxCorrectOrder:	
-;	l2_point_pixel_y_safe					; call plot pixel preseving bc hl
-;	ld		a,iyl							; get delta Y back
-;	ld		iy1,$FE							; roll counter
-;LionSTPxRollQ:
-;	sla		a								; highest bit of delta-Y
-;	jp		c,LoinSTPxSteep
-;	cp		ixl								; compare with DeltaX
-;	jp		cs,LoinSTPxShallow
-;LoinSTPxSteep:								;; LI4
-;	sbc		a,ixl							; deltaYwork -= (deltaX+1)
-;	scf										; force carry flag set
-;LoinSTPxShallow:							;; LI5
-;	rl		iyl								; rotate iyl which started as FE
-;	jp		c,LionSTPxRollQ					; so we are doing a 6 bit loop
-;	inc		ihl								; DeltaX += 1
-;LoinSTPxYDirection:							; change this to self modifying code
-;	ld		a,d
 ;	JumpIfAGTEn	b,LionDOWN:
-;	ld		a,iyh							; swap flag
 ;	JumpIfANotZero	X1Inc  					; if swap flag was not set then no need to update R
-;LoinSTPxX1Dec:
-;	dec		c								; move left 1 pixel as we sawped
-;LoinSTPxXCounter:							;; LIL2
-;	sub		b
 ;	if
 ;
 ;85 82                   STA &82	   \ R	\ mask byte
@@ -714,60 +397,12 @@ l2D_adjustCol2:         nop										; update X and Y
 ;.HL6
 ;60                      RTS 		\ end Line drawing
 
-;;l2_draw_diagonalopt:
 	; ">TODO l2_draw_diagonalopt fast horz vert optmisation"
-;;	push	af
-;;	ld		a,b
-;;	cp		d
-;;	jr		z,.RegularDiagnonal
-;;.CheckHorz:
-;;	ld		a,c
-;;	cp		e
-;;	jr		z,.horizontalLine
-;;.RegularDiagnonal:
-;;	pop		af
-;;	call diag
 
-;;l2_signed_mul2a:
 ;;; ">l2_signed_mul2a - Signed a = a * 2 using shift)"
-;;	TEST	$80
-;;	jr		nz, .negativecalc
-;;.positivecalc:
-;;	ccf
-;;	rla
-;;	ret
-;;.negativecalc:
-;;	neg
-;;	ccf
-;;	rla
-;;	neg
-;;	ret
 ;;	
-;;l2_signed_mul2atohl:
 ;;; ">l2_signed_mul2ahl - Signed hl = a * 2 using shift)"
-;;	TEST	$80
-;;	jr		nz, .negativecalc
-;;.positivecalc:
-;;	ld		hl,0
-;;	ld		l,a
-;;	add		hl,a
-;;	ret
-;;.negativecalc:
-;;	neg
-;;	ld		hl,0
-;;	ld		l,a
-;;	neghl
-;;	ret
 ;;	
-;;l2_e2fractionby2:
-;;	ld 		hl,(l2fraction)
-;;	push	de
-;;	ld		d,h
-;;	ld		e,l
-;;	add		hl,de
-;;	pop		de
-;;	ld		(l2e2),hl
-;;	ret
 
 ;;//	ld		(l2linecolor),a   			; could do an ex but it will be needed multiple times between many uses of a reg
 ;;//.catchLoop:
@@ -878,76 +513,7 @@ l2D_adjustCol2:         nop										; update X and Y
 ;;//        pop     DE              ;can be removed
 ;;//        ret	
  	
-;;	ld		(.l2yadjust),a	
-;;	call	calcdeltax:
-;;	ld		(.l2xadjust),a	
-;;.calcfraction:							; err(or fraction) = dx+dy;
-;;	push	hl
-;;	push	de
-;;	ld		hl,(l2deltaX)
-;;	ld		de,(l2deltaY)
-;;	add		hl,de
-;;	ld		(l2fraction),hl
-;;	pop		de
-;;	pop		hl
-;;.mainloop:
-;;	push	bc
-;;	push	de
-;;	ld 		a,(l2linecolor)
-;;	call	l2_plot_pixel
-;;	pop		de
-;;	pop		bc
 ;;.arewefinishedtest
-;;	ld		a,b
-;;	cp		d
-;;	jr		nz,.notthereyet
-;;	ld		a,c
-;;	cp		e
-;;	ret		z
-;;.notthereyet:
-;;	push	de
-;;	call	l2_e2fractionby2			; e2 = 2*err;
-;;	pop		de
-;;.e2dytest:								; if (e2 >= dy) /* e_xy+e_x > 0 */  then S and P/V are the same
-;;	push	de							; so if m & pe  or p & po calc (m = sign set p = 0)
-;;	ld		de,(l2deltaY)				;    if m & po  or p & pe skip  (pe = pv set po = pv 0)
-;;	or		a							;
-;;	sbc		hl,de						;
-;;	pop		de
-;;	jr		z,  .dodycalc				; if equal then calc
-;;	jp		p,	.dodycalc				; sign clear to H>D even with negtives
-;;	jr		.skipdycalc         		; sign = 0     so  skip as pe
-;;.dodycalc:
-;;	ld		hl,(l2fraction)
-;;	push	de
-;;	ld		de,(l2deltaY)
-;;	add		hl,de
-;;	ld		(l2fraction),de
-;;	pop		de
-;;.l2yadjust:
-;;	nop	
-;;.skipdycalc:
-;;.e2dxtest:								;  if (e2 <= dx) /* e_xy+e_y < 0 */ then S and P/V are different.
-;;	ld		hl,(l2e2)
-;;	push	de							;
-;;	ld		de,(l2deltaX)				;
-;;	or		a							; clear carry flag
-;;	sbc		hl,de						; hl = hl - de is if de > hl will get pv and signed different?
-;;	pop		de
-;;	jr		z,.dodxcalc					; e2 == dx so do calc
-;;	jp		m,.dodxcalc					; was sign bit set
-;;	jr		.skipdxcalc         	    ; diff so skip ; pvclear = po        pvset = pe
-;;.dodxcalc:
-;;	ld		hl,(l2fraction)
-;;	push	de
-;;	ld		de,(l2deltaX)
-;;	add		hl,de
-;;	ld		(l2fraction),de
-;;	pop		de
-;;.l2xadjust:
-;;	nop
-;;.skipdxcalc:
-;;	jr 		.mainloop
 
 ;;/l2_draw_diagonalold:
 ;;/MESSAGE ">l2_draw_diagonal, bc = y0,x0 de=y1,x1,a=color)"

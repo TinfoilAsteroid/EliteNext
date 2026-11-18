@@ -133,12 +133,8 @@ MVS5RotateAxis:         ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                         and     SignOnly8Bit
                         or      d
                         ld      d,a             ; de = nosev /16 signed and ready as if we were doing a + or - based on RAT2            
-;;; ld      a,e
-;;;     or      iyh
-;;; ld      (varP),a        ; PA now equals nosev axis / 16 signed
 ;-now AP = nosev /16  --------------------------------------------------------------------------------------------------------
                         pop     hl              ; get back RS POP ID 1
-    ;ex     de,hl           ; swapping around so hl = AP and de = SR , shoud not matter though as its an add
 ;-now DE = (roofaxis/512) hl - abs(nosevaxis) --------------------------------------------------------------------------------
                         call    addHLDES15 ; do add using hl and de
                         push    hl              ; we use stack to represent var K here now varK = Nosev axis /16 + (1 - 1/512) * roofv axis PUSH ID 2
@@ -160,7 +156,6 @@ MVS5RotateAxis:         ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                         ld      d,a
                         or      a               ; clear carry
                         call    subHLDES15
-;   sbc     hl,de           ; hl = nosev - novesv / 512
                         push    hl              ; save hl on stack  PUSH ID 3
                         ld      a,l
                         ld      (varP),a        ; p = low of resuilt
@@ -169,7 +164,6 @@ MVS5RotateAxis:         ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                         ld      (varT),a        ; t = high of result
 ;-- Set up TQ
                         ld      hl,(varAxis1)   ; now work on roofv axis / 16
-;   ld      hl,(varAxis2)   ; work on nosev again 
                         ld      e,(hl)
                         inc     hl
                         ld      d,(hl)
@@ -188,11 +182,7 @@ MVS5RotateAxis:         ld      hl,(varAxis1)   ; work on roofv axis to get (1- 
                         and     $80
                         or      d
                         ld      d,a
-;;; ld      a,e
-;;;     or      iyh
-;;; ld      (varP),a        ; PA now equals nosev axis / 16 signed
                         pop     hl              ; get back RS   POP ID 3
-;   ex      de,hl           ; swapping around so hl = AP and de = SR , shoud not matter though as its an add
                         call    subHLDES15 ; do add using hl and de
 ;-- Update nosev ---------------------------------------
                         ex      de,hl           ; save hl to de

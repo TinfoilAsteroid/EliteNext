@@ -41,7 +41,6 @@ l1_print_at:                            ; print string at hl to pixel address DE
                         ret
                      
 
-
 HexU8Char:       DB "00",0
 HexU16Char:      DB "0000",0
 HexS8Char:       DB "+00",0
@@ -255,40 +254,13 @@ l1_print_u8_nan_at_char:  ld    hl,HexU8NaN
                           ret
 
 
-;l1_print_at_wrap:
 ;; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
-;	ld      iyh,e
-;.PrintLoop:
-;	ld		a,(hl)
-;	cp		0
-;	ret		z
 ;.CountWordCharLen
 ;; Need to change to word wrap, so it will loop through string as before
 ;; but read up until a null or space, take the character count * 8 for pixels
 ;; if that is > 238 then force a premature line wrap
 ;
 ;    
-;    push    iy
-;    call	l1_print_char
-;    pop     iy
-;	inc		hl							; move 1 message character right
-;	ld		a,e
-;    cp      238
-;    jr      nc,.NextLine
-;	add		a,8
-;	ld		e,a							; move 1 screen character right
-;	jr		.PrintLoop
-;.Clearstackandfinish:
-;	pop		de
-;	ret    
-;.NextLine:
-;    ld      a,(hl)
-;    cp      " "
-;    ld      e,iyh
-;    ld      a,d
-;    add     a,8
-;    ld      d,a
-;    jr		.PrintLoop
      
 ; Counts next word at hl, uses e and forces a wrap if it would over flow puts value in c
 L1LenWordAtHL:          push    hl

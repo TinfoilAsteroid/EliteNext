@@ -8,7 +8,6 @@ name_expanded	DS 32
 				DB 0
 
 
-
 NamingLoop:
 	ld		a,(WorkingSeeds+5)	; a = first byte of name seed
 	and 	$1F					; Keep bottom 5 bits only
@@ -30,87 +29,15 @@ NamingLoop:
 	pop		de
 	ret
 	
-;GetDigramGalaxySeed:
-;	call	copy_galaxy_to_working
-;	jr		GetDigramWorkingSeed
-;GetDigramSystemSeed:
-;	call	copy_system_to_working
-;GetDigramWorkingSeed:
 ;; ">GetDigram a = digram seed"
-;	ld		de,name_expanded
-;	ld		b,3
-;	ld		a,(WorkingSeeds)
-;	and		$40
-;	jr		z,.SmallSizeName
-;.LargeSizeName:
-;	call	NamingLoop
-;.SmallSizeName:
-;	call	NamingLoop
-;	call	NamingLoop
-;	call	NamingLoop
-;.DoneName:
-;	ex		de,hl
-;	ld		(hl),0
-;	ex		de,hl
-;	ret
 
 	
-	
-;GetDigramWorkingSeed:
 ;	MESSAGE ">GetDigram a = digram seed b = length"
-;	ld		b,5					; working seed
-;	ld		de,name_expanded
-;.ExpansionLoop:
-;	push	bc
-;	ld		hl,WorkingSeeds
-;	ld		a,b
-;	add		hl,a
-;	ld		a,(hl)	; a = first byte of name seed
-;	and 	$1F					; Keep bottom 5 bits only
-;	cp		0					; 0 = skip 2 chars
-;	jr		z,.SkipPhrase
-;	or		&80					; set buit 7 high (probabtyl capitalisation)
-;	call	TT27
-;.SkipPhrase:
-;	push	de
-;	call	next_working_seed
-;	pop		de
-;	pop		bc
-;	djnz	GetDigramWorkingSeed
-;.DoneName:
-;	ex		de,hl
-;	ld		(hl),0
-;	ex		de,hl
-;	ret	
 ;
-;ExpandToken:
 ;	DE = target
 ;	a = token
 ;	
-;PlanetDigram:
-;	cp		&A0							; >- 160
-;	jr		c,MorePage4
-;	and		$7F							; 128 to 159 now 0 to 31
 ;	asl		2							; Multiply by 2
-;	ld		hl, name_digrams2
-;	add		hl,a
-;	ld		a,(hl)
-;	call	ProcessTextToken
-;	inc		hl
-;	ld		a,(hl)
-;	cp		'?'
-;	ret		z
-;	call	ProcessTextToken
-;	ret
-;MorePage4:
-;	sub		$A0
-;ExtraTokenCheck:
-;	push	de							; save target address
-;	push	bc
-;	ld		b,a
-;	ld		hl,varV
-;	ld		(VarV),0400
-;	ld		(varV),a
 ;	ld		
 ;	
 ;		.TT43	\ Token > 127 page4 token or planet digram.

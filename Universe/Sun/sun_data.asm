@@ -278,7 +278,6 @@ CreateSunLaunched:      call    ResetSBnKData
                         ret
 ; --------------------------------------------------------------                        
 ; This sets current universe object to a planet,they use sign + 23 bit positions
-;;TODOCreatePlanet:           call    ResetSBnKData
 ;;TODO                        ld      a,(DisplayTekLevel)
 ;;TODO                        and     $00000010               ; Set A = 128 or 130 depending on bit 1 of the system's tech level
 ;;TODO                        or      $10000000
@@ -295,8 +294,6 @@ CreateSunLaunched:      call    ResetSBnKData
 ;;TODO                        ld      (PlanetYsgn),a
 ;;TODO                        ret
 
-
-                   ;     include "./Maths/ADDHLDESignBC.asm"
 
 SunADDHLDESignedv3:     ld      a,h
                         and     SignOnly8Bit
@@ -460,12 +457,10 @@ ScaleSunTo8Bit:			ld			bc,(SBnKZScaled)
 ;;;;......................................................
 ;;;; if ztemp hi <> 0                                   ::Scale Object Distance
 ;;;;  Loop                                              ::LL90
-;;;;     inc X
 ;;;;     divide X, Y & ZtempHiLo by 2
 ;;;;  Until ZtempHi = 0
 ;;;;......................................................
 ;-LL21---------------------------------------------------------------------------------------------------
-;                        include "./Universe/NormaliseTransMat.asm"
 ;-LL91---------------------------------------------------------------------------------------------------
 
 ; Now we have
@@ -491,41 +486,15 @@ ScaleSunTo8Bit:			ld			bc,(SBnKZScaled)
 
 
  ; TESTEDOK
-;SXX12DotOneRow:
-;SXX12CalcX:              N0equN1byN2div256 varT, (hl), (SBnKXScaled)       ; T = (hl) * regSunXX15fx /256 
-;                        inc     hl                                  ; move to sign byte
-;SXX12CalcXSign:          AequN1xorN2 SBnKXScaledSign,(hl)             ;
-;                        ld      (varS),a                            ; Set S to the sign of x_sign * sidev_x
-;                        inc     hl
-;SXX12CalcY:              N0equN1byN2div256 varQ, (hl),(SBnKYScaled)       ; Q = XX16 * SunXX15 /256 using varQ to hold regSunXX15fx
-;                        ldCopyByte varT,varR                        ; R = T =  |sidev_x| * x_lo / 256
-;                        inc     hl
-;                        AequN1xorN2 SBnKYScaledSign,(hl)             ; Set A to the sign of y_sign * sidev_y
 ;; (S)A = |sidev_x| * x_lo / 256  = |sidev_x| * x_lo + |sidev_y| * y_lo
 ;SSTequSRplusAQ           push    hl
-;                        call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA) \ 1byte add (subtract)
-;                        pop     hl
-;                        ld      (varT),a                            ; T = |sidev_x| * x_lo + |sidev_y| * y_lo
-;                        inc     hl
-;SXX12CalcZ:              N0equN1byN2div256 varQ,(hl),(SBnKZScaled)       ; Q = |sidev_z| * z_lo / 256
-;                        ldCopyByte varT,varR                        ; R = |sidev_x| * x_lo + |sidev_y| * y_lo
-;                        inc     hl
-;                        AequN1xorN2 SBnKZScaledSign,(hl)             ; A = sign of z_sign * sidev_z
 ;; (S)A= |sidev_x| * x_lo + |sidev_y| * y_lo + |sidev_z| * z_lo        
-;                        call    baddll38                            ; JSR &4812 \ LL38   \ BADD(S)A=R+Q(SA)   \ 1byte add (subtract)
 ;; Now we exit with A = result S = Sign        
-;                        ret
-
 
 
 ;--------------------------------------------------------------------------------------------------------
                         include "./Universe/Sun/CopySunXX12ScaledToSunXX18.asm"
-;                        include "./Variables/CopySunXX12toSunXX15.asm"
-;                       include "./Variables/CopySunXX18toSunXX15.asm"
-;                       include "./Variables/CopySunXX18ScaledToSunXX15.asm"
-;                       include "./Variables/CopySunXX12ToScaled.asm"
 ;--------------------------------------------------------------------------------------------------------
-;                        include "./Maths/Utilities/DotProductXX12SunXX15.asm"
 ;--------------------------------------------------------------------------------------------------------
 
 ScaleDownSXX15byIXH:    dec     ixh
@@ -554,8 +523,6 @@ DivideSXX18By2:         ld      hl,SBnKDrawCam0xLo
 ; ......................................................                                                         ;;; 
 
     
-    
-    
 ; Pitch and roll are 2 phases
 ; 1 - we apply our pitch and roll to the ship position
 ;       x -> x + alpha * (y - alpha * x)
@@ -578,10 +545,8 @@ DivideSXX18By2:         ld      hl,SBnKDrawCam0xLo
 
 
             INCLUDE "./Universe/Sun/SunApplyMyRollAndPitch.asm"
-;            INCLUDE "./Universe/SunApplyShipRollAndPitch.asm"
 
 SunOnScreen             DB 0
-;LineArrayPtr            DW 0
 LineCount               DB 0
 RaggedSize              DB 0
 MinYOffset              DB 0
@@ -701,13 +666,10 @@ SunDivD3B:              ld      a,(SunVarP)                 ; Ensure P is at lea
                         jp      p, .SunDVL6                 ; keep shifting until bit 7 of a is set
                         ld      (SunVarQ),hl                ; save QR
 .SunDV9:                ld      (SunVarS),a                 ; save S
-                        ;ld      a,h
-                        ;ld      (varQ),a
                         ld      c,a
                         ld      a,(SunVarP+2)
                         push    bc                          ; save shift counter in b
                         call    DIV16Amul256dCUNDOC
-                        ;call    RequAmul256divQ
                         ld      a, c
                         ld      (varR),a
                         pop     bc                          ; retrieve shift counter
@@ -752,14 +714,12 @@ SunDivD3B:              ld      a,(SunVarP)                 ; Ensure P is at lea
                         ret                        
                         
                         
-                        
 SunProcessVertex:       ld      b,a                         ; save sign byte
 .SunProjectToEye:       ld      de,(SBnKzlo)                ; X Pos = X / Z
                         ld      a,(SBnKzsgn)                ; CDE = z
                         ld      iyh,a                       ; save sign
                         ClearSignBitA     
                         ; Addeed as it neds to be AHL/0CD to force * 256 and get correct screen position on scaling
-;                        ld      c,a                         ;
                         ld      e,d
                         ld      d,a
                         ld      c,0
@@ -843,7 +803,6 @@ SunUpdateAndRender:     call    SunApplyMyRollAndPitch
                         ld      d,0
                         ClearCarryFlag
                         adc     hl,de
-                        ;call    HL2cEquHLSgnPlusAusgn       ; correct to center of screen
                         ld      (SunScrnX),hl               ; save projected X Position, 2's compliment
 .calculateY:            ld      a,(SBnKysgn)
                         ld      hl,(SBnKylo)
@@ -855,7 +814,6 @@ SunUpdateAndRender:     call    SunApplyMyRollAndPitch
                         ex      de,hl
                         ClearCarryFlag
                         sbc     hl,de
-                        ;call    HL2cEquHLSgnPlusAusgn       ; correct to center of screen
                         ld      (SunScrnY),hl               ; save projected Y Position, 2's compliment
 ; .........................................................................................................................
                         call    SunCalculateRadius
@@ -1040,7 +998,6 @@ SetIYMinusOffset:       MACRO   reg
 SunDrawCircle                        
                         ; ** BNOTE Ptuichj abnd roll has a bug as piitch increases z axis value
 .PrepCircleData:       ; ld      ixl,0
-                       ; ld		(.Plot1+1),bc			        ; save origin into DE reg in code
                         ld      a,(SunRadius)
                         ld		ixh,a							; ixh = radius
                         ld		ixl,0						    ; ixl = delta (y)
@@ -1197,9 +1154,7 @@ ProcessXRowA:           ;break
                 
 ; .....................................................
 ; if the universe object is a planet or sun then do that instead
-;;TODOProcessPlanet:          cp      129
 ;;TODO                        jr      nz, .ItsAPlanet
-;;TODO.ItsAStar:              ld      a,(SBnKzsgn)
 ;;TODO                        cp      48                               ; if z > 48 (it must be positive to enter this routine)
                         
                         
@@ -1716,7 +1671,6 @@ SunSqrFE:               DB $01, 255
 SunSqrFF:               DB $FF, 255                                       
                         
                
-
 SunBankSize  EQU $ - StartOfSun
 
 

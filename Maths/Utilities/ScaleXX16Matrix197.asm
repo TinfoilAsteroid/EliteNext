@@ -2,7 +2,6 @@
 ;   Get 
 
 
-
 ScaleXX16Matrix197:     
         IFDEF LOGMATHS
                         ld		b,9                 ; Interate though all 9 matrix elements
@@ -51,8 +50,6 @@ ScaleXX16Matrix197:
                         dec     hl                  ; move back to low byte
                         ld      (hl),c              ; save result in low byte as we want to preserve high byte sign    
                         inc     hl                  ; move back to high byte  
-                    ;    ld      a,(hl)
-                    ;    and     $80
                         ld      a,ixl
                         ld      (hl),a              ; write back just sign bit
                         pop		bc                  ; retrieve both counter and constant 197

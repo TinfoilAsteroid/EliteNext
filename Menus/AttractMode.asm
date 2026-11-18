@@ -23,7 +23,6 @@ RandomXCounter:         call    doRandom
 
 RandomYCounter:         call    doRandom
                         ret     nz
-                        ;ReturnIfALTNusng 254
                         ld      a,(LocalZCounter)
                         xor     $80
                         ld      (LocalZCounter),a
@@ -60,12 +59,6 @@ AttractModeInit:        MMUSelectLayer1
                         ret
 
 
-;.StartShip:             ld          a,(InterruptCounter)
-;                        ld          hl,LastInterrupt
-;                        cp          (hl)
-;                        jp          z,.StartShip            ; we only refresh once per interupt
-;                        ld          (hl),a
-                        
 AttractModeMain:        MMUSelectKeyboard
                         call    scan_keyboard
                         ld      a,c_Pressed_Yes
@@ -118,22 +111,18 @@ AttractModeUpdate:      MMUSelectMathsBankedFns                                 
 .CullV2:                call    CullV2
                         jp      .DoneIM2
 .PrepLines:             call    PrepLines
-                        ;break
         IFDEF LATECLIPPING
 .DrawLines:             call    DrawLinesLateClipping     
-                        ;break
         ELSE
 .DrawLines:             call    DrawLines
         ENDIF
 .Drawbox:               ld		bc,$0101
                         ld		de,$7FFD
                         ld		a,$C0
-                        ;break
                         MMUSelectLayer2
                         call	l2_draw_box
 .DoubleBuffer:          call    l2_flip_buffers
 .UpdateZPosIfReady:     ld      a,(AttractCounter)
-                        ;break
                         and     a
                         jp      z,.DoneIM2
                     IFDEF DEBUGBACKFACE
@@ -153,7 +142,6 @@ AttractModeUpdate:      MMUSelectMathsBankedFns                                 
                         ret     nz
                         ZeroA
                         ld      (AttractStep),a
-                        ;break
                         ret
 
 

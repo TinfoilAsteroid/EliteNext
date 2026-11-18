@@ -1,23 +1,5 @@
 ; TESTEDOK
 
-;ScaleOrientationXX16:                       ; DEBUG TODO will combine with inverse later
-;        ld      a,(XX17)
-;        ld      ixl,a
-;        ld      ixh,9
-;        ld      hl,UBnkTransInv0x
-;        ld      a,(hl)
-;ScaleNode:
-;        ld      b,ixl
-;ScaleNodeLoop:        
-;        sla      a
-;        djnz    ScaleNodeLoop
-;        ld      (hl),a
-;        inc     hl
-;        inc     hl
-;        dec     ixh
-;        jr      nz,ScaleNode
-;        ret
-
 
 InverseXX16:								; lead routine into .LL42	\ ->  &4B04 \ DO nodeX-Ycoords their comment  \  TrnspMat
 ; we coudl combine this with move to transmat later as an optimisation

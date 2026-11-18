@@ -56,8 +56,7 @@ ResetPlayerShip:        ZeroThrottle
                         ChargeEnergyAndShields
                         ClearTemperatures
                         ClearWarpPressed
-                        call    IsLaserUseable
-                        SetMemFalse LaserBeamOn
+                        call    LaserReset
                         MMUSelectCommander
                         call    LoadLaserToCurrent
                         ret     z
@@ -114,7 +113,6 @@ InitMainLoop:           call    ClearUnivSlotList
                         ld      (MenuIdMax),a
                         SetMemFalse SetStationHostileFlag
                         SetMemFalse DockedFlag
-;                        call    InitialiseFrontView
                         call    InitialiseCommander
                         MMUSelectUniverseN 2    
                         call    SetInitialShipPosition

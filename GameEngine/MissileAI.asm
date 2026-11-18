@@ -12,7 +12,6 @@ MissileNoDirectHit      equ $FF                     ; .
 ; Positions are S15.8 lead sign (lo = fraction, hi + sign byte bits 0-6 = 15 bit integer, sign byte bit 7 = sign).
 ; The missile - target vector is S15.8 (saturating at +/-32767.996) and NormalizeTactics scales it down to S7
 MissileAIV3:            ;ld      a,(ShipAIEnabled)
-                        ;ReturnOnBitClear a, ShipAIEnabledBitNbr
 .IsAlreadyExploding:    IsShipExploding                             ; blast has already been applied when it exploded
                         ret     nz                                  ; .
 .CheckLifespan:         ld      hl,(FrameCounter16)                 ; elapsed = now - launch frame (16 bit so wrap safe)
@@ -164,7 +163,6 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
 ;--- Now we can actually update the missile AI
 .UpdateMissilePos:      SelectMissileBank
 .NormaliseDirection:    IFDEF MISSILEBREAK
-                            ;break
                         ENDIF
                         MMUSelectMathsBankedFns
                         call    NormalizeTactics                    ; Normalise S15.8 vector down to 7 bit + sign byte (.TA19->TAS2)
@@ -255,10 +253,7 @@ SimplifiedShipPitchv3:  ;break
 ; Bottom right rear         down    +ve     -
 
 
-                        
 SimplifiedShipRollv3:  ; ld      a,(UBnKRotXCounter)               ; get current roll
-                       ; sla     a                                 ; * 2 to also abs
-                       ; ReturnIfAGTENusng 32                      ; and so if >32 skip
                         call    XX12EquTacticsDotSidev             ; calculate side dot protuct
                         ld      (TacticsDotProduct3),a             ; .
                         ld      l,a                                ; .
@@ -266,10 +261,6 @@ SimplifiedShipRollv3:  ; ld      a,(UBnKRotXCounter)               ; get current
                         ld      (TacticsDotProduct3+1),a           ; .
                         ld      h,a                                ; h = sign sidev
                         ld      a,(TacticsDotProduct2+1)           ; get flipped pitch counter sign
-                        ;xor     $80                               ; .
-                        ;xor     h                                 ; b = flip against pitch sign
-                        ;and     $80                               ; .
-                        ;xor $80
                         ld      b,a                                ; b = roof product sign
                         ld      a,(UBnKRAT2)                       ; c = turn threshold
                         ld      c,a                                ; .

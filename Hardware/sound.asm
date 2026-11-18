@@ -362,13 +362,9 @@ SoundChipMapOffset      EQU     SoundDataPointerOffset + 16
 ; Hcops a copy of the 3 chips register 7
 
 
-; StepLength            DB      1   ; $FF = 1 step forever else number of entries in StepListArray
 ; StepListArray
 ;     TonePitch         DW      4 bits unused + 12 bits
 ;     NoisePitch        DB      5 bit or $FF for no noise
-;     Volume            DB      0 to 15
-;     EnvelopePeriod    DW      0
-;     WaveForm          DB      0
 
 ; SFX Format
 ; SFXPointerList - Odd numbers are tone, Even Numbers have noise too, optimisation for channel handling
@@ -398,10 +394,7 @@ SFXLaser        db      11
 
 ;
 ;
-;Laser1:          db 14,14,13,12,10, 8, 7, 6, 3, 1
-;LaserFrameCount  db  5, 5, 5, 5, 5, 5, 5, 5, 5, 5
 ;LaserLength:     db $-LaserFrameCount
-;LaserTone:       dw $05F, $089, $097, $0AE, $0CE, $0B6, $0E6, $106, $13E, $126, $136
 
 DanubePointer1:         DW BlueDanube1
 DanubePointer2:         DW BlueDanube2
@@ -464,19 +457,7 @@ SetChannelDNoteAtHL:    ld      a,d                 ; a is now 0 to 2
                         ld      b,$BF
                         ld      a,(hl)
                         out     (c),a
-                        ;IFDEF   DANUBEATTACK
 .SetAttack:             ;    ld      hl,(DanubeAttackEnvelope)
-                        ;    ld      a,ENVELOPE_PERIOD_FINE
-                        ;    WriteTurboControlA
-                        ;    ld      b,$BF
-                        ;    ld      a,l
-                        ;    out     (c),a
-                        ;    ld      a,ENVELOPE_PERIOD_COARSE
-                        ;    WriteTurboControlA
-                        ;    ld      b,$BF
-                        ;    ld      a,h
-                        ;    out     (c),a
-                        ;ENDIF
 .SetVolume:             ld      a,d                 ; get back channel
                         add     a,8
                         WriteTurboControlA
@@ -525,7 +506,6 @@ PlayDanubeNote:         ld      a,(ix+PointerChipOffset)
                         jr      z,  .NoNote
                         cp      $FF
                         ret     z
-                        ;jp      z,SustainNote
                         ld      hl, TonesPitch
                         ld      e,a         ; save a
                         and     $F0         ; load octave to d
@@ -619,7 +599,6 @@ UpdatePointers:         ld      a,(DanubePace)
                         and     a
                         sbc     hl,de
                         pop     hl
-                        ;break
                         jr      nz,.MovePointersForward
 .ResetPointers:         ld      hl,BlueDanube1
                         ld      (DanubePointer1),hl
@@ -660,8 +639,6 @@ AdvancePointer:         ld      a,(hl)
                         dec     hl
                         ld      (hl),e
                         ret
-
-
 
 
 TonesPitch       db  $BF,   $0F
@@ -755,10 +732,6 @@ TonesPitch       db  $BF,   $0F
 ; low nibble mapping
 ;       0      1  2  3  4  5  6   7  8  9   A  B  C
 ;       None   A  A# B  C  C# D  D#  E  F  F#  G  G#
-;BlueDanube1:     DB $00, $00, $00, $00, $00, $61, $61, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $61, $61, $5B, $5B, $00, $00, $00
-;BlueDanube2:     DB $00, $00, $00, $00, $00, $5A, $5A, $5A, $5A, $00, $00, $00, $00, $00, $00, $00, $00, $58, $58, $55, $55, $00, $00, $00
-;BlueDanube3:     DB $00, $00, $00, $41, $41, $00, $00, $56, $56, $00, $00, $00, $00, $00, $00, $41, $41, $00, $00, $00, $00, $00, $00, $00
-;BlueDanube4:     DB $36, $36, $3A, $00, $00, $00, $00, $00, $00, $00, $00, $00, $36, $36, $3A, $00, $00, $00, $00, $00, $00, $00, $00, $00
 
 BlueDanube1:          DB 	$00, 	$00, 	$00, 	$48, 	$00, 	$00, 	$00, 	$4A, 	$FF, 	$4A, 	$FF, 	$4A, 	$FF, 	$00, 	$00, 	$48, 	$00, 	$00, 	$00, 	$4B, 	$FF, 	$4B, 	$FF, 	$4B, 	$FF, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00
                       DB	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00, 	$00

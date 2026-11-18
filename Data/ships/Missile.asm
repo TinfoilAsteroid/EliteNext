@@ -85,7 +85,6 @@ MissileEdges:	    IFDEF DEBUGMODEL
                         DB $1F,$00,$20,$24 ; Y Cross memeber
                         DB $1F,$00,$28,$2C ; X Triangle
                         DB $1F,$00,$2C,$30 ; X Triangle
-                        ;DB $1F,$00,$18,$1C  
                     ELSE
                         DB $1F, $21, $00, $04
                         DB $1F, $32, $00, $08

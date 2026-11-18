@@ -346,7 +346,6 @@ draw_system_data_menu:  MMUSelectLayer1
                         ld      iyh,a                   ; update iyh copy of b
 ; now bc = pxiel row, character column after string printed, de = start of string, hl = pixel col, iyl = color, ixl = column for start of line, iyh = original pixel row
 .printWord:             push    bc,,de,,hl,,ix          ; stack all registgers
-                        ;break
 .CalculateColum:        ld      a,(de)                  ; get ascii code
                         ld      c,iyl                   ; get colour back
                         call    l2_print_char_at_320    ; b = row, hl = col, a = code for charater, c = color
@@ -422,13 +421,6 @@ sdm_system_title        DB "                ",0
 ;----------------------------------------------------------------------------------------------------------------------
 sdm_header_system       DS 20,0 ;HERE
 
-
-;srm_distance            DB "Distance: "
-;srm_dist_amount         DB "000"
-;srm_decimal             DB "."
-;srm_fraction            DB "0"
-;srm_dis_ly              DB " Light Years",0
-;srm_default_dist        DB "  0.0"
 
 ;----------------------------------------------------------------------------------------------------------------------
 sdm_economy             DB "Economy     : "

@@ -51,41 +51,20 @@ ShipMissileTable        DB  ShipID_Missile
 ShipMissileTableSize    EQU $ - ShipMissileTable
 
 
-
 ;; clean up below or delte
-;ShipPirateTable:
-;ShipPackList:           DB  ShipID_Sidewinder, ShipID_Mamba, ShipID_Krait, ShipID_Adder, ShipID_Gecko, ShipID_Cobra_Mk_1, ShipID_Worm, ShipID_Cobra_Mk_3_P
 ;ShipPackTableSize       EQU $ - ShipPackList
-;ShipHunterTable         DB  ShipID_Cobra_Mk_3_P, ShipID_Asp_Mk_2, ShipID_Python_P, ShipID_Fer_De_Lance
 ;ShipHunterTableSize     EQU $ - ShipHunterTable
 ;
-;MasterShipTable:        
-;MasterStations:         DB ShipID_Coriolis   
-;                        DB ShipID_Dodo    
 ; 
 ;                      
 ;                        
-;MasterJunk:             DB ShipID_Asteroid   
-;                        DB ShipID_Plate   
-;                        DB ShipID_CargoType5  
-;                        DB ShipID_Splinter        
-;                        DB ShipID_Escape_Pod      
-;                        DB ShipID_Rock_Hermit     
-;MasterSuperstructure:                        
-;MasterMissile:          DB ShipID_Missile         
 
                         
-
-
-
 MasterThargoid:         DB ShipID_Thargoid        
                         DB ShipID_Thargon         
 
 MasterMission:          DB ShipID_Constrictor     
                         
-
-                        
-                                
 
                         DB ShipID_Logo            
                         DB ShipID_TestVector      

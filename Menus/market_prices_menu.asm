@@ -182,10 +182,6 @@ MKT_GetCargo:   	    ld      de,0
                         call 	MKT_DispDEIXtoIY
                         push    IY
                         pop     de
-                        ;inc     de
-                        ;ld      hl,mkt_cargo_UoM
-                        ;ld      bc,11
-                       ; ldir
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; re-display market data line from boiler text with selected colour
@@ -291,7 +287,6 @@ mkt_update_line:        ld      hl,CargoTonnes                  ; prep index to 
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 MPM_draw_market_prices_menu:
-                        ;break
                         ld      (mkt_read_only_mode),a
                         MMUSelectLayer1
                         call	l1_cls
@@ -317,7 +312,6 @@ MPM_draw_market_prices_menu:
 .DisCash:               call    MKT_GetCash
                         ld		b,23
                         ld		ix,MPM_boiler_text
-                        ;break
                         call	MPM_print_boiler_text
                         ld      a,(mkt_read_only_mode)
                         and     a
@@ -551,7 +545,6 @@ txt_market_cargo        DB "999",0
 market_cursor			DB  $00
 market_position			equ $2008
 
-;market_UomOffset		equ 46
 market_blank_line       DB "                                      ",0
 mkt_hold_level          DB "Cargo (Tonnes): "
 mkt_cargo_amount		DS 20

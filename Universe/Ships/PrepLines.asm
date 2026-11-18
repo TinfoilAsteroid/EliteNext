@@ -21,20 +21,10 @@ PrepLines:
 ; FOR NOW BRUTE FORCE IF OFF SCREEN
 
 ; TODO add in onced DOEXP is finished
-;        ld          a,(UBnkexplDsp)                     ; INWK+31  \ display/exploding state|missiles
-;        JumpOnBitClear  a,5,EE31                        ; bit5 of mask, if zero no explosion
-;        or          8
-;        ld          (UBnkexplDsp),a                     ; else else set bit3 to erase old line
-;        jp          DOEXP                               ; erase using Do Explosion and use implicit return
-;EE31:                                                   ; no explosion
-;        JumpOnBitClear  a,3,LL74                        ; clear is hop to do New lines
-;        call        ClearLine                           ; LL155    \ else erase lines in XX19 heap at LINEstr down
-;        ld          a, $08                              ; set bit 3 of a and fall into LL74
 ;
 ;--------------------------------------------------------------------------------------------------------
 
 InitialiseLineRead:  
-        ;break
         ldWriteZero UbnkLineArrayLen                    ; current line array index = 0
         ld          (UbnkLineArrayBytes),a              ; UbnkLineArrayBytes= nbr of bytes of lines laoded = array len * 4
         ld          (PLEDGECTR),a
@@ -79,7 +69,6 @@ IsFace1Visibile:                                        ; edges have 2 faces to 
         ld          c,a                                 ;  c = a copy of byte 1
         and         $0F                                 ;
         GetFaceAtA
-;       jp  VisibileEdge; DEBUG BODGE TEST TODO
         JumpIfAIsNotZero VisibileEdge                     ; LL70 visible edge
 IsFace2Visibile:
         ld          a,c                                 ; restore byte 1 from c register
@@ -104,7 +93,6 @@ VisibileEdge:                                           ; Now we need to node id
             jr          nc,.SkipBreak1
             nop
             nop
-            ;break
 .SkipBreak1:            
             jr          c,LL78EdgeNotVisible
 //COMMENEDOUT FOR LATECLIPPING        ELSE

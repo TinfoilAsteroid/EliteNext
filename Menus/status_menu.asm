@@ -260,34 +260,8 @@ STAT_buffer_list:       ld      hl,txt_equipment_01                         ; hl
                         ret
 
 ; Loop through invetory displaying all items equipped
-;draw_STAT_items:        
 ;
 ;
-;MMUSelectLayer2
-;                        ld      hl,STAT_display_buffer                      ; hl = pointer to first item in display
-;.ReadyToPrint:          ex      de,hl                                       ; de = message to print
-;                        ld      hl,equipment1_pos_col                       ; hl = column
-;                        ld      b,equipment1_pos_row                        ; b = row for first line
-;.CheckIfPrintable:      ld      a,(de)                                      ; if its not a lead ">" then we have run out
-;                        cp      '>'
-;                        ret     nz
-;.DrawARow:              push    de,,hl,,bc                                  ; Save vars 
-;                        print_msg_at_de_at_b_hl_macro txt_status_colour     ; Print text at row b col hl
-;                        pop     de,,hl,,bc                                  ; get back row and column, we don't change column for now
-;                        ld      a,l
-;                        cp      equipment1_pos_col
-;                        jp      z,.MoveRight
-;.DownOneLeft:           ld      hl,equipment1_pos_col
-;                        ld      a,8
-;                        add     a,b
-;                        ld      b,a
-;                        jp      .nextBufferItem
-;.MoveRight:             ld      hl,equipment2_pos_col      
-;.nextBufferItem:        ld      a,STAT_buffer_row_len                       ; nbr characters per message
-;                        ex      de,hl
-;                        add     hl,a 
-;                        ex      de,hl
-;                        jp      .CheckIfPrintable
 
 
 ;----------------------------------------------------------------------------------------------------------------------------------	
@@ -326,19 +300,15 @@ draw_status_menu:       MMUSelectLayer1
                         ld      hl,1
                         ld      de,320-4
                         ld      c,$C0
-                       ; call    l2_draw_horz_line_320           ;b = row; hl = col, de = length, c = color"
                         ld      b,$6C
                         ld      hl,1
                         ld      de,320-4
                         ld      c,$C0
                         call    l2_draw_horz_line_320           ;b = row; hl = col, de = length, c = color"
                         call    draw_STAT_maintext
-                        ;break
 .equipment              call    STAT_buffer_list
                         ld      b,19
                         ld      ix,status_equipment_list
-                        ;break
-                        ;call    draw_STAT_items
                         call    STAT_print_boiler_text
                         ret
 
@@ -508,6 +478,3 @@ stat_copy_to_name:      ld      hl,GalaxyExpandedName
 menu_box_colour         equ $C0                        
 
 
-
-
-	

@@ -79,7 +79,7 @@ Moved here from the `DISPLAY "TODO ..."` messages that were printed on every bui
 - [ ] Add leading sign to mul24 ([Maths24/asm_mul24_notbank0safe.asm](Maths24/asm_mul24_notbank0safe.asm))
 - [ ] Optimisae mul24 for leading 0's to do 8.8 x 8.8 ([Maths24/asm_mul24_notbank0safe.asm](Maths24/asm_mul24_notbank0safe.asm))
 - [ ] Replace this with non memory access version ([MathsFPS78/asm_multiply_S78.asm](MathsFPS78/asm_multiply_S78.asm), `AequAmulQdiv256u`)
-- [ ] HLequHLmulDEu doesn't return H.L * D.E as 8.8 as its comment says: H and L both come back as bits 8-15 of the product. Its only caller, XX12EquNodeDotOrientation, uses H with node values under 256, where that is right; fix the routine and the caller together ([MathsFPS78/asm_multiply_S78.asm](MathsFPS78/asm_multiply_S78.asm), `HLequHLmulDEu`; Tests/test_maths.py test_s78_multiplies)
+- [ ] HLequHLmulDEu doesn't return H.L * D.E as 8.8 as its comment says: H and L both come back as bits 8-15 of the product. Its only caller, XX12EquNodeDotOrientation, uses H with node values under 256, where that is right; fix the routine and the caller together ([MathsFPS78/asm_multiply_S78.asm](MathsFPS78/asm_multiply_S78.asm), `HLequHLmulDEu`; Tools/test_maths.py test_s78_multiplies)
 - [ ] DEequDmulEs and the MathsBankedFns routines that call it (ApplyMyAngleAToIXIY, ApplyRollAndPitchToIX) are built but nothing calls them: move to Unused ([MathsFPS78/asm_multiply_S78.asm](MathsFPS78/asm_multiply_S78.asm), `DEequDmulEs`)
 - [ ] NormalizeTactics is up to 3 of 96 low on small components (7 bit scale, the divide's halving for lengths of 128 or more, its 3/8 step); more precision if missiles need it ([Maths/normalise96.asm](Maths/normalise96.asm), `NormalizeTactics`)
 - [ ] Don't bother with overflow for now ([Maths/MathsBankedFns.asm](Maths/MathsBankedFns.asm), `ADDHLDESignBC`)
@@ -152,7 +152,7 @@ Moved here from the `DISPLAY "TODO ..."` messages that were printed on every bui
 
 ## Not in the game build
 
-From files eliteNext.asm doesn't assemble: moved to Unused folders (binary_to_decimal.asm is only used by the SpriteWriter.asm tool). Only relevant if the file comes back into the game.
+From files eliteNext.asm doesn't assemble: moved to Unused folders (SpriteWriter.asm, now Tools/sprite_writer.py, among them). Only relevant if the file comes back into the game.
 
 - [ ] Clear up LSX2 and LSY2 references ([Variables/Unused/initialise_game.asm](Variables/Unused/initialise_game.asm), `WipeScanner`)
 - [ ] Don't bother with overflow for now ([Maths/Unused/asm_add.asm](Maths/Unused/asm_add.asm), `ADDHLDEsBCSameNeg`)
@@ -165,7 +165,7 @@ From files eliteNext.asm doesn't assemble: moved to Unused folders (binary_to_de
 - [ ] DVL9 and DVL6 move P and QRS into registers for faster shift ([Maths/Unused/asm_divide.asm](Maths/Unused/asm_divide.asm), `DVID3B`)
 - [ ] Check oprimisation here for var r  in b ([Maths/Unused/asm_divide.asm](Maths/Unused/asm_divide.asm), `DVID3B`)
 - [ ] TEST ([Maths/Unused/asm_multiply.asm](Maths/Unused/asm_multiply.asm), `mulDEbyLSigned`)
-- [ ] Optimise ([Maths/binary_to_decimal.asm](Maths/binary_to_decimal.asm), `DispPriceAtoDE`)
+- [ ] Optimise ([Maths/Unused/binary_to_decimal.asm](Maths/Unused/binary_to_decimal.asm), `DispPriceAtoDE`)
 - [ ] Dbugtodo ([ModelRender/Unused/PrepTriangles.asm](ModelRender/Unused/PrepTriangles.asm), `IsEdgeInVisibilityRange`)
 - [ ] Debug bodge todo ([ModelRender/Unused/PrepTriangles.asm](ModelRender/Unused/PrepTriangles.asm), `IsFace1Visibile`)
 - [ ] Revert back to macro later ([ModelRender/Unused/drawforwards-LL17.asm](ModelRender/Unused/drawforwards-LL17.asm), `LastNormalAlwaysVisible`)
@@ -173,8 +173,9 @@ From files eliteNext.asm doesn't assemble: moved to Unused folders (binary_to_de
 
 ## Done
 
-- [x] DMA+ fill mode (core 3.03.00) for the Layer 2 clear and memfill_dma in REAL_HARDWARE builds (EliteNHW.nex, `build.bat hardware`); Documentation/ZXNDDMA.md, Tests/test_hardware.py
-- [x] Z80 test programs (clipTst, keyTst, macroTst, Tools/testwrite) replaced by the Python emulator tests in Tests/ (run_tests.py, run by elitebuild.bat / build.bat; `notest` skips them)
+- [x] SpriteWriter.asm (run in CSpect to write the NESprNN.dat sprite files) replaced by Tools/sprite_writer.py, run by build.bat; it and Layer3Sprites/SpriteSheet.asm, export.asm moved to Unused; Tools/test_sprites.py
+- [x] DMA+ fill mode (core 3.03.00) for the Layer 2 clear and memfill_dma in REAL_HARDWARE builds (EliteNHW.nex, `build.bat hardware`); Documentation/ZXNDDMA.md, Tools/test_hardware.py
+- [x] Z80 test programs (clipTst, keyTst, macroTst, Tools/testwrite) replaced by the Python emulator tests in Tools/ (run_tests.py, run by elitebuild.bat / build.bat; `notest` skips them)
 - [x] Keys table was 55 bytes for 56 key states: VK_EXTEND (and control ExtSystemJump) overwrote RawKeys and init_keyboard missed it ([Hardware/keyboard.asm](Hardware/keyboard.asm), `Keys`)
 - [x] fOpen hung (jp to itself) on any open error, so FileLoad / FileSave's error handling never ran; FileSave's write error path returned with the handle still on the stack ([Hardware/drive_access.asm](Hardware/drive_access.asm), `fOpen`, `FileSave`)
 - [x] Clean up console and remove compasses

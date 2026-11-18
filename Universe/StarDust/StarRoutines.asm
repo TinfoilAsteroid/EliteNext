@@ -211,7 +211,6 @@ StarProcessLoop:        push    bc                                  ; save count
 .XRoll:                 ld      a,(ALP1)                           ; h = sign, l = magnitude
                         cp      0
                         jr      z,.NoRoll                           ; don;t roll if magnitude is 0
-                     ;   break
                         ld      l,a                                 ; roll magnitude
                         ld      a,(ALP2FLIP)                        ; inverted roll sign
                         and     SignOnly8Bit                        ; sanitise sign bit
@@ -274,9 +273,6 @@ StarProcessLoop:        push    bc                                  ; save count
 ; now work out screen pos
 ; Note two optimistations, write to layer 2 - we get a free removal via double buffer cls
 ; read z dept than determine hw many pixesl to plot, e.g. 1,2,3,4
-;        pop     de
- ;       call    ProjectStarXToScreen
-                        ;pop     de
 .NoPitch:
 .ProjectStar:           ld      a,(iy+1)
                         ld      l,a
@@ -350,7 +346,6 @@ ProjectStarXToScreen:   ld      c,(iy+0)
                         call    BC_Div_DE   ; replaces  call    DIV16BCDivDEUNDOC
                         ld      a,l
                         JumpOnBitSet a,7,StarXNegativePoint             ; LL62 up, -ve Xdist, RU screen onto XX3 heap
-;StarXPositivePoint:									; x was positive result
                         ld          l,ScreenCenterX						; 
                         ld          h,0
                         add         hl,bc								; hl = Screen Centre + X
@@ -374,7 +369,6 @@ ProjectStarYToScreen:   ld          b,(iy+2)
                         call        BC_Div_DE   ; replaces call        DIV16BCDivDEUNDOC
                         ld          a,l                                 ; XX15+2 \ sign of X dist
                         JumpOnBitSet a,7,StarNegativeYPoint             ; LL62 up, -ve Xdist, RU screen onto XX3 heap top of screen is Y = 0
-                    ;StarPositiveYPoint:									; Y is positive so above the centre line
                        ld          l,ScreenCenterY
                         ClearCarryFlag
                         sbc         hl,bc  							 	; hl = ScreenCentreY - Y coord (as screen is 0 at top)

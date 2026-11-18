@@ -2,8 +2,6 @@
     DEFINE CHECKDOTSHIPDATA  1
 ;    DEFINE DEBUGFORCEFACEDRAW 1
 CurrentNormIdx  DB 0
-; SomeFacesVisible:   
-; EE29:             
 
 ;   Backface cull logic  line of sight vector . face normal vector
 ;       line of sight vector . face normal vector
@@ -51,7 +49,6 @@ XX12EquNodeDotXX16:					         		; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vec
         call    XX12ProcessOneRow
 		ld		b,a
 		ld		a,h
-;		ld		a,l
 		or		b
 		ld		(UBnkXX12ySign),a					; a = result with sign in bit 7
 		ld		a,l                                 ; the result will be in the lower byte now
@@ -61,7 +58,6 @@ XX12EquNodeDotXX16:					         		; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vec
         call    XX12ProcessOneRow
 		ld		b,a
         ld		a,h
-;		ld		a,l
 		or		b
 		ld		(UBnkXX12zSign),a					; a = result with sign in bit 7
 		ld		a,l                                 ; the result will be in the lower byte now
@@ -145,11 +141,9 @@ CheckVisible:           ld      a,(UBnKzsgn)                 ; Is the ship behin
                         ret
                         
 CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;   
-                        ;break                          
                         call    CopyRotmatToTransMat        ; XX16 = UBNKRotMat    
                         call    ScaleXX16Matrix197          ; scale rotation matrix in XX16
                         call    LoadCraftToCamera           ; XX18 = camera
-                        ;call    CopyCameraToXX15Signed      ; Copy the camera to XX15 as signed 15 bit
 .BackfaceLoop:          ld      a,(QAddr)                   ;  
                         ld      iyl,a                       ; iyl = scale factor
 ; By this point XX18 = scaled draw cam and iyl = scale factor

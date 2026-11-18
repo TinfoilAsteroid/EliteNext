@@ -42,7 +42,6 @@ GalaxyDataAddr          equ $e000
 SoundAddr               equ $e000
 KeyboardAddr            equ $e000
 MathsBankedFnsAddr      equ $0000
-PIFnsAddr               equ $e000
 EquipmentTablesAddr     equ $e000
 
 EXSDOSMMU0              equ MMU_SLOT_0_REGISTER
@@ -75,7 +74,6 @@ ConsoleImageDataMMU	    equ MMU_SLOT_7_REGISTER
 GalaxyDataMMU	        equ MMU_SLOT_7_REGISTER
 SoundMMU                equ MMU_SLOT_7_REGISTER
 KeyboardMMU             equ MMU_SLOT_7_REGISTER
-PIFnsMMU                equ	MMU_SLOT_7_REGISTER
 EquipmentTablesMMU      equ MMU_SLOT_7_REGISTER
 
 ; banks 8 to 17 are reserved for layer 2 memory
@@ -131,7 +129,6 @@ BankMathsTables         equ 99
 BankSound               equ 100
 BankKeyboard            equ 101
 BankMathsBankedFns      equ 102
-BankPIFns               equ 103
 
 BankROM                 equ 255
 

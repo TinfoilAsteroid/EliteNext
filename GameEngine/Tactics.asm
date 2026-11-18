@@ -7,11 +7,6 @@ MISSILEMINPITCH         equ -3
 MISSILEMAXROLL          equ 3
 MISSILEMINROLL          equ -3
 ;Ship Tactics
-;ShipTypeNormal          equ 0
-;ShipTypeMissile         equ 1
-;ShipTypeStation         equ 2
-;ShipTypeJunk            equ 3
-;ShipTypeScoopable       equ 4         ; a sub set of junk
 ; To be added
 ;ShipTypeTargoid
 ;ShipTypeHermit
@@ -26,36 +21,16 @@ MISSILEMINROLL          equ -3
 ;ShipTypeNoAI
 
 
-
 ShipAIJumpTable:      DW    NormalAI,   MissileAIV3,  StationAI,  JunkAI,     ScoopableAI
                       DW    ThargoidAI, NoAI,       NoAI,       NoAI,       NoAI
 ShipAiJumpTableMax:   EQU ($ - ShipAIJumpTable)/2
 
 
-
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Main entry point to tactics. Every time it will do a a tidy and the do AI logic
 UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
-                  ;    break
-                  ;    ld       a,(TidyCounter)
-                  ;    ld       hl,
-                  ;     ld      hl,TidyCounter
-                  ;    dec     (hl)
-                  ; IFDEF USE_NORMALISE_IX
-                  ;     MMUSelectMathsBankedFns
-                  ;    call     z,TidyVectorsIX
-                  ; ELSE
-                  ;    call     z,TidyUbnK  ;TODO SEE IF THIS IS AN ISSUE"
-                  ; ENDIF
                        ; This shoudl be a call nz to tidy *****ret     nz
-                      ; ld      a,16
-                      ; ld      (TidyCounter),a
-                       ;call    TidyUbnK
                        ; add AI in here too
-                        ;ld      a,(SelectedUniverseSlot)
-                        ;cp      2
-                        ;jp      nz,.SkipBreak
-                        ;break                       
 .SkipBreak:            ld       a,(ShipTypeAddr)
                        ReturnIfAGTEusng ShipAiJumpTableMax              ; TODO capture duff jumps whilst debugging in case a new shjip type code is added
                        ld       hl,ShipAIJumpTable
@@ -67,7 +42,6 @@ UpdateShip:             ;  call    DEBUGSETNODES ;       call    DEBUGSETPOS
                        ld       l,a                                     ;
                        jp       hl                                      ; Follow the AI Jump Table
                        ret                                              ; not needed as jp handles this
-
 
 
 ; used  when no pre-checks are requrired, e.g. if forcing a space station from main loop
@@ -109,7 +83,6 @@ CalculateAgression:     IFDEF   ALWAYSANGRY
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; set angry if possible, if its an innocent then flag the space station to get angry
 MakeHostile:            ld      a,(ShipNewBitsAddr)                     ; Check bit 5 of newb flags
-                        ;break
                         JumpIfMemEqNusng ShipTypeAddr, ShipTypeStation, .SetNewbHostile
 .ItsNotAStation:        and     ShipIsBystander                         ; check if space station present if its a bystander
                         call    nz, SetStationHostile                   ; Set Space Station if present, Angry
@@ -271,8 +244,6 @@ calcNPitch:             xor     SignOnly8Bit                    ; c = sign flipp
                         JumpIfALTNusng MISSILEMAXPITCH+1, .calcNPitch2    ; if a >= roll threshold
                         ld      a,b
                         and     SignOnly8Bit
-                        ;jr      z,.NPitchPositive
-                       ; ld      a,
                         ld      a,MISSILEMAXPITCH                         ;    z rot = z rot * dot product flipped sign
                         or      c                               ;    i.e. zrot = current magnitude but dot product sign flipped
                         ld      (UBnKRotZCounter),a             ;    .
@@ -292,7 +263,6 @@ calcNRoll:              ld      a,(UBnKRotZCounter)
                         or      MISSILEMAXPITCH   
                         ld      a,(UBnKRotXCounter)
                         ret
-                        
                         
                         
                         and     SignMask8Bit                    ; get ABS value
@@ -374,7 +344,6 @@ DebugTacticsCopy:
 
                         ret
                         ENDIF
-;TacticsVarResult        DW 0                        
 XX12EquTacticsDotNosev: call    CopyRotNoseToTacticsMat
 XX12EquTacticsDotHL:    ld      hl,TacticsRotMatX; UBnkTransmatNosevX    ; ROTMATX HI
 .CalcXValue:            ld      a,(hl)                              ; DE = RotMatX & Vect X
@@ -441,19 +410,16 @@ CopyToTargetVector:     ld      hl,UBnKxlo
 ; Copies 24 bit XYZ Vector to tactics vectors
 CopyPosToVector:        ld      hl,(UBnKxlo)
                         ld      a,(UBnKxsgn)
-                        ;xor     $80
                         ld      (TacticsVectorX),hl
                         ld      (TacticsVectorX+2),a
 
 .CopyY24Bit:            ld      hl,(UBnKylo)
                         ld      a,(UBnKysgn)
-                        ;xor     $80
                         ld      (TacticsVectorY),hl
                         ld      (TacticsVectorY+2),a
 
 .CopyZ24Bit:            ld      hl,(UBnKzlo)
                         ld      a,(UBnKzsgn)
-                        ;xor     $80
                         ld      (TacticsVectorZ),hl
                         ld      (TacticsVectorZ+2),a
                         ret
@@ -468,10 +434,6 @@ SetPlayerAsTarget:      ZeroA
 
 CalcVectorToMyShip:     call    SetPlayerAsTarget
                         call    CopyPosToVector
-                        ;call    CopyToTargetVector
-                        ;FlipSignMem     TacticsTargetX+2
-                        ;FlipSignMem     TacticsTargetY+2
-                        ;FlipSignMem     TacticsTargetZ+2
                         ret
                                               
 CalcTargetVector:       ld      de,(TacticsTargetX)                        ; get target ship X
@@ -765,8 +727,6 @@ CalcTargetVector:       ld      de,(TacticsTargetX)                        ; get
 ;              if chance 25%
 ;                 then fire ECM
 ;
-
-
 
 
 ReduceTacticVectors:ld      hl, (TacticsVectorX)        ; pull XX15 into registers

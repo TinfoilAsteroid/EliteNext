@@ -207,12 +207,10 @@ copyStockStockUoMIXDE:  call    getStockUoMIX
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 getStockPriceIXtoDE:    ld		a,(ix+StockPriceOffset)
-                        ;ld		de,txt_market_amount
                         call	Stock_DispPriceAtoDE
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 getStockQtyIX:          ld		a,(ix+StockQtyOffset)
-                        ;ld		de,txt_market_quantity
                         call	Stock_DispQtyAtoDE
                         ret                
 ;----------------------------------------------------------------------------------------------------------------------------------
@@ -233,7 +231,6 @@ generate_stock_market:  ld		b,$FF				; so the first iteration puts it at 0
                         ld		e,a					; e  = economy adjust
                         bit		7,e
                         jr		nz,.PosMul			; it could be negative and we onnly want
-;.NegMul:						; e reg from mulitply not a 2'c 16 bit word
                         ld		a,e
                         neg
                         ld		e,a

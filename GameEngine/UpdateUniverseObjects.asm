@@ -61,7 +61,6 @@ UpdateUniverseObjects:  xor     a
                             jr      nz,.ProperUpdate                                ; 
         ENDIF
         IFDEF   DEBUG_SHIP_MOVEMENT
-                            ;break
 .DebugUpdate:               call    FixStationPos                                   ; if we are debugging space station code                  
         ENDIF
         IFDEF   CLIPDEBUG                                                           ; if we are debugging clipping then skip all update code
@@ -70,9 +69,7 @@ UpdateUniverseObjects:  xor     a
 .ProperUpdate:          MMUSelectMathsBankedFns
                         ld      ix,UBnkrotmat
                         CallIfMemEqMemusng SelectedUniverseSlot, CurrentUniverseAI, TidyOrientation  ; determine if its tidy time within the universe model
-                        ;break
                         call    ShipApplyMyRollAndPitch;MyRollAndPitch24Bit;ApplyMyRollAndPitch             ; Apply our ship movement to universe object
-                        ;call    MySpeed24Bit
                         call    ApplyShipRollAndPitch                               ; Apply ships own movement to universe object
                         call    ApplyShipSpeed                                      ; Apply ships speed to universe object
                         call    UpdateSpeedAndPitch                                 ; update based on rates of speed roll and pitch accelleration/decelleration
@@ -140,12 +137,9 @@ UpdateUniverseObjects:  xor     a
 ;.. Now check laser to see if the ship is being shot in sights
 .PostCollisionTest:     call    ShipInSights
                         jr      nc,.ProcessedUniverseSlot                        ; for laser and missile we can check once
-                        ld      a,(CurrLaserPulseRate)
-                        JumpIfAIsNotZero .CheckForPulse
-                        JumpIfMemFalse FireLaserPressed,     .NoLaser
-                        jp      .LaserDamage
-.CheckForPulse:         JumpIfMemZero CurrLaserPulseOnCount, .NoLaser
-.LaserDamage:           ld      a,(CurrLaserDamageOutput)
+                        ld      a,(LaserHitDamage)                              ; this loop's laser damage (LaserUpdate)
+                        and     a
+                        jr      z,.NoLaser
                         call    DamageShip
                         ld      a,(UBnKexplDsp)                                 ; is it destroyed
                         and     %10100000      
@@ -177,11 +171,6 @@ UpdateUniverseObjects:  xor     a
                         ret
 ;.. For Missiles AI is updated every cycle
 .UpdateMissile:         ;break                                                   ; Missile AI to add later for now we just fall into UpdateShip
-;.CheckForTidy:          ld      a,(TidyCounter)
-;                        ld      hl,SelectedUniverseSlot
-;                        cp      (hl)
-;                        MMUSelectMathsBankedFns
-;                        call    z,TidyVectorsIX
                         call    UpdateShip                                      ; we do it this way top avoid double calling
                         jp      .DoneAICheck                                    ; ai if the ai slot to process = missile type
 ;..................................................................................................................................
@@ -192,7 +181,6 @@ SavePosition:           push    hl,,de,,bc,,af
                         ld      a,(CurrentShipUniv)
                         cp      2
                         jr      nz,.DoneSave
-                        ;break
                         ld      hl, UBnKxlo
                         ld      de, SaveUBNK
                         ld      bc, 3*3
@@ -218,7 +206,6 @@ RestorePosition:        push    hl,,de,,bc,,af
                         ld      a,(CurrentShipUniv)
                         cp      2
                         jr      nz,.DoneSave
-                        ;break
                         ld      hl, SaveUBNK
                         ld      bc, 3*3
                         ld      de, UBnKxlo
@@ -319,6 +306,5 @@ TestForNextShip:        MacroIsKeyPressed c_Pressed_Quit
                         ld      a,b
                         call    CopyShipToUniverse
                         call    SetInitialShipPosition
-                        ;call    DEBUGSETNODES                        
                         ret
                         

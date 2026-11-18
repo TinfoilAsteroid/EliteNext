@@ -11,7 +11,6 @@ ZI1:                    ld      hl, 0
                         ld      (UBnkrotmatNosevY),hl                ; set the zeroes
 ; Optimised as already have 0 in l
                         ld      h, $60	             				; 96 in hi byte
-                        ;ld      hl,1
                         ld      (UBnkrotmatSidevX),hl
                         ld      (UBnkrotmatRoofvY),hl
 ; Optimised as already have 0 in l

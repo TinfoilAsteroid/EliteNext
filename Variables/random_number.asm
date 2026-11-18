@@ -36,7 +36,6 @@ doRND:                  ;exx                                     ; protect bc,de
                         ld		a,c
                         ld		(RandomSeed3),a
                         ex		af,af'
-                        ;exx                                     ; get bc,de,hl back
                         ret
 
 saveRandomSeeds:        ld      hl,RandomSeed

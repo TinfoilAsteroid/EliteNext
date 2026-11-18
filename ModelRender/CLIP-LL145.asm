@@ -12,8 +12,6 @@ clipXGTY                DB      0
 clipFlags               DB      0
 SWAP                    DB      0
 varYX                   DW      0
-;varRegX                 DB      0
-;varXX12p2               DB      0
 clipXX13                 DB      0
 Gradient                DB      0
 ; for start and end y. bit7 of lower determines its not been setup yet
@@ -127,7 +125,6 @@ ClipLine:               ld      bc,(UbnkPreClipY1)          ; bc - XX15(2,3) Y1
                         ld      a,(clipDxHigh)
                         test    $80                         ; is it a negative X
                         jr      z,.LL111                    ; If delta_x_hi is positive, jump down to LL110 to skip the following
-                        ;ld      hl,(clipDx)                 ;OPTIMISATION 6/11/21 commented out
                         macronegate16hl                     ; Otherwise flip the sign of delta_y to make it  positive, starting with the low bytes
 .LL111:               
 .ScaleLoop:             ld      a,h                         ; At this point DX and DY are ABS values
@@ -320,8 +317,6 @@ LL120:                  ld      a,l                          ; Set R = x1_lo
                         ld      (varYX),hl
 .LL128:                 ret
 
-                        
-                        
                         
 ; Calculate the following: * If T = 0,  calculate (Y X) = (S R) / XX12+2 (actually SR & XX12+2 /256)
 ;                          * If T <> 0, calculate (Y X) = (S R) * XX12+2
@@ -565,7 +560,6 @@ ClipLineV3:             ;break
                         ld      (UbnkPreClipX1), hl
 ; if bit 2 of clipcoord is set
 ;        swap x1y1 with x2y2
-;        call    LL118
 .ClipP2:                ld      a,iyh                                   ; so now repeat all that for point 2
                         and     2
                         jp      z,.ClipComplete
@@ -730,7 +724,6 @@ LL118:                  ;break
                         ex      de,hl
 ;                       x1 += adjust * (-1 if bit 3 of clipcoord is set)
 ;                       y1 = 0
-;                       ret
 ;                       now we have done the adjustment, if y or x are off screen then the line spans screen in only 1 dimension so doesn't get drawn
 .DoneBlockY1:           ld      a,iyh
                         test    4
@@ -780,56 +773,13 @@ LL118:                  ;break
 ;;;;;;; if y1 > 127 and y2 > 127 then same sing and exit
 ;;;;;;
 ;;;;;;;if y1hi y2hi are <> 0 and both same sign exit
-;;;;;;.CheckYOffScreen:       ld      a,b                                 ; y1 and y2 high tests
-;;;;;;                        and     ixh
-;;;;;;                        jp      .CheckYLow
 ;;;;;;                        ld      
-;;;;;;                        and     a                                   ; if either is zero then we can check for > 127
-;;;;;;                        jr      z,.YHighNegativeCheck               ;
-;;;;;;                        ld      a,ixh                               ;
-;;;;;;                        and     a                                   ;
-;;;;;;                        ret     nz                                  ;
 ;;;;;;;if y1h bit 7 and y2h bit 7 set then exit as both -ve
-;;;;;;                        ld      a,b                                 ;
-;;;;;;                        and     ixh                                 ;
-;;;;;;                        and     $80                                 ;
-;;;;;;                        ret     z                                   ;
 ;;;;;;;if y1h > 0 and y2h > 0 then exit as both are +ve high
-;;;;;;                        ld      a,b                                 ;
-;;;;;;                        and     ixh                                 ;
-;;;;;;                        ret     nz                                  ;
 ;;;;;;;if y1h or y2h is not 0 then proceed to clip
-;;;;;;                        ld      a,b
-;;;;;;                        or      ixh
-;;;;;;                        jr      nz,.StartProcessing
 ;;;;;;;if (y1l bit 7 is set and y1h is clear ) or (y2l bit 7 is set and y2h is clear) the proceed to clip
-;;;;;;                        ld      a,c
-;;;;;;                        or      ixl
-;;;;;;                        and     $80
-;;;;;;                        jr      z,.StartProcessing
 ;;;;;;
-;;;;;;.CheckYOffScreen:       ld      a,b                                 ;
-;;;;;;                        cp      0                                   ;
-;;;;;;                        jr      z,.Y1HighIsZero                     ; 
-;;;;;;                        ld      a,ixh                               ; if we get here Y1 high <> 0
-;;;;;;                        cp      0                                   ;
-;;;;;;                        jr      z,.Y2HighIsZero                     ; if they are both non zero we can do a sign check                               
-;;;;;;.CheckYSameSign:        ld      a,b                                 ; if we get here Y1 high and Y2 high are not zero
-;;;;;;                        xor     ixh                                 ; so same sign then bail out if they are
-;;;;;;                        and     $80                                 ;
-;;;;;;                        ret     z                                   ;
 ;;;;;;;if we get here either y1hi or y2 hi are 0, now check and y1 low > 127 & y2 low > 127, exit
-;;;;;;.Y1HighIsZero:          ld      a,ixh                               ; as y1h is zero, if y2h is zero we do y1 y2 test
-;;;;;;                        cp      0                                   ;
-;;;;;;                        jr      nz,.Startprocessing                 ;
-;;;;;;                        ld      a,c                                 ; so by here y1h and y2h must be zero
-;;;;;;                        and     ixl
 ;;;;;;                        
 ;;;;;;                        .CheckY2Lo                        ;
-;;;;;;.CheckY1Lo:             ld      a,c
-;;;;;;                        and     $80
-;;;;;;                        jr      z,.StartProcessing
-;;;;;;.CheckY2Lo:             ld      a,ixl
-;;;;;;                        and     $80
-;;;;;;                        ret     nz
 ;;;;;;;clip = 0                        

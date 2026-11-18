@@ -40,19 +40,6 @@ CopyRotmatToTransMat:   di                                                      
                         ret                                                         ; 10 Total 267 (LDI version is 318)
                         
                             
-                        
-;CopyRotmatToTransMat:   
-;                        ld      hl,UBnkrotmatSidevX
-;                        ld      de,UBnkTransmatSidevX
-;                        SixLDIInstrunctions
-;                        ld      hl,UBnkrotmatRoofvX
-;                        ld      de, UBnkTransmatRoofvX
-;                        SixLDIInstrunctions
-;                        ld      hl,UBnkrotmatNosevX
-;                        ld      de, UBnkTransmatNosevX
-;                        SixLDIInstrunctions
-;                        ret
-
 CopyRotToTransMacro:    MACRO
                         ld      hl,UBnkrotmatSidevX
                         ld      de,UBnkTransmatSidevX

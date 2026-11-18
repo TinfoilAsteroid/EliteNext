@@ -26,14 +26,10 @@ StartOfUnivName     DS 16
 ;-Camera Position of Ship----------------------------------------------------------------------------------------------------------
                        INCLUDE "./Universe/Ships/AIRuntimeData.asm"
 ; moved to runtime asm
-;                        INCLUDE "./Universe/Ships/ShipPosVars.asm"
-;                        INCLUDE "./Universe/Ships/RotationMatrixVars.asm"
  
 ; Orientation Matrix [nosev x y z ] nose vector ( forward) 19 to 26
 ;                    [roofv x y z ] roof vector (up)
 ;                    [sidev x y z ] side vector (right)
-;;rotXCounter                 equ UBnkrotXCounter         ; INWK +29
-;;rotZCounter                 equ UBnkrotZCounter         ; INWK +30UBnkDrawCam0xLo   DB  0               ; XX18+0
 
 
                         INCLUDE "./Universe/Ships/XX16Vars.asm"
@@ -673,8 +669,6 @@ SpaceStationLaunchPositon:
                         ret                 
 ; --------------------------------------------------------------
 UnivSpawnSpaceStation:  ;    UnivSelSpaceStationType ; set a to type
-                        ;ld      c,13                    ; c to slot 13 which is space station
-                        ;call    SpawnShipTypeASlotC     ; load inito universe slot
 .CalculatePosition:     call    CopyPlanetGlobaltoSpaceStation
 .CalcOrbitOffset:       call    CalculateSpaceStationWarpPositon
                         call    InitialiseOrientation
@@ -760,9 +754,6 @@ DebugPos:               DB $00,$00,$00,$0F,$00,$00,$94,$02,$00
 DebugRotMat:            DB $C7,$E0,$3E,$91,$00,$00
 DebugRotMat1:           DB $3E,$11,$C7,$E0,$00,$00
 DebugRotMat2:           DB $00,$00,$00,$00,$00,$60                     
-;DebugRotMat:            DB $AF,$64,$2E,$07,$00,$00
-;DebugRotMat1:           DB $2E,$87,$AF,$64,$00,$00
-;DebugRotMat2:           DB $00,$80,$00,$80,$00,$60                     
         ENDIF
 
 ; --------------------------------------------------------------                        
@@ -852,26 +843,21 @@ UnivInitRuntime:        ld      bc,UBnKRuntimeSize
     
                         include "Universe/Ships/InitialiseOrientation.asm"
 ;----------------------------------------------------------------------------------------------------------------------------------
-;OrientateVertex:
 ;                      [ sidev_x sidev_y sidev_z ]   [ x ]
 ;  projected [x y z] = [ roofv_x roofv_y roofv_z ] . [ y ]
 ;                      [ nosev_x nosev_y nosev_z ]   [ z ]
 ;
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-;TransposeVertex:
 ;                      [ sidev_x roofv_x nosev_x ]   [ x ]
 ;  projected [x y z] = [ sidev_y roofv_y nosev_y ] . [ y ]
 ;                      [ sidev_z roofv_z nosev_z ]   [ z ]
-; VectorToVertex:
 ;                     [ sidev_x roofv_x nosev_x ]   [ x ]   [ x ]
 ;  vector to vertex = [ sidev_y roofv_y nosev_y ] . [ y ] + [ y ]
 ;                     [ sidev_z roofv_z nosev_z ]   [ z ]   [ z ]
 ;INPUTS:    bhl = dividend  cde = divisor where b and c are sign bytes
 ;OUTPUTS:   cahl = quotient cde = divisor
 ;--------------------------------------------------------------------------------------------------------
-                        ;include "./ModelRender/Unused/EraseOldLines-EE51.asm"
- ; OBSOLETE                       include "./ModelRender/Unused/TrimToScreenGrad-LL118.asm"
                         include "./ModelRender/CLIP-LL145.asm"
 ;--------------------------------------------------------------------------------------------------------
                         include "./Universe/Ships/CopyRotmatToTransMat.asm"
@@ -935,7 +921,6 @@ TidyRotation:       IFNDEF FORCE_TIDY
 ;;;;......................................................
 ;;;; if ztemp hi <> 0                                   ::Scale Object Distance
 ;;;;  Loop                                              ::LL90
-;;;;     inc X
 ;;;;     divide X, Y & ZtempHiLo by 2
 ;;;;  Until ZtempHi = 0
 ;;;;......................................................
@@ -943,7 +928,6 @@ TidyRotation:       IFNDEF FORCE_TIDY
     DISPLAY "Tracing 3", $
 
                         include "Universe/Ships/NormaliseTransMat.asm"
-;;;                        include "Universe/Ships/Unused/NormaliseXX15.asm"
 ;-LL91---------------------------------------------------------------------------------------------------
 
 ; Now we have
@@ -999,7 +983,6 @@ XX12CalcZ:              N0equN1byN2div256 varQ,(hl),(UBnkZScaled)       ; Q = |s
 
 ;-- LL51---------------------------------------------------------------------------------------------------------------------------
 ;TESTED OK
-;XX12EquScaleDotOrientation:                         ; .LL51 \ -> &4832 \ XX12=XX15.XX16  each vector is 16-bit x,y,z
 XX12EquXX15DotProductXX16:
                         ld      bc,0                                ; LDX, LDY 0
                         ld      hl,UBnkTransmatSidevX     
@@ -1028,7 +1011,6 @@ XX12EquXX15DotProductXX16:
                         include "./Maths/Utilities/DotProductXX12XX15.asm"
 ;--------------------------------------------------------------------------------------------------------
 ; scale Normal. IXL is xReg and A is loaded with XX17 holds the scale factor to 3
-; Not Used in code      include "Universe/Ships/Unused/ScaleNormal.asm"
 ;--------------------------------------------------------------------------------------------------------
                         include "./Universe/Ships/ScaleObjectDistance.asm"
 ;--------------------------------------------------------------------------------------------------------
@@ -1063,7 +1045,6 @@ XX12EquXX15DotProductXX16:
 ;            Copy Ship Pos (XX18) to scaled (XX15)                                                                  ::LL143
 ;        else
 ;           Copy FaceScale scaled to X  (XX17)
-;LabelOverflowLoop:
 ;           Copy FaceData (XX12) to Scaled (XX15)                                                                   ::LL92
 ;           While X >= 0
 ;              X--                                                                                                  ::LL93
@@ -1280,7 +1261,6 @@ LL69:
         call    DIV16UNDOC
         ld      a,c
         ld      (varR),a
- ;;;       call        RequAmul256divQ                     ; LL28  \ BFRDIV R=A*256/Q byte for remainder of division
 SkipSmallAngle:
 ScaleX:
 LL65:                                                   ; both continue for scaling based on z
@@ -1495,7 +1475,6 @@ ProjectAxis:
     ret
     
     
-    
 ; Pitch and roll are 2 phases
 ; 1 - we apply our pitch and roll to the ship position
 ;       x -> x + alpha * (y - alpha * x)
@@ -1658,7 +1637,6 @@ PointLoop:              push    bc                                  ; save count
                         push    hl                                  ; save verticies list pointer
                         push    iy                                  ; save Screen plot array pointer
                         ld      a,b
-                        ;break
                         call    CopyNodeToXX15                      ; copy verices at hl to xx15
                         ld      a,(UBnkXScaledSign)
                         call    XX12EquNodeDotOrientation
@@ -1666,8 +1644,6 @@ PointLoop:              push    bc                                  ; save count
                         call    ScaleNodeTo8Bit                     ; scale to 8 bit values, why don't we hold the magnitude here?x
                         pop     iy                                  ; get back screen plot array pointer
                         call    ProjectNodeToEye                     ; set up screen plot list entry
-   ; ld      hl,UbnkLineArrayLen
-  ;  inc     (hl)                                ; another node done
 ReadyForNextPoint:      push    iy                                  ; copy screen plot pointer to hl
                         pop     hl
                         ld      a,4
@@ -1691,7 +1667,6 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
 ;............................................................  
 .DetermineDrawType:     ReturnOnBitClear    a, ShipIsVisibleBitNbr          ; if its not visible exit early
                         JumpOnABitClear ShipIsDotBitNbr, .CarryOnWithDraw   ; if not dot do normal draw
-                        ;break
 ;............................................................  
 .itsJustADot:           call    ProcessDot
                         call    UnivVisibleNonDot           ; set is a dot flag
@@ -1711,7 +1686,6 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
                         ret
 ;............................................................  
 .CarryOnWithDraw:       call    ProcessNodes                ; process notes is the poor performer or check distnace is not culling
-                       ; break
                     IFDEF PLOTPOINTSONLY 
                         ld      a,$F6
                         ld      (line_gfx_colour),a  
@@ -1809,7 +1783,6 @@ ProcessShip:            call    CheckVisible                ; checks for z -ve a
                             ld      d,(hl)                  ; now hl is done with and we can use it 
 .LoopSubParticles:          ld      a,ixl                   ; iyh = loop iterator for nbr of particles per vertex
                             ld      iyh,a                   ; 
-                            ;break
 .ProcessAParticle:          push    de,,bc                  ; save y then x coordinates
                                 ex      de,hl               ; hl = de (Y)
                                 ld      d,ixh               ; d = cloud radius
@@ -1952,7 +1925,6 @@ LL74DecX2:
 LL74SkipDec:        
         call        ClipLineV3                            ; LL145 \ clip test on XX15 XX12 vector, returns carry 
         jr          c,CalculateNewLines
-;        jr          c,CalculateNewLines                 ; LL170 clip returned carry set so not visibile if carry set skip the rest (laser not firing)
 ; Here we are usign hl to replace VarU as index        
         ld          hl,(varU16)
         ld          a,(UBnKx1Lo)

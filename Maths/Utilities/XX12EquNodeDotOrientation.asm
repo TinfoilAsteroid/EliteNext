@@ -100,7 +100,6 @@ XX12EquNodeDotTransMat:							    ; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vect
         call    XX12ProcessOneRow
 		ld		b,a
 		ld		a,h
-;		ld		a,l
 		or		b
 		ld		(UBnkXX12ySign),a					; a = result with sign in bit 7
 		ld		a,l                                 ; the result will be in the lower byte now
@@ -110,7 +109,6 @@ XX12EquNodeDotTransMat:							    ; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vect
         call    XX12ProcessOneRow
 		ld		b,a
         ld		a,h
-;		ld		a,l
 		or		b
 		ld		(UBnkXX12zSign),a					; a = result with sign in bit 7
 		ld		a,l                                 ; the result will be in the lower byte now
@@ -132,7 +130,6 @@ XX12EquNodeDotOrientation:							; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vecto
         call    XX12ProcessOneRow
 		ld		b,a
 		ld		a,h
-;		ld		a,l
 		or		b
 		ld		(UBnkXX12ySign),a					; a = result with sign in bit 7
 		ld		a,l                                 ; the result will be in the lower byte now

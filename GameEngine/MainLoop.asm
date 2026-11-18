@@ -77,14 +77,7 @@
 MainLoop:	    MMUSelectMathsBankedFns                                         ; make sure we are in maths routines in case a save paged out
 .doRandom:      call    doRandom                                                ; redo the seeds every frame
 .doLasers:
-                IFDEF LASER_V2
-                        call    LaserBeamV2
-                ELSE
-                        UpdateLaserOnCounter
-                        UpdateLaserOffCounter
-                        UpdateLaserRestCounter
-                        CoolLasers
-                ENDIF
+                        call    LaserUpdate                                     ; pulses timed in frames (FrameCounter16)
 ;...............ECM                
 .doECM:
                 IFDEF MAINLOOP_ECM
@@ -138,7 +131,6 @@ HandleBankSelect:       ld      a,$00
 CallCursorRoutine:      call    $0000
 ;.. Check to see if we are docked as if we are (or are docking.launching then no AI/Ship updates occur.............................
 ;.. Also end up here if we have the screen input blocker set
-;DEFUNCT?EngineSounds:       ;HasEngineSoundChanged
 ;DEFUNCT?                    ;call    nz,UpdateEngineSound
 SkipInputHandlers:      
 ;.. For Docked flag its - 0 = in free space, FF = Docked, FE transition, FD = Setup open space and transition to not docked
@@ -213,27 +205,11 @@ DustUpdateBank:         MMUSelectViewFront                                      
                         IFDEF   MAINLOOP_DUST_RENDER
 DustUpdateRoutine:          call   DustForward                                              ; This needs to be self modifying
                         ENDIF
-;ProcessSun:             call    DrawForwardSun
-                        IFDEF   LASER_V2            
-ProcessLaser:               MMUSelectSpriteBank
-                            JumpIfMemFalse LaserBeamOn, .NoLaser
-.FireLaser:                 call    sprite_laser_show
-                            call    LaserDrainSystems
-                            jp      ProcessPlanet
-.NoLaser:                   call    sprite_laser_hide
-                        ELSE
-ProcessLaser:               ld      a,(CurrLaserPulseRate)
-                            JumpIfAIsNotZero .CheckForPulse
-                            JumpIfMemFalse FireLaserPressed, .NoLaser
-                            jp      .FireLaser
-.CheckForPulse:             JumpIfMemZero CurrLaserPulseOnCount, .NoLaser
-.FireLaser:                 MMUSelectSpriteBank
-                            call    sprite_laser_show
-                            call    LaserDrainSystems
-                            jp      ProcessPlanet
-.NoLaser:                   MMUSelectSpriteBank
-                            call    sprite_laser_hide
-                        ENDIF
+ProcessLaser:           MMUSelectSpriteBank                                         ; the beam's sprite (LaserUpdate drains
+                        JumpIfMemFalse LaserBeamOn, .NoLaser                        ; energy and adds heat)
+                        call    sprite_laser_show
+                        jp      ProcessPlanet
+.NoLaser:               call    sprite_laser_hide
 ProcessPlanet:
                         IFDEF   MAINLOOP_MODEL_RENDER
 ProcessShipModels:          call   DrawForwardShips                                     ; Draw all ships and bodies in system (this may need to be self modifying)
@@ -292,61 +268,159 @@ WeAreHEntering:         ld      a,StateCompletedHJump
 ;--
 LaunchedFromStation:    
                         ret
-; laser duration goign below 0 for some reason
-; if laser is on
-;    if laser duration = master duration - do sfx
-;    laser duration ---
-;    if laser duration = 0
-;          **should set beam off***
-;       curr burst count --
-;       if busrt count = 0 
-;          set cooldown to post pulserests
-;       else
-;          set cooldown to 0
-;          pause = pulse off time
-;    else
-;       return
-;  else
-;     if burst count <> 0
-;        current burst pause --
-;        return if not zero
-;        set laser beam on
-;        return
-;      else
-;         cooldown-- if not zero
+;----------------------------------------------------------------------------------------------------------------------------------
+; Laser, once a main loop. Times are 50 Hz frames of FrameCounter16 (the interrupt's count, stopped while paused), so a
+; pulse lasts as long however fast the loop runs. Like Z-Police's game clock (clock_step): dt = the frames since the last
+; update (at most LaserMaxFrames, so a stall doesn't jump), and each state's end is a frame number, compared by 16 bit
+; subtraction so it works across the counter's wrap.
+;   LaserReady  fire held (LaserFireHeld, from the front view's keys) starts a burst of CurrLaserPulseRate pulses,
+;               or with a rate of 0 a beam
+;   LaserOn     a pulse, CurrLaserPulseOnTime frames; a beam stays on while fire is held
+;   LaserOff    CurrLaserPulseOffTime frames between a burst's pulses
+;   LaserRest   CurrLaserPulseRest frames after a burst (or a beam) before the next
+; Out: LaserBeamOn (the sprite), LaserHitDamage (what a ship in the sights takes this loop: a pulse's damage when it
+; starts, a beam's for each frame it was on), energy drained and heat added for each frame on, the gun cooled for each
+; frame off. LaserFireHeld is cleared: the keys set it again each loop while fire is held.
+LaserReady              equ 0
+LaserOn                 equ 1
+LaserOff                equ 2
+LaserRest               equ 3
+LaserMaxFrames          equ 8
 
-LaserBeamV2:            JumpIfMemFalse LaserBeamOn, .LaserIsOff                          ; If laser is not on then skip
-.LaserIsOn:             ld          hl,CurrLaserPulseOnTime
-                        ld          a,(CurrLaserDuration)
-                        cp          (hl)                                                ; if duration just started
-                        ;call        z, SoundLaserFiring                                ; queue sound
-                        dec         a
-                        ld          (CurrLaserDuration),a                               ; if duration is 0    
-                        ;break
-                        ReturnIfANotZero                                                ; the do the end of pulse
-.EndOfPulse:            SetMemFalse LaserBeamOn
-                        ld          a,(CurrLaserBurstCount)
-                        dec         a
-                        ld          (CurrLaserBurstCount),a                             ; if we have run out of
-                        JumpIfAIsNotZero    .SkipBurstEnd                               ; pulses then 
-.EndOfBurst:            ldCopyByte  CurrLaserPulseRest,  CurrentCooldown                ; main cool down
+LaserUpdate:            ld      hl,(FrameCounter16)                     ; (one instruction: the interrupt can't split it)
+                        ld      (LaserNow),hl
+                        ld      de,(LaserLastFrame)
+                        ld      (LaserLastFrame),hl
+                        or      a
+                        sbc     hl,de                                   ; frames since the last update
+                        ld      a,h
+                        or      a
+                        jr      nz,.Cap
+                        ld      a,l
+                        cp      LaserMaxFrames+1
+                        jr      c,.DtOk
+.Cap:                   ld      a,LaserMaxFrames
+.DtOk:                  ld      (LaserFrames),a
+                        ZeroA
+                        ld      (LaserHitDamage),a
+                        ld      a,(LaserFireHeld)                       ; (true is 0, false $FF: SetMemTrue)
+                        ld      (LaserFireThisLoop),a
+                        SetMemFalse LaserFireHeld                       ; the keys set it again if still held
+                        ld      a,(LaserState)
+                        cp      LaserOn
+                        jr      z,.On
+                        cp      LaserOff
+                        jr      z,.Off
+                        cp      LaserRest
+                        jr      z,.Rest
+.Ready:                 ld      a,(LaserFireThisLoop)
+                        and     a
+                        jr      nz,.Idle                                ; fire not held
+                        call    IsLaserUseable                          ; z: none fitted or destroyed
+                        jr      z,.Idle
+                        ld      a,(CurrLaserPulseRate)
+                        ld      (CurrLaserBurstCount),a
+.StartPulse:            ld      a,(CurrLaserPulseOnTime)
+                        ld      e,a
+                        ld      a,LaserOn
+                        call    LaserSetState
+                        ld      a,(CurrLaserPulseRate)                  ; a pulse hits once, as it starts
+                        and     a
+                        jr      z,.Firing
+                        ld      a,(CurrLaserDamageOutput)
+                        ld      (LaserHitDamage),a
+                        jr      .Firing
+.On:                    ld      a,(CurrLaserPulseRate)
+                        and     a
+                        jr      nz,.PulseOn
+.BeamOn:                ld      a,(LaserFireThisLoop)                   ; a beam: on while fire is held
+                        and     a
+                        jr      z,.Firing
+                        jr      .StartRest
+.PulseOn:               call    LaserStillRunning
+                        jr      c,.Firing
+                        ld      hl,CurrLaserBurstCount                  ; the pulse is over
+                        dec     (hl)
+                        jr      z,.StartRest                            ; that was the burst's last
+                        ld      a,(CurrLaserPulseOffTime)
+                        ld      e,a
+                        ld      a,LaserOff
+                        call    LaserSetState
+                        jr      .Idle
+.Off:                   call    LaserStillRunning
+                        jr      c,.Idle
+                        jr      .StartPulse
+.Rest:                  call    LaserStillRunning
+                        jr      c,.Idle
+                        ld      a,LaserReady
+                        ld      (LaserState),a
+                        jr      .Ready                                  ; (fire again straight away if held)
+.StartRest:             ld      a,(CurrLaserPulseRest)
+                        ld      e,a
+                        ld      a,LaserRest
+                        call    LaserSetState
+                        ; fall into .Idle
+.Idle:                  SetMemFalse LaserBeamOn
+                        ld      a,(LaserFrames)                         ; the gun cools a step a frame
+                        and     a
+                        ret     z
+                        ld      b,a
+.Cool:                  push    bc
+                        CoolLasers
+                        pop     bc
+                        djnz    .Cool
                         ret
-.SkipBurstEnd:          SetMemZero  CurrentCooldown                                     ; else its just pulse 
-                        ldCopyByte  CurrLaserPulseOffTime,  CurrentBurstPause           ; cooldown
-.SkipPulseEnd:          ret
-.LaserIsOff:            ld          a,(CurrLaserBurstCount)
-                        JumpIfAIsZero .FullCool
-.BurstCool:             ld          a,(CurrentBurstPause)
-                        dec         a
-                        ld          (CurrentBurstPause),a
-                        ret         nz
-                        SetMemTrue  LaserBeamOn
-                        ldCopyByte  CurrLaserPulseOnTime, CurrLaserDuration
+.Firing:                SetMemTrue LaserBeamOn
+                        ld      a,(CurrLaserPulseRate)                  ; a beam hits for each frame it was on
+                        and     a
+                        jr      nz,.Drain
+                        ld      a,(LaserFrames)
+                        ld      e,a
+                        ld      a,(CurrLaserDamageOutput)
+                        ld      d,a
+                        mul     de
+                        ld      a,d
+                        and     a
+                        ld      a,e
+                        jr      z,.BeamHit
+                        ld      a,255
+.BeamHit:               ld      (LaserHitDamage),a
+.Drain:                 ld      a,(LaserFrames)                         ; energy and heat a frame
+                        and     a
+                        ret     z
+                        ld      b,a
+.DrainLoop:             push    bc
+                        call    LaserDrainSystems
+                        pop     bc
+                        djnz    .DrainLoop
                         ret
-.FullCool:              ld          a,(CurrentCooldown)
-                        ReturnIfAIsZero
-                        dec         a
-                        ld          (CurrentCooldown),a
+
+; a = the new state, e = the frames it lasts from now
+LaserSetState:          ld      (LaserState),a
+                        ld      hl,(LaserNow)
+                        ld      d,0
+                        add     hl,de
+                        ld      (LaserStateEnd),hl
+                        ret
+
+; carry set while the state's time hasn't run out (now - end < 0, 16 bit: right across the wrap)
+LaserStillRunning:      ld      hl,(LaserNow)
+                        ld      de,(LaserStateEnd)
+                        or      a
+                        sbc     hl,de
+                        ld      a,h
+                        rla
+                        ret
+
+; the laser ready and off, its frame count from now (a new ship, a launch, a loaded commander)
+LaserReset:             ZeroA
+                        ld      (LaserState),a
+                        ld      (LaserHitDamage),a
+                        ld      (CurrLaserBurstCount),a
+                        SetMemFalse LaserBeamOn
+                        SetMemFalse LaserFireHeld
+                        ld      hl,(FrameCounter16)
+                        ld      (LaserLastFrame),hl
                         ret
 
 ;;called from LaunchedFromStation  & WeHaveCompletedHJump to re-seed the system
@@ -381,7 +455,6 @@ InitialiseLocalUniverse:ld      a,(Galaxy)                      ; DEBUG as galax
 ;                                   
 ; --- At the end of a hyperspace jump we have to reset compass, market universe sun and planets etc
 WeHaveCompletedHJump:   call    InitialiseLocalUniverse
-                        ;call    GetDigramGalaxySeed           ; .           
                         MMUSelectStockTable                    ; .
                         call    generate_stock_market          ; generate new prices
                         call    ClearUnivSlotList              ; clear out any ships
@@ -392,13 +465,11 @@ WeHaveCompletedHJump:   call    InitialiseLocalUniverse
                         MMUSelectPlanet
                         call    CreatePlanet
 ;TODO                        call    generateSunAndPlanetPos        ; uses current carry state too
-;TODO.CreateSun:             call    SetSunSlot
 ; PROBABLY NOT NEEDED NOW                      MMUSelectShipBank1
 ; PROBABLY NOT NEEDED NOW                      call    GetShipBankId
 ;;SELECT CORRECT BANK                        MMUSelectUniverseN 0
 ;;TODO                        call    CopyBodyToUniverse
 ;;TODO                        call    CreateSun
-;;TODOCreatePlanet:          call    SetPlanetSlot
 ;;TODO                       MMUSelectShipBank1
 ;;TODO                    eliteb       call    GetShipBankId
 ;;TODO                       MMUSelectUniverseBankN 1
@@ -436,7 +507,6 @@ LoopEventTriggered:     ; for now just do spawn
 SpawnEvent:             IFDEF SPAWN_SHIP_DISABLED
                             ret
                         ENDIF
-                        ;break
                         call    FindNextFreeSlotInC                 ; set c= slot number, if we cant find a slot                   Stack     > 0
                         ret     c                                   ; then may as well just skip routine
 ;.. Found a slot free so can spawn, now this define controls filtering of what can be spawned near a safe zone
@@ -495,7 +565,6 @@ LaunchEnemyMissile:     ; break
                         ret
 
 LaunchEnemyFighter:     ld      a,10
-                        ;break;call    CopyUBnKtoLaunchParameters
                         ;copymatrix,rot and speed
                         ret
 
@@ -548,6 +617,5 @@ BruteForceChange:       call    SetScreenA
 ; Sound Code
 
               
-
 ;As speed goes up so does pitch
 

@@ -23,11 +23,6 @@ AequAdivQmul96ABS:      JumpIfAGTENusng d, .TIS2AccGTEQ			; if A >= Q then retur
     
 ;; USES 			A DE BC
 ;; DOES NOT USE 	HL
-;TIS2962C:		; two's compliment entry point, exits not 2's compliment
-;	bit			        7,a
-;	jr			        z,AequAdivQmul96
-;	neg			        							; revers 2s'c and just set neg bit
-;	set			        7,a
 ;; Note negative numbers are bit 7 set not 2's compliment
 AequAdivQmul96:								; TIS296:			; .tis2 A = A /Q *96 (or A = A * 3/8 * Q) Reduce Acc in NORM routine i.e. *96/Q clamps at +- 96
 TIS2:
@@ -82,7 +77,6 @@ AequAdivDmul96:         ld			c,a							; copy of Acc as we need the sign, altern
                         rl			b							; T rolled left to push bit out the end
                         jr			c,.TIS2RollTLoop			; if we still have not hit the empty marker continue
                         jp			.TIS2SKIPCont
-
 
 
 ; as per AequAdivDmul967Bit but Q is an 8 bit unsigned 

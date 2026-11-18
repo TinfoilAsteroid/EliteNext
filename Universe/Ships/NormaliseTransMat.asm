@@ -45,7 +45,6 @@ NormaliseTransMat:
                 push	hl
                 push	bc
                 call    AEquAmul256Div197Log        ; R = (2(hi).0)/ConstNorm - LL28 Optimised BFRDIV R=A*256/Q = delta_y / delta_x Use Y/X grad. as not steep
-                ;ld      a,c                         ; BFRDIV returns R also in l reg
                 pop		bc
                 pop		hl							; bc gets wrecked by BFRDIV
                 ld      (hl),a                      ; write low result to low byte so zlo = (zhl *2)/197, we keep hi byte in tact as we need the sign bit

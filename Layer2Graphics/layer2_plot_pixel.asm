@@ -17,7 +17,6 @@ l2_plot_pixel:          push    af
                         ld      a,b
 l2_pp_row_valid:        JumpIfAGTENusng ScreenHeight,l2_pp_dont_plot
                         push    bc								; bank select destroys bc so need to save it
-                    ;	ld      a,b
                         call    asm_l2_row_bank_select
                         pop     bc
                         ld      b,a
@@ -58,12 +57,6 @@ l2_target_address_320:  ld      a,h
                         ld      l,d                             ; low byte is row from d
 .DontPlot:              ret
 
-l2_plot_pixel_320_no_check:   call    asm_l2_320_col_bank_select      ; adjust hl for column > h 
-                        ld      l,d                             ; as they are horizontal now
-                        ld      a,e
-                        ld      (hl),a
-                        ret
-                        
 ; y aixs bounds check must have been done before calling this                        
 l2_plot_pixel_no_check: push    af
                         push    bc								; bank select destroys bc so need to save it

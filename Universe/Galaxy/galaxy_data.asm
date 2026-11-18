@@ -317,10 +317,6 @@ GalaxyExtendedDescs:    DB 211                                                  
 ;	level;
 ;	price 2 bytes;
 ;	type;
-;ShipFrontWeapons        DB EQ_FRONT_PULSE,  EQ_FRONT_PULSE,     EQ_FRONT_MINING,    EQ_FRONT_MINING
-;ShipRearWeapons         DB EQ_REAR_PULSE,   EQ_REAR_PULSE,      EQ_REAR_MINING,     EQ_REAR_MINING
-;ShipLeftWeapons         DB EQ_LEFT_PULSE,   EQ_LEFT_PULSE,      EQ_LEFT_MINING,     EQ_LEFT_MINING
-;ShipRightWeapons        DB EQ_RIGHT_PULSE,  EQ_RIGHT_PULSE,     EQ_RIGHT_MINING,    EQ_RIGHT_MINING
 ;                           c  y  s  t                                            
 ;                           a  p  h  e                                            fi     P     Vi
 ;                           n  o  o  c                                            tt     o     ew
@@ -479,9 +475,6 @@ GalaxyCapitaliseString: ; ">CapitaliseString hl = address"
 
 
 GalaxyGoatSoup:         ;ld      (GalaxyTargetSystem),bc                         ; Set the galaxy target variable
-                        ;call    galaxy_system_under_cursor                      ; and set the galaxyworkingseed based on cursor
-                        ;cp      $FF
-                        ;jr      z,.NoSystemFound
 .SeedGalaxy             ld      a,(WorkingSeeds+2)                              ;
                         ld      (GalaxyRandSeed),a                              ; r0 = Seed C
                         ld      a,(WorkingSeeds+3)                              ;
@@ -502,10 +495,7 @@ GalaxyGoatSoup:         ;ld      (GalaxyTargetSystem),bc                        
 ; This is based on the docked BBC PDesc Pink Volcanoes version ratehr tha goat soup
 GalaxyPinkVolcano:      ld      (GalaxyTargetSystem),bc                         ; Set the galaxy target variable
                         call    galaxy_system_under_cursor                      ; and set the galaxyworkingseed based on cursor
-                        ;cp      $FF
-                        ;jr      z,.NoSystemFound
 .SpecialDescs:          ; this is not implemented yet to read GalaxyExtendedDescs look at .PDL1
-
 
 
 ;.NoSytemFound:          Print the "Unable to identify a system at present position"
@@ -710,10 +700,8 @@ galaxy_equip_market:    ld      a,(GalaxyDisplayTekLevel)
                         jr      z,.CheckTechLevel
 .CheckTechLevel:        ld      a,(ix+3)                        ; ItemTech Level
                         cp      h
-                        ;jr      nc,.DoNotShowItem
 .CheckShowItem:         ld      a,(ix+2)
                         cp      0
-                      ;  jr      z,.DoNotShowItem
 .ShowItem:              ld      a,c
                         ld      (ix+1),c                        ; Show Item Row Id
 .CheckFitted:           ld      a,(ix+6)
@@ -977,7 +965,6 @@ GalaxyDigramToDE:       ld		b,3
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 is_system_found:        ld      a,(GalaxySearchLength)
-                        ;dec     a                       ; as we won't check the /0 just first match
                         ld      c,a                     ; will always be max of 32 as that is what length routine does
                         ld      b,0                     ; so we can use cpir
 .readyToSearch:         ld      de,GalaxySearchString   ; hl = string we are serching
@@ -1070,73 +1057,7 @@ find_nearest_to_bc:     ld      ix,galaxy_data                  ; ix = pointer t
 ;
                         
                         
-;;                        JumpIfALTNusng c, nearestXPosLT         ; not we need to know if its e - c or c - e we coudl do 2's compliement of course
-;;nearestXPosGTE:         push    de                              ;
-;;                        ld      h,0                             ;
-;;                        ld      l,a                             ; hl = seed x
-;;                        ld      d,0                             ;
-;;                        ld      e,c                             ; de = nearest x
-;;                        or      a                               ;
-;;                        sbc     hl,de                           ; hl = distance between the two
-;;                        pop     de
-;;                        jp      nearestDistXPos
-;;nearestXPosLT:          push    de                              ;
-;;                        ld      h,0                             ;
-;;                        ld      l,c                             ; hl = nearest x
-;;                        ld      d,0                             ;
-;;                        or      a                               ; de = seed x
-;;                        sbc     hl,de                           ;
-;;                        pop     de                              ; hl = distance between the two
-;;nearestDistXPos:        ld      a,l                             ; so l = abs distance as does a
-;;                        cp      iyl                             ; under initial threshold?
-;;                        jr      nc,find_nearest_miss            ; no so its a miss
 ;; ;DEBUG                       ld      l,a                             ; l = distance (we can drop thsi as it was done above!)
-;;                        ld      a,(ix+1)                        ; 
-;;                        ld      d,a                             ; d = seed y
-;;                        JumpIfALTNusng b, nearestYPosLT         ; determine abs calc
-;;nearestYPosGTE:         push    hl                              ; save current x distance
-;;                        push    de                              ;
-;;                        ld      h,0                             ;
-;;                        ld      l,a                             ; hl = seed y
-;;                        ld      d,0                             ;
-;;                        ld      e,b                             ; de = nearest y
-;;                        or      a                               ;
-;;                        sbc     hl,de                           ; hl = distance between the two
-;;                        ld      a,l
-;;                        pop     de
-;;                        pop     hl
-;;                        jp      nearestDistYPos
-;;nearestYPosLT:          push    hl                              ; save current x distance
-;;                        push    de                              ;
-;;                        ld      h,0                             ;
-;;                        ld      l,b                             ; hl = nearest y
-;;                        ld      e,d                             ;
-;;                        ld      d,0                             ; de = seed y
-;;                        or      a                               ;
-;;                        sbc     hl,de                           ; hl = distance between the two
-;;                        ld      a,l
-;;                        pop     de
-;;                        pop     hl                              ; now we get distance in l back into hl, distance y is in a
-;;nearestDistYPos:        cp      iyl                             ; under initial threshold?
-;;                        jr      nc, find_nearest_miss
-;;                        ld      h,0                             ; hl = distance for x
-;;                        add     hl,a                            ; adding distance y
-;;                        ld      a,l                             ; and copy it to l
-;;                        cp      iyl                             ; is the pair under distance
-;;                        jr      nc, find_nearest_miss           ;
-;;nearest_found_a_hit:    ld      iyl,a                           ; so we have a hit
-;;                        ld      (nearestfound),de               ;
-;;                        ReturnIfALTNusng 2                      ; exact match bail out, note 1 can be an exact match due to Y axis, as we are looking at seed pos then this is accurate enough and we won't hit dx 1 and dy 0 hopefully in any galaxy :)
-;;find_nearest_miss:      push     ix
-;;                        pop      hl
-;;                        add      hl,8
-;;                        push     hl
-;;                        pop      ix
-;;                        dec     iyh
-;;                        ld      a,iyh
-;;                        JumpIfAIsNotZero find_nearest_loop
-;;.CompletedSearch:       ld      bc ,(nearestfound)              ; if we hit here then after searching we have found a nearest
-;;                        ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Does a sqare root distance
 galaxy_find_distance:   ld      d,0

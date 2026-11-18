@@ -1,7 +1,5 @@
 
                 
-
-
     DEVICE ZXSPECTRUMNEXT
     SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
 ; REAL_HARDWARE: the build for a real Next (sjasmplus -DREAL_HARDWARE, or build.bat hardware): the screen clear and
@@ -64,7 +62,6 @@
     ; DEFINE DEBUGMISSILETEST 1
     ; DEFINE DEBUGLINEDRAW 1
     ; DEFINE MESSAGETRACING 1
-     DEFINE  LASER_V2    1
      ;DEFINE  DEBUG_SHIP_MOVEMENT 1
  CSPECTMAP eliteN.map
  OPT --zxnext=cspect --syntax=a --reversepop
@@ -74,7 +71,6 @@
 ;               DEFINE INTERRUPT_BLOCKER 1
 DEBUGSEGSIZE   equ 1
 DEBUGLOGSUMMARY equ 1
-;DEBUGLOGDETAIL equ 1
 
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Game Defines
@@ -141,25 +137,6 @@ ScreenHyperspace EQU ScreenDocking+1
                         INCLUDE "./Variables/general_variables_macros.asm"
                         INCLUDE "./Variables/UniverseSlot_macros.asm"
                         INCLUDE "./Data/ShipIdEquates.asm"
-    IFNDEF  LASER_V2
-UpdateLaserCountersold: MACRO
-                        JumpIfMemZero CurrLaserPulseOnCount,   .SkipPulseOn     ; if beam on count > 0 then beam on count --
-                        dec     a                                               ; .
-                        ld      (CurrLaserPulseOnCount),a                       ; .
-.SkipPulseOn:           JumpIfAIsNotZero  .SkipRestCounter                      ;    if beam on = 0 then                        
-                        ld      a,(CurrLaserPulseOffCount)                      ;       if beam off > 0 then  beam off --
-                        JumpIfMemZero CurrLaserPulseOffCount, .SkipPulseOff     ;       .
-                        dec     a                                               ;       .
-                        ld      (CurrLaserPulseOffCount),a                      ;       .
-.SkipPulseOff:          JumpIfAIsNotZero  .SkipRestCounter                      ;       if beam off = 0
-                        JumpIfMemZero CurrLaserPulseRestCount, .ZeroRateCounter ;
-                        dec     a
-                        ld      (CurrLaserPulseRestCount),a
-                        jr      nz,.SkipRestCounter
-.ZeroRateCounter:       ld      (CurrLaserPulseRateCount),a
-.SkipRestCounter:       
-                        ENDM
-    ENDIF 
 MessageAt:              MACRO   x,y,message
                         MMUSelectLayer1
                         ld      d,y
@@ -239,8 +216,6 @@ EliteNextStartup:       di
                         MMUSelectSpriteBank
                         call        sprite_diagnostic_clear                     
                     ENDIF
-;TidyCounterInitialise:  ld          a,TidyInterval
-;                        ld          (TidyCounter),a
 TestText:               xor			a
                         ld      (JSTX),a
 DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks su n
@@ -270,7 +245,6 @@ StartAttractMode:       di                                          ; we are cha
                         ld          (IM2SoundHandler+1),hl
                         call        AttractModeInit
                         ei
-                        ;break
                         call        AttractModeMain                 ; now drive attact mode keyboard scan
                         di                                          ; set up for main 
                         ld          hl,SoundInterrupt               ; sound handler
@@ -288,14 +262,8 @@ SkipDefaultCommander:
                         ; bring up a browser for saves
                         ; load saves it
                         ; switch back to maths MMU
-;                        call    FindNextFreeSlotInA
-;                        ld      b,a
-;                        ld      a,13 ;Coriolis station
-;                        call    InitialiseShipAUnivB
-;                        xor     a
 InitialiseMainLoop:     call    InitMainLoop
 ;..MAIN GAME LOOP..................................................................................................................
-; MACRO BLOCKS.....................................................................................................................
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
 
 ; if beam on count > 0
@@ -417,10 +385,6 @@ GetStationVectorToWork: ld      hl,UBnKxlo
                         call    normaliseXX1596S7 
                         ret                          ; will return with a holding Vector Z
 
-;TidyCounter             DB  0
-
-            ;INCLUDE "./Unused/debugMatrices.asm"
-
 
 ; Need this table to handle differnet events 
 ; 1-main loop update - just general updates specfic to that screen that are not galaxy or stars, e.g. update heat, console
@@ -500,7 +464,6 @@ SeedGalaxy0Loop:        push    ix
                         jr      nz,SeedGalaxy0Loop
                         ret
             
-    ;include "./ModelRender/Unused/testdrawing.asm"
     IFDEF SKIPATTRACT
         DISPLAY "NOT LOADING ATTRACT MODE CODE"
     ELSE
@@ -532,7 +495,6 @@ XX12PVarSign3		DB 0
     INCLUDE "./Tables/text_tables.asm"
     INCLUDE "./Tables/dictionary.asm"
     INCLUDE "./Tables/name_digrams.asm"
-;INCLUDE "Tables/inwk_table.asm" This is no longer needed as we will write to univer object bank
 ; Include all maths libraries to test assembly   
     INCLUDE "./Maths/asm_AddDEToCash.asm"
     DISPLAY ">24 bit mulitply routine, currently not bank 0 safe"
@@ -660,7 +622,6 @@ IM2AttractMode:         ;break
                         DISPLAY "Attract mode graphics enabled"
                         SaveMMU6
                         SaveMMU7
-                        ;break
                         call    AttractModeUpdate
                         RestoreMMU6
                         RestoreMMU7
@@ -668,7 +629,6 @@ IM2AttractMode:         ;break
                         ret
 
 ; ARCHIVED INCLUDE "Menus/draw_fuel_and_crosshair.asm"
-;INCLUDE "./title_page.asm"
 
 ; Blocks dependent on variables in Universe Banks
 ; Bank 49
@@ -677,9 +637,6 @@ IM2AttractMode:         ;break
 ;seg     RESETUNIVSEG,   BankResetUniv:  StartOfBank, ResetUniverseAddr      
 
 
-
-;	ORG ResetUniverseAddr
-;INCLUDE "./GameEngine/resetUniverse.asm"
 ; Bank 50  ------------------------------------------------------------------------------------------------------------------------
     SLOT    MenuShrChtAddr
     PAGE    BankMenuShrCht
@@ -827,7 +784,6 @@ CopyBodyToUniverse3:    MCopyBodyToUniverse     CopyShipToUniverse3
                     ORG     SpritemembankAddr, BankSPRITE
                     INCLUDE "./Layer3Sprites/sprite_routines.asm"
                     INCLUDE "./Layer3Sprites/sprite_load.asm"
-;;;***    INCLUDE " A./Layer3Sprites/SpriteSheet.asm"
                     DISPLAY "Bank ",BankSPRITE," - Bytes free ",/D, $2000 - ($-ShipModelsAddr), " - BankSPRITE"
                     ASSERT $-SpritemembankAddr <8912 , Bank code leaks over 8K boundary
 ; Bank 61  ------------------------------------------------------------------------------------------------------------------------
@@ -983,20 +939,6 @@ UNIVDATABlock12     DB $FF
                     INCLUDE "./Universe/Planet/planet_data.asm"
                     DISPLAY "Bank ",BankPlanetData," - Bytes free ",/D, $2000 - ($-PlanetBankAddr), " - BankPlanetData"
                     ASSERT $-PlanetBankAddr <8912, Bank code leaks over 8K boundary
-;;;***; Bank 85  ------------------------------------------------------------------------------------------------------------------------
-;;;***                        SLOT    SpriteDataAAddr
-;;;***                        PAGE    BankSpriteDataA
-;;;***                        ORG     SpriteDataAAddr, BankSpriteDataA
-;;;***                        INCLUDE "./Layer3Sprites/sprite_loadA.asm"
-;;;***                        INCLUDE "./Layer3Sprites/SpriteSheetA.asm"
-;;;***                        DISPLAY "Bank ",BankSpriteDataA," - Bytes free ",/D, $2000 - ($-SpriteDataAAddr), " - BankSpriteDataA"
-;;;***; Bank 86  ------------------------------------------------------------------------------------------------------------------------
-;;;***                        SLOT    SpriteDataBAddr
-;;;***                        PAGE    BankSpriteDataB
-;;;***                        ORG     SpriteDataBAddr, BankSpriteDataB 
-;;;***                        INCLUDE "./Layer3Sprites/sprite_loadB.asm"
-;;;***                        INCLUDE "./Layer3Sprites/SpriteSheetB.asm"
-;;;***                        DISPLAY "Bank ",BankSpriteDataB," - Bytes free ",/D, $2000 - ($-SpriteDataBAddr), " - BankSpriteDataB"
 ; Bank 91  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    GalaxyDataAddr
                     PAGE    BankGalaxyData0
@@ -1096,25 +1038,13 @@ GALAXYDATABlock7:   DB $FF
                     INCLUDE "./Maths24/asm_tidy24.asm"
                     INCLUDE "./Maths24/asm_sqrt24.asm"
                     DISPLAY ">Multiply is currently not bank 0 safe"
-            ;        INCLUDE "./Maths24/asm_multiply24.asm"
                     DISPLAY "*** ./Maths/MathsBankedFns.asm  - BankMathsBankedFns"
                     INCLUDE "./Maths/MathsBankedFns.asm"
                     DISPLAY "*** removed ./Maths/asm_tidy.asm - BankMathsBankedFns"
-                    ;INCLUDE "./Maths/Unused/asm_tidy.asm"
                     DISPLAY "*** ./Maths/normalise96.asm - BankMathsBankedFns"
                     INCLUDE "./Maths/normalise96.asm"
-                    ;INCLUDE "./Maths/binary_to_decimal.asm"
                     DISPLAY "Bank ",BankMathsBankedFns," - Bytes free ",/D, $2000 - ($-MathsBankedFnsAddr), " - BankMathsBankedFns"
                     ASSERT $-MathsBankedFnsAddr <8912, Bank code leaks over 8K boundary
-; Bank 103  -----------------------------------------------------------------------------------------------------------------------
-    IFDEF RASPBERRYPIMATHS
-                    SLOT    PIFnsAddr
-                    PAGE    BankPIFns
-                    ORG     PIFnsAddr,BankPIFns
-                    INCLUDE "./PI/PIFns.asm"
-                    DISPLAY "Bank ",BankPIFns," - Bytes free ",/D, $2000 - ($-PIFnsAddr), " - BankPIFns"
-                    ASSERT $-PIFnsAddr <8912, Bank code leaks over 8K boundary
-    ENDIF
     IFDEF REAL_HARDWARE
     SAVENEX OPEN "EliteNHW.nex", EliteNextStartup , TopOfStack
     SAVENEX CORE 3,3,0                              ; DMA+ needs core 3.03.00

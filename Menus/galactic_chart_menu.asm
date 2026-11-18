@@ -404,7 +404,6 @@ l2_GCM_circle_320:          ld      a,e
                             pop     de,,bc,,hl
                             ret
 
-    ;INCLUDE "Menus/print_boiler_text_inlineInclude.asm"
 ; TODO MOVE CURSOR CODE
 
 ;----------------------------------------------------------------------------------------------------------------------------------
@@ -676,7 +675,6 @@ GCM_not_found_text:         DB 232, low 016, high 064, $FF, low galactic_find_no
 GCM_found_text:             DB 232, low 016, high 064, $FF, low galactic_find_match,     high galactic_find_match
 GCM_found_clear:            DB 216, low 016, high 064, $FF, low galactic_find_clear,     high galactic_find_clear
 GCM_found_clear2:           DB 232, low 016, high 064, $FF, low galactic_find_clear,     high galactic_find_clear
-
 
 
 GCM_message_timer           EQU 2500

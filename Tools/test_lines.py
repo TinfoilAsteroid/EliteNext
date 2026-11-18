@@ -8,7 +8,8 @@ checked against a Python reference:
     may go either way);
   * every pixel is in the view, within a pixel of the true line (across the
     line's major axis), one pixel per step along the major axis, from the
-    returned (clipped) end point to the other;
+    returned (clipped) end point to the other, and exactly the Bresenham
+    (Z-Police's draw_line loop) between those end points;
   * the drawn part covers the true in-view part to within a pixel;
   * nothing is written to rows 128-191 (the console) or the other buffer;
   * horizontal and vertical lines (the DMA span path) are exact.
@@ -89,6 +90,34 @@ def clip(p1, p2, x0, y0, x1, y1):
     return (ax + t0 * dx, ay + t0 * dy), (ax + t1 * dx, ay + t1 * dy)
 
 
+def bresenham(x1, y1, x2, y2):
+    """the pixels L2LDiagonal draws between clipped end points (x1 <> x2, y1 <> y2): top to bottom, the error
+    starting at half the major delta, the minor step taken when it goes below 0"""
+    if y2 < y1:
+        x1, y1, x2, y2 = x2, y2, x1, y1
+    dx, dy, sx = abs(x2 - x1), y2 - y1, 1 if x2 > x1 else -1
+    x, y, pts = x1, y1, set()
+    if dx > dy:
+        err = dx // 2
+        for _ in range(dx + 1):
+            pts.add((x, y))
+            x += sx
+            err -= dy
+            if err < 0:
+                y += 1
+                err += dx
+    else:
+        err = dy // 2
+        for _ in range(dy + 1):
+            pts.add((x, y))
+            y += 1
+            err -= dx
+            if err < 0:
+                x += sx
+                err += dy
+    return pts
+
+
 def check_line(cpu, p1, p2):
     carry, ends, pix = draw(cpu, p1, p2)
     what = f"line {p1} - {p2}"
@@ -124,6 +153,10 @@ def check_line(cpu, p1, p2):
         else:
             err = abs(x - (ax + dx * (y - ay) / dy))
         check(err <= 1.01, f"{what}: pixel ({x}, {y}) is {err:.2f} off the line")
+    if ex1 != ex2 and ey1 != ey2:                   # exactly the Bresenham from the clipped ends
+        exp = bresenham(ex1, ey1, ex2, ey2)
+        check(pts == exp, f"{what}: drew {len(pts)} pixels, the Bresenham from {ends} has {len(exp)} "
+                          f"(missing {sorted(exp - pts)[:4]}, extra {sorted(pts - exp)[:4]})")
     ideal = clip(p1, p2, 0, 0, W - 1, H - 1)        # covers the true in-view part
     if ideal:
         lo, hi = sorted(c[0 if xmajor else 1] for c in ideal)

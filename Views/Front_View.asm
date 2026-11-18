@@ -76,7 +76,6 @@ draw_front_view:        MMUSelectLayer1
                         call    sprite_sun_compass
                         call    sprite_planet_compass
                         call    sprite_station_compass
-                       ; call    sprite_laser_show
                         MMUSelectConsoleBank
                         ld          hl,ScreenL1Bottom       ; now the pointers are in Ubnk its easy to read
                         ld          de,ConsoleImageData
@@ -153,7 +152,6 @@ DrawLighningLine:       push    hl,,bc
 hyperspace_Lightning:   ld      b, 7                    ; total number of lightning bolts
                         ld      hl,LightningLines 
                         MMUSelectLayer2
-                        ;break
 ; above here select which lines table we will use
 .LineLoop:              push    bc,,hl
                         call    doRandom
@@ -175,7 +173,6 @@ hyperspace_Lightning:   ld      b, 7                    ; total number of lightn
                         ld      a,(HyperCircle)
                         ld      d,a
                         ld      bc, $4080
-                        ;break
                         ld      e,$00
                         call    l2_draw_circle_fill; ; ">l2_draw_circle_fill BC = center row col, d = radius, e = colour"
                         ld      bc, $4080
@@ -272,7 +269,6 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         ld      hl,ALP1MAXL                         ; currnet ship max left roll
                         cp      (hl)
                         jr      z,.TestRightPressed
-                        ;break
                         dec     a                                   ; increase joystick roll
                         ld      (JSTX),a
                         call    draw_front_calc_alpha
@@ -284,7 +280,6 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         ld      hl,ALP1MAXR                         ; currnet ship max left roll
                         cp      (hl)
                         jr      z,.TestDivePressed                   ; if its held then we don't dampen
-                        ;break
                         inc     a                                   ; increase joystick roll
 .UpdateAlphRoll:        ld      (JSTX),a
                         call    draw_front_calc_alpha
@@ -311,7 +306,6 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         ld      hl,BET1MAXD                         ; currnet ship max left roll
                         cp      (hl)
                         jr      z,.TestClimbPressed
-                        ;break
                         dec     a                                   ; increase joystick roll
                         ld      (JSTY),a
                         call    draw_front_calc_beta
@@ -391,69 +385,13 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         jr      z, .WarpNotPressed
                         SetMemTrue  WarpPressed                     ; This signals the event , teh main loop will cancel this as an acknowlege                        
 .WarpNotPressed:      
-                IFDEF   LASER_V2
-                        call    IsLaserUseable                      ; no laser or destroyed?
-                        jr      z,          .FireNotPressed
-.IsFirePressed:         ld      a,c_Pressed_FireLaser               ; else (beam type) if fire is pressed
-                        MMUSelectKeyboard
-                        call    is_key_up_state 
-                        jr      z,.FireNotPressed
-.FirePressed:           ;break
-                        JumpIfMemNotZero    CurrentCooldown,     .LaserDone
-                        JumpIfMemNotZero    CurrentBurstPause,   .LaserDone
-                        JumpIfMemNotZero    CurrLaserBurstCount, .LaserDone
-                        JumpIfMemTrue       LaserBeamOn,         .LaserDone
-                        ldCopyByte          CurrLaserPulseRate,   CurrLaserBurstCount
-                        ldCopyByte          CurrLaserPulseOnTime, CurrLaserDuration
-                        SetMemTrue          LaserBeamOn
-                        ;call               TriggerLaserSound
-                        jp                  .LaserDone
-.FireNotPressed:        ReturnIfMemNotZero  CurrLaserBurstCount
-                        ReturnIfMemNotZero  CurrLaserDuration
-                        ReturnIfMemFalse    LaserBeamOn
-                        ldCopyByte          CurrLaserPulseRest, CurrentCooldown
-                        SetMemFalse         LaserBeamOn
-                        SetMemZero          CurrLaserBurstCount
-                        SetMemZero          CurrentBurstPause
-.LaserDone:
-                ELSE
 .CheckForLaserPressed:  call    IsLaserUseable                      ; no laser or destroyed?
                         jr      z,.CheckTargetting
-.CanLaserStillFire:     SetMemFalse FireLaserPressed                ; default to no laser
-                        ld      a,(CurrLaserPulseRate)              ; if not beam type
-                        JumpIfAIsZero .BeamType                     ; .
-                        ld      b,a                                 ; and not run out of pulses
-                        ld      a,(CurrLaserPulseRateCount)         ;
-                        ld      a,(CurrLaserPulseOnCount)           ;    if not already on
-                        JumpIfAEqNusng  b, .PulseLimitReached       ;
-                        ld      hl,CurrLaserPulseOffCount           ;       and not in off phase
-                        or      (hl)                                ;    
-                        inc     hl  ; CurrLaserPulseRestCount       ;       and not in rest phase.
-                        or      (hl)                                ;    .
-                        jr      nz, .CheckTargetting                ;    .
-.IsFirePressed:         ld      a,c_Pressed_FireLaser               ;       if fire is pressed
+                        ld      a,c_Pressed_FireLaser               ; fire held: LaserUpdate (MainLoop.asm) times the pulses
                         MMUSelectKeyboard
-                        call    is_key_up_state                     ;       .
-                        jr      z,.CheckTargetting                  ;       .
-.CanProcesFire:         ld      a,(CurrLaserPulseRateCount)         ;            pulse rate count ++
-                        inc     a                                   ;            .
-.StillHavePulsesLeft:   ld      (CurrLaserPulseRateCount),a         ;            .
-                        ldCopyByte CurrLaserPulseOnTime, CurrLaserPulseOnCount  ; pulse on count = pulse on time
-                     ;   ldCopyByte CurrLaserPulseOffTime, CurrLaserPulseOffCount; pulse off count = pulse off time
-                     ;   ldCopyByte CurrLaserPulseRest, CurrLaserPulseRestCount  ; pulse rest count = pulse rest time
-                        jp      .CheckTargetting                   
-.BeamType:              ld      a,c_Pressed_FireLaser               ; else (beam type) if fire is pressed
-                        MMUSelectKeyboard
-                        call    is_key_up_state                     ;                   .
-                        jr      z,.CheckTargetting                  ;                   .
-                        SetMemTrue FireLaserPressed                 ;                   set pulse on to 1
-                        ld      a,0
-                        ld      (SoundFxToEnqueue),a
-                        jp      .CheckTargetting
-.PulseLimitReached:     ;ZeroA                                       ;
-                        ;ld      (CurrLaserPulseRateCount),a         ;
-                        ;ldCopyByte CurrLaserPulseRest, CurrLaserPulseRestCount   ; start the rest phase
-                ENDIF
+                        call    is_key_up_state
+                        jr      z,.CheckTargetting
+                        SetMemTrue LaserFireHeld
 ; . Here we check to see if the target lock has been pressed                        
 .CheckTargetting:       MMUSelectKeyboard
                         call    TargetMissileTest
@@ -479,8 +417,3 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
 .NoECM:                 ret
 
 
-
-
-
-
-                

@@ -4,8 +4,6 @@ galactic_cursor_sprite1             equ galactic_cursor_sprite+1     ; 01
 galactic_cursor_sprite2             equ galactic_cursor_sprite1+2    ; 02
                                                                      ; 
 galactic_hyper_sprite               equ galactic_cursor_sprite2+1    ; 03
-;galactic_hyper_sprite1             equ galactic_hyper_sprite+1      ; 
-;galactic_hyper_sprite2             equ galactic_hyper_sprite1+1     ; 
                                                                       
 local_cursor_sprite                 equ galactic_hyper_sprite+1      ; 04
 local_cursor_sprite1                equ local_cursor_sprite+1        ; 05
@@ -213,7 +211,6 @@ sprite_big:
 sprite_4x4:                 ld      a,e                                                         ; prep upper 2 bits as we will 
                             or      %11000000                                                   ; Enable visible and 5th byte
                             ld      e,a                                                         ; a now holds value to use for anchor
-                            ;break
 .SetAnchor:                 ld      a,d         : nextreg   SPRITE_PORT_INDEX_REGISTER,a        ; set up sprite id
                             ld      a,l         : nextreg   SPRITE_PORT_ATTR0_REGISTER,a        ; Set up lower x cc
                             ld      a,c         : nextreg   SPRITE_PORT_ATTR1_REGISTER,a        ; Set up lower y cc
@@ -238,7 +235,6 @@ sprite_4x4:                 ld      a,e                                         
                             inc     e
                             ld      a,e:/*%1100010*/  : nextreg SPRITE_PORT_ATTR3_REGISTER,a        ; visible, 5 bytes pattern is achor + 2
                             ld      a,%0100000  : nextreg   SPRITE_PORT_MIRROR_ATTRIBUTE_4_WITH_INC,a        ; pattern is relative and relative pattern 
-;.BottomRightRelative:      ; inc     d
 ;                           ; inc     e
 ;                           ; ld      a,d         : nextreg SPRITE_PORT_INDEX_REGISTER,a        ; set up sprite id + 1
 ;                            ld      a,16        : nextreg  SPRITE_PORT_ATTR0_REGISTER,a        ; Set up lower x cc
@@ -246,10 +242,6 @@ sprite_4x4:                 ld      a,e                                         
 ;                            ZeroA               : nextreg   SPRITE_PORT_ATTR2_REGISTER,a        ; clear MSB of X
 ;                            ld      a,%1100011  : nextreg  SPRITE_PORT_ATTR3_REGISTER,a        ; visible, 5 bytes pattern is achor + 3
 ;                            ld      a,%0100001  : nextreg  SPRITE_PORT_ATTR4_REGISTER,a        ; pattern is relative and relative pattern 
-;                            ld      a,e                                                         ; prep upper 2 bits as we will 
-;                            or      %11000000                                                   ; Enable visible and 5th byte
-;                            ld      e,a                                                         ; a now holds value to use for anchor
-;                            break
 .BRAbs:                     ld      a,d :add a,3       : nextreg   SPRITE_PORT_INDEX_REGISTER,a     ; set up sprite id
                             ld      a,l :add a,16:        : nextreg   SPRITE_PORT_ATTR0_REGISTER,a      ; Set up lower x cc
                             ld      a,c :add a,16:        : nextreg   SPRITE_PORT_ATTR1_REGISTER,a      ; Set up lower y cc
@@ -477,7 +469,6 @@ stationCompositeData:       db      stationcompass_sprite1, StationCompassTLX,  
                             db                              StationCompassTLX +17, StationCompassTLY + 17, %00001100 , $81                           , %01000001
  
 
-
 ; Put on compas based on bc = Y X position offset from compass center    
 compass_sun_move:       ld      a,compass_sun
                         nextreg SPRITE_PORT_INDEX_REGISTER,a        ; set up sprite id
@@ -568,7 +559,6 @@ sprite_missile_4:       ld      a,missile_sprite4
                         jp      sprite_missile_ready
 
 
-                        
 sprite_reticule:        ld      a,reticlule_sprite1                 ; LEFT ARM
                         nextreg SPRITE_PORT_INDEX_REGISTER,a        ; select left hand side
                         ld      a,ReticuleCentreX -16 - ReticuleOffset
@@ -738,10 +728,6 @@ sprite_galactic_hide:   HideSprite galactic_cursor_sprite
     
 sprite_galactic_hyper_hide:
                         HideSprite galactic_hyper_sprite
-                         ;nextreg       SPRITE_PORT_INDEX_REGISTER,galactic_hyper_sprite1
-;                        nextreg        SPRITE_PORT_ATTR3_REGISTER,$00
-;                        nextreg        SPRITE_PORT_INDEX_REGISTER,galactic_hyper_sprite2
-;                        nextreg        SPRITE_PORT_ATTR3_REGISTER,$00
                         ret
     
 sprite_local_hide:      HideSprite local_cursor_sprite
@@ -887,16 +873,6 @@ sprite_compass_hide:    HideSprite compass_sun
                         HideSprite stationcompass_sprite1
                         ret
 
-;sprite_cls_cursors:     call    sprite_galactic_hide    
-;                        call    sprite_galactic_hyper_hide  
-;                        call    sprite_local_hide   
-;                        call    sprite_local_hyper_hide 
-;                        call    sprite_reticule_hide
-;                        call    sprite_laser_hide
-;                        call    sprite_compass_hide
-;                        call    sprite_targetting_hide
-;                        call    sprite_missile_all_hide
-;                        ret
                         
 sprite_cls_all:         ld      a,(spr_nextStar)
                         JumpIfAGTENusng   last_sprite, .maxSprites
@@ -909,13 +885,6 @@ sprite_cls_all:         ld      a,(spr_nextStar)
                         ret
 
 ;
-;call    sprite_cls_cursors
-;                        call    sprite_ecm_hide
-;                        call    sprite_missile_all_hide
-;                        call    sprite_local_chart_hide
-;                        call    sprite_compass_hide
-;                        call    sprite_laser_hide
-;                        ret
 
 ; Initialises sprites to sprite 0 lowest Priority, Clipping not in over border, Enable over border, Enable visibility                      
 init_sprites:           call        sprite_cls_all; sprite_cls_cursors
@@ -988,7 +957,6 @@ sprite_diagnostic:      ld      a,$80
                         ld      (diag_sprite_nbr),a
                         ld      a,64
                         ld      (diag_y_pos),a
-                        ;break
 .sprite_newline:        xor a
                         ld      (diag_x_pos),a
 .sprite_loop:           ld      a,(diag_sprite_nbr) : and $7F:  select_sprite_a
@@ -1016,5 +984,4 @@ sprite_diagnostic:      ld      a,$80
                         jr      .sprite_newline
                         ret
                                                
-    
     

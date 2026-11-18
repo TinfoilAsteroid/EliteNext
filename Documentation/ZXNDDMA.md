@@ -177,7 +177,7 @@ source moves to another 64K.
 - Not yet: the long line spans in `l2_draw_6502_line` (a fixed colour too,
   but each span is short, so the extra 5 bytes of set-up a span may eat
   most of the saving).
-- Tests/test_hardware.py assembles the hardware build in a temporary folder
+- Tools/test_hardware.py assembles the hardware build in a temporary folder
   and runs it on Tools/nexsim.py's DMA+ model beside the normal build: the
   boot's Layer 2 and both fills byte for byte the same, fill mode used and
   left off. nexsim's DMA timing is an estimate (a fill byte half a copied

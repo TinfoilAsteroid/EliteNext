@@ -1,15 +1,5 @@
 
 
-;AddSpeedToVert:         MACRO   vertex
-;                        ld      hl,(vertex)
-;                        ld      a,(vertex+2)
-;                        ld      b,a
-;                        call    AHLEquBHLaddCDE
-;                        ld      (vertex),hl
-;                        ld      (vertex+2),a
-;                        ENDM
-                        
-
 ; ---------------------------------------------------------------------------------------------------------------------------------    
 ApplyShipSpeed:         ld      a,(UBnKSpeed)                   ; get speed * 4
                         cp      0

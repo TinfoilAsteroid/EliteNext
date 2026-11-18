@@ -1,3 +1,5 @@
+; Replaced by Tools/sprite_writer.py (run by build.bat), which writes the same NESprNN.dat files
+; from Layer3Sprites/SpriteSheet.SPR. Kept for reference; assemble from the project folder.
  DEVICE ZXSPECTRUMNEXT
  DEFINE  DOUBLEBUFFER 1
  DEFINE  LOGMATHS     1
@@ -60,9 +62,9 @@ Filename                DB "NESpr"
 FileNbr                 DB "00"
 Extension:              DB ".dat",0
         
-                        INCLUDE "./Maths/binary_to_decimal.asm"
+                        INCLUDE "./Maths/Unused/binary_to_decimal.asm"
                         INCLUDE "./Hardware/drive_access.asm"
-                        INCLUDE "./Layer3Sprites/SpriteSheet.asm"
+                        INCLUDE "./Layer3Sprites/Unused/SpriteSheet.asm"
 
 
     SAVENEX OPEN "SpriteWriter.nex", $8000 , $7F00

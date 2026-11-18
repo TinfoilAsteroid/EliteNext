@@ -1,7 +1,8 @@
-rem elitebuild            -> assemble EliteN.nex, then run the regression tests (Tests\run_tests.py)
+rem elitebuild            -> assemble EliteN.nex, then run the regression tests (Tools\run_tests.py)
 rem elitebuild notest     -> without the tests
 rem elitebuild hardware   -> also EliteNHW.nex for a real Next: -DREAL_HARDWARE, DMA+ fill mode for the screen
 rem                          clear and memfill_dma, needs core 3.03.00 (CSpect has no DMA+, so run EliteN.nex there)
+rem Tools\sprite_writer.py writes the sprite pattern files NESpr01-40.dat from Layer3Sprites\SpriteSheet.SPR
 rem snasm
 rem Snasm  -map -next eliteNext.asm 
 
@@ -19,8 +20,9 @@ del     eliteN.nex
 del     /Q .\Build\*.*
 rmdir   /Q .\Build
 
+python Tools\sprite_writer.py || exit /b 1
 sjasmplus --msg=all --color=auto --lst=eliteN.txt --sym=eliteN.sym eliteNext.asm || exit /b 1
-if "%TESTS%"=="1" python Tests\run_tests.py || exit /b 1
+if "%TESTS%"=="1" python Tools\run_tests.py || exit /b 1
 if "%HARDWARE%"=="1" sjasmplus --msg=war -DREAL_HARDWARE --lst=EliteNHW.txt --sym=EliteNHW.sym eliteNext.asm || exit /b 1
 
 mkdir   .\Build

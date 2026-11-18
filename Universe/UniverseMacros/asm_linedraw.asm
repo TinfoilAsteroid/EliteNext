@@ -363,8 +363,6 @@ prefix1?_LL145_6502:        ZeroA                           ; LDA #0            
 ; for the screen coord we will use 127 though, we use c as a temporay X register
 prefix1?_LL147_6502:        ld      a,191                   ; LDX #Y*2-1             \ Set X = #Y * 2 - 1. The constant #Y is 96, the y-coordinate of the mid-point of the space view, so this sets Y2 to 191, the y-coordinate of the bottom pixel row of the space view
                             ld      (Xreg),a                ; .
-;                    ld      a,127
-;                    ld      c,a
 .CheckX2Y2High:             ld      a,b                     ; ORA XX12+1             \ If one or both of x2_hi and y2_hi are non-zero, jump
                             ld      hl,prefix1?_XX15Y2hi    ; .
                             or      (hl)                    ; .

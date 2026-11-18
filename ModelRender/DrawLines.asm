@@ -5,7 +5,6 @@ DrawLinesCounter		db	0
 ; Initial tests look OK    
 LL155:;
 ClearLine:                                  ; CLEAR LINEstr visited by EE31 when XX3 heap ready to draw/erase lines in XX19 heap.
-      ;break                                                                             ; ObjectInFront:
 DrawLines:              ld	a,$65 ; DEBUG
                         ld    iyl,a							; set ixl to colour (assuming we come in here with a = colour to draw)
                         ld	a,(UbnkLineArrayLen)			; get number of lines
@@ -23,7 +22,6 @@ DrawLines:              ld	a,$65 ; DEBUG
                         push  hl,,iy
                         ld    h,b
                         ld    l,c
-  ;  call    l2_draw_any_line                ; call version of LOIN that used BCDE
                         ld	a,iyl							; get colour back before calling line draw
                         MMUSelectLayer2
                         call  LineHLtoDE

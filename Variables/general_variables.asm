@@ -1,6 +1,3 @@
-    IFNDEF LASER_V2
-    DEFINE  LASER_V2    1
-    ENDIF
 ; Debugging data
 failureDiag DS  10              ; 10 bytes to log data before a failure
 
@@ -34,9 +31,6 @@ INF			DW	0				; page 0 &20 Used to get address from UNIV array
 INF28		DW	0				; page 0 &20 Used to get address from UNIV array
 
 
-
-;XX16		DS	16				; 16 byte Matrix
-
 P0INWK							; page 0 & 46
 p0INWK31						; page 0 & 65
 P0INWK36						; PAGE 0 &6A 
@@ -46,13 +40,10 @@ LastNormalVisible	equ	XX4
 varXX4              equ XX4
 
 
-
 PATG		DB	0				; 6502 &03C9     
 SLSP 		DW	0				; &03B0 \ SLSP \ ship lines pointer
 
 
-;UNIV		DS FreeListSize*2	; Array of Universe Pointers
-;HULLINDEX	DS ShipTypeSize*2	; hull index for table at XX21= &F XX21-1,Y
 ;Maths Support
 MultiplyResult:         DS  6  ; reserve 6 bytes for maths result, little endian rest is padding for console display alignment
 
@@ -389,7 +380,6 @@ TextInputMode           DB  0
 CursorKeysPressed       DB  0               ; mapping of the current key presses
                                             ; 7    6    5    4     3    2        1    0
                                             ; Up   Down Left Right Home Recentre 
-FireLaserPressed        DB  0
 WarpPressed             DB  0
 CompassColor			DB	0				; 03C5
 SoundToggle				DB	0				; 03C6
@@ -403,7 +393,6 @@ DiskReadFailFlag		DB	0				; 03CF \ CATF \ Disk catalog fail flag
 
 ; Working Data
 
-;UniverseTable			DS	26				; 1741  \ address pointers for 13 ships INF on pages &9. 37 bytes each.
 ; $0900 =	EQUW page9+37* 0 \ copied to inner worskpace INWK on zero-page when needed
 ; $0925 =	EQUW page9+37* 1
 ; $094A =	EQUW page9+37* 2
@@ -417,7 +406,6 @@ DiskReadFailFlag		DB	0				; 03CF \ CATF \ Disk catalog fail flag
 ; $0A72 =	EQUW page9+37*10
 ; $0A97 =	EQUW page9+37*11
 ; $0ABC =	EQUW page9+37*12 \ allwk up to &0ABC while heap for edges working down from &CFF. 
-
 
 
 ; 0b00 is start address of data to save 
@@ -439,10 +427,7 @@ ShipLineStack			DS  70			; For now but will be in the page later
 ShipLineStackTop		equ $ - ShipLineStack	
 
 ; No longer needed
-;LSO						DS 	$C0				;0E00 Line Buffer Solar of 192 lines (may be 191 in reality)
 ; LSX vector overlaps with LSO
-;LSX2					DS	$C0				; &0EC0	    \ LSX2 bline buffer size?
-;LSY2					DS  $C)	           	; &0F0E	    \ LSY2
 
 ; -- Player Runtime Data
 GunTemperature          DB  0
@@ -461,8 +446,6 @@ CompassY				DB	0				; 03A9
 ; bit 7 set then tagetting and lower nibble holds missile target and launching
 ; bit 7 clear launch at selected target in lower nibble
 MissileTargettingFlag   DB  0
-;;MissileTarget			DB  0				; 45
-;;MissileLaunchFlag       DB  0
 CommanderName           DS  15
 CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
 BadnessStatus           DB  0
@@ -481,30 +464,27 @@ BadnessStatus           DB  0
 ; need to add copy table routines
 CurrLaserType           DB  0               ; current view laser type, copied in from LaserType array
 CurrLaserDamage         DB  0               ; copied in from LaserDamagedFlag array
-CurrLaserPulseRate      DB  0               ; current view laser amount of pulses
-CurrLaserPulseOnTime    DB  0               ; how many cycles the laser is on
-CurrLaserPulseOffTime   DB  0               ; how many cycles the laser is on
-CurrLaserPulseRest      DB  0               ; current view laser delay setup between pulses
+CurrLaserPulseRate      DB  0               ; pulses in a burst, 0 = a beam (on while fire is held)
+CurrLaserPulseOnTime    DB  0               ; frames (50 Hz) a pulse is on
+CurrLaserPulseOffTime   DB  0               ; frames off between a burst's pulses
+CurrLaserPulseRest      DB  0               ; frames of rest after a burst
     
-    IFDEF LASER_V2
-LaserBeamOn             DB  0
-CurrLaserDuration       DB  0   ; == CurrLaserPulseOnTime
-CurrentBurstPause       DB  0   ; == CurrLaserPulseOffTime
-CurrentCooldown         DB  0   ; == CurrLaserPulseRest
-    ENDIF
-CurrLaserBurstRate      DB  0
-CurrLaserBurstCount     DB  0   ; == LaserPulseRate
+LaserBeamOn             DB  $FF             ; the beam's on (LaserUpdate, MainLoop.asm); true 0, false $FF
+LaserFireHeld           DB  $FF             ; fire held this loop (the front view's keys); true 0, false $FF
+LaserFireThisLoop       DB  0               ; (LaserUpdate's copy)
+LaserState              DB  0               ; LaserReady, LaserOn, LaserOff, LaserRest
+LaserStateEnd           DW  0               ; FrameCounter16 when the state ends
+LaserLastFrame          DW  0               ; FrameCounter16 at the last update
+LaserNow                DW  0               ; FrameCounter16 this update
+LaserFrames             DB  0               ; frames since the last update (at most LaserMaxFrames)
+LaserHitDamage          DB  0               ; damage to a ship in the sights this loop
+CurrLaserBurstCount     DB  0               ; pulses left in the burst
 CurrLaserDamageOutput   DB  0
 CurrLaserEnergyDrain    DB  0
 CurrLaserHeat           DB  0
 CurrLaserDurability     DB  0
 CurrLaserDurabilityAmount DB  0
 
-; Count down timers must be aligned like this to work
-CurrLaserPulseOnCount   DB  0               ; how many cycles the laser is on timer
-CurrLaserPulseOffCount  DB  0               ; how many cycles the laser is on timer
-CurrLaserPulseRestCount DB  0               ; countdown after shooting for next shot
-CurrLaserPulseRateCount DB  0               ; current view laser current pulses fired
 
 ; -- Input variables
 JoystickX				DB	0				; 034C JSTX  
@@ -535,6 +515,3 @@ RollMiddle              equ $8CE0
 PitchMiddle             equ $94E0   
 
 
-
-                                                
-                                                
