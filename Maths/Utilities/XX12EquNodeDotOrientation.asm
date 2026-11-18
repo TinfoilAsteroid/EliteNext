@@ -138,8 +138,12 @@ XX12EquNodeDotOrientation:							; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vecto
 		ld		a,l                                 ; the result will be in the lower byte now
         ld      (UBnkXX12yLo),a						; that is result done for
 ;...Z cell
-		ld		hl,UbnkTransInvRow2z0     			; process orientation matrix row 1
+		ld		hl,UbnkTransInvRow2z0     			; process orientation matrix row 2
         call    XX12ProcessOneRow
 		ld		b,a
         ld		a,h
-        ret       
+		or		b
+		ld		(UBnkXX12zSign),a					; a = result with sign in bit 7
+		ld		a,l                                 ; the result will be in the lower byte now
+        ld      (UBnkXX12zLo),a						; that is result done for
+        ret

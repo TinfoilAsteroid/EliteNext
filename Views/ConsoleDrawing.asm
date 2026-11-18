@@ -186,6 +186,166 @@ MissileDiagnotics:      MMUSelectLayer2
                         call    MissileHexToChar                        
                         ret
 
+;----------------------------------------------------------------------------------------------------------------------------------
+; DrawSunDistance / DrawPlanetDistance / DrawStationDistance: print the integer part of the distance to the sun, planet
+; and space station on layer 2 to the right of their compass sprites.
+; The compass sprites sit in the left border (sprite x 0-33, top y = Sun/Planet/StationCompassTLY, layer 2 is offset by
+; 32,32 from sprite coordinates), so the text goes at the left of the 3D view, centred on each compass where possible.
+; That area is cleared every frame, so these are called every frame from the main loop rather than from UpdateConsole,
+; which only runs on console refresh frames.
+; Distance ~= max + 3/8 (mid + min) of |x|, |y|, |z| (within about +13% / -3%), using the integer part of each
+; S15.8 position (sign byte bits 0-6 and the hi byte), so it fits 16 bits (max 57341)
+DistanceCol             equ 4
+SunDistanceRow          equ 2                                       ; sun compass centre is above layer 2, so top text row
+PlanetDistanceRow       equ PlanetCompassTLY + 17 - 32 - 4          ; compass centre (top + 17) in layer 2 rows, less half a character
+StationDistanceRow      equ StationCompassTLY + 17 - 32 - 4
+SunDistanceColour       equ L2ColourYELLOW_1
+PlanetDistanceColour    equ L2ColourGREEN_1
+StationDistanceColour   equ L2ColourWHITE_1
+DistancePosition        DS  9                                       ; copy of x, y, z (lo, hi, sign) taken from the object's bank
+DistanceRow             DB  0
+DistanceColour          DB  0
+DistanceValue           DW  0
+DistanceCurCol          DB  0
+DistanceLeading         DB  0                                       ; non zero once a digit has been printed
+DistanceDigits          DB  0
+DistancePowers          DW  10000, 1000, 100, 10, 1
+
+DrawSunDistance:        call    SaveMMU6                    ; SunXPos/Y/Z are only refreshed by the AI sun tracking
+                        MMUSelectSun                        ; so copy the current sun position in from the sun bank
+                        call    CopySuntoGeneral            ; .
+                        call    RestoreMMU6                 ; .
+                        ld      hl,SunXPos
+                        ld      bc,SunDistanceRow * 256 + SunDistanceColour
+                        jp      DrawDistanceAtHL
+
+DrawPlanetDistance:     call    SaveMMU6                    ; copy the planet position out of the planet bank
+                        MMUSelectPlanet
+                        ld      hl,P_BnKxlo
+                        ld      de,DistancePosition
+                        ld      bc,9
+                        ldir
+                        call    RestoreMMU6
+                        ld      hl,DistancePosition
+                        ld      bc,PlanetDistanceRow * 256 + PlanetDistanceColour
+                        jp      DrawDistanceAtHL
+
+DrawStationDistance:    call    SaveMMU6                    ; copy the space station position out of its universe bank
+                        MMUSelectSpaceStation
+                        ld      hl,UBnKxlo
+                        ld      de,DistancePosition
+                        ld      bc,9
+                        ldir
+                        call    RestoreMMU6
+                        ld      hl,DistancePosition
+                        ld      bc,StationDistanceRow * 256 + StationDistanceColour
+                        jp      DrawDistanceAtHL
+
+; hl = 9 byte position (x, y, z each lo, hi, sign), b = layer 2 row, c = colour
+; prints the approximate distance at column DistanceCol, without leading zeros
+DrawDistanceAtHL:       ld      a,b
+                        ld      (DistanceRow),a
+                        ld      a,c
+                        ld      (DistanceColour),a
+                        inc     hl                          ; x integer part = hi byte, sign byte bits 0-6
+                        ld      e,(hl)
+                        inc     hl
+                        ld      d,(hl)
+                        res     7,d
+                        push    de                          ; |x|
+                        inc     hl                          ; y
+                        inc     hl
+                        ld      e,(hl)
+                        inc     hl
+                        ld      d,(hl)
+                        res     7,d
+                        push    de                          ; |y|
+                        inc     hl                          ; z
+                        inc     hl
+                        ld      c,(hl)
+                        inc     hl
+                        ld      b,(hl)
+                        res     7,b                         ; bc = |z|
+                        pop     de                          ; de = |y|
+                        pop     hl                          ; hl = |x|
+.MaxXY:                 or      a                           ; hl = max(x,y), de = the other
+                        sbc     hl,de
+                        add     hl,de                       ; carry = hl < de
+                        jr      nc,.MaxXYZ
+                        ex      de,hl
+.MaxXYZ:                or      a                           ; hl = max(hl,z), bc = the other
+                        sbc     hl,bc
+                        add     hl,bc
+                        jr      nc,.HaveMax
+                        push    hl
+                        ld      h,b
+                        ld      l,c
+                        pop     bc
+.HaveMax:               push    hl                          ; hl = max
+                        ex      de,hl
+                        add     hl,bc                       ; hl = mid + min (each < 32768 so no carry)
+                        srl     h                           ; hl = (mid + min) / 4
+                        rr      l
+                        srl     h
+                        rr      l
+                        ld      d,h                         ; de = (mid + min) / 8
+                        ld      e,l
+                        srl     d
+                        rr      e
+                        add     hl,de                       ; hl = 3/8 (mid + min)
+                        pop     de
+                        add     hl,de                       ; hl = max + 3/8 (mid + min)
+.PrintDistance:         ld      (DistanceValue),hl
+                        ld      a,DistanceCol
+                        ld      (DistanceCurCol),a
+                        xor     a
+                        ld      (DistanceLeading),a
+                        ld      a,5
+                        ld      (DistanceDigits),a
+                        ld      hl,DistancePowers
+.DigitLoop:             ld      e,(hl)                      ; de = next power of 10
+                        inc     hl
+                        ld      d,(hl)
+                        inc     hl
+                        push    hl
+                        ld      hl,(DistanceValue)
+                        ld      b,'0'                       ; b = digit character
+                        or      a
+.Subtract:              sbc     hl,de                       ; count how many times the power fits
+                        jr      c,.DigitDone
+                        inc     b
+                        jr      .Subtract                   ; carry is clear here for the next sbc
+.DigitDone:             add     hl,de
+                        ld      (DistanceValue),hl
+                        ld      a,(DistanceDigits)
+                        dec     a
+                        ld      (DistanceDigits),a
+                        jr      z,.PrintDigit               ; always print the units digit
+                        ld      a,(DistanceLeading)
+                        and     a
+                        jr      nz,.PrintDigit
+                        ld      a,b
+                        cp      '0'
+                        jr      z,.NextDigit                ; suppress leading zeros
+.PrintDigit:            ld      a,1
+                        ld      (DistanceLeading),a
+                        ld      d,b                         ; d = character
+                        ld      a,(DistanceColour)
+                        ld      e,a
+                        ld      a,(DistanceRow)
+                        ld      b,a
+                        ld      a,(DistanceCurCol)
+                        ld      c,a
+                        add     a,8
+                        ld      (DistanceCurCol),a
+                        MMUSelectLayer2
+                        call    l2_print_chr_at             ; b = row, c = col, d = character, e = colour
+.NextDigit:             pop     hl
+                        ld      a,(DistanceDigits)
+                        and     a
+                        jr      nz,.DigitLoop
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
 UpdateConsole:          IFDEF   MISSILEDIAGNOSTICS
                                 call    MissileDiagnotics
                         ENDIF
@@ -273,7 +433,7 @@ UpdateConsole:          IFDEF   MISSILEDIAGNOSTICS
                         call    DrawColourCodedBar                          
 .SpriteDraw:            MMUSelectSpriteBank          
                         
-.DrawCompases:          call    show_sprite_sun_compass
+.DrawCompases:          call    show_sprite_sun_compass     ; the sun distance next to this compass is drawn every frame by DrawSunDistance (main loop)
                         call    show_sprite_planet_compass
                         call    show_sprite_station_compass
 
@@ -372,6 +532,7 @@ Draw4EnergyBars:        ld      e,24
                         ret
 
 ScannerBottom           equ 190
+ScannerTop              equ 128                     ; first console row, sticks are kept below the view area
 ScannerTypeMissle       equ 2
 ScannerXRangeOffset     equ $35
 ScannerCenter           equ 127
@@ -623,32 +784,7 @@ ScaleUnivPos:           ld      de,(UBnKzhi)               ; de = abs z & save s
                         pop     af                          ; get zsgn
                         and     SignOnly8Bit                ;
                         ld      d,a                         ; de = shifted signed Z
-                        ret
-
-;compass sun
-;            if value is still 24 bit
-;                copy xhi/xsgn y and z to xxx15 ([2 1 0 ] [ 5 4 3] [ 8 7 6 ]
-;                normalise vector (note this assumes sun is just sign byte+ 2 bytes)
-;                tempk39 = OR 3 low bytes
-;                tempkA = OR 3 high bytes
-;                 TAL2:    repeat
-;                             asl tempka tempk39
-;                             exit if carry set
-;                             x coord << 1
-;                             y corrd << 1
-;                             z coord << 1
-;                          until carry clear   
-;                 TA2:     shift x y and z right one and put sign bit in from sign bytes
-;                          now XX15 holds sign + 7 bit bytes maximused for coords
-;                          RQ = AP = X ^ 2
-;                          TP = AP = Y ^ 2
-;                          RQ = RQ + TP
-;                          TP = AP = Z ^ 2
-;                          RQ = RQ + TP
-;                          Q = SQRT (RQ)
-;                          for each coord - A = A/Q * 3/ 8
-;                
-;                
+                        ret              
 
 UpscaleSunPosition:     ld      de,(SBnKzhi)                ; de = abs z & save sign on stack
                         ld      hl,(SBnKxhi)                ; hl = abs x & save sign on stack
@@ -951,11 +1087,9 @@ UpdatePlanetSun:        MMUSelectPlanet
                        
 UpdateScannerSun:       MMUSelectSun
                         Shift24BitScan  SBnKyhi, SBnKylo
-.IsItInRange:           ld      a,(SBnKxsgn)                ; if the high byte is not
-                        ld      hl,SBnKysgn                 ; a sign only
-                        or      (hl)                        ; then its too far away
-                        ld      hl,SBnKzsgn                 ; for the scanner to draw
-                        or      (hl)                        ; so rely on the compass
+.IsItInRange:           ld      a,(SBnKxsgn)                ; only x and z decide if it is in scanner range, y is ignored
+                        ld      hl,SBnKzsgn                 ; so the blip is always drawn (out of range in x or z is
+                        or      (hl)                        ; shown by the radar edge dot instead)
                         and     SignMask8Bit                ;
                         ret     nz                          ;
 .ItsInRange:            ld      hl,(SBnKzlo)                ; we will get unsigned values
@@ -963,9 +1097,16 @@ UpdateScannerSun:       MMUSelectSun
                         ld      bc,(SBnKylo)
                         ld      a,h
                         or      d
-                        or      b
                         and     %11000000
-                        ret     nz                          ; if distance Hi > 64 on any ccord- off screen
+                        ret     nz                          ; if x or z distance Hi >= 64 - off scanner
+.ClampY:                ld      a,(SBnKysgn)                ; if |y| >= 64 clamp the stick to its longest
+                        and     SignMask8Bit                ; .
+                        jr      nz,.YTooHigh                ; .
+                        ld      a,b                         ; .
+                        and     %11000000                   ; .
+                        jr      z,.YInRange                 ; .
+.YTooHigh:              ld      b,63                        ; .
+.YInRange:
 .MakeX2Compliment:      ld      a,(SBnKxsgn)
                         bit     7,a
                         jr      z,.absXHi
@@ -994,6 +1135,9 @@ UpdateScannerSun:       MMUSelectSun
                         NegB
 .absYHi:                ld      a,iyh
 .SetStickPos:           sub     b
+                        JumpIfAGTENusng ScannerTop, .StickBelowTop   ; keep the stick in the console area
+                        ld      a,ScannerTop
+.StickBelowTop:
                         JumpIfALTNusng ScannerBottom, .StickOnScreen
                         ld      a,ScannerBottom
 .StickOnScreen:         ld      iyl,a                       ; iyh is again stick end point   
@@ -1018,11 +1162,9 @@ UpdateScannerSun:       MMUSelectSun
 ; This will do a planet update if we are not in space station range
 UpdateScannerPlanet:    MMUSelectPlanet
                         Shift24BitScan  P_BnKyhi, P_BnKylo
-.IsItInRange:           ld      a,(P_BnKxsgn)                ; if the high byte is not
-                        ld      hl,P_BnKysgn                 ; a sign only
-                        or      (hl)                        ; then its too far away
-                        ld      hl,P_BnKzsgn                 ; for the scanner to draw
-                        or      (hl)                        ; so rely on the compass
+.IsItInRange:           ld      a,(P_BnKxsgn)                ; only x and z decide if it is in scanner range, y is ignored
+                        ld      hl,P_BnKzsgn                 ; so the blip is always drawn (out of range in x or z is
+                        or      (hl)                        ; shown by the radar edge dot instead)
                         and     SignMask8Bit                ;
                         ret     nz                          ;
 .ItsInRange:            ld      hl,(P_BnKzlo)                ; we will get unsigned values
@@ -1030,9 +1172,16 @@ UpdateScannerPlanet:    MMUSelectPlanet
                         ld      bc,(P_BnKylo)
                         ld      a,h
                         or      d
-                        or      b
                         and     %11000000
-                        ret     nz                          ; if distance Hi > 64 on any ccord- off screen
+                        ret     nz                          ; if x or z distance Hi >= 64 - off scanner
+.ClampY:                ld      a,(P_BnKysgn)                ; if |y| >= 64 clamp the stick to its longest
+                        and     SignMask8Bit                ; .
+                        jr      nz,.YTooHigh                ; .
+                        ld      a,b                         ; .
+                        and     %11000000                   ; .
+                        jr      z,.YInRange                 ; .
+.YTooHigh:              ld      b,63                        ; .
+.YInRange:
 .MakeX2Compliment:      ld      a,(P_BnKxsgn)
                         bit     7,a
                         jr      z,.absXHi
@@ -1061,6 +1210,9 @@ UpdateScannerPlanet:    MMUSelectPlanet
                         NegB
 .absYHi:                ld      a,iyh
 .SetStickPos:           sub     b
+                        JumpIfAGTENusng ScannerTop, .StickBelowTop   ; keep the stick in the console area
+                        ld      a,ScannerTop
+.StickBelowTop:
                         JumpIfALTNusng ScannerBottom, .StickOnScreen
                         ld      a,ScannerBottom
 .StickOnScreen:         ld      iyl,a                       ; iyh is again stick end point   
@@ -1082,7 +1234,157 @@ UpdateScannerPlanet:    MMUSelectPlanet
                         call    l2_plot_pixel
                         ret
 
-          
+
+;----------------------------------------------------------------------------------------------------------------------------------
+; Radar edge markers: when the sun, planet or space station is outside the scanner range in X or Z (|x| or |z| >= 64,
+; the same limit the blips use, y is ignored) a dot is put on the scanner outline in its direction. The direction is the
+; one a blip would use (column = x, row = z / 4) and the ray is stepped out a row at a time until it reaches the outline.
+; The outline is not a true ellipse so its half widths are tabled, measured from the console image: columns 59-196,
+; rows 155-190, centre 127.5, 172.5 (left and right are symmetric about it)
+RadarEdgeRowAbove       equ 172                         ; k rows up from here for objects in front (z +ve)
+RadarEdgeRowBelow       equ 173                         ; k rows down from here for objects behind (z -ve)
+RadarEdgeColRight       equ 128                         ; w columns right from here for x +ve
+RadarEdgeColLeft        equ 127                         ; w columns left from here for x -ve
+RadarEdgeRows           equ 18                          ; k = 0..17
+RadarEdgeUp:            DB  68,68,67,67,66,65,64,62,60,58,56,53,50,46,42,36,29,19   ; half width at row 172 - k
+RadarEdgeDown:          DB  68,68,67,67,66,64,63,61,59,57,55,52,48,44,39,33,25,11   ; half width at row 173 + k
+RadarEdgeColour         DB  0
+RadarEdgeXSgn           DB  0
+RadarEdgeZSgn           DB  0
+
+RadarEdgeSun:           MMUSelectSun
+                        ld      ix,SBnKxlo
+                        ld      a,L2ColourYELLOW_1
+                        jp      RadarEdgeDotIX
+
+RadarEdgePlanet:        MMUSelectPlanet
+                        ld      ix,P_BnKxlo
+                        ld      a,L2ColourGREEN_1
+                        jp      RadarEdgeDotIX
+
+RadarEdgeStation:       ld      a,(UniverseSlotList)        ; the station is always slot 0 when there is one
+                        cp      ShipTypeStation             ; .
+                        ret     nz                          ; .
+                        MMUSelectSpaceStation
+                        ld      ix,UBnKxlo
+                        ld      a,L2ColourWHITE_1
+                        ; fall into RadarEdgeDotIX
+
+; ix = 9 byte position (x, y, z each lo, hi, sign) in the paged bank, a = colour. Uses all registers, ix and iy
+RadarEdgeDotIX:         ld      (RadarEdgeColour),a
+.CheckRange:            ld      a,(ix+2)                    ; out of range if either x or z sign byte has magnitude bits
+                        or      (ix+8)                      ; .
+                        and     SignMask8Bit                ; .
+                        jr      nz,.OutOfRange              ; .
+                        ld      a,(ix+1)                    ; or either hi byte is >= 64
+                        or      (ix+7)                      ; .
+                        and     %11000000                   ; .
+                        ret     z                           ; in range, so the scanner blip shows it
+.OutOfRange:            ld      a,(ix+2)                    ; de = |x| integer part
+                        ld      (RadarEdgeXSgn),a           ; .
+                        and     SignMask8Bit                ; .
+                        ld      d,a                         ; .
+                        ld      e,(ix+1)                    ; .
+                        ld      a,(ix+8)                    ; hl = |z| integer part
+                        ld      (RadarEdgeZSgn),a           ; .
+                        and     SignMask8Bit                ; .
+                        ld      h,a                         ; .
+                        ld      l,(ix+7)                    ; .
+.ScaleLoop:             ld      a,d                         ; scale both down together until they fit in 7 bits
+                        or      h                           ; (keeps the x:z ratio, the larger ends up 64..127)
+                        jr      nz,.ScaleDown               ; .
+                        ld      a,e                         ; .
+                        or      l                           ; .
+                        and     $80                         ; .
+                        jr      z,.Scaled                   ; .
+.ScaleDown:             srl     d                           ; .
+                        rr      e                           ; .
+                        srl     h                           ; .
+                        rr      l                           ; .
+                        jr      .ScaleLoop                  ; .
+.Scaled:                ld      b,e                         ; b = |x|, c = |z|
+                        ld      c,l                         ; .
+                        ld      iy,RadarEdgeUp              ; half width table for the half the object is in
+                        ld      a,(RadarEdgeZSgn)           ; .
+                        and     SignOnly8Bit                ; .
+                        jr      z,.HaveTable                ; .
+                        ld      iy,RadarEdgeDown            ; .
+.HaveTable:             ld      ixl,0                       ; k = rows from the centre
+; at row k the ray is at column 4 k |x| / |z|, it has reached the outline once 4 k |x| >= w(k) |z|
+.RowLoop:               ld      d,ixl                       ; hl = 4 k |x|
+                        ld      e,b                         ; .
+                        mul     de                          ; .
+                        ex      de,hl                       ; .
+                        add     hl,hl                       ; .
+                        add     hl,hl                       ; .
+                        ld      d,(iy+0)                    ; de = w(k) |z|
+                        ld      e,c                         ; .
+                        mul     de                          ; .
+                        or      a                           ; .
+                        sbc     hl,de                       ; .
+                        jr      nc,.HitSide                 ; reached the outline on this row
+                        inc     iy                          ; next row out
+                        inc     ixl                         ; .
+                        ld      a,ixl                       ; .
+                        cp      RadarEdgeRows               ; .
+                        jr      c,.RowLoop                  ; .
+; not reached the sides by the last row so it leaves through the flat top (or bottom) of the outline at
+; column 4 * 17 |x| / |z|, found as the first column c where c |z| >= 68 |x|, limited to that row's half width
+.HitEnd:                dec     iy                          ; back to the last row
+                        dec     ixl                         ; .
+                        ld      d,b                         ; hl = 68 |x|
+                        ld      e,4 * (RadarEdgeRows - 1)   ; .
+                        mul     de                          ; .
+                        ex      de,hl                       ; .
+                        xor     a                           ; a = c
+.ColLoop:               ld      d,a                         ; de = c |z|
+                        ld      e,c                         ; .
+                        mul     de                          ; .
+                        push    hl                          ; c |z| >= 68 |x| ?
+                        or      a                           ; . (a unchanged, clears carry)
+                        sbc     hl,de                       ; .
+                        pop     hl                          ; .
+                        jr      c,.Plot                     ; .
+                        jr      z,.Plot                     ; .
+                        inc     a                           ; .
+                        cp      (iy+0)                      ; up to the half width of the top row
+                        jr      c,.ColLoop                  ; .
+                        jr      .Plot                       ; .
+.HitSide:               ld      a,(iy+0)                    ; a = w(k)
+.Plot:                  ld      e,a                         ; e = columns from the centre
+                        ld      a,(RadarEdgeZSgn)           ; d = row
+                        and     SignOnly8Bit                ; .
+                        jr      nz,.Below                   ; .
+.Above:                 ld      a,RadarEdgeRowAbove         ; .
+                        sub     ixl                         ; .
+                        jr      .HaveRow                    ; .
+.Below:                 ld      a,RadarEdgeRowBelow         ; .
+                        add     a,ixl                       ; .
+.HaveRow:               ld      d,a                         ; .
+                        ld      a,(RadarEdgeXSgn)           ; c = outline column, e = the column inside it
+                        and     SignOnly8Bit                ; so the dot is 2 pixels wide like a blip
+                        jr      nz,.Left                    ; .
+.Right:                 ld      a,RadarEdgeColRight         ; .
+                        add     a,e                         ; .
+                        ld      c,a                         ; .
+                        dec     a                           ; .
+                        jr      .HaveCol                    ; .
+.Left:                  ld      a,RadarEdgeColLeft          ; .
+                        sub     e                           ; .
+                        ld      c,a                         ; .
+                        inc     a                           ; .
+.HaveCol:               ld      e,a                         ; .
+                        MMUSelectLayer2                     ; .
+                        ld      b,d                         ; plot the outline pixel
+                        ld      a,(RadarEdgeColour)         ; .
+                        push    de                          ; .
+                        call    l2_plot_pixel               ; .
+                        pop     de                          ; .
+                        ld      b,d                         ; and the one inside it
+                        ld      c,e                         ; .
+                        ld      a,(RadarEdgeColour)         ; .
+                        jp      l2_plot_pixel               ; .
+
 ; As the space station is always ship 0 then we can just use the scanner
                         
 ; This will go though all the universe ship data banks and plot, for now we will just work on one bank
@@ -1094,7 +1396,10 @@ UpdateScannerShip:      ld      a,(UBnKexplDsp)             ; if bit 4 is clear 
                         bit     7,a
                         ret     nz
 ; DEBUG Add in station types later                       
-.NotMissile:            ld      a,(UBnKzsgn)                ; any high byte causes skip
+.NotMissile:            ld      a,(ShipTypeAddr)            ; the station ignores y for the range check so its blip is
+                        cp      ShipTypeStation             ; always drawn when x and z are in range (out of range in x
+                        jr      z,.CheckXZOnly              ; or z is shown by the radar edge dot instead)
+                        ld      a,(UBnKzsgn)                ; any high byte causes skip
                         ld      b,a
                         ld      a,(UBnKxsgn)                ; .
                         ld      c,a
@@ -1104,13 +1409,33 @@ UpdateScannerShip:      ld      a,(UBnKexplDsp)             ; if bit 4 is clear 
                         and     SignMask8Bit                ; so we are checking to see if very high byte is non zero
                         ret     nz
 .CheckLowAndMidByte:    ld      hl,(UBnKzlo)                ; Any distance > 64 causes skip
-                        ld      de,(UBnKxlo)                ; 
+                        ld      de,(UBnKxlo)                ;
                         ld      bc,(UBnKylo)                ;
                         ld      a,h                         ;
                         or      d                           ;
                         or      b                           ;
                         and     %11000000                   ;
                         ret     nz                          ; if distance Hi > 64 on any ccord- off screen
+                        jr      .MakeX2Compliment
+.CheckXZOnly:           ld      a,(UBnKxsgn)                ; x and z only
+                        ld      hl,UBnKzsgn                 ; .
+                        or      (hl)                        ; .
+                        and     SignMask8Bit                ; .
+                        ret     nz                          ; .
+                        ld      hl,(UBnKzlo)                ; .
+                        ld      de,(UBnKxlo)                ; .
+                        ld      bc,(UBnKylo)                ; .
+                        ld      a,h                         ; .
+                        or      d                           ; .
+                        and     %11000000                   ; .
+                        ret     nz                          ; .
+                        ld      a,(UBnKysgn)                ; if |y| >= 64 clamp the stick to its longest
+                        and     SignMask8Bit                ; .
+                        jr      nz,.YTooHigh                ; .
+                        ld      a,b                         ; .
+                        and     %11000000                   ; .
+                        jr      z,.MakeX2Compliment         ; .
+.YTooHigh:              ld      b,63                        ; .
 .MakeX2Compliment:      ld      a,(UBnKxsgn)
                         bit     7,a
                         jr      z,.absXHi
@@ -1141,9 +1466,11 @@ UpdateScannerShip:      ld      a,(UBnKexplDsp)             ; if bit 4 is clear 
                         NegB
 .absYHi:                ld      a,iyh
 .SetStickPos:           sub     b
-                        JumpIfALTNusng ScannerBottom, .StickOnScreen
+                        JumpIfAGTENusng ScannerTop, .StickBelowTop   ; keep the stick in the console area
+                        ld      a,ScannerTop
+.StickBelowTop:         JumpIfALTNusng ScannerBottom, .StickOnScreen
                         ld      a,ScannerBottom
-.StickOnScreen:         ld      iyl,a                       ; iyh is again stick end point   
+.StickOnScreen:         ld      iyl,a                       ; iyh is again stick end point
                         GetShipColor
                         ld      ixl,a
                         ld      b,iyh                       ; from row

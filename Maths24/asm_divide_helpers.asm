@@ -1,6 +1,8 @@
-; BC = BC / DE
-; HL = BC % DE
-; if HL > 0 BC -= 1
+;----------------------------------------------------------------------------------------------------------------------------------
+; Floor_DivQ: BC = BC / DE (unsigned), HL = BC % DE
+; DE is preserved. BC = 0 gives BC = 0, HL = 0. DE = 0 gives BC = 1, HL = 0.
+; (The name comes from a signed floor divide; BC_Div_DE is unsigned so the result is always the plain quotient.
+;  The old signed adjustment wrongly decremented BC whenever the remainder was 32768 or more.)
 Floor_DivQ:             ld      a,b
                         or      c
                         jr      z, .divide0By   ; if bc is zero just return as result will be zero
@@ -8,43 +10,28 @@ Floor_DivQ:             ld      a,b
                         or      e
                         jr      z, .divideBy0
                         push    de
-.DoDivide:              call    BC_Div_DE       ; bc(q0) = bc / de , hl(r0) = bc %de
-                        pop     de              ; get divisor back to test
-                        bit     7,d             ; if divisor <0 or = 0 goto else branch
-                        jp      nz,.deLTE0
-                        ld      a,d
-                        or      e
-                        jp      z,.deLTE0
-.deGT0:                 bit     7,h             ; if remainder >=0 return with no adjustment
-                        ret     z               ; if remainder was not negative then all done
-                        dec     bc              ; else q --
-                        ClearCarryFlag          ;      r += b
-                        adc     hl,de           ;      .
-                        ret
-.deLTE0:                bit     7,h             ; if remainder <= 0 retun with no adjustment
-                        ret     z               ; (return if negative)
-                        ld      a,h
-                        or      l               ; (return if zero)
-                        ret     z
-                        dec     bc              ; else q --
-                        ClearCarryFlag          ;      r += b
-                        adc     hl,de           ;      .
+                        call    BC_Div_DE       ; bc = bc / de , hl = bc % de
+                        pop     de
                         ret
 .divide0By:             ld      hl,0            ; hl = 0, bc is already 0
-                        ret      
+                        ret
 .divideBy0:             ld      hl,0
                         ld      bc,1
-                        ret     
-; BC = BC/DE (ceheck this is correctg wording)                       
-BCDIVDE_Iteration:      MACRO 
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
+; BCDIVDE_Iteration: one bit of BC_Div_DE, shifts the next dividend bit from A into the remainder HL and subtracts
+; the divisor (DE holds -divisor), the inverted quotient bit is left in carry for the next rla
+BCDIVDE_Iteration:      MACRO
                         rla
                         adc	    hl,hl
                         add	    hl,de
                         jr	    c,1F
                         sbc	    hl,de
-1:				        
+1:
                         ENDM
-                        
+;----------------------------------------------------------------------------------------------------------------------------------
+; BC_Div_DE: BC = BC / DE, HL = BC % DE, all unsigned 16 bit. DE must not be 0.
+; Destroys A and DE (DE is left as -DE)
 BC_Div_DE:              xor a
                         ld h,a
                         ld l,a
@@ -54,53 +41,43 @@ BC_Div_DE:              xor a
                         sub d
                         ld d,a
                         ld a,b
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
                         rla
                         ld b,a
                         ld a,c
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
-                        BCDIVDE_Iteration 
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
+                        BCDIVDE_Iteration
                         rla
                         ld c,a
-                        ret	
-Floor_DivQSigned:       ld      a,b             ; save resultant sign
-                        xor     d               ;
-                        and     $80             ;
-                        ld      ixh,a           ;
-                        ld      a,b
-                        and     $7F
-                        ld      b,a
-                        ld      a,d
-                        and     $7F
-                        ld      d,a
-                        call    Floor_DivQ
-                        ld      a,b
-                        or      ixh
-                        ld      b,a
                         ret
-; BC = A0 / C
+;----------------------------------------------------------------------------------------------------------------------------------
+; div_a256_div_c: BC = (A * 256) / C, unsigned, HL = remainder. C must not be 0.
+; Destroys A and DE
 div_a256_div_c:         ld      d,0
                         ld      e,c
                         ld      b,a
                         ld      c,0
                         call    BC_Div_DE
                         ret
-
-div_de_div_bc_signed:   ld      a,d
-                        or      b
+;----------------------------------------------------------------------------------------------------------------------------------
+; div_de_div_bc_signed: DE = DE / BC with DE, BC as 16 bit lead sign values (bit 15 = sign, 15 bit magnitude).
+; Magnitude = |DE| / |BC| truncated, sign = sign DE xor sign BC, a zero result is always +0. BC = 0 divides by 1.
+; Destroys A, BC (sign bit cleared), HL
+div_de_div_bc_signed:   ld      a,d                     ; result sign = sign de xor sign bc
+                        xor     b
                         and     $80
                         ex      af,af'          ; save sign bit
                         res     7,d
@@ -112,44 +89,20 @@ div_de_div_bc_signed:   ld      a,d
                         or      c
                         jp      nz, .OKtoDivide
                         ld      c,1
-.OKtoDivide:            call    DEequDEDivBC    ; get back sign and set as needed
-                        ex      af,af'          ; 
-                        or      d               ; 
-                        ld      d,a             ; 
-                        ret
-.ResultIsZero:          ld      de,0
-                        ret
-
-div_de_div_96_signed:   ld      a,d
-                        or      b
-                        and     $80
-                        ex      af,af'          ; save sign bit
-                        res     7,d
-                        res     7,b
+.OKtoDivide:            call    DEequDEDivBC    ; de = |de| / |bc|
                         ld      a,d
                         or      e
-                        jp      z,  .ResultIsZero
-                        ld      a,b
-                        or      c
-                        jp      nz, .OKtoDivide
-                        ld      c,1
-.OKtoDivide:            call    DEequDEDivBC    ; get back sign and set as needed
-                        ex      af,af'          ; 
-                        or      d               ; 
-                        ld      d,a             ; 
+                        jr      z,.ResultIsZero ; never return -0
+                        ex      af,af'          ; get back sign and set as needed
+                        or      d               ;
+                        ld      d,a             ;
                         ret
-.ResultIsZero:          ld      de,0
+.ResultIsZero:          ex      af,af'          ; restore the caller's af'
+                        ld      de,0
                         ret
-
-;Inputs: DE is the numerator, BC is the divisor
-;;Outputs: DE is the result
-;;         A is a copy of E
-;;         HL is the remainder
-;;         BC is not changed
-;; so DE = DE /BC
-;140 bytes
-;145cc	
-; DE = DE/BC
+;----------------------------------------------------------------------------------------------------------------------------------
+; MacroDEDivBC: one bit of DEequDEDivBC, shifts the next dividend bit from A into the remainder HL and subtracts BC,
+; restoring if it went negative; the inverted quotient bit is left in carry for the next rla
 MacroDEDivBC:       MACRO
                     rla
                     adc     hl,hl
@@ -157,8 +110,10 @@ MacroDEDivBC:       MACRO
                     jr      nc,$+3
                     add     hl,bc
                     ENDM
-
-DEequDEDivBC:       xor a 
+;----------------------------------------------------------------------------------------------------------------------------------
+; DEequDEDivBC: DE = DE / BC, HL = DE % BC, all unsigned 16 bit. BC must not be 0.
+; A = copy of E (the quotient low byte), BC is not changed. 140 bytes, 145cc
+DEequDEDivBC:       xor a
                     sbc hl,hl
                     ld a,d
                     MacroDEDivBC
@@ -169,8 +124,8 @@ DEequDEDivBC:       xor a
                     MacroDEDivBC
                     MacroDEDivBC
                     MacroDEDivBC
-                    rla 
-                    cpl 
+                    rla
+                    cpl
                     ld d,a
 
                     ld a,e
@@ -183,36 +138,38 @@ DEequDEDivBC:       xor a
                     MacroDEDivBC
                     MacroDEDivBC
                     rla
-                    cpl 
+                    cpl
                     ld e,a
                     ret
-                    
-; ">asm_div16: HL_Div_C: HL is the numerator,  C is the denominator, output A is the remainder, B is 0, C,DE is not changedHL is the quotient"
+;----------------------------------------------------------------------------------------------------------------------------------
+; div_hl_div_c: HL = HL / C, A = HL % C, unsigned 16 by 8 bit. C must not be 0.
+; B = 0 on exit, C and DE are not changed. Works for any C (1-255): when the shifted remainder overflows 8 bits
+; it is always >= C so the subtract is forced (previously C >= 128 gave wrong results).
 div_hl_div_c:           ld b,16
                         xor a
 div16_loop:	            sla l
                         rl	h
-;    add hl,hl
                         rla
+                        jr  c,.Subtract                 ; remainder went past 255 so it is >= c
                         cp c
                         jr c,div16_skip
-                        inc l
+.Subtract:              inc l
                         sub c
 div16_skip:		        djnz div16_loop
                         ret
-
-
+;----------------------------------------------------------------------------------------------------------------------------------
+; EDivC_Iteration: one bit of div_e_div_c, shifts the next bit of E into the remainder A and subtracts C, restoring
+; if it borrowed; the inverted quotient bit is left in carry and rotated into E by the next iteration
 EDivC_Iteration:        MACRO
                         rl  e
                         rla
                         sub c
                         jr  nc,.Div8_NoAdd
                         add a,c
-.Div8_NoAdd:            
+.Div8_NoAdd:
                         ENDM
-
-; Switch to a logarithm version
-; Divide E by divider C Out: A = result, B = rest
+;----------------------------------------------------------------------------------------------------------------------------------
+; div_e_div_c: A = E / C, B = E % C, unsigned 8 bit. C must not be 0. Destroys E.
 div_e_div_c:            ZeroA
                         EDivC_Iteration
                         EDivC_Iteration
@@ -227,37 +184,46 @@ div_e_div_c:            ZeroA
                         rla
                         cpl
                         ret
-; Entry point if varQ is populated with demoninator
-RequAmul256divQ:	    
+;----------------------------------------------------------------------------------------------------------------------------------
+; RequAmul256divQ / BFRDIV: varR = A = (A * 256) / varQ, unsigned, 255 if A >= Q (as the 6502 LL28/BFRDIV).
+; RequAmul256divC: the same with the divisor already in C, HL_Div_Cold: the same with HL = A * 256 already set.
+; Q/C must not be 0. Destroys B, C, HL. (Previously Q >= 128 gave wrong results and A >= Q returned the low
+; byte of the quotient instead of 255.)
+RequAmul256divQ:
 BFRDIV:                 push	af
                         ld		a,(varQ)
                         ld		c,a
                         pop		af
                         cp		0
                         jp		z, HLDIVC_0_BY	; fast exit if numerator is 0
-RequAmul256divC:        ld		l,0
+RequAmul256divC:        cp      c
+                        jr      nc,HLDIVC_TooBig ; A >= C so the result will not fit in a byte
+                        ld		l,0
                         ld		h,a
 HL_Div_Cold:			ld b,16			; fast entry point if C and HL are already set
                         xor a
 LOOPPOINT:	            add hl,hl
                         rla
+                        jr  c,.Subtract         ; remainder went past 255 so it is >= c
                         cp c
                         jr c,SKIPINCSUB
-                        inc l
+.Subtract:              inc l
                         sub c
 SKIPINCSUB:             djnz LOOPPOINT
                         ld		a,l
                         ld 		(varR),a
                         ret
+HLDIVC_TooBig:          ld      a,255
 HLDIVC_0_BY:            ld		(varR),a
                         ret
-                        
-                        
+;----------------------------------------------------------------------------------------------------------------------------------
+; AEquAmul256DivD: A = (A * 256) / D, unsigned, 255 if A >= D (6502 LL28 style). D must not be 0.
+; Destroys E
 AEquAmul256DivD:        cp      d
                         jr      z,.BothSame
                         jr      nc,.DgtA
                         ld      e,%11111110                 ; Set R to have bits 1-7 set, so we can rotate through 7
-.DivideLoop:            sla     a                        
+.DivideLoop:            sla     a
                         jr      c,.LL29
                         JumpIfALTNusng  d, .SkipSub         ; will jump if carry set, so we need to reset on the rol
                         sub     d
@@ -277,29 +243,21 @@ AEquAmul256DivD:        cp      d
                         ret
 .DgtA:                  ld  a,255                           ; Fail with FF as result
                         ret
-                                         
-;divdide by 16 using undocumented instrunctions
-;Input: BC = Dividend, DE = Divisor, HL = 0
-;Output: BC = Quotient, HL = Remainder
-; Our use
-; BC = A0
-; DE = 0C
-; so BC = a * 256 / C
+;----------------------------------------------------------------------------------------------------------------------------------
+; DIV16Amul256dCUNDOC: BC = (A * 256) / C, unsigned, BC = $00FF if A >= C. HL = remainder. C must not be 0.
+; Destroys A, DE. Uses the undocumented sll instruction through DIV16UNDOC.
 DIV16Amul256dCUNDOC:    JumpIfAGTENusng	  c,DEV16ATooLarge                                          ; first off if a > c ten return 255
                         ld      b,a
                         ld      e,c
                         ld      c,0
                         ld      d,0
                         jp      DIV16UNDOC
-DIV16Amul256dQUNDOC:    ld      b,a
-                        ld      c,0
-                        ld      hl,varQ
-                        ld      a,(hl)
-                        ld      d,0
-                        ld      e,a
+;----------------------------------------------------------------------------------------------------------------------------------
+; DIV16BCDivDEUNDOC / DIV16UNDOC: BC = BC / DE, HL = BC % DE, all unsigned 16 bit. DE must not be 0.
+; DE is not changed, destroys A. Uses the undocumented sll instruction to shift the quotient bit in.
 DIV16BCDivDEUNDOC:
 DIV16UNDOC:             ld      hl,0
-                        ld      a,b 
+                        ld      a,b
                         ld      b,16
 DIV16UNDOCLOOP:         sll	c		; unroll 16 times
                         rla			; ...
@@ -313,8 +271,9 @@ DIV16UNDOCSKIP:         djnz DIV16UNDOCLOOP
                         ret
 DEV16ATooLarge:         ld     bc,$00FF
                         ret
-; switch to logarithm version
-; "> asm_div8 C_Div_D - C is the numerator, D is the denominator, A is the remainder, B is 0, C is the result of C/D,D,E,H,L are not changed"
+;----------------------------------------------------------------------------------------------------------------------------------
+; asm_div8: C = C / D, A = C % D, unsigned 8 bit. D must not be 0.
+; B = 0 on exit, D, E, H, L are not changed
 asm_div8:               ld b,8
                         xor a
 .div8_loop:	            sla c
@@ -325,23 +284,24 @@ asm_div8:               ld b,8
                         sub d
 .div8_skip:	            djnz .div8_loop
                         ret
-
-Div16by24usgn:          inc     d                           ; can we fast retu
-                        dec     d
+;----------------------------------------------------------------------------------------------------------------------------------
+; Div16by24usgn: AHL = HL / DBC, unsigned, HL 16 bit dividend and D:B:C a 24 bit divisor (D = top byte).
+; A = 0 and C = 0 on exit, DE = remainder. D <> 0 means the divisor is > 65535 so the result is 0.
+; Divisor 0 returns AHL = $FFFFFF with carry set.
+Div16by24usgn:          inc     d                           ; if the divisor top byte is non zero
+                        dec     d                           ; then divisor > dividend so the result is 0
                         jr      nz,.ResultZero
                         ld      de,bc                       ; so prep for bc/de
                         ld      bc,hl
 .div16by16usng:         ld      a,d
                         or      e
                         jr      z,.DivideByZero
-                        inc     d
-                        dec     d
                         call    BC_Div_DE
                         ZeroA
                         ex      de,hl                       ; de = remainder (need to fix c after hl = nothing of worth)
                         ld      hl,bc                       ; hl = result (a is zero from above)
                         ld      c,a                         ; now fix c
-                        ret 
+                        ret
 .ResultZero:            xor     a                           ; set AHL to 0 as d was 0 so h is zero
                         ld      c,a                         ; c = 0
                         ld      h,a
@@ -352,8 +312,9 @@ Div16by24usgn:          inc     d                           ; can we fast retu
                         ld      l,a
                         SetCarryFlag
                         ret
-                        
-
+;----------------------------------------------------------------------------------------------------------------------------------
+; Amul256DivQ: varR = A = (A * 256) / varQ, unsigned (6502 LL28 port). If A >= Q, R = 255 and carry is set.
+; Q must not be 0. Destroys B, C, HL
 Amul256DivQ:            ld      hl,varQ                 ; CMP Q                  \ If A >= Q, then the answer will not fit in one byte,
                         ld      c,(hl)                  ; using c as Q var
                         cp      c
@@ -384,4 +345,3 @@ Amul256DivQ:            ld      hl,varQ                 ; CMP Q                 
                         ld      (varR),a                ; STA R                  \ possible answer to 256, i.e. R = 255
                         SetCarryFlag                    ; we failed so need carry flag set
                         ret                             ; RTS                    \ Return from the subroutine
-                        

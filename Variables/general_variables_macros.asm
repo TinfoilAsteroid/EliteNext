@@ -80,6 +80,7 @@ ZeroPitch:              MACRO
                         ld      (BET2FLIP),a
                         ld      (JSTY),a
                         ld      (BETA),a
+                        ld      (BETAFLIP),a                    ; the position rotation reads BETA and ALPHAFLIP
                         ENDM
                         
 ZeroRoll:               MACRO
@@ -88,6 +89,7 @@ ZeroRoll:               MACRO
                         ld      (ALP2FLIP),a
                         ld      (JSTX),a
                         ld      (ALPHA),a
+                        ld      (ALPHAFLIP),a                   ; else the position keeps rolling after a reset
                         ENDM
 
 CorrectPostJumpFuel:    MACRO

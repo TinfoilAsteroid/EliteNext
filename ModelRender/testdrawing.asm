@@ -327,14 +327,10 @@ NegBodgeSkip1:
 RollLoop: DB $B0
     
 TestRender:
-	;include "Tests/PlotTest2.asm"
 ; Initialise banks is include in main initialise subrotines now
 ; Prototype for .TITLE
 TestLines:
-;include "Tests/LineHLtoDETest.asm"
 TestCalcs:
-
-;include "Tests/CalcHLDEsignedBE.asm"
 
 
 	ld	a,90

@@ -167,7 +167,7 @@ NormalAI:               IsAIEnabled                             ; check if AI is
 ShipSeekingLogic:       call    XX12EquTacticsDotNosev              ; SA = nose . XX15                           (     ->TAS3)
                         ld      (TacticsDotProduct1),a              ; CNT = A (high byte of dot product)
                         ld      a,(varS)                            ; get sign from dot product
-                        ld      (TacticsDotProduct2+1),a            ; Note here its direction not dir
+                        ld      (TacticsDotProduct1+1),a            ; nose direction sign, read by ShipSpeedv3
 .RoofDotProduct:        call    XX12EquTacticsDotRoofv              ; Now tran the roof for rotation        
                         ld      (TacticsDotProduct2),a              ; so if its +ve then the roof is similar so pull up to head towards it
                         ld      a,(varS)                            ; .                                       

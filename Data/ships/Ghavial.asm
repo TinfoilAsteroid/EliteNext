@@ -13,7 +13,7 @@ Ghavial:	            DB $03                      ; Number of cargo canisters rel
                         DB $72                      ; Energy Max
                         DB $10                      ; Speed Max
                         DW GhavialNormals           ; Normals
-                        DB $00                      ; Q scaling
+                        DB $02                      ; Q scaling
                         DB $27                      ; Laser power and Nbr Missiles
                         DW GhavialVertices          ; Verticles Address
                         DB ShipTypeNormal           ; Ship Type
@@ -69,18 +69,18 @@ GhavialEdgesSize: equ $ - GhavialEdges
 GhavialEdgesCnt: equ GhavialEdgesSize/4	
 	
 	
-GhavialNormals:	DB $1F, $00, $3E, $0E
-                DB $1F, $33, $24, $0C
-                DB $3F, $33, $1C, $19
-                DB $3F, $00, $30, $2A
-                DB $BF, $33, $1C, $19
-                DB $9F, $33, $24, $0C
-                DB $5F, $00, $3E, $0F
-                DB $5F, $1C, $38, $07
-                DB $7F, $1B, $37, $0D
-                DB $7F, $00, $33, $26
-                DB $FF, $1B, $37, $0D
-                DB $DF, $1C, $38, $07
+GhavialNormals:         DB $1F, $00, $5A, $14    ;00
+                        DB $1F, $8D, $63, $21    ;01
+                        DB $3F, $CC, $70, $64    ;02
+                        DB $3F, $00, $77, $68    ;03
+                        DB $BF, $CC, $70, $64    ;04
+                        DB $9F, $8D, $63, $21    ;05
+                        DB $5F, $00, $5D, $16    ;06
+                        DB $5F, $2B, $57, $0B    ;07
+                        DB $7F, $34, $6A, $19    ;08
+                        DB $7F, $00, $73, $56    ;09
+                        DB $FF, $34, $6A, $19    ;10
+                        DB $DF, $2B, $57, $0B    ;11
 
 GhavialNormalsSize: equ $ - GhavialNormals	
 GhavialLen: equ $ - Ghavial	

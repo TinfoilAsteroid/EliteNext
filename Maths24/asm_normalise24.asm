@@ -1,17 +1,6 @@
 
 ; takes a 3x24 bit vector and normalilses them, this is done by taking the ABS values scaling down into a maxioum of a 15 bit number
 
-PrepScale:              MACRO                       ;setg [A IYH] to or'ed all bytes of ABS X,Y,Z
-                        ld      a,h                 
-                        or      d
-                        or      c
-                        ld      iyh,a
-                        ld      a,l
-                        or      e
-                        or      c
-                        or      1                   ; we can never have a status where hl,de,bc are 0 but we will force bit 1 to be safe
-                        ENDM
-
 ScaleHLD:               MACRO
                         ld      a,h
                         or      l
@@ -37,20 +26,6 @@ ScaleHLD:               MACRO
 .DoneShift:
                         ENDM
                         
-CalculateScale:         MACRO
-                        ld      iyl,a
-                        exx                         ; save off registers so we can use altgernates for barrel shift calc
-                        ld      b,0             
-                        ld      de,iy               ; moving iy to de for faster bit and shift operations
-                        ; as we ABS then bit 7 can never have been set anmd we want to stop after setting bit 6 so max range is 16129 (127 ^ 2)
-.ScaleLoop:             bit     6,d                 ; this loop will find the minium number of shifts requried
-                        jp      nz,.DoneShift       ; if bit 6 is set then we have done enough shifts
-                        ShiftDELeft1
-                        inc     b
-                        jp      .ScaleLoop
-.DoneShift              ld      a,b                 ; b is all we are interestred in so save it in IYL
-                        exx                         ; now we have the vector coords recovered
-                        ENDM
 ScaleY:                 MACRO
                         ld      b,iyl               ; shift de
                         bsrl    de,b
@@ -67,18 +42,6 @@ ScaleZ:                 MACRO                       ; as b is already loaded we 
                         ld      bc,de
                         pop     de
                         ENDM    
-SquareX:                MACRO
-                        ex      de,hl
-                        mul     de
-                        ex      de,hl
-                        ENDM
-SquareY:                MACRO
-                        mul     de
-                        ENDM
-SquareZ:                MACRO
-                        ld      de,bc
-                        mul     de                  ; d * e
-                        ENDM
                         
 Normalise24IX:          ld      b,0                 ; B = 0
 .GetAllSignBytes:       SetIYHToSignBits            ; bit 7 = sign X, bit 6 sign Y, bit 5 sign Z
@@ -129,7 +92,6 @@ Normalise24IX:          ld      b,0                 ; B = 0
                         NormXMul96
                         SetNormX96ToDE
                         ret
-ss
 
 POS_MAT_XLOOFFSET       EQU     00
 POS_MAT_XHIOFFSET       EQU     01
@@ -265,9 +227,8 @@ Normalise16IX:          ld      b,0                 ; B = 0
                         add     hl,de               ; hl = X^2 + Y^2
                         add     hl,bc               ; hl = X^2 + Y^2 + Z^2
                         call    sqrtHL              ; a = sqrt (hl)
-                        exx                         ; now get back HLD for XYZ
-.performNorm:           ld      iyl,a               ; save a copy of sqrt as iyh holds sign bits                                        
-                        pop     bc                ; get back original values
+.performNorm:           ld      iyl,a               ; save a copy of sqrt as iyh holds sign bits
+                        pop     bc                ; get back original values (all registers reloaded, no exx needed)
 .NormaliseZ:            ld      a,b                 ; divide X by sqrt
                         ld      d,iyl               ; 
                         call    AEquAmul256DivD

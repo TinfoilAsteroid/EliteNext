@@ -325,7 +325,7 @@ UnivDistanceToTarget:DISPLAY "TODO : WRITE CODE FOR UnivDistanceToTarget"
 
         IFNDEF  DEBUG_NO_TACTICS_CODE
 
-TacticsVarResult        DW 0      
+; TacticsVarResult is in general_variables.asm: this bank is in slot 0 where writes can be going to layer 2
 TacticsDotRoofv:        ld      hl,UBnkrotmatRoofvX
                         jp      TacticsDotHL
                         

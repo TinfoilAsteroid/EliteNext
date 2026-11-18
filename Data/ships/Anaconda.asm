@@ -13,7 +13,7 @@ Anaconda:	            DB $07                                                    
                         DB $FC                                                        ; Energy Max
                         DB $0E                                                        ; Speed Max
                         DW AnacondaNormals                                            ; Normals
-                        DB $11                                                        ; Q scaling
+                        DB $01                                                        ; Q scaling
                         DB $3F                                                        ; Laser power and Nbr Missiles
                         DW AnacondaVertices                                           ; Verticles Address
                         DB ShipTypeNormal                                             ; Ship Type     

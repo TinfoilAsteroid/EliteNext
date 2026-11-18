@@ -112,6 +112,16 @@ AlphaDecimal            DS  3               ; roll /256 as 24 bit 16.8
 BetaDecimal             DS  3               ; pitch /256 as 24 bit 16.8
 DeltaDecimal            DS  3               ; pitch /256 as 24 bit 16.8
 RPK2                    DS  3               ; Roll pitch tgemporary holding for K2
+; ApplyMyRollAndPitchFracIX work area, must be outside the slot 0 maths bank as layer 2 writes can be paged over it
+RPX32                   DS  4               ; 32 bit 2's complement x, y, z and K2 (raw * 256 + fraction)
+RPY32                   DS  4
+RPZ32                   DS  4
+RPK232                  DS  4
+RPAbs                   DS  4
+RPProd                  DS  4
+RPRot                   DB  0
+RPSign                  DB  0
+TacticsVarResult        DW  0               ; TacticsDotHL work value, moved out of the slot 0 maths bank for the same reason
 
 
 ;-- Message handler -----------------------------------------------------------------------------------------------------------------

@@ -13,7 +13,7 @@ Ophidian:	            DB $02                     ; Number of cargo canisters rel
                         DB $40                     ; Energy Max
                         DB $22                     ; Speed Max
                         DW OphidianNormals         ; Normals
-                        DB $01                     ; Q scaling
+                        DB $02                     ; Q scaling
                         DB $1A                     ; Laser power and Nbr Missiles
                         DW OphidianVertices        ; Verticles Address
                         DB ShipTypeNormal          ; Ship Type
@@ -80,18 +80,18 @@ OphidianEdges:	        DB $1F, $06, $00, $04
 OphidianEdgesSize:      equ $ - OphidianEdges
 OphidianEdgesCnt:       equ OphidianEdgesSize/4
 
-OphidianNormals:	    DB $1F, $00, $25, $0C
-                        DB $1F, $0B, $1C, $05
-                        DB $9F, $0B, $1C, $05
-                        DB $1F, $10, $22, $02
-                        DB $9F, $10, $22, $02
-                        DB $3F, $00, $25, $03
-                        DB $5F, $00, $1F, $0A
-                        DB $5F, $0A, $14, $02
-                        DB $DF, $0A, $14, $02
-                        DB $7F, $12, $20, $02
-                        DB $FF, $12, $20, $02
-                        DB $3F, $00, $00, $25
+OphidianNormals:        DB $1F, $00, $4A, $18    ;00
+                        DB $1F, $16, $38, $0A    ;01
+                        DB $9F, $16, $38, $0A    ;02
+                        DB $1F, $20, $44, $04    ;03
+                        DB $9F, $20, $44, $04    ;04
+                        DB $3F, $00, $4A, $06    ;05
+                        DB $5F, $00, $3E, $14    ;06
+                        DB $5F, $1C, $38, $06    ;07
+                        DB $DF, $1C, $38, $06    ;08
+                        DB $7F, $24, $40, $04    ;09
+                        DB $FF, $24, $40, $04    ;10
+                        DB $3F, $00, $00, $C8    ;11
 
 OphidianNormalsSize:    equ $ - OphidianNormals
 OphidianLen:            equ $ - Ophidian

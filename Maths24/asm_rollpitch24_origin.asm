@@ -20,7 +20,6 @@ Rot16EquRotDiv256           MACRO   Rotator, RotatorDecimal
                             ld      (RotatorDecimal),hl     ; .
                             ENDM
 
-                            
 CDEEquDeltaDiv256           MACRO   SpeedDelta
                             ld      a,(SpeedDelta)          ; Speed = Delta / 256 signed 
 .SpeedRelative:             ld      d,$00                   ; 
@@ -48,7 +47,6 @@ SetHLtoBeta16:              MACRO
                             ld      hl,(BetaDecimal)        ;
                             ENDM
 
-
 SetBHLtoK2:                 MACRO
                             ld      a,(RPK2+2)
                             ld      b,a                     ; bhl = K2
@@ -70,15 +68,6 @@ SetCDEtoAHL                 MACRO
                             ex      de,hl
                             ENDM   
                             
-SetCDEtoDelta:              MACRO
-                            ld      a,(DeltaDecimal+2)      ; set BHL to Beta
-                            ld      b,a                     ;
-                            ld      hl,(DeltaDecimal)       ;
-                            ENDM
-                                
-                              
-                                DISPLAY "Later oprimise to do decimal calc in main loop"
-                                DISPLAY "Also update compasses"
 ; Apply roll (alpha) and pitch (beta) takes 3 24 bit X, Y, Z and applies player roll, pitch and speed
 ; for readability all steps are done via macros
 ApplyMyRollAndPitchIX:      RotEquRotDiv256 ALPHAFLIP, AlphaDecimal  ; Alpha = alpha / 256 signed             
@@ -122,8 +111,206 @@ ApplyMyRollAndPitchIX:      RotEquRotDiv256 ALPHAFLIP, AlphaDecimal  ; Alpha = a
                             SaveAHLToZ
                             ret
                             
-ApplyMyRollAndPitchMatIX:   Rot16EquRotDiv256  ALPHA, AlphaDecimal               ; Alpha = alpha / 256 signed  16 bit            
-.CalcBetaDecimal:           Rot16EquRotDiv256  BETAFLIP,  BetaDecimal                ; Beta = beta / 256 signed     16 bit
+;----------------------------------------------------------------------------------------------------------------------------------
+; Ship version of ApplyMyRollAndPitchIX with an extra fraction byte per axis.
+; With roll / pitch rates of only 1..2 / 256 per frame, alpha * x truncated to whole raw units is 0 for any |x| below
+; 128..256 raw, so nearby ships close to the centre of view never moved when the player rolled. Here each axis is
+; worked as a 32 bit 2's complement value (raw * 256 + fraction) and the fraction is kept between frames.
+; Products are truncated towards zero so the Minsky rotation has no drift in either direction.
+; ix = 24 bit lead sign position (x, y, z each lo, hi, sign), iy = 3 fraction bytes (x, y, z). ix and iy preserved
+; Its work variables (RPX32 .. RPSign) are in general_variables.asm, not here: this bank is in slot 0 and writes to
+; $0000-$3FFF can be going to layer 2, so variables in this bank read back as garbage
+
+; 32 bit 2's complement value at dest = position axis at ix+ixoff (lo, hi, sign) * 256 + fraction at iy+iyoff
+RPLoadAxis:                 MACRO   dest, ixoff, iyoff
+                            ld      a,(iy+iyoff)
+                            ld      (dest),a
+                            ld      a,(ix+ixoff)
+                            ld      (dest+1),a
+                            ld      a,(ix+ixoff+1)
+                            ld      (dest+2),a
+                            ld      a,(ix+ixoff+2)
+                            ld      b,a
+                            and     $7F
+                            ld      (dest+3),a
+                            bit     7,b
+                            jr      z,.Positive
+                            ld      hl,dest
+                            call    RPNeg32
+.Positive:
+                            ENDM
+
+; position axis at ix+ixoff and fraction at iy+iyoff = 32 bit 2's complement value at src (src is left as |src|)
+RPSaveAxis:                 MACRO   src, ixoff, iyoff
+                            ld      b,0
+                            ld      a,(src+3)
+                            and     a
+                            jp      p,.Positive
+                            ld      hl,src
+                            call    RPNeg32
+                            ld      b,$80
+.Positive:                  ld      a,(src)
+                            ld      (iy+iyoff),a
+                            ld      a,(src+1)
+                            ld      (ix+ixoff),a
+                            ld      a,(src+2)
+                            ld      (ix+ixoff+1),a
+                            ld      a,(src+3)
+                            or      b
+                            ld      (ix+ixoff+2),a
+                            ENDM
+
+ApplyMyRollAndPitchFracIX:  RPLoadAxis RPX32, POS_XOFFSET, 0
+                            RPLoadAxis RPY32, POS_YOFFSET, 1
+                            RPLoadAxis RPZ32, POS_ZOFFSET, 2
+.CalcK2:                    ld      hl,RPX32                ; K2 = y - alpha * x
+                            ld      a,(ALPHAFLIP)           ; .
+                            call    RPMulRot                ; .
+                            ld      hl,RPY32                ; .
+                            ld      de,RPK232               ; .
+                            ld      bc,4                    ; .
+                            ldir                            ; .
+                            ld      de,RPK232               ; .
+                            ld      hl,RPProd               ; .
+                            call    RPSub32                 ; .
+.CalcZ:                     ld      hl,RPK232               ; z = z + beta * K2
+                            ld      a,(BETA)                ; .
+                            call    RPMulRot                ; .
+                            ld      de,RPZ32                ; .
+                            ld      hl,RPProd               ; .
+                            call    RPAdd32                 ; .
+.CalcY:                     ld      hl,RPZ32                ; y = K2 - beta * z
+                            ld      a,(BETA)                ; .
+                            call    RPMulRot                ; .
+                            ld      hl,RPK232               ; .
+                            ld      de,RPY32                ; .
+                            ld      bc,4                    ; .
+                            ldir                            ; .
+                            ld      de,RPY32                ; .
+                            ld      hl,RPProd               ; .
+                            call    RPSub32                 ; .
+.CalcX:                     ld      hl,RPY32                ; x = x + alpha * y
+                            ld      a,(ALPHAFLIP)           ; .
+                            call    RPMulRot                ; .
+                            ld      de,RPX32                ; .
+                            ld      hl,RPProd               ; .
+                            call    RPAdd32                 ; .
+.ApplySpeed:                xor     a                       ; z = z - DELTA (raw units), as ApplyMyRollAndPitchIX
+                            ld      (RPProd),a              ; .
+                            ld      (RPProd+2),a            ; .
+                            ld      (RPProd+3),a            ; .
+                            ld      a,(DELTA)               ; .
+                            ld      (RPProd+1),a            ; .
+                            ld      de,RPZ32                ; .
+                            ld      hl,RPProd               ; .
+                            call    RPSub32                 ; .
+                            RPSaveAxis RPX32, POS_XOFFSET, 0
+                            RPSaveAxis RPY32, POS_YOFFSET, 1
+                            RPSaveAxis RPZ32, POS_ZOFFSET, 2
+                            ret
+
+; RPProd = (hl) * a / 256, (hl) = 32 bit 2's complement, a = lead sign S7 rotator, truncated towards zero
+; uses a, bc, de, hl
+RPMulRot:                   ld      (RPRot),a
+                            ld      de,RPAbs                ; RPAbs = |(hl)|
+                            ld      bc,4                    ; .
+                            ldir                            ; .
+                            ld      a,(RPAbs+3)             ; .
+                            ld      b,a                     ; b bit 7 = sign of (hl)
+                            and     a                       ; .
+                            jp      p,.Positive             ; .
+                            ld      hl,RPAbs                ; .
+                            call    RPNeg32                 ; .
+.Positive:                  ld      a,(RPRot)               ; sign of the result
+                            xor     b                       ; .
+                            and     $80                     ; .
+                            ld      (RPSign),a              ; .
+                            ld      a,(RPRot)               ; c = |rotator|
+                            and     $7F                     ; .
+                            ld      c,a                     ; .
+                            ld      a,(RPAbs)               ; |v| * c / 256: byte 0 of the product is dropped
+                            ld      d,a                     ; .
+                            ld      e,c                     ; .
+                            mul     de                      ; .
+                            ld      b,d                     ; b = carry in to byte 1
+                            ld      a,(RPAbs+1)             ; .
+                            ld      d,a                     ; .
+                            ld      e,c                     ; .
+                            mul     de                      ; .
+                            ld      a,e                     ; .
+                            add     a,b                     ; .
+                            ld      (RPProd),a              ; .
+                            ld      b,d                     ; (mul leaves the carry flag alone)
+                            ld      a,(RPAbs+2)             ; .
+                            ld      d,a                     ; .
+                            ld      e,c                     ; .
+                            mul     de                      ; .
+                            ld      a,e                     ; .
+                            adc     a,b                     ; .
+                            ld      (RPProd+1),a            ; .
+                            ld      b,d                     ; .
+                            ld      a,(RPAbs+3)             ; .
+                            ld      d,a                     ; .
+                            ld      e,c                     ; .
+                            mul     de                      ; .
+                            ld      a,e                     ; .
+                            adc     a,b                     ; .
+                            ld      (RPProd+2),a            ; .
+                            ld      a,d                     ; .
+                            adc     a,0                     ; .
+                            ld      (RPProd+3),a            ; .
+                            ld      a,(RPSign)              ; apply the sign
+                            and     a                       ; .
+                            ret     z                       ; .
+                            ld      hl,RPProd               ; .
+                            ; fall into RPNeg32
+
+; (hl) = -(hl), 32 bit 2's complement. Uses a, hl
+RPNeg32:                    xor     a
+                            sub     (hl)
+                            ld      (hl),a
+                            inc     hl
+                            ld      a,0
+                            sbc     a,(hl)
+                            ld      (hl),a
+                            inc     hl
+                            ld      a,0
+                            sbc     a,(hl)
+                            ld      (hl),a
+                            inc     hl
+                            ld      a,0
+                            sbc     a,(hl)
+                            ld      (hl),a
+                            ret
+
+; (de) = (de) + (hl), 32 bit. Uses a, b, de, hl
+RPAdd32:                    ld      b,4
+                            or      a
+.Loop:                      ld      a,(de)
+                            adc     a,(hl)
+                            ld      (de),a
+                            inc     hl
+                            inc     de
+                            djnz    .Loop
+                            ret
+
+; (de) = (de) - (hl), 32 bit. Uses a, b, de, hl
+RPSub32:                    ld      b,4
+                            or      a
+.Loop:                      ld      a,(de)
+                            sbc     a,(hl)
+                            ld      (de),a
+                            inc     hl
+                            inc     de
+                            djnz    .Loop
+                            ret
+
+;----------------------------------------------------------------------------------------------------------------------------------
+; The orientation vectors are the ship's axes in the player's frame (a vertex is x*side + y*roof + z*nose, see
+; XX12EquNodeDotOrientation using the transposed matrix) so they must turn exactly as the position does in
+; ApplyMyRollAndPitchIX, i.e. the same ALPHAFLIP and BETA. Using ALPHA / BETAFLIP made ships spin the wrong way on roll
+ApplyMyRollAndPitchMatIX:   Rot16EquRotDiv256  ALPHAFLIP, AlphaDecimal           ; Alpha = alpha / 256 signed  16 bit
+.CalcBetaDecimal:           Rot16EquRotDiv256  BETA,  BetaDecimal                ; Beta = beta / 256 signed     16 bit
                             ; k2 = y - alpha * x;
 .StartK2Calc:               SetHLtoAlpha16                  ; HL.L = Alpha decimal
                             SetDEtoMatX                     ; CD.E = X

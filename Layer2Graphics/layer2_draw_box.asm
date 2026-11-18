@@ -44,33 +44,6 @@ l2_draw_box:            push	bc,,de,,af
                         call	l2_draw_vert_line
                         ret
 
-; "b = row, hl = col, c = height, de = width, a = colour"
-l2_draw_box_320:        push    bc,,de,,hl,,af	
-                        ;TODOcall    l2_draw_horz_line_320       ; b = row, hl = col, e = width a = colour
-                        pop     bc,,de,,hl,,af	
-                        push    bc,,de,,hl,,af	
-                        ex      af,af'
-                        ld      a,b
-                        dec     a
-                        add     a,c
-                        ld      b,c
-                        ex      af,af'
-                        ;TODOcall    l2_draw_horz_line_320       ; b = row, hl = col, e = width a = colour
-.leftVertLine:          pop     bc,,de,,hl,,af	
-                        push    bc,,de,,hl,,af	
-                        ld      d,0                             ; de = height 
-                        ld      e,c
-                        ld      c,a                             ; set colour
-                        call    l2_draw_vert_line_320
-                        pop     bc,,de,,hl,,af	
-                        add     hl,de                           ; hl = right column
-                        dec     hl
-                        ld      d,0                             ; de = length
-                        ld      e,c
-                        ld      c,a                             ; set colour
-                        call    l2_draw_vert_line_320
-                        ret
-
 l2_draw_menu_border:    ld      b,1
                         ld      hl,1
                         ld      e,255-2

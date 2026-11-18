@@ -42,8 +42,12 @@ ScaleXX16Matrix197:
                         push	bc                  ; save BC  counter and constant 197
                         push	hl                  ; save HL
                         MMUSelectMathsBankedFns
-                        call	div_a256_div_c      ;DIV16Amul256dCUNDOC; AEquAmul256DivD; DIV16Amul256dCUNDOC	; result in BC = A*256 / 197 or D *512 / 197 = 2.6 * vector element, effectivley the result will always be in c
-                        pop		hl
+                        cp      ConstNorm           ; a >= 197 would give a quotient >= 256 which wraps in c
+                        jr      c,.DivideOK         ; (orientation drifted above unit length)
+                        ld      c,255               ; so clamp like the 6502 LL28 does
+                        jr      .Divided
+.DivideOK:              call	div_a256_div_c      ;DIV16Amul256dCUNDOC; AEquAmul256DivD; DIV16Amul256dCUNDOC	; result in BC = A*256 / 197 or D *512 / 197 = 2.6 * vector element, effectivley the result will always be in c
+.Divided:               pop		hl
                         dec     hl                  ; move back to low byte
                         ld      (hl),c              ; save result in low byte as we want to preserve high byte sign    
                         inc     hl                  ; move back to high byte  

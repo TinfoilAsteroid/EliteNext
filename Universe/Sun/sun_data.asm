@@ -772,7 +772,7 @@ SunProcessVertex:       ld      b,a                         ; save sign byte
 .CheckPosOnScreenX:     JumpIfAIsNotZero .IsOffScreen         ; if A has a value then its way too large regardless of sign
                         JumpOnLeadSignSet h, .IsOffScreen      ; or bit 7 set of h
                         ld      a,h
-                        ReturnIfAGTEusng 4                  ; if a > 1024 then its way too large regardless of sign
+                        JumpIfAGTENusng 4, .IsOffScreen     ; if >= 1024 then off screen (was a plain ret, carry clear and sign lost)
                         ld      a,iyh                       ; now deal with the sign
                         xor     iyl
                         SignBitOnlyA                        ; a= resultant sign
@@ -798,17 +798,31 @@ CopySuntoGeneral:       ld      hl,SBnKxlo
                         ret  
 ; .........................................................................................................................
 ; we only hit this if z is positive so we can ignore signs
-SunCalculateRadius:     ld      bc,(SBnKzlo)                ; DBC = z position
-                        ld      a,(SBnKzsgn)                ; 
-                        ld      d,a                         ; 
-                        ld      hl,$6000  ; was hl          ; planet radius at Z = 1 006000
-                        call    Div16by24usgn               ; radius = HL/DBC = 24576 / distance z
+; radius = 16384 / (z / 256): BBC Elite uses 24576 (on the same X / (Z / 256) scale as the projected centre), scaled to
+; 2/3 as our view is 128 rows high against the BBC 192, so the size still grows in step with
+; the position. Worked as 32768 / (z / 128) for an extra bit of precision: SunUpdateAndRender only draws when
+; z sign < 48 and z >= 256, so z / 128 is 2..24575 and fits the 16 bit divisor. Any radius 1..248 (odd or even)
+; so the sun grows a pixel at a time rather than jumping
+SunCalculateRadius:     ld      a,(SBnKzsgn)                ; DBC = z / 128 = 0 : (sign<<1 | hi bit 7) : (hi<<1 | lo bit 7)
+                        and     SignMask8Bit                ; .
+                        ld      b,a                         ; .
+                        ld      a,(SBnKzlo)                 ; .
+                        rla                                 ; . carry = z bit 7
+                        ld      a,(SBnKzhi)                 ; .
+                        rla                                 ; .
+                        ld      c,a                         ; .
+                        rl      b                           ; .
+                        ld      d,0                         ; .
+                        ld      hl,$8000                    ; 32768 = 16384 * 2
+                        call    Div16by24usgn               ; radius = 32768 / (z / 128) = 16384 / (z / 256)
                         or      h                           ; if A or H are not 0 then max Radius
                         JumpIfAIsZero  .SaveRadius
-.MaxRadius:             ld      e,248                       ;set radius to 248 as maxed out
+.MaxRadius:             ld      hl,248                      ; set radius to 248 as maxed out (l is read below)
 .SaveRadius:            ld      a,l                         ; l = resultant radius
-                        or      1                           ; at least radius 1 (never even so need to test)
-                        ld      (SunRadius),a               ; save a copy of radius now for later
+                        and     a                           ; at least radius 1 so a distant sun is still a dot
+                        jr      nz,.HaveRadius              ; .
+                        inc     a                           ; .
+.HaveRadius:            ld      (SunRadius),a               ; save a copy of radius now for later
                         ld      e,a                         ; as later code expects it to be in e
                         ret    
 

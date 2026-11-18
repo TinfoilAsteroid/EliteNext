@@ -7,13 +7,13 @@ Chameleon:	            DB $03                          ; Number of cargo caniste
                         DB ChameleonVertSize /6         ; Vertex Count /6
                         DB ChameleonVertSize            ; Vertex Count
                         DB ChameleonEdgesCnt            ; Edges Count
-                        DB $00C8                        ; Bounty LoHi
+                        DW $00C8                        ; Bounty LoHi
                         DB ChameleonNormalsSize         ; Face (Normal) Count
                         DB $0A                          ; Range when it turns to a dot
                         DB $64                          ; Energy Max
                         DB $1D                          ; Speed Max
                         DW ChameleonNormals             ; Normals
-                        DB $01                          ; Q scaling
+                        DB $02                          ; Q scaling
                         DB $23                          ; Laser power and Nbr Missiles
                         DW ChameleonVertices            ; Verticles Address
                         DB ShipTypeNormal               ; Ship Type     
@@ -74,18 +74,18 @@ ChameleonEdges:	        DB $1F, $01, $00, $04
                         DB $0A, $CC, $44, $38
 ChameleonEdgesSize:     equ $ - ChameleonEdges
 ChameleonEdgesCnt:      equ ChameleonEdgesSize/4
-ChameleonNormals:	    DB $1F, $00, $5A, $1F
-                        DB $5F, $00, $5A, $1F
-                        DB $9F, $39, $4C, $0B
-                        DB $1F, $39, $4C, $0B
-                        DB $5F, $39, $4C, $0B
-                        DB $DF, $39, $4C, $0B
-                        DB $1F, $00, $60, $00
-                        DB $5F, $00, $60, $00
-                        DB $BF, $39, $4C, $0B
-                        DB $3F, $39, $4C, $0B
-                        DB $7F, $39, $4C, $0B
-                        DB $FF, $39, $4C, $0B
-                        DB $3F, $00, $00, $60
+ChameleonNormals:       DB $1F, $00, $B4, $3E    ;00
+                        DB $5F, $00, $B4, $3E    ;01
+                        DB $9F, $38, $4B, $0B    ;02
+                        DB $1F, $38, $4B, $0B    ;03
+                        DB $5F, $38, $4B, $0B    ;04
+                        DB $DF, $38, $4B, $0B    ;05
+                        DB $1F, $00, $60, $00    ;06
+                        DB $5F, $00, $60, $00    ;07
+                        DB $BF, $39, $4C, $0B    ;08
+                        DB $3F, $39, $4C, $0B    ;09
+                        DB $7F, $39, $4C, $0B    ;10
+                        DB $FF, $39, $4C, $0B    ;11
+                        DB $3F, $00, $00, $C0    ;12
 ChameleonNormalsSize:   equ $ - ChameleonNormals
 ChameleonLen:           equ $ - Chameleon

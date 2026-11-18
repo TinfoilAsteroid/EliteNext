@@ -1,83 +1,78 @@
-; Bodge 2';s c
-AHLequBHLplusCDE:       ld      a,b                             ; if BHL is negative
-                        bit     7,b                             ; then 
-                        jp      z,.CheckCDE                     ;
-.NegBHL:                ;ld      a,b                             ; clear sign bit
-                        ;and     $80                             ; and 2's c BHL
-                        res     7,b
-                        NegBHL                                  ;
-                        ;ld      b,a                             ;
-.CheckCDE               bit     7,c                             ; if CDE is negative
-                        jp      z,.PerformAdd                   ;
-.NegCDE:               ;push    af,,hl                          ;
-                        ;ld      a,c                             ; set up AHL as CDE
-                        ;ex      de,hl                           ; preserving old HL 
+; AHL = BHL + CDE, 24 bit lead sign (S15.8: bit 7 of B/C is the sign, the other 23 bits the magnitude).
+; Same signs add the magnitudes (the sign in bit 7 of B carries through), opposite signs subtract the smaller
+; magnitude from the larger and take that operand's sign. Never returns -0, overflow is not detected.
+; Destroys C and DE.
+AHLequBHLplusCDE:       ld      a,b
+                        xor     c
+                        jp      m,.Opposite
+.SameSign:              add     hl,de                   ; |B| + |C| + carry, B keeps the common sign in bit 7
                         res     7,c
-                        NegCDE                                  ; in DE
-                        ;ld      c,a                             ; then negate
-                        ;ex      de,hl                           ; and restore
-                        ;pop     af,,hl                          ; BHL
-.PerformAdd:            ClearCarryFlag
-                        adc     hl,de
                         ld      a,b
-                        adc     c
-                        bit     7,a
+                        adc     a,c
+                        ret
+.Opposite:              res     7,c                     ; c = |C|
+                        ld      a,b
+                        and     $7F                     ; a = |B|, and clears carry for the subtract
+                        sbc     hl,de                   ; |BHL| - |CDE|
+                        sbc     a,c
+                        jr      c,.Flip                 ; |CDE| was the larger
+                        ld      c,a                     ; |BHL| >= |CDE|: result takes B's sign unless it is 0
+                        or      h
+                        or      l
+                        ld      a,c
                         ret     z
-                        NegAHL
+                        bit     7,b
+                        ret     z
+                        or      $80
+                        ret
+.Flip:                  ld      c,a                     ; negate the 24 bit borrow, result takes C's sign (not B's)
+                        xor     a
+                        sub     l
+                        ld      l,a
+                        ld      a,0
+                        sbc     a,h
+                        ld      h,a
+                        ld      a,0
+                        sbc     a,c
+                        bit     7,b
+                        ret     nz
                         or      $80
                         ret
 
-HLequHLplusDE:          ld      a,h                             ; if HL is negative
-                        bit     7,h                             ; then 
-                        jp      z,.CheckDE                      ;
-.NegHL:                 res     7,h
-                        NegHL                                   ;
-.CheckDE                bit     7,d                             ; if CDE is negative
-                        jp      z,.PerformAdd                   ;
-.NegBC:                 res     7,d
-                        NegDE                                   ; in DE
-.PerformAdd:            ClearCarryFlag
-                        adc     hl,de
-                        bit     7,h
-                        ret     z
-                        NegHL
-                        set     7,h
+; HL = HL + DE, S7.8 lead sign. Same signs add the magnitudes, opposite signs subtract the smaller from the larger.
+; Never returns -0, overflow is not detected. Destroys A and DE.
+HLequHLplusDE:          ld      a,h
+                        xor     d
+                        jp      m,.Opposite
+.SameSign:              res     7,d                     ; h keeps the common sign in bit 7
+                        add     hl,de
                         ret
-
-; 
-HLequHLplusBC:          ld      a,h                             ; if BHL is negative
-                        bit     7,h                            ; then 
-                        jp      z,.CheckBC                  ;
-.NegHL:                 res     7,h
-                        NegHL                                  ;
-.CheckBC                bit     7,b                           ; if CDE is negative
-                        jp      z,.PerformAdd                   ;
-.NegBC:                 res     7,b
-                        NegBC                                  ; in DE
-.PerformAdd:            ClearCarryFlag
-                        adc     hl,bc
-                        bit     7,h
-                        ret     z
-                        NegHL
-                        set     7,h
+.Opposite:              ld      a,h                     ; a keeps HL's sign
+                        res     7,h
+                        res     7,d
+                        or      a
+                        sbc     hl,de                   ; |HL| - |DE|
+                        jr      c,.Flip
+                        ret     z                       ; equal magnitudes give +0
+                        and     $80
+                        or      h
+                        ld      h,a
                         ret
-
-HLequHLminusDE:         ld      a,h                             ; if HL is negative
-                        bit     7,h                             ; then 
-                        jp      z,.CheckDE                      ;
-.NegHL:                 res     7,h
-                        NegHL                                   ;
-.CheckDE                bit     7,d                             ; if CDE is negative
-                        jp      z,.PerformAdd                   ;
-.NegBC:                 res     7,d
-                        NegDE                                   ; in DE
-.PerformAdd:            ClearCarryFlag
+.Flip:                  ex      de,hl                   ; |DE| - |HL| = 0 - (|HL| - |DE|)
+                        ld      hl,0
+                        ccf                             ; carry is set from the borrow
                         sbc     hl,de
-                        bit     7,h
-                        ret     z
-                        NegHL
-                        set     7,h
+                        xor     $80                     ; result takes DE's sign
+                        and     $80
+                        or      h
+                        ld      h,a
                         ret
+
+; HL = HL - DE, S7.8 lead sign: flip the sign of DE and add
+HLequHLminusDE:         ld      a,d
+                        xor     $80
+                        ld      d,a
+                        jp      HLequHLplusDE
 
 ;;-;-- Addition---------------------------------------------------
 ;;-; BAHL = BHL+CDE Lead Sign bit - If overflows AHL then carry will be set resulting in B holding sign and rest of value, else AHL holds value
@@ -129,38 +124,12 @@ HLequHLminusDE:         ld      a,h                             ; if HL is negat
 ;;-                        or      %10000000                    ; flip the lead bit of A
 ;;-                        ret
 
-
 ; AHL = BHL-CDE Lead Sign bit
 AHLequBHLminusCDE:      ld      a,c
                         xor     %10000000
                         ld      c,a
                         jp      AHLequBHLplusCDE
  
-; variant on above for simplifying post multiply           ; d = e (saving d)
-AHLequBHLminusDEC:      ld      a,d                        ; .
-                        or      %10000000                  ; but we also flip the sign on the saved D
-                        ld      d,e                        ; .
-                        ld      e,c                        ; e = c
-                        ld      c,a                        ; c = d (orginal value)
-                        jp      AHLequBHLplusCDE
-                        
-
-ResultIsZero:           pop     af                          ; get rid of unwanted sign bits
-                        ld      c,e                         ; CDE = EHL as remainder
-                        ex      hl,de
-                        xor     a                           ; result AHL = $0
-                        ld      h,a
-                        ld      l,a                         ; .
-                        ret
-
-DivideByZero:           pop     af                          ; get rid of unwanted sign bits
-                        ld      c,e                         ; CDE = EHL as remainder
-                        ex      hl,de
-                        ld      a,$FF                       ; result AHL = $FFFFFF
-                        ld      hl,$FFFF                    ; .
-                        SetCarryFlag                        ; and carry set
-                        ret
-
 subHLDES15:             bit     7,h                         ; for lead sign subtract
                         jp      z,.doneHL                   ; we convert to 2s compliment
                         res     7,h
@@ -176,7 +145,6 @@ subHLDES15:             bit     7,h                         ; for lead sign subt
                         NegHL                               ; .
                         set     7,h                         ; .
                         ret
-
 
 addHLDES15:             bit     7,h                         ; for lead sign subtract
                         jp      z,.doneHL                   ; we convert to 2s compliment

@@ -83,19 +83,19 @@ Shuttle_Mk_2EdgesSize: equ $ - Shuttle_Mk_2Edges
 Shuttle_Mk_2EdgesCnt: equ Shuttle_Mk_2EdgesSize/4	
 	
 	
-Shuttle_Mk_2Normals:	DB $9F, $27, $27, $4E
-	DB $DF, $27, $27, $4E
-	DB $5F, $27, $27, $4E
-	DB $1F, $27, $27, $4E
-	DB $1F, $00, $60, $00
-	DB $9F, $60, $00, $00
-	DB $5F, $00, $60, $00
-	DB $1F, $60, $00, $00
-	DB $BF, $42, $42, $16
-	DB $FF, $42, $42, $16
-	DB $7F, $42, $42, $16
-	DB $3F, $42, $42, $16
-	DB $3F, $00, $00, $60
+Shuttle_Mk_2Normals:    DB $9F, $35, $35, $6B    ;00
+                        DB $DF, $35, $35, $6B    ;01
+                        DB $5F, $35, $35, $6B    ;02
+                        DB $1F, $35, $35, $6B    ;03
+                        DB $1F, $00, $60, $00    ;04
+                        DB $9F, $60, $00, $00    ;05
+                        DB $5F, $00, $60, $00    ;06
+                        DB $1F, $60, $00, $00    ;07
+                        DB $BF, $42, $42, $16    ;08
+                        DB $FF, $42, $42, $16    ;09
+                        DB $7F, $42, $42, $16    ;10
+                        DB $3F, $42, $42, $16    ;11
+                        DB $3F, $00, $00, $A0    ;12
 
 	
 Shuttle_Mk_2NormalsSize: equ $ - Shuttle_Mk_2Normals	

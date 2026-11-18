@@ -49,15 +49,15 @@ BoulderEdges:	        DB $1F, $15, $00, $04
                         DB $1F, $89, $10, $18
 BoulderEdgesSize:       equ $ - BoulderEdges
 BoulderEdgesCnt:        equ BoulderEdgesSize/4
-BoulderNormals:	        DB $DF, $0F, $03, $08
-                        DB $9F, $07, $0C, $1E
-                        DB $5F, $20, $2F, $18
-                        DB $FF, $03, $27, $07
-                        DB $FF, $05, $04, $01
-                        DB $1F, $31, $54, $08
-                        DB $3F, $70, $15, $15
-                        DB $7F, $4C, $23, $52
-                        DB $3F, $16, $38, $89
-                        DB $3F, $28, $6E, $26
+BoulderNormals:         DB $DF, $0F, $03, $08    ;00
+                        DB $9F, $07, $0C, $1E    ;01
+                        DB $5F, $20, $2F, $18    ;02
+                        DB $FF, $02, $1B, $05    ;03
+                        DB $FF, $05, $04, $01    ;04
+                        DB $1F, $31, $54, $08    ;05
+                        DB $3F, $70, $15, $15    ;06
+                        DB $7F, $4C, $23, $52    ;07
+                        DB $3F, $16, $38, $89    ;08
+                        DB $3F, $28, $6E, $26    ;09
 BoulderNormalsSize:     equ $ - BoulderNormals
 BoulderLen:             equ $ - Boulder

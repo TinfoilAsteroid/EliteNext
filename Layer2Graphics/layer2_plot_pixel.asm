@@ -12,7 +12,6 @@ l2_plot_macro:          MACRO
 .NoPlot:                        
                         ENDM
                         
-                        
 ; ">l2_plot_pixel b= row number, c = column number, a = pixel col"
 l2_plot_pixel:          push    af
                         ld      a,b
@@ -77,24 +76,8 @@ l2_plot_pixel_no_check: push    af
                         ld      (hl),a                          ; poke to ram
                         ret              
 	
-; ">l2_plot_pixel_no_bank b= row number, c = column number, a = pixel col"
-; This version assues pixel is in the same bank as previously plotted ones. optimised for horizontal lines
-l2_plot_pixel_no_bank:  push 	hl
-                        ld 		h,b								; hl now holds ram address after bank select
-                        ld 		l,c
-                        ld 		(hl),a
-                        pop		hl
-                        ret
-                        
-; ">l2_plot_pixel_no_bank d= row number, h = column number, a = pixel col"
-; This version assues pixel is in the same bank as previously plotted ones. optimised for horizontal lines
-l2_plot_pixel_320_no_bank:  
-                        ld 		l,d
-                        ld 		(hl),a
-                        ret
 ; The more simpler h col l row is just ld (hl),a so no need for a function
                         
-
 ShipPixel:              push    af
                         ld      a,b
                         cp      127
@@ -120,11 +103,3 @@ l2_plot_pixel_y_test:   push	af
 .clearup:               pop		af
                         ret
 	
-l2_point_pixel_y_safe:	MACRO
-						push	hl
-						push	bc
-						call	l2_plot_pixel
-						pop		bc
-						pop		hl
-						ENDM
-						

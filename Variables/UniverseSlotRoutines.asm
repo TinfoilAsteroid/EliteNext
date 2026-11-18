@@ -87,7 +87,9 @@ ClearJunk:              ld      hl,UniverseSlotType+1
                         ClearJunkCount
                         ret
 .ProcessJunk:           ld      a,c
+                        push    hl                  ; ClearSlotA uses hl, which is walking the slot types
                         call    ClearSlotA
+                        pop     hl
                         jp      .DoneIteration
                         
 

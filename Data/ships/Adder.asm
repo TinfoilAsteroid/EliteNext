@@ -13,7 +13,7 @@ Adder:	                DB $00                              ; Number of cargo can
                         DB $48                              ; Energy Max
                         DB $18                              ; Speed Max
                         DW AdderNormals                     ; Normals
-                        DB $12                              ; Q scaling
+                        DB $02                              ; Q scaling
                         DB $21                              ; Laser power and Nbr Missiles
                         DW AdderVertices                    ; Verticles Address
                         DB ShipTypeNormal                   ; Ship Type

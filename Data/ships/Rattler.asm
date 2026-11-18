@@ -13,7 +13,7 @@ Rattler:	            DB $02                       ; Number of cargo canisters re
                         DB $71                       ; Energy Max
                         DB $1F                       ; Speed Max
                         DW RattlerNormals            ; Normals
-                        DB $01                       ; Q scaling
+                        DB $02                       ; Q scaling
                         DB $20 | ShipMissiles2       ; Laser power and Nbr Missiles
                         DW RattlerVertices           ; Verticles Address
                         DB ShipTypeNormal            ; Ship Type
@@ -78,19 +78,19 @@ RattlerEdgesSize: equ $ - RattlerEdges
 RattlerEdgesCnt: equ RattlerEdgesSize/4	
 	
 	
-RattlerNormals:	DB $9F, $1A, $5C, $06
-	DB $9F, $17, $5C, $0B
-	DB $9F, $09, $5D, $12
-	DB $1F, $09, $5D, $12
-	DB $1F, $17, $5C, $0B
-	DB $1F, $1A, $5C, $06
-	DB $DF, $1A, $5C, $06
-	DB $DF, $17, $5C, $0B
-	DB $DF, $09, $5D, $12
-	DB $5F, $09, $5D, $12
-	DB $5F, $17, $5C, $0B
-	DB $5F, $1A, $5C, $06
-	DB $3F, $00, $00, $60
+RattlerNormals:         DB $9F, $12, $3F, $04    ;00
+                        DB $9F, $0E, $38, $07    ;01
+                        DB $9F, $04, $2D, $09    ;02
+                        DB $1F, $04, $2D, $09    ;03
+                        DB $1F, $0E, $38, $07    ;04
+                        DB $1F, $12, $3F, $04    ;05
+                        DB $DF, $12, $3F, $04    ;06
+                        DB $DF, $0E, $38, $07    ;07
+                        DB $DF, $04, $2D, $09    ;08
+                        DB $5F, $04, $2D, $09    ;09
+                        DB $5F, $0E, $38, $07    ;10
+                        DB $5F, $12, $3F, $04    ;11
+                        DB $3F, $00, $00, $C0    ;12
 
 RattlerNormalsSize: equ $ - RattlerNormals	
 RattlerLen: equ $ - Rattler	

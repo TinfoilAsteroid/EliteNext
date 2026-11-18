@@ -2,7 +2,8 @@
                         DEFINE MISSILEDOHIT 1
 
 MISSILEMAXACCEL         equ 3
-MISSILEMAXDECEL         equ -3                        
+MISSILEMAXDECEL         equ -3
+MissileRangeLimit       equ 125                     ; missiles lose tracking and self destruct beyond +/-125 (integer part) on any axis
                         ;DEFINE MISSILEBREAK
 ;.. Thsi version uses new kind logic
 ;... Now the tactics if current ship is the missile, when we enter this SelectedUniverseSlot holds slot of missile
@@ -11,6 +12,9 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         IFDEF MISSILEDOHIT
                             JumpIfMemTrue UBnKMissleHitToProcess, .ProcessMissileHit
                         ENDIF
+.CheckMissileRange:     ld      hl,UBnKxlo                          ; beyond +/-125 on any axis the missile has lost tracking
+                        call    PositionBeyondMissileRange          ; so it self destructs as if by ECM; this also keeps every
+                        jp      c,.ECMIsActive                      ; position below 16 bits for the vector maths
 .CheckForECM:           JumpIfMemNotZero ECMCountDown,.ECMIsActive  ; If ECM is running then kill the missile
 .IsMissileHostile:      IsShipHostile                               ; is missle attacking us?
                         JumpIfZero .MissileTargetingShip            ; Missile is friendly then z is set else targetting us
@@ -44,8 +48,13 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
 ;... Note we don't have to check for impact as we already have a loop doing that
 .SelectTargetShip:      SelectTargetBank
 .IsShipExploding:       IsShipExploding                             ; check exploding status
-                        jr      z,.UpdateTargetingShipX             ; as if exploding then the missile will also explode
+                        jr      z,.CheckTargetRange                 ; as if exploding then the missile will also explode
 .ShipIsExploding:       SelectMissileBank                           ; get missile back into memory
+                        jp      .ECMIsActive
+.CheckTargetRange:      ld      hl,UBnKxlo                          ; target bank is paged in; a target beyond +/-125 means the
+                        call    PositionBeyondMissileRange          ; missile has lost lock and can not regain it, so it self
+                        jr      nc,.UpdateTargetingShipX            ; destructs; with both in range missile - target fits 16 bits
+                        SelectMissileBank
                         jp      .ECMIsActive
 ;--- At this point we already have the target banked in ready for calculating vector
 ; Tactics vector = missile - target
@@ -171,10 +180,30 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         jp      .ProcessMissileHit              ; lets see if we can enqueue now
                         ; DUMMY RET get a free return as activenewexplosion does jp to init with a free ret
 
+;----------------------------------------------------------------------------------------------------------------------------------
+; hl -> 9 byte position (x, y, z each lo, hi, sign). Carry set if any axis is beyond +/-MissileRangeLimit, i.e. the integer
+; part (sign byte bits 0-6 : hi byte) is > 125. Destroys A, B, HL
+PositionBeyondMissileRange:
+                        ld      b,3
+.AxisLoop:              inc     hl                                  ; hl -> hi byte
+                        ld      a,(hl)
+                        inc     hl                                  ; hl -> sign byte
+                        cp      MissileRangeLimit + 1
+                        jr      nc,.Beyond                          ; integer part > 125
+                        ld      a,(hl)
+                        and     SignMask8Bit
+                        jr      nz,.Beyond                          ; integer part > 255
+                        inc     hl                                  ; next axis lo byte
+                        djnz    .AxisLoop
+                        or      a                                   ; in range, carry clear
+                        ret
+.Beyond:                scf
+                        ret
+;----------------------------------------------------------------------------------------------------------------------------------
 SeekingLogic:           call    XX12EquTacticsDotNosev              ; SA = nose . XX15                           (     ->TAS3)
                         ld      (TacticsDotProduct1),a              ; CNT = A (high byte of dot product)
                         ld      a,(varS)                            ; get sign from dot product
-                        ld      (TacticsDotProduct2+1),a            ; Note here its direction not dir
+                        ld      (TacticsDotProduct1+1),a            ; nose direction sign, read by the speed logic and pitch
 .RoofDotProduct:        call    XX12EquTacticsDotRoofv              ; Now tran the roof for rotation        
                         ld      (TacticsDotProduct2),a              ; so if its +ve then the roof is similar so pull up to head towards it
                         ld      a,(varS)                            ; .                                       
@@ -191,8 +220,11 @@ SimplifiedShipPitchv3:  ;break
                         and     $80                                ; .
                         ld      h,a                                ; h  = flipped sign
                         ld      a,l                                ; a = value * 2
-                        sla     a                                  ; 
+                        sla     a                                  ;
                         JumpIfAGTENusng 16, .skipPitchZero         ; if its > 16 then update pitch
+                        ld      a,(TacticsDotProduct1+1)           ; if the target is behind (nose dot negative) keep pitching,
+                        and     $80                                ; else with the target near the tail the roof and side dots
+                        jr      nz,.skipPitchZero                  ; stay under the threshold and the missile never turns round
                         ZeroA                                      ; else we zero pitch but
                         or      h                                  ; we need to retain the sign
                         ld      (UBnKRotZCounter),a                ; .

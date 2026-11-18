@@ -16,10 +16,8 @@
    ; DEFINE  MAINLOOP_SPAWN_ALWAYS_OUTSIDE_SAFEZONE 1
     DEFINE  MAINLOOP_WARP_ENABLED 1
    ; used to block ship spawning whilst `ging
-    DEFINE  SPAWN_SHIP_DISABLED 1
-;    DEFINE  PLANET_DIAGNOSTICS 1
-;    DEFINE  SUN_DIAGNOSTICS 1
-    DEFINE  STATION_DIAGNOSTICS 1
+   ; DEFINE  SPAWN_SHIP_DISABLED 1
+
 ;.................................................................................................................................    
 ; Main loop
 ;   bank in Maths
@@ -240,6 +238,9 @@ ProcessPlanet:
                         IFDEF   MAINLOOP_MODEL_RENDER
 ProcessShipModels:          call   DrawForwardShips                                     ; Draw all ships and bodies in system (this may need to be self modifying)
                         ENDIF
+                        call    DrawSunDistance                                     ; every frame as the view area it prints in is cleared every frame
+                        call    DrawPlanetDistance
+                        call    DrawStationDistance
                         ; add in loop so we only update every 4 frames, need to change CLS logic too, 
                         ; every 4 frames needs to do 2 updates so updates both copies of buffer
                         ; now will CLS bottom thrid

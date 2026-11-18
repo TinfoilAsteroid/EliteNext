@@ -543,9 +543,7 @@ PlanetAHLequAHLDivCDE:  ld      b,a                         ; save a reg
 ; AHL = ahl/cde, this could be a genuine 24 bit divide
 ; if AHL is large and cde small then the value will be big so will be off screen so we can risk 16 bit divide
 .divideAHLbyCDE:        MMUSelectMathsBankedFns
-                        call    AHLequAHLDivCDE;            Div24by24
-                        ex      hl,de                         ; ahl is result
-                        ld      a,c                           ; ahl is result
+                        call    AHLequAHLDivCDE             ; AHL = AHL/CDE (integer quotient, same as SunProcessVertex uses)
                         ClearCarryFlag
                         ret 
 ; AHL = 0hl/0de as A is zero
@@ -648,17 +646,31 @@ PlanetProcessVertex:    ld      b,a                         ; save sign/high byt
                         
 ; .........................................................................................................................
 ; we only hit this if z is positive so we can ignore signs
-; calculates 24576/z, maxes at 248
-PlanetCalculateRadius:  ld      bc,(P_BnKzlo)                ; DBC = z position
-                        ld      a,(P_BnKzsgn)                ; 
-                        ld      d,a                         ; 
-                        ld      hl,$6000  ; was hl          ; planet radius at Z = 1 006000
-                        call    Div16by24usgn               ; radius = HL/DBC = 24576 / distance z
+; radius = 16384 / (z / 256): BBC Elite uses 24576 (on the same X / (Z / 256) scale as the projected centre), scaled to
+; 2/3 as our view is 128 rows high against the BBC 192, so the size still grows in step with
+; the position. Worked as 32768 / (z / 128) for an extra bit of precision: PlanetUpdateAndRender only draws when
+; z sign < 48 and z >= 256, so z / 128 is 2..24575 and fits the 16 bit divisor. Any radius 1..248 (odd or even)
+; so the planet grows a pixel at a time rather than jumping
+PlanetCalculateRadius:  ld      a,(P_BnKzsgn)                ; DBC = z / 128 = 0 : (sign<<1 | hi bit 7) : (hi<<1 | lo bit 7)
+                        and     SignMask8Bit                 ; .
+                        ld      b,a                          ; .
+                        ld      a,(P_BnKzlo)                 ; .
+                        rla                                  ; . carry = z bit 7
+                        ld      a,(P_BnKzhi)                 ; .
+                        rla                                  ; .
+                        ld      c,a                          ; .
+                        rl      b                            ; .
+                        ld      d,0                          ; .
+                        ld      hl,$8000                     ; 32768 = 16384 * 2
+                        call    Div16by24usgn               ; radius = 32768 / (z / 128) = 16384 / (z / 256)
                         or      h                           ; if A or H are not 0 then max Radius
                         JumpIfAIsZero  .SaveRadius
 .MaxRadius:             ld      hl,248                      ; set radius to 248 as maxed out
 .SaveRadius:            ld      a,l                         ; l = resultant radius
-                        or      1                           ; at least radius 1 (never even so need to test)
+                        and     a                           ; at least radius 1 so a distant planet is still a dot
+                        jr      nz,.HaveRadius              ; .
+                        inc     a                           ; .
+.HaveRadius:
                         DISPLAY "DONE - Eliiminate the check to see if planet radius is > 255 as its already fixed in Planet Calculate Radius"
                         ;ld      l,a                        ;
                         ;ld      (P_Radius),hl              ; save a copy of radius now for later

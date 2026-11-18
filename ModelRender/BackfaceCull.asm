@@ -69,18 +69,21 @@ XX12EquNodeDotXX16:					         		; .LL51	\ -> &4832 \ XX12=XX15.XX16  each vec
         ret
 
  
-ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then we have scaled XX18
-                        JumpIfAIsZero .ScaleDone            ; 
-                        ld      hl,(UBnkDrawCam0xLo)        ; pull postition into registers
-                        ld      de,(UBnkDrawCam0yLo)        ; we only pull in if needed to save fetches
+; Halves the camera until z hi = 0 (z < 256). |x|,|y| < z from CheckVisible, so the three dot products
+; P.sidev/roofv/nosev in XX12EquNodeDotXX16 are up to ~762: the low byte goes in XX18 lo and bits 8-9 sit in the
+; XX18 sign byte, and the face test below works on the full value, so nothing wraps
+ScaleDrawcam:           ld      hl,(UBnkDrawCam0xLo)        ; pull postition into registers
+                        ld      de,(UBnkDrawCam0yLo)        ;
                         ld      bc,(UBnkDrawCam0zLo)        ;
-.ScaleNormalLoop:       inc     iyl                         ; Q goes up by one
+.ScaleNormalLoop:       ld      a,b                         ; done once z hi = 0
+                        or      a                           ; .
+                        jr      z,.ScaledDown               ; .
+.Halve:                 inc     iyl                         ; Q goes up by one
                         ShiftHLRight1                       ; divide cam position by 2
                         ShiftDERight1                       ;
                         ShiftBCRight1                       ;
-                        ld      a,b                         ; loop if not scaled down
-                        JumpIfAIsNotZero .ScaleNormalLoop     ;
-                        ld      (UBnkDrawCam0xLo),hl        ; save position back to XX18
+                        jp      .ScaleNormalLoop            ;
+.ScaledDown:            ld      (UBnkDrawCam0xLo),hl        ; save position back to XX18
                         ld      (UBnkDrawCam0yLo),de        ;
                         ld      (UBnkDrawCam0zLo),bc        ;
 .ScaleDone:             ld      a,iyl
@@ -90,6 +93,13 @@ ScaleDrawcam:           ld      a,(UBnkDrawCam0zHi)         ; if z hi is 0 then 
 CheckVisible:           ld      a,(UBnKzsgn)                 ; Is the ship behind us
 .CheckBehind:           and     SignOnly8Bit                 ; which means z sign is negative
                         jr      nz,.ShipNoDraw               ; .
+.CheckFar:              ld      a,(UBnKxsgn)                 ; positions are 24 bit: bits 0-6 of the sign bytes are the top of the
+                        ld      hl,UBnKysgn                  ; magnitude, and anything there is >= 65536, beyond ShipMaxDistance
+                        or      (hl)                         ; (z < 49152) or outside the view (|x|,|y| must be < z), so the 16 bit
+                        ld      hl,UBnKzsgn                  ; tests below would only see the truncated low 16 bits
+                        or      (hl)
+                        and     SignMask8Bit
+                        jr      nz,.ShipNoDraw
 .CheckViewPort:         ld      hl,(UBnKzlo)                 ; now check to see if its within 90 degree arc
                         ld      a,h
                         JumpIfAGTENusng ShipMaxDistance, .ShipNoDraw
@@ -145,6 +155,11 @@ CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
                         ld      iyl,a                       ; iyl = scale factor
 ; By this point XX18 = scaled draw cam and iyl = scale factor
                         call    ScaleDrawcam                ; XX18 = scaled camera XX17 = scale
+                        ld      a,(varXX17)                 ; normals are added as N >> XX17, capped at 8 as an
+                        cp      8                           ; 8 bit normal is all shifted out by then
+                        jr      c,.ShiftOK
+                        ld      a,8
+.ShiftOK:               ld      (CullShift),a
                         call    CopyCameraToXX15Signed      ; Xx18 -> xx15 sign + 15 bit
 .LL91:                  call    XX12EquNodeDotXX16          ; xx12 = Scaled Camera . Rotation matrix (Note Xx16 no Xx16 inv)
                         call    CopyXX12ScaledToXX18        ; now xx18 = XX12 = xx15.xx16
@@ -170,98 +185,43 @@ CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
                             jp      c,.FaceVisible              ; then we always draw
                         ENDIF
 ; This bit needs to be added to force face visible
-.LL87:                  call    CopyFaceToXX12              ; XX12 = normal (repolaced scale version) as a working copy
-                        ld      a,(XX17)                    ; a = q scale XX17 cauclated by the call to ScaleDrawcam
+.LL87:                  call    CopyFaceToXX12              ; XX12 = normal magnitudes with $80/$00 sign bytes
+; Face is visible if (P + N/2^XX17) . N < 0, where P = XX18 (camera in ship axes, 16 bit sign magnitude) and N is the
+; stored normal. Summed exactly in a 24 bit accumulator: no truncated 8 bit products, no wrapping, no Q >= 4 shortcut
+                        xor     a
+                        ld      (CullAcc),a
+                        ld      (CullAcc+1),a
+                        ld      (CullAcc+2),a
+                        ld      a,(UBnkDrawCam0xLo)         ; x: de = P.sidev
+                        ld      e,a
+                        ld      a,(UBnkDrawCam0xSgn)
+                        call    CullSignMagToTwos
+                        ld      a,(UBnkXX12xLo)
                         ld      b,a
-                        JumpIfALTNusng 4,.ScaleNormByXX17   ; if q >= 4 then is so big we don;t factor in + normal for dot product
-.LL143:                 call    CopyXX18toXX15              ; and we just set XX15 = scaled Camera dot rotation matrix
-                        jp      .DoneScalingIntoXX15        ; Now Process XX12 normal
-.Ovflw:                 ld      a,(UBnkDrawCam0xLo)         ; divide camera by 2 if overflow
-                        srl     a                           ; which is held in XX18
-                        ld      (UBnkDrawCam0xLo),a         ; .
-                        ld      a,(UBnkDrawCam0zLo)         ; .
-                        srl     a                           ; .
-                        ld      (UBnkDrawCam0zLo),a         ; .
-                        ld      a,(UBnkDrawCam0yLo)         ; .
-                        srl     a                           ; .
-                        ld      (UBnkDrawCam0yLo),a        ; .
-.ScaleXScaledAgain:     ld      b,1                         ; set scale to 1 so we divide original normal by 2 into face and try again and hope we didn't scaled down XX12 earlier so if we did then we must be in the do doo as the object was obscenely large and very close
-                        ShiftMem8Right1 UBnkXScaled         ; Divide XX15 by 2^B
-                        ShiftMem8Right1 UBnkYScaled         ; 
-                        ShiftMem8Right1 UBnkZScaled         ; 
-; if we jumped to here scale factor < 4 so we copy in normal to XX15 (scaled) LL92
-.ScaleNormByXX17:       ;ld      b,a
-                        call    CopyXX12toXX15
-.LL93                   dec     b
-                        jp      m, .ScaledNorm
-.LL93Loop:              ShiftMem8Right1 UBnkXScaled        ; Divide XX15 by 2^B, I think this should be really XX12 and is a bug in the original code
-                        ShiftMem8Right1 UBnkYScaled        ; 
-                        ShiftMem8Right1 UBnkZScaled        ; 
-                        dec     b                          ; 
-                        jp      p,.LL93Loop                ; Now we have XX15 as scaled Normal, XX15 as camera, don;t really knwo why as cals work on XX12 and XX18
-.ScaledNorm:            ;ORIG CODE DOES NOT HAVE THIS call    CopyXX15ToXX12 ; DEBUG as XX15 shoudl be a sacled nromal
-; Add normal to XX15
-; if we jumped here direct from LL143 then XX15 = drawcam scaled by Q, XX12 = face normal unscaled, XX18 = drawcam scaled also
-; if we jumped here via scaling       then XX15 = normal scaled by Q,  XX12 = face normal unscaled, XX16 = drawcam scaled
-; if we hit an overflow               then XX15 = drawcam scaled by Q  XX12 = face normal unscaled, XX18 = (drawcam scaled / 2 ) / 2^ nbr overflows (if we cam in vai scaling then its a mess?
-; So LL94 is wrong as it shoud be operating on XX12 not XX15
-.LL94:                  ldCopyByte UBnkZScaled, varR        ; ldCopyByte  UBnkZScaled,     varR  ; if we jumped direct XX15 = drawcam scaled, Xx12 = normal xx18 = drawcam
-                        ldCopyByte UBnkXX12zSign, varS      ; ldCopyByte  UBnkYScaled,     varS  ; if we did scaling then xx15 = norm scaled XX18 = drawcam
-                        ldCopyByte  UBnkDrawCam0zLo, varQ   ; AQ = drawcam Z signed
-                        ld      a,(UBnkDrawCam0zSgn)        ; .
-                        call    SAEquSRPlusAQ               ; SA = drawcam Z dot + z
-                        jp      c,.Ovflw
-                        ld      (UBnkZScaled),a             ; XX15Z = SA
-                        ldCopyByte  varS, UBnkZScaledSign   ;
-                        ldCopyByte  UBnkXScaled,     varR   ; SR = normal X
-                        ldCopyByte  UBnkXX12xSign,   varS   ; .
-                        ldCopyByte  UBnkDrawCam0xLo, varQ   ; AQ = drawcam x dot
-                        ld      a,(UBnkDrawCam0xSgn)        ; .
-                        call    SAEquSRPlusAQ               ; SA = normal x + drawcam x dot
-                        jp      c,.Ovflw
-                        ld      (UBnkXScaled),a             ; XX15Z = SA
-                        ldCopyByte  varS, UBnkXScaledSign   ; .
-                        ldCopyByte  UBnkYScaled, varR       ; SR = normal Y
-                        ldCopyByte  UBnkXX12ySign, varS     ; .
-                        ldCopyByte  UBnkDrawCam0yLo, varQ   ; AQ = drawcam y dot
-                        ld      a,(UBnkDrawCam0ySgn)        ; .
-                        call    SAEquSRPlusAQ               ; SA = normal y + drawcam y dot
-                        jp      c,.Ovflw                    ; .
-                        ld      (UBnkYScaled),a             ; XX15 Y = SA
-                        ldCopyByte   varS, UBnkYScaledSign  ; .
-; calculate dot product LL89
-.DoneScalingIntoXX15:   ldCopyByte  UBnkXX12xLo, varQ       ; Q = norm X XX12
-                        ld      a,(UBnkXScaled)             ; A = XX15 X
-                        call    AequAmulQdiv256             ; A = XX15 X * XX 12 X
-                        ld      (varT),a                    ; T = XX15 X * XX 12 X
-                        ld      a,(UBnkXX12xSign)           ; S = sign of XX15 X * XX12 X
-                        ld      hl,UBnkXScaledSign          ; .
-                        xor     (hl)                        ; . 
-                        ld      (varS),a                    ; .
-                        ldCopyByte  UBnkXX12yLo, varQ       ; Q = norm Y XX12
-                        ld      a,(UBnkYScaled)             ; A = XX15 Y
-                        call    AequAmulQdiv256             ; A = XX15 Y * XX 12 Y
-                        ld      (varQ),a                    ; Q = XX15 Y * XX 12 Y
-                        ldCopyByte  varT,varR               ; R = XX15 X * XX 12 X
-                        ld      a,  (UBnkXX12ySign)         ; A = sign of XX15 Y * XX 12 Y
-                        ld      hl, UBnkYScaledSign         ; .
-                        xor     (hl)                        ; .
-                        call    SAEquSRPlusAQ               ; SA = SR+AQ = (X calc) + (Y calc)
-                        ld      (varT),a                    ; T = usigned (X calc) + (Y calc)
-                        ldCopyByte  UBnkXX12zLo, varQ       ; Q = XX12 Z
-                        ld      a,  (UBnkZScaled)           ; A = XX15 Z
-                        call    AequAmulQdiv256             ; A = XX12 Z * XX15 Z
-                        ld      (varQ),a                    ; Q = XX12 Z * XX15 Z
-                        ldCopyByte  varT, varR              ; R = usigned (X calc) + (Y calc)
-                        ld      a,  (UBnkZScaledSign)       ; A = sign of XX12 Z * XX15 Z
-                        ld      hl, UBnkXX12zSign           ; .
-                        xor     (hl)                        ; .
-                        call    SAEquSRPlusAQ               ; SA = ((X+Y signed)) (Z signed)
-                        cp      0                           ; was the result 0, if so then there are scenarios where SAEquSRPlusAQ can return -ve 0
-                        jr      z,.FaceNotVisible           ; in which case face is not visible
-                        ld      a,(varS)                    ; if the cacl was a negative number then its visible
-                        test    $80                         ; this should test S not A
-                        jr      nz,.FaceVisible                                      ;        if dot product < 0 set face visible
+                        ld      a,(UBnkXX12xSign)
+                        ld      c,a
+                        call    CullAddAxis
+                        ld      a,(UBnkDrawCam0yLo)         ; y: de = P.roofv
+                        ld      e,a
+                        ld      a,(UBnkDrawCam0ySgn)
+                        call    CullSignMagToTwos
+                        ld      a,(UBnkXX12yLo)
+                        ld      b,a
+                        ld      a,(UBnkXX12ySign)
+                        ld      c,a
+                        call    CullAddAxis
+                        ld      a,(UBnkDrawCam0zLo)         ; z: de = P.nosev
+                        ld      e,a
+                        ld      a,(UBnkDrawCam0zSgn)
+                        call    CullSignMagToTwos
+                        ld      a,(UBnkXX12zLo)
+                        ld      b,a
+                        ld      a,(UBnkXX12zSign)
+                        ld      c,a
+                        call    CullAddAxis
+                        ld      a,(CullAcc+2)               ; negative total means the face points towards us
+                        and     a
+                        jp      m,.FaceVisible
 .FaceNotVisible:         ld          a,(CurrentNormIdx)
                         call        SetFaceAHidden                                      ;           set face invisible
                         jp          .ProcessNormalLoopEnd                                ;        end if
@@ -278,3 +238,93 @@ CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
                         jp          nz,.ProcessNormalsLoop
                         ret   
                         
+CullAcc                 DS      3                           ; 24 bit 2's complement sum of (P + N >> XX17) . N
+CullShift               DB      0                           ; XX17 capped at 8
+CullProductSign         DB      0
+
+; e = magnitude low byte, a = sign byte holding the sign in bit 7 and magnitude bits 8-14 in bits 0-6
+; -> de = value as 16 bit 2's complement
+CullSignMagToTwos:      ld      d,a
+                        res     7,d
+                        bit     7,a
+                        ret     z
+                        xor     a
+                        sub     e
+                        ld      e,a
+                        sbc     a,a
+                        sub     d
+                        ld      d,a
+                        ret
+
+; de = P component (2's complement), b = |N| component, c = N sign ($80 negative)
+; CullAcc += (P + N >> CullShift) * N, worked as |T| * |N| (at most ~1020 * 255) with the sign applied on the add
+CullAddAxis:            ld      l,b                         ; hl = |N| >> CullShift
+                        ld      h,0
+                        ld      a,(CullShift)
+                        and     a
+                        jr      z,.Shifted
+.ShiftLoop:             srl     l
+                        dec     a
+                        jr      nz,.ShiftLoop
+.Shifted:               bit     7,c                         ; apply the normal's sign
+                        jr      z,.AddP
+                        xor     a
+                        sub     l
+                        ld      l,a
+                        sbc     a,a
+                        sub     h
+                        ld      h,a
+.AddP:                  add     hl,de                       ; hl = T = P + N >> shift
+                        ld      a,h                         ; product sign = sign T xor sign N
+                        xor     c
+                        ld      (CullProductSign),a
+                        bit     7,h                         ; hl = |T|
+                        jr      z,.TPositive
+                        xor     a
+                        sub     l
+                        ld      l,a
+                        sbc     a,a
+                        sub     h
+                        ld      h,a
+.TPositive:             ld      d,h                         ; |T| * |N| = (h * N) << 8 + l * N
+                        ld      e,b
+                        mul     de
+                        push    de                          ; h * N
+                        ld      d,l
+                        ld      e,b
+                        mul     de                          ; de = l * N
+                        pop     hl                          ; hl = h * N
+                        ld      a,d                         ; product = c:d:e with c = h + carry, d = d + l
+                        add     a,l
+                        ld      d,a
+                        ld      a,h
+                        adc     a,0
+                        ld      c,a
+                        ld      hl,CullAcc
+                        ld      a,(CullProductSign)
+                        and     a
+                        jp      m,.Subtract
+                        ld      a,(hl)                      ; CullAcc += product
+                        add     a,e
+                        ld      (hl),a
+                        inc     hl
+                        ld      a,(hl)
+                        adc     a,d
+                        ld      (hl),a
+                        inc     hl
+                        ld      a,(hl)
+                        adc     a,c
+                        ld      (hl),a
+                        ret
+.Subtract:              ld      a,(hl)                      ; CullAcc -= product
+                        sub     e
+                        ld      (hl),a
+                        inc     hl
+                        ld      a,(hl)
+                        sbc     a,d
+                        ld      (hl),a
+                        inc     hl
+                        ld      a,(hl)
+                        sbc     a,c
+                        ld      (hl),a
+                        ret

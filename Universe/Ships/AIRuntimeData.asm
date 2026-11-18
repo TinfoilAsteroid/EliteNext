@@ -136,6 +136,8 @@ UBnKFightersLeft            DB  0                       ; the number of ships le
 UBnKCloudCounter            DB  0                       ; cloud pixels
 UBnKCloudRadius             DB  0                       ; cloud pixels
 UBnKHeadingToPlanetOrSun    DB  0                       ; 0 = undefined 1 = heading to planet 2 = heading to sun, if it reaches planet then will move to docking, if it heads to sun then will jump
+UBnKPosFrac                 DS  3                       ; x, y, z position below 1 raw unit (1/256), kept by ApplyMyRollAndPitchFracIX so
+                                                        ; small roll / pitch steps on nearby ships are not lost to truncation
 
 UBnKRuntimeSize             EQU $-UBnKStartOfRuntimeData
 ; Flags work as follows:

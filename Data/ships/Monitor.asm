@@ -13,7 +13,7 @@ Monitor:	            DB $04                     ; Number of cargo canisters rele
                         DB $84                     ; Energy Max
                         DB $10                     ; Speed Max
                         DW MonitorNormals          ; Normals
-                        DB $00                     ; Q scaling
+                        DB $01                     ; Q scaling
                         DB $37                     ; Laser power and Nbr Missiles
                         DW MonitorVertices         ; Verticles Address
                         DB ShipTypeNormal          ; Ship Type
@@ -68,16 +68,16 @@ MonitorEdges:	        DB $1F, $01, $00, $04
                         DB $0A, $66, $3C, $40
 MonitorEdgesSize:       equ $ - MonitorEdges
 MonitorEdgesCnt:        equ MonitorEdgesSize/4
-MonitorNormals:	        DB $1F, $00, $3E, $0B
-                        DB $1F, $2C, $2B, $0D
-                        DB $3F, $36, $1C, $10
-                        DB $3F, $00, $39, $1C
-                        DB $BF, $36, $1C, $10
-                        DB $9F, $2C, $2B, $0D
-                        DB $DF, $26, $2F, $12
-                        DB $5F, $26, $2F, $12
-                        DB $7F, $27, $30, $0D
-                        DB $FF, $27, $30, $0D
-                        DB $3F, $00, $00, $40
+MonitorNormals:         DB $1F, $00, $45, $0C    ;00
+                        DB $1F, $33, $32, $0F    ;01
+                        DB $3F, $46, $24, $15    ;02
+                        DB $3F, $00, $50, $27    ;03
+                        DB $BF, $46, $24, $15    ;04
+                        DB $9F, $33, $32, $0F    ;05
+                        DB $DF, $29, $32, $13    ;06
+                        DB $5F, $29, $32, $13    ;07
+                        DB $7F, $23, $2B, $0C    ;08
+                        DB $FF, $23, $2B, $0C    ;09
+                        DB $3F, $00, $00, $80    ;10
 MonitorNormalsSize:     equ $ - MonitorNormals
 MonitorLen:             equ $ - Monitor

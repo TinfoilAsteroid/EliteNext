@@ -45,35 +45,7 @@ LateDrawLinesLoop:      ld    de,x1
                         FourLDIInstrunctions
                         FourLDIInstrunctions
                         push  hl,,iy
-                        //call  l2_draw_clipped_line
-                        //call  l2_draw_elite_line
-                        call    l2_draw_6502_line
-                        jp      c,LateNoLineToDraw
-                        DISPLAY "TODO - Optimise fetching direct from XX1510 rather than using x1 to y2 as an interface"
-PreLate:                push    hl,,bc,,de,,iy
-                        ld      a,(x1)
-                        ld      c,a
-                        ld      a,(y1)
-                        ld      b,a
-                        ld      a,(x2)
-                        ld      e,a
-                        ld      a,(y2)
-                        ld      d,a
-                        ; bc = y0,x0 de=y1,x1,a=color)
-                        ld	    a, $D5 ; colour
-ReadyToDraw:            MMUSelectLayer2
-.CheckHorz:             ld      a,b                      ; Are y1 and y2 the same?
-                        cp      d                        ; .
-                        jp      nz,.ItsNotHorizontal     ; .
-.ItsHorizontal:         call    l2_drawHorzClip          ; if so its a horizontal line
-                        jp      DrawnLine                ; done draw
-.ItsNotHorizontal:      ld      a,c                      ; Are x1 and x2 the same?
-                        cp      e
-                        jp      nz,LateLine
-.ItsVertical:           call    l2_drawVertClip
-                        jp      DrawnLine
-LateLine:               call    l2_draw_elite_line; l2_draw_diagonal ** NOTE DOESNT DO HORZ OR VERT
-DrawnLine:              pop     hl,,bc,,de,,iy
+                        call    l2_draw_6502_line               ; clips and draws in line_gfx_colour
 LateNoLineToDraw:       pop   hl,,iy
                         dec   iyh
                         jr	nz, LateDrawLinesLoop

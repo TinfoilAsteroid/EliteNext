@@ -57,19 +57,19 @@ DragonEdges:	        DB $1F, $01, $04, $1C
                         DB $1F, $CD, $0C, $10
 DragonEdgesSize:        equ $ - DragonEdges	
 DragonEdgesCnt:         equ DragonEdgesSize/4		
-DragonNormals:	        DB $1F, $10, $5A, $1C
-                        DB $1F, $21, $5A, $00
-                        DB $3F, $19, $5B, $0E
-                        DB $BF, $19, $5B, $0E
-                        DB $9F, $21, $5A, $00
-                        DB $9F, $10, $5A, $1C
-                        DB $5F, $10, $5A, $1C
-                        DB $5F, $21, $5A, $00
-                        DB $7F, $19, $5B, $0E
-                        DB $FF, $19, $5B, $0E
-                        DB $DF, $21, $5A, $00
-                        DB $DF, $10, $5A, $1C
-                        DB $3F, $30, $00, $52
-                        DB $BF, $30, $00, $52
+DragonNormals:          DB $1F, $10, $5A, $1C    ;00
+                        DB $1F, $21, $5A, $00    ;01
+                        DB $3F, $19, $5B, $0E    ;02
+                        DB $BF, $19, $5B, $0E    ;03
+                        DB $9F, $21, $5A, $00    ;04
+                        DB $9F, $10, $5A, $1C    ;05
+                        DB $5F, $10, $5A, $1C    ;06
+                        DB $5F, $21, $5A, $00    ;07
+                        DB $7F, $19, $5B, $0E    ;08
+                        DB $FF, $19, $5B, $0E    ;09
+                        DB $DF, $21, $5A, $00    ;10
+                        DB $DF, $10, $5A, $1C    ;11
+                        DB $3F, $6D, $00, $BA    ;12
+                        DB $BF, $6D, $00, $BA    ;13
 DragonNormalsSize:      equ $ - DragonNormals	
 DragonLen:              equ $ - Dragon	

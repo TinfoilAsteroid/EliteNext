@@ -3,6 +3,8 @@ AttractCounterStart        EQU $80
 AttractTimer:              DW      AttractDuration
 AttractCounter:            DB      AttractCounterStart
 
+        DEFINE DEBUGBACKFACE 1
+
 Attract_boiler_text		DW $083D
 
 
@@ -134,12 +136,16 @@ AttractModeUpdate:      MMUSelectMathsBankedFns                                 
                         ;break
                         and     a
                         jp      z,.DoneIM2
+                    IFDEF DEBUGBACKFACE
+                        nop
+                    ELSE                        
                         dec     a
                         ld      (AttractCounter),a
                         ld      hl, (UBnKzlo)
 .UpdatePos:             ld      de, $0008
                         sbc     hl,de
-                        ld      (UBnKzlo),hl                        
+                        ld      (UBnKzlo),hl      
+                    ENDIF                  
 .DoneIM2:               ld      a,(AttractStep)
                         inc     a
                         cp      3
@@ -151,13 +157,17 @@ AttractModeUpdate:      MMUSelectMathsBankedFns                                 
                         ret
 
 
-
 SelectARandomShip:      ld      b,1                             ; Demo screen uses slot 1
                         MMUSelectUniverseN  1
                         MMUSelectShipBank1
                         ld      iyh, 1
-.SelectRandom:          call    doRandom
+.SelectRandom:
+                    IFDEF DEBUGBACKFACE
+                        ld      a,ShipID_Coriolis               ; always the Coriolis station to debug backface culling
+                    ELSE
+                        call    doRandom
                         JumpIfAGTENusng ShipID_Rattler+1, .SelectRandom
+                    ENDIF
                         ld      iyl,a
                         call    GetShipBankId                       ; find actual memory location of data
                         MMUSelectShipBankA

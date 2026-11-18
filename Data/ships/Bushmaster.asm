@@ -58,14 +58,14 @@ BushmasterEdges:	    DB $1F, $13, $00, $04            ; 01
                         DB $0A, $88, $2C, $20            ; 19           ; 19 * 4 = 76
 BushmasterEdgesSize:    equ $ - BushmasterEdges
 BushmasterEdgesCnt:     equ BushmasterEdgesSize/4        ; 
-BushmasterNormals:	    DB $9F, $17, $58, $1D            ; 01
-                        DB $1F, $17, $58, $1D            ; 02
-                        DB $DF, $0E, $5D, $12            ; 03
-                        DB $5F, $0E, $5D, $12            ; 04
-                        DB $BF, $1F, $59, $0D            ; 05
-                        DB $3F, $1F, $59, $0D            ; 06
-                        DB $FF, $2A, $55, $07            ; 07
-                        DB $7F, $2A, $55, $07            ; 08
-                        DB $3F, $00, $00, $60            ; 09           ; 9 * 4 = 36
+BushmasterNormals:      DB $9F, $17, $58, $1D    ;00
+                        DB $1F, $17, $58, $1D    ;01
+                        DB $DF, $07, $2C, $09    ;02
+                        DB $5F, $07, $2C, $09    ;03
+                        DB $BF, $17, $41, $09    ;04
+                        DB $3F, $17, $41, $09    ;05
+                        DB $FF, $2A, $55, $07    ;06
+                        DB $7F, $2A, $55, $07    ;07
+                        DB $3F, $00, $00, $A0    ;08
 BushmasterNormalsSize:  equ $ - BushmasterNormals
 BushmasterLen:          equ $ - Bushmaster

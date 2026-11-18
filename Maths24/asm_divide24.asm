@@ -59,21 +59,6 @@ divs24:                 ld      b,a             ; preserve dividend sign
                         or      d               ; set de.h to signed divide
                         ret
         
-divs32swap:             exx                     ;
-; dehl = dehl' / dehl in our case it will be S78.0/ 0S78.0 to give us 0S78.0
-divs32:                 ld      a,e             ; get sign bit from divisor
-                        exx                     ; swap to get dividend sign bit
-                        xor     d               ; .
-                        exx                     ; then swap back for normal compute
-                        and     $80             ; but we can then save sign bit to stack
-                        push    af              ; .
-                        call    divu32          ; perform divide
-                        pop     af              ; get sign bit
-                        or      e               ; as result will be in ehl that we want
-                        ld      e,a             ; we ignore d reg
-                        ret
-
-divu32swap:             exx
 ; dehl = dehl' / dehl in our case it will be 78.80 / 078.8 to give us 078.8
 divu32:                 ld a,d
                         or e
@@ -121,9 +106,7 @@ l1_small_divu_32_32x32: ; dede' = 32-bit divisor, bcbc' = 32-bit dividend, hlhl'
                         
                         ret
 
-
 divide_by_zero:
    
                     SetCarryFlag
                     ret
-

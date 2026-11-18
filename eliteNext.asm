@@ -51,8 +51,6 @@
     ;DEFINE  FORCE_TIDY 1               ; Forces call to Tidy every iteration
     DEFINE  BYPASS_TIDY 1               ; Forces tidy routine to return even if force FORCE_TIDY was enabled
     ;DEFINE  q 1
-    ;DEFINE  TESTGALAXYCHART 1
-    ;DEFINE TESTSHORTRANGECHART 1
     ;DEFINE  TESTSYSTEMMENU 1
     ;DEFINE  TESTMARKETROMENU 1
 ;    DEFINE  TESTSTATUSMENU 1
@@ -84,7 +82,6 @@
                   ;DEFINE DEBUG_LL145_6502 1
 ;                DEFINE DEBUG_LL129
  ;               DEFINE DEBUG_LL120 1
-           ; DEFINE DEBUGCLIP 1
     ;DEFINE SKIPATTRACTMUSIC 1
     ;DEFINE SKIPATTRACTGRAPHICS 1
     ;DEFINE  SKIPATTRACT 1
@@ -286,7 +283,6 @@ DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks
 InitialiseGalaxies: 
                     IFDEF MESSAGETRACING
                         MessageAt   0,24,InitialisingGalaxies
-                        ;break
                     ENDIF
                         call		ResetUniv                       ; Reset ship data
                         call        ResetGalaxy                     ; Reset each galaxy copying in code
@@ -296,162 +292,7 @@ InitialiseGalaxies:
                         MMUSelectLayer1
                         call		l1_cls
                         SetBorder   $00
-TESTCODEPOINT1:     IFDEF TESTGALAXYCHART
-                        ;break
-                        MMUSelectMenuGalCht
-                        call        draw_g_chart
-.testGalaxyChartLoop:   MMUSelectKeyboard
-                        call        scan_keyboard
-                        MMUSelectMenuGalCht
-                        call        update_g_chart
-                        MMUSelectKeyboard
-                        call        MovementKeyTest
-                        MMUSelectMenuGalCht
-                        call        cursors_g_chart
-                        jp          .testGalaxyChartLoop
-                    ENDIF                 
-TESTCODEPOINT2:     IFDEF TESTSHORTRANGECHART
-                        ;break
-                        MMUSelectMenuShrCht
-                        call        draw_s_chart
-                        ;break
-.testGalaxyChartLoop:   MMUSelectKeyboard
-                        call        scan_keyboard
-                        MMUSelectMenuShrCht
-                        call        update_s_chart
-                        MMUSelectKeyboard
-                        call        MovementKeyTest
-                        MMUSelectMenuShrCht
-                        call        cursors_s_chart
-                        jp          .testGalaxyChartLoop
-                    ENDIF                 
-TESTCODEPOINT3:     IFDEF TESTSYSTEMMENU
-                        ;break
-                        MMUSelectMenuSystem
-                        call        draw_s_data
-                        ;break
-.testMenuSystemLoop:    MMUSelectKeyboard
-                        call        scan_keyboard
-                        MMUSelectMenuSystem
-                        call        update_s_data
-                        jp          .testMenuSystemLoop
-                    ENDIF          
-                    ; if not docked then market is just a price list
-TESTCODEPOINT4:     IFDEF TESTMARKETROMENU
-                        ;break
-                        MMUSelectStockTable                    ; .
-                        call    generate_stock_market          ; generate new prices
-                        
-                        MMUSelectMenuMarket
-                        call        draw_mkt_data
-                        ;break
-.testMenuMktLoop:       MMUSelectKeyboard
-                        call        scan_keyboard
-                        MMUSelectMenuMarket
-                        call        update_mkt_data
-                        jp          .testMenuMktLoop
-                    ENDIF          
-TESTCODEPOINT5:     IFDEF TESTSTATUSMENU
-                        ;break
-                        MMUSelectMenuStatus
-                        call        draw_stat_menu
-                        ;break
-.testMenuStatLoop:      jp          .testMenuStatLoop
-                    ENDIF         
-TESTCODEPOINT6:     IFDEF TESTINVENTORYMENU
-                        MMUSelectMenuInvent
-                        call        draw_inv_menu
-                        ;break
-.testMenuInvLoop:       jp          .testMenuInvLoop
-                    ENDIF         
-TESTCODEPOINT7:     IFDEF TESTMUL
-                        ld      b,3
-                        ld      ix,.DataSet
-.MathsLoop1:            push    ix,,bc
-                        ld      b,(ix+0)
-                        ld      h,(ix+1)
-                        ld      l,(ix+2)
-                        ld      c,(ix+3)
-                        ld      d,(ix+4)
-                        ld      e,(ix+5)
-                        ;break
-                        call    BCDEHLequBHLmulCDEs; BCDEHLequBHLmulCDEu 
-                        ;break
-                        pop     hl,,bc
-                        ld      a,6
-                        add     hl,a
-                        ld      ix,hl
-                        djnz    .MathsLoop1
-                        ;break
-;                                                                            B C D E H L
-.DataSet:               DB 0x80, 0x50, 0x80, 0x00, 0x50, 0x80    ; Result    800019504000 Pass            
-;.DataSet:               DB 0x00, 0x50, 0x80, 0x00, 0x50, 0x80    ; Result    000019504000 Pass            
-;.DataSet1:              DB 0x10, 0x50, 0x80, 0x00, 0x50, 0x80    ; Result    000521504000 Pass                 
-;.DataSet2:              DB 0x02, 0x50, 0x80, 0x10, 0x50, 0x80    ; Result    000263CAC000 Pass
-;.DataSet3:              DB 0x00, 0x00, 0x80, 0x00, 0x50, 0x80    ; Result    000000284000 Pass               
-;.DataSet4:              DB 0x00, 0x00, 0x80, 0x00, 0x00, 0x80    ; Result    000000004000 Pass
-.DataSet3:              DB 0x00, 0x00, 0x80, 0x80, 0x50, 0x80    ; Result    800000284000 Pass               
-.DataSet4:              DB 0x80, 0x00, 0x80, 0x80, 0x00, 0x80    ; Result    000000004000 Pass
-          
-                    ENDIF 
-                ;    TESTINVENTORYMENU
-                    
-                     ; MMUSelectMenuInvent
-                    ;
-                    
-                    ;MMUSelectMenuStatus
-                    IFDEF COPROCESSOR_TEST
-                        DISPLAY "PI COPROCESSOR TEST ENABELD"
-;--- Initialise Pi--------------------------------------------------;
-                        MMUSelectPIFns
-                        call        PiReset
-;--- Create Universe------------------------------------------------;
-                        call        ENPiResetUniverse
-;--- Set View-------------------------------------------------------;
-                        ld          a,1
-                        call        ENPiSetView
-                        ld          hl,.PiPlayerInput
-                        call        ENPiPlayerInput
-;--- Create Object--------------------------------------------------;
-;--- Update Universe------------------------------------------------;
-                        call        ENPiUpdateUniverse
-;--- Display Object-------------------------------------------------;
-                        call        ENPiRenderData
-                        ld          bc,(HeapSizeBytes)
-                        ld          de,LineHeap
-                        ld          hl,LineBuffer ; this needs expanding later
-                        call        memcopy_dma
-; "memcopy_dma, hl = target address de = source address to copy, bc = length"
-                        ld          hl,LineBuffer
-                        ld          a,(LineHeapSize)
-                        ld          b,a
-.DrawLinesLoop:         push        bc,,hl
-                        inc         hl
-                        ld          a,(hl)
-                        ld          (x1),a
-                        inc         hl
-                        ld          (y1),a
-                        inc         hl
-                        ld          (x2),a
-                        inc         hl
-                        ld          (y2),a
-                        MMUSelectLayer2
-                        call        l2_draw_6502_line
-                        pop         bc,,hl
-                        ld          a,5
-                        add         hl,a
-                        djnz        .DrawLinesLoop
-                        call        l2_flip_buffers
-                        jp          .PiTestComplete
-.PiDataSection:
-.PiPlayerInput:         DW $0201, $0403,$0605,$0807
-.LineBufferPointer:     DW 0
-.PiTestComplete:        jp          .PiTestComplete
-                    ENDIF
-                    IFDEF SKIPATTRACT
-                        DISPLAY "INITGALAXIES SKIP ATTRACT"
-                        jp DefaultCommander
-                    ELSE
+
                         DISPLAY "INITGALAXIES ATTRACT ENABLED"
 StartAttractMode:       di                                          ; we are changing interrupts
                         MMUSelectSound
@@ -469,7 +310,7 @@ StartAttractMode:       di                                          ; we are cha
                         call        InitAudio                       ; jsut re-init all audio for now rather than sound off
                         ei 
                         JumpIfAIsZero  SkipDefaultCommander
-                    ENDIF
+
 DefaultCommander:       MMUSelectCommander
                         call		defaultCommander
                         jp          InitialiseMainLoop:
@@ -487,8 +328,6 @@ InitialiseMainLoop:     call    InitMainLoop
 ;..MAIN GAME LOOP..................................................................................................................
 ; MACRO BLOCKS.....................................................................................................................
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
-
-
 
 ; if beam on count > 0
 ;    then beam on count --
@@ -729,14 +568,11 @@ XX12PVarSign3		DB 0
 ;INCLUDE "Tables/inwk_table.asm" This is no longer needed as we will write to univer object bank
 ; Include all maths libraries to test assembly   
     INCLUDE "./Maths/asm_AddDEToCash.asm"
-;    INCLUDE "./Maths/DIVD3B2.asm"
-    ;INCLUDE "./Maths/asm_multiply.asm"
     DISPLAY ">24 bit mulitply routine, currently not bank 0 safe"
     INCLUDE "./Maths24/asm_mul24_notbank0safe.asm"
     DISPLAY ">Loading S78 Maths routines"
     INCLUDE "./MathsFPS78/asm_multiply_S78.asm"
  DISPLAY "Moved 24 bit maths to bank 0"
- ;INCLUDE "./Maths24/asm_addition24.asm"
     INCLUDE "./Maths/asm_square.asm"
     INCLUDE "./Maths/asm_sine.asm"
     INCLUDE "./Maths/asm_sqrt.asm"
@@ -748,25 +584,16 @@ XX12PVarSign3		DB 0
     INCLUDE "./Maths/compare16.asm"
     INCLUDE "./Maths/asm_AequAdivQmul96.asm"
     INCLUDE "./Maths/Utilities/AequAmulQdiv256-FMLTU.asm"
-    ;INCLUDE "./Maths/Utilities/PRequSpeedDivZZdiv8-DV42-DV42IYH.asm"
+
 
     INCLUDE "./Maths/Utilities/APequQmulA-MULT1.asm"
     INCLUDE "./Maths/Utilities/badd_ll38.asm"
 
-    ;INCLUDE "./Maths/Utilities/RequAmul256divQ-BFRDIV.asm"
-    ;INCLUDE "./Maths/Utilities/RequAdivQ-LL61.asm"
-    ;INCLUDE "./Maths/Utilities/RSequQmulA-MULT12.asm"
 
     include "./Universe/Ships/CopyRotMattoXX15.asm"
     include "./Universe/Ships/CopyXX15toRotMat.asm"
-
-    ;INCLUDE "./Maths/Utilities/LL28AequAmul256DivD.asm"    
-    ;INCLUDE "./Maths/Utilities/XAequMinusXAPplusRSdiv96-TIS1.asm"
-
     INCLUDE "./GameEngine/Tactics.asm"
     INCLUDE "./Hardware/drive_access.asm"
-
-    ;INCLUDE "./Menus/common_menu.asm"
 MainNonBankedCodeEnd:
     DISPLAY "Main Non Banked Code Ends at ",$
 ;-- END OF MAIN NON BANKED CODE ---------------------------------------------------------
@@ -814,8 +641,7 @@ IM2Routine:             IFDEF INTERRUPT_BLOCKER
                         exx
                         push    af,,bc,,de,,hl
                         ld      hl,InterruptCounter
-                        inc     (hl)                        ; cycles each interrupt
-                        ;break                         
+                        inc     (hl)                        ; cycles each interrupt                    
 IM2SoundHandler:        call    IM2Sound                    ; This is a self modifying code address to change the actual sound vector if we are doing special music e.g. intro or docking
                         pop    af,,bc,,de,,hl
                         ex      af,af'
@@ -827,26 +653,6 @@ IM2SoundHandler:        call    IM2Sound                    ; This is a self mod
 EndOfNonBanked:
     DISPLAY "Non Banked Code + Interrupt Handler Ends At", EndOfNonBanked
 
-
-;SaveMMU6:               MACRO
-;                        GetNextReg  MMU_SLOT_6_REGISTER
-;                        ld      (SavedMMU6),a
-;                        ENDM
-;
-;RestoreMMU6:            MACRO     
-;                        ld      a,(SavedMMU6)               ; now restore up post interrupt
-;                        nextreg MMU_SLOT_6_REGISTER,a       ; Restore MMU7                   
-;                        ENDM
-;
-;SaveMMU7:               MACRO
-;                        GetNextReg  MMU_SLOT_7_REGISTER
-;                        ld      (SavedMMU7),a
-;                        ENDM
-;
-;RestoreMMU7:            MACRO     
-;                        ld      a,(SavedMMU7)               ; now restore up post interrupt
-;                        nextreg MMU_SLOT_7_REGISTER,a       ; Restore MMU7                   
-;                        ENDM
 
 IM2Sound:               SaveMMU7
                         MMUSelectSound
@@ -958,15 +764,10 @@ IM2AttractMode:         ;break
     INCLUDE "./Layer2Graphics/asm_l2_plot_horizontal.asm"
     INCLUDE "./Layer2Graphics/asm_l2_plot_vertical.asm"
     INCLUDE "./Layer2Graphics/layer2_plot_diagonal.asm"
-;    INCLUDE "./Layer2Graphics/int_bren_save.asm"
-;    INCLUDE "./Layer2Graphics/asm_l2_plot_triangle.asm"
-;    INCLUDE "./Layer2Graphics/asm_l2_fill_triangle.asm"
-;    INCLUDE "./Layer2Graphics/L2_SolidTriangles.asm"
     INCLUDE "./Layer2Graphics/layer2_plot_circle.asm"
     INCLUDE "./Layer2Graphics/layer2_plot_circle_fill.asm"
     INCLUDE "./Layer2Graphics/BBCEliteDirectMappingLL118.asm"    
     INCLUDE "./Layer2Graphics/l2_draw_any_line.asm"
-;    INCLUDE "./Layer2Graphics/clearLines-LL155.asm"
     INCLUDE "./Layer2Graphics/l2_draw_line_v2.asm"
     DISPLAY "Bank ",BankLAYER2," - Bytes free ",/D, $2000 - ($-LAYER2Addr), " - BankLAYER2"
 ; Bank 58  ------------------------------------------------------------------------------------------------------------------------

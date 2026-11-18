@@ -21,22 +21,6 @@ asm_disable_l2_readwrite:   ld      bc, IO_LAYER2_PORT
                             out     (c),a
                             ret
 
-asm_restore_l2_readwrite:   ld      a,(varL2_ACCESS_MODE)
-                            and     LAYER2_READ_WRITE_MASK
-                            ld      d,a
-                            ld      bc, IO_LAYER2_PORT
-                            in      (c)
-                            ld      (varL2_ACCESS_MODE),a
-                            and     d
-                            out     (c),a
-                            ret  
-
-asm_enable_l2_readwrite:    ld      bc, IO_LAYER2_PORT
-                            in      (c)
-                            or      LAYER2_READ_WRITE_MASK
-                            out     (c),a
-                            ret                               
-    
 ; "asm_l2_bank_select"
 ; " a = sepecific bank mask value to select, does not set varL2_BANK_SELECTED"
 asm_l2_bank_select:         ld      d,a
@@ -66,14 +50,6 @@ asm_l2_bank_n_select:       ld		(varL2_BANK_SELECTED),a
 .notmiddlebank:             ld		a,LAYER2_SHIFTED_SCREEN_BOTTOM ; default to bottom
                             jr		asm_l2_bank_select
 		; Note no ret as its handled by above routines
-
-asm_l2_reselect_saved_bank: ld      a,(varL2_SAVED_SELECT)  ; recover selected option
-                            ld 		bc, IO_LAYER2_PORT
-                            out 	(c),a
-                            ld      a,(varL2_SAVED_OFFSET)
-                            out 	(c),a
-                            ret
-                            
 
 asm_l2_bank_0_macro:        MACRO
                             ld      a,(varL2_BUFFER_MODE)
@@ -163,7 +139,6 @@ asm_l2_row_bank_select:     JumpIfAGTENusng 128, .BottomBank
 .NoBottomChange:            ex      af,af'                            
                             sub     128
                             ret
-
 
 ; "asm_l2_320_row_bank_select"
 ; HL (unsinged) = x column of pixel line from left, uses this to define bank
@@ -283,7 +258,3 @@ asm_l2_320_next_bank_noSv:  ld      a,(varL2_BANK_SELECTED)
                             ld      a,%00010001
                             out 	(c),a          
                             ret           
-
-
-
-

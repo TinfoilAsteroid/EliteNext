@@ -13,7 +13,7 @@ Iguana:	                DB $01                      ; Number of cargo canisters 
                         DB $5A                      ; Energy Max
                         DB $21                      ; Speed Max
                         DW IguanaNormals            ; Normals
-                        DB $01                      ; Q scaling
+                        DB $02                      ; Q scaling
                         DB $20 | ShipMissiles3      ; Laser power and Nbr Missiles
                         DW IguanaVertices           ; Verticles Address
                         DB ShipTypeNormal           ; Ship Type
@@ -75,16 +75,16 @@ IguanaEdgesSize: equ $ - IguanaEdges
 IguanaEdgesCnt: equ IguanaEdgesSize/4	
 	
 	
-IguanaNormals:	DB $9F, $33, $4D, $19
-	DB $DF, $33, $4D, $19
-	DB $1F, $33, $4D, $19
-	DB $5F, $33, $4D, $19
-	DB $9F, $2A, $55, $00
-	DB $DF, $2A, $55, $00
-	DB $1F, $2A, $55, $00
-	DB $5F, $2A, $55, $00
-	DB $BF, $17, $00, $5D
-	DB $3F, $17, $00, $5D
+IguanaNormals:          DB $9F, $37, $53, $1B    ;00
+                        DB $DF, $37, $53, $1B    ;01
+                        DB $1F, $37, $53, $1B    ;02
+                        DB $5F, $37, $53, $1B    ;03
+                        DB $9F, $20, $40, $00    ;04
+                        DB $DF, $20, $40, $00    ;05
+                        DB $1F, $20, $40, $00    ;06
+                        DB $5F, $20, $40, $00    ;07
+                        DB $BF, $2E, $00, $BA    ;08
+                        DB $3F, $2E, $00, $BA    ;09
 
 	
 IguanaNormalsSize: equ $ - IguanaNormals	

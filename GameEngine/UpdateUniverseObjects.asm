@@ -270,6 +270,9 @@ DrawForwardShips:       xor     a
                         call    UpdateScannerPlanet
                         MMUSelectSpaceStation
                         call    UpdateCompassStation
+.DrawRadarEdges:        CallIfMemTrue ConsoleRedrawFlag, RadarEdgeSun       ; dots on the scanner outline for the sun, planet
+                        CallIfMemTrue ConsoleRedrawFlag, RadarEdgePlanet    ; and station when out of scanner range, only on the
+                        CallIfMemTrue ConsoleRedrawFlag, RadarEdgeStation   ; frames the console area of layer 2 is cleared
                         ret
 .DrawStationCompass:
 

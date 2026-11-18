@@ -450,6 +450,16 @@ UnivSetDemoPostion:     call    UnivSetSpawnPosition
                         ld      hl,0
                         ld      (UBnKxlo),hl
                         ld      (UBnKylo),hl
+                    IFDEF DEBUGBACKFACE
+; fixed view for backface culling debugging, values as sign/hi.lo: x = +0000.00, y = -0000.6B, z = +0004.9F
+                        ld      a,$6B                               ; y = -$006B (x already 0, x and z signs already +)
+                        ld      (UBnKylo),a
+                        ld      a,$80
+                        ld      (UBnKysgn),a
+                        ld      hl,$049F                            ; z = +$049F
+                        ld      (UBnKzlo),hl
+                        ret
+                    ENDIF
                         ld      a,(ShipTypeAddr)
                         ld      hl,$05B0                            ; so its a negative distance behind
                         JumpIfANENusng ShipTypeStation, .SkipFurther
@@ -1427,49 +1437,58 @@ LL49:
 
     DISPLAY "Tracing 6", $
 
+; Projects the 8 bit scaled node in XX15 to screen x,y at (iy+0..3) as 16 bit 2's complement values
+; screen x = ScreenCenterX + x * 256 / z, screen y = ScreenCenterY - y * 256 / z (screen y is 0 at the top)
+; the offsets are full 16 bit (not clamped at 255) so off screen vertices keep the right line slope for the clipper,
+; and are limited to NodeProjectMax, the range l2_draw_6502_line clips accurately
+NodeProjectMax              equ 2047
 ProjectNodeToEye:
-    ld          bc,(UBnkZScaled)                    ; BC = Z Cordinate. By here it MUST be positive as its clamped to 4 min
-    ld          a,c                                 ;  so no need for a negative check
-    ld          (varQ),a                            ; VarQ = z
-    ld          a,(UBnkXScaled)                     ; XX15  \ rolled x lo which is signed
-    call        DIV16Amul256dCUNDOC                 ; result in BC which is 16 bit TODO Move to 16 bit below not just C reg
-    ld          a,(UBnkXScaledSign)                 ; XX15+2 \ sign of X dist
-    JumpOnBitSet a,7,EyeNegativeXPoint             ; LL62 up, -ve Xdist, RU screen onto XX3 heap
-EyePositiveXPoint:                                  ; x was positive result
-    ld          l,ScreenCenterX                     ; 
-    ld          h,0
+    ld          a,(UBnkZScaled)                     ; z, clamped to >= 4 before scaling (scaling can take it to 0, which clamps below)
+    ld          c,a
+    ld          a,(UBnkXScaled)                     ; |x| as ScaleNodeTo8Bit leaves the hi byte as just the sign
+    call        ProjectAxis                         ; bc = |x| * 256 / z
+    ld          hl,ScreenCenterX
+    ld          a,(UBnkXScaledSign)
+    bit         7,a
+    jr          nz,.NegativeX
     add         hl,bc                               ; hl = Screen Centre + X
-    jp          EyeStoreXPoint
-EyeNegativeXPoint:                                 ; x < 0 so need to subtract from the screen centre position
-    ld          l,ScreenCenterX                     
-    ld          h,0
+    jr          .StoreX
+.NegativeX:
     ClearCarryFlag
     sbc         hl,bc                               ; hl = Screen Centre - X
-EyeStoreXPoint:                                    ; also from LL62, XX3 node heap has xscreen node so far.
-    ex          de,hl
-    ld          (iy+0),e                            ; Update X Point TODO this bit is 16 bit aware just need to fix above bit
-    ld          (iy+1),d                            ; Update X Point
-EyeProcessYPoint:
-    ld          bc,(UBnkZScaled)                    ; Now process Y co-ordinate
-    ld          a,c
-    ld          (varQ),a
-    ld          a,(UBnkYScaled)                     ; XX15  \ rolled x lo
-    call        DIV16Amul256dCUNDOC                 ; a = Y scaled * 256 / zscaled
-    ld          a,(UBnkYScaledSign)                 ; XX15+2 \ sign of X dist
-    JumpOnBitSet a,7,EyeNegativeYPoint             ; LL62 up, -ve Xdist, RU screen onto XX3 heap top of screen is Y = 0
-EyePositiveYPoint:                                  ; Y is positive so above the centre line
-    ld          l,ScreenCenterY
+.StoreX:
+    ld          (iy+0),l
+    ld          (iy+1),h
+    ld          a,(UBnkZScaled)
+    ld          c,a
+    ld          a,(UBnkYScaled)                     ; |y|
+    call        ProjectAxis                         ; bc = |y| * 256 / z
+    ld          hl,ScreenCenterY
+    ld          a,(UBnkYScaledSign)
+    bit         7,a
+    jr          nz,.NegativeY
     ClearCarryFlag
-    sbc         hl,bc                               ; hl = ScreenCentreY - Y coord (as screen is 0 at top)
-    jp          EyeStoreYPoint
-EyeNegativeYPoint:                                  ; this bit is only 8 bit aware TODO FIX
-    ld          l,ScreenCenterY                     
-    ld          h,0
-    add         hl,bc                               ; hl = ScreenCenterY + Y as negative is below the center of screen
-EyeStoreYPoint:                                    ; also from LL62, XX3 node heap has xscreen node so far.
-    ex          de,hl
-    ld          (iy+2),e                            ; Update Y Point
-    ld          (iy+3),d                            ; Update Y Point
+    sbc         hl,bc                               ; hl = ScreenCentreY - Y as +ve y is above the centre line
+    jr          .StoreY
+.NegativeY:
+    add         hl,bc                               ; hl = ScreenCenterY + Y as -ve y is below the centre line
+.StoreY:
+    ld          (iy+2),l
+    ld          (iy+3),h
+    ret
+
+; a = |v| (8 bit), c = z (8 bit) -> bc = min(|v| * 256 / z, NodeProjectMax); z = 0 gives $FFFF so also clamps
+; uses DIV16UNDOC from the banked maths (already paged in by ScaleXX16Matrix197)
+ProjectAxis:
+    ld          b,a                                 ; bc = |v| * 256
+    ld          e,c                                 ; de = z
+    ld          d,0
+    ld          c,0
+    call        DIV16UNDOC                          ; bc = bc / de
+    ld          a,b
+    cp          high (NodeProjectMax + 1)
+    ret         c                                   ; < 2048 so in range
+    ld          bc,NodeProjectMax
     ret
     
     
@@ -1503,22 +1522,68 @@ EyeStoreYPoint:                                    ; also from LL62, XX3 node he
 ; ---------------------------------------------------------------------------------------------------------------------------------    
 
 ; DIot seem to lawyas have Y = 0???
-ProcessDot:            ; break
-                        call    CopyRotmatToTransMat             ;#01; Load to Rotation Matrix to XX16, 16th bit is sign bit
-                        call    ScaleXX16Matrix197               ;#02; Normalise XX16
-                        call    LoadCraftToCamera                ;#04; Load Ship Coords to XX18
-                        call    InverseXX16                      ;#11; Invert rotation matrix
-                        ld      hl,0
-                        ld      (UBnkXScaled),hl
-                        ld      (UBnkYScaled),hl
-                        ld      (UBnkZScaled),hl
+; A dot is the ship's origin, so its screen position is the projected ship position and needs no rotation.
+; Positions are 24 bit lead sign (sgn byte bit 7 = sign, bits 0-6 = top of the magnitude). Dots are drawn out to
+; ShipMaxDistance, past the 15 bit range TransposeXX12ByShipToXX15 handles (z >= 32768 read as negative and
+; clamped to 4), so the full magnitudes are scaled down to 8 bit here and handed straight to ProjectNodeToEye
+DotPosition             DS      9                       ; x, y, z magnitudes as lo, hi, top with the signs removed
+ProcessDot:             ld      hl,UBnKxlo
+                        ld      de,DotPosition
+                        ld      bc,9
+                        ldir
+                        ld      hl,DotPosition+2        ; split the signs off the top bytes
+                        ld      a,(hl)
+                        and     SignOnly8Bit
+                        ld      (UBnkXScaledSign),a
+                        res     7,(hl)
+                        ld      hl,DotPosition+5
+                        ld      a,(hl)
+                        and     SignOnly8Bit
+                        ld      (UBnkYScaledSign),a
+                        res     7,(hl)
+                        ld      hl,DotPosition+8
+                        res     7,(hl)                  ; z is in front of us (CheckVisible) so positive
                         xor     a
-                        call    XX12EquNodeDotOrientation
-                        call    TransposeXX12ByShipToXX15
-                        call    ScaleNodeTo8Bit                     ; scale to 8 bit values, why don't we hold the magnitude here?x
+                        ld      (UBnkZScaledSign),a
+.ScaleLoop:             ld      a,(DotPosition+1)       ; halve x, y, z together until every hi and top byte is 0
+                        ld      hl,DotPosition+2
+                        or      (hl)
+                        ld      hl,DotPosition+4
+                        or      (hl)
+                        inc     hl
+                        or      (hl)
+                        ld      hl,DotPosition+7
+                        or      (hl)
+                        inc     hl
+                        or      (hl)
+                        jr      z,.Scaled
+                        ld      hl,DotPosition+2        ; x >>= 1
+                        srl     (hl)
+                        dec     hl
+                        rr      (hl)
+                        dec     hl
+                        rr      (hl)
+                        ld      hl,DotPosition+5        ; y >>= 1
+                        srl     (hl)
+                        dec     hl
+                        rr      (hl)
+                        dec     hl
+                        rr      (hl)
+                        ld      hl,DotPosition+8        ; z >>= 1
+                        srl     (hl)
+                        dec     hl
+                        rr      (hl)
+                        dec     hl
+                        rr      (hl)
+                        jr      .ScaleLoop
+.Scaled:                ld      a,(DotPosition)
+                        ld      (UBnkXScaled),a
+                        ld      a,(DotPosition+3)
+                        ld      (UBnkYScaled),a
+                        ld      a,(DotPosition+6)
+                        ld      (UBnkZScaled),a
                         ld      iy,UBnkNodeArray
-                        call    ProjectNodeToEye
-                        ret
+                        jp      ProjectNodeToEye
                 
 ; .....................................................
 ; Plot Node points as part of debugging

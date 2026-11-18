@@ -81,16 +81,16 @@ ThargoidEdgesSize: equ $ - ThargoidEdges
 
 ThargoidEdgesCnt: equ ThargoidEdgesSize/4	
 
-ThargoidNormals:	DB $5F, $67, $3C, $19
-	DB $7F, $67, $3C, $19
-	DB $7F, $67, $19, $3C
-	DB $3F, $67, $19, $3C
-	DB $1F, $40, $00, $00
-	DB $3F, $67, $3C, $19
-	DB $1F, $67, $3C, $19
-	DB $1F, $67, $19, $3C
-	DB $5F, $67, $19, $3C
-	DB $9F, $30, $00, $00
+ThargoidNormals:        DB $5F, $CD, $77, $32    ;00
+                        DB $7F, $CD, $77, $32    ;01
+                        DB $7F, $CD, $32, $77    ;02
+                        DB $3F, $CD, $32, $77    ;03
+                        DB $1F, $80, $00, $00    ;04
+                        DB $3F, $CD, $77, $32    ;05
+                        DB $1F, $CD, $77, $32    ;06
+                        DB $1F, $CD, $32, $77    ;07
+                        DB $5F, $CD, $32, $77    ;08
+                        DB $9F, $60, $00, $00    ;09
 
 	
 ThargoidNormalsSize: equ $ - ThargoidNormals	
