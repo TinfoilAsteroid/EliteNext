@@ -1,8 +1,12 @@
+; A = A / D * 96 unsigned (A < D, else 96), the 6502 TIS2 shift and subtract. The remainder is 9 bit after each shift:
+; when the shift carries out it is over 255 so over D and must be subtracted (that carry was once dropped, so with D
+; over 128 the answer could be anything, e.g. 67 / 137 gave 1 not 46)
 AequAdivQmul96ABS:      JumpIfAGTENusng d, .TIS2AccGTEQ			; if A >= Q then return with a 1 (unity i.e. 96) with the correct sign
                         ld			b,$FE						; division roll (replaced varT)
 .TIS2RollTLoop:			sla			a		
+                        jr          c,.TIS2Sub                  ; 9 bit remainder >= 256 > d
                         JumpIfALTNusng d,.TIS2SkipSub           ; a < d so don;t subtract
-                        sbc			a,d							; do subtraction with carry
+.TIS2Sub:               sub			d							; remainder - d (mod 256 is right for the 9 bit case)
                         scf
                         rl			b							; T rolled left to push bit out the end
                         jr			c,.TIS2RollTLoop				; if we still have not hit the empty marker continue

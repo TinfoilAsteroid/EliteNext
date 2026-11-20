@@ -187,7 +187,7 @@ draw_system_data_menu:  MMUSelectLayer1
 .Drawbox:               call    l2_draw_menu_border
                         ld      b,115
                         ld      hl,8
-                        ld      de,86
+                        ld      de,87
                         ld      c,$C0
                         call    l2_draw_horz_line_320
                         ZeroA

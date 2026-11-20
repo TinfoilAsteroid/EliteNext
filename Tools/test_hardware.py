@@ -23,15 +23,23 @@ SJASM = shutil.which("sjasmplus") or r"C:\CSpect\sjasmplus.exe"
 COLOUR_TRANSPARENT = 0xE3
 
 
+def source_defines():
+    """the names eliteNext.asm DEFINEs (not commented out)"""
+    src = open(os.path.join(et.ROOT, "eliteNext.asm"), encoding="latin-1").read()
+    return {w[1] for w in (l.split() for l in src.splitlines()) if len(w) > 1 and w[0] == "DEFINE"}
+
+
 class Build:
     """a build's .nex and symbols, in a temporary folder"""
 
-    def __init__(self, hardware):
+    def __init__(self, hardware, defines=()):
         self.tmp = tempfile.mkdtemp(prefix="elitehw_")
         root = et.ROOT.replace("\\", "/")
         args = [SJASM, "--nologo", "--msg=war", f"-I{root}", f"--sym={self.tmp}/build.sym"]
         if hardware:
             args.append("-DREAL_HARDWARE")
+        args += [f"-D{d}" for d in defines if d.split("=")[0] not in source_defines()]  # e.g. SOLID_HULL (sjasmplus stops
+        #                                                                                 on a define given twice)
         r = subprocess.run(args + [f"{root}/eliteNext.asm"], cwd=self.tmp, capture_output=True, text=True,
                            errors="replace")
         self.nex = os.path.join(self.tmp, "EliteNHW.nex" if hardware else "EliteN.nex")

@@ -1,10 +1,10 @@
 ;    DEFINE DEBUGMODEL 1
 Missile:	            DB $00                     ; Number of cargo canisters released when destroyed
                         DW $0640                   ; Ship's targetable area LoHi
-                        DW MissileEdges            ; Edge Data 
+                        DW MissileEdges            ; Edge Data
                         DB MissileEdgesSize        ; Size of Edge Data
                         DB $00                     ; Gun Vertex Byte offset
-                        DB $0A                     ; Explosion Count 
+                        DB $0A                     ; Explosion Count
                         DB MissileVertSize /6      ; Vertex Count /6
                         DB MissileVertSize         ; Vertex Count
                         DB MissileEdgesCnt         ; Edges Count
@@ -18,24 +18,24 @@ Missile:	            DB $00                     ; Number of cargo canisters rele
                         DB $00                     ; Laser power and Nbr Missiles
                         DW MissileVertices         ; Verticles Address
                         DB ShipTypeMissile         ; Ship Type
-                        DB 0                       ; NewB Tactics 
-                        DB 0                       ; AI Flags            
+                        DB 0                       ; NewB Tactics
+                        DB 0                       ; AI Flags
                         DB $00                     ; chance of ECM module
-                        DB $FF                              ; Supports Solid Fill = false
-                        DW $0000                            ; no solid data
-                        DB $00                              ; no solid data
-                        
+                        DB $00                              ; Supports Solid Fill = true (Tools/ship_faces.py)
+                        DW MissileFaces                   ; face polygons (SOLID_HULL)
+                        DB MissileFacesSize               ; face table length
+
 ;; Modifications for solid:
 ;; Need a list of triangles, triangle are linked to faces
 ;; so on the verticies we can have an additional link on faces to triangle nbr, we also have to draw in z furthest sequenvce
 
 ;;;     Byte 0 = X magnitide with origin at middle of ship
-;;;		Byte 1 = Y magnitide with origin at middle of ship		
-;;;		Byte 2 = Z magnitide with origin at middle of ship			
+;;;		Byte 1 = Y magnitide with origin at middle of ship
+;;;		Byte 2 = Z magnitide with origin at middle of ship
 ;;;		Byte 3 = Sign Bits of Vertex 7=X 6=Y 5 = Z 4 - 0 = visibility beyond which vertix is not shown
 ;;;		Byte 4 = High 4 bits Face 2 Index Low 4 bits = Face 1 Index
 ;;;		Byte 5 = High 4 bits Face 4 Index Low 4 bits = Face 3 Index
-MissileVertices:    IFDEF DEBUGMODEL	               
+MissileVertices:    IFDEF DEBUGMODEL
                         DB $00,$50,$00,$1F,$00,$00  ; 00 00 Y Tip (Roof)
                         DB $00,$00,$00,$1F,$00,$00  ; 01 04 Y base for all nodes
                         DB $50,$00,$00,$1F,$01,$01  ; 02 08 X Tip (Side)
@@ -68,14 +68,14 @@ MissileVertices:    IFDEF DEBUGMODEL
                         DB $08, $08, $0C, $28, $74, $77
                         DB $08, $08, $0C, $68, $54, $55
                     ENDIF
-MissileVertSize: equ $ - MissileVertices	
-	
-;;;     Byte 0 = Edge visbility Distance if > XX4 distance then won't show	
-;;;		Byte 1 = High 4 bits Face 2 Index Low 4 bits = Face 1 Index			
-;;;		Byte 2 = Byte offset to Point 1 (divide by 4 for index)			
-;;;		Byte 3 = Byte offset to Point 2 (divide by 4 for index)		
-	
-MissileEdges:	    IFDEF DEBUGMODEL	
+MissileVertSize: equ $ - MissileVertices
+
+;;;     Byte 0 = Edge visbility Distance if > XX4 distance then won't show
+;;;		Byte 1 = High 4 bits Face 2 Index Low 4 bits = Face 1 Index
+;;;		Byte 2 = Byte offset to Point 1 (divide by 4 for index)
+;;;		Byte 3 = Byte offset to Point 2 (divide by 4 for index)
+
+MissileEdges:	    IFDEF DEBUGMODEL
                         DB $1F,$00,$00,$04 ; Y
                         DB $1F,$00,$08,$0C ; X
                         DB $1F,$00,$10,$14 ; Z
@@ -111,15 +111,15 @@ MissileEdges:	    IFDEF DEBUGMODEL
                         DB $08, $76, $30, $34
                         DB $08, $65, $2C, $38
                     ENDIF
-MissileEdgesSize: equ $ - MissileEdges	
-	
-	
-MissileEdgesCnt: equ MissileEdgesSize/4	
-	
-;;;		Byte 0 = Sign Bits of Vertex 7=X 6=Y 5 = Z, bits 4 to 0 are distance for always visible 			
-;;;		Byte 1 = X Lo			
-;;;		Byte 2 = Y Lo			
-;;;		Byte 3 = Z Lo		
+MissileEdgesSize: equ $ - MissileEdges
+
+
+MissileEdgesCnt: equ MissileEdgesSize/4
+
+;;;		Byte 0 = Sign Bits of Vertex 7=X 6=Y 5 = Z, bits 4 to 0 are distance for always visible
+;;;		Byte 1 = X Lo
+;;;		Byte 2 = Y Lo
+;;;		Byte 3 = Z Lo
 MissileNormals:	    IFDEF DEBUGMODEL
                         DB $1F,$00,$10,$00
                         DB $1F,$10,$00,$00
@@ -136,6 +136,26 @@ MissileNormals:	    IFDEF DEBUGMODEL
                         DB $1F, $00, $20, $00
                         DB $3F, $00, $00, $B0
                     ENDIF
-	
-MissileNormalsSize: equ $ - MissileNormals	
-MissileLen: equ $ - Missile	
+
+MissileNormalsSize: equ $ - MissileNormals
+MissileLen: equ $ - Missile
+
+; --- SOLID_HULL face table: generated by Tools/ship_faces.py from the edges above, do not edit ---
+MissileFaces:          DB 13                     ; records: DW visible mask, DB n, n vertices x4
+                        DW $0001 : DB 3, $00, $0C, $10    ; face 0
+                        DW $0002 : DB 3, $00, $04, $10    ; face 1
+                        DW $0004 : DB 3, $00, $04, $08    ; face 2
+                        DW $0008 : DB 3, $00, $08, $0C    ; face 3
+                        DW $0010 : DB 4, $04, $08, $14, $18    ; face 4
+                        DW $0020 : DB 4, $04, $10, $1C, $18    ; face 5
+                        DW $0040 : DB 4, $0C, $10, $1C, $20    ; face 6
+                        DW $0080 : DB 4, $08, $0C, $20, $14    ; face 7
+                        DW $0100 : DB 4, $1C, $20, $14, $18    ; face 8
+                        DW $01C0 : DB 3, $20, $30, $34    ; fin 0, seen with faces 6, 7, 8
+                        DW $0160 : DB 3, $1C, $2C, $38    ; fin 1, seen with faces 5, 6, 8
+                        DW $0190 : DB 3, $14, $24, $3C    ; fin 2, seen with faces 4, 7, 8
+                        DW $0130 : DB 3, $18, $28, $40    ; fin 3, seen with faces 4, 5, 8
+                        DB 0                        ; phase 2 polygons, drawn after the hull: DW mask, DB type, n, vertices
+                        DB 0                        ; lone lines: DW visible mask, DB v0, v1 x4
+MissileFacesSize        equ $ - MissileFaces
+; --- end of generated face table ---

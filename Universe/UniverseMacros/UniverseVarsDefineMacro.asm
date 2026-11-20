@@ -1,88 +1,13 @@
-; -- AI Core data
+; -- The planet's size and colours (only the planet uses this). It also held the meridian / crater drawing's working
+; variables (BLINE, the plot heaps, the sin / cos terms, STP, the planet type...), unused since the planets are solid:
+; they are in Unused/Unused/universe_unused.asm
 UnivCoreAIVarsMacro:        MACRO  prefix1?
-prefix1?_BnKRotXCounter             DB  0                       ; INWK +29
-prefix1?_BnKRotZCounter             DB  0                       ; INWK +30
-prefix1?_BnkCam0yLo                 DB  0                       ; INWK +33 ????
-prefix1?_BnkCam0yHi                 DB  0                       ; INWK +34?????
-prefix1?_BnKShipType                DB  0
-        
-; Used to make 16 bit reads a little cleaner in source code
-prefix1?_BnKzPoint                  DS  3
-prefix1?_BnKzPointLo                equ prefix1?_BnKzPoint
-prefix1?_BnKzPointHi                equ prefix1?_BnKzPoint+1
-prefix1?_BnKzPointSign              equ prefix1?_BnKzPoint+2
-
-; Used for medridan drawing routines
-prefix1?_BnKCx                      DW  0
-prefix1?_BnKCxSign                  EQU prefix1?_BnKCx+1
-prefix1?_BnKCy                      DW  0
-prefix1?_BnKCySign                  EQU prefix1?_BnKCy+1
-prefix1?_BnKUx                      DW  0
-prefix1?_BnKUxSign                  EQU prefix1?_BnKUx+1
-prefix1?_BnKUy                      DW  0
-prefix1?_BnKUySign                  EQU prefix1?_BnKUy+1
-prefix1?_BnKVx                      DW  0
-prefix1?_BnKVxSign                  EQU prefix1?_BnKVx+1
-prefix1?_BnKVy                      DW  0
-prefix1?_BnKVySign                  EQU prefix1?_BnKVy+1
-prefix1?_BnKSinCNT2                 DB  0
-prefix1?_BnKSinCNT2Sign             DB  0
-prefix1?_BnKCosCNT2                 DB  0
-prefix1?_BnKCosCNT2Sign             DB  0
-prefix1?_BnKUxCos                   DB  0
-prefix1?_BnKUxCosSign               DB  0
-prefix1?_BnKUyCos                   DB  0
-prefix1?_BnKUyCosSign               DB  0
-prefix1?_BnKVxSin                   DB  0
-prefix1?_BnKVxSinSign               DB  0
-prefix1?_BnKVySin                   DB  0
-prefix1?_BnKVySinSign               DB  0
-prefix1?_BnKVxVySinSign             DB  0
-prefix1?_BnKUxUyCosSign             DB  0
-prefix1?_BnKUxCosAddVxSin           DW  0
-prefix1?_BnKUyCosSubVySin           DW  0
-prefix1?_BnKAngle                   DB  0
-s
-        
-; General local variables used in universe object
-prefix1?_BnKTGT                     DB  0
-prefix1?_BnKSTP                     DB  0
-prefix1?_BnKLSP                     DS  50              ; move to planet or L2 code ?
-prefix1?_BnKCNT                     DB  0               ; 93
-prefix1?_BnKCNT2                    DB  0               ; 93
-; Replaced LSX2 and LSY2 with plot heaps of 64 x 2 bytes each + 1 pair for initial point
-    IFDEF MERIDANLINEDEBUG
-prefix1?_BnKPlotXHeap               DS  $82			   ; &0EC0	    \ LSX2 bline buffer size?
-prefix1?_BnKPlotYHeap               DS  $82            ; &0F0E	    \ LSY2
-    ENDIF
-prefix1?_BnKPlotIndex               DB  0
-prefix1?_BnKFlag					DB  0
-
-; Post clipping the results are now 8 bit
-prefix1?_BnKVisibility              DB  0               ; replaces general purpose xx4 in renderingW
-prefix1?_BnKProjectedY              DB  0
-prefix1?_BnKProjectedX              DB  0
-prefix1?_BnKProjected               equ prefix1?_BnKProjectedY  ; resultant projected position
-prefix1?_XX15Save                   DS  8
-prefix1?_XX15Save2                  DS  8
 prefix1?_Radius                     DB  0
-; Used when drawing curves for the end value from previous calls to BLINE
-; held as 16 bit values pre clipping
-prefix1?_PrevXPos                   DW 0
-prefix1?_PrevYPos                   DW 0
-prefix1?_NewXPos                    DW 0
-prefix1?_NewYPos                    DW 0
-                            
-; Colouration
-; For planets, Colour 1 is main colour, Colour 2 is outer rim
-; if we are going to do outer rim then may have colour thickeness as number of pixels to simulat atmosphere
+; For planets, Colour 1 is main colour, Colour 2 is outer rim, Colour2Thickness its width in pixels (atmosphere)
 prefix1?_Colour1                    DB 0
 prefix1?_Colour2                    DB 0
 prefix1?_Colour2Thickness           DB 0
-
-;        -- _pl(prf .. "Radius                     DW  0
-;        -- _pl(prf .. "RadiusHigh                 equ prefix1?_Radius+1
-                             ENDM
+                            ENDM
 
 UnivPosVarsMacro:            MACRO  prefix1?
 prefix1?_BnKxlo                     DB  0                       ; INWK+0

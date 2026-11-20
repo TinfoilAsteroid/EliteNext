@@ -28,8 +28,8 @@ l2_draw_vert_line:      ld 		a,b
                         ret		z
                         cp		1
                         jr		nz,.multiplepixels
-.itsonepixel:           l2_plot_macro; call	l2_plot_pixel
-                        ret
+.itsonepixel:           ld      a,e                         ; colour (l2_plot_macro would use line_gfx_colour)
+                        jp      l2_plot_pixel
 .multiplepixels:						; so now we have at least 2 pixels to plot
 .clipto192:             ld		a,d							; get length
                         add		a,b							; a= row + length
@@ -91,34 +91,35 @@ l2_draw_vert_line_to:   ld		a,b
                         ; no return needed
 	
     
-;; ">l2_draw_vert_line"
-; ">b = row; hl = col, e = length, c = color"
-l2_draw_vert_line_320:  ZeroA
-                        or      e
+;; ">l2_draw_vert_line_320"
+; ">b = row; hl = col, e = length in pixels, c = color"
+; ">clipped at the bottom (row 255); 1 pixel is poked, longer lines use the DMA as in 320 mode a column is
+; ">contiguous in memory (the screen is in effect rotated 90 degrees). Destroys a, bc, de, hl"
+l2_draw_vert_line_320:  ld      a,e
+                        and     a
                         ret     z							; if its zero length then just return
-                        push    bc
+.clipBottom:            ld      a,b                         ; row + length > 256?
+                        add     a,e                         ; .
+                        jr      nc,.lengthOK                ; .
+                        jr      z,.lengthOK                 ; exactly 256 is fine
+                        xor     a                           ; length = 256 - row
+                        sub     b                           ; .
+                        ld      e,a                         ; .
+.lengthOK:              push    bc
 .selectBank:            call    asm_l2_320_col_bank_select  ; select bank and load row into h
                         pop     bc
                         ld      l,b                         ; hl is adjusted address
-                        push    hl
-                        dec     hl
-                        ClearCarryFlag
-.checkVertLength:       ld      a,b
-                        dec     a
-                        ClearCarryFlag
-                        adc     e                           ; check if it oversplills
-                        jp      nc,.lengthOK
-.tooLong:               adc     e                           ; as a now is negive add length results
-                        dec     a                           ; a = adjsted length
-                        ld      e,a                         ;                        
-.lengthOK:              ld		a,c                         ; set colour
-                        pop     bc                          ; bc = memory address
+                        ld      a,e                         ; just 1 pixel?
+                        cp      1                           ; .
+                        jr      nz,.dmaLine                 ; .
+                        ld      (hl),c                      ; then poke it
+                        ret
+.dmaLine:               ld		a,c                         ; set colour
 ; we now hijack l2_draw_horz_dma as in 320 mode the screen is in effect rotated 90 degrees from a memory perspective
-; de is already length, bc is already target
                         ld		(l2_horz_pixel),a  
                         ld      d,0                         ; de = length 
                         ld      (l2_horz_lenlo),de
-                        ld      (l2_horz_target),bc
+                        ld      (l2_horz_target),hl
 .write_dma:             ld 		hl, l2_horz_line            ;
                         ld 		b, l2_horz_cmd_len          ; 
                         ld		c,IO_DATAGEAR_DMA_PORT      ; 

@@ -31,7 +31,7 @@ AddPirateCount:         MACRO
 
 SubPirateCount:         MACRO
                         ld      hl,PirateCount
-                        inc     (hl)     
+                        dec     (hl)     
                         ENDM
 
 AreCopsPresent:         MACRO
@@ -48,11 +48,17 @@ SetSlotAToUnivClass:    MACRO
                         call    SetSlotAToClassB
                         ENDM
 
+; jumps to Target if JunkCount is under the limit: 3 in the space station safe zone (SpaceStationSafeZone 0), 5 outside;
+; uses a, b, hl. (It once jumped when JunkCount was over the limit)
 TestRoomForJunk:        MACRO   Target
-                        ld      a,3
-                        JumpIfMemTrue  SpaceStationSafeZone, .DoTest
-                        add     a,2
-.DoTest                 JumpIfALTMemusng    JunkCount, Target
+                        ld      b,3
+                        ld      a,(SpaceStationSafeZone)
+                        and     a
+                        jr      z,.DoTest
+                        ld      b,5
+.DoTest                 ld      a,(JunkCount)
+                        cp      b
+                        jp      c,Target
                         ENDM
 
 JumpIfSpaceStation:     MACRO   Target

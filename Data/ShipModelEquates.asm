@@ -25,7 +25,11 @@ ShipECMFittedChanceOffset   equ 26
 ShipSolidFlagOffset         equ 27 ; Intially for non cargo these will be garbage
 ShipSolidFillOffset         equ 28
 ShipSolidLenOffset          equ 29
-ShipDataLength              equ ShipECMFittedChanceOffset+1
+ShipDataLength              equ ShipSolidLenOffset+1         ; (was ShipECMFittedChanceOffset + 1: the solid fields were never copied)
+; SOLID_HULL phase 2 polygons (ports, Tools/ship_faces.py PORTS): each one's type, which picks its colour
+; (SolidPortColours, Layer2Graphics/l2_solid_hull.asm); later an engine may take a thrust colour while manoeuvring
+PortEngine                  equ 0                           ; engine ports: dark grey
+PortEntrance                equ 1                           ; a station's entrance: black
 
 CobraTablePointer           equ 43
 ;29 faulty

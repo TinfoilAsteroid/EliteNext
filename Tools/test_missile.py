@@ -195,6 +195,200 @@ def test_SeekingLogic():
     sd.close()
 
 
+def test_trader_steering():
+    """ShipHeadingToUnivBody (non hostile ships) steering to the planet or
+    sun, as the missile: TacticsVector = ship - body (saturating), inside the
+    safe zone cube (|d| < $C000 on every axis) it stops there (docking / jump,
+    nothing yet), else the vector is normalised to 96 and negated (body -
+    ship) and ShipSeekingLogic sets pitch 2 with the roof dot's sign flipped
+    if |roof| * 2 >= 16, roll 2 with sign side xor roof if |side| * 2 >= 16,
+    accelerate 3 if the nose dot >= 22, brake 1 if behind or >= 18, else 0;
+    with the body behind (nose dot -ve) it keeps pitching so it turns round"""
+    sd, cpu = booted()
+    r = et.rnd(15)
+    rows = {"nose": "UBnkrotmatNosevX", "roof": "UBnkrotmatRoofvX", "side": "UBnkrotmatSidevX"}
+    bodies = {1: (sym["BankPlanetData"], "P_BnKxlo"), 2: (sym["BankSunData"], "SBnKxlo")}
+    seen = set()
+    stopped = 0
+    for n in range(1200):
+        which = r.choice((1, 2))
+        ship = [r.randrange(-(1 << 20), 1 << 20) >> r.randrange(0, 12) for _ in range(3)]
+        big = 1 << r.choice((15, 17, 20, 23))
+        body = [r.randrange(-big + 1, big) for _ in range(3)]
+        if n % 10 == 0:
+            body = [s + r.randrange(-0xBFFF, 0xC000) for s in ship]    # inside the zone
+        if n % 25 == 1:
+            body = [-(1 << 23) + 1 if s >= 0 else (1 << 23) - 1 for s in ship]   # ship - body saturates
+        body = [max(-SM24, min(SM24, c)) for c in body]
+        for i, c in enumerate(ship):
+            ship_wr(cpu, 1, sym["UBnKxlo"] + 3 * i, sm(c), 3)
+        page, name = bodies[which]
+        p = cpu.page(page)
+        for i, c in enumerate(body):
+            for k in range(3):
+                p[sym[name] - 0xC000 + 3 * i + k] = sm(c) >> (8 * k) & 255
+        mat = {}
+        for k, row in rows.items():
+            mat[k] = [r.randrange(0, 0x61) | r.choice((0, 0x80)) for _ in range(3)]
+            for i, hb in enumerate(mat[k]):
+                ship_wr(cpu, 1, sym[row] + 2 * i, hb << 8 | r.randrange(256), 2)
+        ship_wr(cpu, 1, "UBnKHeadingToPlanetOrSun", which)
+        for v in ("UBnKRotZCounter", "UBnKRotXCounter", "UBnKAccel"):
+            ship_wr(cpu, 1, v, 0x55)
+        et.page_in(cpu, 6, bank(1))
+        et.call(cpu, "ShipHeadingToUnivBody")
+        check(cpu.mmu[6] == bank(1), f"slot 6 holds page {cpu.mmu[6]}, not the ship's {bank(1)}")
+        d = [max(-SM24, min(SM24, s - b)) for s, b in zip(ship, body)]
+        got = (ship_rd(cpu, 1, "UBnKRotZCounter"), ship_rd(cpu, 1, "UBnKRotXCounter"), ship_rd(cpu, 1, "UBnKAccel"))
+        if all(abs(c) < 0xC000 for c in d):
+            stopped += 1
+            check(got == (0x55, 0x55, 0x55), f"ship {ship} body {body}: in the zone but steered {got}")
+            continue
+        length = sum(c * c for c in d) ** 0.5
+        v = []
+        for i, c in enumerate(d):
+            a = sym["TacticsVectorX"] + 4 * i
+            lo, hi, sg = et.rd(cpu, a), et.rd(cpu, a + 1), et.rd(cpu, a + 2)
+            exp = 96 * abs(c) / length
+            check(hi == 0 and sg & 0x7F == 0 and -2 < exp - lo < 3.5,    # (NormalizeTactics: a little over 1.5 over at worst)
+                  f"ship {ship} body {body}: axis {i} = {lo:02X} {hi:02X} {sg:02X}, expected {exp:.1f}")
+            if lo:
+                check(sg == (0 if c < 0 else 0x80), f"ship {ship} body {body}: axis {i} sign {sg:02X} (not body - ship)")
+            v.append((lo, sg))
+        nose, nsg = dot(v, mat["nose"])
+        roof, rsg = dot(v, mat["roof"])
+        side, ssg = dot(v, mat["side"])
+        flip = rsg ^ 0x80
+        pitch = (2 | flip) if (roof * 2 & 255) >= 16 or nsg else flip
+        roll = ((2 | ssg) ^ rsg) if (side * 2 & 255) >= 16 else rsg
+        if nsg:
+            accel = 0xFF
+        else:
+            accel = 3 if nose >= 22 else 0xFF if nose >= 18 else 0
+        check(got == (pitch, roll, accel),
+              f"ship {ship} body {body} mat {mat}: dots nose {nose} {nsg:02X} roof {roof} {rsg:02X} side {side} "
+              f"{ssg:02X}; pitch/roll/accel got {got[0]:02X} {got[1]:02X} {got[2]:02X}, "
+              f"expected {pitch:02X} {roll:02X} {accel:02X}")
+        seen.add((pitch & 0x7F != 0, roll & 0x7F != 0, accel, bool(nsg)))
+    check(stopped >= 50, f"only {stopped} cases inside the zone")
+    check(len(seen) >= 8, f"only {len(seen)} kinds of decision covered")
+    sd.close()
+
+
+def test_safe_zone_and_station():
+    """UpdateSafeZone: SpaceStationSafeZone 0 inside the cube |x|, |y|, |z| < $C000 round the planet, $FF outside (it
+    was never set); on flying in with slot 0 (kept for the station) free the station is made there, |normal| * 192 from
+    the planet's centre towards us with its nose (the slot) towards us, as the docking test wants; not made twice"""
+    sd, cpu = booted()
+    import math
+    MATHS_PLANET = {0: sym["BankMathsBankedFns"], 6: sym["BankPlanetData"]}
+    pp = cpu.page(sym["BankPlanetData"])
+    st = sym["BankUNIVDATA0"]
+    r = et.rnd(16)
+    made = 0
+    for n in range(40):
+        inside = n % 4 != 3
+        lim = 0xBFFF if inside else 0x30000
+        planet = [r.randrange(-lim, lim) for _ in range(3)]
+        planet[2] = abs(planet[2]) or 1                    # ahead of us
+        if not inside:
+            planet[r.randrange(3)] = r.choice((-1, 1)) * r.randrange(0xC000, 0x40000)
+        for i, c in enumerate(planet):
+            v = sm(c)
+            for k in range(3):
+                pp[sym["P_BnKxlo"] - 0xC000 + 3 * i + k] = v >> (8 * k) & 255
+        et.call(cpu, "Normalise24IX", mmu=MATHS_PLANET, ix=sym["P_BnKxlo"])
+        for slot in range(sym["UniverseSlotListSize"]):
+            et.wr(cpu, sym["UniverseSlotList"] + slot, 0xFF)
+        et.wr(cpu, "SpaceStationSafeZone", 0xFF)           # coming from outside
+        et.call(cpu, "UpdateSafeZone")
+        zone = et.rd(cpu, "SpaceStationSafeZone")
+        check(zone == (0 if inside else 0xFF), f"{planet}: SpaceStationSafeZone {zone:02X}")
+        if not inside:
+            check(et.rd(cpu, sym["UniverseSlotList"]) == 0xFF, f"{planet}: a station made outside the zone")
+            continue
+        made += 1
+        check(et.rd(cpu, sym["UniverseSlotList"]) != 0xFF and et.rd(cpu, sym["UniverseSlotType"]) == sym["ShipTypeStation"],
+              f"{planet}: slot 0 isn't the station")
+        et.call(cpu, "IsSpaceStationPresent")
+        check(not et.reg(cpu, "carry"), "IsSpaceStationPresent doesn't find it")
+        pos = [unsm(sum(cpu.page(st)[sym["UBnKxlo"] - 0xC000 + 3 * i + k] << (8 * k) for k in range(3))) for i in range(3)]
+        length = math.sqrt(sum(c * c for c in planet))
+        exp = [c - 192 * 255 * c / length for c in planet]
+        check(all(abs(a - b) < 2000 for a, b in zip(pos, exp)), f"{planet}: station at {pos}, expected about {[int(e) for e in exp]}")
+        nose = []
+        for i in range(3):
+            a = sym["UBnkrotmatNosevX"] - 0xC000 + 2 * i
+            hi = cpu.page(st)[a + 1]
+            nose.append(-(hi & 0x7F) if hi & 0x80 else hi & 0x7F)
+        dirn = [-c / length * 96 for c in planet]
+        check(all(abs(a - b) < 6 for a, b in zip(nose, dirn)), f"{planet}: station nose {nose}, expected {[int(d) for d in dirn]}")
+        et.call(cpu, "UpdateSafeZone")                    # still inside: nothing more
+        check(sum(et.rd(cpu, sym["UniverseSlotList"] + k) != 0xFF for k in range(sym["UniverseSlotListSize"])) == 1,
+              f"{planet}: a second object made")
+    check(made >= 20, f"only {made} cases inside")
+    sd.close()
+
+
+def test_player_missile_launch():
+    """IsMissileLockedOn: carry only for a lock ($80 | slot) on an occupied slot ($FF none, $FE targeting, and a lock
+    on an emptied slot clears it); it once tested the zero flag of the wrong bits, so firing unlocked launched at slot
+    14 / 15. LaunchPlayerMissile (MAINLOOP_LAUNCHMISSILE, back on): a missile in a free slot (1 on) aimed at the
+    locked ship, one fewer in the rack, targeting cleared"""
+    sd, cpu = booted()
+    for slot in range(sym["UniverseSlotListSize"]):
+        et.wr(cpu, sym["UniverseSlotList"] + slot, 0xFF)
+    et.wr(cpu, sym["UniverseSlotList"] + 3, 0x05)          # something in slot 3
+    for flag, locked in ((0xFF, False), (0xFE, False), (0x83, True), (0x84, False)):
+        et.wr(cpu, "MissileTargettingFlag", flag)
+        et.call(cpu, "IsMissileLockedOn")
+        check(bool(et.reg(cpu, "carry")) == locked, f"flag {flag:02X}: carry {et.reg(cpu, 'carry')}")
+    check(et.rd(cpu, "MissileTargettingFlag") == 0xFF, "a lock on an empty slot wasn't cleared")
+    et.wr(cpu, "NbrMissiles", 2)
+    et.wr(cpu, "MissileTargettingFlag", 0x03)               # SetMissileLaunch: launch at slot 3
+    et.call(cpu, "LaunchPlayerMissile")
+    slots = [et.rd(cpu, sym["UniverseSlotList"] + k) for k in range(sym["UniverseSlotListSize"])]
+    new = [k for k, v in enumerate(slots) if v != 0xFF and k != 3]
+    check(len(new) == 1 and new[0] >= 1, f"slots {slots}")
+    m = new[0]
+    check(et.rd(cpu, sym["UniverseSlotType"] + m) == sym["ShipTypeMissile"], f"slot {m} isn't a missile")
+    check(ship_rd(cpu, m, "UBnKMissileTarget") == 3, f"missile target {ship_rd(cpu, m, 'UBnKMissileTarget')}")
+    check(et.rd(cpu, "NbrMissiles") == 1, "the rack wasn't reduced")
+    check(et.rd(cpu, "MissileTargettingFlag") == 0xFF, "targeting not cleared")
+    sd.close()
+
+
+def test_collisions():
+    """Collisions back on (were skipped by a DEBUG jp): a ship within 128 on every axis with us at speed 5 or more is
+    destroyed and our front shield takes 128 + its energy / 2, the overflow off our energy (ApplyDamage once treated any
+    energy over 127 as dead); the same ship 65536 further out on an axis isn't close (the sign bytes were ignored, and
+    the closeness test once started with A as UpdateECM left it)"""
+    sd, cpu = booted()
+    for shield, damage, energy in ((200, 50, 200), (40, 100, 200), (40, 100, 30), (0, 255, 255)):
+        et.wr(cpu, "PlayerEnergy", energy)
+        et.call(cpu, "ApplyDamage", a=shield, b=damage)
+        left = shield - damage
+        exp_shield, exp_energy = (left, energy) if left >= 0 else (0, max(0, energy + left))
+        check(et.reg(cpu, "a") == exp_shield and et.rd(cpu, "PlayerEnergy") == exp_energy,
+              f"shield {shield} energy {energy} hit {damage}: shield {et.reg(cpu, 'a')} energy {et.rd(cpu, 'PlayerEnergy')}")
+    for far in (False, True):
+        for slot in range(sym["UniverseSlotListSize"]):
+            et.wr(cpu, sym["UniverseSlotList"] + slot, 0xFF)
+        et.call(cpu, "SpawnShipTypeA", a=sym["ShipID_Viper"])
+        slot = next(k for k in range(1, 12) if et.rd(cpu, sym["UniverseSlotList"] + k) != 0xFF)
+        place(cpu, slot, (10, 5, 40 if not far else 0x10000 + 40), energy=100)   # (raw units: close is hi 0, lo < 128)
+        et.wr(cpu, "DELTA", 10)
+        et.wr(cpu, "ForeShield", 200)
+        et.wr(cpu, "PlayerEnergy", 255)
+        et.wr(cpu, "DockedFlag", sym["StateNormal"])
+        et.call(cpu, "UpdateUniverseObjects", mmu=MATHS)
+        hit = exploding(cpu, slot)
+        check(hit != far, f"{'far' if far else 'close'} ship: exploding {hit}")
+        if not far:
+            check(et.rd(cpu, "ForeShield") < 200, f"shield {et.rd(cpu, 'ForeShield')} after the collision")
+    sd.close()
+
+
 # --- lifespan, hits and the blast ---------------------------------------------
 def missile(cpu, slot, pos, hostile=True, launch=0, now=0):
     """a live missile in slot, heading +z, the BBC missile settings"""

@@ -37,8 +37,6 @@ l1_print_at:                            ; print string at hl to pixel address DE
                         add		a,8
                         ld		e,a							; move 1 screen character right
                         jr		.PrintLoop
-.Clearstackandfinish:   ;pop		de                      ; TODO LOOOKS TO BE A ROGUE POPDE
-                        ret
                      
 
 HexU8Char:       DB "00",0
@@ -325,8 +323,6 @@ l1_print_at_wrap:       ld      iyh,e
 ; but read up until a null or space, take the character count * 8 for pixels
 ; if that is > 238 then force a premature line wrap
                         jr		.PrintLoop
-.Clearstackandfinish:   ;op		de
-                        ret
 .WrapNextLine:           
 .NextLine:              ld      e,iyh
                         ld      a,d

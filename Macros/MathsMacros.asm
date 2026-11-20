@@ -1,5 +1,17 @@
+; ask for sound effect id (SFXLaser ..) to start on the next interrupt; uses a
+PlaySFX:                MACRO   id
+                        ld      a,1
+                        ld      (SoundFxPending+id),a
+                        ENDM
 ZeroA:		            MACRO
                         xor a
+                        ENDM
+; A = A * C / 256 unsigned, uses DE (replaces AequAmulQdiv256u, which read Q from memory)
+AequAmulCdiv256u:       MACRO
+                        ld      d,a
+                        ld      e,c
+                        mul     de
+                        ld      a,d
                         ENDM
 ; sets z flag is HL less than 255 else sets it to nz (note opposite of GT127)
 IsHLGT255:              MACRO

@@ -24,8 +24,9 @@ SpawnSpaceStation:      MMUSelectShipBank1                          ; select ban
                         MMUSelectShipBankA                          ; by paging in bank a then looking up computed bank for model a
                         ld      a,b                                 ; b = computed ship id for bank
                         call    CopyShipToUniverse                  ; copy all the ship data in to the paged in bank
-                        call    UnivSetSpawnPosition                ; set initial spawn position
                         call    UnivInitRuntime                     ; Clear runtime data before startup, iy h and l are already set up
+                        call    UnivSetSpawnPosition                ; set initial spawn position, after the clear: it sets the
+                                                                    ; random roll and pitch (runtime data), which the clear wiped
                         ld      a,(ShipTypeAddr)                    ; get ship type
                         ld      (StartOfUnivT),a                    ; to help debugging we store type too
                         ld      b,a                                 ; and set the type into slot table

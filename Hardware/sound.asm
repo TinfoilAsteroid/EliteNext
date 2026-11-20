@@ -47,45 +47,8 @@ SoundInterruptHandler:  ld      a,(DELTA)
                         ld      hl,LAST_DELTA
                         cp      (hl)
 .SpeedChange:           call    nz, UpdateEngineSound
-.NoSpeedChange:         ld      a,(SoundFxToEnqueue)        ; Check for new sound
-                        cp      $FF
-                        call    nz,EnqueSound
-.NoNewSound:            IFDEF   USETIMER
-                            ld      hl,SoundChannelTimer
-                        ENDIF
-                        ld      de,SoundChannelSeq
-                        ld      b,8
-.ResetLoop:             ld      a,(de)                  ; we only update active channels
-                        cp      $FF
-                        jr      z,.NextCounter
-                        IFDEF   USETIMER
-                            dec     (hl)                    ; so update channel timer
-                            jr      nz,.NextCounter         ; if its not zero then continue
-                        ENDIF
-                        ld      a,8                     ; a now = channel to play
-                        sub     a,b
-                        IFDEF   USETIMER
-                            push    bc,,de,,hl              ; save state
-                        ELSE
-                            push    bc,,de
-                        ENDIF
-                        call    PlaySound               ; play sound
-                        IFDEF   USETIMER
-                            pop     bc,,de,,hl              ; restore state so de = correct timer & hl = correct channel, b = coutner
-                        ELSE
-                            pop     bc,,de              ; restore state so de = correct timer & hl = correct channel, b = coutner
-                        ENDIF
-; If it went negative new sound update
-                        IFDEF   USETIMER
-.ResetTimer:                ld      a,SOUNDSTEPLENGTH       ; as we fallin to this it will auto update counter
-                            ld      (hl),a                  ; so may take it out of playsound routine
-                        ENDIF
-.NextCounter:
-                        IFDEF   USETIMER
-                            inc     hl
-                        ENDIF
-                        inc     de
-                        djnz    .ResetLoop
+.NoSpeedChange:         call    SfxStartPending             ; start requested effects (PlaySFX)
+                        call    SfxStepChannels             ; and play a step of each
                         ret
 
 
@@ -125,14 +88,7 @@ InitAudio:              ld      a, TURBO_CHIP_AY1
                         call    DefaultAYChip
                         WriteTurboRegister ENVELOPE_SHAPE,ENVELOPE_SHAPE_SINGLE_ATTACK_HOLD
                         WriteTurboRegister TONE_ENABLE,   NOISE_CHANNEL_A | NOISE_CHANNEL_B | NOISE_CHANNEL_C
-                        ld      hl,SoundChannelSeq      ; now set up all the channel data to $FF
-                        ld      hl,SoundChannelSeq      ; now set up all the channel data to $FF
-                        ld      a,$FF                   ; which means that it
-                        ld      b,8                     ; has no data to play
-.InitLoop:              ld      (hl),a
-                        inc     hl
-                        djnz    .InitLoop
-                        ret
+                        jp      SfxReset                ; no effects playing
 
 ;Enable with no noise chanels active
 InitAudioMusic:         ld      a, TURBO_CHIP_AY1
@@ -147,144 +103,6 @@ InitAudioMusic:         ld      a, TURBO_CHIP_AY1
                         call    DefaultAYChip
                         WriteTurboRegister ENVELOPE_SHAPE,ENVELOPE_SHAPE_SINGLE_ATTACK_HOLD
                         WriteTurboRegister TONE_ENABLE,   NOISE_CHANNEL_A | NOISE_CHANNEL_B | NOISE_CHANNEL_C
-                        ret
-
-GetSoundAAddressToHL:   MACRO
-                        ld      hl,SFXPointerList
-                        add     a,a
-                        add     hl,a
-                        ld      a,(hl)
-                        inc     hl
-                        ld      h,(hl)
-                        ld      l,a
-                        ENDM
-
-SetIXToChannelA:        MACRO
-                        ld      hl,SoundChannelSeq
-                        add     hl,a
-                        ld      ix,hl
-                        ENDM
-
-SelectChannelMapping:   MACRO
-                        ld      hl,SoundChipMapNumber
-                        add     hl,a
-                        ld      a,(hl)
-                        ENDM
-
-; This version ignores nooise and envelope setup so its always 0 atack hold and
-; noise is pre-configured in channel
-; The channel always holds a pointer to the next block of data to play
-PlayChannelD:           ld      a,(ix+SoundDataPointerOffset)    ; set hl to current data block
-                        ld      l,a                              ; for SFX step
-                        ld      a,(ix+SoundDataPointerOffset1)   ;
-                        ld      h,a                              ;
-                        ld      a,(hl)                           ; get fine
-                        WriteAToTurboRegister d
-                        inc     d                                ; Move to channel coarse
-                        inc     hl
-                        ld      a,(hl)
-                        WriteAToTurboRegister d
-                        ld      a,d
-                        add     a,7
-                        ld      d,a
-                        inc     hl                               ; Get Volume
-                        ld      a,(hl)
-                        WriteAToTurboRegister d
-                        ret
-
-;--- Take the current sound to play, Put it in a noise or tone channel (if bit 1 is clear is a tone only)
-EnqueSound:             ld      a,(SoundFxToEnqueue)                ; Get Sound FX to Enque
-                        JumpIfAGTENusng SFXEndOfList, .InvalidSound ; Invalid sounds get discarded quickly
-.GetSoundData:          ld      e,a                                 ; save SoundFxToEnqeue
-                        and     $01                                 ; even numbers are tone only (Including 0)
-                        jr      nz,.FindFreeNoiseChannel
-.FindFreeToneChannel:   ld      hl,SoundChannelSeq + 2              ; so we start at the first tone channel
-                        ld      d,$FF                               ; d = marker for free slot cp d will be faster in the loop
-                        ld      c,2                                 ; c= current slot
-                        ld      b,7                                 ; b = nbr of slots
-.ToneScanLoop:          ld      a,(hl)                              ; is channel occupied
-                        cp      d
-                        jr      z,.SaveSoundId                      ; if its free then move forward
-                        inc     c                                   ; c is hunting for a free channel
-                        inc     hl                                  ; move tonext address in channel list
-                        djnz    .ToneScanLoop
-.NoFreeSlot:            ret                                         ; no free slot, leave sound enqued
-.FindFreeNoiseChannel:  ld      hl,SoundChannelSeq                  ; We only have 2 noise channels so no need to
-                        ld      c,0                                 ; do a complex loop
-                        ld      a,(hl)
-                        ld      d,$FF                               ; d = marker for free slot
-                        cp      d
-                        jr      z,.SaveSoundId
-                        inc     hl
-                        ld      a,(hl)
-                        cp      d
-.NoNoiseSlot:           ret     nz                                  ; no free slot, leave sound enqued
-.NoiseChannel2:         ld      c,1                                 ; So we have channel 1 free
-.SaveSoundId:           ld      a,e                                 ; get back sound id
-                        GetSoundAAddressToHL                        ; hl = pointer to sfx data
-                        ex      de,hl                               ; save pointer to data also makes loading to (ix) easier
-.SetIXToChannelPointer: ld      hl,SoundChannelSeq                  ; Get the sequence for the
-                        ld      a,c                                 ; respective channel
-                        add     hl,a                                ; that we are looking at
-                        ld      ix,hl                               ; now we can use indexed access
-.GetSFXDataBack:        ex      de,hl                               ; hl = sound fx again
-.LoadSeqCount           ZeroA
-                        ld      (ix+0),a                            ; set SoundChannelSeq[channel] to 0 as its starting
-                        ld      a,(hl)                              ; get the nbr of steps
-                        ld      (ix+SoundLastSeqOffset),a           ; load SoundChannelLastSeq[channel]
-                        IFDEF   USETIMER
-                            ld      a,1                             ; for now we have separate timers, we enque with 1 so the loops starts immediatly
-                            ld      (ix+SoundTimerOffset),a         a; load SoundChannelTimer[channel] with duration
-                        ENDIF
-                        inc     hl                                  ; move hl to first byte of data block
-                        ld      (ix+SoundDataPointerOffset),l       ; load SoundDataPointer[channel] with current data set
-                        ld      (ix+SoundDataPointerOffset1),h
-.InvalidSound:          ld      a,$FF
-                        ld      (SoundFxToEnqueue),a                ; ClearFXEnqeue
-                        ret
-
-PlaySound:              ld      e,a                                 ; save channel number
-                        SetIXToChannelA                             ; We trap for debugging
-.GetCurrentSeq:         ld      a,(ix+0)                            ; for optimisation we
-                        cp      $FF                                 ; will never call this if its $FF
-                        ret     z                                   ; its just a belt n braces
-;--- Play Next Step, we select chip, select channel, set up tone then step, timer & pointer
-.SelectChip             ld      a,(ix+SoundChipMapOffset)           ; get the mapping. bits 1 and 0 hold
-                        ld      d,a                                 ; .
-                        or      %11111100                           ; .
-                        WriteTurboControlA                          ; .
-.CheckLastSeq:          ld      a,(ix+SoundLastSeqOffset)           ; get last in sequence
-                        JumpIfALTNusng  (ix+0),.CompletedSFX        ; if we have gone beyond last then done
-.PlayStep:              ld      a,d                                 ; Get the channel number
-                        and     %00110000
-                        swapnib                                     ; get channel to lower bits
-                        ld      d,a
-                        call    PlayChannelD                        ; play channel D step ix is pointer to correct soundchannelseq
-.UpdateStep:            inc     (ix+0)                              ; next stepssss
-                        IFDEF   USETIMER
-.UpdateTimer:               ld      a,SOUNDSTEPLENGTH
-                            ld      (ix+SoundTimerOffset),a
-                        ENDIF
-.UpdateStepPointer:     ld      e,(ix+SoundDataPointerOffset)       ; move pointer on by 7 bytes
-                        ld      d,(ix+SoundDataPointerOffset+1)     ;
-                        ex      de,hl                               ; hl = current pointer
-                        ld      a,SFXBlockLength                    ; move to next block
-                        add     hl,a                                ; .
-                        ex      de,hl                               ; move to de for load back
-                        ld      (ix+SoundDataPointerOffset),e       ;
-                        ld      (ix+SoundDataPointerOffset+1),d     ;
-                        ret
-.CompletedSFX:          ld      a,(ix+SoundChipMapOffset)           ; channel number is in upper bits
-                        swapnib                                     ; so we need it in
-                        and     %00000011                           ; lower for selecting volume register
-                        add     a,CHANNEL_A_AMPLITUDE               ; select the register
-                        WriteTurboRegisterA 0                       ; set volume to 0
-                        WriteTurboRegister ENVELOPE_PERIOD_FINE,0
-                        WriteTurboRegister ENVELOPE_PERIOD_COARSE,0
-                        WriteTurboRegister ENVELOPE_SHAPE,ENVELOPE_SHAPE_SINGLE_ATTACK_HOLD
-                        WriteTurboRegister TONE_ENABLE,   NOISE_CHANNEL_A | NOISE_CHANNEL_B | NOISE_CHANNEL_C
-                        ld      a,$FF                               ; set sequence to FF to denote
-                        ld      (ix+0),a                            ; channel is now free
                         ret
 
 ; Engine Sound is always a priority so gets a dedicated channel
@@ -334,67 +152,374 @@ UpdateEngineSound:      SelectAY TURBO_CHIP_AY1
                         ld      (LAST_DELTA),a
                         ret
 
-SoundLabel              DB      "Sound Channels  "
-SoundChannelSeq         DS      8   ; The current step in the SFX or $FX for empty
-SoundChannelLastSeq     DS      8   ; A copy of SFX length to save an extra lookup, $FF means 1 step always on, $00 means off
-SoundChannelTimer       DS      8   ; The count down to next sequence
-SoundDataPointer        DS      2*8 ; pointer to current sound step
-;                  Channel/Chip B/1  C/1  A/2  B/2  C/2  A/3  B/3  C/3
-SoundChipMapNumber      DB      $10 | TURBO_CHIP_AY1, $20 | TURBO_CHIP_AY1
-                        DB      $00 | TURBO_CHIP_AY2, $10 | TURBO_CHIP_AY2 | $20 | TURBO_CHIP_AY2
-                        DB      $00 | TURBO_CHIP_AY2, $10 | TURBO_CHIP_AY3 | $20 | TURBO_CHIP_AY3
-SoundLastSeqOffset      EQU     8
-SoundTimerOffset        EQU     SoundLastSeqOffset + 8
-SoundDataPointerOffset  EQU     SoundTimerOffset + 8
-SoundDataPointerOffset1 EQU     SoundTimerOffset + 9
-SoundChipMapOffset      EQU     SoundDataPointerOffset + 16
-;Chip map is            bits 5,4 channel letter A = 0 B =1 C = 2    1,0 Chip Number
-;Mapping                0 = 1B, 1 = 1C, 3=2A, 4 = 2B, 5=2C, 6 = 3A, 7 = 3B, 8 = 3C
-;                       Chip 1 Engine, noise channel but engine noise period is priority
-;                       Chip 2 General FX, no noise
-;                       Chip 3 General FX, no noise
+;----------------------------------------------------------------------------------------------------------------------------------
+; Sound effects. The game asks for one with PlaySFX id (Macros: SoundFxPending[id] = 1, a single store so it is safe
+; against this interrupt); each interrupt SfxStartPending starts every pending one on a free channel and SfxStepChannels
+; plays one step (tone period and volume) of every running one, so a step is a frame. Channels: AY1 B and C, AY2 A B C,
+; AY3 A B C (AY1 A is the engine, UpdateEngineSound). Tones only: InitAudio's mixer has the noise off. A request with
+; every channel busy is dropped. (This replaces EnqueSound / PlaySound, whose register numbers were only right for
+; channel A, whose channel map had 6 entries for 8 channels, and which nothing ever asked for a sound)
+SfxChannels             equ 8
+SfxChannelChip:         DB      TURBO_MANDATORY | TURBO_LEFT | TURBO_RIGHT | TURBO_CHIP_AY1
+                        DB      TURBO_MANDATORY | TURBO_LEFT | TURBO_RIGHT | TURBO_CHIP_AY1
+                        DB      TURBO_MANDATORY | TURBO_LEFT | TURBO_RIGHT | TURBO_CHIP_AY2
+                        DB      TURBO_MANDATORY | TURBO_LEFT | TURBO_RIGHT | TURBO_CHIP_AY2
+                        DB      TURBO_MANDATORY | TURBO_LEFT | TURBO_RIGHT | TURBO_CHIP_AY2
+                        DB      TURBO_MANDATORY | TURBO_LEFT | TURBO_RIGHT | TURBO_CHIP_AY3
+                        DB      TURBO_MANDATORY | TURBO_LEFT | TURBO_RIGHT | TURBO_CHIP_AY3
+                        DB      TURBO_MANDATORY | TURBO_LEFT | TURBO_RIGHT | TURBO_CHIP_AY3
+SfxChannelVoice:        DB      1, 2, 0, 1, 2, 0, 1, 2              ; A = 0, B = 1, C = 2
+SfxChannelLeft:         DS      SfxChannels                         ; steps still to play, 0 = free
+SfxChannelPtr:          DS      SfxChannels * 2                     ; the next step, 0 once silenced
+SfxChannelSilence:      DS      SfxChannels                         ; non 0: the effect just ended, set the volume to 0
 
-;--- Data sets for Sound
-;--- Sound Channels are 0 to 9 AY1 A B C AY2 A B C AY3 A B C
-;--- Sounds can not enqueu, the find a free slot & SoundFxtoEnqueue gets zeroed or it gets left
-;--- AY1 channel 1 is reserved for engine noise as its calculated on the fly
-; Predefined value for each channel to load to $FFFD before setting up tone
-; Hcops a copy of the 3 chips register 7
+; d = register, a = value on the chip already selected; uses bc
+SfxWriteReg:            ld      bc,TURBO_SOUND_NEXT_CONTROL
+                        out     (c),d
+                        ld      b,$BF
+                        out     (c),a
+                        ret
 
+; e = channel: select its chip, d = its voice (0 to 2); uses a, bc, hl
+SfxSelectChannel:       ld      hl,SfxChannelChip
+                        ld      a,e
+                        add     hl,a
+                        ld      a,(hl)
+                        ld      bc,TURBO_SOUND_NEXT_CONTROL
+                        out     (c),a
+                        ld      hl,SfxChannelVoice
+                        ld      a,e
+                        add     hl,a
+                        ld      d,(hl)
+                        ret
 
-; StepListArray
-;     TonePitch         DW      4 bits unused + 12 bits
-;     NoisePitch        DB      5 bit or $FF for no noise
+; start every requested effect (SoundFxPending, main memory)
+SfxStartPending:        ld      hl,SoundFxPending
+                        ld      c,0                                 ; c = effect id
+.Loop:                  ld      a,(hl)
+                        and     a
+                        jr      z,.Next
+                        ld      (hl),0
+                        push    bc,,hl
+                        ld      a,c
+                        call    SfxStart
+                        pop     bc,,hl
+.Next:                  inc     hl
+                        inc     c
+                        ld      a,c
+                        cp      SFXCount
+                        jr      c,.Loop
+                        ret
 
-; SFX Format
-; SFXPointerList - Odd numbers are tone, Even Numbers have noise too, optimisation for channel handling
-SoundLabelSFX   DB      "Sound Data      "
-SFXPointerList  dw      SFXLaser
-SFXEndOfList    EQU     1
-SFXBlockLength  EQU     3
-SFXFineOffset   EQU     0
-SFXCorseOffset  EQU     1
-SFXVolOffset    EQU     2
-;                       Step Count
-SoundLaser      DB      "Laser  "
-SFXLaser        db      11
-;                       Tone
-;                      Fine Crs  Vol
-               db      $5F, $00, $0E
-               db      $39, $00, $0E
-               db      $47, $00, $0D
-               db      $5E, $00, $0C
-               db      $6E, $10, $0A
-               db      $76, $00, $08
-               db      $76, $00, $07
-               db      $06, $01, $06
-               db      $2E, $01, $03
-               db      $16, $01, $03
-               db      $03, $00, $01
+; a = effect id: on the first free channel (dropped if none)
+SfxStart:               ld      hl,SFXPointerList                   ; de = its data
+                        add     a,a
+                        add     hl,a
+                        ld      e,(hl)
+                        inc     hl
+                        ld      d,(hl)
+                        ld      hl,SfxChannelLeft                   ; find a free channel
+                        ld      b,SfxChannels
+                        ld      c,0
+.Find:                  ld      a,(hl)
+                        and     a
+                        jr      z,.Found
+                        inc     hl
+                        inc     c
+                        djnz    .Find
+                        ret                                         ; all busy
+.Found:                 ld      a,(de)                              ; the step count
+                        ld      (hl),a
+                        inc     de                                  ; the first step
+                        ld      hl,SfxChannelPtr
+                        ld      a,c
+                        add     a,a
+                        add     hl,a
+                        ld      (hl),e
+                        inc     hl
+                        ld      (hl),d
+                        ld      hl,SfxChannelSilence
+                        ld      a,c
+                        add     hl,a
+                        ld      (hl),0
+                        ret
 
-;
-;
-;LaserLength:     db $-LaserFrameCount
+; one step of every running effect, and silence the ones that ended last frame
+SfxStepChannels:        ld      e,0                                 ; e = channel
+.Loop:                  ld      hl,SfxChannelSilence
+                        ld      a,e
+                        add     hl,a
+                        ld      a,(hl)
+                        and     a
+                        jr      z,.NotEnded
+                        ld      (hl),0
+                        push    de
+                        call    SfxSelectChannel
+                        ld      a,d                                 ; volume register 8 + voice
+                        add     a,CHANNEL_A_AMPLITUDE
+                        ld      d,a
+                        xor     a
+                        call    SfxWriteReg
+                        pop     de
+.NotEnded:              ld      hl,SfxChannelLeft
+                        ld      a,e
+                        add     hl,a
+                        ld      a,(hl)
+                        and     a
+                        jr      z,.Next                             ; free
+                        dec     (hl)                                ; one fewer to play
+                        jr      nz,.Step
+                        ld      hl,SfxChannelSilence                ; the last: silence it next frame
+                        ld      a,e
+                        add     hl,a
+                        ld      (hl),1
+.Step:                  ld      hl,SfxChannelPtr                    ; ix = the step's data
+                        ld      a,e
+                        add     a,a
+                        add     hl,a
+                        push    hl
+                        ld      a,(hl)
+                        inc     hl
+                        ld      h,(hl)
+                        ld      l,a
+                        push    hl
+                        pop     ix
+                        push    de
+                        call    SfxSelectChannel                    ; d = voice
+                        ld      a,d                                 ; fine tone register 2 * voice
+                        add     a,a
+                        ld      d,a
+                        ld      a,(ix+SFXFineOffset)
+                        call    SfxWriteReg
+                        inc     d                                   ; coarse 2 * voice + 1
+                        ld      a,(ix+SFXCorseOffset)
+                        and     $0F
+                        call    SfxWriteReg
+                        srl     d                                   ; volume 8 + voice
+                        ld      a,d
+                        add     a,CHANNEL_A_AMPLITUDE
+                        ld      d,a
+                        ld      a,(ix+SFXVolOffset)
+                        and     $0F
+                        call    SfxWriteReg
+                        pop     de
+                        pop     hl                                  ; the pointer on a step
+                        ld      bc,SFXBlockLength
+                        add     ix,bc
+                        push    ix
+                        pop     bc
+                        ld      (hl),c
+                        inc     hl
+                        ld      (hl),b
+.Next:                  inc     e
+                        ld      a,e
+                        cp      SfxChannels
+                        jr      c,.Loop
+                        ret
+
+; silence and free every effect channel (start up)
+SfxReset:               ld      hl,SfxChannelLeft
+                        ld      b,SfxChannels * 4
+.Clear:                 ld      (hl),0
+                        inc     hl
+                        djnz    .Clear
+                        ld      e,0
+.Silence:               push    de
+                        call    SfxSelectChannel
+                        ld      a,d
+                        add     a,CHANNEL_A_AMPLITUDE
+                        ld      d,a
+                        xor     a
+                        call    SfxWriteReg
+                        pop     de
+                        inc     e
+                        ld      a,e
+                        cp      SfxChannels
+                        jr      c,.Silence
+                        ret
+
+;--- Effect data (ids SFXLaser .. in Variables/constant_equates.asm, in this order): a step count, then per step the
+;--- tone period fine, coarse (4 bits) and the volume (0 to 15); a period is 1.75 MHz / 16 / the frequency
+SFXBlockLength          EQU     3
+SFXFineOffset           EQU     0
+SFXCorseOffset          EQU     1
+SFXVolOffset            EQU     2
+SoundLabelSFX           DB      "Sound Data      "
+; laser pulse (the original table, its 5th step coarse $10, a typo, now $00)
+SFXDataLaser:         DB      11                          ; steps (one a frame)
+                        DB      $5F, $00, $0E
+                        DB      $39, $00, $0E
+                        DB      $47, $00, $0D
+                        DB      $5E, $00, $0C
+                        DB      $6E, $00, $0A
+                        DB      $76, $00, $08
+                        DB      $76, $00, $07
+                        DB      $06, $01, $06
+                        DB      $2E, $01, $03
+                        DB      $16, $01, $03
+                        DB      $03, $00, $01
+
+; a ship hit by our laser or a collision
+SFXDataHit:           DB      6                           ; steps (one a frame)
+                        DB      $6E, $00, $0F
+                        DB      $8C, $00, $0D
+                        DB      $AA, $00, $0B
+                        DB      $C8, $00, $08
+                        DB      $E6, $00, $05
+                        DB      $04, $01, $02
+
+; an explosion: random low periods (no noise channel) dying away
+SFXDataExplosion:     DB      25                          ; steps (one a frame)
+                        DB      $B2, $08, $0F
+                        DB      $ED, $05, $0E
+                        DB      $D5, $09, $0E
+                        DB      $EE, $0D, $0D
+                        DB      $49, $04, $0D
+                        DB      $AC, $04, $0C
+                        DB      $16, $0C, $0B
+                        DB      $05, $05, $0B
+                        DB      $5D, $09, $0A
+                        DB      $D7, $0C, $0A
+                        DB      $71, $04, $09
+                        DB      $A2, $0B, $08
+                        DB      $F3, $06, $08
+                        DB      $1D, $04, $07
+                        DB      $E4, $04, $07
+                        DB      $74, $0A, $06
+                        DB      $34, $0A, $05
+                        DB      $A2, $04, $05
+                        DB      $5D, $07, $04
+                        DB      $F7, $04, $04
+                        DB      $55, $0C, $03
+                        DB      $4E, $0A, $02
+                        DB      $76, $04, $02
+                        DB      $90, $0C, $01
+                        DB      $7F, $05, $01
+
+; missile launch: a rising whoosh
+SFXDataMissile:       DB      16                          ; steps (one a frame)
+                        DB      $BC, $02, $0C
+                        DB      $96, $02, $0C
+                        DB      $71, $02, $0C
+                        DB      $4C, $02, $0C
+                        DB      $26, $02, $0C
+                        DB      $01, $02, $0C
+                        DB      $DC, $01, $0C
+                        DB      $B6, $01, $0C
+                        DB      $91, $01, $0C
+                        DB      $6C, $01, $0C
+                        DB      $46, $01, $0A
+                        DB      $21, $01, $08
+                        DB      $FC, $00, $06
+                        DB      $D6, $00, $04
+                        DB      $B1, $00, $03
+                        DB      $8C, $00, $02
+
+; ECM: a warble
+SFXDataECM:           DB      32                          ; steps (one a frame)
+                        DB      $82, $00, $0A
+                        DB      $5A, $00, $0A
+                        DB      $82, $00, $0A
+                        DB      $5A, $00, $0A
+                        DB      $82, $00, $0A
+                        DB      $5A, $00, $0A
+                        DB      $82, $00, $0A
+                        DB      $5A, $00, $0A
+                        DB      $82, $00, $0A
+                        DB      $5A, $00, $0A
+                        DB      $82, $00, $0A
+                        DB      $5A, $00, $0A
+                        DB      $82, $00, $0A
+                        DB      $5A, $00, $0A
+                        DB      $82, $00, $0A
+                        DB      $5A, $00, $0A
+                        DB      $82, $00, $0A
+                        DB      $5A, $00, $0A
+                        DB      $82, $00, $0A
+                        DB      $5A, $00, $0A
+                        DB      $82, $00, $0A
+                        DB      $5A, $00, $0A
+                        DB      $82, $00, $0A
+                        DB      $5A, $00, $0A
+                        DB      $82, $00, $09
+                        DB      $5A, $00, $08
+                        DB      $82, $00, $07
+                        DB      $5A, $00, $06
+                        DB      $82, $00, $05
+                        DB      $5A, $00, $04
+                        DB      $82, $00, $03
+                        DB      $5A, $00, $02
+
+; bing bong: the jump drive hot or mass locked, a missile with no lock
+SFXDataBong:          DB      22                          ; steps (one a frame)
+                        DB      $18, $01, $0D
+                        DB      $18, $01, $0D
+                        DB      $18, $01, $0C
+                        DB      $18, $01, $0B
+                        DB      $18, $01, $0A
+                        DB      $18, $01, $09
+                        DB      $18, $01, $08
+                        DB      $18, $01, $06
+                        DB      $A4, $01, $0D
+                        DB      $A4, $01, $0D
+                        DB      $A4, $01, $0C
+                        DB      $A4, $01, $0B
+                        DB      $A4, $01, $0A
+                        DB      $A4, $01, $09
+                        DB      $A4, $01, $08
+                        DB      $A4, $01, $07
+                        DB      $A4, $01, $06
+                        DB      $A4, $01, $05
+                        DB      $A4, $01, $04
+                        DB      $A4, $01, $03
+                        DB      $A4, $01, $02
+                        DB      $A4, $01, $01
+
+; hyperspace: a long rising sweep
+SFXDataHyperspace:    DB      40                          ; steps (one a frame)
+                        DB      $E8, $03, $0C
+                        DB      $A2, $03, $0C
+                        DB      $61, $03, $0C
+                        DB      $25, $03, $0C
+                        DB      $ED, $02, $0C
+                        DB      $B9, $02, $0C
+                        DB      $88, $02, $0C
+                        DB      $5B, $02, $0C
+                        DB      $31, $02, $0C
+                        DB      $0A, $02, $0C
+                        DB      $E6, $01, $0C
+                        DB      $C4, $01, $0C
+                        DB      $A4, $01, $0C
+                        DB      $87, $01, $0C
+                        DB      $6C, $01, $0C
+                        DB      $52, $01, $0C
+                        DB      $3B, $01, $0C
+                        DB      $25, $01, $0C
+                        DB      $10, $01, $0C
+                        DB      $FD, $00, $0C
+                        DB      $EC, $00, $0C
+                        DB      $DB, $00, $0C
+                        DB      $CC, $00, $0C
+                        DB      $BE, $00, $0C
+                        DB      $B1, $00, $0C
+                        DB      $A4, $00, $0C
+                        DB      $99, $00, $0C
+                        DB      $8E, $00, $0C
+                        DB      $84, $00, $0C
+                        DB      $7B, $00, $0C
+                        DB      $72, $00, $0B
+                        DB      $6A, $00, $0A
+                        DB      $63, $00, $09
+                        DB      $5C, $00, $08
+                        DB      $56, $00, $07
+                        DB      $50, $00, $06
+                        DB      $4A, $00, $05
+                        DB      $45, $00, $04
+                        DB      $40, $00, $03
+                        DB      $3C, $00, $02
+
+SFXPointerList:         DW      SFXDataLaser, SFXDataHit, SFXDataExplosion, SFXDataMissile, SFXDataECM, SFXDataBong, SFXDataHyperspace
+
 
 DanubePointer1:         DW BlueDanube1
 DanubePointer2:         DW BlueDanube2

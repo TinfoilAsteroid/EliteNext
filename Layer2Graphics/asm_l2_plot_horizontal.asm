@@ -1,34 +1,41 @@
 
 ;; NOTE DMA is little endian
 l2_horz_pixel           DB 0
-        
+
 l2_horz_line            DB DMA_DISABLE,  DMA_RESET, DMA_RESET_PORT_A_TIMING, DMA_RESET_PORT_B_TIMING ,DMA_WRO_BLOCK_PORTA_A2B_XFR
 l2_horz_colr            DW l2_horz_pixel
 l2_horz_lenlo           DB 0
 l2_horz_lenhi           DB 0
                         DB DMA_WR1_P1FIXED_MEMORY, DMA_WR2_P2INC_MEMORY, DMA_WR4_CONT_MODE
 l2_horz_target          DB $00, $00
-                        DB DMA_LOAD, DMA_ENABLE			   
+                        DB DMA_LOAD, DMA_ENABLE
 l2_horz_cmd_len	        EQU $ - l2_horz_line
 ; "l2_draw_horz_dma"
-; "plot at bc for length d colour e using dma, assumes bank already selected"  
-l2_draw_horz_dma:       ld		a,e                                               ; T=4      ;
+; "plot at bc for length d colour e using dma, assumes bank already selected"
+; a length of 0 is skipped: the zxnDMA would move 65536 bytes (over the stack and everything else)
+l2_draw_horz_dma:       ld      a,d
+                        and     a
+                        ret     z
+                        ld		a,e                                               ; T=4      ;
                         ld		(l2_horz_pixel),a                                 ; T=13     ;
                         ld      e,d ; saved 3 t states ld		a,d                                               ; T=4      ; e=d   4
-                        ld      d,0; saved 3 t states ld 		(l2_horz_lenlo),a                                 ; T=13     ; d = 0  7 
+                        ld      d,0; saved 3 t states ld 		(l2_horz_lenlo),a                                 ; T=13     ; d = 0  7
                         ld      (l2_horz_lenlo),de; saved 3 t states xor 	a                                                 ; T=4      ; t 20  31
                         ; saved 3 t states ld ld 		(l2_horz_lenhi),a                                 ; T=13     ;
                       ; saved 4 t states  ld		h,b                           ;          ;
                       ; saved 4 t states  ld		l,c                           ;          ;
                         ld      (l2_horz_target),bc ; saved 4 t states  was , hl  ; T=20     ;
 .write_dma:             ld 		hl, l2_horz_line                                  ;          ;
-                        ld 		b, l2_horz_cmd_len                                ; 
-                        ld		c,IO_DATAGEAR_DMA_PORT                            ; 
-                        otir                                                      ; 
+                        ld 		b, l2_horz_cmd_len                                ;
+                        ld		c,IO_DATAGEAR_DMA_PORT                            ;
+                        otir                                                      ;
                         ret
-	
+
 ; "bc = left side row,col, d = length, e = color"
-l2_draw_horz_dma_bank:  push 	de							; save length and colour
+l2_draw_horz_dma_bank:  ld      a,d                         ; length 0: nothing (see l2_draw_horz_dma)
+                        and     a
+                        ret     z
+                        push 	de							; save length and colour
                         push 	bc							; save row col
                         ld   	a,b
                         call 	asm_l2_row_bank_select		; now we have the correct bank, its a horizontal line so bank will not shift
@@ -46,8 +53,8 @@ l2_draw_horz_line:      ld		a,d
 .zerolengthexit:        ret		z
 .isitlen1:              cp 		1
                         jp 		z,.l2_draw_horz_line_1
-.longenoughtfordma:     cp  10
-                        jp  l2_draw_horz_dma_bank
+.longenoughtfordma:     cp      10                          ; 10 or more: the DMA, shorter ones are quicker by CPU
+                        jp      nc,l2_draw_horz_dma_bank    ; than its 15 byte set-up
 .plottableline:         push 	de,,bc  					; save length and colour an d row col
                         ld   	a,b
                         call 	asm_l2_row_bank_select		; now we have the correct bank, its a horizontal line so bank will not shift
@@ -59,59 +66,74 @@ l2_draw_horz_line:      ld		a,d
                         ld  	b,d  						; speculate that we don't clip by pre-loading b with length
                         add  	a,d
                         jr   	nc, .l2_draw_horz_plot_loop	; if carry is set c+d > 255
-.clipat255:             ld   	a,$FF
+.clipat255:             xor     a                           ; a = 256 - c, the pixels to the right edge
                         sub  	c							; a holds clipped length
                         ld 		b, a 						; so now hl holds poke address  b = clipped length e = colour
-                        jr		.l2_draw_horz_plot_loop		
+                        jr		.l2_draw_horz_plot_loop
 .l2_draw_horz_plot_loop:ld (hl),e							; loop poking hl with e for b pixels
                         inc hl
                         djnz .l2_draw_horz_plot_loop
                         ret
-.l2_draw_horz_line_1:   ld		a,e
-                        l2_plot_macro; jp		l2_plot_pixel				; hijack return
-                        ret
+.l2_draw_horz_line_1:   ld		a,e                         ; (l2_plot_macro would use line_gfx_colour, not e)
+                        jp		l2_plot_pixel				; hijack return
 
-	
+
 ; "l2_draw_horz_line_to"
-; "bc = left side row,col, d right pixel, e = color"
+; "bc = left side row,col, d right pixel (drawn), e = color"
 l2_draw_horz_line_to:   ld 		a,d
                         cp 		c
+                        jr      z, .singlepixel             ; (tested first: equal also gives nc, and length 0 drew nothing)
                         jr		nc, .noswap
-                        jr      z, .singlepixel
 .swap:                  ld		d,c
                         ld		c,a
 .noswap:                ld		a,d
                         sub		c
-                        ld		d,a
+                        inc     a                           ; both ends, as l2_draw_vert_line_to
+                        jr      nz,.lengthOK                ; (0 to 255 would be 256: 255 will do)
+                        dec     a                           ; .
+.lengthOK:              ld		d,a
                         jr 		l2_draw_horz_line			; hijack routine and return statements
-.singlepixel:           ld		a,e
-                        l2_plot_macro; jp		l2_plot_pixel				; hijack return
-                        ret
+.singlepixel:           ld		a,e                         ; (l2_plot_macro would use line_gfx_colour, not e)
+                        jp		l2_plot_pixel				; hijack return
 
 
-; "l2_draw_horz_line"
-; ">b = row; hl = col, de = length, c = color"
+; "l2_draw_horz_line_320"
+; ">b = row; hl = col, de = length in pixels (1 = 1 pixel), c = color"
+; ">clipped at the right edge (column 319); destroys a, bc, de, hl"
 l2_draw_horz_line_320:  ld		a,d
                         or      e
 .zerolengthexit:        ret		z
-.longenoughtfordma:     push    hl,,bc                      ; copy row and colour to ixh and ixl
+.clipRight:             push    bc,,hl                      ; save row, colour and column
+                        add     hl,de                       ; hl = column after the last pixel
+                        ld      bc,320                      ; past the right edge?
+                        ClearCarryFlag                      ; .
+                        sbc     hl,bc                       ; hl = pixels past the edge
+                        jr      c,.noClip                   ; none
+                        ex      de,hl                       ; length -= pixels past the edge
+                        ClearCarryFlag                      ; .
+                        sbc     hl,de                       ; .
+                        ex      de,hl                       ; .
+                        jr      c,.offScreen                ; started at or past column 320
+                        jr      z,.offScreen                ; .
+.noClip:                pop     bc,,hl                      ; get back row, colour and column
+.longenoughtfordma:     push    hl,,bc                      ; (hl stays on the stack until done)
                         call    asm_l2_320_col_bank_select  ; Select the first bank to start writing to and adjust hl
 .bankSelected:          pop     bc                          ; get back row and colour
                         ld      l,b                         ; set target row
 .fillBank:              ld      (hl),c                      ; plot pixel
+                        dec     de                          ; one less still to do
                         ld      a,d                         ; if we run out of DE then done
                         or      e                           ; .
                         jp      z,.fillComplete             ; .
                         inc     h                           ; move on one column
                         ld      a,h                         ; if we are done next bank
                         cp      64                          ; .
-                        jp      z,.nextBank                 ; if inc H compeltes a carry then we have spanned a bank
-                        dec     de                          ; one less still to do
-                        jp      .fillBank                   ; else carry on
-.fillComplete:          pop     hl                          ; clean up stack on completion
-                        ret
+                        jp      nz,.fillBank                ; else carry on
 .nextBank:              push    bc
                         call    asm_l2_320_next_bank        ; cycle on one bank as we always go left to right
                         ld      h,0                         ; reset banked memory address colum to 0
-                        dec     de
                         jp      .bankSelected
+.fillComplete:          pop     hl                          ; clean up stack on completion
+                        ret
+.offScreen:             pop     bc,,hl                      ; nothing to draw
+                        ret

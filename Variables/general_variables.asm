@@ -154,7 +154,7 @@ DELTA4                  equ                 DELT4Lo
 
 ; SoundFX Variables -------------------------------------------------------------------------------------------
 ;DEFUNCT, uses DELTA/ LAST_DELTAEngineSoundChanged:     DB  0
-SoundFxToEnqueue        DB  $FF             ; $FF No sound to enque,if it is $FF then next sound will not get enqued
+SoundFxPending          DS  SFXCount        ; 1 = play effect n (PlaySFX), cleared by the sound interrupt as it starts it
 InterruptCounter        DB 0                ; simple marker updated once per IM2 event
 FrameCounter16          DW 0                ; 16 bit count of IM2 events (50Hz) while not paused, wraps after ~22 minutes, game timers e.g. missile lifespan
 
@@ -357,11 +357,15 @@ CurrentUniverseAI       DB  0               ; current ship unviverse slot due an
 SelectedUniverseSlot    DB  0
 SetStationHostileFlag   DB  0               ; used to semaphore angry space station
 ShipBlastCheckCounter   DB  0
-InnerHyperCount			DB 	0				; 2F QQ22+1 (will move to a CTC timer later)
-OuterHyperCount			DB 	0				; 2E QQ22
+InnerHyperCount			DB 	0				; 2F QQ22+1, non zero while the hyperspace countdown runs
+OuterHyperCount			DB 	0				; 2E QQ22, the countdown's seconds left (InnerHyperCount as a word is non zero while counting)
+HyperNextTick           DW  0               ; FrameCounter16 at which the countdown next goes down a second
+HyperTextOnScreen       DB  0               ; non zero while the countdown text is on Layer 1 (so it is cleared once when it stops)
 WarpCooldown            DB  0
 EventCounter            DB  0
 HyperCircle             DB  0
+HyperJumpStart          DW  0               ; FrameCounter16 when the hyperspace screen started (draw_hyperspace)
+HyperLastFrame          DW  0               ; FrameCounter16 of the last lightning drawn (once a frame)
 MissJumpFlag            DB  0
 PlayerMisJump			DB	0				; $0341 witchspace misjump
 HyperSpaceFX			DB	0				; 0348 HFX (probabyl BBC specific
@@ -378,6 +382,7 @@ ConsoleRefreshCounter   DB  ConsoleRefreshInterval ; Every 4 interations the con
 ConsoleRedrawFlag       DB  0
 TextInputMode           DB  0
 CursorKeysPressed       DB  0               ; mapping of the current key presses
+ChartCursorNext         DW  0               ; FrameCounter16 when a held chart cursor key next moves the cursor (ChartCursorDue)
                                             ; 7    6    5    4     3    2        1    0
                                             ; Up   Down Left Right Home Recentre 
 WarpPressed             DB  0
@@ -445,7 +450,7 @@ CompassY				DB	0				; 03A9
 ; $FE missile targetting, no target selected
 ; bit 7 set then tagetting and lower nibble holds missile target and launching
 ; bit 7 clear launch at selected target in lower nibble
-MissileTargettingFlag   DB  0
+MissileTargettingFlag   DB  StageMissileNotTargeting    ; $FF none, $FE targeting, $8n locked on slot n, n launch at slot n
 CommanderName           DS  15
 CommanderName0			DB	0				; Sneaky little 0 to allow use of print name directly
 BadnessStatus           DB  0

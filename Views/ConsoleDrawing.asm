@@ -443,6 +443,13 @@ UpdateConsole:          IFDEF   MISSILEDIAGNOSTICS
                         jp      .ProcessedECM                                              
 .HideECM:               call    sprite_ecm_hide  
 .ProcessedECM:                      
+.DrawSafeZone:          ld      a,(SpaceStationSafeZone)            ; 0 inside the space station's safe zone (UpdateSafeZone)
+                        and     a
+                        jr      nz,.HideSafeZone
+                        call    show_safe_zone_sprite
+                        jr      .ProcessedSafeZone
+.HideSafeZone:          call    sprite_safe_zone_hide
+.ProcessedSafeZone:
 .DrawMissiles:          ld      a,(NbrMissiles)  
                         ld      iyl,a
                         JumpIfAIsZero   .HideAllMissiles                    ; First off do we have any missiles                                                     
@@ -461,9 +468,9 @@ UpdateConsole:          IFDEF   MISSILEDIAGNOSTICS
                         JumpIfALTNusng 3, .Only2Missiles 
                         call    show_missile_3_ready     
 .DrawMissile_4:         ld      a,iyl                    
-                        JumpIfALTNusng 4, .Only2Missiles 
+                        JumpIfALTNusng 4, .Only3Missiles                    ; (was .Only2Missiles: with 3 it hid the third)
                         call    show_missile_4_ready                       
-                        ret                              
+                        jp      .EnergyBars                                 ; (was ret: with 4 the energy bars weren't drawn)
 .HideAllMissiles:       call    sprite_missile_1_hide    
 .Only1Missile:          call    sprite_missile_2_hide    
 .Only2Missiles:         call    sprite_missile_3_hide    
@@ -617,7 +624,27 @@ SunShiftRight           MACRO   reglo, reghi, regsgn
                         ENDM
 
 ;                        
-ScalePlanetPos:         ld      de,(P_BnKzhi)               ; de = abs z & save sign on stack
+; Scales x, y, z to 7 bit magnitudes (de = z, hl = x, bc = y, the low byte the value, the high byte its sign). When
+; every sign byte has no integer bits (all within 65536) the lo and hi bytes are used, else the hi and sign bytes, so a
+; close one keeps 7 bits too (from the hi bytes alone something within 1024 was 0 to 3 a side and the compass saturated)
+ScalePlanetPos:         ld      a,(P_BnKxsgn)                ; all within 65536?
+                        ld      hl,P_BnKysgn                 ; .
+                        or      (hl)                        ; .
+                        ld      hl,P_BnKzsgn                 ; .
+                        or      (hl)                        ; .
+                        and     SignMask8Bit                ; .
+                        jr      nz,.FarAway                 ; .
+.Close:                 ld      de,(P_BnKzlo)                ; de = |z| lo hi, sign on the stack
+                        ld      a,(P_BnKzsgn)                ; .
+                        push    af                          ; .
+                        ld      hl,(P_BnKxlo)                ; hl = |x|
+                        ld      a,(P_BnKxsgn)                ; .
+                        push    af                          ; .
+                        ld      bc,(P_BnKylo)                ; bc = |y|
+                        ld      a,(P_BnKysgn)                ; .
+                        push    af                          ; .
+                        jr      .ShiftLoop                  ; .
+.FarAway:               ld      de,(P_BnKzhi)               ; de = abs z & save sign on stack
                         ld      a,d                         ; .
                         push    af                          ; .
                         and     SignMask8Bit                ; .
@@ -701,7 +728,27 @@ ScaleSunPos:            ld      de,(SBnKzhi)                ; de = abs z & save 
                         ld      d,a                         ; de = shifted signed Z
                         ret
 ;-----------------------------------------------------------
-ScaleUnivPos:           ld      de,(UBnKzhi)               ; de = abs z & save sign on stack
+; Scales x, y, z to 7 bit magnitudes (de = z, hl = x, bc = y, the low byte the value, the high byte its sign). When
+; every sign byte has no integer bits (all within 65536) the lo and hi bytes are used, else the hi and sign bytes, so a
+; close one keeps 7 bits too (from the hi bytes alone something within 1024 was 0 to 3 a side and the compass saturated)
+ScaleUnivPos:           ld      a,(UBnKxsgn)                ; all within 65536?
+                        ld      hl,UBnKysgn                 ; .
+                        or      (hl)                        ; .
+                        ld      hl,UBnKzsgn                 ; .
+                        or      (hl)                        ; .
+                        and     SignMask8Bit                ; .
+                        jr      nz,.FarAway                 ; .
+.Close:                 ld      de,(UBnKzlo)                ; de = |z| lo hi, sign on the stack
+                        ld      a,(UBnKzsgn)                ; .
+                        push    af                          ; .
+                        ld      hl,(UBnKxlo)                ; hl = |x|
+                        ld      a,(UBnKxsgn)                ; .
+                        push    af                          ; .
+                        ld      bc,(UBnKylo)                ; bc = |y|
+                        ld      a,(UBnKysgn)                ; .
+                        push    af                          ; .
+                        jr      .ShiftLoop                  ; .
+.FarAway:               ld      de,(UBnKzhi)               ; de = abs z & save sign on stack
                         ld      a,d                         ; .
                         push    af                          ; .
                         and     SignMask8Bit                ; .
@@ -810,27 +857,31 @@ UpscaleSunPosition:     ld      de,(SBnKzhi)                ; de = abs z & save 
                         or      e
                         ld      e,a
                         ret
-; takes B = Y and C = X, limits to +/-16 in each direction
+; Compass dot offsets: B = Y, C = X, 2's complement, +/-12 at 90 degrees off (the sun from NormalToCompassSigned, the
+; planet and station as 96 * axis / length / 8). The ring (4 mirrored 16 pixel quadrants, 17 apart) has room inside its
+; 2 pixel edge for the 4x4 dot at -13 to +12 from the centre, so clamp to +/-12 in case of rounding
+CompassDotMax           equ 12
 LimitCompassBC:         ld      a,b
-                        JumpIfALTNsigned -14, .ClampBNeg16
-                        JumpIfAGTENsigned 15, .ClampBPos16
+                        JumpIfALTNsigned -CompassDotMax, .ClampBNeg
+                        JumpIfAGTENsigned CompassDotMax+1, .ClampBPos
                         jp      .CheckCReg
-.ClampBNeg16:           ld      b,-14
+.ClampBNeg:             ld      b,-CompassDotMax
                         jp      .CheckCReg
-.ClampBPos16:           ld      b,14
+.ClampBPos:             ld      b,CompassDotMax
 .CheckCReg:             ld      a,c
-                        JumpIfALTNsigned -14, .ClampCNeg16
-                        JumpIfAGTENsigned 15, .ClampCPos16
+                        JumpIfALTNsigned -CompassDotMax, .ClampCNeg
+                        JumpIfAGTENsigned CompassDotMax+1, .ClampCPos
                         ret
-.ClampCNeg16:           ld      c,-14
+.ClampCNeg:             ld      c,-CompassDotMax
                         ret
-.ClampCPos16:           ld      c,14
+.ClampCPos:             ld      c,CompassDotMax
                         ret
 UpdateCompassSun:       MMUSelectSun
                         MMUSelectMathsBankedFns
                         ld      ix,SBnKDataBlock
                         SetBCCompassYX
                         MMUSelectSpriteBank
+                        call    LimitCompassBC              ; as the planet and station
                         call    compass_sun_move
                         ld      a,(SBnKzsgn)
                         bit     7,a
@@ -869,8 +920,10 @@ UpdateCompassPlanet:    MMUSelectPlanet
                         ld      a,l                         ; a = 8 bit abs z
                         call    AequAdivQmul96ABS              ; e = a /q * 96 (d was already loaded with q)
                         ld      e,a                         ; .
-                        EDiv10Inline                        ; a = e / 10
-                        ld      a,h                         ; .
+                        ld      a,e                         ; a = e / 8, so 96 (90 degrees off) is 12, as the sun
+                        srl     a                           ; .
+                        srl     a                           ; .
+                        srl     a                           ; .
                         pop     bc                          ; retrieve sign
                         cp      0
                         jr      z,.DoneNormX                ; in case we end up with - 0
@@ -887,8 +940,10 @@ UpdateCompassPlanet:    MMUSelectPlanet
                         ld      a,l                         ; a = 8 bit signed z
                         call    AequAdivQmul96ABS           ; .
                         ld      e,a                         ; a = e / 10
-                        EDiv10Inline                        ; .
-                        ld      a,h                         ; retrieve sign
+                        ld      a,e                         ; a = e / 8, so 96 (90 degrees off) is 12, as the sun
+                        srl     a                           ; .
+                        srl     a                           ; .
+                        srl     a                           ; .
                         pop     bc                          ; retrieve sign
                         cp      0
                         jr      z,.DoneNormY                 ; in case we end up with - 0
@@ -937,8 +992,10 @@ UpdateCompassStation:   MMUSelectSpaceStation
                         ld      a,l                         ; a = 8 bit abs z
                         call    AequAdivQmul96ABS              ; e = a /q * 96 (d was already loaded with q)
                         ld      e,a                         ; .
-                        EDiv10Inline                        ; a = e / 10
-                        ld      a,h                         ; .
+                        ld      a,e                         ; a = e / 8, so 96 (90 degrees off) is 12, as the sun
+                        srl     a                           ; .
+                        srl     a                           ; .
+                        srl     a                           ; .
                         pop     bc                          ; retrieve sign
                         cp      0
                         jr      z,.DoneNormX                ; in case we end up with - 0
@@ -955,8 +1012,10 @@ UpdateCompassStation:   MMUSelectSpaceStation
                         ld      a,l                         ; a = 8 bit signed z
                         call    AequAdivQmul96ABS           ; .
                         ld      e,a                         ; a = e / 10
-                        EDiv10Inline                        ; .
-                        ld      a,h                         ; retrieve sign
+                        ld      a,e                         ; a = e / 8, so 96 (90 degrees off) is 12, as the sun
+                        srl     a                           ; .
+                        srl     a                           ; .
+                        srl     a                           ; .
                         pop     bc                          ; retrieve sign
                         cp      0
                         jr      z,.DoneNormY                 ; in case we end up with - 0

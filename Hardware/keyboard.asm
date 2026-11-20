@@ -1,22 +1,22 @@
 ;
 ; $FEFE;65278 V, C, X, Z, Caps Shifts       4  3  2  1  0
-; $FDFE;65022 G, F, D, S, A                 9  8  7  6  5 
+; $FDFE;65022 G, F, D, S, A                 9  8  7  6  5
 ; $FBFE;64510 T, R, E, W, Q                14 13 12 11 10
-; $F7FE;63486 5, 4, 3, 2, 1                19 18 17 16 15 
+; $F7FE;63486 5, 4, 3, 2, 1                19 18 17 16 15
 ; $EFFE;61438 6, 7, 8, 9, 0                24 23 22 23 20
 ; $DFFE;57342 Y, U, I, O, P                29 28 27 26 25
-; $BFFE;49150 H, J, K, L, Enter            34 33 32 31 30 
+; $BFFE;49150 H, J, K, L, Enter            34 33 32 31 30
 ; $7FFE;32766 B, N, M, Symbol Shift, Space 39 38 37 36 35
 ;
 ; Keyboard
 ;
-;   0      1       2       3       4       5        6       7       8       9       
+;   0      1       2       3       4       5        6       7       8       9
 ;  VK_CAPS, VK_Z,  VK_X,   VK_C,   VK_V,   VK_A,    VK_S,   VK_D,   VK_F,   VK_G
-;   10     11      12      13      14      15       16      17      18      19       
+;   10     11      12      13      14      15       16      17      18      19
 ;  VK_Q,   VK_W,   VK_E,   VK_R,   VK_T,   VK_1,    VK_2,   VK_3,   VK_4,   VK_5
-;   20     21      22      23      24      25       26      27      28      29       
+;   20     21      22      23      24      25       26      27      28      29
 ;  VK_0    VK_9,   VK_8,   VK_7,   VK_6,   VK_P ,    VK_O,  VK_I,   VK_U,   VK_Y
-;   30     31      32      33      34      35       36      37      38      39       
+;   30     31      32      33      34      35       36      37      38      39
 ; VK_ENTER VK_L,   VK_K,   VK_J,   VK_H,   VK_SPACE VK_SYM, VK_M,   VK_N,   VK_B
 ;
 ; ZX Spectrum Next Compound keys
@@ -26,34 +26,34 @@
 ;  VK_DELETE VK_EDIT VK_BREAK VK_INV_VID VK_TRUE_VID VK_GRAPH VK_CAPS VK_EXTEND $Register B1 bits 7 to 0
 ; Default map
 ;-----------------------------------------------------------------------------------------------------------------------------------
-;   0          1           2             3              4           5           6           7           8           9       
+;   0          1           2             3              4           5           6           7           8           9
 ;   VK_CAPS    VK_Z        VK_X,         VK_C,          VK_V,       VK_A        VK_S,       VK_D,       VK_F,       VK_G
-;              GameSkip                  Equip          SelLCargo   Climb       Decelerate  Recentre    FireM       HomeCursor 
+;              GameSkip                  Equip          SelLCargo   Climb       Decelerate  Recentre    FireM       HomeCursor
 ;                                                                                                       Find System
 ;-----------------------------------------------------------------------------------------------------------------------------------
 ;   10         11          12            13             14          15          16          17          18          19
 ;   VK_Q       VK_W,       VK_E,         VK_R,          VK_T,       VK_1        VK_2        VK_3        VK_4        VK_5
 ;   Dive       Accelerate  ECM           UnarmMissile   TargetM     FrontV      AftV        LeftV       RightV      GalacticChart
 ;-----------------------------------------------------------------------------------------------------------------------------------
-;   20         Accel       22            23             24          25          26          27          28          29       
+;   20         Accel       22            23             24          25          26          27          28          29
 ;   VK_0       VK_9,       VK_8,         VK_7,          VK_6,       VK_P ,      VK_O,       VK_I,       VK_U,       VK_Y
 ;   EscapePod  Inventory   Status        MarketPrices   LocalChart  RollRight   RolLLeft                EnergyBomb  Quit
 ;   PlanetData                                                      PauseGame   SaveGame
 ;-----------------------------------------------------------------------------------------------------------------------------------
-;   30         31          32            33             34          Right       36          37          EnergyBomb  39       
+;   30         31          32            33             34          Right       36          37          EnergyBomb  39
 ;   VK_ENTER   VK_L,       VK_K,         VK_J,          VK_H,       VK_SPACE    VK_SYM,     VK_M,       VK_N,       VK_B
 ;              Launch                    Distance       Hyperspace  Laser                               DockComp    BuyCargo
 ;              ResumeGame                WarpJump
 ;-----------------------------------------------------------------------------------------------------------------------------------
-;   40         41          42            43             44          45          46          47          48          49       
+;   40         41          42            43             44          45          46          47          48          49
 ;   VK_SEMI    VK_QUOTE    VK_COMMA      VK_STOP        VK_UP       VK_DOWN     VK_LEFT     VK _RIGHT   VK_DELETE   VK_EDIT
-;   Market     EquipShip   PlanetData    NearestObject  Map Cursor no auto repeat....................   Delete      Find System
-;                                                                                   
+;   Market     EquipShip   PlanetData    NearestObject  Map Cursor no auto repeat....................   Delete      SystemMap
+;
 ;-----------------------------------------------------------------------------------------------------------------------------------
 ;   50         51          52            53             54          55
-;   VK_BREAK   VK_INV_VID  VK_TRUE_VID   VK_GRAPH       VK_EXTCAPS  VK_EXTEND 
+;   VK_BREAK   VK_INV_VID  VK_TRUE_VID   VK_GRAPH       VK_EXTCAPS  VK_EXTEND
 ;   EscapePod  Inventory   Status        GalacticChart  LocalChart  SystemJump
-;                                                     
+;
 
 ; You can read address to check keystate by address KeyboardMap + c_Pressed corresponding key. There is also an addr_ helper too
 
@@ -109,7 +109,7 @@ c_Pressed_ExtCurDown    equ 48 * 2
 c_Pressed_ExtCurLeft    equ 49 * 2
 c_Pressed_ExtCurRight   equ 50 * 2
 c_Pressed_ExtDelete     equ 51 * 2
-c_Pressed_ExtFindSystem equ 52 * 2
+c_Pressed_SystemMap     equ 52 * 2       ; EDIT: the system map (was ExtFindSystem, unused)
 c_Pressed_ExtEscapePod  equ 53 * 2
 c_Pressed_ExtInventory  equ 54 * 2
 c_Pressed_ExtStatus     equ 55 * 2
@@ -209,7 +209,7 @@ KeyCode_HomeCursor   	equ VK_G
 KeyCode_Launch       	equ VK_L
 KeyCode_BuyCargo     	equ VK_B
 KeyCode_SellCargo    	equ VK_V
-KeyCode_Equip        	equ VK_C
+KeyCode_Equip        	equ VK_DELETE    ; (was C)
 KeyCode_GalacticChrt 	equ VK_5
 KeyCode_LocalChart   	equ VK_6
 KeyCode_MarketPrices 	equ VK_7
@@ -236,32 +236,32 @@ KeyCode_ExtCurDown      equ VK_DOWN
 KeyCode_ExtCurLeft      equ VK_LEFT
 KeyCode_ExtCurRight     equ VK_RIGHT
 KeyCode_ExtDelete       equ VK_DELETE
-KeyCode_ExtFindSystem   equ VK_EDIT
+KeyCode_SystemMap       equ VK_EDIT
 KeyCode_ExtEscapePod    equ VK_BREAK
 KeyCode_ExtInventory    equ VK_INV_VID
 KeyCode_ExtStatus       equ VK_TRUE_VID
 KeyCode_ExtGlactic      equ VK_GRAPH
 KeyCode_ExtLocal        equ VK_EXTCAPS
-KeyCode_ExtSystemJump   equ VK_EXTEND 
+KeyCode_ExtSystemJump   equ VK_EXTEND
 
 Keys					DS	56          ; key states for VK_CAPS (0) through VK_EXTEND (55): 40 matrix keys + 16 extended
 c_KeyBoardLen 			equ $ - Keys
 RawKeys					DS	10          ; increased for extended keys
 KeyAddrTab				DB	$FE, $FD, $FB, $F7, $EF, $DF, $BF, $7F
-; Now keyboard map lists each game key and the corresponding address in the Keys table to get the value. This way redefining keys is just a case 
+; Now keyboard map lists each game key and the corresponding address in the Keys table to get the value. This way redefining keys is just a case
 ; of updating this table with the respective location to look up
 ; key list sequence is in table above
-KeyboardMap             DW  Keys+KeyCode_Front        ,Keys+KeyCode_Aft          ,Keys+KeyCode_Left         ,Keys+KeyCode_Right        ,Keys+KeyCode_RollLeft     
-                        DW  Keys+KeyCode_RollRight    ,Keys+KeyCode_Dive         ,Keys+KeyCode_Climb        ,Keys+KeyCode_Accellerate  ,Keys+KeyCode_Decellerate  
-                        DW  Keys+KeyCode_FireLaser    ,Keys+KeyCode_TargetMissle ,Keys+KeyCode_FireMissile  ,Keys+KeyCode_UnarmMissile ,Keys+KeyCode_ECM          
-                        DW  Keys+KeyCode_EnergyBomb   ,Keys+KeyCode_EscapePod    ,Keys+KeyCode_DockingComp  ,Keys+KeyCode_Hyperspace   ,Keys+KeyCode_Distance     
-                        DW  Keys+KeyCode_HomeCursor   ,Keys+KeyCode_Launch       ,Keys+KeyCode_BuyCargo     ,Keys+KeyCode_SellCargo    ,Keys+KeyCode_Equip        
-                        DW  Keys+KeyCode_GalacticChrt ,Keys+KeyCode_LocalChart   ,Keys+KeyCode_MarketPrices ,Keys+KeyCode_Status       ,Keys+KeyCode_Inventory    
-                        DW  Keys+KeyCode_GameSkip     ,Keys+KeyCode_Save         ,Keys+KeyCode_Freeze       ,Keys+KeyCode_Resume       ,Keys+KeyCode_Recentre     
+KeyboardMap             DW  Keys+KeyCode_Front        ,Keys+KeyCode_Aft          ,Keys+KeyCode_Left         ,Keys+KeyCode_Right        ,Keys+KeyCode_RollLeft
+                        DW  Keys+KeyCode_RollRight    ,Keys+KeyCode_Dive         ,Keys+KeyCode_Climb        ,Keys+KeyCode_Accellerate  ,Keys+KeyCode_Decellerate
+                        DW  Keys+KeyCode_FireLaser    ,Keys+KeyCode_TargetMissle ,Keys+KeyCode_FireMissile  ,Keys+KeyCode_UnarmMissile ,Keys+KeyCode_ECM
+                        DW  Keys+KeyCode_EnergyBomb   ,Keys+KeyCode_EscapePod    ,Keys+KeyCode_DockingComp  ,Keys+KeyCode_Hyperspace   ,Keys+KeyCode_Distance
+                        DW  Keys+KeyCode_HomeCursor   ,Keys+KeyCode_Launch       ,Keys+KeyCode_BuyCargo     ,Keys+KeyCode_SellCargo    ,Keys+KeyCode_Equip
+                        DW  Keys+KeyCode_GalacticChrt ,Keys+KeyCode_LocalChart   ,Keys+KeyCode_MarketPrices ,Keys+KeyCode_Status       ,Keys+KeyCode_Inventory
+                        DW  Keys+KeyCode_GameSkip     ,Keys+KeyCode_Save         ,Keys+KeyCode_Freeze       ,Keys+KeyCode_Resume       ,Keys+KeyCode_Recentre
                         DW  Keys+KeyCode_Quit         ,Keys+KeyCode_PlanetData   ,Keys+KeyCode_CursorUp     ,Keys+KeyCode_CursorDown   ,Keys+KeyCode_Find
                         DW  Keys+KeyCode_PressedYes   ,Keys+KeyCode_PressedNo    ,Keys+KeyCode_Warp         ,Keys+KeyCode_ExtMarket    ,Keys+KeyCode_ExtEquip
                         DW  Keys+KeyCode_ExtPlanet    ,Keys+KeyCode_ExtNearest   ,Keys+KeyCode_ExtCurUp     ,Keys+KeyCode_ExtCurDown   ,Keys+KeyCode_ExtCurLeft
-                        DW  Keys+KeyCode_ExtCurRight  ,Keys+KeyCode_ExtDelete    ,Keys+KeyCode_ExtFindSystem,Keys+KeyCode_ExtEscapePod ,Keys+KeyCode_ExtInventory 
+                        DW  Keys+KeyCode_ExtCurRight  ,Keys+KeyCode_ExtDelete    ,Keys+KeyCode_SystemMap    ,Keys+KeyCode_ExtEscapePod ,Keys+KeyCode_ExtInventory
                         DW  Keys+KeyCode_ExtStatus    ,Keys+KeyCode_ExtGlactic   ,Keys+KeyCode_ExtLocal     ,Keys+KeyCode_ExtSystemJump
 
 
@@ -277,47 +277,48 @@ ASCII_Map:              DB "?","Z","X","C","V"
                         DB "#","e","b","i","t","g","c","x"  ; Extended keys register 1 delete, edit, break, inv video, true video graph, caps, extend
 ; mapping of a code to the lookup table Keyboard map. So if you are using an addr_Pressed you can then fetch from KeyboardMap the address in Keys
 ; for the raw key press status
-addr_Pressed_Front         equ KeyboardMap+c_Pressed_Front       
-addr_Pressed_Aft           equ KeyboardMap+c_Pressed_Aft          
-addr_Pressed_Left          equ KeyboardMap+c_Pressed_Left         
-addr_Pressed_Right         equ KeyboardMap+c_Pressed_Right        
-addr_Pressed_RollLeft      equ KeyboardMap+c_Pressed_RollLeft     
-addr_Pressed_RollRight     equ KeyboardMap+c_Pressed_RollRight    
-addr_Pressed_Dive          equ KeyboardMap+c_Pressed_Dive         
-addr_Pressed_Climb         equ KeyboardMap+c_Pressed_Climb        
-addr_Pressed_Accellerate   equ KeyboardMap+c_Pressed_Accellerate  
-addr_Pressed_Decellerate   equ KeyboardMap+c_Pressed_Decellerate  
-addr_Pressed_FireLaser     equ KeyboardMap+c_Pressed_FireLaser    
-addr_Pressed_TargetMissle  equ KeyboardMap+c_Pressed_TargetMissle 
-addr_Pressed_FireMissile   equ KeyboardMap+c_Pressed_FireMissile  
-addr_Pressed_UnarmMissile  equ KeyboardMap+c_Pressed_UnarmMissile 
-addr_Pressed_ECM           equ KeyboardMap+c_Pressed_ECM          
-addr_Pressed_EnergyBomb    equ KeyboardMap+c_Pressed_EnergyBomb   
-addr_Pressed_EscapePod     equ KeyboardMap+c_Pressed_EscapePod    
-addr_Pressed_DockingComp   equ KeyboardMap+c_Pressed_DockingComp  
-addr_Pressed_Hyperspace    equ KeyboardMap+c_Pressed_Hyperspace   
-addr_Pressed_Distance      equ KeyboardMap+c_Pressed_Distance     
-addr_Pressed_HomeCursor    equ KeyboardMap+c_Pressed_HomeCursor   
-addr_Pressed_Launch        equ KeyboardMap+c_Pressed_Launch       
-addr_Pressed_BuyCargo      equ KeyboardMap+c_Pressed_BuyCargo     
-addr_Pressed_SellCargo     equ KeyboardMap+c_Pressed_SellCargo    
-addr_Pressed_Equip         equ KeyboardMap+c_Pressed_Equip        
-addr_Pressed_GalacticChrt  equ KeyboardMap+c_Pressed_GalacticChrt 
-addr_Pressed_LocalChart    equ KeyboardMap+c_Pressed_LocalChart   
-addr_Pressed_MarketPrices  equ KeyboardMap+c_Pressed_MarketPrices 
-addr_Pressed_Status        equ KeyboardMap+c_Pressed_Status       
-addr_Pressed_Inventory     equ KeyboardMap+c_Pressed_Inventory    
-addr_Pressed_GameSkip      equ KeyboardMap+c_Pressed_GameSkip     
-addr_Pressed_Save          equ KeyboardMap+c_Pressed_Save         
-addr_Pressed_Freeze        equ KeyboardMap+c_Pressed_Freeze       
-addr_Pressed_Resume        equ KeyboardMap+c_Pressed_Resume       
-addr_Pressed_Recentre      equ KeyboardMap+c_Pressed_Recentre     
-addr_Pressed_Quit          equ KeyboardMap+c_Pressed_Quit         
-addr_Pressed_PlanetData    equ KeyboardMap+c_Pressed_PlanetData   
+addr_Pressed_Front         equ KeyboardMap+c_Pressed_Front
+addr_Pressed_Aft           equ KeyboardMap+c_Pressed_Aft
+addr_Pressed_Left          equ KeyboardMap+c_Pressed_Left
+addr_Pressed_Right         equ KeyboardMap+c_Pressed_Right
+addr_Pressed_RollLeft      equ KeyboardMap+c_Pressed_RollLeft
+addr_Pressed_RollRight     equ KeyboardMap+c_Pressed_RollRight
+addr_Pressed_Dive          equ KeyboardMap+c_Pressed_Dive
+addr_Pressed_Climb         equ KeyboardMap+c_Pressed_Climb
+addr_Pressed_Accellerate   equ KeyboardMap+c_Pressed_Accellerate
+addr_Pressed_Decellerate   equ KeyboardMap+c_Pressed_Decellerate
+addr_Pressed_FireLaser     equ KeyboardMap+c_Pressed_FireLaser
+addr_Pressed_TargetMissle  equ KeyboardMap+c_Pressed_TargetMissle
+addr_Pressed_FireMissile   equ KeyboardMap+c_Pressed_FireMissile
+addr_Pressed_UnarmMissile  equ KeyboardMap+c_Pressed_UnarmMissile
+addr_Pressed_ECM           equ KeyboardMap+c_Pressed_ECM
+addr_Pressed_EnergyBomb    equ KeyboardMap+c_Pressed_EnergyBomb
+addr_Pressed_EscapePod     equ KeyboardMap+c_Pressed_EscapePod
+addr_Pressed_DockingComp   equ KeyboardMap+c_Pressed_DockingComp
+addr_Pressed_Hyperspace    equ KeyboardMap+c_Pressed_Hyperspace
+addr_Pressed_Distance      equ KeyboardMap+c_Pressed_Distance
+addr_Pressed_HomeCursor    equ KeyboardMap+c_Pressed_HomeCursor
+addr_Pressed_Launch        equ KeyboardMap+c_Pressed_Launch
+addr_Pressed_BuyCargo      equ KeyboardMap+c_Pressed_BuyCargo
+addr_Pressed_SellCargo     equ KeyboardMap+c_Pressed_SellCargo
+addr_Pressed_Equip         equ KeyboardMap+c_Pressed_Equip
+addr_Pressed_GalacticChrt  equ KeyboardMap+c_Pressed_GalacticChrt
+addr_Pressed_LocalChart    equ KeyboardMap+c_Pressed_LocalChart
+addr_Pressed_MarketPrices  equ KeyboardMap+c_Pressed_MarketPrices
+addr_Pressed_Status        equ KeyboardMap+c_Pressed_Status
+addr_Pressed_Inventory     equ KeyboardMap+c_Pressed_Inventory
+addr_Pressed_GameSkip      equ KeyboardMap+c_Pressed_GameSkip
+addr_Pressed_Save          equ KeyboardMap+c_Pressed_Save
+addr_Pressed_Freeze        equ KeyboardMap+c_Pressed_Freeze
+addr_Pressed_Resume        equ KeyboardMap+c_Pressed_Resume
+addr_Pressed_Recentre      equ KeyboardMap+c_Pressed_Recentre
+addr_Pressed_Quit          equ KeyboardMap+c_Pressed_Quit
+addr_Pressed_PlanetData    equ KeyboardMap+c_Pressed_PlanetData
 addr_Pressed_CursorUp      equ KeyboardMap+c_Pressed_CursorUp
 addr_Pressed_CursorDown    equ KeyboardMap+c_Pressed_CursorDown
 addr_Pressed_Find          equ KeyboardMap+c_Pressed_Find
 addr_Pressed_Warp          equ KeyboardMap+c_Pressed_Warp
+addr_Pressed_SystemMap     equ KeyboardMap+c_Pressed_SystemMap
 
 
 MIsKeyPressed:          MACRO   keyaddress, misstarget
@@ -333,7 +334,7 @@ init_keyboard:          ld		hl,Keys                         ; no key s are press
                         ld		a,0                             ;
                         call	memfill_dma                     ;
                         ret                                     ;
-	
+
 
 
 scan_keyboard:          ld		ix,RawKeys                      ; hl = table of raw IO port readings
@@ -371,7 +372,7 @@ scan_keyboard:          ld		ix,RawKeys                      ; hl = table of raw 
                         ld      e,a                             ; e now holds the raw keys for shifting
 .ProcessExtend0:        rl      e                               ; shift bits left into carry for extended keys
                         jr      c,.SetExtend0KeyPressed         ; if carry they key was pressedw
-.Extend0NotPressed:     ZeroA                       
+.Extend0NotPressed:     ZeroA
                         jp      .SetExtend0Key
 .SetExtend0KeyPressed:  ld      a,(hl)                          ; consider if key was already held down
                         cp      2
@@ -384,10 +385,10 @@ scan_keyboard:          ld		ix,RawKeys                      ; hl = table of raw 
                         ld      (RawKeys+9),a                      ; save to extended slot
                         ld      b,8
                         ld      hl,Keys + VK_DELETE
-                        ld      e,a  
+                        ld      e,a
 .ProcessExtend1:        rl      e                                 ; shift bits left into carry for extended keys
                         jr      c,.SetExtend1KeyPressed
-.Extend1NotPressed:     ZeroA                       
+.Extend1NotPressed:     ZeroA
                         jp      .SetExtend1Key
 .SetExtend1KeyPressed:  ld      a,(hl)
                         cp      2
@@ -397,9 +398,9 @@ scan_keyboard:          ld		ix,RawKeys                      ; hl = table of raw 
 .Extend1AlreadyHeld:    inc     hl
                         djnz    .ProcessExtend1
                         ret
-                        
-                        
-                        
+
+
+
 GetKeyStateAddressDE:   MACRO
                         ld      hl,KeyboardMap                  ; work our address to read from
                         add     hl,a
@@ -417,7 +418,7 @@ GetKeyStateAddressHL:   MACRO
                         ld      l,a
                         ENDM
 
-; Gets the current keystate of the c_Pressed Key in a register    
+; Gets the current keystate of the c_Pressed Key in a register
 get_vkey_a_state:       ld      hl,Keys
                         add     hl,a
                         ld      a,(hl)
@@ -432,7 +433,7 @@ is_vkey_held:           ld      hl,Keys
 is_vkey_pressed:        ld      hl,Keys
                         add     hl,a
                         ld      a,(hl)
-                        cp      1 
+                        cp      1
                         ret
 
 get_key_a_state:        GetKeyStateAddressHL                    ; reads a mapped key and sets a to key staus, e.g. 0 1 or >=2 DOES NOT SCAN KEYBOARD
@@ -456,7 +457,7 @@ is_key_pressed:         GetKeyStateAddressHL
                         ld      a,(hl)                          ; a = keystate
                         cp      1                               ; we cant just test bit 0 as this may have been held long
                         ret
-      
+
 ; returns nz is set if c_ key is held, if key was held then keystate would be 2 or 3, i.e. bit 1 set
 is_key_held:            GetKeyStateAddressHL
                         ld      a,(hl)                          ; a = keystate
@@ -487,9 +488,9 @@ is_any_key_held:        ld      hl,Keys
                         SetAFalse
                         ret
 .KeyPressed:            ld      a,c
-                        ret    
-    
-    
+                        ret
+
+
 WaitForNoKey:           ld      hl,KeyAddrTab                   ; de = table of IO ports to read
                         ld		b,8                             ; 8 ports to ready
 .PortReadLoop:          ld		a,(hl)							; Set up port to read as (hl)$FE
@@ -500,7 +501,7 @@ WaitForNoKey:           ld      hl,KeyAddrTab                   ; de = table of 
                         inc		hl                              ; and ready for next read
                         djnz    .PortReadLoop
                         ret
-    
+
 WaitForAnyKey:          push    af,,de,,bc,,hl
                         call    WaitForNoKey
 .waitKeyLoop:           ld		hl,KeyAddrTab                   ; de = table of IO ports to read
@@ -525,7 +526,7 @@ InputCursor             DB  0               ; Current Cursor Position
 EnterPressed            DB  0               ; zero notpressed FF pressed
 InputChanged            DB  0
 InsertMode              DB  0
-InputLimit              EQU 15 
+InputLimit              EQU 15
 
 keyboard_copy_input_to_de:  ld      hl,InputString
                             ld      a,(InputCursor)
@@ -539,9 +540,9 @@ keyboard_copy_input_to_de:  ld      hl,InputString
                             ret
 
  ;Input routine logic
- ;Intialise input state 
- 
-; Scans the key pressed to determine if its an alpha, returns ascii code or 0 if not alpha 
+ ;Intialise input state
+
+; Scans the key pressed to determine if its an alpha, returns ascii code or 0 if not alpha
 ; Input a = key pressed, returns with carry set if no alpha else carry is clear
 isKeyAlpha:             JumpIfALTNusng  "A",   .NotAlpha
                         JumpIfAGTENusng "Z"+1, .NotAlpha
@@ -557,7 +558,7 @@ InsertKeystroke:        ld      a,(InputCursor)                         ; Curren
                         add     hl,a                                    ; .
                         push    hl                                      ; save current cursor position
                         ld      b,a                                     ; as a quick optimisation
-                        JumpIfMemFalse InsertMode, .NoCopyNeeded        ; if we are in overtype mode skip copy 
+                        JumpIfMemFalse InsertMode, .NoCopyNeeded        ; if we are in overtype mode skip copy
                         ld      a,(InputLength)                         ; no need to shuffle string
                         cp      b                                       ; if we are at the end already
                         ld      a,b                                     ; .
@@ -570,11 +571,11 @@ InsertKeystroke:        ld      a,(InputCursor)                         ; Curren
                         ld      a,(hl)                                  ; now suffle from left char to right char
                         ld      (de),a                                  ; .
                         dec     hl                                      ; moving back one byte at a time
-                        dec     de                                      ;   
+                        dec     de                                      ;
                         dec     b                                       ; and reducing the current copy position
                         ld      a,c                                     ; have we reached the input cursor pos
                         cp      b                                       ;
-                        pop     bc                      
+                        pop     bc
                         jp      nz,.CopyLoop
 .NoCopyNeeded:          pop     hl
                         ld      a,(LastKeyPressed)
@@ -584,7 +585,7 @@ InsertKeystroke:        ld      a,(InputCursor)                         ; Curren
                         inc     hl                                      ;  to input cursor as a short cut to logic
                         inc     (hl)
                         ret
-                        
+
 
 ; We won't have any auto repeat on input
 LastKeyPressed:         db 0
@@ -607,15 +608,15 @@ initInputText:          ZeroA
                         inc     hl
                         djnz    .wipeloop
                         ret
-              
-                       
-                        
-                        
-.MaxInputReached:       ret ; will add a beep later                        
-                        
 
-                        
-                        
+
+
+
+.MaxInputReached:       ret ; will add a beep later
+
+
+
+
 .NoKeyPressed:          ZeroA
                         ld      (LastKeyPressed),a              ; Clear last key pressed
 
@@ -626,11 +627,11 @@ InputBlinkCounter:      DW      InputBlinkDelay
 InputBlinkSymbol:       DB      InputBlinkOn
 
 InputName:              SetMemFalse InputChanged
-                        call    is_any_key_pressed              
+                        call    is_any_key_pressed
                         cp      $FF
                         jp      z,InputBlinkCursor
 .KeyPressed:            ld      c,a
-                        ld      a,(InputCursor)                 ; No key so we can now look at if we are at the end of the buffer    
+                        ld      a,(InputCursor)                 ; No key so we can now look at if we are at the end of the buffer
                         cp      InputLimit                      ; move to variable later and then cp (hl)
                         jr      z,.DeleteOrEnterOnly            ;
                         ld      hl,ASCII_Map
@@ -665,7 +666,7 @@ InputName:              SetMemFalse InputChanged
                         SetMemTrue EnterPressed
                         SetMemTrue InputChanged
                         call    init_keyboard           ; Flush keyboard status so futher inputs don't auto read the enter key as a second press
-                        jp      InputBlinkCursor   
+                        jp      InputBlinkCursor
 .SpacePressed:          ld      a,(InputCursor)         ; Space = delete
                         cp      0                       ; if input is zero length then can not delete
                         ret     z
@@ -700,7 +701,7 @@ InputBlinkCursor:       ld      hl,(InputBlinkCounter)
                         ld      (hl),0
                         SetMemTrue InputChanged
                         ret
-                        
+
 
 TargetMissileTest:      AnyMissilesLeft
                         JumpIfZero      .ClearTargetting
@@ -713,7 +714,7 @@ TargetMissileTest:      AnyMissilesLeft
                         JumpIfAEqNusng  StageMissileNotTargeting, .SetTargetting
 .ClearTargetting:       ClearMissileTargetting
                         ret
-.SetTargetting:         SetMissileTargetting                      
+.SetTargetting:         SetMissileTargetting
                         ret
 
 MovementKeyTest:        xor     a
@@ -777,4 +778,3 @@ ScanRecentreKey:        ld      hl,(addr_Pressed_Recentre)
                         ld      (CursorKeysPressed),a
                         ret
 
-    

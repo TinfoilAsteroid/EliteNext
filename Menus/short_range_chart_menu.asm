@@ -71,7 +71,9 @@ SRM_DispDEIXtoIY:       ld (.SRMclcn32z),ix
 .SRMclcn32zIX           ds 2
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; draws chart and keeps a local cache of pixel position to chart position
-SRM_galactic_chart:         MMUSelectLayer1                         ; initialise display
+SRM_galactic_chart:         ld      a,ChartViewLocal                ; the view type (BBC QQ11): MovementKeyTest then reads
+                            ld      (MenuIdMax),a                   ; the cursor keys, Q up, A down
+                            MMUSelectLayer1                         ; initialise display
                             call  l1_cls                            ; .
                             ld      a,7                             ; .
                             call    l1_attr_cls_to_a                ; .
@@ -81,21 +83,19 @@ SRM_galactic_chart:         MMUSelectLayer1                         ; initialise
                             call    l2_320_cls                      ; .
                             MMUSelectSpriteBank                     ; .
                             call    sprite_cls_all;sprite_cls_cursors              ; .
-                            ld      a,SRM_cursor_dampen
-                            ld      (SRM_cursor_dampen_timer),a
 .selectPresentSystem:       call    SRM_get_current_name
 .drawOuterBorder:           MMUSelectLayer2                         ; draw chart background graphics
                             call    l2_draw_menu_border
 .drawTextAreas:             ld      b,192
                             ld      hl,2
-                            ld      de,316
+                            ld      de,317
                             ld      c,$C0
                             call    l2_draw_horz_line_320           ;b = row; hl = col, de = length, c = color"
 .generateHeaderText:        ld      b,1                             ; only 1 line to print og boiler text
                             ld      ix,SRM_boiler_text              ; .
                             call    SRM_print_boiler_text           ; .
                             call    SRM_fuel_circle
-.plot_stars:                call    SRM_plot_stars                         
+.plot_stars:                call    SRM_plot_stars
 .CircleandCrosshair:        ld      hl,srm_star_x_centre -15
                             ld      (SRM_cursor_x),hl
                             ld      hl,srm_star_y_centre -15
@@ -130,7 +130,10 @@ SRM_bc_in_range_iy:         ClearCarryFlag
                             ccf
                             ret                                     ; set carry flag on failure
 ;----------------------------------------------------------------------------------------------------------------------------------
-SRM_plot_stars:             xor     a                               ; intiailise
+SRM_plot_stars:             MMUSelectSpriteBank                     ; (spr_nextStar is in the sprite bank)
+                            ld      a,local_chart_first_star        ; stars from the first sprite after the fixed ones
+                            ld      (spr_nextStar),a                ; (sprite_cls_all has hidden the last chart's)
+                            xor     a                               ; intiailise
                             ld      (srm_star_cache_size),a         ; local copy of stars rendered
                             ld      (XSAV),a                        ; .
                             ld      ix,galaxy_data                  ; .
@@ -213,8 +216,10 @@ SRM_plot_stars:             xor     a                               ; intiailise
                             jp      .CounterLoop                     ; .
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; bc = row hl = col
-SRM_show_star_sprite:       MMUSelectSpriteBank                   
+SRM_show_star_sprite:       MMUSelectSpriteBank
                             ld      a,(spr_nextStar)                    ; select next sprite slot in queue
+                            cp      128                                 ; out of sprites: no more stars
+                            ret     nc                                  ; .
                             nextreg   SPRITE_PORT_INDEX_REGISTER,a      ;
                             inc     a                                   ; mark next free slot
                             ld      (spr_nextStar),a                    ;
@@ -258,14 +263,14 @@ SRM_fuel_circle:            ld      bc,((srm_star_y_centre) << 8) + srm_star_x_c
                             ld      (.Plot1+1),bc           ; save origin into cXcY reg in code
                             ld      ixh,a                   ; ixh =  x = raidus
                             ld      ixl,0                   ; iyh =  y = 0
-.calcd:                     ld      h,0     
-                            ld      l,a     
+.calcd:                     ld      h,0
+                            ld      l,a
                             add     hl,hl                   ; hl = r * 2
                             ex      de,hl                   ; de = r * 2
-                            ld      hl,3        
-                            and     a       
+                            ld      hl,3
+                            and     a
                             sbc     hl,de                   ; hl = 3 - (r * 2)
-                            ld      b,h     
+                            ld      b,h
                             ld      c,l                     ; bc = 3 - (r * 2)
 .calcdelta:                 ld      hl,1
                             ld      d,0
@@ -338,15 +343,15 @@ SRM_fuel_circle:            ld      bc,((srm_star_y_centre) << 8) + srm_star_x_c
 .IncrementCircle:           bit     7,h                     ; Check for Hl<=0
                             jr z,   .draw_circle_1
                             add hl,de                       ; Delta=Delta+D1
-                            jr      .draw_circle_2      ; 
+                            jr      .draw_circle_2      ;
 .draw_circle_1:             add     hl,bc                   ; Delta=Delta+D2
                             inc     bc
                             inc     bc                      ; D2=D2+2
                             dec     ixh                     ; Y=Y-1
 .draw_circle_2:             inc bc                          ; D2=D2+2
-                            inc bc          
+                            inc bc
                             inc de                          ; D1=D1+2
-                            inc de              
+                            inc de
                             inc ixl                         ; X=X+1
                             jp      .CircleLoop
 .PlotPixel:                 ld      a,0                     ; This was originally indirect, where as it neeed to be value
@@ -362,13 +367,6 @@ SRM_fuel_circle:            ld      bc,((srm_star_y_centre) << 8) + srm_star_x_c
                             ret
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-srm_get_name:           ld      a,(Galaxy)
-                        MMUSelectGalaxyA
-                        ld      bc,(TargetSystemX)
-                        ld      (GalaxyTargetSystem),bc
-                        call    galaxy_system_under_cursor
-                        cp      0
-                        ret     z
 srm_get_seed_name:      call    GetDigramWorkingSeed            ; entry point if we have already got the target system
                         ld      hl,name_expanded
                         call    CapitaliseString
@@ -376,58 +374,6 @@ srm_get_seed_name:      call    GetDigramWorkingSeed            ; entry point if
                         ld      a,$FF
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-SRM_update_cursor:      call    SRM_draw_cursor
-                        ret
-                        ld      bc,(TargetSystemX)              ; bc = selected jump
-                        ld      de,(PresentSystemX)
-                        ld      a,c                             ; a = target x pos
-                        sub     e                               ; a = target x - present x
-                        jp      p,.NoFlipX                      ; if > 0 skip next bit
-                        neg                                     ; c = a = abs a * 4
-                        sla     a                               ; .
-                        sla     a                               ; .
-                        ld      c,a                             ;  .
-                        ld      a,srm_x_centre                  ; c = a = centre screen - c
-                        sub     c                               ; .
-                        ld      c,a                             ; .
-                        jp      .fixY                           ;. now do Y
-.NoFlipX:               sla     a
-                        sla     a
-                        add     a,srm_x_centre
-                        ld      c,a
-.fixY:                  ld      a,b                             ; for Y its * 2
-                        sub     d
-                        jp      p,.NoFlipY
-                        neg
-                        sla     a
-                        ld      b,a
-                        ld      a,srm_y_centre
-                        sub     b
-                        ld      b,a
-                        jp      .RedrawSprite
-.NoFlipY                sla     a
-                        add     a,srm_y_centre
-                        ld      b,a
-.RedrawSprite:          MMUSelectSpriteBank
-                        call    sprite_lhc_move
-                        call    srm_name_current
-                        ret
-
-srm_clear_name_area:    ld      h,8
-                        ld      de,$A000 | COLOUR_TRANSPARENT
-                        ld      bc,$A80A
-.ClearLoop:             push    hl
-                        push    de
-                        push    bc
-                        MMUSelectLayer2
-                        call    l2_draw_horz_line
-                        pop     bc
-                        pop     de
-                        pop     hl
-                        inc     b
-                        dec     h
-                        jr      nz,.ClearLoop
-                        ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 srm_display_target_details:
                         ld      a,(Galaxy)
@@ -445,35 +391,8 @@ srm_display_target_details:
                         ld      ix,SRM_detail_text
                         call    SRM_print_boiler_text
                         ret
-                        
+
 ;----------------------------------------------------------------------------------------------------------------------------------
-srm_system_undercursor: ld      a,(Galaxy)
-                        MMUSelectGalaxyA
-                        ld      bc,(TargetSystemX)
-                        ld      (GalaxyTargetSystem),bc
-                        call    galaxy_system_under_cursor  ; local position to workingseeds
-                        cp      0                           ; or exit if non found
-                        ret     z
-srm_name_current:       call    srm_get_seed_name
-                        push    hl
-                        push    af
-                        call    srm_clear_name_area
-                        ld      hl,name_expanded            ; we are writing name
-                        ld      b,$A0
-                        ld      hl, $00A0
-                        ld      c,$FF
-                        MMUSelectLayer2
-                        call    l2_print_at_320         ;b = row, hl = col, de = addr of message, c = color
-                        pop     af
-                        pop     hl
-                        call    srm_calc_distance
-                        ld      de,srm_distance
-                        ld      bc,$B0
-                        ld      hl,$0A
-                        ld      c,$FF
-                        MMUSelectLayer2
-                        call    l2_print_at_320
-                        ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 srm_calc_distance:      ld      a,(Galaxy)                                      ; Default in 0 distance
                         MMUSelectGalaxyA
@@ -497,9 +416,9 @@ srm_calc_distance:      ld      a,(Galaxy)                                      
                         pop     hl                                              ; hl = iy
                         ld      de,srm_distance_val
                         ld      a,(hl)                                          ;Push last digit to post decimal
-                        ld      (srm_fraction),a    
+                        ld      (srm_fraction),a
                         dec     hl
-                        call    compare16HLDE                                   
+                        call    compare16HLDE
                         jr      c,.done_number
                         ld      a,(hl)
                         ld      (srm_dist_amount+2),a
@@ -595,7 +514,7 @@ srm_cache_star_pos:     push    af,,de,,hl              ;
                         inc     (hl)
                         pop     af,,de,,hl              ;
                         ret                             ;
-srm_cachelabel:         push    af,,bc,,de,,hl          ; 
+srm_cachelabel:         push    af,,bc,,de,,hl          ;
                         ld      hl,srm_printed_text     ; find next slot in cache
                         ld      d,srm_fill_buffer_record; .
                         ld      a,(srm_buffer_size)     ; .
@@ -609,9 +528,9 @@ srm_cachelabel:         push    af,,bc,,de,,hl          ;
                         ldi                             ; .
                         ld      hl,srm_buffer_size
                         inc     (hl)
-                        pop     af,,bc,,de,,hl          ; 
+                        pop     af,,bc,,de,,hl          ;
                         ret
-                        
+
 ;----------------------------------------------------------------------------------------------------------------------------------
 ;-- Takes the pixel lable details and converts to char positions
 srm_scale_label_pos:    ld      de,(local_name_row)     ; convert pixels to char positions
@@ -633,7 +552,7 @@ srm_scale_label_pos:    ld      de,(local_name_row)     ; convert pixels to char
                         jp      c,.LeftSideText
 .RightSideText:         inc     a                       ; On the right 1 characters from star
                         ld      (local_name_col8bitLeft),a; save left edge
-                        ld      a,(local_name_len)      ; now a holds actual end 
+                        ld      a,(local_name_len)      ; now a holds actual end
                         add     b
                         ld      (local_name_col8bitRght),a  ; save right edge
                         ret
@@ -642,23 +561,23 @@ srm_scale_label_pos:    ld      de,(local_name_row)     ; convert pixels to char
                         ld      c,a                     ; .
                         ld      a,b                     ; a = star position - (len - 1) to be left side
                         sbc     a,c                     ; .
-                        dec     a                       ; and an additional 2 chars. position will never be off left 
+                        dec     a                       ; and an additional 2 chars. position will never be off left
                         dec     b                       ;
                         ld      (local_name_col8bitLeft),a  ; for reading into e
                         ld      a,b
                         ld      (local_name_col8bitRght),a; right most side for reading into d
                         ret
-; takes memorty location local_name_col and local_name_row as character positions of text                        
+; takes memorty location local_name_col and local_name_row as character positions of text
 srm_label_system8bit:   call    copy_system_to_working  ; set up working seed
                         ld      a,(Galaxy)              ; and name
                         MMUSelectGalaxyA                ;
-                        call    srm_get_seed_name     
+                        call    srm_get_seed_name
                         call    srm_string_len          ; gets length of string at hl into b
-                        ld      a,b                     
+                        ld      a,b
                         inc     a
-                        ld      (local_name_len),a      
+                        ld      (local_name_len),a
                         call    srm_scale_label_pos     ; now local 8 bit holds direct position
- ;.......................first attempt                  
+ ;.......................first attempt
 .attempt1:              call    TestBoxAgainstCache     ; hl = row de = col bc = col right col e = chars
                         jr      nc,.OKToPrint
 ;.......................attempt 2 up one row
@@ -676,12 +595,12 @@ srm_label_system8bit:   call    copy_system_to_working  ; set up working seed
                         ld      a,(local_name_col8bit)  ; hl = pixel columns ( * 8 to get pixel address) which also means its on character boundary
                         ld      d,8                     ; .
                         ld      e,a                     ; .
-                        mul     de                      ; . 
+                        mul     de                      ; .
                         ex      de,hl                   ; .
                         ld      a,(local_name_row8bit)
                         sla     a
                         sla     a
-                        sla     a                       
+                        sla     a
                         ld      b,a                     ; now in pixels
                         ld      de,name_expanded
                         ld      c,$FF
@@ -689,7 +608,7 @@ srm_label_system8bit:   call    copy_system_to_working  ; set up working seed
                         call    l2_print_at_320         ;b = row, hl = col, de = addr of message, c = color
                         ret
 
-                        
+
 ; hl = string pointer, returns b with length
 srm_string_len:         ld      b,a
 .FindLoop:              ld      a,(hl)
@@ -698,7 +617,7 @@ srm_string_len:         ld      b,a
                         inc     hl
                         inc     b
                         jp      .FindLoop
-                       
+
 SRM_cursor_to_chart:    ld      hl,(SRM_cursor_x)               ; compensate for screen venter and pixel adjustment
                         ld      a,15                            ; adjust as SRM_cursor_x holds top left
                         add     hl,a                            ;
@@ -713,7 +632,7 @@ SRM_cursor_to_chart:    ld      hl,(SRM_cursor_x)               ; compensate for
                         ld      a,(PresentSystemX)              ;
                         ld      e,a                             ;
                         add     hl,de                           ; de = dx + center star chart x
-                        ex      de,hl                           ; 
+                        ex      de,hl                           ;
                         ld      hl,(SRM_cursor_y)               ; hl = dy in pixels / 2
                         ld      a,15                            ; adjust as SRM_cursor_y holds top left
                         add     hl,a                            ; .
@@ -725,7 +644,7 @@ SRM_cursor_to_chart:    ld      hl,(SRM_cursor_x)               ; compensate for
                         ld      a,(PresentSystemY)              ; .
                         ld      c,a                             ; .
                         add     hl,bc                           ; .
-                        ld      b,l                             ; 
+                        ld      b,l                             ;
                         ld      c,e                             ; b = ypos c = xpos
                         ret
 
@@ -749,14 +668,14 @@ SRM_chart_to_cursor:    ld      a,(PresentSystemY)              ; hl = center sy
                         ClearCarryFlag                          ; .
                         sbc     hl,bc                           ; .
                         ex      de,hl                           ; de = c - cx, hl = adjusted y position
-                        ld      b,2                             ; de = de * 4 
+                        ld      b,2                             ; de = de * 4
                         bsla    de,b                            ; .
                         ex      de,hl                           ; hl = ( c - cx) * 4, de = adjusted y position
                         ld      bc,srm_star_x_centre -15        ; hl += (srm_star_x_centre offset by cursor home)
                         add     hl,bc                           ; .
                         ld      bc,de                           ; bc = adjusted y position
                         ret
-; takes present system x y and convers to bc = row, hl = column                        
+; takes present system x y and convers to bc = row, hl = column
 SRM_star_to_screen:     ld      a,(PresentSystemY)              ; hl = center system Y (in de) - b (chart Y)
                         ld      e,a                             ; .
                         ld      d,0                             ; .
@@ -776,7 +695,7 @@ SRM_star_to_screen:     ld      a,(PresentSystemY)              ; hl = center sy
                         ClearCarryFlag                          ; .
                         sbc     hl,bc                           ; .
                         ex      de,hl                           ; de = c - cx, hl = adjusted y position
-                        ld      b,2                             ; de = de * 4 
+                        ld      b,2                             ; de = de * 4
                         bsla    de,b                            ; .
                         ex      de,hl                           ; hl = ( c - cx) * 4, de = adjusted y position
                         ld      bc,srm_star_x_centre -7         ; hl += (srm_star_x_centre offset by cursor home)
@@ -784,105 +703,68 @@ SRM_star_to_screen:     ld      a,(PresentSystemY)              ; hl = center sy
                         ld      bc,de                           ; bc = adjusted y position
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-SRM_cursors:
-local_chart_cursors:    ld      a,(SRM_cursor_dampen_timer)             ; if timer has reached zero 
-                        or      a                                       ; else carry on with 
-                        jp      z,.timerZero                            ; count down of timer
-                        dec     a
-                        ld      (SRM_cursor_dampen_timer),a
-                        ret                                             ; .
-.timerZero:             ld      a,(CursorKeysPressed)                   ; Once it gets to zero
-                        ReturnIfAIsZero                                 ; it holds that until another eky is pressed
-                        ld      b,a
-                        ld      a,SRM_cursor_dampen
-                        ld      (SRM_cursor_dampen_timer),a
-                        ld      a,b
-                        rla
-                        call   c,srm_UpPressed
-                        rla
-                        call   c,srm_DownPressed
-                        rla
-                        call   c,srm_LeftPressed
-                        rla
-                        call   c,srm_RightPressed
-                        rla
-                        call   c,srm_HomePressed
-                        rla
-                        call   c,srm_RecenterPressed
-                        ret
+; the cursor keys every ChartCursorFrames while held (ChartCursorKeys): Q up, A down, then left, right, home, recentre
+SRM_cursors:            ld      hl,SRM_cursor_handlers
+                        jp      ChartCursorKeys
+SRM_cursor_handlers:    DW      srm_UpPressed, srm_DownPressed, srm_LeftPressed, srm_RightPressed, srm_HomePressed, srm_RecenterPressed
+; The handlers may change any register (ChartCursorKeys keeps the key bits) and at a limit just return. (Each pushed
+; AF for the dispatcher and popped it again; at a limit srm_BoundsLimit cleared A, so no other key held was acted on)
 ;----------------------------------------------------------------------------------------------------------------------------------
-srm_UpPressed:          push    af
-                        ld     a,(SRM_cursor_y)
-                        JumpIfAEqNusng   168, srm_BoundsLimit 
-                        inc    a
-                        ld      (SRM_cursor_y),a
-                        call    SRM_update_cursor
-                        pop     af
-                        ret
+srm_UpPressed:          ld      hl,SRM_cursor_y                 ; up the screen: y - 1
+                        ld      a,(hl)
+                        cp      8
+                        ret     z
+                        dec     (hl)
+                        jp      SRM_draw_cursor
 ;----------------------------------------------------------------------------------------------------------------------------------
-srm_DownPressed:        push    af
-                        ld     a,(SRM_cursor_y)
-                        JumpIfAEqNusng   8, srm_BoundsLimit 
-                        dec    a
-                        ld      (SRM_cursor_y),a
-                        call    SRM_update_cursor
-                        pop     af
-                        ret
+srm_DownPressed:        ld      hl,SRM_cursor_y                 ; down the screen: y + 1
+                        ld      a,(hl)
+                        cp      168
+                        ret     z
+                        inc     (hl)
+                        jp      SRM_draw_cursor
 ;----------------------------------------------------------------------------------------------------------------------------------
-srm_LeftPressed:        push    af
-                        ld      a,(SRM_cursor_x)           ; can cheat and do 8 bit as we will never go beyond 80 and 240
-                        JumpIfAEqNusng   64, srm_BoundsLimit 
-                        dec    a
-                        ld      (SRM_cursor_x),a
-                        call    SRM_update_cursor
-                        pop     af
-                        ret
+srm_LeftPressed:        ld      hl,SRM_cursor_x                 ; (8 bit: it stays within 64 to 224)
+                        ld      a,(hl)
+                        cp      64
+                        ret     z
+                        dec     (hl)
+                        jp      SRM_draw_cursor
 ;----------------------------------------------------------------------------------------------------------------------------------
-srm_RightPressed:       push    af
-                        ld      a,(SRM_cursor_x)           ; can cheat and do 8 bit as we will never go beyond 80 and 240
-                        JumpIfAEqNusng   224, srm_BoundsLimit 
-                        inc    a
-                        ld      (SRM_cursor_x),a
-                        call    SRM_update_cursor
-                        pop     af
-                        ret
+srm_RightPressed:       ld      hl,SRM_cursor_x
+                        ld      a,(hl)
+                        cp      224
+                        ret     z
+                        inc     (hl)
+                        jp      SRM_draw_cursor
 ;----------------------------------------------------------------------------------------------------------------------------------
-srm_HomePressed:        push    af
-                        ld      hl,srm_star_x_centre -15
+srm_HomePressed:        ld      hl,srm_star_x_centre -15
                         ld      (SRM_cursor_x),hl
                         ld      hl,srm_star_y_centre -15
                         ld      (SRM_cursor_y),hl
-                        call    SRM_update_cursor
-                        pop     af
-                        ret
+                        jp      SRM_draw_cursor
 ;----------------------------------------------------------------------------------------------------------------------------------
-srm_RecenterPressed:    push    af
-.GetCursorDistance:     call    srm_calc_cur_jumpable
+srm_RecenterPressed:    call    srm_calc_cur_jumpable
                         jp      c,.TooFar
-                        call    find_nearest_cache  ; find nearest system to galactic chart position
+                        call    find_nearest_cache              ; find nearest system to galactic chart position
                         jp      c,.TooFar
-                        ld      (TargetSystemX),bc  ; save galatic position to TargetSystemX
-                        call    SRM_chart_to_cursor ; convert back to on screen cursor position
+                        ld      (TargetSystemX),bc              ; save galatic position to TargetSystemX
+                        call    SRM_chart_to_cursor             ; convert back to on screen cursor position
                         ld      (SRM_cursor_y),bc
                         ld      (SRM_cursor_x),hl
-                        call    SRM_update_cursor
-                        
-                        call    srm_display_target_details
-                        pop     af
-                        ret
+                        call    SRM_draw_cursor
+                        jp      srm_display_target_details
 .TooFar:                ld      b,2
                         ld      ix,SRM_system_too_far
-                        call    SRM_print_boiler_text
-                        pop     af
-                        ret
+                        jp      SRM_print_boiler_text
 ; Cache is pre adjusted to cursor positions
-found_distance:         dw      9000                        ; assume starting 9000 as crazy high    
-found_system            dw      0           
+found_distance:         dw      9000                        ; assume starting 9000 as crazy high
+found_system            dw      0
 find_nearest_cache:     ld      a,(srm_star_cache_size)     ; if there are no stars then forget it
                         and     a                           ; .
                         jp      z,.NoHit                    ; .
                         ld      ixl,a
-.SearchCache:           ld      hl,9000                     ; assume starting 9000 as crazy high  
+.SearchCache:           ld      hl,9000                     ; assume starting 9000 as crazy high
                         ld      (found_distance),hl         ; .
                         ld      iy,srm_star_cache           ; for each star in the cache
 .SearchLoop:            ld      hl,(iy+0)                   ; check abs distance from target cusor
@@ -978,12 +860,9 @@ srm_calc_cur_jumpable:  ld      hl,(SRM_cursor_x)
 .tooFar:                SetCarryFlag
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-srm_BoundsLimit:        pop     af
-                        xor     a
-                        ret
 ;---------------------------------------------------------------------------------------------------------------------------------
 ; prints text based on message data
-SRM_print_boiler_text:      
+SRM_print_boiler_text:
 .BoilerTextLoop:        push        bc          ; Save Message Count loop value
                         ld          b,(ix+0)    ; get row into b
                         ld          de,(ix+1)   ; get column into hl (as we can't load direct to hl from ix)
@@ -1006,8 +885,6 @@ SRM_print_boiler_text:
 SRM_message_timer           EQU 2500
 SRM_message_clear_counter   dw  0
 
-SRM_cursor_dampen           equ 75
-SRM_cursor_dampen_timer:    DB  0
 
 data_short_range_chart:     ;row  column low high  colr text address low high
 SRM_boiler_text             DB 002, low 064, high 064, $FF, low short_rg_chart_header,   high short_rg_chart_header
@@ -1026,9 +903,6 @@ SRM_detail_dist_blank2:     DB 220, low 16, high 16, $FF, low srm_distance_blank
 
 short_range_boiler_text DW $0030 : DB $02 : DW TextBuffer
 short_range_header      equ 12
-srm_xy_centre           equ $6080
-srm_x_centre            equ 160
-srm_y_centre            equ $60
 srm_star_x_centre       equ 160 ;- 8 ; adjusted for sprite centre
 srm_star_y_centre       equ $68 ;- 8 ; adjusted for sprite centre
 srm_star_x_centre_char  equ 20 ; (160/2)
@@ -1065,7 +939,7 @@ srm_distance_val        DS  6
 srm_fill_buffer_len     EQU 64
 srm_fill_buffer_record  EQU 3
 srm_fill_buffer_size    EQU srm_fill_buffer_record * srm_fill_buffer_len                          ; up to 32 labels topx topy lengthx spare
-srm_printed_text        DS  srm_fill_buffer_size                             ; space for occupied cells may move to bit flags later TODO
+srm_printed_text        DS  srm_fill_buffer_size                             ; the labels printed (row, column, length), so the next one is placed clear of them
 srm_buffer_size         DB  0
 srm_star_cache          DS  (2+2+2)*30    ; Keeps a list of screen xy and chart xy
 srm_star_cache_size     DB  0

@@ -123,6 +123,19 @@ def test_AequAdivDmul967Bit():
     sd.close()
 
 
+def test_AequAdivQmul96ABS():
+    """A = A / D * 96 (unsigned, A < D else 96), the compass's TIS2: 0 to 2 under for every A < D. The 9 bit
+    remainder's carry was once dropped, so with D over 128 it could be anything (67 / 137 gave 1, not 46)"""
+    sd, cpu = machine()
+    for d in range(1, 256):
+        for a in sorted({0, 1, d - 1, d, d // 2, d // 3} | set(range(0, d, 9))):
+            et.call(cpu, "AequAdivQmul96ABS", a=a, d=d)
+            got = et.reg(cpu, "a")
+            exp = 96 if a >= d else 96 * a / d
+            check(got == 96 if a >= d else 0 <= exp - got < 2, f"{a} / {d} * 96: got {got}, expected {exp:.2f}")
+    sd.close()
+
+
 def test_asm_sqrt():
     """HL = floor(sqrt(DE)), exhaustive over 16 bits in steps"""
     sd, cpu = machine()
@@ -132,13 +145,94 @@ def test_asm_sqrt():
     sd.close()
 
 
+def test_mul24():
+    """mul24: BCDE.HL = BH.L * CD.E unsigned (B, C 7 bit), the full 9
+    multiply path and the leading zero ones (BH = 0, CD = 0, B = C = 0); the
+    carries into bytes 4 and 5 were once doubled rather than added.
+    mul24Signed: lead sign, DE.H = the S15.8 product with D's bit 7 the sign"""
+    sd, cpu = machine()
+    r = et.rnd(8)
+    shapes = (lambda: r.randrange(1 << 23), lambda: r.randrange(256), lambda: r.randrange(1 << 16),
+              lambda: r.randrange(256) << 16, lambda: 0x7FFFFF, lambda: 0)
+    for n in range(3000):
+        x, y = r.choice(shapes)(), r.choice(shapes)()
+        et.call(cpu, "mul24", b=x >> 16, hl=x, c=y >> 16, de=y)
+        got = et.reg(cpu, "bc") << 32 | et.reg(cpu, "de") << 16 | et.reg(cpu, "hl")
+        check(got == x * y, f"mul24 {x:06X} * {y:06X}: got {got:012X}, expected {x * y:012X}")
+    for n in range(1500):
+        x = r.randrange(1, 128) * r.choice((-1, 1))                 # as ApplyMyRollAndPitchIX: alpha / 256
+        y = r.choice(shapes)() * r.choice((-1, 1)) >> r.randrange(0, 8)
+        if n % 3 == 0:
+            x = r.randrange(-(1 << 20), 1 << 20)
+        exp = abs(x) * abs(y) >> 8
+        if exp > 0x7FFFFF or not y or abs(y) > 0x7FFFFF:
+            continue
+        bx, cy = sm(x, 24), sm(y, 24)
+        et.call(cpu, "mul24Signed", b=bx >> 16, hl=bx, c=cy >> 16, de=cy)
+        got = et.reg(cpu, "de") << 8 | et.reg(cpu, "h")
+        check(got == sm(exp if (x < 0) == (y < 0) else -exp, 24) or (exp == 0 and got & 0x7FFFFF == 0),
+              f"mul24Signed {x} * {y}: got {unsm(got, 24)} ({got:06X}), expected {exp}")
+    sd.close()
+
+
+def test_mul16():
+    """mul16: DE.HL = DE * HL, all 16 bits (mul24's 8.8 x 8.8 path)"""
+    sd, cpu = machine()
+    r = et.rnd(9)
+    for x, y in [(0xFFFF, 0xFFFF), (0x8000, 0x8000), (0, 0x1234)] + \
+                [(r.randrange(65536), r.randrange(65536)) for _ in range(2000)]:
+        et.call(cpu, "mul16", hl=x, de=y)
+        got = et.reg(cpu, "de") << 16 | et.reg(cpu, "hl")
+        check(got == x * y, f"mul16 {x:04X} * {y:04X}: got {got:08X}, expected {x * y:08X}")
+    sd.close()
+
+
+def test_UnivDistanceToTarget():
+    """carry set when TacticsVector (ship - body, S15.8 lo, hi, sign per
+    axis) is inside the station safe zone cube: every sign byte 0 or $80,
+    every hi byte < $C0"""
+    sd, cpu = machine()
+    r = et.rnd(10)
+    for n in range(1500):
+        v = [r.choice((r.randrange(0xC000), r.randrange(0xB800, 0xC800), r.randrange(1 << 23)))
+             * r.choice((-1, 1)) for _ in range(3)]
+        for i, c in enumerate(v):
+            et.wr_s158(cpu, sym["TacticsVectorX"] + 4 * i, c)   # (3 bytes then a pad byte)
+        et.call(cpu, "UnivDistanceToTarget", mmu=MATHS)
+        exp = all(abs(c) < 0xC000 for c in v)
+        check(et.reg(cpu, "carry") == exp, f"{[hex(c) for c in v]}: carry {et.reg(cpu, 'carry')}")
+    sd.close()
+
+
+def test_XX12ProcessOneRow():
+    """XX12ProcessOneRow (XX12EquNodeDotOrientation's rows): HL, sign A =
+    sum over x, y, z of |scaled| * |row| / 256 each truncated, signed by
+    scaled sign xor row sign (|scaled| < 256 as the nodes are, |row| < 128)"""
+    sd, cpu = machine()
+    r = et.rnd(11)
+    row = sym["UbnkTransInvRow0x0"]
+    for n in range(1500):
+        xs = [r.randrange(-255, 256) for _ in range(3)]
+        ms = [r.randrange(-127, 128) for _ in range(3)]
+        for i, (x, m) in enumerate(zip(xs, ms)):
+            et.wr(cpu, sym[("UBnkXScaled", "UBnkYScaled", "UBnkZScaled")[i]], sm(x, 16), 2)
+            et.wr(cpu, row + 2 * i, abs(m))
+            et.wr(cpu, row + 2 * i + 1, 0x80 if m < 0 else 0)
+        et.call(cpu, "XX12ProcessOneRow", mmu=MATHS, hl=row)   # (ADDHLDESignBC is banked)
+        exp = sum((abs(x) * abs(m) >> 8) * (-1 if (x < 0) != (m < 0) else 1) for x, m in zip(xs, ms))
+        a, hl = et.reg(cpu, "a"), et.reg(cpu, "hl")
+        got = -hl if a & 0x80 else hl
+        check(got == exp, f"{xs} . {ms}: got {got} (sign {a:02X} {hl:04X}), expected {exp}")
+    sd.close()
+
+
 def test_s78_multiplies():
     """The S7.8 multiplies in MathsFPS78/asm_multiply_S78.asm:
     HLequDEmulHL      HL = DE * HL (16 bit result)
-    AequAmulQdiv256u  A = A * Q / 256
     HLeqyHLmulAdiv256 HL = HL * A / 256, the 6502 shift and add (0 to 6 low)
-    HLequHLmulDEu     only H is right: H = bits 8-15 of HL * DE, which is what
-                      XX12EquNodeDotOrientation (its only caller) uses"""
+    HLequHLmulDEu     H.L = H.L * D.E, bits 8-23 of the product (H once came
+                      back as bits 8-15 too)
+    (AequAmulQdiv256u is now the AequAmulCdiv256u macro, used inline)"""
     sd, cpu = machine()
     r = et.rnd(5)
     for _ in range(800):
@@ -148,19 +242,17 @@ def test_s78_multiplies():
         et.call(cpu, "HLequDEmulHL", de=de, hl=hl)
         check(et.reg(cpu, "hl") == de * hl & 0xFFFF, f"HLequDEmulHL {de} * {hl}: got {et.reg(cpu, 'hl')}")
     for _ in range(800):
-        a, q = r.randrange(256), r.randrange(256)
-        et.wr(cpu, "varQ", q)
-        et.call(cpu, "AequAmulQdiv256u", a=a)
-        check(et.reg(cpu, "a") == a * q >> 8, f"AequAmulQdiv256u {a} * {q}: got {et.reg(cpu, 'a')}")
-    for _ in range(800):
         hl, a = r.randrange(65536), r.randrange(256)
         et.call(cpu, "HLeqyHLmulAdiv256", hl=hl, a=a)
         got, exp = et.reg(cpu, "hl"), hl * a >> 8
         check(0 <= exp - got <= 6, f"HLeqyHLmulAdiv256 {hl} * {a} / 256: got {got}, expected {exp}")
-    for _ in range(800):
-        hl, e = r.randrange(256), r.randrange(128)      # as XX12EquNodeDotOrientation: D = 0, |x| < 256
-        et.call(cpu, "HLequHLmulDEu", hl=hl, de=e)
-        check(et.reg(cpu, "h") == (hl * e >> 8) & 255, f"HLequHLmulDEu {hl} * {e}: H {et.reg(cpu, 'h')}")
+    for n in range(1500):
+        hl, de = r.randrange(65536), r.randrange(65536)
+        if n % 2:
+            hl, de = r.randrange(256), r.randrange(128)  # as XX12EquNodeDotOrientation: D = 0, |x| < 256
+        et.call(cpu, "HLequHLmulDEu", hl=hl, de=de)
+        got, exp = et.reg(cpu, "hl"), (hl * de >> 8) & 0xFFFF
+        check(got == exp, f"HLequHLmulDEu {hl:04X} * {de:04X}: got {got:04X}, expected {exp:04X}")
     sd.close()
 
 

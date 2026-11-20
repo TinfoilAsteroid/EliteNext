@@ -1,26 +1,30 @@
-eqshp_prices_page_marker  DB "EquipShipPG63"    
-eqshp_boiler_text		DW $0250,eqship_title
-						DW $0220,name_expanded
-                        DW $B008,eqship_cash
-                        
+eqshp_prices_page_marker  DB "EquipShipPG63"
+; 320 x 256 single buffered, as the other menus (it was 256 x 192 with Layer 1 text and attribute highlights).
+; Boiler text: row, column (16 bit), colour, message (as the market screen's MPM_boiler_text)
+eqshp_TextColour        equ $FF
+eqshp_HighColour        equ $BC                     ; the selected row (as the market)
+eqshp_TextCol           equ 8
+eqshp_ListTop           equ 24                      ; pixel row of the first list row
+eqshp_ListRows          equ 18
+eqshp_CashRow           equ 180
+eqshp_CashCol           equ 72
+eqshp_boiler_text       DB 2,             low 8,   high 8,   eqshp_TextColour, low eqship_title,   high eqship_title
+                        DB 2,             low 120, high 120, eqshp_TextColour, low name_expanded,  high name_expanded
+                        DB eqshp_CashRow, low 8,   high 8,   eqshp_TextColour, low eqship_cash,    high eqship_cash
+eqshp_boiler_count      equ 3
+
 eqship_title            DB "Equip Ship",0
 eqship_cash				DB "Cash : ",0
+
 
 txt_eqshp_amount	    DB "00.0",0
 txt_eqshp_quantity      DB "999",0
 txt_eqshp_cargo         DB "999",0
 eqshp_cursor			DW  $0000
-eqshp_position			equ $1808
-eqshp_uom				equ	$68
-eqshp_price 			equ $88
-eqshp_Quantity			equ	$B0
-eqshp_Cargo             equ $E0
-eqshp_UomOffset		    equ 46
 eqshp_blank_line        DB "                                ",0
 
 eqshp_item_price        DS 20
 
-eqshp_cash_position     equ $B048
 eqshp_cash_amount		DS 20
 eqshp_cash_UoM          DB " Cr       ",0
 
@@ -34,23 +38,43 @@ eqship_display_buffer:  DS      eqship_display_buff_len                     ; ma
 eqship_buyable_buffer:  DS      128
 eqship_buffer_cash_col: EQU     21
 eqship_fitted_module:   EQU     29
-;----------------------------------------------------------------------------------------------------------------------------------	
+;----------------------------------------------------------------------------------------------------------------------------------
+; the selected row redrawn in the highlight colour, or back in the text colour
 eqshp_highlight_row:    ld      a,(eqshp_selected_row)
-                        add     a,3
-                        ld      d,a
-                        ld      e,L1InvHighlight
-                        MMUSelectLayer1
-                        call    l1_hilight_row
-                        ret
-;----------------------------------------------------------------------------------------------------------------------------------	
+                        ld      c,eqshp_HighColour
+                        jp      eqshp_print_row
+;----------------------------------------------------------------------------------------------------------------------------------
 eqshp_lowlight_row      ld      a,(eqshp_selected_row)
-                        add     a,3
-                        ld      d,a
-                        ld      e,L1InvLowlight
-                        MMUSelectLayer1
-                        call    l1_hilight_row
+                        ld      c,eqshp_TextColour
+                        jp      eqshp_print_row
+;----------------------------------------------------------------------------------------------------------------------------------
+; a = screen row (0 to eqshp_ListRows - 1), c = colour: print the list item there (eqshp_current_topItem + a), or a blank
+; line past the end of the list so a shorter list leaves nothing behind. 320 x 256, characters are opaque
+eqshp_print_row:        push    af
+                        ld      d,a                     ; b = pixel row = top + a * 8
+                        ld      e,8
+                        mul     de
+                        ld      a,e
+                        add     a,eqshp_ListTop
+                        ld      b,a
+                        pop     af
+                        ld      hl,eqshp_current_topItem
+                        add     a,(hl)                  ; a = list item
+                        ld      hl,eqshp_current_end
+                        cp      (hl)
+                        ld      de,eqshp_blank_line
+                        jr      nc,.Print               ; past the end
+                        ld      d,eqship_buffer_row_len
+                        ld      e,a
+                        mul     de
+                        ld      hl,eqship_display_buffer
+                        add     hl,de
+                        ex      de,hl
+.Print:                 ld      hl,eqshp_TextCol
+                        MMUSelectLayer2
+                        call    l2_print_at_320         ; b = row, hl = col, de = message, c = colour
                         ret
-;----------------------------------------------------------------------------------------------------------------------------------	
+;----------------------------------------------------------------------------------------------------------------------------------
 eqshp_DispDEIXtoIY1DP:  call    eqshp_DispDEIXtoIY
                         ld      (iy+2),0
                         ld      a,(IY+0)
@@ -60,7 +84,7 @@ eqshp_DispDEIXtoIY1DP:  call    eqshp_DispDEIXtoIY
                         inc     IY
                         inc     IY
                         ret
-;----------------------------------------------------------------------------------------------------------------------------------	
+;----------------------------------------------------------------------------------------------------------------------------------
 eqshp_DispDEIXtoIY:     ld (.EQSHPclcn32z),ix
                         ld (.EQSHPclcn32zIX),de
                         ld ix,.EQSHPclcn32t+36
@@ -107,8 +131,8 @@ eqshp_DispDEIXtoIY:     ld (.EQSHPclcn32z),ix
 .EQSHPclcn32t             dw 1,0,     10,0,     100,0,     1000,0,       10000,0
                         dw $86a0,1, $4240,$0f, $9680,$98, $e100,$05f5, $ca00,$3b9a
 .EQSHPclcn32z             ds 2
-.EQSHPclcn32zIX           ds 2                        
-;----------------------------------------------------------------------------------------------------------------------------------	                     
+.EQSHPclcn32zIX           ds 2
+;----------------------------------------------------------------------------------------------------------------------------------
 ; "DispHL, writes HL to DE address"
 EQSHP_DispHLtoDE:         ld	bc,-10000
                         call	EQSHP_Num1
@@ -126,73 +150,25 @@ EQSHP_Num1:	            ld	a,'0'-1
                         sbc	hl,bc
                         ld	(de),a
                         inc	de
-                        ret 
-;----------------------------------------------------------------------------------------------------------------------------------	
-EQSHP_DispAtoDE:          ld h,0
-                        ld l,a
-                        jp EQSHP_DispHLtoDE
-;----------------------------------------------------------------------------------------------------------------------------------	
-EQSHP_DispPriceAtoDE:     ld h,0
-                        ld l,a
-                        ld	bc,-100
-                        call	.NumLeadBlank1
-                        ld	c,-10
-                        call	EQSHP_Num1
-                        ld		a,'.'					; we could assume preformat but
-                        ld		(de),a					; we can optimse that later TODO
-                        inc		de						; with just an inc De
-                        ld	c,-1
-                        jr		EQSHP_Num1
-.NumLeadBlank1:	        ld	a,'0'-1
-.NumLeadBlank2:	        inc	a
-                        add	hl,bc
-                        jr	c,.NumLeadBlank2
-                        cp	'0'
-                        jr	nz,.DontBlank
-.Blank:                 ld	a,' '
-.DontBlank:	            sbc	hl,bc
-                        ld	(de),a
-                        inc	de
-                        ret 
-;----------------------------------------------------------------------------------------------------------------------------------	
-EQSHP_DispQtyAtoDE:      cp	0
-                        jr	z,.NoStock
-                        ld h,0
-                        ld l,a
-                        ld	bc,-100
-                        call	.NumLeadBlank1
-.WasLead0:              cp      ' '
-                        jr      nz,.NotHundredsZero
-                        ld	c,-10
-                        call	.NumLeadBlank1
-                        ld	c,-1
-                        jr		EQSHP_Num1
-.NotHundredsZero:       ld	c,-10
-                        call	EQSHP_Num1
-                        ld	c,-1
-                        jr		EQSHP_Num1
-.NumLeadBlank1:	        ld	a,'0'-1
-.NumLeadBlank2:	        inc	a
-                        add	hl,bc
-                        jr	c,.NumLeadBlank2
-                        cp	'0'
-                        jr	nz,.DontBlank
-.Blank:                 ld	a,' '
-.DontBlank:	            sbc	hl,bc
-                        ld	(de),a
-                        inc	de
-                        ret 
-.NoStock:               ld	a,' '
-                        ld	(de),a
-                        inc	de
-                        ld	(de),a
-                        inc	de
-                        ld	a,'-'
-                        ld	(de),a
-                        inc de
                         ret
-;----------------------------------------------------------------------------------------------------------------------------------	
-EQSHP_print_boiler_text:  INCLUDE "Menus/print_boiler_text_inlineInclude.asm"
+;----------------------------------------------------------------------------------------------------------------------------------
+; ix = boiler text, b = lines (row, column, colour, message each)
+EQSHP_print_boiler_text:push    bc
+                        ld      b,(ix+0)
+                        ld      l,(ix+1)
+                        ld      h,(ix+2)
+                        ld      c,(ix+3)
+                        ld      e,(ix+4)
+                        ld      d,(ix+5)
+                        push    ix
+                        MMUSelectLayer2
+                        call    l2_print_at_320
+                        pop     ix
+                        ld      de,6
+                        add     ix,de
+                        pop     bc
+                        djnz    EQSHP_print_boiler_text
+                        ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 eqshp_GetCash:          ld		hl,(Cash+2)
                         ex      de,hl
@@ -207,12 +183,14 @@ eqshp_GetCash:          ld		hl,(Cash+2)
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 eqshp_DisplayCash:      call	eqshp_GetCash
-                        ld		hl,eqshp_cash_amount
-                        ld      de,eqshp_cash_position
-                        MMUSelectLayer1   
-                        call	l1_print_at   
+                        ld      b,eqshp_CashRow
+                        ld      hl,eqshp_CashCol
+                        ld      c,eqshp_TextColour
+                        ld		de,eqshp_cash_amount
+                        MMUSelectLayer2
+                        call	l2_print_at_320
                         ret
-;----------------------------------------------------------------------------------------------------------------------------------	
+;----------------------------------------------------------------------------------------------------------------------------------
 eqshp_expand_word:      ld      a,(hl)
                         cp      0
                         ret     z
@@ -224,14 +202,14 @@ eqshp_expand_word:      ld      a,(hl)
 ; hl = list of words
 ; de = adress to expand to
 eqshp_expand_name:      ld      a,(hl)
-                        ld      b,a             
+                        ld      b,a
                         inc     hl
                         ld      a,(hl)              ; its a 16 bit
                         dec     hl                  ; move back one for now, need to optimise laters
                         or      b
                         jr      nz,.MoreToDo
 ;                        ld      (de),a we dont want the null marker now
-                        ret     
+                        ret
 .MoreToDo:              push    hl,,de
                         ld      a,(hl)              ; bodge for now no optimise
                         ld      e,a
@@ -266,14 +244,14 @@ eqshp_buffer_list:      ld      hl,eqship_display_buffer                    ; hl
                         ld      c,0                                         ; Current Row
 .ProcessRow:            ld      a,(ix+1)                                    ; get can buy
                         cp      $FF                                         ; if its $FF then do not display
-                        jp      nz,.BufferItem                              
+                        jp      nz,.BufferItem
 .DoNotDisplay:          ld      de,ShipEquipTableRowLen                     ; mov eto next equipment list, 7 =  row length
                         add     ix,de
                         djnz    .ProcessRow
                         jp      .DoneProcess
 .BufferItem:            push    iy,,ix,,bc
                         ld      a,(ix+0)                                    ; get can buy
-                        ld      hl,eqship_buyable_buffer                    ; 
+                        ld      hl,eqship_buyable_buffer                    ;
                         ld      e,c
                         ld      d,0                                         ;
                         add     hl,de                                       ;
@@ -288,7 +266,7 @@ eqshp_buffer_list:      ld      hl,eqship_display_buffer                    ; hl
                         call    eqshp_expand_name                           ; expand name
                         pop     bc
                         ld      de,eqship_buffer_cash_col                   ; move buffer column to 20
-                        add     iy,de   
+                        add     iy,de
                         push    iy
                         ld      a,(ix+4)
                         ld      e,a
@@ -337,42 +315,36 @@ eqshp_buffer_list:      ld      hl,eqship_display_buffer                    ; hl
                         ld      a," "
                         ld      (hl),a
                         ret
-                        
 
-draw_eqship_items:      MMUSelectLayer1
-                        call    l1_cls
-                        ld		b,3
-                        ld		hl,eqshp_boiler_text
-                        call	EQSHP_print_boiler_text
-                        call    eqshp_DisplayCash                                                
-                        ld      a,(eqshp_current_topItem)
-                        ld      d,eqship_buffer_row_len
-                        ld      e,a
-                        mul
-                        ld      hl,eqship_display_buffer
-                        add     hl,de
-                        ld      a,(eqshp_current_topItem)
-                        ld      b,a
-                        ld      a,(eqshp_current_end)
-                        sub     b
-                        JumpIfALTNusng  18, .FillScreen
-.JustWindowing:         ld      b,18
-                        jr      .ReadyToPrint
-.FillScreen:            ld      b,a         ; the mumber of rows to display
-.ReadyToPrint:          ld      de,eqshp_position
-.DrawARow:              push    de,,hl,,bc                  ; "l1 PrintAt, pixel row, whole char col, DE = yx, HL = message Addr"
-                        call    l1_print_at:
-                        pop     hl,,bc                      ; get mesage addr back and move down one line
-                        ld      de,eqship_buffer_row_len
-                        add     hl,de
-                        pop     de                          ; get output row back
-                        ld      a,8
-                        add     a,d
-                        ld      d,a
-                        djnz    .DrawARow
+
+; the list, eqshp_ListRows rows from eqshp_current_topItem (the selected one highlighted), and the cash
+draw_eqship_items:      ld      b,0
+.Row:                   push    bc
+                        ld      a,b
+                        ld      c,eqshp_TextColour
+                        ld      hl,eqshp_selected_row
+                        cp      (hl)
+                        jr      nz,.Draw
+                        ld      c,eqshp_HighColour
+.Draw:                  call    eqshp_print_row
+                        pop     bc
+                        inc     b
+                        ld      a,b
+                        cp      eqshp_ListRows
+                        jr      c,.Row
+                        call    eqshp_DisplayCash
                         ret
 
-draw_eqshp_menu:        InitNoDoubleBuffer
+draw_eqshp_menu:        MMUSelectLayer1                     ; 320 x 256 single buffered, as the other menus
+                        call    l1_cls
+                        ld      a,7
+                        call    l1_attr_cls_to_a
+                        MMUSelectLayer2
+                        call    asm_l2_double_buffer_off
+                        call    l2_320_initialise
+                        call    l2_320_cls
+                        MMUSelectSpriteBank
+                        call    sprite_cls_all
                         ld      a,$20
                         ld      (MenuIdMax),a
 .SetData:               ld      a,(Galaxy)
@@ -385,24 +357,19 @@ draw_eqshp_menu:        InitNoDoubleBuffer
                         xor     a
                         ld      (eqshp_current_topItem),a
                         call    eqshp_buffer_list
-.Drawbox:               ld		bc,$0101
-                        ld		de,$BEFD
-                        ld		a,$C0
-                        MMUSelectLayer2
-                        call	l2_draw_box
-                        ld		bc,$0A01
-                        ld		de,$FEC0
-                        call	l2_draw_horz_line                        
+.Drawbox:               MMUSelectLayer2
+                        call    l2_draw_menu_border
 .StaticText:	        ld      a,(Galaxy)
                         MMUSelectGalaxyA
                         ld		a,25
                         call	expandTokenToString
                         call	GetDigramGalaxySeed
-                        call    draw_eqship_items
+                        ld      ix,eqshp_boiler_text                ; title, system name, "Cash :"
+                        ld      b,eqshp_boiler_count
+                        call    EQSHP_print_boiler_text
 .InitialHighlight:      xor     a
                         ld      (eqshp_selected_row),a        ; assume on row zero
-                        call    eqshp_highlight_row
-.DisCash:               call    eqshp_DisplayCash
+                        call    draw_eqship_items             ; (the list, the highlighted row and the cash)
                         ret
 
 ;----------------------------------------------------------------------------------------------------------------------------------
@@ -421,13 +388,12 @@ eqip_refesh_buffer:     call    eqshp_buffer_list
                         ld      a,(eqshp_current_end)               ; b = end of list
                         sub     c                                   ; minus current top
                         ld      (eqshp_selected_row),a
-.RedrawList:            call    eqshp_highlight_row
-                        call    draw_eqship_items
+.RedrawList:            call    draw_eqship_items                   ; (highlights the selected row)
                         ret
-                        
+
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; Handles all the input whilst in the market menu
-loop_eqshp_menu:        MacroIsKeyPressed c_Pressed_CursorUp  
+loop_eqshp_menu:        MacroIsKeyPressed c_Pressed_CursorUp
                         call    z,eqshp_UpPressed
                         MacroIsKeyPressed c_Pressed_CursorDown
                         call    z,eqshp_DownPressed
@@ -468,7 +434,7 @@ eqshp_DownPressed:      ld      a,(eqshp_current_end)
                         call    eqshp_highlight_row
                         ret
 .check_scroll_down:     ld      b,a
-                        ld      a,(eqshp_current_topItem)                      
+                        ld      a,(eqshp_current_topItem)
                         add     b
                         inc     a
                         ld      hl,eqshp_current_end
@@ -492,7 +458,7 @@ eqshp_LeftPressed:      ld      a,(Galaxy)
                         ld      e,a
                         mul
                         add     ix,de
-                        ld      a,(ix+7)                       
+                        ld      a,(ix+7)
                         cp      "-"
                         ret     z
 .CheckIfMissle:         ld      a,c
@@ -513,7 +479,7 @@ eqshp_LeftPressed:      ld      a,(Galaxy)
                         ld      a,(ix+8)
                         cp      $FF
                         ret     z
-.ItsALaser              ld      hl,LaserType        ; clear out respective current laser           
+.ItsALaser              ld      hl,LaserType        ; clear out respective current laser
                         ld      b,a
                         ld      a,(ix+9)
                         add     hl,a
@@ -555,7 +521,7 @@ eqshp_RightPressed:     ld      a,(Galaxy)
                         ld      e,a
                         mul
                         add     ix,de
-                        ld      a,(ix+7)  
+                        ld      a,(ix+7)
 .CompareCheck:          cp      "*"; not true for missles astyou can buy 1 to 4
                         ret     z
 .Purchasable:           ld      b,a

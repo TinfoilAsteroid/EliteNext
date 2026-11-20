@@ -278,7 +278,9 @@ CapitaliseString:
                         ld      (hl),a
                         jr      .CapLoop
     
-ShipIndexToAddress      ld      hl,WordIdxShipNames
+; a = ship model id: hl = its name (it loaded hl with WordIdxShipNames, the table's word index, as an address, so every
+; universe bank's StartOfUnivName was copied from the wrong memory)
+ShipIndexToAddress      ld      hl,WordPtrShipNames
                         jp      WordLookup
 
 ;takes a value in a and loads hl with the address for the corresponding string   

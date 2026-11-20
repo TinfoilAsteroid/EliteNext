@@ -107,5 +107,23 @@ def test_errors_return_cleanly():
     sd.close()
 
 
+def test_load_commander_keeps_on_error():
+    """loadCommander (the Load Commander Y answer, which once did nothing): carry clear and the commander loaded from a
+    good save; with no save, carry set and the commander left as it was (FileLoad now sets carry on every error)"""
+    sd, cpu = booted()
+    et.wr(cpu, "Cash", 7654321, 4)
+    et.call(cpu, "saveCommander", mmu=ROMS)
+    et.wr(cpu, "Cash", 5, 4)
+    et.call(cpu, "loadCommander", mmu=ROMS)
+    check(not et.reg(cpu, "carry") and et.rd(cpu, "Cash", 4) == 7654321, "a good save didn't load")
+    import os
+    os.remove(sd.path(save_name(cpu)))
+    et.wr(cpu, "Cash", 99, 4)
+    et.call(cpu, "loadCommander", mmu=ROMS)
+    check(et.reg(cpu, "carry"), "no carry with no save")
+    check(et.rd(cpu, "Cash", 4) == 99, f"cash {et.rd(cpu, 'Cash', 4)}: the commander changed with no save")
+    sd.close()
+
+
 if __name__ == "__main__":
     et.main(globals())

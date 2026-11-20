@@ -1,9 +1,9 @@
 Cougar:	                DB $03                         ; Number of cargo canisters released when destroyed
                         DW $1324                       ; Ship's targetable area LoHi
-                        DW CougarEdges                 ; Edge Data 
+                        DW CougarEdges                 ; Edge Data
                         DB CougarEdgesSize             ; Size of Edge Data
                         DB $00                         ; Gun Vertex Byte offset
-                        DB $2A                         ; Explosion Count 
+                        DB $2A                         ; Explosion Count
                         DB CougarVertSize /6           ; Vertex Count /6
                         DB CougarVertSize              ; Vertex Count
                         DB CougarEdgesCnt              ; Edges Count
@@ -17,10 +17,10 @@ Cougar:	                DB $03                         ; Number of cargo caniste
                         DB $30 | ShipMissiles4         ; Laser power and Nbr Missiles
                         DW CougarVertices              ; Verticles Address
                         DB ShipTypeNormal              ; Ship Type
-                        DB 0                           ; NewB Tactics 
-                        DB ShipCanAnger                ; AI Flags            
+                        DB 0                           ; NewB Tactics
+                        DB ShipCanAnger                ; AI Flags
                         DB $B0                         ; chance of ECM module
-                        DB $FF                              ; Supports Solid Fill = false
+                        DB $FF                              ; Supports Solid Fill = false (faces 0, 1, 3, 4 don't close: wireframe)
                         DW $0000                            ; no solid data
                         DB $00                              ; no solid data
 
@@ -43,7 +43,7 @@ CougarVertices:	        DB $00, $05, $43, $1F, $02, $44
                         DB $0A, $06, $28, $F4, $55, $55
                         DB $0A, $06, $28, $74, $55, $55
                         DB $0A, $06, $28, $34, $55, $55
-CougarVertSize:         equ $ - CougarVertices	
+CougarVertSize:         equ $ - CougarVertices
 CougarEdges:	        DB $1F, $02, $00, $04
                         DB $1F, $01, $04, $1C
                         DB $1F, $01, $1C, $20
@@ -69,13 +69,13 @@ CougarEdges:	        DB $1F, $02, $00, $04
                         DB $14, $55, $40, $48
                         DB $12, $55, $48, $44
                         DB $14, $55, $44, $3C
-CougarEdgesSize:        equ $ - CougarEdges	
-CougarEdgesCnt:         equ CougarEdgesSize/4	
+CougarEdgesSize:        equ $ - CougarEdges
+CougarEdgesCnt:         equ CougarEdgesSize/4
 CougarNormals:	        DB $9F, $10, $2E, $04
                         DB $DF, $10, $2E, $04
                         DB $5F, $00, $1B, $05
                         DB $5F, $10, $2E, $04
                         DB $1F, $10, $2E, $04
                         DB $3E, $00, $00, $A0
-CougarNormalsSize:      equ $ - CougarNormals	
-CougarLen:              equ $ - Cougar	
+CougarNormalsSize:      equ $ - CougarNormals
+CougarLen:              equ $ - Cougar

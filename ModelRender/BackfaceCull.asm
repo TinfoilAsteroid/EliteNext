@@ -140,10 +140,9 @@ CheckVisible:           ld      a,(UBnKzsgn)                 ; Is the ship behin
                         ENDIF
                         ret
                         
-CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;   
-                        call    CopyRotmatToTransMat        ; XX16 = UBNKRotMat    
-                        call    ScaleXX16Matrix197          ; scale rotation matrix in XX16
-                        call    LoadCraftToCamera           ; XX18 = camera
+; XX16 (the scaled rotation matrix) and XX18 (the camera) are already set up: ProcessNodes, always called just before,
+; does CopyRotmatToTransMat, ScaleXX16Matrix197 and LoadCraftToCamera and nothing after changes them
+CullV2:                 ReturnIfMemisZero FaceCtX4Addr      ;
 .BackfaceLoop:          ld      a,(QAddr)                   ;  
                         ld      iyl,a                       ; iyl = scale factor
 ; By this point XX18 = scaled draw cam and iyl = scale factor

@@ -40,7 +40,6 @@ l2_draw_circle_fill:    ld		a,e
                         ld 		a,d
                         add 	a,ixh
                         ld		b,a
-                        ;; TODO ADD DOUBLE X CALC
                         push	de
                         ld		d,ixl
                         sla		d
@@ -52,7 +51,6 @@ l2_draw_circle_fill:    ld		a,e
                         ld 		a,d
                         sub 	ixh
                         ld 		b,a
-                        ;; TODO ADD DOUBLE X CALC
                         push	de
                         ld		d,ixl
                         sla		d
@@ -64,8 +62,7 @@ l2_draw_circle_fill:    ld		a,e
                         ld 		a,d
                         add 	a,ixl
                         ld 		b,a
-                        ;; TODO ADD DOUBLE Y CALC
-                        push	de	
+                        push	de
                         ld		d,ixh
                         sla		d
                         call	.PlotLine			;CX-Y,CY+x
@@ -76,8 +73,7 @@ l2_draw_circle_fill:    ld		a,e
                         ld 		a,d
                         sub 	ixl
                         ld 		b,a
-                        ;; TODO ADD DOUBLE Y CALC
-                        push	de	
+                        push	de
                         ld		d,ixh
                         sla		d
                         call	.PlotLine			;CX-Y,CY+x
@@ -86,7 +82,7 @@ l2_draw_circle_fill:    ld		a,e
 .IncrementCircle:	    bit 7,h				; Check for Hl<=0
                         jr z,.draw_circle_1
                         add hl,de			; Delta=Delta+D1
-                        jr .draw_circle_2		; 
+                        jr .draw_circle_2		;
 .draw_circle_1:		    add hl,bc			; Delta=Delta+D2
                         inc bc
                         inc bc				; D2=D2+2
@@ -94,7 +90,7 @@ l2_draw_circle_fill:    ld		a,e
 .draw_circle_2:		    inc bc				; D2=D2+2
                         inc bc
                         inc de				; D1=D1+2
-                        inc de	
+                        inc de
                         inc ixl				; X=X+1
                         jp .CircleLoop
 .PlotLine:              push	de,,bc,,hl,,af
@@ -104,7 +100,7 @@ l2_draw_circle_fill:    ld		a,e
                         pop     de,,bc,,hl,,af
                         ret
 ; ">l2_draw_clipped_circle HL = Center X 2's c, DE = Center Y 2's , c = radius, b = colour"
-l2_draw_clipped_circle_filled:     
+l2_draw_clipped_circle_filled:
                     ld      a,b                             ; save Colour
                     ld		(.PlotColour+1),a
                     ld		a,c								; get radius
@@ -112,8 +108,8 @@ l2_draw_clipped_circle_filled:
                     JumpIfAEqNusng  1, .circleSinglepixel
                     ld		(.Plot1Y+1),de					; save origin into DE and HL
                     ld      (.Plot1X+1),hl                  ; .
-                    ld		ixh,a							; ixh = x = raidus 
-                    ld		ixl,0						    ; ixl = y = error 
+                    ld		ixh,a							; ixh = x = raidus
+                    ld		ixl,0						    ; ixl = y = error
 .calcd:	            ld		h,0                             ; hl = radius
                     ld		l,a                             ; raidius is still in a at this point
                     add		hl,hl							; hl = r * 2
@@ -124,7 +120,7 @@ l2_draw_clipped_circle_filled:
                     ld      bc,hl                           ; bc = 3 - (r * 2)
 .calcdelta:         ld		hl,1                            ; hl = 1
                     ld		d,0                             ; de = ixl (error)
-                    ld		e,ixl                           ; 
+                    ld		e,ixl                           ;
                     ClearCarryFlag                          ;
                     sbc		hl,de                           ; hl = 1 - error
 .Setde1:            ld		de,1                            ; de = 1
@@ -142,6 +138,7 @@ l2_draw_clipped_circle_filled:
                     ld      b,0                             ; Now we have calculated D is bc
                     ld      c,ixh                           ;
                     ShiftBCLeft1                            ;
+                    inc     bc                              ; CX - X to CX + X is 2X + 1 pixels (2X was 0 when X = 0)
                     ld      (.LoadBCLength1+1),bc            ; self modifying to optimise laod on line 2
                     call	.PlotLine               		; de = start X, hl= Y line, bc = length
 .Plot1Done:         pop     hl                              ; Stack+1 get cy from stack into hl to save an ex as we have pre calculated x positions
@@ -150,7 +147,7 @@ l2_draw_clipped_circle_filled:
                     CalcNewPointMacro hl, sbc, ixl          ; now we have CY-Y in hl
 .LoadDEXStart1:     ld      de,0                            ; de is loaded from above via self modiying code with start X
 .LoadBCLength1:     ld      bc,0                            ; bc is loaded from above via self modifying code with length
-                    call	.PlotLine                       ; 
+                    call	.PlotLine                       ;
 .Plot2Done:         pop     hl,,de                          ; Stack+0 now hl = cx, de = cy
 ;--- from CX-Y to CX+Y, CY+X -------------------------------;
 .Plot3:             push    de                              ; Stack + 1 we need cy for final plot calculation
@@ -161,6 +158,7 @@ l2_draw_clipped_circle_filled:
                     ld      b,0                             ; Now we have calculated D is bc
                     ld      c,ixl                           ;
                     ShiftBCLeft1                            ;
+                    inc     bc                              ; 2Y + 1 pixels (2Y is 0 on the first step, Y = 0)
                     ld      (.LoadBCLength2+1),bc            ; self modifying to optimise laod on line 2
                     call	.PlotLine               		; de = start X, hl= Y line, bc = length
 .Plot3Done:         pop     hl                              ; Stack + 0 get cy from stack into hl to save an ex as we have pre calculated x positions
@@ -168,26 +166,26 @@ l2_draw_clipped_circle_filled:
 .Plot4a:            CalcNewPointMacro hl, sbc, ixh          ; now we have CY-X in hl
 .LoadDEXStart2:     ld      de,0                            ; de is loaded from above via self modiying code with start X
 .LoadBCLength2:     ld      bc,0                            ; bc is loaded from above via self modifying code with length
-                    call	.PlotLine                       ; 
+                    call	.PlotLine                       ;
 .PlotDone:          exx                                     ; get back data from alternate registers
 .IncrementCircle:	bit     7,h			                  	; Check for Hl<=0
                     jr z,   .draw_circle_1
                     add hl,de			                    ; Delta=Delta+D1
-                    jr      .draw_circle_2		            ; 
+                    jr      .draw_circle_2		            ;
 .draw_circle_1:		add     hl,bc		                    ; Delta=Delta+D2
-                    inc     bc                              
+                    inc     bc
                     inc     bc			                    ; D2=D2+2
                     dec     ixh			                    ; Y=Y-1
 .draw_circle_2:		inc     bc			                    ; D2=D2+2
-                    inc     bc                              
+                    inc     bc
                     inc     de			                    ; D1=D1+2
-                    inc     de	                            
+                    inc     de
                     inc     ixl			                    ; X=X+1
                     jp      .CircleLoop
 ;-- PERFORM THE LINE DRAW ----------------------------------;
 ; comes in with de = left x , hl = y, bc = length
 ; Note bc must be +ve < 32768
-.PlotLine:          
+.PlotLine:
 .IsYOnScreen:       ld      a,h                             ; if y > 255 or < 0 then no line to draw
                     and     a                               ;
                     ret     nz                              ;
@@ -199,12 +197,12 @@ l2_draw_clipped_circle_filled:
                     and     a
                     jr      z,.NoLeftClip                   ; if high is not set then no X clip
 ;-- if X > 255 then off screen so just skip line
-.LeftClip:          ret     p                               ; if its > 255 then no line        
+.LeftClip:          ret     p                               ; if its > 255 then no line
 ;-- if its off the left then add distance, if this is < 0 then off screen skip
 .IsTotallyOffLeft:  push    hl                              ; if X pos + length <0 then no line
                     ld      hl,de                           ; .
                     ClearCarryFlag                          ; .
-;    but also this calculation gives us the line length if x is clipped to 90            
+;    but also this calculation gives us the line length if x is clipped to 90
                     adc     hl,bc                           ; .
                     ld      bc,hl                           ; save the result in HL as this is also line length from hl = 0
                     pop     hl                              ; .
@@ -212,27 +210,34 @@ l2_draw_clipped_circle_filled:
 ;-- now as its on screen but clipped x < 0 we can just draw a line from 0 to x+d, maxed at x+d = 255
 .ClippedSpanX:      ld      de,0                            ; if off left X = 0, bc already calcualted above in ADC
                     ld      a,b                             ; if bc < 255 then good
-                    and     a   
+                    and     a
                     jp      z,.NoPopPlotColour              ;
                     ld      bc,255                          ; max length
                     jp      .NoPopPlotColour                ; we can now just draw
 ;-- No left side clipping needed so we just need to work out if x + d > 255
-.NoLeftClip:        push    hl                              ; STACK+1 if corrected x + length < 256 then 
+.NoLeftClip:        push    hl                              ; STACK+1 if corrected x + length < 256 then
                     ld      hl,de                           ; just plot
                     add     hl,bc
                     ld      a,h
                     or      a
                     pop     hl
                     jp      z,.NoPopPlotColour
-;-- x + d > 255 so we plot from x to distance 255 - x                    
-.LengthClip:        push    hl                              
-                    ld      hl,255
+;-- x + d > 255 so we plot from x to distance 255 - x
+.LengthClip:        push    hl
+                    ld      hl,256                          ; x to column 255 is 256 - x pixels (was 255 - x, 0 at x = 255)
                     ClearCarryFlag
                     sbc     hl,de                           ; now hl = corrected length
                     ld      bc,hl
 ;-- This entry point is if there is hl on the stack
-.PopHLPlotColour:   pop     hl                    
-.NoPopPlotColour:   ld      d,c             ; d = length
+.PopHLPlotColour:   pop     hl
+.NoPopPlotColour:   ld      a,b             ; over 255: 255 (d is 8 bit, 256 would be 0)
+                    and     a
+                    jr      z,.LengthFits
+                    ld      c,255
+.LengthFits:        ld      a,c             ; nothing to draw: skip it, a zero length DMA is 65536 bytes (it wrote over
+                    and     a               ; everything, the stack too, and crashed: the planet after launching)
+                    ret     z
+                    ld      d,c             ; d = length
                     ld      c,e             ; c = start X
                     ld      b,l             ; b = row Y
 .PlotColour:        ld		e,0             ; This was originally indirect, where as it neeed to be value
@@ -249,11 +254,11 @@ l2_draw_clipped_circle_filled:
                     ld      c,l             ; c = x
                     call    l2_plot_pixel
                     ret
-                    
+
 ;---------------------------------------------------------------------------------------------------------------------------------
 ; ">l2_draw_circle_fill_320 B = center row, hl = col, d = radius, e = colour"
 ;  draws circle in 320 mode
-; self modifying set colur in code below TODO 
+; self modifying set colur in code below TODO
 ; lINES ARE
 ;           CX-X, CY-Y  to  CX+X, CY-Y, i.e. CX-X, CY-Y for X*2
 ;           CX-X, CY+Y  to  CX+X, CY+Y       CX-X, CY+Y for X*2

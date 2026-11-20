@@ -1,5 +1,5 @@
 
-                
+
     DEVICE ZXSPECTRUMNEXT
     SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
 ; REAL_HARDWARE: the build for a real Next (sjasmplus -DREAL_HARDWARE, or build.bat hardware): the screen clear and
@@ -15,8 +15,6 @@
     DEFINE  USE_NORMALISE_IX 1          ; use the replacemtn normaliseix (now should be always used)
     DEFINE  USE_24BIT_ROLL_AND_PITCH 1  ; Use 24 bit maths always
     ;DEFINE  ROUND_ROLL_AND_PITCH    1  ; Forces rouding of rotmat matricies to 8 bit
-    ;DEFINE  FORCE_TIDY 1               ; Forces call to Tidy every iteration
-    DEFINE  BYPASS_TIDY 1               ; Forces tidy routine to return even if force FORCE_TIDY was enabled
     ;DEFINE  q 1
     ;DEFINE  TESTSYSTEMMENU 1
     ;DEFINE  TESTMARKETROMENU 1
@@ -27,15 +25,33 @@
 
     ;DEFINE  SPAWN_SHIP_DISABLED  1      ; Forces spawn event to immedatly return rather than do anything
     ;DEFINE DEBUGCIRCLE1 1
-    ;DEFINE DEBUGCIRCLE2 1 
-    ;DEFINE DEBUGCIRCLE3 1 
-    ;DEFINE DEBUGCIRCLE4 1 
+    ;DEFINE DEBUGCIRCLE2 1
+    ;DEFINE DEBUGCIRCLE3 1
+    ;DEFINE DEBUGCIRCLE4 1
     ;DEFINE DEBUGCIRCLE5 1 ws
-    ;DEFINE DEBUGCIRCLE6 1 
+    ;DEFINE DEBUGCIRCLE6 1
     ;DEFINE  DEBUGPLANET 1
     ;DEFINE  DEBUGPLANETCIRCLE 1
     ;DEFINE  MERIDANLINEDEBUG 1
     DEFINE  PLANETSARESOLID 1
+    DEFINE  SOLID_HULL 1                ; solid (filled face) ships, Documentation/SolidHulls.md
+    DEFINE  MANUAL_ATTRACT 1            ; attract screen: no auto cycling, F next model, B previous, its name on the HUD
+    ;DEFINE  WIREFRAME_FALLBACK 1        ; with SOLID_HULL: a ship nearer than WIREFRAME_DISTANCE is drawn as wireframe
+    ;DEFINE  SOLID_OUTLINES ALL          ; with SOLID_HULL: lines over the fill. ALL: every visible edge; DECORATION: only
+                                         ; the decoration edges (both faces the same: vents, engines); not defined: none
+; SOLID_OUTLINES: its value pasted onto SolidOutlines_ gives the mode (sjasmplus substitutes the define inside the name),
+; so any other value stops the build
+SolidOutlines_ALL           equ 1
+SolidOutlines_DECORATION    equ 2
+    IFDEF SOLID_OUTLINES
+        ASSERT SolidOutlines_SOLID_OUTLINES > 0, SOLID_OUTLINES must be ALL or DECORATION
+SolidOutlinesMode           equ SolidOutlines_SOLID_OUTLINES
+    ENDIF
+; WIREFRAME_FALLBACK: a ship whose z is less than this is drawn as wireframe. S15.8 (1.0 = 256), so 256/30 is 0.1. To be
+; tuned on real hardware. (-DWIREFRAME_DISTANCE=n on the sjasmplus command line overrides it, for the tests)
+    IFNDEF WIREFRAME_DISTANCE
+WIREFRAME_DISTANCE          equ 256/30
+    ENDIF
     ;DEFINE DEBUG_LL122_DIRECT 1 ; PASS
     ;DEFINE DEBUG_LL121_DIRECT 1 ; PASS
     ;DEFINE DEBUG_LL129_DIRECT 1 ; PASS
@@ -82,7 +98,8 @@ ScreenStatus     EQU ScreenMarketDsp + 1
 ScreenInvent     EQU ScreenStatus + 1
 ScreenPlanet     EQU ScreenInvent + 1
 ScreenEquip      EQU ScreenPlanet + 1
-ScreenLaunch     EQU ScreenEquip + 1
+ScreenSystemMap  EQU ScreenEquip + 1             ; (before ScreenFront: the pause test takes ScreenFront on as views)
+ScreenLaunch     EQU ScreenSystemMap + 1
 ScreenFront      EQU ScreenLaunch + 1
 ScreenAft        EQU ScreenFront+1
 ScreenLeft       EQU ScreenAft+1
@@ -114,7 +131,7 @@ ScreenHyperspace EQU ScreenDocking+1
                         INCLUDE "./Hardware/screen_equates.asm"
                         INCLUDE "./Data/EquipmentEquates.asm"
                         INCLUDE "./Data/ShipModelEquates.asm"
-                        INCLUDE "./Menus/clear_screen_inline_no_double_buffer.asm"	
+                        INCLUDE "./Menus/clear_screen_inline_no_double_buffer.asm"
                         INCLUDE "./Macros/graphicsMacros.asm"
                         INCLUDE "./Macros/callMacros.asm"
                         INCLUDE "./Macros/carryFlagMacros.asm"
@@ -144,13 +161,13 @@ MessageAt:              MACRO   x,y,message
                         ld      hl,message
                         call    l1_print_at_wrap
                         ENDM
-                        
-SetBorder:              MACRO   value 
+
+SetBorder:              MACRO   value
                         MMUSelectLayer1
                         ld          a,value
                         call        l1_set_border
                         ENDM
-                        
+
 charactersetaddr		equ 15360
 STEPDEBUG               equ 1
 
@@ -161,7 +178,7 @@ TopOfStack              equ $5CCB ;$6100
 EliteNextStartup:       di
 .InitiliseFileIO:       call        GetDefaultDrive
 .InitialiseClockSpeed:  nextreg     TURBO_MODE_REGISTER,Speed_28MHZ
-.InitialiseLayerOrder:  
+.InitialiseLayerOrder:
                         DISPLAY "Starting Assembly At ", EliteNextStartup
                         ; "STARTUP"
                         ; Make sure  rom is in page 0 during load
@@ -179,9 +196,9 @@ EliteNextStartup:       di
                         call        InitAudio
 .InitialiseInterrupts:  ld	        a,VectorTable>>8
                         ld	        i,a						                        ; im2 table will be at address 0xa000
-                        nextreg     LINE_INTERRUPT_CONTROL_REGISTER,%00000110       ; Video interrup on 
-                        nextreg     LINE_INTERRUPT_VALUE_LSB_REGISTER,0   ; lasta line..                        
-                        im	2                        
+                        nextreg     LINE_INTERRUPT_CONTROL_REGISTER,%00000110       ; Video interrup on
+                        nextreg     LINE_INTERRUPT_VALUE_LSB_REGISTER,0   ; lasta line..
+                        im	2
                         di ; debug
 .GenerateDefaultCmdr:   MMUSelectCommander
                         call		defaultCommander
@@ -212,9 +229,9 @@ EliteNextStartup:       di
                         call        sprite_diagnostic
                         SetBorder   $05
 .PostDiag2:             MMUSelectKeyboard
-                        call        WaitForAnyKey                      
+                        call        WaitForAnyKey
                         MMUSelectSpriteBank
-                        call        sprite_diagnostic_clear                     
+                        call        sprite_diagnostic_clear
                     ENDIF
 TestText:               xor			a
                         ld      (JSTX),a
@@ -224,7 +241,7 @@ DEBUGCODE:              ClearSafeZone ; just set in open space so compas treacks
                         MMUSelectLayer2
                         SetBorder   $07
 ;
-InitialiseGalaxies: 
+InitialiseGalaxies:
                     IFDEF MESSAGETRACING
                         MessageAt   0,24,InitialisingGalaxies
                     ENDIF
@@ -246,31 +263,32 @@ StartAttractMode:       di                                          ; we are cha
                         call        AttractModeInit
                         ei
                         call        AttractModeMain                 ; now drive attact mode keyboard scan
-                        di                                          ; set up for main 
+                        di                                          ; set up for main
                         ld          hl,SoundInterrupt               ; sound handler
                         ld          (IM2SoundHandler+1),hl
                         MMUSelectSound
                         call        InitAudio                       ; jsut re-init all audio for now rather than sound off
-                        ei 
+                        ei
                         JumpIfAIsZero  SkipDefaultCommander
 
 DefaultCommander:       MMUSelectCommander
                         call		defaultCommander
                         jp          InitialiseMainLoop:
-SkipDefaultCommander:           
-                        ; This bit needs to MMU Selet exdos
-                        ; bring up a browser for saves
-                        ; load saves it
-                        ; switch back to maths MMU
+; Load Commander (Y): the save, Default.SAV for now (a file browser later); on any error the default commander made at
+; start up stays. (This was only comments, so Y did the same as N)
+SkipDefaultCommander:   MMUSelectCommander
+                        MMUSelectROMS                               ; rst $08 needs the ROM in slots 0 and 1
+                        call    loadCommander
+                        MMUSelectMathsBankedFns
 InitialiseMainLoop:     call    InitMainLoop
 ;..MAIN GAME LOOP..................................................................................................................
 ;.. Check if keyboard scanning is allowed by screen. If this is set then skip all keyboard and AI..................................
 
 ; if beam on count > 0
 ;    then beam on count --
-;         if beam on count = 0 
+;         if beam on count = 0
 ;            then beam off count = beam off
-; if beam off > 0 
+; if beam off > 0
 ;    then beam off --
 ;         if beam off = 0 and pulse rate count = max count
 ;            then pulse rest count = pulse rest
@@ -278,16 +296,16 @@ InitialiseMainLoop:     call    InitMainLoop
 ;    if pulse rest = 0
 ;       then pulse rate count = 0
 
-          
+
 ; counter logic
 ;    if beam on count > 0 then beam on count --
-;    if beam on = 0 then  
+;    if beam on = 0 then
 ;       if beam off count >0 then beam off count --
 ;       if beam off count = 0 them
 ;          if pulse rest count > 0 then pulse rest count --
 ;             if reset count = 0 then pulse rate count = 0
 ; shoting logic
-;    if pulse on count is 0 and pulse off count is 0 and rest count is 0                        
+;    if pulse on count is 0 and pulse off count is 0 and rest count is 0
 ;       then  if fire pressed is OK
 ;                if not beam type
 ;                   then pulse rate count ++
@@ -336,11 +354,11 @@ TestPauseMode:          ld      a,(GamePaused)
                         ret
 .TestForResume:         MacroIsKeyPressed c_Pressed_Resume                  ; In pause loop so we can check for resume key
                         ret     nz
-.ResumePressed:         xor     a             
+.ResumePressed:         xor     a
                         ld      (GamePaused),a                      ; Resume pressed to reset pause state
                         ret
 
-currentDemoShip:        DB      13;$12 ; 13 - corirollis 
+currentDemoShip:        DB      13;$12 ; 13 - corirollis
 
 
 GetStationVectorToWork: ld      hl,UBnKxlo
@@ -360,7 +378,7 @@ GetStationVectorToWork: ld      hl,UBnKxlo
                         or      b                       ; or all high bytes but don't worry about 1 as its sorted on low bytes
 .MulBy2Loop:            push    bc
                         ld      b,ixl
-                        sla     b                       ; Shift ixl left 
+                        sla     b                       ; Shift ixl left
                         ld      ixl,b
                         pop     bc
                         rl      a                       ; roll into a
@@ -376,17 +394,17 @@ GetStationVectorToWork: ld      hl,UBnKxlo
                         ld      a,(varVector9ByteWork+5); y sign
                         srl     d
                         or      d
-                        ld      (XX15VecY),a         ; note this is now a signed highbyte                        
+                        ld      (XX15VecY),a         ; note this is now a signed highbyte
                         ld      a,(varVector9ByteWork+8); y sign
                         srl     b
                         or      b
-                        ld      (XX15VecZ),a         ; note this is now a signed highbyte                        
+                        ld      (XX15VecZ),a         ; note this is now a signed highbyte
                         MMUSelectMathsBankedFns
-                        call    normaliseXX1596S7 
+                        call    normaliseXX1596S7
                         ret                          ; will return with a holding Vector Z
 
 
-; Need this table to handle differnet events 
+; Need this table to handle differnet events
 ; 1-main loop update - just general updates specfic to that screen that are not galaxy or stars, e.g. update heat, console
 ; cursor key, joystick press
 ; cursor key, joystick press
@@ -394,28 +412,33 @@ GetStationVectorToWork: ld      hl,UBnKxlo
 ;
                         INCLUDE "./Tables/ScreenControlTable.asm"
 
-ScreenTransitionForced  DB $FF    
+ScreenTransitionForced  DB $FF
     INCLUDE "./GameEngine/resetUniverse.asm"
 
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-    
+
 InitialiseCommander:    ld      a,(ScreenCmdr+1)
                         jp      SetScreenA
-                
+
 InitialiseFrontView:    ld      a,(ScreenKeyFront+1)
                         jp      SetScreenA
-; false ret here as we get it free from jp    
-;----------------------------------------------------------------------------------------------------------------------------------                    
+; false ret here as we get it free from jp
+;----------------------------------------------------------------------------------------------------------------------------------
                         INCLUDE "./GameEngine/SetScreenA.asm"
                         INCLUDE "./GameEngine/ViewKeyTest.asm"
-;----------------------------------------------------------------------------------------------------------------------------------                    
+;----------------------------------------------------------------------------------------------------------------------------------
 ; Set initial ship position as X,Y,Z 000,000,03B4 - Moved to UpodateUniverseObjects.asm
 
 ; Checks to see if current ship swapped in is in our sights
 ; we don;t need to deal with planets or sun as they have their own memory bank
 ShipInSights:           ClearCarryFlag                          ; Carry clear no hit
                         ReturnIfMemIsNegative UBnKzsgn
+                        ld      a,(UBnKxsgn)                    ; 65536 or more to the side (the sign bytes' integer bits):
+                        ld      hl,UBnKysgn                     ; not in the sights (they were ignored, so a ship that far
+                        or      (hl)                            ; off with small x / y lo and hi bytes counted as a hit)
+                        and     SignMask8Bit                    ; (and clears carry)
+                        ret     nz
                         ld      a,(UBnKexplDsp)                 ; get exploding flag and or with x and y high
                         ld      hl,(UBnKxlo)                    ; do 16 bit fetch as we will often need both bytes
                         ld      bc,(UBnKylo)                    ; .
@@ -432,7 +455,7 @@ ShipInSights:           ClearCarryFlag                          ; Carry clear no
                         ld      de,(MissileLockLoAddr)          ; get targettable area ^ 2 from blueprint copy
                         cpHLDE                                  ; now compare x^2 + y^2 to target area
                         jr      z,.EdgeHit                      ; if its an edge hit then we need to set carry
-                        ret                                     ; if its < area then its a hit and carry is set, we will not work on = 
+                        ret                                     ; if its < area then its a hit and carry is set, we will not work on =
 .EdgeHit:               SetCarryFlag                            ; its an edge hit then we need to set carry
                         ret
             INCLUDE "./Views/ConsoleDrawing.asm"
@@ -463,7 +486,7 @@ SeedGalaxy0Loop:        push    ix
                         ld		(XSAV),a
                         jr      nz,SeedGalaxy0Loop
                         ret
-            
+
     IFDEF SKIPATTRACT
         DISPLAY "NOT LOADING ATTRACT MODE CODE"
     ELSE
@@ -471,7 +494,7 @@ SeedGalaxy0Loop:        push    ix
     ENDIF
 
     include "./Maths/Utilities/XX12EquNodeDotOrientation.asm"
-    include "./ModelRender/CopyXX12ToXX15.asm"	
+    include "./ModelRender/CopyXX12ToXX15.asm"
     include "./Maths/Utilities/ScaleXX16Matrix197.asm"
     include "./Universe/StarDust/StarRoutines.asm"
     INCLUDE	"./Hardware/memfill_dma.asm"
@@ -494,8 +517,12 @@ XX12PVarSign3		DB 0
     INCLUDE "./Variables/galaxy_seed.asm"
     INCLUDE "./Tables/text_tables.asm"
     INCLUDE "./Tables/dictionary.asm"
+; The equipment tables (names, prices, tech levels, what's fitted) in main memory: the galaxy code (galaxy_equip_market)
+; runs from slot 7 and the equip ship screen pages the galaxy into slot 7, so in their own slot 7 bank they read code
+; bytes instead (the equip screen's list, the market's tech level pass and buying all used the wrong data)
+    INCLUDE "./Tables/EquipmentTables.asm"
     INCLUDE "./Tables/name_digrams.asm"
-; Include all maths libraries to test assembly   
+; Include all maths libraries to test assembly
     INCLUDE "./Maths/asm_AddDEToCash.asm"
     DISPLAY ">24 bit mulitply routine, currently not bank 0 safe"
     INCLUDE "./Maths24/asm_mul24_notbank0safe.asm"
@@ -528,7 +555,7 @@ MainNonBankedCodeEnd:
 ;-- END OF MAIN NON BANKED CODE ---------------------------------------------------------
     org $B000
     DISPLAY "Vector Table Starts at ",$
-VectorTable:            
+VectorTable:
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
                 dw      IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine,IM2Routine
@@ -542,7 +569,7 @@ VectorTable:
 
 IR_COUNT        dw  $0060
 
-LAST_DELTA          db  0    
+LAST_DELTA          db  0
 SavedMMU6           db  0               ; use by interrupt handler only
 SavedMMU7           db  0               ; use by interrupt handler only
 SoundInterrupt      EQU IM2Sound
@@ -557,7 +584,7 @@ StartOfInterruptHandler:
                 org $B1B1
     DISPLAY "Interrupt Handler Starts at",$
 ; keeping the handler to a minimal size in order to make best use of
-; non pageable memory    
+; non pageable memory
 IM2Routine:             IFDEF INTERRUPT_BLOCKER
                                 DISPLAY "Interrupt Blocker Enabled"
                                 ei
@@ -570,7 +597,7 @@ IM2Routine:             IFDEF INTERRUPT_BLOCKER
                         exx
                         push    af,,bc,,de,,hl
                         ld      hl,InterruptCounter
-                        inc     (hl)                        ; cycles each interrupt                    
+                        inc     (hl)                        ; cycles each interrupt
                         ld      a,(GamePaused)              ; 16 bit 50Hz frame counter for game timers
                         and     a                           ; it stops while the game is paused
                         jr      nz,.FrameCountPaused        ; .
@@ -598,7 +625,7 @@ IM2Sound:               SaveMMU7
 .IM2SoundHandler:       call    SoundInterruptHandler       ; this does the work
 .DoneInterrupt:         RestoreMMU7
                         ret
-   
+
 
 IM2PlayDanube:          SaveMMU7
                         MMUSelectSound
@@ -608,11 +635,11 @@ IM2PlayDanube:          SaveMMU7
 .IM2SoundHandler:       call    PlayDanube                  ; this does the work
 .DoneInterrupt:         RestoreMMU7
                         ret
-                        
+
 IM2AttractMode:         ;break
                     IFDEF SKIPATTRACTMUSIC
                         DISPLAY "Attract mode Music disabled"
-                    ELSE                        
+                    ELSE
                         DISPLAY "Attract mode Music enabled"
                         call    IM2PlayDanube
                     ENDIF
@@ -634,7 +661,7 @@ IM2AttractMode:         ;break
 ; Bank 49
 ;    SEG RESETUNIVSEG
 ;seg     CODE_SEG,       4:              $0000,       $8000                 ; flat address
-;seg     RESETUNIVSEG,   BankResetUniv:  StartOfBank, ResetUniverseAddr      
+;seg     RESETUNIVSEG,   BankResetUniv:  StartOfBank, ResetUniverseAddr
 
 
 ; Bank 50  ------------------------------------------------------------------------------------------------------------------------
@@ -653,13 +680,14 @@ IM2AttractMode:         ;break
     SLOT    MenuInventAddr
     PAGE    BankMenuInvent
 	ORG     MenuInventAddr
-    INCLUDE "./Menus/inventory_menu.asm"        
+    INCLUDE "./Menus/inventory_menu.asm"
     DISPLAY "Bank ",BankMenuInvent," - Bytes free ",/D, $2000 - ($-MenuInventAddr), " - BankMenuInvent"
 ; Bank 53  ------------------------------------------------------------------------------------------------------------------------
     SLOT    MenuSystemAddr
     PAGE    BankMenuSystem
 	ORG     MenuSystemAddr
     INCLUDE "./Menus/system_data_menu.asm"
+    INCLUDE "./Menus/system_map_menu.asm"
     DISPLAY "Bank ",BankMenuSystem," - Bytes free ",/D, $2000 - ($-MenuSystemAddr), " - BankMenuSystem"
 ; Bank 54  ------------------------------------------------------------------------------------------------------------------------
     SLOT    MenuMarketAddr
@@ -670,7 +698,7 @@ IM2AttractMode:         ;break
 ; Bank 55  ------------------------------------------------------------------------------------------------------------------------
     SLOT    StockTableAddr
     PAGE    BankStockTable
-    ORG     StockTableAddr  
+    ORG     StockTableAddr
     INCLUDE "./Tables/stock_table.asm"
     DISPLAY "Bank ",BankStockTable," - Bytes free ",/D, $2000 - ($-StockTableAddr), " - BankStockTable"
 ; Bank 56  ------------------------------------------------------------------------------------------------------------------------
@@ -684,7 +712,7 @@ IM2AttractMode:         ;break
     SLOT    LAYER2Addr
     PAGE    BankLAYER2
     ORG     LAYER2Addr
-     
+
     INCLUDE "./Layer2Graphics/layer2_bank_select.asm"
     INCLUDE "./Layer2Graphics/layer2_cls.asm"
     INCLUDE "./Layer2Graphics/layer2_initialise.asm"
@@ -694,11 +722,12 @@ IM2AttractMode:         ;break
     INCLUDE "./Layer2Graphics/layer2_draw_box.asm"
     INCLUDE "./Layer2Graphics/asm_l2_plot_horizontal.asm"
     INCLUDE "./Layer2Graphics/asm_l2_plot_vertical.asm"
-    INCLUDE "./Layer2Graphics/layer2_plot_diagonal.asm"
     INCLUDE "./Layer2Graphics/layer2_plot_circle.asm"
     INCLUDE "./Layer2Graphics/layer2_plot_circle_fill.asm"
-    INCLUDE "./Layer2Graphics/BBCEliteDirectMappingLL118.asm"    
+    INCLUDE "./Layer2Graphics/BBCEliteDirectMappingLL118.asm"
     INCLUDE "./Layer2Graphics/l2_draw_any_line.asm"
+    INCLUDE "./Layer2Graphics/l2_fill_polygon.asm"
+    INCLUDE "./Layer2Graphics/l2_solid_hull.asm"
     INCLUDE "./Layer2Graphics/l2_draw_line_v2.asm"
     DISPLAY "Bank ",BankLAYER2," - Bytes free ",/D, $2000 - ($-LAYER2Addr), " - BankLAYER2"
 ; Bank 58  ------------------------------------------------------------------------------------------------------------------------
@@ -714,7 +743,7 @@ Layer1Header:  DB "Bank L1 Utils--"
 ; Bank 59  ------------------------------------------------------------------------------------------------------------------------
 ; In the first copy of the banks the "Non number" labels exist. They will map directly in other banks
 ; as the is aligned and data tables are after that
-; need to make the ship index tables same size in each to simplify further    
+; need to make the ship index tables same size in each to simplify further
     SLOT    ShipModelsAddr
     PAGE    BankShipModels1
 	ORG     ShipModelsAddr, BankShipModels1
@@ -726,8 +755,10 @@ CopyVertsToUniv:
 CopyVertsToUniv1:       McopyVertsToUniverse
 CopyEdgesToUniv:
 CopyEdgesToUniv1:       McopyEdgesToUniverse
-CopyNormsToUniv:        
+CopyNormsToUniv:
 CopyNormsToUniv1:       McopyNormsToUniverse
+CopyFacesToUniv:
+CopyFacesToUniv1:       McopyFacesToUniverse
 ShipBankTable:
 ShipBankTable1:         MShipBankTable
 CopyShipToUniverse:
@@ -737,22 +768,18 @@ CopyBodyToUniverse1:    MCopyBodyToUniverse     CopyShipToUniverse1
     INCLUDE "./Data/ShipModelMetaData1.asm"
     DISPLAY "Bank ",BankShipModels1," - Bytes free ",/D, $2000 - ($-ShipModelsAddr), " - BankShipModels1"
 ; Bank 66  ------------------------------------------------------------------------------------------------------------------------
-; marked now incorporated in menu with read only swtich replaced with equipment table
-    SLOT    EquipmentTablesAddr
-    PAGE    BankEquipmentTables
-    ORG     EquipmentTablesAddr
-    INCLUDE "./Tables/EquipmentTables.asm"
-    DISPLAY "Bank ",BankEquipmentTables," - Bytes free ",/D, $2000 - ($-EquipmentTablesAddr), " - BankEquipmentTables"
+; (was the equipment tables: they are in main memory now, see Tables/EquipmentTables.asm's include)
 ; Bank 67  ------------------------------------------------------------------------------------------------------------------------
     SLOT    ShipModelsAddr
     PAGE    BankShipModels2
 	ORG     ShipModelsAddr, BankShipModels2
 
     INCLUDE "./Data/ShipBank2Label.asm"
-GetShipBank2Id:         MGetShipBankId ShipBankTable2                        
+GetShipBank2Id:         MGetShipBankId ShipBankTable2
 CopyVertsToUniv2:       McopyVertsToUniverse
 CopyEdgesToUniv2:       McopyEdgesToUniverse
 CopyNormsToUniv2:       McopyNormsToUniverse
+CopyFacesToUniv2:       McopyFacesToUniverse
 ShipBankTable2:         MShipBankTable
 CopyShipToUniverse2     MCopyShipToUniverse     BankShipModels2
 CopyBodyToUniverse2:    MCopyBodyToUniverse     CopyShipToUniverse2
@@ -768,7 +795,8 @@ CopyBodyToUniverse2:    MCopyBodyToUniverse     CopyShipToUniverse2
 GetShipBank3Id:         MGetShipBankId ShipBankTable3
 CopyVertsToUniv3:       McopyVertsToUniverse
 CopyEdgesToUniv3:       McopyEdgesToUniverse
-CopyNormsToUniv3:       McopyNormsToUniverse    
+CopyNormsToUniv3:       McopyNormsToUniverse
+CopyFacesToUniv3:       McopyFacesToUniverse
 ShipBankTable3:         MShipBankTable
 CopyShipToUniverse3     MCopyShipToUniverse     BankShipModels3
 CopyBodyToUniverse3:    MCopyBodyToUniverse     CopyShipToUniverse3
@@ -796,8 +824,8 @@ CopyBodyToUniverse3:    MCopyBodyToUniverse     CopyShipToUniverse3
 ; Bank 62  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    ViewFrontAddr
                     PAGE    BankFrontView
-                    ORG     ViewFrontAddr  
-                    INCLUDE "./Views/Front_View.asm"    
+                    ORG     ViewFrontAddr
+                    INCLUDE "./Views/Front_View.asm"
                     DISPLAY "Bank ",BankFrontView," - Bytes free ",/D, $2000 - ($-ViewFrontAddr), " - BankFrontView"
                     ASSERT $-ViewFrontAddr <8912 , Bank code leaks over 8K boundary
 ; Bank 63  ------------------------------------------------------------------------------------------------------------------------
@@ -810,8 +838,8 @@ CopyBodyToUniverse3:    MCopyBodyToUniverse     CopyShipToUniverse3
 ; Bank 64  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    MenuEquipSAddr
                     PAGE    BankMenuEquipS
-                    ORG     MenuEquipSAddr  
-                    INCLUDE "./Menus/equip_ship_menu.asm"    
+                    ORG     MenuEquipSAddr
+                    INCLUDE "./Menus/equip_ship_menu.asm"
                     DISPLAY "Bank ",BankMenuEquipS," - Bytes free ",/D, $2000 - ($-MenuEquipSAddr), " - BankMenuEquipS"
                     ASSERT $-MenuEquipSAddr <8912 , Bank code leaks over 8K boundary
 ; Bank 65  ------------------------------------------------------------------------------------------------------------------------
@@ -837,7 +865,7 @@ UNIVDATABlock1      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA1," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data B"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 72  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 72  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA2
                     ORG	UniverseBankAddr,BankUNIVDATA2
@@ -845,7 +873,7 @@ UNIVDATABlock2      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA2," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data C"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 73  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 73  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA3
                     ORG	UniverseBankAddr,BankUNIVDATA3
@@ -853,7 +881,7 @@ UNIVDATABlock3      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data D"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 74  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 74  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA4
                     ORG	UniverseBankAddr,BankUNIVDATA4
@@ -861,7 +889,7 @@ UNIVDATABlock4      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data E"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 75  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 75  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA5
                     ORG	UniverseBankAddr,BankUNIVDATA5
@@ -869,7 +897,7 @@ UNIVDATABlock5      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data F"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 76  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 76  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA6
                     ORG	UniverseBankAddr,BankUNIVDATA6
@@ -877,7 +905,7 @@ UNIVDATABlock6      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data G"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 77  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 77  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA7
                     ORG	UniverseBankAddr,BankUNIVDATA7
@@ -885,7 +913,7 @@ UNIVDATABlock7      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data H"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 78  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 78  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA8
                     ORG	UniverseBankAddr,BankUNIVDATA8
@@ -893,7 +921,7 @@ UNIVDATABlock8      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data I"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 79  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 79  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA9
                     ORG	UniverseBankAddr,BankUNIVDATA9
@@ -901,7 +929,7 @@ UNIVDATABlock9      DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data J"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 80  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 80  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA10
                     ORG	UniverseBankAddr,BankUNIVDATA10
@@ -909,7 +937,7 @@ UNIVDATABlock10     DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data K"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 81  ------------------------------------------------------------------------------------------------------------------------    
+; Bank 81  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA11
                     ORG	UniverseBankAddr,BankUNIVDATA11
@@ -917,7 +945,7 @@ UNIVDATABlock11     DB $FF
                     DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankUNIVDATA3," - Bytes free ",/D, $2000 - ($-UniverseBankAddr), "- Universe Data L"
                     ASSERT $-UniverseBankAddr <8912, Bank code leaks over 8K boundary
-; Bank 82  ------------------------------------------------------------------------------------------------------------------------             
+; Bank 82  ------------------------------------------------------------------------------------------------------------------------
                     SLOT    UniverseBankAddr
                     PAGE    BankUNIVDATA12
                     ORG	UniverseBankAddr,BankUNIVDATA12
@@ -943,7 +971,7 @@ UNIVDATABlock12     DB $FF
                     SLOT    GalaxyDataAddr
                     PAGE    BankGalaxyData0
                     ORG GalaxyDataAddr, BankGalaxyData0
-                    INCLUDE "./Universe/Galaxy/galaxy_data.asm"                                                            
+                    INCLUDE "./Universe/Galaxy/galaxy_data.asm"
                     DISPLAY "Bank ",BankGalaxyData0," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData0"
                     ASSERT $-GalaxyDataAddr <8912, Bank code leaks over 8K boundary
 ; Bank 92  ------------------------------------------------------------------------------------------------------------------------
@@ -951,7 +979,7 @@ UNIVDATABlock12     DB $FF
                     PAGE    BankGalaxyData1
                     ORG GalaxyDataAddr, BankGalaxyData1
 GALAXYDATABlock1:   DB $FF
-                    DS $1FFF                 ; just allocate 8000 bytes for now  
+                    DS $1FFF                 ; just allocate 8000 bytes for now
                     DISPLAY "Bank ",BankGalaxyData1," - Bytes free ",/D, $2000 - ($- GalaxyDataAddr), " - BankGalaxyData1"
                     ASSERT $-GalaxyDataAddr <8912, Bank code leaks over 8K boundary
 ; Bank 93  ------------------------------------------------------------------------------------------------------------------------
@@ -1014,13 +1042,13 @@ GALAXYDATABlock7:   DB $FF
 ; Bank 100  -----------------------------------------------------------------------------------------------------------------------
                     SLOT    KeyboardAddr
                     PAGE    BankKeyboard
-                    ORG SoundAddr, BankKeyboard             
+                    ORG SoundAddr, BankKeyboard
                     INCLUDE "./Hardware/keyboard.asm"
                     DISPLAY "Keyboard ",BankKeyboard," - Bytes free ",/D, $2000 - ($-KeyboardAddr), " - BankKeyboard"
                     ASSERT $-KeyboardAddr <8912, Bank code leaks over 8K boundary
 ; Bank 101  -----------------------------------------------------------
                     PAGE    BankSound
-                    ORG SoundAddr, BankSound             
+                    ORG SoundAddr, BankSound
                     INCLUDE "./Hardware/sound.asm"
                     DISPLAY "Sound ",BankSound," - Bytes free ",/D, $2000 - ($-SoundAddr), " - BankSound"
                     ASSERT $-SoundAddr <8912, Bank code leaks over 8K boundary
@@ -1056,4 +1084,4 @@ GALAXYDATABlock7:   DB $FF
     SAVENEX CLOSE
     DISPLAY "Main Non Banked Code End ", MainNonBankedCodeEnd , " Bytes free ", 0B000H - MainNonBankedCodeEnd
     ASSERT MainNonBankedCodeEnd < 0B000H, Program code leaks intot interrup vector table
-    
+ 

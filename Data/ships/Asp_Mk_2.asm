@@ -1,9 +1,9 @@
 Asp_Mk_2:	            DB $00                          ; Number of cargo canisters released when destroyed
                         DW 60 * 60                      ; Ship's targetable area LoHi
-                        DW Asp_Mk_2Edges                ; Edge Data 
+                        DW Asp_Mk_2Edges                ; Edge Data
                         DB Asp_Mk_2EdgesSize            ; Size of Edge Data
                         DB $20                          ; Gun Vertex Byte offset
-                        DB $1A                          ; Explosion Count 
+                        DB $1A                          ; Explosion Count
                         DB Asp_Mk_2VertSize /6          ; Vertex Count /6
                         DB Asp_Mk_2VertSize             ; Vertex Count
                         DB Asp_Mk_2EdgesCnt             ; Edges Count
@@ -17,10 +17,10 @@ Asp_Mk_2:	            DB $00                          ; Number of cargo canister
                         DB $29                          ; Laser power and Nbr Missiles
                         DW Asp_Mk_2Vertices             ; Verticles Address
                         DB ShipTypeNormal               ; Ship Type
-                        DB 0                            ; NewB Tactics                        
+                        DB 0                            ; NewB Tactics
                         DB ShipCanAnger                 ; AI Flags
                         DB $80                          ; chance of ECM module
-                        DB $FF                              ; Supports Solid Fill = false
+                        DB $FF                              ; Supports Solid Fill = false (faces 0, 4 don't close: wireframe)
                         DW $0000                            ; no solid data
                         DB $00                              ; no solid data
 
@@ -43,7 +43,7 @@ Asp_Mk_2Vertices:	    DB $00, $12, $00, $56, $01, $22 ;01
                         DB $00, $04, $2D, $28, $BB, $BB ;17
                         DB $00, $07, $49, $4A, $04, $04 ;18
                         DB $00, $07, $53, $4A, $04, $04 ;19
-Asp_Mk_2VertSize:       equ $ - Asp_Mk_2Vertices	
+Asp_Mk_2VertSize:       equ $ - Asp_Mk_2Vertices
 Asp_Mk_2Edges:	        DB $16, $12, $00, $04           ;01
                         DB $16, $01, $00, $10           ;02
                         DB $16, $02, $00, $1C           ;03
@@ -72,8 +72,8 @@ Asp_Mk_2Edges:	        DB $16, $12, $00, $04           ;01
                         DB $08, $BB, $38, $40
                         DB $08, $BB, $40, $34
                         DB $0A, $04, $48, $44
-Asp_Mk_2EdgesSize:      equ $ - Asp_Mk_2Edges	
-Asp_Mk_2EdgesCnt:       equ Asp_Mk_2EdgesSize/4	
+Asp_Mk_2EdgesSize:      equ $ - Asp_Mk_2Edges
+Asp_Mk_2EdgesCnt:       equ Asp_Mk_2EdgesSize/4
 Asp_Mk_2Normals:	    DB $5F, $00, $23, $05           ;01
                         DB $7F, $08, $26, $07           ;02
                         DB $FF, $08, $26, $07           ;03
@@ -86,9 +86,8 @@ Asp_Mk_2Normals:	    DB $5F, $00, $23, $05           ;01
                         DB $1F, $50, $2E, $32           ;10
                         DB $9F, $50, $2E, $32           ;11
                         DB $3F, $00, $00, $5A           ;12
-Asp_Mk_2NormalsSize:    equ $ - Asp_Mk_2Normals	        
-Asp_Mk_2Len:            equ $ - Asp_Mk_2	            
-                                                        
-                                                        
-                                                        
-                                                        
+Asp_Mk_2NormalsSize:    equ $ - Asp_Mk_2Normals
+Asp_Mk_2Len:            equ $ - Asp_Mk_2
+
+
+

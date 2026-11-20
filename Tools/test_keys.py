@@ -114,5 +114,108 @@ def test_controls():
     sd.close()
 
 
+def test_chart_cursor_pacing():
+    """ChartCursorDue (both charts' cursors): a move the first loop a cursor key is down, then one every
+    ChartCursorFrames frames of FrameCounter16 however often it's called; a new press after letting go moves at once"""
+    sd, cpu = booted()
+    step = sym["ChartCursorFrames"]
+    check(step == 5, f"ChartCursorFrames {step}, expected 5 (1/10 second)")
+    et.wr(cpu, "CursorKeysPressed", 0)
+    et.wr(cpu, "FrameCounter16", 1000, 2)
+    et.call(cpu, "ChartCursorDue")
+    check(not et.reg(cpu, "carry"), "a move with no key down")
+    et.wr(cpu, "CursorKeysPressed", 0x80)
+    moves = []
+    for f in range(1000, 1031):
+        et.wr(cpu, "FrameCounter16", f, 2)
+        for _ in range(3):                                   # (called 3 times a frame: a fast menu loop)
+            et.call(cpu, "ChartCursorDue")
+            if et.reg(cpu, "carry"):
+                check(et.reg(cpu, "a") == 0x80, "a isn't CursorKeysPressed")
+                moves.append(f)
+    check(moves == list(range(1000, 1031, step)), f"moves at {moves}")
+    et.wr(cpu, "CursorKeysPressed", 0)
+    et.call(cpu, "ChartCursorDue")
+    et.wr(cpu, "CursorKeysPressed", 0x40)
+    et.wr(cpu, "FrameCounter16", 1032, 2)
+    et.call(cpu, "ChartCursorDue")
+    check(et.reg(cpu, "carry"), "a new press didn't move at once")
+    sd.close()
+
+
+def test_chart_cursor_q_up_a_down():
+    """On the galactic and local charts Q moves the cursor up and A down, whatever screen came before. The charts
+    didn't set MenuIdMax (BBC QQ11), so MovementKeyTest read either the climb / dive pair or the cursor keys depending
+    on the last screen, and the local chart's up / down handlers were the wrong way round: Q could move it down"""
+    sd, cpu = booted()
+    for screen, var, bank in (("ScreenGalactic", "TargetSystemX", "BankMenuGalCht"), ("ScreenLocal", "SRM_cursor_y", "BankMenuShrCht")):
+        for before in (3, 0x20):                            # (InitMainLoop's 3, the equip screen's $20)
+            et.wr(cpu, "MenuIdMax", before)
+            et.call(cpu, "SetScreenA", a=sym[screen])
+            for key, step in ((sym["VK_Q"], -1), (sym["VK_A"], 1)):
+                if var == "TargetSystemX":
+                    addr = sym["TargetSystemX"] + 1         # the galaxy y
+                    et.wr(cpu, addr, 100)
+                    page = None
+                else:
+                    page = cpu.page(sym[bank])
+                    addr = sym["SRM_cursor_y"] - 0xC000
+                    page[addr] = 100
+                et.page_in(cpu, 7, sym["BankKeyboard"])
+                press(cpu, key)
+                scan(cpu)
+                et.call(cpu, "MovementKeyTest")
+                release(cpu)
+                et.wr(cpu, "ChartCursorNext", 0, 2)          # a move due now
+                et.wr(cpu, "FrameCounter16", 10, 2)
+                et.wr(cpu, "TextInputMode", 0xFF)           # (false)
+                routine = "GCM_cursors" if var == "TargetSystemX" else "SRM_cursors"
+                et.call(cpu, routine, mmu={6: sym[bank]})
+                y = et.rd(cpu, addr) if page is None else page[addr]
+                check(y == 100 + step, f"{screen} after MenuIdMax {before:02X}: key {key} moved y to {y}, expected {100 + step}")
+    sd.close()
+
+
+def test_chart_cursor_limits():
+    """Both charts with two cursor keys held, one axis at its limit: that axis stays, the other moves, and the stack is
+    as it was. ChartCursorKeys now calls the handlers; each handler pushed AF, and at a limit the galactic chart's
+    gc_BoundsLimit returned with it still pushed (the ret went to the pushed AF as an address), while the local chart's
+    srm_BoundsLimit cleared A so the other key held was ignored"""
+    sd, cpu = booted()
+    up, down, left, right = 0x80, 0x40, 0x20, 0x10
+    gal = ("GCM_cursors", "BankMenuGalCht", sym["TargetSystemX"], sym["TargetSystemX"] + 1, False)
+    loc = ("SRM_cursors", "BankMenuShrCht", sym["SRM_cursor_x"], sym["SRM_cursor_y"], True)
+    cases = [   # (chart, keys, x, y, expected x, expected y)
+        (gal, up | left, 100, 1, 99, 1), (gal, down | right, 100, 255, 101, 255),
+        (gal, up | left, 1, 100, 1, 99), (gal, down | right, 254, 100, 254, 101),
+        (gal, up | right, 100, 100, 101, 99), (gal, down | left, 1, 255, 1, 255),
+        (loc, up | left, 100, 8, 99, 8), (loc, down | right, 100, 168, 101, 168),
+        (loc, up | left, 64, 100, 64, 99), (loc, down | right, 224, 100, 224, 101),
+        (loc, down | left, 100, 100, 99, 101), (loc, up | right, 224, 8, 224, 8)]
+    for (routine, bank, ax, ay, banked), keys, x, y, ex, ey in cases:
+        page = cpu.page(sym[bank])
+
+        def w(a, v):
+            if banked:
+                page[a - 0xC000] = v
+            else:
+                et.wr(cpu, a, v)
+
+        def r(a):
+            return page[a - 0xC000] if banked else et.rd(cpu, a)
+        w(ax, x)
+        w(ay, y)
+        et.wr(cpu, "CursorKeysPressed", keys)
+        et.wr(cpu, "ChartCursorNext", 0, 2)                  # a move due now
+        et.wr(cpu, "FrameCounter16", 10, 2)
+        et.wr(cpu, "TextInputMode", 0xFF)                   # (false)
+        sp = sym["TopOfStack"]
+        et.call(cpu, routine, mmu={6: sym[bank]}, sp=sp)
+        what = f"{routine} keys {keys:02X} from ({x}, {y})"
+        check(cpu.sp == sp, f"{what}: the stack moved by {sp - cpu.sp}")
+        check((r(ax), r(ay)) == (ex, ey), f"{what}: at ({r(ax)}, {r(ay)}), expected ({ex}, {ey})")
+    sd.close()
+
+
 if __name__ == "__main__":
     et.main(globals())

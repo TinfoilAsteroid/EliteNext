@@ -174,9 +174,11 @@ source moves to another 64K.
   - `l2_cls_dma_bank` (Layer2Graphics/layer2_cls.asm): the Layer 2 clears,
     16K a third.
   - `memfill_dma` (Hardware/memfill_dma.asm): every other fixed value fill.
-- Not yet: the long line spans in `l2_draw_6502_line` (a fixed colour too,
-  but each span is short, so the extra 5 bytes of set-up a span may eat
-  most of the saving).
+- Not used for the long line spans in `l2_draw_6502_line` (a fixed colour
+  too): the span DMA already runs at 2+2 cycles, so fill mode saves about
+  2 T a pixel, and its extra 4-6 set-up bytes (84-126 T of OTIR) only pay
+  back on spans over ~42-63 pixels, while that path is only taken by exactly
+  horizontal ship edges, which are rare.
 - Tools/test_hardware.py assembles the hardware build in a temporary folder
   and runs it on Tools/nexsim.py's DMA+ model beside the normal build: the
   boot's Layer 2 and both fills byte for byte the same, fill mode used and

@@ -1,30 +1,30 @@
-Python_P:	            DB $02                           ; Number of cargo canisters released when destroyed   
-                        DW $1900                         ; Ship's targetable area LoHi   
-                        DW Python_PEdges                 ; Edge Data    
-                        DB Python_PEdgesSize             ; Size of Edge Data   
-                        DB $00                           ; Gun Vertex Byte offset   
-                        DB $2A                           ; Explosion Count    
-                        DB Python_PVertSize /6           ; Vertex Count /6   
-                        DB Python_PVertSize              ; Vertex Count   
-                        DB Python_PEdgesCnt              ; Edges Count   
-                        DW $00C8                         ; Bounty LoHi   
-                        DB Python_PNormalsSize           ; Face (Normal) Count   
-                        DB $28                           ; Range when it turns to a dot   
-                        DB $FA                           ; Energy Max   
-                        DB $14                           ; Speed Max   
-                        DW Python_PNormals               ; Normals   
-                        DB $00                           ; Q scaling   
-                        DB $60 | ShipMissiles6           ; Laser power and Nbr Missiles   
-                        DW Python_PVertices              ; Verticles Address   
+Python_P:	            DB $02                           ; Number of cargo canisters released when destroyed
+                        DW $1900                         ; Ship's targetable area LoHi
+                        DW Python_PEdges                 ; Edge Data
+                        DB Python_PEdgesSize             ; Size of Edge Data
+                        DB $00                           ; Gun Vertex Byte offset
+                        DB $2A                           ; Explosion Count
+                        DB Python_PVertSize /6           ; Vertex Count /6
+                        DB Python_PVertSize              ; Vertex Count
+                        DB Python_PEdgesCnt              ; Edges Count
+                        DW $00C8                         ; Bounty LoHi
+                        DB Python_PNormalsSize           ; Face (Normal) Count
+                        DB $28                           ; Range when it turns to a dot
+                        DB $FA                           ; Energy Max
+                        DB $14                           ; Speed Max
+                        DW Python_PNormals               ; Normals
+                        DB $00                           ; Q scaling
+                        DB $60 | ShipMissiles6           ; Laser power and Nbr Missiles
+                        DW Python_PVertices              ; Verticles Address
                         DB ShipTypeNormal                ; Ship Type
-                        DB 0                             ; NewB Tactics    
-                        DB ShipCanAnger                  ; AI Flags               
-                        DB $F0                           ; chance of ECM module   
-                        DB $FF                              ; Supports Solid Fill = false
-                        DW $0000                            ; no solid data
-                        DB $00                              ; no solid data
-                        
-                                                        
+                        DB 0                             ; NewB Tactics
+                        DB ShipCanAnger                  ; AI Flags
+                        DB $F0                           ; chance of ECM module
+                        DB $00                              ; Supports Solid Fill = true (Tools/ship_faces.py)
+                        DW Python_PFaces                  ; face polygons (SOLID_HULL)
+                        DB Python_PFacesSize              ; face table length
+
+
 Python_PVertices:	    DB $00, $00, $E0, $1F, $10, $32
                         DB $00, $30, $30, $1F, $10, $54
                         DB $60, $00, $10, $3F, $FF, $FF
@@ -37,10 +37,10 @@ Python_PVertices:	    DB $00, $00, $E0, $1F, $10, $32
                         DB $00, $30, $20, $7F, $76, $BA
                         DB $00, $18, $70, $7F, $BA, $CC
 
-Python_PVertSize: equ $ - Python_PVertices	
-	
-	
-	
+Python_PVertSize: equ $ - Python_PVertices
+
+
+
 Python_PEdges:	DB $1F, $32, $00, $20
 	DB $1F, $20, $00, $0C
 	DB $1F, $31, $00, $08
@@ -68,12 +68,12 @@ Python_PEdges:	DB $1F, $32, $00, $20
 	DB $1F, $54, $04, $10
 	DB $1F, $76, $20, $24
 
-Python_PEdgesSize: equ $ - Python_PEdges	
-	
-	
-Python_PEdgesCnt: equ Python_PEdgesSize/4	
-	
-	
+Python_PEdgesSize: equ $ - Python_PEdges
+
+
+Python_PEdgesCnt: equ Python_PEdgesSize/4
+
+
 Python_PNormals:	DB $9F, $1B, $28, $0B
 	DB $1F, $1B, $28, $0B
 	DB $DF, $1B, $28, $0B
@@ -88,6 +88,26 @@ Python_PNormals:	DB $9F, $1B, $28, $0B
 	DB $FF, $19, $25, $0B
 	DB $3F, $00, $00, $70
 
-	
-Python_PNormalsSize: equ $ - Python_PNormals	
-Python_PLen: equ $ - Python_P	
+
+Python_PNormalsSize: equ $ - Python_PNormals
+Python_PLen: equ $ - Python_P
+
+; --- SOLID_HULL face table: generated by Tools/ship_faces.py from the edges above, do not edit ---
+Python_PFaces:          DB 13                     ; records: DW visible mask, DB n, n vertices x4
+                        DW $0001 : DB 3, $00, $0C, $04    ; face 0
+                        DW $0002 : DB 3, $00, $08, $04    ; face 1
+                        DW $0004 : DB 3, $00, $20, $0C    ; face 2
+                        DW $0008 : DB 3, $00, $20, $08    ; face 3
+                        DW $0010 : DB 3, $04, $0C, $10    ; face 4
+                        DW $0020 : DB 3, $08, $10, $04    ; face 5
+                        DW $0040 : DB 3, $0C, $20, $24    ; face 6
+                        DW $0080 : DB 3, $08, $20, $24    ; face 7
+                        DW $0100 : DB 4, $0C, $10, $14, $18    ; face 8
+                        DW $0200 : DB 4, $08, $10, $14, $1C    ; face 9
+                        DW $0400 : DB 4, $08, $24, $28, $1C    ; face 10
+                        DW $0800 : DB 4, $0C, $24, $28, $18    ; face 11
+                        DW $1000 : DB 4, $14, $18, $28, $1C    ; face 12
+                        DB 0                        ; phase 2 polygons, drawn after the hull: DW mask, DB type, n, vertices
+                        DB 0                        ; lone lines: DW visible mask, DB v0, v1 x4
+Python_PFacesSize       equ $ - Python_PFaces
+; --- end of generated face table ---

@@ -9,9 +9,9 @@ l2_plot_macro:          MACRO
                         ld      h,a
                         ld      a,(line_gfx_colour)
                         ld      (hl),a
-.NoPlot:                        
+.NoPlot:
                         ENDM
-                        
+
 ; ">l2_plot_pixel b= row number, c = column number, a = pixel col"
 l2_plot_pixel:          push    af
                         ld      a,b
@@ -33,7 +33,7 @@ l2_plot_pixel_320:      ld      a,h
 .checkXlt256:           and     a                               ; if h = 0 then must be < 256 so OK
                         jp      z,.DoneCheck
 .checkXgt320:           cp      1                               ; if h <> 1 then must be > 320
-                        jr      nz,.DontPlot                    ; 
+                        jr      nz,.DontPlot                    ;
                         ld      a,l                             ; so now its >= 256
 .checkXlt320:           and     %11000000                       ; if its 7 or 6 set then > 319
                         jr      nz,.DontPlot
@@ -49,15 +49,18 @@ l2_target_address_320:  ld      a,h
                         and     a                               ; if h = 0 then must be < 256 so OK
                         jp      z,.DoneCheck
                         cp      1                               ; if h <> 1 then must be > 320
-                        jr      nz,.DontPlot                    ; 
+                        jr      nz,.DontPlot                    ;
                         ld      a,l                             ; so now its >= 256
                         and     %11000000                       ; if its 7 or 6 set then > 319
                         jr      nz,.DontPlot
 .DoneCheck:             call    asm_l2_320_col_bank_select      ; adjust hl for hl address which is now in l only
                         ld      l,d                             ; low byte is row from d
-.DontPlot:              ret
+                        or      a                               ; carry clear: on screen
+                        ret
+.DontPlot:              scf                                     ; carry set: column 320 or more, nothing to write (callers once
+                        ret                                     ; wrote anyway, at hl = the column, into main memory)
 
-; y aixs bounds check must have been done before calling this                        
+; y aixs bounds check must have been done before calling this
 l2_plot_pixel_no_check: push    af
                         push    bc								; bank select destroys bc so need to save it
                         ld      a,b                             ; determine target bank
@@ -67,10 +70,10 @@ l2_plot_pixel_no_check: push    af
                         ld      hl,bc                           ; hl now holds ram address after bank select
                         pop     af								; a = colour to plott
                         ld      (hl),a                          ; poke to ram
-                        ret              
-	
+                        ret
+
 ; The more simpler h col l row is just ld (hl),a so no need for a function
-                        
+
 ShipPixel:              push    af
                         ld      a,b
                         cp      127
@@ -95,4 +98,3 @@ l2_plot_pixel_y_test:   push	af
                         jr		l2_plot_pixel
 .clearup:               pop		af
                         ret
-	

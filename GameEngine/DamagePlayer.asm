@@ -9,7 +9,7 @@ ApplyDamage:            ClearCarryFlag
                         ld      a,(PlayerEnergy)    ; and apply it to player energy
                         ClearCarryFlag
                         sbc     c
-                        jp      p,.DoneDamage       ; if result was 0 or more then completed damage
+                        jr      nc,.DoneDamage      ; if result was 0 or more then completed damage (was jp p: energy over 127 always counted as dead)
 .KilledPlayer:          xor     a
 .DoneDamage:            ld      (PlayerEnergy),a
                         xor     a                   ; shield is gone

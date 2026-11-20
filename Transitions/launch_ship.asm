@@ -172,6 +172,7 @@ draw_docking_ship:      MMUSelectLayer1
                         call    sprite_cls_all;sprite_cls_cursors
                         MMUSelectLayer2
                         call    asm_l2_double_buffer_on     
+                        call    l2_initialise                   ; 256 x 192 whatever the last screen left
 .CurrentBuffer:         ld      a,$FF                           ; Clear upper 2 thirds to white
                         ld      (l2_cls_byte),a
                         call    l2_set_color_upper2

@@ -166,9 +166,6 @@ MissileAIV3:            ;ld      a,(ShipAIEnabled)
                         ENDIF
                         MMUSelectMathsBankedFns
                         call    NormalizeTactics                    ; Normalise S15.8 vector down to 7 bit + sign byte (.TA19->TAS2)
-                        IFDEF TACTICSDEBUG
-                            call DebugTacticsCopy
-                        ENDIF
 .NegateDirection:       FlipSignMem TacticsVectorX+2                ; negate vector so it is target - missile, i.e. points from
                         FlipSignMem TacticsVectorY+2                ; the missile to the target; all dot products are taken after
                         FlipSignMem TacticsVectorZ+2                ; this so +ve nose dot means facing the target

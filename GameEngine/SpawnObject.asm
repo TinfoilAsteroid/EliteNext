@@ -1,36 +1,4 @@
 
-SpawnMissileHandler:            ld      a,(UbnKShipUnivBankNbr)             ; save current bank number
-                                ld      (EnemyShipBank),a                   ;
-                                ld      a,5
-                                call    CalcLaunchOffset
-                                ld      a,0                                 ; TODO For now only 1 missile type
-                                GetByteAInTable ShipMissileTable            ; swap in missile data
-                                call    SpawnShipTypeA                      ; spawn the ship
-                                ret     c                                   ; return if failed
-                                call    UnivSetEnemyMissile                 ; as per player but sets as angry
-                                ld      a,$FF
-                                ld      (UBnKMissileTarget),a               ; set as definte player as target
-                                ld      a,(EnemyShipBank)                   ; Direct restore current bank
-                                MMUSelectUnivBankA                          ;
-                                ld      hl, UBnKMissilesLeft                ; reduce enemy missile count
-                                dec     (hl)
-                                ret
-
-SpawnPlayerMissileHandler:      ZeroA                                       ; TODO For now only 1 missile type
-                                GetByteAInTable ShipMissileTable            ; swap in missile data
-                                call    SpawnShipTypeA                      ; spawn the ship
-                                jr      c,.MissileMissFire                  ; give a miss fire indicator as we have no slots
-                                ld      a,(MissileTargettingFlag)           ; Get target from computer
-                                ld      (UBnKMissileTarget),a               ; load target Data
-                                call    UnivSetPlayerMissile                ; .
-                                ClearMissileTargetting                      ; reset targetting
-                                ld      hl, NbrMissiles
-                                dec     (hl)
-                                ret
-.MissileMissFire:               ClearMissileTargetting
-                                ret ; TODO bing bong noise misfire message
-
-
 SpawnStationHandler:            call    SpawnShipTypeA
                                 ret     c                                   ; abort if failed
                                 ; extra code goes here
@@ -47,13 +15,17 @@ SpawnAsteroidHandler:           call    SpawnShipTypeA
 
                                 ret
 
-SpawnTypeJunkHandler:           push    af
+; in a = ship type; carry set when not spawned: no room for more junk (3 in the safe zone, 5 outside) or no free slot.
+; It once left AF on the stack on "no room" (the ret then went to it as an address), took the room test the wrong way
+; round, and counted the junk before checking the spawn worked
+SpawnTypeJunkHandler:           ld      c,a                                 ; ship type (SpawnEvent keeps its own b and c)
                                 TestRoomForJunk .CanAddJunk
+                                SetCarryFlag                                ; no room for more junk
                                 ret
-.CanAddJunk:                    pop     af
+.CanAddJunk:                    ld      a,c
                                 call    SpawnShipTypeA
-                                AddJunkCount
                                 ret     c                                   ; abort if failed
+                                AddJunkCount                                ; (inc leaves carry clear)
                                 ret
 
 SpawnTypeCopHandler:            call    SpawnShipTypeA                      ; will add logic later for alignment etc
@@ -113,17 +85,15 @@ SpawnTypeDoNotSpawnHandler:     ret
 
 SpawnHostileCop:                ld      a,ShipID_Viper
                                 call    SpawnShipTypeA                      ; call rather than jump
+                                ret     c                                   ; no slot: the bank paged in is another ship's
                                 call    SetShipHostile                      ; as we have correct universe banked in now
                                 ret
-SpawnTrader:       ; TODO
 
-; DEFUNCT?                        inc     (hl)                                ;
-; DEFUNCT?                        and     3                                   ; a = random 0..3
-; DEFUNCT?                        MMUSelectShipBank1
-; DEFUNCT?                        GetByteAInTable ShipHunterTable             ; get hunter ship type
-; DEFUNCT?                        call    SpawnShipTypeA
-; DEFUNCT?                        call    SetShipHostile
-; DEFUNCT?                        ret
+; a trader from the trader row's table (the spawn tables use ShipNonTraderTableARank for traders); carry set if not spawned
+SpawnTrader:                    ld      hl,ShipNonTraderTableARank
+                                call    SelectSpawnType                     ; c = ship type
+                                ld      a,c
+                                jp      SpawnTypeTraderHandler
 
 
 ;-------------------------------------------------------------------
@@ -203,10 +173,3 @@ StationSpawnHandlerAddrLo:  DB low(SpawnTypeCopHandler), low(SpawnTypeTraderHand
 StationSpawnHandlerAddrHi:  DB high(SpawnTypeCopHandler),high(SpawnTypeTraderHandler),   high(SpawnTypeNonTraderHandler),high(SpawnTypePirateHandler),high(SpawnTypeDoNotSpawnHandler),high(SpawnTypeDoNotSpawnHandler),high(SpawnTypeDoNotSpawnHandler),high(SpawnTypeDoNotSpawnHandler)
 
 SpawnTableSize             EQU  FreeSpaceSpawnTableType - FreeSpaceSpawnTableLow
-
-; Looko in constant equates, Spawntype equates for the values for this jump table
-; note at minium it must itmust point to SpawnTypeDoNotSpawnHandlers which just does a ret
-SpawnTypeHandlers:         DW SpawnStationHandler,       SpawnAsteroidHandler,      SpawnTypeJunkHandler,          SpawnTypeCopHandler
-                           DW SpawnTypeTraderHandler,    SpawnTypeNonTraderHandler, SpawnTypePirateHandler,        SpawnTypeHunterHandler
-                           DW SpawnTypeThargoidHandler,  SpawnTypeMissionHandler,   SpawnTypeStationDebrisHandler, SpawnTypeMissionEventHandler
-                           DW SpawnTypeDoNotSpawnHandler

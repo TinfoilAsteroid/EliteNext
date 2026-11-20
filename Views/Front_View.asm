@@ -67,6 +67,7 @@ draw_front_view:        MMUSelectLayer1
                         call    sprite_lock
                         call    sprite_targetting_hide      ; do not show targeting initially
                         call    sprite_ECM
+                        call    sprite_safe_zone            ; hidden until UpdateConsole finds us in the safe zone
                         call    sprite_missile_1
                         call    sprite_missile_2
                         call    sprite_missile_3
@@ -146,16 +147,46 @@ DrawLighningLine:       push    hl,,bc
                         ret
 
 ;Loop though all lines
-;   60$% chance of drawing a line, call draw line
-;   go to next line
-;repeat
-hyperspace_Lightning:   ld      b, 7                    ; total number of lightning bolts
-                        ld      hl,LightningLines 
+; The hyperspace lightning and the hole growing over it, once a main loop while jumping (WeAreHJumping), timed by
+; FrameCounter16 so it takes HyperJumpFrames however fast the loop runs: the hole's radius is 2 + the frames since
+; draw_hyperspace * 62 / HyperJumpFrames (drawn every loop, a step a frame), the lightning is drawn once a frame,
+; each bolt with a HyperBoltChance in 256. Carry set while it runs, clear once the time is up
+hyperspace_Lightning:   ld      hl,(FrameCounter16)     ; a = frames since the start
+                        ld      de,(HyperJumpStart)
+                        or      a
+                        sbc     hl,de
+                        ld      a,h
+                        and     a
+                        ret     nz                      ; (carry clear) long past the end
+                        ld      a,l
+                        cp      HyperJumpFrames
+                        ret     nc                      ; done
+.Radius:                ld      c,a                     ; radius = 2 + a * HyperRadiusStep / 256
+                        ld      d,a
+                        ld      e,low HyperRadiusStep
+                        mul     de                      ; de = a * step lo
+                        ld      b,d                     ; b = its / 256
+                        ld      d,c
+                        ld      e,high HyperRadiusStep
+                        mul     de                      ; e = (a * step hi) lo
+                        ld      a,b
+                        add     a,e
+                        add     a,2
+                        ld      (HyperCircle),a
                         MMUSelectLayer2
+                        ld      hl,(FrameCounter16)     ; lightning once a frame
+                        ld      de,(HyperLastFrame)
+                        or      a
+                        sbc     hl,de
+                        jp      z,.DrawHole
+                        add     hl,de
+                        ld      (HyperLastFrame),hl
+                        ld      b, 7                    ; total number of lightning bolts
+                        ld      hl,LightningLines 
 ; above here select which lines table we will use
 .LineLoop:              push    bc,,hl
                         call    doRandom
-                        cp      30
+                        cp      HyperBoltChance
                         jr      nc,.NextLine
                         call    doRandom
                         and     $07
@@ -170,7 +201,7 @@ hyperspace_Lightning:   ld      b, 7                    ; total number of lightn
                         mul
                         add     hl,de
                         djnz    .LineLoop
-                        ld      a,(HyperCircle)
+.DrawHole:              ld      a,(HyperCircle)
                         ld      d,a
                         ld      bc, $4080
                         ld      e,$00
@@ -181,13 +212,7 @@ hyperspace_Lightning:   ld      b, 7                    ; total number of lightn
                         ld      d,a
                         ld      e,$FF
                         call    l2_draw_circle
-                        ld      a,(HyperCircle)
-                        inc     a
-                        inc     a
-                        cp      64
-                        ret     nc
-                        ld      (HyperCircle),a
-                        SetCarryFlag
+                        SetCarryFlag                    ; still running
                         ret
                         
                        
@@ -196,6 +221,7 @@ draw_hyperspace:        MMUSelectLayer1
                         call    l1_attr_cls
                         MMUSelectLayer2
                         call     asm_l2_double_buffer_on
+                        call    l2_initialise                   ; 256 x 192 (the countdown can end with a 320 x 256 chart up)
                         MMUSelectSpriteBank
                         call    sprite_cls_all;sprite_cls_cursors
                         MMUSelectConsoleBank
@@ -212,6 +238,10 @@ draw_hyperspace:        MMUSelectLayer1
                         ld          (DockedFlag),a              ; we can never be docked if we hit a view screen
                         ld          a,2
                         ld          (HyperCircle),a
+                        ld          hl,(FrameCounter16)         ; the animation's clock (hyperspace_Lightning)
+                        ld          (HyperJumpStart),hl
+                        dec         hl                          ; so the first loop draws lightning
+                        ld          (HyperLastFrame),hl
                         ld          a,$FC
                         ld          (DockedFlag),a
                         ret
@@ -341,9 +371,8 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
 .ForwardCursorKeysDone: MacroIsKeyPressed c_Pressed_Hyperspace              ; Check for hyperspace
                         jr      nz,.NotHyperspace
 ; If we are in hyperspace countdown then test for hyperspace
-                        ld      hl,(InnerHyperCount)                ; if hyperspace was enaged then cancel
-                        ld      a,h                                 ; hyperspace
-                        or      l                                   ; .
+                        ld      a,(InnerHyperCount)                 ; if hyperspace was enaged then cancel
+                        and     a                                   ; hyperspace
                         jr      nz,.CancelHyperspace                ; .
 ; check selected target if we find one then after gettting galaxy at bc a=0 if not found
                         ld      de,(PresentSystemX)
@@ -368,9 +397,9 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         ld      a,(Fuel)
                         JumpIfALTNusng    l, .InsufficientFuel
 ; set up timer countdown
-                        ld      hl,HyperSpaceTimers                 ; set both timers to 15
-                        ld      (InnerHyperCount),hl                ; .
-.CancelHyperspace
+                        call    HyperSpaceStart                     ; HyperSpaceSeconds, timed by FrameCounter16
+                        jr      .NotHyperspace
+.CancelHyperspace:      call    HyperSpaceCancel                    ; (H again: HyperSpaceMessage clears the text)
 .NoTargetSelected
 .InsufficientFuel
 .NotHyperspace:         
@@ -400,9 +429,10 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
                         AnyMissilesLeft                             
                         jr      z,.NotMissileLaunch                 ; no missiles in rack
                         call    IsMissileLockedOn
-                        jr      z,.MissileNotLocked
+                        jr      nc,.MissileNotLocked                ; (carry set if locked on)
 .MissileLaunch:         SetMissileLaunch
-.MissileNotLocked:                       ; later on we need a "bing bong" nose for trying to launch an unlocked missile
+                        jr      .NotMissileLaunch
+.MissileNotLocked:      PlaySFX SFXBong                             ; fire with no lock
 .NotMissileLaunch:
 .CheckForECM:           ld      a,(ECMPresent)
                         JumpIfAEqNusng EquipmentItemNotFitted,.NoECM
@@ -411,6 +441,7 @@ input_front_view:       ;DEFUNCT ClearEngineSoundChanged
 .CheckForKeyPress:      MacroIsKeyPressed c_Pressed_ECM
                         jr      nz, .NoECM
 .FireECM:               SetMemToN      PlayerECMActiveCount, ECMCounterMax 
+                        PlaySFX SFXECM
                         ld      a,(ECMCountDown)
                         JumpIfAGTENusng ECMCounterMax, .NoECM
                         SetMemToN      ECMCountDown, ECMCounterMax 

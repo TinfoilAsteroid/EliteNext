@@ -139,5 +139,33 @@ def test_basic_laser_timeline():
     sd.close()
 
 
+def test_ship_in_sights_sign_bytes():
+    """ShipInSights: a ship straight ahead is in the sights; the same with 65536 or more to the side or above (the sign
+    bytes' integer bits) is not (they were ignored); behind us never"""
+    sd = et.SD()
+    cpu = et.machine(sd, boot="StartAttractMode")
+    for slot in range(sym["UniverseSlotListSize"]):
+        et.wr(cpu, sym["UniverseSlotList"] + slot, 0xFF)
+    et.call(cpu, "SpawnShipTypeA", a=sym["ShipID_Anaconda"])
+    bank = sym["BankUNIVDATA0"] + 1
+    page = cpu.page(bank)
+
+    def put(x, y, z):
+        for i, v in enumerate((x, y, z)):
+            m = abs(v) | (0x800000 if v < 0 else 0)
+            for k in range(3):
+                page[sym["UBnKxlo"] - 0xC000 + 3 * i + k] = m >> (8 * k) & 255
+        page[sym["UBnKexplDsp"] - 0xC000] = 0
+
+    def hit():
+        et.call(cpu, "ShipInSights", mmu={6: bank})
+        return bool(et.reg(cpu, "carry"))
+    for (x, y, z), want in (((2, 3, 5000), True), ((0x10002, 3, 5000), False), ((2, -0x10003, 5000), False),
+                            ((-0x20000, 0, 5000), False), ((2, 3, -5000), False), ((0, 0, 0x20000), True)):
+        put(x, y, z)
+        check(hit() == want, f"ship at ({x:X}, {y:X}, {z:X}): in the sights {not want}")
+    sd.close()
+
+
 if __name__ == "__main__":
     et.main(globals())

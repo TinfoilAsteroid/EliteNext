@@ -55,17 +55,17 @@ l2_draw_menu_border:    ld      b,1
                         call    l2_draw_vert_line_320           ;b = row; hl = col, de = length, c = color"
                         ld      b,1
                         ld      hl,1
-                        ld      de,320-4
+                        ld      de,320-3
                         ld      c,$C0
                         call    l2_draw_horz_line_320
                         ld      b,253
                         ld      hl,2
-                        ld      de,320-4
+                        ld      de,320-3
                         ld      c,$C0
                         call    l2_draw_horz_line_320
                         ld      b,11
                         ld      hl,2
-                        ld      de,320-4
+                        ld      de,320-3
                         ld      c,$C0
                         call    l2_draw_horz_line_320
                         ret

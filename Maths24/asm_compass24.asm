@@ -6,12 +6,13 @@
 ; For Normal to compass we take the leading sign Normal in BC as the basis
 ; as its not 2's compliment. The result is a 
 
-; When written to compass position its a 2's compliment +/- 15
-; Takes bc = Normal and returns HL with 2's compliment offset +/-15
+; When written to compass position its a 2's compliment +/- 12
+; Takes bc = Normal and returns HL with 2's compliment offset +/-12, uses DE
 
-NormalToCompassSigned:  ld      a,c
-                        swapnib
-                        and     $0F
+NormalToCompassSigned:  ld      d,c                         ; a = |normal| * 13 / 256, so 255 (90 degrees off) is 12
+                        ld      e,13                        ; (was / 16, 15: onto the compass ring's edge, and not
+                        mul     de                          ; the planet's and station's scale)
+                        ld      a,d                         ; .
                         bit     7,b
                         jp      nz,.NormalNegative
 .NormalPositive:        ld      h,0

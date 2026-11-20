@@ -1,9 +1,9 @@
 Viper:                  DB $00                         ; Number of cargo canisters released when destroyed
                         DW $15F9                       ; Ship's targetable area LoHi
-                        DW ViperEdges                  ; Edge Data 
+                        DW ViperEdges                  ; Edge Data
                         DB ViperEdgesSize              ; Size of Edge Data
                         DB $00                         ; Gun Vertex Byte offset
-                        DB $2A                         ; Explosion Count 
+                        DB $2A                         ; Explosion Count
                         DB ViperVertSize /6            ; Vertex Count /6
                         DB ViperVertSize               ; Vertex Count
                         DB ViperEdgesCnt               ; Edges Count
@@ -17,45 +17,59 @@ Viper:                  DB $00                         ; Number of cargo caniste
                         DB $11                         ; Laser power and Nbr Missiles
                         DW ViperVertices               ; Verticles Address
                         DB ShipTypeNormal              ; Ship Type
-                        DB 0                           ; NewB Tactics 
-                        DB ShipCanAnger                ; AI Flags            
+                        DB 0                           ; NewB Tactics
+                        DB ShipCanAnger                ; AI Flags
                         DB $FF                         ; chance of ECM module
-                        DB $FF                              ; Supports Solid Fill = false
-                        DW $0000                            ; no solid data
-                        DB $00                              ; no solid data
-                        
-                        
-ViperVertices:          DB $00, $00, $48, $1F, $21, $43 
-                        DB $00, $10, $18, $1E, $10, $22 
-                        DB $00, $10, $18, $5E, $43, $55 
-                        DB $30, $00, $18, $3F, $42, $66 
-                        DB $30, $00, $18, $BF, $31, $66 
-                        DB $18, $10, $18, $7E, $54, $66 
-                        DB $18, $10, $18, $FE, $35, $66 
-                        DB $18, $10, $18, $3F, $20, $66 
-                        DB $18, $10, $18, $BF, $10, $66 
-                        DB $20, $00, $18, $B3, $66, $66 
-                        DB $20, $00, $18, $33, $66, $66 
-                        DB $08, $08, $18, $33, $66, $66 
-                        DB $08, $08, $18, $B3, $66, $66 
-                        DB $08, $08, $18, $F2, $66, $66 
-                        DB $08, $08, $18, $72, $66, $66 
+                        DB $00                              ; Supports Solid Fill = true (Tools/ship_faces.py)
+                        DW ViperFaces                     ; face polygons (SOLID_HULL)
+                        DB ViperFacesSize                 ; face table length
+
+
+ViperVertices:          DB $00, $00, $48, $1F, $21, $43
+                        DB $00, $10, $18, $1E, $10, $22
+                        DB $00, $10, $18, $5E, $43, $55
+                        DB $30, $00, $18, $3F, $42, $66
+                        DB $30, $00, $18, $BF, $31, $66
+                        DB $18, $10, $18, $7E, $54, $66
+                        DB $18, $10, $18, $FE, $35, $66
+                        DB $18, $10, $18, $3F, $20, $66
+                        DB $18, $10, $18, $BF, $10, $66
+                        DB $20, $00, $18, $B3, $66, $66
+                        DB $20, $00, $18, $33, $66, $66
+                        DB $08, $08, $18, $33, $66, $66
+                        DB $08, $08, $18, $B3, $66, $66
+                        DB $08, $08, $18, $F2, $66, $66
+                        DB $08, $08, $18, $72, $66, $66
 ViperVertSize           equ $  - ViperVertices
-ViperEdges:             DB $1F, $42, $00, $0C, $1E, $21, $00, $04 
-                        DB $1E, $43, $00, $08, $1F, $31, $00, $10 
-                        DB $1E, $20, $04, $1C, $1E, $10, $04, $20 
-                        DB $1E, $54, $08, $14, $1E, $53, $08, $18 
-                        DB $1F, $60, $1C, $20, $1E, $65, $14, $18 
-                        DB $1F, $61, $10, $20, $1E, $63, $10, $18 
-                        DB $1F, $62, $0C, $1C, $1E, $46, $0C, $14 
-                        DB $13, $66, $24, $30, $12, $66, $24, $34 
-                        DB $13, $66, $28, $2C, $12, $66, $28, $38 
-                        DB $10, $66, $2C, $38, $10, $66, $30, $34 
+ViperEdges:             DB $1F, $42, $00, $0C, $1E, $21, $00, $04
+                        DB $1E, $43, $00, $08, $1F, $31, $00, $10
+                        DB $1E, $20, $04, $1C, $1E, $10, $04, $20
+                        DB $1E, $54, $08, $14, $1E, $53, $08, $18
+                        DB $1F, $60, $1C, $20, $1E, $65, $14, $18
+                        DB $1F, $61, $10, $20, $1E, $63, $10, $18
+                        DB $1F, $62, $0C, $1C, $1E, $46, $0C, $14
+                        DB $13, $66, $24, $30, $12, $66, $24, $34
+                        DB $13, $66, $28, $2C, $12, $66, $28, $38
+                        DB $10, $66, $2C, $38, $10, $66, $30, $34
 ViperEdgesSize          equ $  - ViperEdges
 ViperEdgesCnt           equ ViperEdgesSize/4
-ViperNormals            DB $1F, $00, $20, $00, $9F, $16, $21, $0B 
-                        DB $1F, $16, $21, $0B, $DF, $16, $21, $0B 
-                        DB $5F, $16, $21, $0B, $5F, $00, $20, $00 
+ViperNormals            DB $1F, $00, $20, $00, $9F, $16, $21, $0B
+                        DB $1F, $16, $21, $0B, $DF, $16, $21, $0B
+                        DB $5F, $16, $21, $0B, $5F, $00, $20, $00
                         DB $3F, $00, $00, $30
-ViperNormalsSize        equ $  - ViperNormals                    
+ViperNormalsSize        equ $  - ViperNormals
 ViperLen                equ $  - Viper
+
+; --- SOLID_HULL face table: generated by Tools/ship_faces.py from the edges above, do not edit ---
+ViperFaces:          DB 7                     ; records: DW visible mask, DB n, n vertices x4
+                        DW $0001 : DB 3, $04, $1C, $20    ; face 0
+                        DW $0002 : DB 4, $00, $04, $20, $10    ; face 1
+                        DW $0004 : DB 4, $00, $0C, $1C, $04    ; face 2
+                        DW $0008 : DB 4, $00, $08, $18, $10    ; face 3
+                        DW $0010 : DB 4, $00, $0C, $14, $08    ; face 4
+                        DW $0020 : DB 3, $08, $14, $18    ; face 5
+                        DW $0040 : DB 6, $1C, $20, $10, $18, $14, $0C    ; face 6
+                        DB 0                        ; phase 2 polygons, drawn after the hull: DW mask, DB type, n, vertices
+                        DB 0                        ; lone lines: DW visible mask, DB v0, v1 x4
+ViperFacesSize          equ $ - ViperFaces
+; --- end of generated face table ---

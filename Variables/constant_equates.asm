@@ -36,8 +36,10 @@ EliteToken			equ $1E			; Token ID for text messsage ---- E L I T E ----
 BrabenBellToken 	equ $0D
 AcorToken			equ $0C
 ; Cursor Bits
-CursorClimb         equ %10000000
-CursorDive          equ %01000000
+CursorClimb         equ %10000000          ; (on the charts: the cursor up key, Q)
+CursorDive          equ %01000000          ; (on the charts: the cursor down key, A)
+ChartViewGalactic   equ $40                ; MenuIdMax (BBC QQ11) for the galactic chart: 4 or more selects the cursor keys
+ChartViewLocal      equ $80                ; and for the short range chart
 CursorLeft          equ %00100000
 CursorRight         equ %00010000
 CursorHome          equ %00001000
@@ -51,7 +53,7 @@ RotationUnity		equ $60
 DBCheckCode			equ $DB
 MaxVisibility		equ $1F
 FarInFront			equ $C0
-; Equipment Flags     
+; Equipment Flags
 EquipmentItemFitted     equ $FF
 EquipmentItemNotFitted  equ 0
 ; Universe Managment
@@ -118,7 +120,7 @@ ShipMissiles12          equ %00001100
 ShipMissiles13          equ %00001101
 ShipMissiles14          equ %00001110
 ShipMissiles15          equ %00001111
-; AI Flags  UniverseAIControl     
+; AI Flags  UniverseAIControl
 ShipCanAnger            equ %10000000   ; Yes or no
 ShipFighterBaySize      equ %01110000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
 ShipFighterBaySize1     equ %00010000   ; fighter day size 0 = none 1,2 = 1 or 2 fighters, 3 = infinite
@@ -136,12 +138,12 @@ ShipUltraHostile        equ %00000010   ; If ultra hostile, will never back down
 ShipFree                equ $00000011   ; Unused bits at present for later
 ; NewBTactics
 ShipIsTrader            equ Bit0Only   ; Trader flag  80% are peaceful 20% also have Bounty Hunter flag
-ShipIsBountyHunter      equ Bit1Only   ; 
+ShipIsBountyHunter      equ Bit1Only   ;
 ShipIsHostile           equ Bit2Only   ; Also used as Angry flag now
-ShipIsPirate            equ Bit3Only   ; 
-ShipIsDocking           equ Bit4Only   ; 
-ShipIsBystander         equ Bit5Only   ; 
-ShipIsCop               equ Bit6Only   ; 
+ShipIsPirate            equ Bit3Only   ;
+ShipIsDocking           equ Bit4Only   ;
+ShipIsBystander         equ Bit5Only   ;
+ShipIsCop               equ Bit6Only   ;
 ShipHasEscapePod        equ Bit7Only   ;
 ShipHostileNewBitNbr    equ 2
 
@@ -150,7 +152,7 @@ ShipIsDot               equ Bit3Only
 ShipKilled              equ Bit4Only    ; Ship has just been marked as killed so initiate cloud of debris
 ShipExploding           equ Bit5Only
 ShipIsVisible           equ Bit6Only
-ShipAIEnabled           equ Bit7Only   ; 
+ShipAIEnabled           equ Bit7Only   ;
 
 
 ; UBnkaiakecm 2
@@ -160,7 +162,7 @@ ShipIsNotDot            equ Bit3Clear
 ShipIsDotBitNbr         equ 3
 ShipKilledBitNbr        equ 4
 ShipIsVisibleBitNbr     equ 6
-ShipIsScoopDockEsc      equ Bit7Only   ; 
+ShipIsScoopDockEsc      equ Bit7Only   ;
 ShipAIDisabled          equ Bit7Clear
 ShipAIEnabledBitNbr     equ 7
 ShipExplodingBitNbr     equ 5
@@ -180,7 +182,29 @@ StageMissileTargeting   equ $FE
 
 
 ShipMaxDistance     equ 192
-HyperSpaceTimers    equ $0B0B
+HyperSpaceSeconds   equ 11                  ; hyperspace countdown, seconds shown 11 to 1 (HyperSpaceTick)
+FramesPerSecond     equ 50                  ; FrameCounter16 rate
+; Sound effect ids (PlaySFX; the data is SFXPointerList in Hardware/sound.asm, in this order)
+HyperJumpFrames     equ 22                  ; the hyperspace lightning and hole, in frames (twice the ~11 it took when it went by loops)
+HyperBoltChance     equ 90                  ; per frame, out of 256, that each of the 7 lightning bolts flashes (was 30 a loop at ~3 loops a frame)
+HyperRadiusStep     equ (62 * 256) / HyperJumpFrames    ; the hole's radius goes 2 to 64 over HyperJumpFrames: 1/256ths a frame
+; Launching: the station is put this far straight behind us (z, in 1/256ths), just outside the range where it counts as
+; close (JumpIfShipNotClose: within $80 on every axis, then a collision or docking) with a small margin. The planet is
+; put StationSafeZoneRange less this ahead, so the station is that far from it (as UnivSetStationInSafeZone) and we
+; start inside the safe zone
+StationCollisionRange   equ $80
+StationLaunchMargin     equ $20
+StationLaunchDistance   equ StationCollisionRange + StationLaunchMargin
+StationSafeZoneRange    equ $C000                   ; the safe zone: within this of the planet on every axis (UpdateSafeZone)
+ChartCursorFrames   equ FramesPerSecond / 10    ; the chart cursors move a step every 1/10 second while a cursor key is held
+SFXLaser            equ 0
+SFXHit              equ 1
+SFXExplosion        equ 2
+SFXMissile          equ 3
+SFXECM              equ 4
+SFXBong             equ 5
+SFXHyperspace       equ 6
+SFXCount            equ 7
 
 ; -- game limts
 MaxNumberOfStars	equ 11
@@ -228,7 +252,7 @@ L2DebrisColour      equ L2ColourYELLOW_1
 ;;;;00 00			 EQUW 0     \ type 10 is       Transporter
 ;;;;00 00			 EQUW 0     \ type 11 is #CYL  Cobra Mk III,  Boa
 ;;;;00 00			 EQUW 0     \ type 12 is       Python
-;;;;00 00			 EQUW 0     \ type 13 is       Last of three traders	
+;;;;00 00			 EQUW 0     \ type 13 is       Last of three traders
 ;;;;00 00			 EQUW 0     \ type 14 is #ANA  Anaconda
 ;;;;00 00			 EQUW 0     \ type 15 is #WRM  Worm with Anaconda
 ;;;;00 00			 EQUW 0     \ type 16 is #COP  Viper

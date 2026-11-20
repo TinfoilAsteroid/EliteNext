@@ -1,9 +1,9 @@
 Logo:	                DB $00                    ; Number of cargo canisters released when destroyed
                         DW $2649                  ; Ship's targetable area LoHi
-                        DW LogoEdges              ; Edge Data 
+                        DW LogoEdges              ; Edge Data
                         DB LogoEdgesSize          ; Size of Edge Data
                         DB $00                    ; Gun Vertex Byte offset
-                        DB $36                    ; Explosion Count 
+                        DB $36                    ; Explosion Count
                         DB LogoVertSize /6        ; Vertex Count /6
                         DB LogoVertSize           ; Vertex Count
                         DB LogoEdgesCnt           ; Edges Count
@@ -17,13 +17,13 @@ Logo:	                DB $00                    ; Number of cargo canisters rele
                         DB $00                    ; Laser power and Nbr Missiles
                         DW LogoVertices           ; Verticles Address
                         DB ShipTypeText           ; Ship Type
-                        DB 0                      ; NewB Tactics 
-                        DB 0                      ; AI Flags            
+                        DB 0                      ; NewB Tactics
+                        DB 0                      ; AI Flags
                         DB $FF                    ; chance of ECM module
-                        DB $FF                              ; Supports Solid Fill = false
+                        DB $FF                              ; Supports Solid Fill = false (faces 0, 1, 2 don't close: wireframe)
                         DW $0000                            ; no solid data
                         DB $00                              ; no solid data
-                        
+
 
 LogoVertices:	DB $00, $09, $37, $5F, $00, $00
 	DB $0A, $09, $1E, $DF, $00, $00
@@ -68,10 +68,10 @@ LogoVertices:	DB $00, $09, $37, $5F, $00, $00
 	DB $31, $0B, $11, $3F, $00, $00
 	DB $31, $0B, $0A, $3F, $00, $00
 
-LogoVertSize: equ $ - LogoVertices	
-	
-	
-	
+LogoVertSize: equ $ - LogoVertices
+
+
+
 LogoEdges:	DB $1F, $00, $00, $04
 	DB $1F, $00, $04, $08
 	DB $1F, $00, $08, $0C
@@ -110,18 +110,18 @@ LogoEdges:	DB $1F, $00, $00, $04
 	DB $1E, $00, $9C, $A0
 	DB $1E, $00, $A4, $98
 
-LogoEdgesSize: equ $ - LogoEdges	
-	
-	
-LogoEdgesCnt: equ LogoEdgesSize/4	
-	
-	
+LogoEdgesSize: equ $ - LogoEdges
+
+
+LogoEdgesCnt: equ LogoEdgesSize/4
+
+
 LogoNormals:	DB $1F, $00, $17, $00
 	DB $1F, $00, $04, $0F
 	DB $3F, $00, $0D, $34
 	DB $9F, $51, $51, $00
 	DB $1F, $51, $51, $00
 
-	
-LogoNormalsSize: equ $ - LogoNormals	
-LogoLen: equ $ - Logo	
+
+LogoNormalsSize: equ $ - LogoNormals
+LogoLen: equ $ - Logo

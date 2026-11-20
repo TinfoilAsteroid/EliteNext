@@ -18,7 +18,7 @@ XX12CalcXCell:
 		ld		h,b
 		ld		l,c
 		call	HLequHLmulDEu; replaces mulDEbyHL							    ; hl = |orientation| * |x pos)
-		ld		(XX12PVarResult1),hl				    ; T = 16 bit result, we only want to use high byte later
+		ld		(XX12PVarResult1),hl				    ; T = |orientation| * |x pos| / 256
 		ld		a,ixh
 		ld		(XX12PVarSign1),a					    ; S = sign  not sign 1 and 2 are reversed in memory so that fetchign back will put 1 in high byte 2 in low byte
 		pop		hl
@@ -68,19 +68,12 @@ XX12CalcCellResult:
 		ld		hl,(XX12PVarResult1)				    ; X Cell Result
 		ld		de,(XX12PVarResult2)				    ; Y Cell Result
 		ld		bc,(XX12PVarSign2)					    ; b = var 1 result sign c = var 2 result signs
-XX12MSBOnly:
-		ld		l,h									    ; now move results into lower byte so / 256
-		ld		e,d									    ; for both results
-		xor		a									    ;
-		ld		h,a									    ;
-		ld		d,a									    ; so set high byte to 0
-		call	ADDHLDESignBC                           ;  XX12ProcessCalcHLPlusDESignBC		; returns with HL = result1 + result 2 signed in a 
+XX12MSBOnly:                                            ; HLequHLmulDEu results are already / 256
+		call	ADDHLDESignBC                           ;  XX12ProcessCalcHLPlusDESignBC		; returns with HL = result1 + result 2 signed in a
 		ld		b,a									    ; move sign into b ready for next calc
 		ld		a,(XX12PVarSign3)					    ; result of the calcZ cell
 		ld		c,a									    ; goes into c to align with DE
 		ld		de,(XX12PVarResult3)				    ; now add result to Result 3
-		ld		e,d                                     ; d = result /256
-		ld		d,0									    ; and only us high byte
 		call	ADDHLDESignBC; XX12ProcessCalcHLPlusDESignBC		; returns with HL = result and a = sign
 		ret											    ; hl = result, a = sign
 								    ; hl = result, a = sign

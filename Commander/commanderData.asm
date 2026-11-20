@@ -94,14 +94,17 @@ saveCommander:          call    copyCommanderToSave
                         call    FileSave
                         ret
                         
+; carry set if the file couldn't be read (the commander is then left as it was). Needs the ROM in slots 0 and 1
 loadCommander:          ld      hl, defaultSaveName             ; default debug name
                         ld      ix, SaveCommanderHeader
                         ld      bc, SaveSize
                         call    FileLoad
+                        ret     c                               ; not loaded: keep the commander we have
                         call    copyCommanderFromSave
                         ClearMissileTargetting
                         call    SetPlayerRank
                         call    LaserReset
+                        or      a                               ; carry clear: loaded
                         ret
                         
  ; For now hard laod, later correctlt sequence gneeral vars and dma fill with 0 for a start

@@ -2,31 +2,30 @@
 traingleColor           DB     $CF
 
 ; ">l2_draw_any_line, bc = y0,x0 de=y1,x1,a=color: determines if its horizontal, vertical or diagonal then hands off the work"
-; b - y0 c - x0, d - y1 e - x1 a - colour
+; b - y0 c - x0, d - y1 e - x1 a - colour. Both end points are drawn. (The same row and same column tests were once
+; the wrong way round, so every horizontal or vertical line came out as one pixel)
 l2_draw_any_line:       ex		af,af'              ; save colour into a'
-                        ld		a,c                 ; if x and e are the same its horizontal
-                        cp		e
-                        jr		z,.HorizontalLineCheck
-                        ld		a,b                 ; if b and d are the same its vertica;
+                        ld		a,b                 ; same row: horizontal (or a single pixel)
                         cp		d
+                        jr		z,.SameRow
+                        ld		a,c                 ; same column: vertical
+                        cp		e
                         jr		z,.VerticalLine
 ; use jp and get a free ret instruction optimisation                        
 .DiagonalLine:		    ex		af,af'			     ; get colour back into a
                         jp		l2_draw_diagonal
-
-.HorizontalLineCheck:   ld      a,b
-                        cp      d
+.SameRow:               ld      a,c
+                        cp      e
                         jr      z, .SinglePixel
 .HorizontalLine:        ex		af,af'              ; get colour back into a
                         ld		d,e				    ; set d as target right pixel
                         ld		e,a				    ; e holds colour on this call
                         jp		l2_draw_horz_line_to
 .VerticalLine:          ex		af,af'
-                        ld		e,a				    ; e holds colour on this call
+                        ld		e,a				    ; e holds colour on this call, d = y1 the end row
                         jp		l2_draw_vert_line_to
 .SinglePixel:           ex		af,af'              ; get colour back into a
-                        l2_plot_macro; jp      l2_plot_pixel
-                        ret
+                        jp      l2_plot_pixel       ; (l2_plot_macro would use line_gfx_colour, not a)
 
 x1                      dw 0
 y1                      dw 0
@@ -111,6 +110,21 @@ L2LDmaDest:             DW      0
                         DB      DMA_LOAD, DMA_ENABLE
 L2LDmaProgLen           equ     $ - L2LDmaProg
 L2LDmaColour:           DB      0
+
+;----------------------------------------------------------------------------------------------------------------------------------
+; ">l2_draw_diagonal, bc = y0,x0 de=y1,x1, a = colour": an unclipped line on the full 256 x 192 screen (the launch
+; tunnel, hyperspace lightning, l2_draw_any_line), drawn by L2LDiagonal in colour a; line_gfx_colour is kept.
+; (Was its own 4-connected loop that drew up to 70% extra pixels, often missed an end and used line_gfx_colour,
+; not a: Unused/Unused/layer2_plot_diagonal.asm)
+l2_draw_diagonal:       ld      h,a                             ; line_gfx_colour = a for L2LDiagonal
+                        ld      a,(line_gfx_colour)             ; keeping the old one
+                        push    af                              ; .
+                        ld      a,h                             ; .
+                        ld      (line_gfx_colour),a             ; .
+                        call    L2LDiagonal                     ; .
+                        pop     af                              ; .
+                        ld      (line_gfx_colour),a             ; .
+                        ret
 
 l2_draw_6502_line:      ld      hl,(y1)                         ; y1 = y2 -> horizontal or single point
                         ld      de,(y2)
@@ -449,11 +463,17 @@ L2LYMajor:              ld      (hl),c
 .NoX:                   djnz    L2LYMajor
                         ret
 
-; row 63 -> 64, the window only spans banks 0 and 1 so the next bank is always 1; preserves af, bc, de, l
+; row 63 -> 64 or 127 -> 128: page in the next third (the 128 row view only reaches bank 1, l2_draw_diagonal's
+; full 192 row screen bank 2); preserves af, bc, de, l
 L2LNextBank:            push    af
                         push    bc
+                        ld      a,(varL2_BANK_SELECTED)
+                        and     a
+                        jr      nz,.ToBottom
                         asm_l2_bank_1_macro
-                        pop     bc
+                        jr      .Selected
+.ToBottom:              asm_l2_bank_2_macro
+.Selected:              pop     bc
                         pop     af
                         ld      h,0
                         ret

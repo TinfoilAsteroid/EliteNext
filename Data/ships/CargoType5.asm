@@ -1,9 +1,9 @@
 CargoType5              DB $00                                     ; Number of cargo canisters released when destroyed
                         DW 20 * 20                                 ; Ship's targetable area LoHi
-                        DW CargoType5Edges                         ; Edge Data 
+                        DW CargoType5Edges                         ; Edge Data
                         DB CargoType5EdgesSize                     ; Size of Edge Data
                         DB $00                                     ; Gun Vertex Byte offset
-                        DB $12                                     ; Explosion Count 
+                        DB $12                                     ; Explosion Count
                         DB CargoType5VertSize /6                   ; Vertex Count /6
                         DB CargoType5VertSize                      ; Vertex Count
                         DB CargoType5EdgesCnt                      ; Edges Count
@@ -17,12 +17,12 @@ CargoType5              DB $00                                     ; Number of c
                         DB $00                                     ; Laser power and Nbr Missiles
                         DW CargoType5Vertices                      ; Verticles Address
                         DB ShipTypeScoopable                       ; Ship Type
-                        DB 0                                       ; NewB Tactics                        
+                        DB 0                                       ; NewB Tactics
                         DB 0                                       ; AI Flags
                         DB $0                                      ; chance of ECM module
-                        DB $00                                     ; Supports Solid Fill
-                        DW CargoType5Traingles                  ;
-                        DB CargoType5TrainglesSize
+                        DB $00                              ; Supports Solid Fill = true (Tools/ship_faces.py)
+                        DW CargoType5Faces                ; face polygons (SOLID_HULL)
+                        DB CargoType5FacesSize            ; face table length
 ; So cargo is               Edge offset $0050  Face Offset $008C, Verices will alwys be +20, LineMax 31 -> 4  EdgeCnt 15  VertexCnt 60 -> 10     FaceCn 28 -> 7
 ;                                       Faces
 ;                            X  Y    Z  12 34  Vis
@@ -32,15 +32,15 @@ CargoType5Vertices		DB $18,$10,$00,$1F,$10,$55 	               ;00  Top Right
                         DB $18,$0D,$09,$7F,$30,$44                 ;03  Bottom Right Rear
                         DB $18,$05,$0F,$3F,$40,$55                 ;04  Mid Right Rear
                         DB $18,$10,$00,$9F,$51,$66                 ;05  Left versions
-                        DB $18,$05,$0F,$9F,$21,$66                 ;06 
-                        DB $18,$0D,$09,$DF,$32,$66                 ;07 
-                        DB $18,$0D,$09,$FF,$43,$66                 ;08 
-                        DB $18,$05,$0F,$BF,$54,$66                 ;09 
-CargoType5VertSize      equ $  - CargoType5Vertices     
+                        DB $18,$05,$0F,$9F,$21,$66                 ;06
+                        DB $18,$0D,$09,$DF,$32,$66                 ;07
+                        DB $18,$0D,$09,$FF,$43,$66                 ;08
+                        DB $18,$05,$0F,$BF,$54,$66                 ;09
+CargoType5VertSize      equ $  - CargoType5Vertices
 ;                          Vis  FacVert Offset (4 bytexVertnbr)
-;                               12  01 02              
+;                               12  01 02
 CargoType5Edges			DB $1F,$10,$00,$04 	       ;00 Face  0,1
-                        DB $1F,$20,$04,$08         ;01       
+                        DB $1F,$20,$04,$08         ;01
                         DB $1F,$30,$08,$0C         ;02
                         DB $1F,$40,$0C,$10         ;03
                         DB $1F,$50,$00,$10         ;04
@@ -64,7 +64,7 @@ CargoType5Normals    	DB $1F,$60,$00,$00 			               ;00 Right side
                         DB $7F,$00,$12,$30                         ;04
                         DB $3F,$00,$29,$1E                         ;05 Left
                         DB $9F,$60,$00,$00   ; end Cargo cannister ;06 right side
-CargoType5NormalsSize   equ $  - CargoType5Normals 
+CargoType5NormalsSize   equ $  - CargoType5Normals
 CargoType5Len           equ $  - CargoType5
                         ; Triangles is made of a list of edges
 ; Ideal is pointers have a DW at the end to the list of triangles and count
@@ -78,8 +78,20 @@ CargoType5Traingles     DB $00,$00*4, $01*4, $04*4
                         DB $01,$04*4, $05*4, $06*4
                         DB $06,$05*4, $06*4, $09*4 ; its we store UBNkNodeArray + this offset it will save one memroy ready
                         DB $06,$06*4, $07*4, $09*4
-                        DB $06,$07*4, $08*4, $09*4  
+                        DB $06,$07*4, $08*4, $09*4
                         DB $FF ; Very important end of traingle list marker
-CargoType5TrainglesSize:equ $  -  CargoType5Traingles                     
-                        
-                        
+CargoType5TrainglesSize:equ $  -  CargoType5Traingles
+
+; --- SOLID_HULL face table: generated by Tools/ship_faces.py from the edges above, do not edit ---
+CargoType5Faces:          DB 7                     ; records: DW visible mask, DB n, n vertices x4
+                        DW $0001 : DB 5, $00, $04, $08, $0C, $10    ; face 0
+                        DW $0002 : DB 4, $00, $04, $18, $14    ; face 1
+                        DW $0004 : DB 4, $04, $08, $1C, $18    ; face 2
+                        DW $0008 : DB 4, $08, $0C, $20, $1C    ; face 3
+                        DW $0010 : DB 4, $0C, $10, $24, $20    ; face 4
+                        DW $0020 : DB 4, $00, $10, $24, $14    ; face 5
+                        DW $0040 : DB 5, $14, $18, $1C, $20, $24    ; face 6
+                        DB 0                        ; phase 2 polygons, drawn after the hull: DW mask, DB type, n, vertices
+                        DB 0                        ; lone lines: DW visible mask, DB v0, v1 x4
+CargoType5FacesSize     equ $ - CargoType5Faces
+; --- end of generated face table ---

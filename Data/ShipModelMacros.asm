@@ -1,10 +1,10 @@
-MShipBankTable          MACRO 
+MShipBankTable          MACRO
                         DW      BankShipModels1
                         DW      BankShipModels2
                         DW      BankShipModels3
                         DW      BankShipModels4
                         ENDM
-; For ship number A fetch 
+; For ship number A fetch
 ;           the adjusted ship number in B , C = original number
 ;           bank number in A for the respective ship based on the ship table
 MGetShipBankId:         MACRO   banktable
@@ -21,9 +21,9 @@ MGetShipBankId:         MACRO   banktable
                         mul                                         ; de = 16 * bank number (max is about 15 banks)
                         sub     e                                   ; a= actual model id now
 .SelectedBank:          ld      d,b                                 ; save current bank number
-                        ld      b,a                                 ; b = adjusted ship nbr 
+                        ld      b,a                                 ; b = adjusted ship nbr
                         ld      a,d                                 ; a = bank number
-;.. Now b = bank and a = adjusted ship nbr                     
+;.. Now b = bank and a = adjusted ship nbr
                         ld      hl,banktable                        ; a= bank index
                         add     hl,a
                         add     hl,a
@@ -32,7 +32,7 @@ MGetShipBankId:         MACRO   banktable
                         ret
                         ENDM
 
-McopyVertsToUniverse:   MACRO 
+McopyVertsToUniverse:   MACRO
                         ld          hl,(VerticesAddyAddr)       ; now the pointers are in Ubnk its easy to read
                         ld          de,UBnkHullVerticies
                         ld          b,0
@@ -53,7 +53,7 @@ McopyEdgesToUniverse:   MACRO
                         call        memcopy_dma
                         ret
                         ENDM
-                        
+
 McopyNormsToUniverse:   MACRO
                         ld          hl,(FaceAddyAddr)          ; now the pointers are in Ubnk its easy to read
                         ld          de,UBnkHullNormals
@@ -64,7 +64,24 @@ McopyNormsToUniverse:   MACRO
                         call        memcopy_dma
                         ret
                         ENDM
-                        
+
+; the face table (Tools/ship_faces.py) to UBnkHullSolid when SOLID_HULL is built and the model has one
+McopyFacesToUniverse:   MACRO
+                    IFDEF SOLID_HULL
+                        ld          a,(ShipSolidFlagAddr)       ; $00 = has a face table
+                        and         a
+                        ret         nz
+                        ld          hl,(ShipSolidFillAddr)
+                        ld          de,UBnkHullSolid
+                        ld          b,0
+                        ld          a,(ShipSolidLenAddr)
+                        ld          c,a
+                        ex          de,hl                       ; dma transfer goes de -> hl i.e. opposite of ldir
+                        call        memcopy_dma
+                    ENDIF
+                        ret
+                        ENDM
+
 ; Passes in ship nbr in A and bank is part of MACRO
 MCopyShipToUniverse:    MACRO       banklabel
                         ld          hl,UBnkShipModelBank
@@ -88,11 +105,12 @@ MCopyShipToUniverse:    MACRO       banklabel
                         ld          h,(hl)
                         ld          l,a                         ; now hl = address of ship hull data
                         ld          de,UBnkHullCopy             ; Universe bank
-                        ld          bc,ShipDataLength           
-                        ldir                                    
+                        ld          bc,ShipDataLength
+                        ldir
                         call        CopyVertsToUniv
                         call        CopyEdgesToUniv
                         call        CopyNormsToUniv
+                        call        CopyFacesToUniv
 .ClearName:             ld          hl,StartOfUnivName
                         ld          a," "
                         ld          b,16
@@ -112,14 +130,14 @@ MCopyShipToUniverse:    MACRO       banklabel
                         djnz        .CopyLoop
 .CopyDone:              ret
                         ENDM
-                        
+
 MCopyBodyToUniverse:    MACRO       copyRoutine
                         ld          a,13
                         call        copyRoutine
                         ret
                         ENDM
-                        
-                        
+
+
 MCopyShipIdToUniverse:  MACRO
                         call        GetShipModelId
                         MMUSelectShipBankA

@@ -1,6 +1,6 @@
                               ;0123456780ABCDEF
 market_prices_page_marker  DB "MarketPricesPG54"
- 
+
 draw_mkt_data:          ld      a,0
                         jp      MPM_draw_market_prices_menu
 draw_mkt_dataRO:        ld      a,$FF
@@ -21,7 +21,7 @@ mkt_highlight_row:      ld      a,(mkt_selected_row)
                         mul     de
                         add     hl,de
                         ld      ix,hl
-                        ld      (ix+3),$BC 
+                        ld      (ix+3),$BC
                         ld		b,1
                         call	MPM_print_boiler_text
                         ret
@@ -33,7 +33,7 @@ mkt_lowlight_row        ld      a,(mkt_selected_row)
                         mul     de
                         add     hl,de
                         ld      ix,hl
-                        ld      (ix+3),$FF 
+                        ld      (ix+3),$FF
                         ld		b,1
                         call	MPM_print_boiler_text
                         ret
@@ -115,36 +115,9 @@ MPM_Num1:	            ld	a,'0'-1
                         ld	(de),a
                         inc	de
                         ret
-;----------------------------------------------------------------------------------------------------------------------------------
-MPM_DispAtoDE:          ld h,0
-                        ld l,a
-                        jp MPM_DispHLtoDE
-;----------------------------------------------------------------------------------------------------------------------------------
-MPM_DispPriceAtoDE:     ld h,0
-                        ld l,a
-                        ld	bc,-100
-                        call	.NumLeadBlank1
-                        ld	c,-10
-                        call	MPM_Num1
-                        ld		a,'.'					; we could assume preformat but
-                        ld		(de),a					; we can optimse that later TODO
-                        inc		de						; with just an inc De
-                        ld	c,-1
-                        jr		MPM_Num1
-.NumLeadBlank1:	        ld	a,'0'-1
-.NumLeadBlank2:	        inc	a
-                        add	hl,bc
-                        jr	c,.NumLeadBlank2
-                        cp	'0'
-                        jr	nz,.DontBlank
-.Blank:                 ld	a,' '
-.DontBlank:	            sbc	hl,bc
-                        ld	(de),a
-                        inc	de
-                        ret
 ;---------------------------------------------------------------------------------------------------------------------------------
 ; prints text based on message data
-MPM_print_boiler_text:      
+MPM_print_boiler_text:
 .BoilerTextLoop:        push        bc          ; Save Message Count loop value
                         ld          b,(ix+0)    ; get row into b
                         ld          de,(ix+1)   ; get column into hl (as we can't load direct to hl from ix)
@@ -192,7 +165,7 @@ MKT_GetCargo:   	    ld      de,0
 ; b holds adjustment signed value, c holds colour to re-draw
 
 ;----------------------------------------------------------------------------------------------------------------------------------
-MPM_shift_de_a_chars:   ex      de,hl               ; now adjust 
+MPM_shift_de_a_chars:   ex      de,hl               ; now adjust
                         add     hl,a
                         ex      de,hl
                         ret
@@ -216,7 +189,7 @@ DEFECTIUVE
 ;----------------------------------------------------------------------------------------------------------------------------------
 MPM_getCargoQtyIY:      ld		a,(iy)
                         call	Stock_DispQtyAtoDE
-                        ret                             
+                        ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 ; loads market data to boiler text
 MPM_Market_To_Boiler:   ;break
@@ -230,7 +203,7 @@ MPM_Market_To_Boiler:   ;break
 .GetName:               MMUSelectStockTable
                         push    de,,de              ; save for outer loop too
                         call    copyStockItemNameIXDE
-                        pop     de                        
+                        pop     de
 .GetUoM:                ld      a,13
                         call    MPM_shift_de_a_chars
                         push    de
@@ -310,7 +283,7 @@ MPM_draw_market_prices_menu:
                         call    MPM_Market_To_Boiler
 .DisCargo:              call    MKT_GetCargo
 .DisCash:               call    MKT_GetCash
-                        ld		b,23
+                        ld		b,MPM_boiler_count
                         ld		ix,MPM_boiler_text
                         call	MPM_print_boiler_text
                         ld      a,(mkt_read_only_mode)
@@ -436,7 +409,7 @@ mkt_RightPressed:       MMUSelectStockTable
                         cp      l
                         jr      nc,.MoreThanRequired
                         ret                         ; Insufficient Funds
-.MoreThanRequired:      add     hl,de                               
+.MoreThanRequired:      add     hl,de
                         ld      a,h
                         or      e
                         ; check cash can we buy, and cargo capacity
@@ -462,7 +435,7 @@ mkt_RightPressed:       MMUSelectStockTable
                         ld      b,2
                         call    MPM_print_boiler_text
                         ret
-                       
+
 ;----------------------------------------------------------------------------------------------------------------------------------
 mkt_read_only_mode      DB  $00
 mkt_boiler_unit_col     equ $80
@@ -480,7 +453,7 @@ market_cargo_pos_row    equ $C0
 market_top_row          equ $20
 
 mkt_cash_pos_col        equ $0010
-mkt_cargo_pos_col       equ $0010                        
+mkt_cargo_pos_col       equ $0010
 market_cash_pos_col     equ $0048
 market_cargo_pos_col    equ $0048
 market_uom_col			equ	mkt_boiler_uom_col
@@ -488,9 +461,9 @@ market_price_col        equ mkt_boiler_price_col + 8
 market_quantity_col 	equ	mkt_boiler_stock_col + $10
 market_cargo_col        equ mkt_boiler_inv_col
 
-MPM_boiler_text:        DB 002, low 08  , high 08  , $FF, low MPM_system_name  , high MPM_system_name    
+MPM_boiler_text:        DB 002, low 08  , high 08  , $FF, low MPM_system_name  , high MPM_system_name
                         DB 016, low 08  , high 08  , $FF, low MPM_header1      , high MPM_header1
-                        DB 024, low 08  , high 08  , $FF, low MPM_header2      , high MPM_header2 
+                        DB 024, low 08  , high 08  , $FF, low MPM_header2      , high MPM_header2
 MPM_market_cash         DB 180, low 08  , high 08  , $FF, low mkt_cash ,         high mkt_cash
 MPM_market_cargo        DB 180, low 160 , high 160 , $FF, low mkt_hold_level ,   high mkt_hold_level
 MPM_market_data01       DB 040, low 08  , high 08  , $FF, low MPM_market_txt01 , high MPM_market_txt01
@@ -510,6 +483,9 @@ MPM_market_data14       DB 144, low 08  , high 08  , $FF, low MPM_market_txt14 ,
 MPM_market_data15       DB 152, low 08  , high 08  , $FF, low MPM_market_txt15 , high MPM_market_txt15
 MPM_market_data16       DB 160, low 08  , high 08  , $FF, low MPM_market_txt16 , high MPM_market_txt16
 MPM_market_data17       DB 168, low 08  , high 08  , $FF, low MPM_market_txt17 , high MPM_market_txt17
+MPM_boiler_count        equ ($ - MPM_boiler_text) / 6       ; 22 (the draw printed 23: the 23rd was read from the text below,
+                                                            ; "Market Data", as row $4D column $7261, and wrote into main
+                                                            ; memory, the compass code, which crashed after launching)
 
 MPM_system_name         DB "Market Data : "
 MPM_system_title        DB "                ",0
@@ -519,7 +495,7 @@ MPM_header2:            DB "PRODUCT      UoM      PRICE SALE CARGO",0
                            ;1234567890123456789012345678901234567  8 9 0 1 2 3 4 5 6 7 8
 MPM_market_txtblank:    DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
 MPM_market_txt01:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
-MPM_market_row_len      EQU $ - MPM_market_txt01                                        
+MPM_market_row_len      EQU $ - MPM_market_txt01
 MPM_market_txt02:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
 MPM_market_txt03:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
 MPM_market_txt04:       DB "                                     ",0,0,0,0,0,0,0,0,0,0,0
@@ -557,4 +533,3 @@ mkt_selected_row        db  0
 
 mkt_cargo_position      equ $A848
 ;                           12345678901
-                        

@@ -72,7 +72,13 @@ DisplayCurrentMessage:  ld      a,(MessageCount)
                         call    l1_print_at_wrap
                         ret
 
+; The hyperspace countdown text (main loop, while a view is up and either counting or the text is still showing): drawn
+; every loop from the seconds left now (HyperSpaceTick does the timing), cleared once when the count stops (H again,
+; docking). The two lines are only cleared when the text first appears, so redrawing it doesn't flicker
 HyperSpaceMessage:      MMUSelectLayer1                 ; We are using Layer 1
+                        ld      a,(InnerHyperCount)     ; stopped: clear the text
+                        and     a
+                        jp      z,.ClearText
 .DisplayHyperCountDown: ld      de,Hyp_to               ; Sort out destination
                         ld      hl,name_expanded
                         ldCopyTextAtHLtoDE
@@ -96,6 +102,17 @@ HyperSpaceMessage:      MMUSelectLayer1                 ; We are using Layer 1
                         inc     hl                       ; clear counter digits
                         ld      (hl),a                   ; clear counter digits
                         call    UpdateCountdownNumber    ; Update count down
+                        ld      hl,Hyp_counter           ; leading zeros as spaces (keeps the width, so
+                        ld      a,(hl)                   ; printing over the last loop's text is enough)
+                        cp      '0'
+                        jr      nz,.CounterDone
+                        ld      (hl),' '
+                        inc     hl
+                        ld      a,(hl)
+                        cp      '0'
+                        jr      nz,.CounterDone
+                        ld      (hl),' '
+.CounterDone:
                         ld      hl,Hyp_charging
                         HalfLengthHL
                         ld      hl,Hyp_centeredCharging  
@@ -105,33 +122,27 @@ HyperSpaceMessage:      MMUSelectLayer1                 ; We are using Layer 1
                         ldCopyTextAtHLtoDE
                         xor     a
                         ld      (Hyp_centeredEol2),a
-.UpdateHyperCountdown:  ld      hl,(InnerHyperCount)    ; Update inner loop of counter
-                        dec     l                       ;
-                        jr      nz,.decHyperInnerOnly   ; if its only inner loop updated the no display update
-                        dec     h                       ; if its outer loop counter
-                        jp      m,.HyperCountDone       ; abort once complete
-.resetHyperInner:       ld      l,$0B                   ; else display
-                        push    hl
-                        ld      d,12
+.ShowText:              ld      d,12                    ; yellow on black (every loop, in case the attributes were reset)
                         ld      a,L1ColourPaperBlack | L1ColourInkYellow
                         call    l1_attr_cls_2DlinesA
+                        ld      a,(HyperTextOnScreen)   ; clear the lines when it first appears
+                        and     a
+                        jr      nz,.PrintText
+                        inc     a
+                        ld      (HyperTextOnScreen),a
                         ld      d,12 * 8
                         call    l1_cls_2_lines_d
-                        ld      de,$6000
+.PrintText:             ld      de,$6000                ; the lines are full width, so printing over them is enough
                         ld      hl,Hyp_centeredTarget
                         call    l1_print_at
                         ld      de,$6800
                         ld      hl,Hyp_centeredCharging
                         call    l1_print_at
-                        pop     hl
-.decHyperInnerOnly:     ld      (InnerHyperCount),hl
                         ret
-.HyperCountDone:        ld      hl,0
-                        ld      (InnerHyperCount),hl
+.ClearText:             ld      (HyperTextOnScreen),a   ; (a = 0)
                         ld      d,12
                         ld      a,L1ColourPaperBlack | L1ColourInkBlack
                         call    l1_attr_cls_2DlinesA
                         ld      d,12 * 8
                         call    l1_cls_2_lines_d
-                        ForceTransition ScreenHyperspace                            ; transition to hyperspace
                         ret                   

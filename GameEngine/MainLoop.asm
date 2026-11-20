@@ -7,7 +7,7 @@
     DEFINE  MAINLOOP_INPUTHANDLER
     DEFINE  MAINLOOP_EVENTHANDLER 1
     DEFINE  MAINLOOP_RECHARGE 1
- ;   DEFINE  MAINLOOP_LAUNCHMISSILE
+    DEFINE  MAINLOOP_LAUNCHMISSILE
     DEFINE  MAINLOOP_UPDATEUNIVERSE 1
     DEFINE  MAINLOOP_DUST_RENDER 1    
     DEFINE  MAINLOOP_SUN_RENDER 1
@@ -78,6 +78,7 @@ MainLoop:	    MMUSelectMathsBankedFns                                         ; 
 .doRandom:      call    doRandom                                                ; redo the seeds every frame
 .doLasers:
                         call    LaserUpdate                                     ; pulses timed in frames (FrameCounter16)
+                        call    HyperSpaceTick                                  ; the hyperspace countdown, in seconds of FrameCounter16
 ;...............ECM                
 .doECM:
                 IFDEF MAINLOOP_ECM
@@ -145,6 +146,7 @@ TestAreWeDocked:        JumpIfMemNeNusng DockedFlag, StateNormal, UpdateLoop    
                         and     7   
                         call    z, RechargeShip 
                 ENDIF
+                        call    UpdateSafeZone                                  ; the space station's safe zone, and the station on entering it
                 IFDEF MAINLOOP_LAUNCHMISSILE
 .PlayerMissileLaunch:   AnyMissilesLeft
                         jr      z,.NoMissiles                                           ; just in case last one gets destroyed
@@ -168,8 +170,10 @@ CheckIfViewUpdate:      ld      a,$00                                           
                         JumpIfAIsZero  UpdateLoop                                       ; This will change as more screens are added TODO
 ;..Processing a view...............................................................................................................
 ;..Display any message ............................................................................................................
-.CheckHyperspaceMessage:AnyHyperSpaceMacro .HandleMessages
-                        call    HyperSpaceMessage
+.CheckHyperspaceMessage:ld      a,(InnerHyperCount)                                     ; counting, or the text still to clear
+                        ld      hl,HyperTextOnScreen
+                        or      (hl)
+                        call    nz,HyperSpaceMessage
 .HandleMessages:        AnyMessagesMacro  .NoMessages
                         call    DisplayCurrentMessage
                         call    UpdateMessageTimer
@@ -320,7 +324,8 @@ LaserUpdate:            ld      hl,(FrameCounter16)                     ; (one i
                         jr      z,.Idle
                         ld      a,(CurrLaserPulseRate)
                         ld      (CurrLaserBurstCount),a
-.StartPulse:            ld      a,(CurrLaserPulseOnTime)
+.StartPulse:            PlaySFX SFXLaser                                       ; each pulse (or a beam) starting
+                        ld      a,(CurrLaserPulseOnTime)
                         ld      e,a
                         ld      a,LaserOn
                         call    LaserSetState
@@ -464,16 +469,6 @@ WeHaveCompletedHJump:   call    InitialiseLocalUniverse
                         call    CreateSun                      ; create the local sun and set position based on seed
                         MMUSelectPlanet
                         call    CreatePlanet
-;TODO                        call    generateSunAndPlanetPos        ; uses current carry state too
-; PROBABLY NOT NEEDED NOW                      MMUSelectShipBank1
-; PROBABLY NOT NEEDED NOW                      call    GetShipBankId
-;;SELECT CORRECT BANK                        MMUSelectUniverseN 0
-;;TODO                        call    CopyBodyToUniverse
-;;TODO                        call    CreateSun
-;;TODO                       MMUSelectShipBank1
-;;TODO                    eliteb       call    GetShipBankId
-;;TODO                       MMUSelectUniverseBankN 1
-;;TODO                       call    CopyBodyToUniverse
                         SetMemFalse DockedFlag
 .TriggerEngineSound:    ld      a,$FF
                         ld      (LAST_DELTA),a              ; force sound update in interrupt
@@ -494,6 +489,82 @@ WarpRoutineAddr:        call    0000
 ;--- We will need actually two tables, 1 for in station range 1 for not else flipping tables on the Z boundary
 ;--- Would be difficult
 ;--- load the table to work from. This then leaves all teh logic configurable
+;----------------------------------------------------------------------------------------------------------------------------------
+; The space station's safe zone (as BBC Elite): inside the cube |x|, |y|, |z| < $C000 round the planet (sign bytes no
+; integer bits, hi bytes < $C0). SpaceStationSafeZone is 0 inside, $FF outside (SetSafeZone / ClearSafeZone); the spawn
+; tables, the status screen and the station's arrival use it. On flying in, if slot 0 (kept for it) is free, the station
+; is made there: on the line from the planet's centre towards us, |normal| * 192 out (49000 at most, as BBC's 2 nosev
+; lengths), its slot towards us (UnivSetStationInSafeZone). Once a main loop while in flight
+StationPlaceDistance    equ 192
+StationPlacePos:        DS 9                                        ; x, y, z (lo, hi, sign) for UnivSetStationInSafeZone
+StationPlaceNose:       DS 3                                        ; its nose's hi bytes (lead sign)
+
+StationAxisFromPlanet:  MACRO   pos, norm, dest, nose               ; dest = pos - planet normal * StationPlaceDistance
+                        ld      a,(norm)                            ; |normal| (0 to 255)
+                        ld      d,a
+                        ld      e,StationPlaceDistance
+                        mul     de                                  ; de = |normal| * 192
+                        ld      c,d                                 ; bch = that, the sign flipped (from the planet to us)
+                        ld      h,e                                 ; .
+                        ld      a,(norm+1)                          ; .
+                        and     SignOnly8Bit                        ; .
+                        xor     SignOnly8Bit                        ; .
+                        ld      b,a                                 ; .
+                        ld      a,(norm)                            ; the nose: |normal| * 96 / 256, same sign
+                        ld      d,a
+                        ld      e,96
+                        mul     de
+                        ld      a,d
+                        or      b
+                        ld      (nose),a
+                        ld      a,(pos)                             ; del = the planet's position
+                        ld      l,a                                 ; .
+                        ld      de,(pos+1)                          ; .
+                        call    AddBCHtoDELsigned                   ; del = planet + offset
+                        ld      a,l
+                        ld      (dest),a
+                        ld      (dest+1),de
+                        ENDM
+
+UpdateSafeZone:         MMUSelectPlanet
+                        ld      a,(P_BnKxsgn)                       ; any axis 65536 or more off?
+                        ld      hl,P_BnKysgn
+                        or      (hl)
+                        ld      hl,P_BnKzsgn
+                        or      (hl)
+                        and     SignMask8Bit
+                        jp      nz,.Outside
+                        ld      a,(P_BnKxhi)                        ; or $C000 or more
+                        cp      $C0
+                        jp      nc,.Outside
+                        ld      a,(P_BnKyhi)
+                        cp      $C0
+                        jp      nc,.Outside
+                        ld      a,(P_BnKzhi)
+                        cp      $C0
+                        jp      nc,.Outside
+.Inside:                ld      a,(SpaceStationSafeZone)            ; already in
+                        and     a
+                        ret     z
+                        SetSafeZone
+                        ld      a,(UniverseSlotList)                ; slot 0 free?
+                        cp      $FF
+                        ret     nz                                  ; (the station is already there)
+.PlaceStation:          MMUSelectMathsBankedFns                     ; AddBCHtoDELsigned (the planet bank stays in slot 6)
+                        StationAxisFromPlanet P_BnKxlo, P_BnKxlo+POS_NORMXOFFSET, StationPlacePos,   StationPlaceNose
+                        StationAxisFromPlanet P_BnKylo, P_BnKxlo+POS_NORMYOFFSET, StationPlacePos+3, StationPlaceNose+1
+                        StationAxisFromPlanet P_BnKzlo, P_BnKxlo+POS_NORMZOFFSET, StationPlacePos+6, StationPlaceNose+2
+                        MMUSelectSpaceStation                       ; slot 0's bank
+                        call    UnivSelSpaceStationType
+                        ld      iyh,0
+                        ld      iyl,a
+                        call    SpawnSpaceStation                   ; slot 0, the model, runtime data
+                        MMUSelectSpaceStation
+                        call    UnivSetStationInSafeZone            ; position and facing
+                        ret
+.Outside:               ClearSafeZone
+                        ret
+
 LoopEventTriggered:     ; for now just do spawn
                         call        SpawnEvent
                         ret ; implicit ret from jp to be added later
@@ -555,7 +626,8 @@ LaunchEnemyMissile:     ; break
                         GetByteAInTable ShipMissileTable            ; swap in missile data
                         call    SpawnShipTypeA                      ; spawn the ship
                         ret     c                                   ; return if failed
-                        call    UnivSetEnemyMissile                 ; as per player but sets as angry
+                        call    UnivSetEnemyMissile
+                        PlaySFX SFXMissile                 ; as per player but sets as angry
                         ld      a,$FF
                         ld      (UBnKMissileTarget),a               ; set as definte player as target
                         ld      a,(EnemyShipBank)                   ; Direct restore current bank
@@ -580,9 +652,11 @@ LaunchPlayerMissile:   ; break
                         ClearMissileTargetting                      ; reset targetting
                         ld      hl, NbrMissiles
                         dec     (hl)
+                        PlaySFX SFXMissile
                         ret
 .MissileMissFire:       ClearMissileTargetting
-                        ret ; TODO bing bong noise misfire message
+                        PlaySFX SFXBong                             ; no free slot (TODO misfire message)
+                        ret
 
                         include "./SpawnShipTypeA.asm"
 

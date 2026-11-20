@@ -79,7 +79,22 @@ mul24Signed:            ld      a,b
                         ld      h,0
                         ret
                         
-mul24:                  ld      a,d                 ; preserve L2 for later
+; BH.L * CD.E unsigned (B and C 7 bit when called from mul24Signed) -> BCDE.HL
+; Leading zeros take a shorter path:
+;   BH = 0     0.L  * CD.E  3 multiplies (alpha / beta in ApplyMyRollAndPitchIX are always 0.L)
+;   CD = 0     BH.L * 0.E   3 multiplies
+;   B = C = 0  H.L  * D.E   mul16, 4 multiplies
+; otherwise all 9. Each result byte collects its carries in A, cleared at the start of the byte
+mul24:                  ld      a,b                 ; BH = 0?
+                        or      h                   ; .
+                        jp      z,.Mul8x24          ; .
+                        ld      a,c                 ; CD = 0?
+                        or      d                   ; .
+                        jp      z,.Mul24x8          ; .
+                        ld      a,b                 ; B = C = 0?
+                        or      c                   ; .
+                        jp      z,.Mul16x16         ; .
+                        ld      a,d                 ; preserve L2 for later
                         ld      d,l
                         ld      (.mul24_1+1),de     ; write to D1 * D2 calc 1
                         ld      d,h
@@ -107,54 +122,79 @@ mul24:                  ld      a,d                 ; preserve L2 for later
                         ZeroA                       ; clear accumulator for carry bit
 .mul24_2:               ld      de,$0000            ; L1 * D2 
                         mul     de
-                        add     hl,de               ; hl = (L1 * D2) + (D1*D2)high byte with a carry
+                        add     hl,de               ; hl = (L1 * D2) + (D1*D2)high byte
                         adc     a,0                 ; a holds carry incase of any overflow
 .mul24_3:               ld      de,$0000            ; now add in D1 * L2
                         mul     de                  ; so we have a completed byte 1 of result
                         add     hl,de               ;
-                        adc     a,a                 ; So now we hbave byte 1 complete and ahl holding current bytes 321
+                        adc     a,0                 ; So now we have byte 1 complete and ahl holding current bytes 321
                         ld      (MultiplyResult+1),hl; save byte 1 (in l) of result
                         ld      l,h                 ; prep carry over for step 4
                         ld      h,a                 ; .
+                        ZeroA                       ; byte 2 carries
 .mul24_4:               ld      de,$0000            ; now (D1 * H2)
                         mul     de                  ; .
-                        ZeroA
                         add     hl,de               ; and bring in carry over from step 3
-                        adc     a,a                 ; so ahl is the result
-.mul24_5:               ld      de,$0000            ; now (D1 * H2)
+                        adc     a,0                 ; .
+.mul24_5:               ld      de,$0000            ; now (L1 * L2)
                         mul     de                  ; .
-                        or      a                   ; clear carry flag
-                        add     hl,de               ; and bring in carry over from step 4
-                        adc     a,a                 ; so ahl is the result                        
-.mul24_6:               ld      de,$0000            ; now (D1 * H2)
+                        add     hl,de               ; .
+                        adc     a,0                 ; .
+.mul24_6:               ld      de,$0000            ; now (H1 * D2)
                         mul     de                  ; .
-                        or      a                   ; clear carry flag
-                        add     hl,de               ; and bring in carry over from step 5
-                        adc     a,a                 ; so ahl is the result of bytes 654               
+                        add     hl,de               ; .
+                        adc     a,0                 ; so ahl is the result of bytes 432
                         ld      (MultiplyResult+2),hl; save byte 2 (in l) of result
                         ld      l,h                 ; prep carry over for step 7
-                        ld      h,a                 ; .    
-.mul24_7:               ld      de,$0000            ; now (D1 * H2)
+                        ld      h,a                 ; .
+                        ZeroA                       ; byte 3 carries
+.mul24_7:               ld      de,$0000            ; now (L1 * H2)
                         mul     de                  ; .
-                        or      a                   ; clear carry flag
-                        add     hl,de               ; and bring in carry over from step 6
-                        adc     a,a                 ; so ahl is the result 
-.mul24_8:               ld      de,$0000            ; now (D1 * H2)
+                        add     hl,de               ; .
+                        adc     a,0                 ; .
+.mul24_8:               ld      de,$0000            ; now (H1 * L2)
                         mul     de                  ; .
-                        or      a                   ; clear carry flag
-                        add     hl,de               ; and bring in carry over from step 7
-                        adc     a,a                 ; so ahl is the result  
+                        add     hl,de               ; .
+                        adc     a,0                 ; so ahl is the result of bytes 543
                         ld      (MultiplyResult+3),hl; save byte 3 (in l) of result
-                        ld      l,h                 ; prep carry over for step 8
-                        ld      h,a                 ; .    
-.mul24_9:               ld      de,$0000            ; now (D1 * H2)
+                        ld      l,h                 ; prep carry over for step 9
+                        ld      h,a                 ; .
+.mul24_9:               ld      de,$0000            ; now (H1 * H2)
                         mul     de                  ; .
-                        add     hl,de               ; and bring in carry over from step 7
-                        adc     a,a                 ; so ahl is the result 
+                        add     hl,de               ; the product fits in 48 bits so nothing carries out
                         ld      (MultiplyResult+4),hl; save bytes 4 5 of result
                         ld      hl,(MultiplyResult)
                         ld      de,(MultiplyResult+2)
                         ld      bc,(MultiplyResult+4)
+                        ret
+; BH.L * 0.E: swap so the 8 bit value is in L and drop into .Mul8x24
+.Mul24x8:               ex      de,hl               ; hl = 0.E (D was 0), de = old HL
+                        ld      c,b                 ; cde = old BHL
+; 0.L * CD.E (B and H are 0)
+.Mul8x24:               ld      b,l                 ; b = multiplier
+                        ld      a,c                 ; a = Y2
+                        ld      c,d                 ; c = Y1
+                        ld      d,b                 ; de = m * Y0
+                        mul     de                  ; .
+                        ld      l,e                 ; byte 0
+                        ld      h,d                 ; h = carry into byte 1
+                        ld      d,b                 ; de = m * Y1
+                        ld      e,c                 ; .
+                        mul     de                  ; .
+                        ld      c,a                 ; c = Y2
+                        ld      a,h                 ; de += carry (at most 65025 + 254, no overflow)
+                        add     de,a                ; .
+                        ld      h,e                 ; byte 1, hl done
+                        ld      a,d                 ; a = carry into byte 2
+                        ld      d,b                 ; de = m * Y2
+                        ld      e,c                 ; .
+                        mul     de                  ; .
+                        add     de,a                ; bytes 3 2 (m * Y2 + carry < 65536)
+                        ld      bc,0                ; bytes 5 4
+                        ret
+; H.L * D.E (B and C are 0)
+.Mul16x16:              call    mul16               ; DE.HL = DE * HL
+                        ld      bc,0                ; bytes 5 4
                         ret
 
 ; so in our calcs we have

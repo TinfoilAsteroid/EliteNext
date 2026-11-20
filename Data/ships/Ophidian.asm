@@ -1,9 +1,9 @@
 Ophidian:	            DB $02                     ; Number of cargo canisters released when destroyed
                         DW $0E88                   ; Ship's targetable area LoHi
-                        DW OphidianEdges           ; Edge Data 
+                        DW OphidianEdges           ; Edge Data
                         DB OphidianEdgesSize       ; Size of Edge Data
                         DB $00                     ; Gun Vertex Byte offset
-                        DB $3C                     ; Explosion Count 
+                        DB $3C                     ; Explosion Count
                         DB OphidianVertSize /6     ; Vertex Count /6
                         DB OphidianVertSize        ; Vertex Count
                         DB OphidianEdgesCnt        ; Edges Count
@@ -17,14 +17,14 @@ Ophidian:	            DB $02                     ; Number of cargo canisters rel
                         DB $1A                     ; Laser power and Nbr Missiles
                         DW OphidianVertices        ; Verticles Address
                         DB ShipTypeNormal          ; Ship Type
-                        DB 0                       ; NewB Tactics 
-                        DB ShipCanAnger            ; AI Flags            
+                        DB 0                       ; NewB Tactics
+                        DB ShipCanAnger            ; AI Flags
                         DB $C0                     ; chance of ECM module
-                        DB $FF                              ; Supports Solid Fill = false
+                        DB $FF                              ; Supports Solid Fill = false (faces 3, 4, 9, 10 don't close: wireframe)
                         DW $0000                            ; no solid data
                         DB $00                              ; no solid data
-                        
-                        
+
+
 OphidianVertices:	    DB $14, $00, $46, $9F, $68, $02 ; 01
                         DB $14, $00, $46, $1F, $67, $01 ; 02
                         DB $00, $0A, $28, $1F, $22, $01 ; 03

@@ -1,9 +1,9 @@
 Cobra_Mk_1:	            DB $03                              ; Number of cargo canisters released when destroyed
                         DW $2649                            ; Ship's targetable area LoHi
-                        DW Cobra_Mk_1Edges                  ; Edge Data 
+                        DW Cobra_Mk_1Edges                  ; Edge Data
                         DB Cobra_Mk_1EdgesSize              ; Size of Edge Data
                         DB $28                              ; Gun Vertex Byte offset
-                        DB $1A                              ; Explosion Count 
+                        DB $1A                              ; Explosion Count
                         DB Cobra_Mk_1VertSize /6            ; Vertex Count /6
                         DB Cobra_Mk_1VertSize               ; Vertex Count
                         DB Cobra_Mk_1EdgesCnt               ; Edges Count
@@ -17,10 +17,10 @@ Cobra_Mk_1:	            DB $03                              ; Number of cargo ca
                         DB $20 | ShipMissiles3              ; Laser power and Nbr Missiles
                         DW Cobra_Mk_1Vertices               ; Verticles Address
                         DB ShipTypeNormal                   ; Ship Type
-                        DB 0                                ; NewB Tactics                        
+                        DB 0                                ; NewB Tactics
                         DB ShipCanAnger                     ; AI Flags
                         DB $30                              ; chance of ECM module
-                        DB $FF                              ; Supports Solid Fill = false
+                        DB $FF                              ; Supports Solid Fill = false (faces 0, 1 don't close: wireframe)
                         DW $0000                            ; no solid data
                         DB $00                              ; no solid data
 

@@ -183,6 +183,12 @@ class Cpu:
             self.pal_phase = 0
         elif reg == 0x44:
             self.pal_hi, self.pal_phase = val, 1
+        elif reg == 0x34:               # sprite number for the attribute registers below
+            self.spr_slot = val & 0x7F
+        elif 0x35 <= reg <= 0x39 or 0x75 <= reg <= 0x79:
+            self.spr_attr[self.spr_slot][(reg & 0x0F) - 5] = val    # sprite attribute 0-4
+            if reg >= 0x75:             # $75-$79: then on to the next sprite
+                self.spr_slot = (self.spr_slot + 1) & 0x7F
         elif reg in (0x12, 0x13):
             self.l2_remap()
             if reg == 0x12 and self.on_flip:

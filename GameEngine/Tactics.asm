@@ -1,5 +1,4 @@
 
-                        DEFINE TACTICSDEBUG 1
 ;                       DEFINE ALWAYSANGRY 1
 ;                        DEFINE TARGETDEBUG 1
 MISSILEMAXPITCH         equ 3
@@ -319,31 +318,6 @@ CopyRotmatToTacticsMat: ld      de,TacticsRotMatX
                         ld      (de),a              ; set rot mat sign
                         ret
 
-                        IFDEF TACTICSDEBUG                        
-DebugTacticsCopy:   
-                        ld      hl,(UBnkrotmatSidevX)
-                        ld      de,(UBnkrotmatSidevY)
-                        ld      bc,(UBnkrotmatSidevZ)
-                        ld      (TacticsSideX),hl
-                        ld      (TacticsSideY),de
-                        ld      (TacticsSideZ),bc
-
-                        ld      hl,(UBnkrotmatRoofvX)
-                        ld      de,(UBnkrotmatRoofvY)
-                        ld      bc,(UBnkrotmatRoofvZ)
-                        ld      (TacticsRoofX),hl
-                        ld      (TacticsRoofY),de
-                        ld      (TacticsRoofZ),bc
-
-                        ld      hl,(UBnkrotmatNosevX)
-                        ld      de,(UBnkrotmatNosevY)
-                        ld      bc,(UBnkrotmatNosevZ)
-                        ld      (TacticsNoseX),hl
-                        ld      (TacticsNoseY),de
-                        ld      (TacticsNoseZ),bc
-
-                        ret
-                        ENDIF
 XX12EquTacticsDotNosev: call    CopyRotNoseToTacticsMat
 XX12EquTacticsDotHL:    ld      hl,TacticsRotMatX; UBnkTransmatNosevX    ; ROTMATX HI
 .CalcXValue:            ld      a,(hl)                              ; DE = RotMatX & Vect X
@@ -436,37 +410,6 @@ CalcVectorToMyShip:     call    SetPlayerAsTarget
                         call    CopyPosToVector
                         ret
                                               
-CalcTargetVector:       ld      de,(TacticsTargetX)                        ; get target ship X
-                        ld      a,(TacticsTargetX+2)                       ; and flip sign so we have missile - target
-                        FlipSignBitA
-                        ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
-                        ld      hl,(UBnKxlo)                        ; get missile x
-                        ld      a,(UBnKxsgn)                        ; get missile x sign
-                        ld      b,a
-                        call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
-                        ld      (TacticsVectorX),hl
-                        ld      (TacticsVectorX+2),a
-.UpdateTargetingShipY:  ld      de,(TacticsTargetY)
-                        ld      a,(TacticsTargetY+2)
-                        FlipSignBitA
-                        ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
-                        ld      hl,(UBnKylo)                        ; get missile x
-                        ld      a,(UBnKysgn)                        ; get missile x sign
-                        ld      b,a
-                        call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
-                        ld      (TacticsVectorY),hl
-                        ld      (TacticsVectorY+2),a
-.UpdateTargetingShipZ:  ld      de,(TacticsTargetZ)
-                        ld      a,(TacticsTargetZ+2)
-                        FlipSignBitA
-                        ld      c,a                                 ; get target ship x sign but * -1 as we are subtracting
-                        ld      hl,(UBnKzlo)                        ; get missile x
-                        ld      a,(UBnKzsgn)                        ; get missile x sign
-                        ld      b,a
-                        call    ADDHLDESignBC                       ;AHL = BHL + CDE i.e. missile - target x
-                        ld      (TacticsVectorZ),hl
-                        ld      (TacticsVectorZ+2),a
-                        ret
                         
 ;-- Now its scaled we can normalise
 ;-- Scale down so that h d &b are zero, then do once again so l e and c are 7 bit

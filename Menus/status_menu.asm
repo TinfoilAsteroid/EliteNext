@@ -224,7 +224,19 @@ draw_STAT_maintext:
                         call	getTableText
                         ld      de,txt_stat_rank_val
                         call    STAT_copy_str_hl_to_de
-                        ld      b,17
+.DisplayMissiles:       ld      a,(NbrMissiles)                     ; (only one missile type for now: its name, or None)
+                        ld      hl,EquipNameMissile
+                        and     a
+                        jr      nz,.HaveMissileType
+                        ld      hl,txt_stat_none
+.HaveMissileType:       ld      de,txt_stat_missle_type_val
+                        call    STAT_copy_str_hl_to_de
+                        ld      a,(NbrMissiles)                     ; 0 to 4: one digit
+                        add     a,"0"
+                        ld      (txt_stat_missle_count_val),a
+                        xor     a
+                        ld      (txt_stat_missle_count_val+1),a
+                        ld      b,19                                ; (the missile values were never filled or printed)
                         ld      ix,status_boiler_text
                         call    STAT_print_boiler_text
                         ret
@@ -234,16 +246,17 @@ STAT_buffer_list:       ld      hl,txt_equipment_01                         ; hl
 .ZeroBuffer:            ld      a,0                                         ; so it will still skip them on printing
                         ld      de, 20*19
                         call    memfill_dma                                 ; full buffer with ASCII 1 (unprintable character)
-                        MMUSelectEquipmentTables                            ; bring in equipment tables for lookups
+                                                                            ; (the equipment tables are in main memory)
 .StartFetching:         ld      iy,txt_equipment_01                         ; Target to copy to
                         ld      ix,EquipmentFitted + STAT_First_Item        ; ix = equipment master table, ignore missiles
-                        ld      b,EQ_ITEM_COUNT - EQ_CARGO_BAY              ; we do not include Fuel and Missile counts
+                        ld      b,EQ_ITEM_COUNT - STAT_First_Item           ; we do not include Fuel and Missile counts
+                        ld      c,STAT_First_Item                           ; c = the item, for its name
 .ProcessRow:            ld      a,(ix+0)                                    ; Do we own one? (if so a will be non 0)
                         JumpIfAIsZero .NotFitted                            ; optimised check for EquipmentItemNotFitted
 .OwnItem:               push    bc
                         ld      hl,EquipNameIndex                           ; look up equipment name
-                        ld      a,b                                         ; hl += index * 2 for address
-                        sla     a                                           ;
+                        ld      a,c                                         ; hl += item * 2 (it used b, the count down,
+                        sla     a                                           ; so ECM came out as a military laser)
                         add     hl,a                                        ;
                         ld      a,(hl)                                      ; hl = pointer to name
                         inc     hl
@@ -256,6 +269,7 @@ STAT_buffer_list:       ld      hl,txt_equipment_01                         ; hl
                         pop     bc                        
 .NotFitted:
 .DoneFittedCheck:       inc     ix                                          ; move to next equipment slot
+                        inc     c
                         djnz    .ProcessRow
                         ret
 
@@ -302,7 +316,7 @@ draw_status_menu:       MMUSelectLayer1
                         ld      c,$C0
                         ld      b,$6C
                         ld      hl,1
-                        ld      de,320-4
+                        ld      de,320-3
                         ld      c,$C0
                         call    l2_draw_horz_line_320           ;b = row; hl = col, de = length, c = color"
                         call    draw_STAT_maintext
@@ -382,6 +396,8 @@ status_boiler_text		DB $02                  , low $0050, high $0050, $FF, low tx
                         DB cash_pos_row         , low $00A0, high $00A0, $FF, low STAT_cash_amount           , high STAT_cash_amount    
                         DB legal_status_pos_row , low $00A0, high $00A0, $FF, low txt_stat_legal_status_val  , high txt_stat_legal_status_val
                         DB rank_pos_row         , low $00A0, high $00A0, $FF, low txt_stat_rank_val          , high txt_stat_rank_val
+                        DB missile_type_row     , low $00A0, high $00A0, $FF, low txt_stat_missle_type_val   , high txt_stat_missle_type_val
+                        DB missile_count_row    , low $00A0, high $00A0, $FF, low txt_stat_missle_count_val  , high txt_stat_missle_count_val
                         DB equipment_list_row   , low 008, high 008, $FF, low txt_stat_equipment	     , high txt_stat_equipment
 status_equipment_list:  DB equipment1_pos_row   , low 008, high 008, $FF, low txt_equipment_01           , high txt_equipment_01
                         DB equipment1_pos_row   , low 160, high 160, $FF, low txt_equipment_02           , high txt_equipment_02
@@ -420,6 +436,7 @@ txt_stat_missle_type        DB "Missile Type     :",0
 txt_stat_missle_type_val    DS 20,0
 txt_stat_missle_count       DB "Missile Count    :",0
 txt_stat_missle_count_val   DS 20,0
+txt_stat_none               DB "None",0
 txt_stat_equipment			DB "EQUIPMENT:",0
 
 txt_stat_fuel_level			DB "00.0 Light Years",0

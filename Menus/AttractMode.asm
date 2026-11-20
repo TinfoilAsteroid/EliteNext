@@ -3,7 +3,7 @@ AttractCounterStart        EQU $80
 AttractTimer:              DW      AttractDuration
 AttractCounter:            DB      AttractCounterStart
 
-        DEFINE DEBUGBACKFACE 1
+       ; DEFINE DEBUGBACKFACE 1 This stops the ship moving forward, so you can see the backface culling in action
 
 Attract_boiler_text		DW $083D
 
@@ -69,6 +69,18 @@ AttractModeMain:        MMUSelectKeyboard
                         MMUSelectKeyboard
                         call    is_key_up_state
                         jr      nz,.NPressed
+                    IFDEF MANUAL_ATTRACT
+                        ld      a,VK_F                          ; F: the next model, B: the previous (one a press;
+                        MMUSelectKeyboard                       ; the interrupt makes the change between frames)
+                        call    is_vkey_pressed
+                        ld      a,1
+                        jr      z,.Request
+                        ld      a,VK_B
+                        call    is_vkey_pressed
+                        jp      nz,AttractModeMain
+                        ld      a,$FF
+.Request:               ld      (AttractRequest),a
+                    ENDIF
                         jp      AttractModeMain
 .YPressed:              ld      a,0
                         ret
@@ -79,6 +91,28 @@ AttractModeMain:        MMUSelectKeyboard
 AttractStep             DB      0
 
 AttractModeUpdate:      MMUSelectMathsBankedFns                                 ; Need to set it on entering post interrupt to make sure we are in bank 0
+                    IFDEF MANUAL_ATTRACT
+                        ld      a,(AttractStep)                 ; never cycles itself: F / B (AttractModeMain) ask for
+                        and     a                               ; the next / previous model, taken here at the start
+                        jp      nz,.DrawShip                    ; of a frame so its 3 steps are all one model
+                        ld      a,(AttractRequest)
+                        and     a
+                        jp      z,.DrawShip
+                        ld      c,a
+                        xor     a
+                        ld      (AttractRequest),a
+                        ld      a,(AttractShipId)               ; + 1 or - 1, wrapping round every model
+                        add     a,c
+                        cp      ShipTotalModelCount
+                        jr      c,.IdOK
+                        ld      a,ShipTotalModelCount-1         ; (below 0: the last)
+                        bit     7,c
+                        jr      nz,.IdOK
+                        xor     a                               ; (past the last: the first)
+.IdOK:                  ld      (AttractShipId),a
+                        call    SelectARandomShip
+                        ret
+                    ELSE
                         ld      hl,(AttractTimer)
                         dec     hl
                         ld      (AttractTimer),hl
@@ -87,6 +121,7 @@ AttractModeUpdate:      MMUSelectMathsBankedFns                                 
                         jp      nz,.DrawShip
                         call    SelectARandomShip
                         ret
+                    ENDIF
 .DrawShip:              ;BREAK
 .RandomRotateShip:      call    doRandom
                         MMUSelectUniverseN  1
@@ -110,7 +145,13 @@ AttractModeUpdate:      MMUSelectMathsBankedFns                                 
 .ProcessNodes:          call    ProcessNodes
 .CullV2:                call    CullV2
                         jp      .DoneIM2
-.PrepLines:             call    PrepLines
+.PrepLines:
+        IFDEF SOLID_HULL
+                        MMUSelectLayer2
+                        call    SolidHullDraw                   ; filled, as in flight (the nodes and visible faces are
+                        jr      c,.Drawbox                      ; from the last step); else the wireframe
+        ENDIF
+                        call    PrepLines
         IFDEF LATECLIPPING
 .DrawLines:             call    DrawLinesLateClipping     
         ELSE
@@ -150,23 +191,32 @@ SelectARandomShip:      ld      b,1                             ; Demo screen us
                         MMUSelectShipBank1
                         ld      iyh, 1
 .SelectRandom:
+                    IFDEF MANUAL_ATTRACT
+                        ld      a,(AttractShipId)               ; the model F / B chose: every model, none skipped
+                    ELSE
                     IFDEF DEBUGBACKFACE
                         ld      a,ShipID_Coriolis               ; always the Coriolis station to debug backface culling
                     ELSE
                         call    doRandom
                         JumpIfAGTENusng ShipID_Rattler+1, .SelectRandom
                     ENDIF
+                    ENDIF
                         ld      iyl,a
                         call    GetShipBankId                       ; find actual memory location of data
                         MMUSelectShipBankA
                         ld      a,b
                         call    CopyShipToUniverse
+                    IFNDEF MANUAL_ATTRACT
                         ld      a,(ShipTypeAddr)
                         bit     7,a                                 ; is it a type we don't want in attract mode
                         jr      nz,.SelectRandom
+                    ENDIF
                         ld      a,1                                 ; slot 1, iyh and iyl already set
-                        call    UnivInitRuntime                       
+                        call    UnivInitRuntime
                         call    UnivSetDemoPostion
+                    IFDEF MANUAL_ATTRACT
+                        call    AttractShowName
+                    ENDIF
                         ld      hl,AttractDuration*2
                         ld      (AttractTimer),hl
                         ld      a, AttractCounterStart
@@ -174,5 +224,59 @@ SelectARandomShip:      ld      b,1                             ; Demo screen us
                         ZeroA
                         ld      (AttractStep),a
                         ret
-                        
-                        
+
+    IFDEF MANUAL_ATTRACT
+; MANUAL_ATTRACT (eliteNext.asm): the attract screen shows one model at a time, F the next, B the previous, with its
+; name at the top of the HUD (the console's top row, between the gauges). The name is the universe bank's
+; StartOfUnivName (16 characters, space padded, from the ship names table when the model was copied in), centred, with
+; _ shown as a space
+AttractShipId           DB      0                               ; the model shown
+AttractRequest          DB      0                               ; from the key loop: 1 next, $FF previous, 0 none
+AttractNameCols         equ     16
+AttractNameRow          equ     16                              ; character row (the console's top)
+AttractNameCol          equ     8                               ; character column (centred between the gauges)
+AttractNameText         DS      AttractNameCols + 1
+
+AttractShowName:        ld      hl,AttractNameText              ; spaces, then the name centred in them
+                        ld      b,AttractNameCols
+.Blank:                 ld      (hl)," "
+                        inc     hl
+                        djnz    .Blank
+                        ld      (hl),0
+                        ld      hl,StartOfUnivName+AttractNameCols  ; its length: up to the last non space
+                        ld      b,AttractNameCols
+.Length:                dec     hl
+                        ld      a,(hl)
+                        cp      " "+1
+                        jr      nc,.GotLength
+                        djnz    .Length
+.GotLength:             ld      a,AttractNameCols               ; start = (16 - length) / 2
+                        sub     b
+                        srl     a
+                        ld      de,AttractNameText
+                        add     de,a
+                        ld      hl,StartOfUnivName
+                        ld      a,b
+                        and     a
+                        jr      z,.Copied
+.Copy:                  ld      a,(hl)
+                        cp      "_"
+                        jr      nz,.NotUnderscore
+                        ld      a," "
+.NotUnderscore:         ld      (de),a
+                        inc     hl
+                        inc     de
+                        djnz    .Copy
+.Copied:                ld      hl,ScreenL1AttrBtm+(AttractNameRow-16)*32+AttractNameCol
+                        ld      b,AttractNameCols               ; visible there (the console leaves it black on black)
+.Attr:                  ld      (hl),L1ColourPaperBlack | L1ColourInkYellow
+                        inc     hl
+                        djnz    .Attr
+                        MMUSelectLayer1
+                        ld      d,AttractNameRow*8
+                        ld      e,AttractNameCol*8
+                        ld      hl,AttractNameText
+                        jp      l1_print_at
+    ENDIF
+
+

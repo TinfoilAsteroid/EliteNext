@@ -3,13 +3,9 @@
 
 ; replaces all maths multplication
 
-; DE = D (S7) * E (S7)
-; Optimised mulitploy routines S7 by S7 signed
-; muliptiply S7.0 bu ny S7e signed
-; used A and B registers
-; result in DE
-; This replaces DEequDmulEs
-; 16 bit HL * DE 
+; (DEequDmulEs, D (S7) * E (S7) = DE, had no callers: moved to Unused/Unused/DEequDmulEs.asm)
+; A = A * Q / 256 unsigned is the AequAmulCdiv256u macro in Macros/MathsMacros.asm, with Q in C
+; 16 bit HL * DE
 ; start with lower and help with add sequence           ; all with carry flag (as lower case target reg)
 ;        L *     E   X0mulY0 1>> 1>>  shift >> 16       ;     HL = L * E
 ;        L *   D     Y1mulX0 0   1>>  shift >> 8        ;   DEHL = 00HL  + 0[L*D]0
@@ -21,29 +17,6 @@
 ;        L *   D     Y1mulX0 0   1>>  shift >> 8        ;   DEHL = 00HL  + 0[L*D]0
 ;      H   *     E   X1mulY0 0   1>>  shift >> 8        ;   DEHL = DEHL  + 0[H*E]0 = DEH + 0[H*E]
 ;      H   *   D     X1mulY1 0   0    shift 0           ;  CDE   = CDE   + 0[H*D]
-
-DEequDmulEs:        ld      a,d                     ; work out resultant sign and load into b
-                    xor     e                       ; .
-                    and     SignOnly8Bit            ; .
-                    ld      b,a                     ; .
-                    ld      a,d                     ; now clear d sign bit
-                    and     SignMask8Bit            ; .
-                    ld      d,a                     ; .
-                    ld      a,e                     ; now clear e sign bit
-                    and     SignMask8Bit            ; .
-                    ld      e,a                     ; .
-                    mul     de                      ; do mulitply
-                    ld      a,d                     ; get sign bit from b and re0introduce it
-                    or      b                       ; .
-                    ld      d,a                     ; .
-                    ret
-
-AequAmulQdiv256u:   ld      d,a
-                    ld      a,(varQ)
-                    ld      e,a
-                    mul     de
-                    ld      a,d
-                    ret
 
 HLequSRmulQdiv256:  ;X.Y=x1 lo.S*M/256  	\ where M/256 is gradient replaces HLequSRmulQdiv256
                     ld      hl,(varRS)
@@ -87,11 +60,11 @@ HLequDEmulHL:       push    bc
                     xor     a                       ; reset carry
                     pop     bc
                     ret
-HLequHLmulDEu:      
-;H.L = H.L * D.E unsigned S7.8 format, just skips signed bit check
-                    call    fixedS78_mulu
-                    ld      l,h
-                    ld      h,a
+HLequHLmulDEu:
+;H.L = H.L * D.E unsigned 8.8 (bits 8-23 of the 32 bit product, so truncated), no sign handling
+                    call    fixedS78_mulu       ; DE.HL = product
+                    ld      l,h                 ; l = bits 8-15
+                    ld      h,e                 ; h = bits 16-23
                     ret
 ;DE.HL = D.E * H.L as  7.8 Fixed Point unsigned maths, when doing 24 bit maths scale down to 8.8 as its accurate enough
 fixedS78_mulu:      ;            

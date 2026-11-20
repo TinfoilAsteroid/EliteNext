@@ -69,7 +69,10 @@ GCM_DispDEIXtoIY:       ld (.GCMclcn32z),ix
 .GCMclcn32z             ds 2
 .GCMclcn32zIX           ds 2
 ;..................................................................................................................................
-GCM_galactic_chart:         MMUSelectLayer1                         ; initialise display
+GCM_galactic_chart:         ld      a,ChartViewGalactic             ; the view type (BBC QQ11): MovementKeyTest then reads
+                            ld      (MenuIdMax),a                   ; the cursor keys, Q up, A down (left as the last screen
+                                                                    ; set it, Q was up or down depending on that)
+                            MMUSelectLayer1                         ; initialise display
                             call  l1_cls                            ; .
                             ld      a,7                             ; .
                             call    l1_attr_cls_to_a                ; .
@@ -79,9 +82,7 @@ GCM_galactic_chart:         MMUSelectLayer1                         ; initialise
                             call    l2_320_cls                      ; .
                             MMUSelectSpriteBank                     ; .
                             call    sprite_cls_all; sprite_cls_cursors              ; .
-                            ld      a,GCM_cursor_dampen
-                            ld      (GCM_cursor_dampen_timer),a
-.selectPresentSystem:       ld      hl,(PresentSystemX)             ; load present galaxy and system               
+.selectPresentSystem:       ld      hl,(PresentSystemX)             ; load present galaxy and system
                             call    GCM_get_present_system
 .drawOuterBorder:           MMUSelectLayer2                         ; draw chart background graphics
                             call    l2_draw_menu_border
@@ -92,7 +93,7 @@ GCM_galactic_chart:         MMUSelectLayer1                         ; initialise
                             call    l2_draw_vert_line_320           ;b = row; hl = col, de = length, c = color"
                             ld      b,153
                             ld      hl,2
-                            ld      de,262
+                            ld      de,263
                             ld      c,$C0
                             call    l2_draw_horz_line_320           ;b = row; hl = col, de = length, c = color"
 .generateHeaderText:        ld      a,(Galaxy)                      ; Now print header text
@@ -100,10 +101,10 @@ GCM_galactic_chart:         MMUSelectLayer1                         ; initialise
                             ld      (galactic_chart_header_nbr),a   ; set chart number
                             ld      b,1                             ; only 1 line to print og boiler text
                             ld      ix,GCM_boiler_text              ; .
-                            ;add additional border aroudn stars so we have a column for system info and border at bottom for more 
+                            ;add additional border aroudn stars so we have a column for system info and border at bottom for more
                             ;system info
                             call    GCM_print_boiler_text           ; .
-.plot_stars:                call    GCM_plot_stars                         
+.plot_stars:                call    GCM_plot_stars
 .CircleandCrosshair:        call    GCM_chart_postion
                             call    GCM_target_cursor
                             call    GCM_get_current_name
@@ -170,7 +171,7 @@ GCM_print_name_if_poss:     call    GetDigramWorkingSeed
 
 ;---------------------------------------------------------------------------------------------------------------------------------
 ; prints text based on message data
-GCM_print_boiler_text:      
+GCM_print_boiler_text:
 .BoilerTextLoop:            push        bc          ; Save Message Count loop value
                             ld          b,(ix+0)    ; get row into b
                             ld          de,(ix+1)   ; get column into hl (as we can't load direct to hl from ix)
@@ -275,7 +276,7 @@ GCM_position_cursor:        ld      e,c; temp holding to preserve c
                             ret
 ;---------------------------------------------------------------------------------------------------------------------------------
 GCM_target_cursor:          ld      bc,(TargetSystemX)              ; bc = present system row col
-.OnGalacticChart:           srl     b 
+.OnGalacticChart:           srl     b
                             ld      e,c; temp holding to preserve c
                             ld      hl,galactic_chart_y_offset - 4  ; adjust for menu and offset of cursor
                             ld      a,b
@@ -302,14 +303,14 @@ l2_GCM_circle_320:          ld      a,e
                             ld      (.Plot1+1),bc           ; save origin into cXcY reg in code
                             ld      ixh,a                   ; ixh =  x = raidus
                             ld      ixl,0                   ; iyh =  y = 0
-.calcd:                     ld      h,0     
-                            ld      l,a     
+.calcd:                     ld      h,0
+                            ld      l,a
                             add     hl,hl                   ; hl = r * 2
                             ex      de,hl                   ; de = r * 2
-                            ld      hl,3        
-                            and     a       
+                            ld      hl,3
+                            and     a
                             sbc     hl,de                   ; hl = 3 - (r * 2)
-                            ld      b,h     
+                            ld      b,h
                             ld      c,l                     ; bc = 3 - (r * 2)
 .calcdelta:                 ld      hl,1
                             ld      d,0
@@ -382,15 +383,15 @@ l2_GCM_circle_320:          ld      a,e
 .IncrementCircle:           bit     7,h                     ; Check for Hl<=0
                             jr z,   .draw_circle_1
                             add hl,de                       ; Delta=Delta+D1
-                            jr      .draw_circle_2      ; 
+                            jr      .draw_circle_2      ;
 .draw_circle_1:             add     hl,bc                   ; Delta=Delta+D2
                             inc     bc
                             inc     bc                      ; D2=D2+2
                             dec     ixh                     ; Y=Y-1
 .draw_circle_2:             inc bc                          ; D2=D2+2
-                            inc bc          
+                            inc bc
                             inc de                          ; D1=D1+2
-                            inc de              
+                            inc de
                             inc ixl                         ; X=X+1
                             jp      .CircleLoop
 .PlotPixel:                 ld      a,0                     ; This was originally indirect, where as it neeed to be value
@@ -404,14 +405,12 @@ l2_GCM_circle_320:          ld      a,e
                             pop     de,,bc,,hl
                             ret
 
-; TODO MOVE CURSOR CODE
-
 ;----------------------------------------------------------------------------------------------------------------------------------
 GCM_refresh_input_text: call    GCM_input_to_display
 ;----------------------------------------------------------------------------------------------------------------------------------
 GCM_input_text:         ld      b,1                             ; only 1 line to print og boiler text
                         ld      ix,GCM_find_text                ; .
-                        call    GCM_print_boiler_text           ; . 
+                        call    GCM_print_boiler_text           ; .
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 GCM_input_to_display:   MMUSelectKeyboard
@@ -427,23 +426,23 @@ GCM_input_to_display:   MMUSelectKeyboard
 ;----------------------------------------------------------------------------------------------------------------------------------
 GCM_input_not_found:    ld      b,1                             ; only 1 line to print og boiler text
                         ld      ix,GCM_not_found_text           ; .
-                        call    GCM_print_boiler_text           ; . 
+                        call    GCM_print_boiler_text           ; .
                         ld      hl,GCM_message_timer
                         ld      (GCM_message_clear_counter),hl
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 GCM_input_found:        ld      b,1                             ; only 1 line to print og boiler text
                         ld      ix,GCM_found_text               ; .
-                        call    GCM_print_boiler_text           ; . 
+                        call    GCM_print_boiler_text           ; .
                         ld      hl,GCM_message_timer
                         ld      (GCM_message_clear_counter),hl
                         ret
 GCM_clear_find_message: ld      b,2                             ; only 1 line to print og boiler text
                         ld      ix,GCM_found_clear              ; .
-                        call    GCM_print_boiler_text           ; . 
+                        call    GCM_print_boiler_text           ; .
                         ret
 ;----------------------------------------------------------------------------------------------------------------------------------
-GCM_input_clear:        ld      hl,galactic_find_text  
+GCM_input_clear:        ld      hl,galactic_find_text
                         xor     a
                         ld      b,20
 .clear_loop:            ld      (hl),a
@@ -464,7 +463,7 @@ GCM_update_loop:        ld      hl,(GCM_message_clear_counter)
 .NoMessageUpdate:       ld      (GCM_message_clear_counter),hl
 .NoMessage:             JumpIfMemTrue TextInputMode,GCM_AlreadyInInputMode  ;if we are in input mode then go directly there
 .StartFindCheck:        MacroIsKeyPressed c_Pressed_Find                ;Is F pressed
-                        ret     nz                                      ;the main loop handles find key 
+                        ret     nz                                      ;the main loop handles find key
 .FindPressed:           call    GCM_clear_find_message
                         call    GCM_input_clear
                         MMUSelectKeyboard
@@ -506,88 +505,52 @@ GCM_AlreadyInInputMode: MMUSelectKeyboard
                         call    GCM_input_not_found
                         ret; DOSTUFFHERE
 ;----------------------------------------------------------------------------------------------------------------------------------
+; the cursor keys every ChartCursorFrames while held (ChartCursorKeys): Q up, A down, then left, right, home, recentre
 GCM_cursors:            ReturnIfMemTrue TextInputMode
-                        ld      a,(GCM_cursor_dampen_timer)             ; if timer has reached zero 
-                        or      a                                       ; else carry on with 
-                        jp      z,.timerZero                            ; count down of timer
-                        dec     a
-                        ld      (GCM_cursor_dampen_timer),a
-                        ret                                             ; .
-.timerZero:             ld      a,(CursorKeysPressed)                   ; Once it gets to zero
-                        ReturnIfAIsZero                                 ; it holds that until another eky is pressed
-                        ld      b,a
-                        ld      a,GCM_cursor_dampen
-                        ld      (GCM_cursor_dampen_timer),a
-                        ld      a,b
-                        rla
-                        call   c,gc_DownPressed;gc_UpPressed
-                        rla
-                        call   c,gc_UpPressed;gc_DownPressed
-                        rla
-                        call   c,gc_LeftPressed
-                        rla
-                        call   c,gc_RightPressed
-                        rla
-                        call   c,gc_HomePressed
-                        rla
-                        call   c,gc_RecenterPressed
-                        ret
+                        ld      hl,GCM_cursor_handlers
+                        jp      ChartCursorKeys
+GCM_cursor_handlers:    DW      gc_UpPressed, gc_DownPressed, gc_LeftPressed, gc_RightPressed, gc_HomePressed, gc_RecenterPressed
+; The handlers may change any register (ChartCursorKeys keeps the key bits) and at a limit just return. (At a limit
+; gc_BoundsLimit returned with the handler's pushed AF still on the stack, so the ret went to it as an address)
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_UpPressed:           push    af
-                        ld     a,(TargetSystemX+1)
-                        JumpIfAEqNusng 1,gc_BoundsLimit
-                        dec     a
-                        ld      (TargetSystemX+1),a
-                        call    UpdateGalacticCursor
-                        pop     af
-                        ret
+gc_UpPressed:           ld      hl,TargetSystemX+1              ; up the chart: galaxy y - 1
+                        ld      a,(hl)
+                        cp      1
+                        ret     z
+                        dec     (hl)
+                        jp      UpdateGalacticCursor
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_DownPressed:         push    af
-                        ld     a,(TargetSystemX+1)
-                        JumpIfAEqNusng 255,gc_BoundsLimit
-                        inc    a
-                        ld      (TargetSystemX+1),a
-                        call    UpdateGalacticCursor
-                        pop     af
-                        ret
+gc_DownPressed:         ld      hl,TargetSystemX+1              ; down the chart: galaxy y + 1
+                        ld      a,(hl)
+                        cp      255
+                        ret     z
+                        inc     (hl)
+                        jp      UpdateGalacticCursor
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_LeftPressed:         push    af
-                        ld     a,(TargetSystemX)
-                        JumpIfAEqNusng 1,gc_BoundsLimit
-                        dec    a
-                        ld      (TargetSystemX),a
-                        call    UpdateGalacticCursor
-                        pop     af
-                        ret
+gc_LeftPressed:         ld      hl,TargetSystemX
+                        ld      a,(hl)
+                        cp      1
+                        ret     z
+                        dec     (hl)
+                        jp      UpdateGalacticCursor
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_RightPressed:        push    af
-                        ld     a,(TargetSystemX)
-                        JumpIfAEqNusng 254,gc_BoundsLimit
-                        inc    a
-                        ld      (TargetSystemX),a
-                        call    UpdateGalacticCursor
-                        pop     af
-                        ret
+gc_RightPressed:        ld      hl,TargetSystemX
+                        ld      a,(hl)
+                        cp      254
+                        ret     z
+                        inc     (hl)
+                        jp      UpdateGalacticCursor
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_HomePressed:         push    af
-                        ld      hl,(PresentSystemX)
+gc_HomePressed:         ld      hl,(PresentSystemX)
                         ld      (TargetSystemX),hl
-                        call    UpdateGalacticCursor
-                        pop     af
-                        ret
+                        jp      UpdateGalacticCursor
 ;----------------------------------------------------------------------------------------------------------------------------------
-gc_RecenterPressed:     push    af
-                        ld      a,(Galaxy)       
+gc_RecenterPressed:     ld      a,(Galaxy)
                         MMUSelectGalaxyA
                         ld      bc,(TargetSystemX)
                         call    find_nearest_to_bc
                         ld      (TargetSystemX),bc
-                        call    UpdateGalacticCursor
-                        pop     af
-                        ret
-;----------------------------------------------------------------------------------------------------------------------------------
-gc_BoundsLimit          xor     a
-                        ret
+                        jp      UpdateGalacticCursor
 ;----------------------------------------------------------------------------------------------------------------------------------
 GCM_calc_distance:      ld      a,(Galaxy)
                         MMUSelectGalaxyA
@@ -630,7 +593,7 @@ GCM_calc_distance:      ld      a,(Galaxy)
 .done_number:           ret
 ;----------------------------------------------------------------------------------------------------------------------------------
 GCM_get_present_system: xor     a
-                        ld      (XSAV),a                        
+                        ld      (XSAV),a
                         ld      ix,galaxy_data
 GCCounterLoop:          ld      a,(Galaxy)
                         MMUSelectGalaxyA
@@ -680,8 +643,6 @@ GCM_found_clear2:           DB 232, low 016, high 064, $FF, low galactic_find_cl
 GCM_message_timer           EQU 2500
 GCM_message_clear_counter   dw  0
 
-GCM_cursor_dampen           equ 125
-GCM_cursor_dampen_timer:    DB  0
 
 gcEndOfString               DB  0
 gcInputText                 DS  31

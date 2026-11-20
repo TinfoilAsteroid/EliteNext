@@ -36,7 +36,7 @@ l2_print_chr_at:        ld		a,d
                         add		hl,charactersetaddr			; hl = address of rom char
                         inc		b							; start + 1 pixel x and y as we only print 7x7
                         inc		hl							; skip first byte
-                        ld		d,7	
+                        ld		d,7
 .PrintCharLoop:         push	de
                         ld		a,(hl)
                         cp		0
@@ -63,7 +63,7 @@ l2_print_chr_at:        ld		a,d
 .IterateLoop:	        ;	pop		bc
                         pop		hl
                         pop		af							; a= current byte shifted
-                        dec		d						 	; do dec after inc as we amy 
+                        dec		d						 	; do dec after inc as we amy
                         jr		nz,.PrintPixelLoop
 .NextRow:               pop		bc							; Current Col Row
 .NextRowNoBCPop:	    pop		de							; d= row loop
@@ -81,25 +81,26 @@ l2_print_chr_at:        ld		a,d
 
 l2_print_blank_at_320:  ld      d,b                         ; d = row
                         call    l2_target_address_320       ;
+                        ret     c                           ; off the right edge
 ;... so now we have hl = address of 8 bytes of character, iyl = d = row , iyh = c = color, ixh = off colour, stack = column, b = 8
 .PrintCharPrep:         ld      b,8                         ;
 .PrintCharLoop:         push    hl                          ; save row col address
                         ZeroA
-.LineUnwarped:          ld      (hl),a                      ; write to screen                       
+.LineUnwarped:          ld      (hl),a                      ; write to screen
                         inc     h                           ; next colum = + 256
-                        ld      (hl),a                      ; write to screen                       
+                        ld      (hl),a                      ; write to screen
                         inc     h                           ; next colum = + 256
-                        ld      (hl),a                      ; write to screen                       
+                        ld      (hl),a                      ; write to screen
                         inc     h                           ; next colum = + 256
-                        ld      (hl),a                      ; write to screen                       
+                        ld      (hl),a                      ; write to screen
                         inc     h                           ; next colum = + 256
-                        ld      (hl),a                      ; write to screen                       
+                        ld      (hl),a                      ; write to screen
                         inc     h                           ; next colum = + 256
-                        ld      (hl),a                      ; write to screen                       
+                        ld      (hl),a                      ; write to screen
                         inc     h                           ; next colum = + 256
-                        ld      (hl),a                      ; write to screen                       
+                        ld      (hl),a                      ; write to screen
                         inc     h                           ; next colum = + 256
-                        ld      (hl),a                      ; write to screen                       
+                        ld      (hl),a                      ; write to screen
                         inc     h                           ; next colum = + 256
 .DoneLine:              pop     hl                          ; get back row col
                         inc     hl                          ; move down 1 pixel row
@@ -123,6 +124,7 @@ l2_print_char_at_320:   cp		32
                         ld      ixh,c                       ; pixel on
                         ex      af,af'                      ; save a holding charachter code
                         call    l2_target_address_320       ;
+                        jr      c,.OffScreen                ; off the right edge: nothing to draw
                         ex      af,af'
                         push    hl                          ; save target address
 .CalculateCharacterAddr:ld      e,8                         ; de = offset address for character set
@@ -141,7 +143,7 @@ l2_print_char_at_320:   cp		32
                         jr      c,.plotPixel
 .PlotSpace:             ex      af,af'                      ; save current byte
                         ld      a,ixl                       ; write 0
-                        jp      .WritePixel                 ; 
+                        jp      .WritePixel                 ;
 .plotPixel:             ex      af,af'                      ; save currenty byte
                         ld      a,ixh                       ; write color
 .WritePixel:            ld      (de),a                      ; write to screen
@@ -154,7 +156,9 @@ l2_print_char_at_320:   cp		32
                         inc     hl                          ; move to next byte
                         djnz    .PrintCharLoop
                         ret
- 	
+.OffScreen:             ex      af,af'                      ; (as on screen)
+                        ret
+
 ; l2_print_at_320, b = row, hl = col, de = addr of message, c = color
 ; non optimised bank switching as it will do it for each character
 ; assumes each character is aligned to a bank so will only bank switch on new character cell
@@ -187,7 +191,7 @@ l2_print_at_320:        ld      a,(de)                      ; return if empty me
 ;   current col += word length
 ; loop
 ; Not for optimisation always works in 8 pixel alignment
-l2_print_at_wrap_320:   
+l2_print_at_wrap_320:
 .PrintPrep:             ld      a,(de)                  ; intial trap null char at ptr <> 0
                         and     a                       ; .
                         ret     z                       ; .
@@ -203,13 +207,13 @@ l2_print_at_wrap_320:
                         pop     hl                      ; get back pixel column address
 .PrintLoop:             ld      a,(de)                  ; while char at ptr <> 0
                         and     a                       ; .
-                        ret     z   
+                        ret     z
                         call    L2LenWordAtDE           ; b = length of string
                         ld      ixh,b                   ; save string length
                         ld      a,c                     ; a= total character length
                         add     a,b                     ; a= projected end character position of string
                         ld      c,a                     ; c=total character length (needed to keep track of string length so far
-                        ld      b,iyh                   ; restore b saved in iyh above for row 
+                        ld      b,iyh                   ; restore b saved in iyh above for row
                         JumpIfALTNusng 38,.printWord    ; if calcualted length > 38 chars then word wrap
 .wrapText:              ld      c,ixl                   ; start column
                         ex      de,hl                   ; update hl to be pixel start column

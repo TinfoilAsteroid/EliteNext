@@ -1,9 +1,9 @@
 Iguana:	                DB $01                      ; Number of cargo canisters released when destroyed
                         DW $0DAC                    ; Ship's targetable area LoHi
-                        DW IguanaEdges              ; Edge Data 
+                        DW IguanaEdges              ; Edge Data
                         DB IguanaEdgesSize          ; Size of Edge Data
                         DB $00                      ; Gun Vertex Byte offset
-                        DB $1A                      ; Explosion Count 
+                        DB $1A                      ; Explosion Count
                         DB IguanaVertSize /6        ; Vertex Count /6
                         DB IguanaVertSize           ; Vertex Count
                         DB IguanaEdgesCnt           ; Edges Count
@@ -17,14 +17,14 @@ Iguana:	                DB $01                      ; Number of cargo canisters 
                         DB $20 | ShipMissiles3      ; Laser power and Nbr Missiles
                         DW IguanaVertices           ; Verticles Address
                         DB ShipTypeNormal           ; Ship Type
-                        DB 0                        ; NewB Tactics 
-                        DB ShipCanAnger             ; AI Flags            
+                        DB 0                        ; NewB Tactics
+                        DB ShipCanAnger             ; AI Flags
                         DB $80                      ; chance of ECM module
-                        DB $FF                              ; Supports Solid Fill = false
+                        DB $FF                              ; Supports Solid Fill = false (faces 0, 1, 2, 3 don't close: wireframe)
                         DW $0000                            ; no solid data
                         DB $00                              ; no solid data
 
-	
+
 IguanaVertices:	DB $00, $00, $5A, $1F, $23, $01
                 DB $00, $14, $1E, $1F, $46, $02
                 DB $28, $00, $0A, $9F, $45, $01
@@ -41,10 +41,10 @@ IguanaVertices:	DB $00, $00, $5A, $1F, $23, $01
                 DB $00, $08, $28, $6A, $99, $88
                 DB $10, $00, $24, $2A, $99, $99
 
-IguanaVertSize: equ $ - IguanaVertices	
-	
-	
-	
+IguanaVertSize: equ $ - IguanaVertices
+
+
+
 IguanaEdges:	DB $1F, $02, $00, $04
                 DB $1F, $01, $00, $08
                 DB $1F, $13, $00, $0C
@@ -69,12 +69,12 @@ IguanaEdges:	DB $1F, $02, $00, $04
                 DB $0A, $99, $2C, $38
                 DB $0A, $99, $34, $38
 
-IguanaEdgesSize: equ $ - IguanaEdges	
-	
-	
-IguanaEdgesCnt: equ IguanaEdgesSize/4	
-	
-	
+IguanaEdgesSize: equ $ - IguanaEdges
+
+
+IguanaEdgesCnt: equ IguanaEdgesSize/4
+
+
 IguanaNormals:          DB $9F, $37, $53, $1B    ;00
                         DB $DF, $37, $53, $1B    ;01
                         DB $1F, $37, $53, $1B    ;02
@@ -86,6 +86,6 @@ IguanaNormals:          DB $9F, $37, $53, $1B    ;00
                         DB $BF, $2E, $00, $BA    ;08
                         DB $3F, $2E, $00, $BA    ;09
 
-	
-IguanaNormalsSize: equ $ - IguanaNormals	
-IguanaLen: equ $ - Iguana	
+
+IguanaNormalsSize: equ $ - IguanaNormals
+IguanaLen: equ $ - Iguana

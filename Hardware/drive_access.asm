@@ -171,6 +171,7 @@ FileLoad:	            call    GetDefaultDrive
 .NormalError:  	        pop	bc	; don't pop into A, return with error code
                         pop	de
                         pop	bc
+                        scf                     ; carry set on every error (a handle of 0 came here with carry clear)
                         ret
 
 ; *******************************************************************************************************

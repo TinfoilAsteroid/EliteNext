@@ -49,21 +49,6 @@ SetSlotAToClassB:       ld      hl,UniverseSlotType
                         ld      (hl),b
                         ret                     
 
-; Clears all except slot A, used when say restarting a space station post launch
-ClearFreeSlotListSaveA: ld      d,a
-                        ld      c,0
-                        ld      hl,UniverseSlotList
-                        ld      b, UniverseSlotListSize * 2
-.fillLoop:              ld      a,c
-                        cp      d
-                        jr      z,.SkipSlot
-                        ld      a,$FF
-                        ld      (hl),a
-.SkipSlot:              inc     hl
-                        inc     hl
-                        djnz    .fillLoop
-                        ret
-
 ClearSlotA:             ld      hl,UniverseSlotList
                         add     hl,a
                         ld      (hl),$FF
@@ -121,11 +106,15 @@ AreShipsPresent:        ld      hl,UniverseSlotType+1
                         SetCarryFlag
                         ret
                         
-IsSpaceStationPresent:  ld      hl,UniverseSlotList
-                        ClearCarryFlag
-.SearchLoop:            ld      a,(hl)
-                        ReturnIfAEqNusng ShipTypeStation
-                        SetCarryFlag
+; carry clear if slot 0 holds the space station, else carry set. UniverseSlotList holds the model, UniverseSlotType the
+; class: this once compared the model with ShipTypeStation, so it never found the station
+IsSpaceStationPresent:  ld      a,(UniverseSlotList)
+                        cp      $FF
+                        jr      z,.NotPresent                   ; slot 0 empty
+                        ld      a,(UniverseSlotType)
+                        cp      ShipTypeStation
+                        ret     z                               ; (carry clear)
+.NotPresent:            SetCarryFlag
                         ret
                         
 GetTypeAtSlotA:         ld      hl,UniverseSlotList
@@ -140,9 +129,11 @@ IsPlanetOrSpaceStation: ld      hl,UniverseSlotList+1
 ;-- Search the slot list for a free slot and return the result in c register. 
 ;-- Carry is clear if successful, else carry is set if all slots full
 ;-- uses hl, bc, a
-FindNextFreeSlotInC:    ld      hl,UniverseSlotList
-                        ld      b, UniverseSlotListSize
-                        ld      c, 0
+; slot 0 is kept for the space station (IsSpaceStationPresent, the station compass and UpdateSafeZone expect it there):
+; ships use slots 1 on, so one spawned before we reach a safe zone can't take the station's place
+FindNextFreeSlotInC:    ld      hl,UniverseSlotList+1
+                        ld      b, UniverseSlotListSize-1
+                        ld      c, 1
 .SearchLoop:            ld      a,(hl)
                         JumpIfAEqNusng $FF, .FoundSlot
                         inc     c

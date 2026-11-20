@@ -1,9 +1,9 @@
 Adder:	                DB $00                              ; Number of cargo canisters released when destroyed
                         DW 50 * 50                          ; Ship's targetable area LoHi
-                        DW AdderEdges                       ; Edge Data 
+                        DW AdderEdges                       ; Edge Data
                         DB AdderEdgesSize                   ; Size of Edge Data
                         DB $00                              ; Gun Vertex Byte offset
-                        DB $16                              ; Explosion Count 
+                        DB $16                              ; Explosion Count
                         DB AdderVertSize / 6                ; Vertex Count /6
                         DB AdderVertSize                    ; Vertex Count
                         DB AdderEdgesCnt                    ; Edges Count
@@ -17,13 +17,13 @@ Adder:	                DB $00                              ; Number of cargo can
                         DB $21                              ; Laser power and Nbr Missiles
                         DW AdderVertices                    ; Verticles Address
                         DB ShipTypeNormal                   ; Ship Type
-                        DB 0                                ; NewB Tactics 
-                        DB ShipCanAnger                     ; AI Flags            
+                        DB 0                                ; NewB Tactics
+                        DB ShipCanAnger                     ; AI Flags
                         DB $80                              ; chance of ECM module
-                        DB $FF                              ; Supports Solid Fill = false
+                        DB $FF                              ; Supports Solid Fill = false (faces 6, 7, 8 don't close: wireframe)
                         DW $0000                            ; no solid data
                         DB $00                              ; no solid data
-                        
+
                                        ; chance of ECM module
 AdderVertices:	        DB $12, $00, $28, $9F, $01, $BC     ;01
                         DB $12, $00, $28, $1F, $01, $23     ;02
@@ -43,7 +43,7 @@ AdderVertices:	        DB $12, $00, $28, $9F, $01, $BC     ;01
                         DB $0B, $03, $1D, $05, $00, $00     ;16
                         DB $0B, $04, $18, $04, $00, $00     ;17
                         DB $0B, $04, $18, $84, $00, $00     ;18
-AdderVertSize:          equ $ - AdderVertices	
+AdderVertSize:          equ $ - AdderVertices
 AdderEdges:	            DB $1F, $01, $00, $04               ;01
                         DB $07, $23, $04, $08               ;02
                         DB $1F, $45, $08, $0C               ;03
@@ -73,8 +73,8 @@ AdderEdges:	            DB $1F, $01, $00, $04               ;01
                         DB $03, $00, $3C, $40               ;27
                         DB $04, $00, $40, $44               ;28
                         DB $03, $00, $44, $38               ;29
-AdderEdgesSize:         equ $ - AdderEdges	                
-AdderEdgesCnt:          equ AdderEdgesSize/4	            
+AdderEdgesSize:         equ $ - AdderEdges
+AdderEdgesCnt:          equ AdderEdgesSize/4
 AdderNormals:	        DB $1F, $00, $27, $0A               ;01
                         DB $5F, $00, $27, $0A               ;02
                         DB $1F, $45, $32, $0D               ;03
@@ -90,17 +90,16 @@ AdderNormals:	        DB $1F, $00, $27, $0A               ;01
                         DB $DF, $45, $32, $0D               ;13
                         DB $1F, $00, $1C, $00               ;14
                         DB $5F, $00, $1C, $00               ;15
-                                                            
-AdderNormalsSize:       equ $ - AdderNormals	            
-AdderLen:                equ $ - Adder	                    
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
-                                                            
+
+AdderNormalsSize:       equ $ - AdderNormals
+AdderLen:                equ $ - Adder
+
+
+
+
+
+
+
+
+
+

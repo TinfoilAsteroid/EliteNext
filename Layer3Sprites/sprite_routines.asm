@@ -1,53 +1,57 @@
 
+; Fixed sprite numbers. A cursor is a 3 sprite composite (sprite_big: anchor n, relatives n+1 and n+2, hidden by
+; hiding the anchor); 08-11 are spare, kept so the numbers from the reticule on stay where they were.
+; The local chart's stars are numbered from local_chart_first_star, after all of these, so they never take a cursor
 galactic_cursor_sprite              equ 0                            ; 00
 galactic_cursor_sprite1             equ galactic_cursor_sprite+1     ; 01
-galactic_cursor_sprite2             equ galactic_cursor_sprite1+2    ; 02
-                                                                     ; 
-galactic_hyper_sprite               equ galactic_cursor_sprite2+1    ; 03
+galactic_cursor_sprite2             equ galactic_cursor_sprite1+1    ; 02
+safe_zone_sprite                    equ galactic_cursor_sprite2+1    ; 03 the space station safe zone indicator (was spare)
+galactic_hyper_sprite               equ galactic_cursor_sprite2+2    ; 04 (a single sprite)
                                                                       
-local_cursor_sprite                 equ galactic_hyper_sprite+1      ; 04
-local_cursor_sprite1                equ local_cursor_sprite+1        ; 05
-local_cursor_sprite2                equ local_cursor_sprite1+1       ; 06
-local_hyper_sprite                  equ local_cursor_sprite2+5       ; 07
-local_hyper_sprite1                 equ local_hyper_sprite+1         ; 08
-local_hyper_sprite2                 equ local_hyper_sprite1+2        ; 09
-                                                                     
-reticlule_sprite1                   equ local_hyper_sprite2+1        ; 10
-reticlule_sprite2                   equ reticlule_sprite1+1          ; 11
-reticlule_sprite3                   equ reticlule_sprite2+1          ; 12
-reticlule_sprite4                   equ reticlule_sprite3+1          ; 13
+local_cursor_sprite                 equ galactic_hyper_sprite+1      ; 05
+local_cursor_sprite1                equ local_cursor_sprite+1        ; 06
+local_cursor_sprite2                equ local_cursor_sprite1+1       ; 07
+                                                                     ; 08-11 spare
+local_hyper_sprite                  equ local_cursor_sprite2+5       ; 12
+local_hyper_sprite1                 equ local_hyper_sprite+1         ; 13
+local_hyper_sprite2                 equ local_hyper_sprite1+1        ; 14
+                                                                     ; 15 spare
+reticlule_sprite1                   equ local_hyper_sprite2+2        ; 16
+reticlule_sprite2                   equ reticlule_sprite1+1          ; 17
+reticlule_sprite3                   equ reticlule_sprite2+1          ; 18
+reticlule_sprite4                   equ reticlule_sprite3+1          ; 19
 
-laser_sprite1                       equ reticlule_sprite4+1          ; 14
-laser_sprite2                       equ laser_sprite1    +1          ; 15
-laser_sprite3                       equ laser_sprite2    +1          ; 16
-laser_sprite4                       equ laser_sprite3    +1          ; 17
-laser_sprite5                       equ laser_sprite4    +1          ; 18
-laser_sprite6                       equ laser_sprite5    +1          ; 19
-laser_sprite7                       equ laser_sprite6    +1          ; 20
-laser_sprite8                       equ laser_sprite7    +1          ; 21
-laser_sprite9                       equ laser_sprite8    +1          ; 22
-laser_sprite10                      equ laser_sprite9    +1          ; 23
-laser_sprite11                      equ laser_sprite10   +1          ; 24
-laser_sprite12                      equ laser_sprite11   +1          ; 25
-laser_sprite13                      equ laser_sprite12   +1          ; 26
-laser_sprite14                      equ laser_sprite13   +1          ; 27
-laser_sprite15                      equ laser_sprite14   +1          ; 28
-laser_sprite16                      equ laser_sprite15   +1          ; 29
-compass_sun                         equ laser_sprite16   +1          ; 30
-compass_planet                      equ compass_sun      +1          ; 31
-compass_station                     equ compass_planet   +1          ; 31
-targetting_sprite1                  equ compass_station  +1          ; 32
-targetting_sprite2                  equ targetting_sprite1   +1      ; 33
-ECM_sprite                          equ targetting_sprite2   +1      ; 34
-missile_sprite1                     equ ECM_sprite       +1          ; 35
-missile_sprite2                     equ missile_sprite1  +1          ; 36
-missile_sprite3                     equ missile_sprite2  +1          ; 37
-missile_sprite4                     equ missile_sprite3  +1          ; 38
+laser_sprite1                       equ reticlule_sprite4+1          ; 20
+laser_sprite2                       equ laser_sprite1    +1          ; 21
+laser_sprite3                       equ laser_sprite2    +1          ; 22
+laser_sprite4                       equ laser_sprite3    +1          ; 23
+laser_sprite5                       equ laser_sprite4    +1          ; 24
+laser_sprite6                       equ laser_sprite5    +1          ; 25
+laser_sprite7                       equ laser_sprite6    +1          ; 26
+laser_sprite8                       equ laser_sprite7    +1          ; 27
+laser_sprite9                       equ laser_sprite8    +1          ; 28
+laser_sprite10                      equ laser_sprite9    +1          ; 29
+laser_sprite11                      equ laser_sprite10   +1          ; 30
+laser_sprite12                      equ laser_sprite11   +1          ; 31
+laser_sprite13                      equ laser_sprite12   +1          ; 32
+laser_sprite14                      equ laser_sprite13   +1          ; 33
+laser_sprite15                      equ laser_sprite14   +1          ; 34
+laser_sprite16                      equ laser_sprite15   +1          ; 35
+compass_sun                         equ laser_sprite16   +1          ; 36
+compass_planet                      equ compass_sun      +1          ; 37
+compass_station                     equ compass_planet   +1          ; 38
+targetting_sprite1                  equ compass_station  +1          ; 39
+targetting_sprite2                  equ targetting_sprite1   +1      ; 40
+ECM_sprite                          equ targetting_sprite2   +1      ; 41
+missile_sprite1                     equ ECM_sprite       +1          ; 42
+missile_sprite2                     equ missile_sprite1  +1          ; 43
+missile_sprite3                     equ missile_sprite2  +1          ; 44
+missile_sprite4                     equ missile_sprite3  +1          ; 45
 suncompass_sprite1                  equ missile_sprite4  +1
 suncompass_sprite2                  equ suncompass_sprite1  +1
 suncompass_sprite3                  equ suncompass_sprite2  +1
 suncompass_sprite4                  equ suncompass_sprite3  +1
-; For the local chart the sprites are all reused from 0 onwards to display the star map.
+; The local chart's stars are sprites from local_chart_first_star on (SRM_plot_stars).
 ; For galactic chart they are plot pixels so sprites are not needed
 
 planetcompass_sprite1               equ suncompass_sprite4  +1
@@ -61,6 +65,7 @@ stationcompass_sprite3              equ stationcompass_sprite2  +1
 stationcompass_sprite4              equ stationcompass_sprite3  +1
 diagnostic_sprite                   equ stationcompass_sprite4  +1
 last_sprite                         equ diagnostic_sprite
+local_chart_first_star              equ last_sprite+1                ; the local chart stars use the sprites after this (to 127)
 
 
 glactic_pattern_1                   equ 0
@@ -350,29 +355,6 @@ sprite_ghc_move:            ld      a,galactic_hyper_sprite
                             nextreg SPRITE_PORT_ATTR4_REGISTER,a        ; visible 5 bytes pattern e
                             ret
 ;-----------------------------------------------------------------------
-sprite_lhc_move:            ld      a,local_hyper_sprite
-                            nextreg SPRITE_PORT_INDEX_REGISTER,a        ; set up sprite id
-; write out X position bits 1 to 8
-                            ld      a,c
-                            ld      hl,spritecursoroffset
-                            add     hl,a                                ; hl = full x position
-                            ld      a,l
-                            nextreg SPRITE_PORT_ATTR0_REGISTER,a        ; Set up lower x cc
-; write out Y position bits 1 to 8
-                            ex      de,hl                               ; de = full x position
-                            ld      a,b
-                            ld      hl,spritecursoroffset
-                            add     hl,a
-                            ld      a,l                                 ; hl = full y position
-                            nextreg SPRITE_PORT_ATTR1_REGISTER,a        ; lower y coord on screen
-; write out MSB of X as its an anchor  
-                            ld      a,d                                 ; de = MSB of X (hl bit 0)
-                            nextreg SPRITE_PORT_ATTR2_REGISTER,a        ; lower y
-; write out msb of y in h must be bit 0 only
-                            ld      a,%00000000                         ; big unified composite
-                            or      d                                   ; MSB Y
-                            nextreg SPRITE_PORT_ATTR4_REGISTER,a        ; visible 5 bytes pattern e
-                            ret
 ;-----------------------------------------------------------------------
 ; "sprite_local_cursor BC = rowcol"
 sprite_local_cursor:        ld      d,local_cursor_sprite
@@ -522,6 +504,20 @@ sprite_missile_y        EQU 192-8+32
 
 sprite_ecm_x            EQU (6*8) +2 +32
 sprite_ecm_y            EQU 192-15+32
+sprite_safe_zone_x      EQU 256+32+32 -16 -sprite_ecm_x        ; the ECM's mirror image across the scanner: bottom right (BBC's "S")
+sprite_safe_zone_y      EQU sprite_ecm_y
+
+; the safe zone indicator's position and pattern, hidden (UpdateConsole shows it while SpaceStationSafeZone is 0)
+sprite_safe_zone:       ld      a,safe_zone_sprite
+                        nextreg SPRITE_PORT_INDEX_REGISTER,a
+                        ld      a,sprite_safe_zone_x
+                        nextreg SPRITE_PORT_ATTR0_REGISTER,a
+                        ld      a,sprite_safe_zone_y
+                        nextreg SPRITE_PORT_ATTR1_REGISTER,a
+                        nextreg SPRITE_PORT_ATTR2_REGISTER,0        ; palette 0, no mirror or rotation, x < 256
+                        ld      a,space_station_safe_zone_pattern  ; (bit 7 clear: hidden)
+                        nextreg SPRITE_PORT_ATTR3_REGISTER,a
+                        ret
 
 sprite_ECM:             ld      a,ECM_sprite
                         nextreg SPRITE_PORT_INDEX_REGISTER,a
@@ -640,6 +636,9 @@ RightLaser:             MACRO   xoffset, yoffset, spriteL, patternL
 show_ecm_sprite:        ShowSprite  ECM_sprite, ecm_pattern
                         ret
 
+show_safe_zone_sprite:  ShowSprite  safe_zone_sprite, space_station_safe_zone_pattern
+                        ret
+
 show_missile_1_ready:   ShowSprite  missile_sprite1, missile_ready_pattern
                         ret
 
@@ -747,6 +746,9 @@ sprite_reticule_hide:   HideSprite reticlule_sprite1
                         ret
 
 sprite_ecm_hide:        HideSprite ECM_sprite
+                        ret
+
+sprite_safe_zone_hide:  HideSprite safe_zone_sprite
                         ret
 
 sprite_missile_1_hide:  HideSprite missile_sprite1

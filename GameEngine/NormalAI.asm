@@ -272,22 +272,17 @@ ShipHeadingToUnivBody:  ld      a,(UBnKHeadingToPlanetOrSun)        ; do we have
                         cp      1
                         jp      nz, UpdateSunTracking               ; if its not 1 then must be sun
 ;.. Update tracking to planet.......................................
+; Steering to a body works as the missile does: TacticsVector = ship - body (S15.8, saturating), normalised to 96,
+; negated so it points from the ship to the body, then the nose, roof and side dot products set pitch, roll and speed
 UpdatePlanetTracking:   call    SaveMMU6                            ; save current ship     
                         MMUSelectPlanet
                         call    CopyPlanettoGeneral                 ; get planet position
                         call    RestoreMMU6                         ; get current Universe Object back
-                        ld      iy,PlanetXPos
-                        call    VectorUnivtoIY                      ; get Univ Target vector to planet - ship position
-;.. Get distance ...................................................
-                        call    UnivDistanceToTarget                ; Determine if ship is in safe zone of planet, 
+                        ld      ix,PlanetXPos                       ; TacticsVector = ship - planet
+                        call    UnivBodyVector                      ; .
+                        call    UnivDistanceToTarget                ; in the planet's safe zone?
                         jp      c,.MoveToDockingPhase               ; if close enough to planet move to docking phase
-                        MMUSelectMathsBankedFns
-                        call    NormalseUnivTarget                  ; now in the target normalise it to work out direction
-.NegateDirection:       FlipSignMem UBnKTargetXPosSgn                ; negate vector so it points opposite direction
-                        FlipSignMem UBnKTargetXPosSgn                ; we have already negated the dot product above
-                        FlipSignMem UBnKTargetXPosSgn                ; .                         
-                        jp      UnivSeekingLogic                     ; 
-                        ; implicit ret
+                        jp      UnivSteerToBody                     ; implicit ret
 ;.. If we are close enough moce to docking phase
 .MoveToDockingPhase:
                         ret
@@ -299,36 +294,58 @@ UpdateSunTracking:      call    SaveMMU6
                         MMUSelectSun
                         call    CopySuntoGeneral                    ; get sun position
                         call    RestoreMMU6                         ; get current Universe Object back
-                        ld      iy,SunXPos
-                        call    VectorUnivtoIY                      ; get Univ Target vector to planet - ship position
-                        call    UnivDistanceToTarget                ; Determine if ship is in safe zone of planet, 
+                        ld      ix,SunXPos                          ; TacticsVector = ship - sun
+                        call    UnivBodyVector                      ; .
+                        call    UnivDistanceToTarget                ; close to the sun?
                         jp      c,UnivMoveToJump                    ; if close enough to sun then jump (i.e. destrouy object but use flash of light)
-                        MMUSelectMathsBankedFns
-                        call    NormalseUnivTarget                  ; now in teh target normalise it to work out direction
-.NegateDirection:       FlipSignMem UBnKTargetXPosSgn                ; negate vector so it points opposite direction
-                        FlipSignMem UBnKTargetXPosSgn                ; we have already negated the dot product above
-                        FlipSignMem UBnKTargetXPosSgn                ; .                         
-                        jp      UnivSeekingLogic                     ; 
-                        ret
+                        jp      UnivSteerToBody                     ; implicit ret
                         
 UnivDocking:            ret
 
 UnivMoveToJump:
                         ret
 
-UnivSeekingLogic:       call    TacticsDotNosev                     ; TacticsVarResult = nose . Target Vector                           (     ->TAS3)
-                        ld      ( UBnKTargetDotProduct1),a              ; CNT = A (high byte of dot product)
-                        ld      a,(varS)                            ; get sign from dot product
-                        ld      ( UBnKTargetDotProduct2+1),a            ; Note here its direction not dir
-.RoofDotProduct:        call    XX12EquTacticsDotRoofv              ; Now tran the roof for rotation        
-                        ld      (TacticsDotProduct2),a              ; so if its +ve then the roof is similar so pull up to head towards it
-                        ld      a,(varS)                            ; .                                       
-                        ld      ( UBnKTargetDotProduct2+1),a            ; Note here its direction not dir
-;.. Update facing and speed ........................................
-                        call    UnivPitchToTarget
-                        call    UnivRollToTarget
-                        call    UnivSpeedToTarget
-                        ret                       
+;-------------------------------------------------------------------
+; one axis of UnivBodyVector: dest = ship axis - body axis at ix+ixoff
+UnivBodyAxis:           MACRO   ixoff, shiplo, shipsgn, dest
+                        ld      e,(ix+ixoff)                        ; cde = -body
+                        ld      d,(ix+ixoff+1)                      ; .
+                        ld      a,(ix+ixoff+2)                      ; .
+                        FlipSignBitA                                ; .
+                        ld      c,a                                 ; .
+                        ld      hl,(shiplo)                         ; bhl = ship
+                        ld      a,(shipsgn)                         ; .
+                        ld      b,a                                 ; .
+                        call    MissileVectorAdd                    ; ahl = ship - body, saturating
+                        ld      (dest),hl                           ; .
+                        ld      (dest+2),a                          ; .
+                        ENDM
+; TacticsVector = ship position - body position at ix (x, y, z each lo, hi, sign), S15.8 saturating as the missile's
+; vector. Leaves the maths bank paged in (MissileVectorAdd, UnivDistanceToTarget and UnivSteerToBody need it)
+UnivBodyVector:         MMUSelectMathsBankedFns
+                        UnivBodyAxis 0, UBnKxlo, UBnKxsgn, TacticsVectorX
+                        UnivBodyAxis 3, UBnKylo, UBnKysgn, TacticsVectorY
+                        UnivBodyAxis 6, UBnKzlo, UBnKzsgn, TacticsVectorZ
+                        ret
+
+; TacticsVector = ship - body: normalise, point it at the body and steer (maths bank paged in)
+UnivSteerToBody:        call    NormalizeTactics                    ; S7, 96 = 1.0
+                        FlipSignMem TacticsVectorX+2                ; negate so it is body - ship, i.e. points from
+                        FlipSignMem TacticsVectorY+2                ; the ship to the body, so +ve nose dot means
+                        FlipSignMem TacticsVectorZ+2                ; facing it
+                        call    ShipSeekingLogic                    ; pitch, roll and speed from the dot products
+; With the body behind, the roof and side dots are both small so ShipPitchv3 leaves pitch at 0 and the ship would
+; never turn round (as the missile, SimplifiedShipPitchv3): keep pitching while the nose dot is negative
+                        ld      a,(TacticsDotProduct1+1)            ; nose dot sign
+                        and     SignOnly8Bit                        ; .
+                        ret     z                                   ; body is ahead
+                        ld      a,(UBnKRotZCounter)                 ; magnitude is 0 or 2, keep the sign
+                        or      2                                   ; .
+                        ld      (UBnKRotZCounter),a                 ; .
+                        IFDEF MISSILEDEBUG
+                            ld  (TacticsRotZ),a
+                        ENDIF
+                        ret
 
                         
 ;;;

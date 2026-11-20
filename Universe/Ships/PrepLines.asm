@@ -17,6 +17,20 @@
  ;   DEFINE NOBACKFACECULL 1
 PLEDGECTR           DB          0
 
+    IFDEF SOLID_OUTLINES
+      IF SolidOutlinesMode == SolidOutlines_DECORATION
+; PrepDecorationLines: PrepLines with only the decoration edges (both face numbers the same: vents, engines, markings),
+; for SolidHullDraw to draw over the fill (SOLID_OUTLINES DECORATION)
+PrepLinesDecorationOnly DB      0
+PrepDecorationLines:    ld      a,1
+                        ld      (PrepLinesDecorationOnly),a
+                        call    PrepLines
+                        xor     a
+                        ld      (PrepLinesDecorationOnly),a
+                        ret
+      ENDIF
+    ENDIF
+
 PrepLines:
 ; FOR NOW BRUTE FORCE IF OFF SCREEN
 
@@ -79,6 +93,20 @@ IsFace2Visibile:
         pop         hl
         JumpIfAIsZero LL78EdgeNotVisible                ; edge not visible
 VisibileEdge:                                           ; Now we need to node id from bytes 2 - start and 3 - end
+    IFDEF SOLID_OUTLINES
+      IF SolidOutlinesMode == SolidOutlines_DECORATION
+        ld          a,(PrepLinesDecorationOnly)         ; only decoration edges: skip one whose two faces differ
+        and         a
+        jr          z,.AnyEdge
+        ld          a,(IY+1)
+        ld          c,a
+        swapnib
+        xor         c
+        and         $0F
+        jp          nz,LL78EdgeNotVisible
+.AnyEdge:
+      ENDIF
+    ENDIF
 ;LL79--Visible edge--------------------------------------
 ; Get Edge Byte 2
         ld          a,(IY+2)                            ; get Node id

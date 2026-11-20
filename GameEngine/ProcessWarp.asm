@@ -75,10 +75,10 @@ ProcessWarp:            SetMemFalse     WarpPressed                     ; clear 
                         MMUSelectLayer1
                         call    WarpSFX             ; Do the visual SFX based on facing
                         ret
-.TooHot:                ;       call hot bong
+.TooHot:                PlaySFX SFXBong                         ; the jump drive is still hot
                         MMUSelectLayer1
                         ret                     
-.MassLocked:            ;       call bing bong noise 
+.MassLocked:            PlaySFX SFXBong                         ; something within 1.0
 .NoWarp:                MMUSelectLayer1             ; skip with no sound
                         ret 
 

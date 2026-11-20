@@ -235,5 +235,247 @@ def test_horizontal_and_vertical():
     sd.close()
 
 
+def test_draw_diagonal():
+    """l2_draw_diagonal (the launch tunnel, hyperspace lightning, l2_draw_any_line): unclipped on the full 256 x 192
+    screen, exactly the L2LDiagonal Bresenham, in the colour passed in A (it once drew in line_gfx_colour, 4-connected,
+    with up to 70% extra pixels and often a missing end), line_gfx_colour left as it was"""
+    sd, cpu = booted()
+    r = et.rnd(34)
+    for n in range(300):
+        x0, x1 = r.randrange(256), r.randrange(256)
+        y0, y1 = r.randrange(192), r.randrange(192)
+        if x0 == x1 or y0 == y1:
+            continue
+        clear(cpu)
+        et.wr(cpu, "line_gfx_colour", 0x11)
+        colour = r.choice((0x80, 0xCC, 0xFF, 0x1C))
+        et.call(cpu, "l2_draw_diagonal", b=y0, c=x0, d=y1, e=x1, a=colour)
+        pix = drawn(cpu)
+        got = {(x, y) for _, x, y, _ in pix}
+        exp = bresenham(x0, y0, x1, y1)
+        check(got == exp, f"({x0}, {y0}) to ({x1}, {y1}): {len(got)} pixels, expected {len(exp)} "
+                          f"(missing {sorted(exp - got)[:4]}, extra {sorted(got - exp)[:4]})")
+        check(all(v == colour for *_, v in pix), f"({x0}, {y0}) to ({x1}, {y1}): not all colour {colour:02X}")
+        check(et.rd(cpu, "line_gfx_colour") == 0x11, "line_gfx_colour changed")
+    sd.close()
+
+
+def test_horz_line_spans_and_single_pixels():
+    """l2_draw_horz_line (b = row, c = column, d = length, e = colour): exactly d pixels, the short ones (under 10, by
+    CPU) clipped at column 255, the long ones by DMA; and the single pixel paths of it, l2_draw_horz_line_to,
+    l2_draw_vert_line and l2_draw_any_line plot in the colour passed in, not line_gfx_colour"""
+    sd, cpu = booted()
+    r = et.rnd(35)
+    for n in range(300):
+        row, col, ln = r.randrange(192), r.randrange(256), r.choice((r.randrange(1, 12), r.randrange(10, 120)))
+        if ln >= 10 and col + ln > 256:
+            continue                        # (the DMA path isn't clipped: callers keep inside the row)
+        clear(cpu)
+        et.wr(cpu, "line_gfx_colour", 0x11)
+        et.call(cpu, "l2_draw_horz_line", b=row, c=col, d=ln, e=0xCC)
+        pix = drawn(cpu)
+        exp = {(x, row) for x in range(col, min(col + ln, 256))}
+        check({(x, y) for _, x, y, _ in pix} == exp, f"row {row} col {col} length {ln}: {len(pix)} pixels, expected {len(exp)}")
+        check(all(v == 0xCC for *_, v in pix), f"row {row} col {col} length {ln}: colour")
+    for name, regs in (("l2_draw_horz_line", dict(d=1, e=0xCC)), ("l2_draw_horz_line_to", dict(d=40, e=0xCC)),
+                       ("l2_draw_vert_line", dict(d=1, e=0xCC)), ("l2_draw_any_line", dict(d=70, e=40, a=0xCC))):
+        clear(cpu)
+        et.wr(cpu, "line_gfx_colour", 0x11)
+        et.call(cpu, name, b=70, c=40, **regs)
+        pix = drawn(cpu)
+        check([(x, y, v) for _, x, y, v in pix] == [(40, 70, 0xCC)], f"{name} single pixel: {pix}")
+    sd.close()
+
+
+def l2_320_pages(cpu):
+    return [cpu.page(cpu.nextreg.get(0x12, 8) * 2 + k) for k in range(10)]
+
+
+def drawn_320(cpu):
+    """{(x, y)} set in the 320 x 256 Layer 2 (column major: x * 256 + y)"""
+    return {((k * 8192 + o) >> 8, (k * 8192 + o) & 255) for k, p in enumerate(l2_320_pages(cpu)) for o, v in enumerate(p) if v}
+
+
+def test_320_lines():
+    """The menus' 320 x 256 lines: l2_draw_horz_line_320 (b = row, hl = column, de = length) and
+    l2_draw_vert_line_320 (e = length) draw exactly the length (the horizontal one once drew one more, the callers
+    allowed for it) clipped at column 319 / row 255 (the horizontal once wrapped to column 0, the vertical spilled into
+    the next column)"""
+    sd, cpu = booted()
+    r = et.rnd(36)
+    for n in range(250):
+        row, col = r.randrange(256), r.randrange(320)
+        for p in l2_320_pages(cpu):
+            p[:] = bytes(8192)
+        if n % 2:
+            ln = r.choice((1, 2, r.randrange(1, 340)))
+            et.call(cpu, "l2_draw_horz_line_320", b=row, hl=col, de=ln, c=0xC0)
+            exp = {(x, row) for x in range(col, min(col + ln, 320))}
+        else:
+            ln = r.choice((1, 2, r.randrange(1, 256)))
+            et.call(cpu, "l2_draw_vert_line_320", b=row, hl=col, e=ln, c=0xC0)
+            exp = {(col, y) for y in range(row, min(row + ln, 256))}
+        got = drawn_320(cpu)
+        check(got == exp, f"{'horizontal' if n % 2 else 'vertical'} row {row} col {col} length {ln}: {len(got)} pixels, "
+                          f"expected {len(exp)} (extra {sorted(got - exp)[:3]}, missing {sorted(exp - got)[:3]})")
+    sd.close()
+
+
+def test_draw_any_line():
+    """l2_draw_any_line (the planet's lines): horizontal, vertical, diagonal and single points on the full 256 x 192
+    screen, both ends drawn, in the colour passed in A (horizontal and vertical lines once came out as one pixel:
+    its same row / same column tests were the wrong way round)"""
+    sd, cpu = booted()
+    r = et.rnd(37)
+    for n in range(300):
+        x0, y0 = r.randrange(256), r.randrange(192)
+        kind = n % 4
+        x1 = x0 if kind in (1, 3) else r.randrange(256)
+        y1 = y0 if kind in (0, 3) else r.randrange(192)
+        clear(cpu)
+        et.wr(cpu, "line_gfx_colour", 0x11)
+        et.call(cpu, "l2_draw_any_line", b=y0, c=x0, d=y1, e=x1, a=0xCC)
+        pix = drawn(cpu)
+        got = {(x, y) for _, x, y, _ in pix}
+        if y0 == y1:
+            exp = {(x, y0) for x in range(min(x0, x1), max(x0, x1) + 1)}
+            if len(exp) == 256:
+                exp.discard((255, y0))      # (0 to 255 is drawn as 255 pixels: 256 doesn't fit the length)
+        elif x0 == x1:
+            exp = {(x0, y) for y in range(min(y0, y1), max(y0, y1) + 1)}
+        else:
+            exp = bresenham(x0, y0, x1, y1)
+        check(got == exp, f"({x0}, {y0}) to ({x1}, {y1}): {len(got)} pixels, expected {len(exp)} "
+                          f"(missing {sorted(exp - got)[:4]}, extra {sorted(got - exp)[:4]})")
+        check(all(v == 0xCC for *_, v in pix), f"({x0}, {y0}) to ({x1}, {y1}): colour")
+    sd.close()
+
+
+def test_equip_screen_320_and_hyperspace_256():
+    """The equip ship screen (Delete, was C) is a 320 x 256 single buffered menu like the charts: border, title, the
+    list from the equipment tables (in main memory: in their own slot 7 bank the galaxy's code was read instead), the
+    selected row in $BC and the rest in $FF, the highlight following the cursor. The hyperspace screen switches Layer 2
+    back to 256 x 192 when a countdown ends on a 320 x 256 chart. (nexsim has no ROM font: the test gives it solid blocks
+    so a printed character's cell shows its colour)"""
+    sd, cpu = booted()
+    et.page_in(cpu, 7, sym["BankKeyboard"])
+    check(et.rd(cpu, sym["KeyboardMap"] + sym["c_Pressed_Equip"], 2) == sym["Keys"] + sym["VK_DELETE"], "equip isn't on Delete")
+    rom = cpu.page(0xFF)
+    for c in range(32, 128):
+        for k in range(8):
+            rom[(sym["charactersetaddr"] + 8 * c + k) & 0x1FFF] = 0xFF
+    pages = l2_320_pages(cpu)
+
+    def px(x, y):
+        a = x * 256 + y
+        return l2_320_pages(cpu)[a >> 13][a & 0x1FFF]
+    for chart in ("ScreenGalactic", "ScreenLocal"):
+        et.call(cpu, "SetScreenA", a=sym[chart])
+        et.call(cpu, "SetScreenA", a=sym["ScreenEquip"])
+        mode = (cpu.nextreg.get(0x70, 0) >> 4) & 3
+        check(mode == 1 and et.rd(cpu, "varL2_BUFFER_MODE") == 0, f"equip after {chart}: mode {mode}, buffer mode {et.rd(cpu, 'varL2_BUFFER_MODE')}")
+        top = sym["eqshp_ListTop"]
+        check(px(9, top + 2) == sym["eqshp_HighColour"], f"row 0 colour {px(9, top + 2):02X}")
+        check(px(9, top + 10) == sym["eqshp_TextColour"], f"row 1 colour {px(9, top + 10):02X}")
+        check(px(9, 4) == sym["eqshp_TextColour"] and px(9, sym["eqshp_CashRow"] + 2) == sym["eqshp_TextColour"], "title or cash missing")
+        check(px(1, 100) != 0xE3, "no border")
+    page = cpu.page(sym["BankMenuEquipS"])
+    rows = []
+    for r in range(4):
+        a = sym["eqship_display_buffer"] - 0xC000 + r * sym["eqship_buffer_row_len"]
+        rows.append(bytes(page[a:a + 20]).split(b"")[0].strip().decode("latin-1"))
+    check(rows == ["Fuel", "Missile", "Large Cargo Bay", "E.C.M. System"], f"equip list {rows}")
+    et.call(cpu, "eqshp_DownPressed", mmu={6: sym["BankMenuEquipS"]})
+    top = sym["eqshp_ListTop"]
+    check(px(9, top + 2) == sym["eqshp_TextColour"] and px(9, top + 10) == sym["eqshp_HighColour"],
+          f"after down: rows {px(9, top + 2):02X} {px(9, top + 10):02X}")
+    for chart in ("ScreenGalactic", "ScreenLocal"):
+        et.call(cpu, "SetScreenA", a=sym[chart])
+        et.call(cpu, "SetScreenA", a=sym["ScreenHyperspace"])
+        mode = (cpu.nextreg.get(0x70, 0) >> 4) & 3
+        check(mode == 0 and cpu.l2clip == [0, 255, 0, 192], f"hyperspace after {chart}: mode {mode}, clip {cpu.l2clip}")
+    sd.close()
+
+def fill_model(pts):
+    """l2_fill_convex_polygon's pixels in Python: each edge's rows clipped to 0-127, x(y) = xa + sign * floor((y - ya) *
+    |dx| / dy), each row from its smallest to its largest x, clipped to 0-255"""
+    ys = [y for x, y in pts]
+    if max(ys) < 0 or min(ys) > 127:
+        return set()
+    if min(ys) == max(ys):                                  # flat: the row from the smallest to the largest x
+        xs = [x for x, y in pts]
+        return {(x, ys[0]) for x in range(max(min(xs), 0), min(max(xs), 255) + 1)}
+    top, bot = max(min(ys), 0), min(max(ys), 127)
+    left, right = {}, {}
+    n = len(pts)
+    for i in range(n):
+        (xa, ya), (xb, yb) = pts[i], pts[(i + 1) % n]
+        if ya == yb:
+            continue
+        if ya > yb:
+            xa, ya, xb, yb = xb, yb, xa, ya
+        if yb < top or ya > bot:
+            continue
+        ys_, ye = max(ya, top), min(yb, bot)
+        dy, s, adx = yb - ya, (1 if xb >= xa else -1), abs(xb - xa)
+        q, r = divmod(adx, dy)
+        k = ys_ - ya
+        x, err = xa + s * (k * adx // dy), (k * adx) % dy
+        for y in range(ys_, ye + 1):
+            left[y] = min(left.get(y, 32767), x)
+            right[y] = max(right.get(y, -32768), x)
+            err += r
+            step = q
+            if err >= dy:
+                err -= dy
+                step += 1
+            x += s * step
+    out = set()
+    for y in range(top, bot + 1):
+        if y not in left or right[y] < 0 or left[y] > 255:
+            continue
+        for x in range(max(left[y], 0), min(right[y], 255) + 1):
+            out.add((x, y))
+    return out
+
+
+def convex(r, n, cx, cy, rad):
+    import math
+    angles = sorted(r.uniform(0, 2 * math.pi) for _ in range(n))
+    if r.random() < 0.5:
+        angles = angles[::-1]                               # either winding
+    return [(int(cx + rad * math.cos(a) * r.uniform(0.6, 1.4)), int(cy + rad * math.sin(a))) for a in angles]
+
+
+def test_fill_convex_polygon():
+    """l2_fill_convex_polygon (solid ships, Layer2Graphics/l2_fill_polygon.asm): exactly the model's pixels in the
+    colour given, nothing outside rows 0-127 or the other buffer, for random convex polygons of 3 to 8 points either way
+    round, on and partly or wholly off screen (out to +-16000), and thin and degenerate ones"""
+    import math
+    sd, cpu = booted()
+    r = et.rnd(40)
+    pts_addr = sym["TextBuffer"]
+    cases = [[(10, 10), (60, 10), (35, 50)], [(0, 0), (255, 0), (255, 127), (0, 127)], [(-50, -50), (400, -50), (400, 300), (-50, 300)],
+             [(100, 20), (101, 20), (101, 90)], [(5, 5), (5, 5), (5, 5)], [(-16000, 60), (16000, 50), (16000, 70)],
+             [(50, -16000), (60, 16000), (70, 16000)], [(300, 10), (400, 10), (350, 50)], [(10, 200), (50, 200), (30, 250)],
+             [(10, 50), (40, 50), (25, 50)], [(-20, 60), (300, 60), (100, 60), (5, 60)], [(0, 0), (255, 0), (30, 0)],
+             [(-90, 127), (-10, 127), (-50, 127)], [(260, 3), (900, 3), (300, 3)], [(70, -1), (90, -1), (80, -1)]]
+    for n in range(400):
+        rad = r.choice((5, 20, 60, 150, 600, 4000))
+        cases.append(convex(r, r.randrange(3, 9), r.randrange(-200, 460), r.randrange(-150, 280), rad))
+    for pts in cases:
+        clear(cpu)
+        for i, (x, y) in enumerate(pts):
+            et.wr(cpu, pts_addr + 4 * i, x & 0xFFFF, 2)
+            et.wr(cpu, pts_addr + 4 * i + 2, y & 0xFFFF, 2)
+        et.call(cpu, "l2_fill_convex_polygon", ix=pts_addr, b=len(pts), a=0x5A)
+        pix = drawn(cpu)
+        got = {(x, y) for _, x, y, _ in pix}
+        exp = fill_model(pts)
+        check(got == exp, f"{pts}: {len(got)} pixels, expected {len(exp)} (extra {sorted(got - exp)[:4]}, missing {sorted(exp - got)[:4]})")
+        check(all(v == 0x5A for *_, v in pix), f"{pts}: colour")
+    sd.close()
+
+
 if __name__ == "__main__":
     et.main(globals())
