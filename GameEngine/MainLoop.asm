@@ -428,16 +428,14 @@ LaserReset:             ZeroA
                         ld      (LaserLastFrame),hl
                         ret
 
-;;called from LaunchedFromStation  & WeHaveCompletedHJump to re-seed the system
-;-- Get seed for galaxy system and copy into working vars for system and galaxy, correct post jump fuel, force to front view, set extra vessels to spawn to 0 and mark as undocked
-InitialiseLocalUniverse:ld      a,(Galaxy)                      ; DEBUG as galaxy n is not working
+; called from WeHaveCompletedLaunch and WeHaveCompletedHJump: the present system's seeds into the working, system and
+; galaxy copies and its planet data, the front view forced, no extra vessels, undocked. The jump itself (the present
+; system the target, the fuel used) is WeHaveCompletedHJump's: it was done here, so a launch after picking a target
+; on the chart moved us there without a jump, and took the fuel (Tools/test_jump.py)
+InitialiseLocalUniverse:ld      a,(Galaxy)                      ; (BankGalaxyData0 + the galaxy number)
                         MMUSelectGalaxyA
-                        ld      hl,(TargetSystemX)
-                        ld      (PresentSystemX),hl
-                        ld      b,h
-                        ld      c,l
-                        CorrectPostJumpFuel
-                        ForceTransition ScreenFront            ; This will also trigger stars 
+                        ld      bc,(PresentSystemX)
+                        ForceTransition ScreenFront            ; This will also trigger stars
                         ld      a,$00
                         ld      (ExtraVesselsCounter),a
                         ld      (DockedFlag),a
@@ -448,18 +446,12 @@ InitialiseLocalUniverse:ld      a,(Galaxy)                      ; DEBUG as galax
                         ret
 
 
-; to create planet position 
-;       take seed 2 AND %00000011 + 3 + carry and store in z sign
-;       take result and divide by 2 then store in x and y sign
-;         
-;       take seed 4 AND %00000111 OR %10000001 and store in z sign
-;       take seed 6 AND %00000011 and store in x sign and y sign
-;       set pitch and roll to 0
-;
-;
-;                                   
-; --- At the end of a hyperspace jump we have to reset compass, market universe sun and planets etc
-WeHaveCompletedHJump:   call    InitialiseLocalUniverse
+; --- At the end of a hyperspace jump: we're at the target, the fuel used, then the new system's seeds, market, empty
+; slots, the ship reset, and the sun and planet from the seeds (CreateSun, CreatePlanet, as BBC Elite's SOLAR: the planet
+; ahead, the sun behind). The station is made on flying into the planet's safe zone (UpdateSafeZone). Tools/test_jump.py
+WeHaveCompletedHJump:   CopyTargetSystemToPresent
+                        CorrectPostJumpFuel                    ; Fuel -= Distance (H checked it's enough)
+                        call    InitialiseLocalUniverse
                         MMUSelectStockTable                    ; .
                         call    generate_stock_market          ; generate new prices
                         call    ClearUnivSlotList              ; clear out any ships

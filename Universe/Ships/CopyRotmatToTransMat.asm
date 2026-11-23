@@ -5,41 +5,18 @@
 ; This moves Side XYZ to position 0, Roof XYZ to position 1 annd nose XYZ to position 2 as a copy of each batch of 6 bytes
 ; 18 byte fast copy
 
-; Fast copy using the stack                                                         ; T states
-CopyRotmatToTransMat:   di                                                          ; disable interrups to protect during copy
-                        ld      ix,0                                                ; 14
-                        add     ix,sp                                               ; 15
-                        ld      sp,UBnkrotmatSidevX ; Source                        ; 10
-                        pop     hl                  ; UBnkrotmatSidevX              ; 10
-                        pop     de                  ; UBnkrotmatSidevY              ; 10
-                        pop     bc                  ; UBnkrotmatSidevZ              ; 10
-                        exx                                                         ; 4
-                        pop     hl                  ; UBnkrotmatRoofvX              ; 10
-                        pop     de                  ; UBnkrotmatRoofvY              ; 10
-                        pop     bc                  ; UBnkrotmatRoofvZ              ; 10
-                        ld      sp,UBnkTransmatRoofvZ+2 ; Target + 2 reversed       ; 10
-                        push    bc                                                  ; 10
-                        push    de                                                  ; 10
-                        push    hl                                                  ; 10
-                        exx                                                         ; 4
-                        push    bc                                                  ; 10
-                        push    de                                                  ; 10
-                        push    hl                                                  ; 10
-                        ld      sp,UBnkrotmatNosevX ; Source                        ; 10
-                        pop     hl                  ; UBnkrotmatSidevX              ; 10
-                        pop     de                  ; UBnkrotmatSidevY              ; 10
-                        pop     bc                  ; UBnkrotmatSidevZ              ; 10
-                        ld      sp,UBnkTransmatNosevZ+2                             ; 10
-                        push    bc                                                  ; 10
-                        push    de                                                  ; 10
-                        push    hl                                                  ; 10
-                        ld      sp,ix               ; restore stack                 ; 10
-                    IFNDEF INTERRUPS_DISABLE
-                        ei
-                    ENDIF
-                        ret                                                         ; 10 Total 267 (LDI version is 318)
-                        
-                            
+; A straight 18 byte copy (the rotmat and transmat vectors are each 9 contiguous words in the same order). It was a
+; stack copy (267 T states) under di/ei, but ProcessNodes also runs inside the attract mode interrupt, where that ei
+; re-enabled interrupts mid handler and let the next one nest. 18 LDIs (308 T states) need no interrupt protection.
+                        ASSERT  UBnkrotmatNosevZ - UBnkrotmatSidevX == 16 && UBnkTransmatNosevZ - UBnkTransmatSidevX == 16
+CopyRotmatToTransMat:   ld      hl,UBnkrotmatSidevX
+                        ld      de,UBnkTransmatSidevX
+                        SixLDIInstrunctions
+                        SixLDIInstrunctions
+                        SixLDIInstrunctions
+                        ret
+
+
 CopyRotToTransMacro:    MACRO
                         ld      hl,UBnkrotmatSidevX
                         ld      de,UBnkTransmatSidevX

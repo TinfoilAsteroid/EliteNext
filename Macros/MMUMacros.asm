@@ -163,8 +163,9 @@ MMUSelectSound:      MACRO
                      
                      
 
+; SaveMMU6/7 macros are for the IM2 handler only (interrupts off): main code uses the SaveMMU6/7 routines
 SaveMMU6:           MACRO
-                    GetNextReg  MMU_SLOT_6_REGISTER
+                    GetNextRegNoInt  MMU_SLOT_6_REGISTER
                     ld      (SavedMMU6),a
                     ENDM
 
@@ -174,7 +175,7 @@ RestoreMMU6:        MACRO
                     ENDM
 
 SaveMMU7:           MACRO
-                    GetNextReg  MMU_SLOT_7_REGISTER
+                    GetNextRegNoInt  MMU_SLOT_7_REGISTER
                     ld      (SavedMMU7),a
                     ENDM
 

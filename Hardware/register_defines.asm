@@ -262,17 +262,35 @@ CTCEND                                  EQU CTCBASE+(CTCSIZE*2)
 DEBUG_LEDS_REGISTER						EQU 255
 
 
+; Reading a next register is two port accesses: select it on $243B, then read $253B. The IM2 handler reads MMU7 the same
+; way (SaveMMU7), so an interrupt between the two would leave MMU7 selected and the read would return its value instead
+; (seen on hardware as phantom extended key presses: BankKeyboard in MMU7 reads as EDIT, the system map). So in main
+; line code the pair runs with interrupts off. These re-enable them (ei) so must not be used where interrupts are off,
+; i.e. in the IM2 handler or anything it calls, or startup before interrupts are on: use GetNextRegNoInt there.
 GetNextRegSaveBC:	MACRO register
                     push bc
                     ld bc,$243B
                     ld a,register
+                    di
                     out (c),a
                     inc b
                     in a,(c)
+                    ei
                     pop bc
                     ENDM
 
 GetNextReg:	MACRO register
+            ld bc,$243B
+            ld a,register
+            di
+            out (c),a
+            inc b
+            in a,(c)
+            ei
+            ENDM
+
+; for code that runs with interrupts already off (the IM2 handler and what it calls), so nothing can interrupt the pair
+GetNextRegNoInt: MACRO register
             ld bc,$243B
             ld a,register
             out (c),a

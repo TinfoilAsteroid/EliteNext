@@ -8,16 +8,15 @@ Bugs and checks first, then the tools that decide the optimisation work, then th
 
 1. [Check on CSpect / a Next](#checks-and-tools): confirms several "probably fixed" items at once; low effort.
 2. [Lasers](#flight-and-combat): the laser sound lag (a bug), anger the station when hit (small), then per view lasers. (The ShipInSights sign byte bug is fixed.)
-3. [Per routine T-state profile](#checks-and-tools): needed before any optimisation item (log divides, ProcessShip).
-4. [Verify post hyper space](#jumps): an end to end jump test; the code is done, only the test is missing.
-5. [Traders head for the station and dock](#ai-and-spawning): the station and safe zone exist now, so the AI can use them.
-6. [Docking and collisions with the station](#flight-and-combat), then [equipment damage](#flight-and-combat) (decide the design first).
-7. [The "mass locked" message](#jumps): the first use of the message queue (EnqueMessage has never been called), so test the queue with it.
-8. [Spawn tables](#ai-and-spawning), JunkCount / PirateCount, bravery, the jump flash.
-9. [Jump drive extras](#jumps), then the [galaxy drive jump](#jumps).
-10. [Missile types and equipment names](#missiles-equipment-and-the-commander), [load and save](#missiles-equipment-and-the-commander).
-11. [Radar range, line colours, the redocking flicker](#screens-and-display).
-12. [Missions](#missiles-equipment-and-the-commander), [solid hulls phase 2](#solid-hulls), [80 column text](#screens-and-display); [input](#input-deferred) waits on the ZPolice keyboard logic.
+3. [Optimise what the profile shows](#checks-and-tools): the profile is done (Tools/profile_game.py); the polygon edge walk, the projection divide, the planet circle.
+4. [Docking and collisions with the station](#flight-and-combat), then [equipment damage](#flight-and-combat) (decide the design first).
+5. [The "mass locked" message](#jumps): the first use of the message queue (EnqueMessage has never been called), so test the queue with it.
+6. [Spawn tables](#ai-and-spawning), JunkCount / PirateCount, bravery, the jump flash.
+7. [Jump drive extras](#jumps), then the [galaxy drive jump](#jumps).
+8. [Missile types and equipment names](#missiles-equipment-and-the-commander), [load and save](#missiles-equipment-and-the-commander).
+9. [Radar range, line colours, the redocking flicker](#screens-and-display).
+10. [Missions](#missiles-equipment-and-the-commander), [solid hulls phase 2](#solid-hulls), [80 column text](#screens-and-display); [input](#input-deferred) waits on the ZPolice keyboard logic.
+11. [Pi renderer](#pi-renderer): a proposal; answer its questions and prototype it in nexsim before any hardware work.
 
 ## Checks and tools
 
@@ -27,11 +26,15 @@ Bugs and checks first, then the tools that decide the optimisation work, then th
   - The sound effects: tune them by ear, and the noise channel (explosions are tone only as InitAudio's mixer has noise off). (Was its own item, from "Sound FXs".)
   - The system map's text and layout (the emulator has no ROM font), and the station 160 behind us in the rear view after launch (StationLaunchMargin).
   - The safe zone indicator, the menus' text, the solid planet.
-- [ ] Per routine T-state profile in the emulator (replaces "Optimisation")
-  - In Tools/nexsim.py: while running, add each instruction's T-states to the label containing PC (from eliteN.sym, nearest label below, per bank), over a few hundred main loop frames in flight with ships about; a tool (Tools/profile.py) printing the top routines by T-states per frame and their share of the 560,000 T a 50 Hz frame has at 28 MHz, and call counts. Then optimise only what it shows matters (candidates so far: projection and clipping divides, the planet fill, the dot products).
+  - Ships moving: they now move along their nose on every axis (ApplyShipSpeed only moved many of them on x until 2026-11-21, see DONE.md); traders flying round to the station's slot, slowing and vanishing into it, and heading for the sun.
+  - After a hyperspace jump: the planet ahead and the sun behind us (CreateSun cleared the sun's z sign until 2026-11-21, so it was alongside us), and a launch after picking a target on the chart staying in the home system.
+- [ ] Optimise what the profile shows (follow up of the per routine T-state profile, done: [DONE.md](DONE.md); `python Tools/profile_game.py`, `--lines ROUTINE` for a routine by source line)
+  - Measured (2026-11-21, hardware build, 300 main loops, 6 ships ahead of us drawn solid, the planet in view): 2,156,000 T a main loop, 3.85 frames, so 13 main loops a second. The interrupt is 0.3%.
+  - Where it goes (inclusive, share of all the time): the ships 70% (DrawForwardShips; ProcessShip 208,600 T a ship). Of that, ProcessNodes 36%: the node rotation (XX12EquNodeDotOrientation / XX12ProcessOneRow) 16%, HLequHLmulDEu > fixedS78_mulu 191 calls a frame 7.6%, the projection (ProjectNodeToEye) 10%, nearly all the DIV16UNDOC divide (9%, 1,256 T a call, 40 a frame). SolidHullDraw 28%: l2_fill_convex_polygon 24% (PolyEdge 17.7%, PolyDivide32 5.4%, PolySignedLess 4.1% at 281 calls a frame). CullV2 6%. The planet 19% (l2_draw_clipped_circle_filled 18%; l2_draw_clipped_circle 127 calls a frame, 6.3% of its own). The spans (l2_draw_horz_dma*) 6.7%. The screen clear 1.8% (DMA+).
+  - Candidates, biggest first: (1) PolyEdge: keep x and the error term in registers through the row loop instead of PolyX / PolyErr / PolyR / PolyDY in memory, and the left / right compares inline rather than calls of PolySignedLess (81 T each); (2) DIV16UNDOC: its comment says unroll 16 times but it is still a djnz loop (unrolled saves about 200 of its 1,256 T), or the log divide (see Log divide maths); (3) the planet circle: 601 T a row step in l2_draw_clipped_circle, a table of half widths per row would replace the circle walk; on REAL_HARDWARE the DMA+ 2D fill for the spans; (4) the node dot products: fixedS78_mulu already uses mul de (4 of them, 188 T), so the gain is in calling it less (HLequHLmulDEu throws away the low byte: an 8.8 x 8.8 with 3 muls).
 - [ ] Log divide maths
   - Partly done: the log / antilog routines (Maths/logmaths.asm) are used by ScaleXX16Matrix197, NormaliseTransMat and the node scaling (AEquAmul256DivBLog). Projection (RequAmul256divQ in univ_ship_data.asm) and clipping (AEquAmul256DivD in CLIP-LL145.asm) use the shift and subtract divides.
-  - Suggested: measure first (see the per routine T-state profile item); move a divide to logs only where it's hot and the log version's error (about 1 part in 64) is acceptable. Clipping needs exact end points, so probably not there.
+  - Suggested: measured (see Optimise what the profile shows): the projection's DIV16UNDOC is 9% of the time, so it's the one to try; move a divide to logs only where it's hot and the log version's error (about 1 part in 64) is acceptable. Clipping needs exact end points, so probably not there.
 - [ ] NormalizeTactics is up to 3 of 96 low on small components (7 bit scale, the divide's halving for lengths of 128 or more, its 3/8 step); more precision if missiles need it ([Maths/normalise96.asm](Maths/normalise96.asm), `NormalizeTactics`): left open, the missile tests pass so not needed yet
 
 ## Flight and combat
@@ -43,6 +46,7 @@ Bugs and checks first, then the tools that decide the optimisation work, then th
   - Suggested: add the sign bytes to ShipInSights' test; per view lasers (rear / left / right views using their own laser stats with the ship position mirrored into that view); anger the station when hit; the laser sound is done (see Sound FXs in [DONE.md](DONE.md)).
   - Done (2026-11-20): ShipInSights now also checks the sign bytes' integer bits, so a ship 65536 or more to the side or above is not in the sights. Tools/test_laser.py test_ship_in_sights_sign_bytes (fails on the old code). Still to do: per view lasers and angering the station.
 - [ ] Docking and collisions with the station ([eliteNext.asm](eliteNext.asm), GetStationVectorToWork; [GameEngine/UpdateUniverseObjects.asm](GameEngine/UpdateUniverseObjects.asm) .CollisionCheck)
+  - Other ships don't collide with the station either: a docking trader coming from behind flies through it on its way round to the slot (GameEngine/DockingAI.asm).
   - Bouncing off the station is wrong: hitting it outside the docking angle should push us back and damage us.
   - Collision damage to both ships proportional to speed (DamageShip is called on a collision; "dent target too, make damage proportional to speed").
   - (was: Docking works but bouncing off is wrong for space station ([eliteNext.asm](eliteNext.asm), `GetStationVectorToWork`))
@@ -59,13 +63,6 @@ Bugs and checks first, then the tools that decide the optimisation work, then th
 
 ## AI and spawning
 
-- [ ] Traders and other non hostile ships head for the station and dock, or for the sun and jump out ([GameEngine/NormalAI.asm](GameEngine/NormalAI.asm), ShipHeadingToUnivBody, UpdatePlanetTracking, UpdateSunTracking)
-  - Now they steer for the planet (UnivSteerToBody) and stop at its safe zone; the station is what they should head for, then a docking phase (line up with the slot, fly in, leave the slot list), and a random direction where needed. At the sun they jump out (UnivMoveToJump).
-  - (was: Change this from move to planet to move to station as moving to planet is now superfluous ([GameEngine/NormalAI.asm](GameEngine/NormalAI.asm), `ShipHeadingToUnivBody`))
-  - (was: Sort out targeting station not planet ([GameEngine/NormalAI.asm](GameEngine/NormalAI.asm), `UpdatePlanetTracking`))
-  - (was: Add in transitiion to docking phase ([GameEngine/NormalAI.asm](GameEngine/NormalAI.asm), `UpdatePlanetTracking`))
-  - (was: Sort out random directio etc if needed ([GameEngine/NormalAI.asm](GameEngine/NormalAI.asm), `UpdatePlanetTracking`))
-  - (was: Sort out docking ([GameEngine/NormalAI.asm](GameEngine/NormalAI.asm), `UpdateSunTracking`))
 - [ ] Add flash of light jump logic into ships. similar to explosion but just a star of random lines and no kill score ([GameEngine/NormalAI.asm](GameEngine/NormalAI.asm), `UnivMoveToJump`)
 - [ ] Spawn tables by rank, galaxy and the commander ([GameEngine/SpawnObject.asm](GameEngine/SpawnObject.asm), SelectSpawnTableData)
   - Only the 'A' tables are used (Tables/ShipClassTable.asm has B and C hunter / pirate tables); choose by the commander's rank, the galaxy, the cargo's value and FIST, as the comments in the spawn handlers plan.
@@ -76,10 +73,6 @@ Bugs and checks first, then the tools that decide the optimisation work, then th
 
 ## Jumps
 
-- [ ] Verify post hyper space: an end to end jump test
-  - WeHaveCompletedHJump (GameEngine/MainLoop.asm) seeds the system, generates the market, clears the slots, resets the player ship and makes the sun and planet, but no space station is ever created afterwards: that waits on the safe zone, which wasn't implemented (see the safe boundary item in [DONE.md](DONE.md)). The commented out generateSunAndPlanetPos / CopyBodyToUniverse lines are leftovers.
-  - Suggested: after the safe zone work, an emulator test that runs a jump to the end (DockedFlag through StateHJumping, StateHEntering, StateCompletedHJump) and checks the present system, fuel, an empty slot list, the sun and planet positions from the seeds, the front view, and the station appearing on flying into the safe zone. Remove the dead commented lines.
-  - Done (2026-11-19): the station now appears on reaching the planet's safe zone (see the safe boundary item in [DONE.md](DONE.md)). Still to do: the end to end jump test and removing the dead commented lines.
 - [ ] A "mass locked" message through the message queue when the jump drive is mass locked (ProcessWarp .MassLocked; from "Jump stop bong noise", see DONE.md)
 - [ ] In system jump drive extras ([GameEngine/ProcessWarp.asm](GameEngine/ProcessWarp.asm), ProcessWarp)
   - A malfunction (random mass lock or misjump, with equipment damage).
@@ -144,6 +137,38 @@ Bugs and checks first, then the tools that decide the optimisation work, then th
     - Code: a print routine (character, string, at row / column, with colour from the attribute byte), clear line / clear screen, and every caller moved over: the console text and messages (l1_print_at, the hyperspace countdown, the message queue), the menus (status, market, equipment, inventory, system data, the charts' labels) and the attract screen.
     - Interactions: the tilemap over or under Layer 2 and the sprites (NextReg $15 layer order), transparency, and the console graphics now drawn on Layer 1.
     - Suggested order: the menus first (most text, least timing), then the console, then remove Layer 1 text. Probably a few days of work; it changes most screens.
+
+## Pi renderer
+
+Proposal (2026-11-23): the Pi Zero on the accelerator header holds the models and the render pipeline, works in floating point and renders the 3D view (the top 2/3 of the screen) straight into the Layer 2 back buffer over the official Pi debug interface. The Z80 keeps the game, the dashboard and the flip. How the interface works: [PIRENDER.md](PIRENDER.md).
+d
+- [ ] Design (to review before coding)
+  - The Pi: holds the models; reads the scene, converts F15.8 to floats, rotates, projects, clips and draws (texture mapped ships); writes the result into the shadow Layer 2 buffer with SRAM WRITE (`A8`). Top 128 rows: `0x60000` to `0x67FFF` (bank 8) or `0x74000` to `0x7BFFF` (bank 13); it reads NextReg `0x13` (`AB`) to know which is the shadow buffer.
+  - we will need code to ingest the models from next ram into its own memory. it will need to cycle through each model in the list and pick up its data for the render pipeline and write back to spec next memory. The F15.8 number format will be as per current implementation in the spectrum next.
+  - The Z80: publishes a scene block each frame, runs everything else, draws the bottom third, and flips with l2_flip_buffers when the Pi says the frame is done.
+  - The scene block: one packed block in a fixed 8K page outside banks 5 and 7 (which the Pi can only reach with the CPU paused), so the Pi gets it with one SRAM READ (`A7`). Camera; each ship's model id, position (3 x F15.8), rotation matrix and state (exploding, hit, ...); sun, planet, dust.
+  - Two flags, one written by each side:
+    - Pi status, written by the Pi: `0` ready for process, `1` processing, `2` rendered to RAM, `3` error.
+    - Z80 command, written by the Z80: `0` perform render, `1` data not ready (set while the Z80 writes the scene block).
+  - Suggested changes, to decide:
+    - Strict turns on the status byte so only one side writes it at a time: the Pi only moves it `0 > 1 > 2 / 3`, the Z80 only moves it `2 / 3 > 0`, after the flip (or after handling the error). The Pi starts only when the status is `0` and the command is `0`. Wihtj two status flags does this need to happen?
+    - A frame sequence byte: the Z80 adds one each time it publishes a scene, the Pi copies it back with the result. The Pi never renders the same scene twice, and the Z80 can time out on a stalled Pi and fall back to its own renderer.
+    - Double buffer the scene block, so the Z80 can build the next scene while the Pi reads this one. Yes have this.
+    - Write only the bounding box that changed, as full width rows (one contiguous `A8`). With two Layer 2 buffers the box must cover the new frame and the one drawn two frames ago in that buffer, so the old image is cleared. No, we will clear the back buffer with DMA+ clear, then set the pi to render. It only needs to do the top third
+  - Bandwidth: the full top 2/3 is 32 KB a frame. At 3 MHz SCLK (NextTang's clean speed, about 375 KB/s) that's about 11 frames a second; 25 needs about 6.5 MHz, 50 about 13 MHz. (The game runs about 13 main loops a second now; see Optimise what the profile shows.) With SPI raterh than UART this shoudl be faster.
+- [ ] Questions
+  - F15.8: sign magnitude or two's complement, and the byte order in memory? The Pi's conversion depends on it (check Maths24). It will read and write the same format as the 24 bit maths
+  - Who draws what in the 3D view: the sun, the planet, the dust, the lasers, explosions, the sights? If the Pi owns the top 2/3, the Z80 must not draw there too; Z80 overlays would go on after status `2` and before the flip. The pi draws everything on layer 2 that would come out the game rendering. We can add the dust to layer 2 as well so it can do grey for futher away to white for close up.
+  - The models: the Z80 still needs them for hit tests, the radar and collisions. One source for both, generated by a tool? Z80 will do hit tests. Pi can set pixel positions  for radar then the z80 do the drawing
+  - Colours: the textures have to be reduced to the Layer 2 palette on the Pi. A fixed palette, or one the Pi sets with NextReg writes? Pi will have its own copy of the next pallete so it can send the corret colours over.
+  - Without a Pi (or with an older core, before 3.02.04): fall back to the Z80 renderer. Detect it how: the Z80 sets NextReg `0xA0` bit 1 and waits for the Pi to answer through the status byte? I think we have a "non pi" and "pi" version to showcase the differences. That can be controlled by a build parameter PI
+  - Pi Zero or Zero 2 W: the original Zero is a single 1 GHz ARM11; textured ships at 256 x 128 should fit, but measure. we assume the orignal pi zero as per of spec next standard spec
+  - Measure on hardware: the fastest SCLK a real Next takes from a real Pi, and what SRAM writes from the Pi cost the Z80 at 28 MHz. Need to do some performance measurements on real hardware.
+- [ ] Steps
+  1. Add a `pi_debug_control` slave to Tools/nexsim.py (commands `A1` to `AE`), with an `exchange(bytes) -> bytes` transport like NextTang's.
+  2. A Python Pi renderer stub (Tools/) that runs the handshake against nexsim and writes test patterns into the shadow buffer; a test for the handshake and the flip.
+  3. The Z80 side in GameEngine/MainLoop.asm: publish the scene block, check the status, flip, time out and fall back to the Z80 renderer.
+  4. The real renderer on the Pi with an spidev transport (see PIRENDER.md); measure the SCLK speed and the contention.
 
 ## Input (deferred)
 

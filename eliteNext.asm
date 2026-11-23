@@ -2,7 +2,7 @@
 
     DEVICE ZXSPECTRUMNEXT
     SLDOPT COMMENT WPMEM, LOGPOINT, ASSERTION
-; REAL_HARDWARE: the build for a real Next (sjasmplus -DREAL_HARDWARE, or build.bat hardware): the screen clear and
+; REAL_HARDWARE: the build for a real Next (sjasmplus -DREAL_HARDWARE; build.bat makes both): the screen clear and
 ; memfill_dma use DMA+ fill mode (core 3.03.00 or later, Documentation/ZXNDDMA.md) and the result is EliteNHW.nex.
 ; CSpect has no DMA+, so the normal build (EliteN.nex) uses the plain zxnDMA only
     IFDEF REAL_HARDWARE
@@ -1071,6 +1071,7 @@ GALAXYDATABlock7:   DB $FF
                     DISPLAY "*** removed ./Maths/asm_tidy.asm - BankMathsBankedFns"
                     DISPLAY "*** ./Maths/normalise96.asm - BankMathsBankedFns"
                     INCLUDE "./Maths/normalise96.asm"
+                    INCLUDE "./GameEngine/DockingAI.asm"
                     DISPLAY "Bank ",BankMathsBankedFns," - Bytes free ",/D, $2000 - ($-MathsBankedFnsAddr), " - BankMathsBankedFns"
                     ASSERT $-MathsBankedFnsAddr <8912, Bank code leaks over 8K boundary
     IFDEF REAL_HARDWARE

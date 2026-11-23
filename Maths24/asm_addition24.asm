@@ -199,13 +199,20 @@ SubDELequAtIXMinusAtIY24Signed:
                         ret
 ;------------------------------------------------------------
 ;tested mathstestsun2
-; DEL = DEL - BCH signed, uses BC, DE, HL, IY, A
+; DEL = DEL - BCH signed, uses BC, DE, HL, A (IY kept)
 ; Just flips sign on b then performs add
 SubBCHfromDELsigned:    ld      a,b
                         xor     SignOnly8Bit
                         ld      b,a
-; DEL = DEL + BCH signed, uses BC, DE, HL, IY, A
-AddBCHtoDELsigned:      ld      a,b                 ; Are the values both the same sign?
+; DEL = DEL + BCH signed, uses BC, DE, HL, A; IY is kept. It used IYH and IYL for the signs, and ApplyShipSpeed (and
+; CalcLaunchOffset) keep the speed in IYL across it: with the x position and movement of opposite signs the y and z
+; steps then used the position's sign byte as the speed, so ships stopped on y and z or, with bit 7 set, jumped
+; (Tools/test_docking.py test_ship_speed_moves_every_axis)
+AddBCHtoDELsigned:      push    iy
+                        call    AddBCHtoDELsignedIY
+                        pop     iy
+                        ret
+AddBCHtoDELsignedIY:    ld      a,b                 ; Are the values both the same sign?
                         xor     d                   ; .
                         and     SignOnly8Bit        ; .
                         jr      nz,.SignDifferent   ; .

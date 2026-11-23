@@ -7,7 +7,8 @@ macros in asm_linedraw.asm among them) are all assembled here.
   * no DISPLAY "TODO ..." messages: those live in TODO.md now;
   * the non-banked code ends below the IM2 vector table ($B000);
   * the result is byte for byte the EliteN.nex the other tests run on, so
-    they test the current sources (rebuild if this fails).
+    they test the current sources (rebuild if this fails);
+  * and the same for the real hardware build (-DREAL_HARDWARE), EliteNHW.nex.
 """
 import os
 import re
@@ -21,13 +22,13 @@ from elitetest import check
 SJASM = shutil.which("sjasmplus") or r"C:\CSpect\sjasmplus.exe"
 
 
-def build():
+def build(hardware=False):
     tmp = tempfile.mkdtemp(prefix="elitebuild_")
     try:
         root = et.ROOT.replace("\\", "/")             # (sjasmplus warns about \ in file names)
-        r = subprocess.run([SJASM, "--nologo", "--msg=war", f"-I{root}", f"{root}/eliteNext.asm"],
-                           cwd=tmp, capture_output=True, text=True, errors="replace")
-        nex = os.path.join(tmp, "EliteN.nex")
+        r = subprocess.run([SJASM, "--nologo", "--msg=war", f"-I{root}"] + (["-DREAL_HARDWARE"] if hardware else [])
+                           + [f"{root}/eliteNext.asm"], cwd=tmp, capture_output=True, text=True, errors="replace")
+        nex = os.path.join(tmp, "EliteNHW.nex" if hardware else "EliteN.nex")
         data = open(nex, "rb").read() if os.path.exists(nex) else None
         return r.returncode, r.stdout + r.stderr, data
     finally:
@@ -47,8 +48,23 @@ def test_build():
     m = re.search(r"Main Non Banked Code Ends at 0x([0-9A-F]+)", out)
     check(m and int(m.group(1), 16) < 0xB000, f"non-banked code ends at {m.group(1) if m else '?'}, past $B000")
     et.note(f"non-banked code ends at ${m.group(1)}, {0xB000 - int(m.group(1), 16)} bytes below the vector table")
-    with open(et.NEX, "rb") as f:
-        check(f.read() == nex, "EliteN.nex isn't what the sources build: rebuild (elitebuild.bat) and test again")
+    with open(et.BUILDS["regular"][0], "rb") as f:
+        check(f.read() == nex, "EliteN.nex isn't what the sources build: rebuild (build.bat) and test again")
+
+
+def test_hardware_build():
+    """the real hardware build (-DREAL_HARDWARE): no errors or warnings, and byte for byte EliteNHW.nex"""
+    if not os.path.exists(SJASM):
+        et.note(f"no sjasmplus ({SJASM}): skipped")
+        return
+    code, out, nex = build(hardware=True)
+    problems = [l for l in out.splitlines() if re.search(r"\b(error|warning)\b", l, re.I)]
+    check(code == 0 and nex, f"the build failed (exit {code}):\n" + "\n".join(problems[:20] or out.splitlines()[-20:]))
+    check(not problems, "errors or warnings:\n" + "\n".join(problems[:20]))
+    path = et.BUILDS["hardware"][0]
+    check(os.path.exists(path), "no EliteNHW.nex: build first (build.bat)")
+    with open(path, "rb") as f:
+        check(f.read() == nex, "EliteNHW.nex isn't what the sources build: rebuild (build.bat) and test again")
 
 
 if __name__ == "__main__":

@@ -1,14 +1,18 @@
 """The real hardware build (-DREAL_HARDWARE: DMA+ fill mode for the screen
-clear and memfill_dma, Documentation/ZXNDDMA.md), assembled in a temporary
-folder and run on nexsim's DMA+ model beside the normal (CSpect) build:
+clear and memfill_dma, Documentation/ZXNDDMA.md), EliteNHW.nex as build.bat
+makes it, run on nexsim's DMA+ model beside the regular (CSpect) build,
+EliteN.nex:
 
-  * the boot leaves Layer 2 byte for byte as the normal build does;
+  * the boot leaves Layer 2 byte for byte as the regular build does;
   * l2_cls and memfill_dma fill exactly the same bytes, nothing either side;
   * the hardware build's fills really are DMA+ fill mode (no reads), and
     fill mode is off again afterwards (DMA+ settings stay until $C3, so a
     flag left on would turn the next copy into a fill);
   * the times are reported (nexsim's DMA timing is an estimate: a fill byte
     costs half a read and write; the hardware is what counts).
+
+Build(hardware, defines) assembles a variant in a temporary folder instead
+(test_attract.py, test_solid_hull.py).
 """
 import os
 import shutil
@@ -30,9 +34,17 @@ def source_defines():
 
 
 class Build:
-    """a build's .nex and symbols, in a temporary folder"""
+    """a build's .nex and symbols: assembled in a temporary folder, or with prebuilt, build.bat's ("regular" or
+    "hardware", elitetest.BUILDS)"""
 
-    def __init__(self, hardware, defines=()):
+    def __init__(self, hardware=False, defines=(), prebuilt=None):
+        self.tmp = None
+        if prebuilt:
+            self.nex, symfile = et.BUILDS[prebuilt]
+            for f in (self.nex, symfile):
+                check(os.path.exists(f), f"no {os.path.basename(f)}: build first (build.bat)")
+            self.sym = et.load_sym(symfile)
+            return
         self.tmp = tempfile.mkdtemp(prefix="elitehw_")
         root = et.ROOT.replace("\\", "/")
         args = [SJASM, "--nologo", "--msg=war", f"-I{root}", f"--sym={self.tmp}/build.sym"]
@@ -73,7 +85,8 @@ class Build:
         return cpu
 
     def close(self):
-        shutil.rmtree(self.tmp, ignore_errors=True)
+        if self.tmp:
+            shutil.rmtree(self.tmp, ignore_errors=True)
 
 
 def call(cpu, name, **regs):
@@ -92,17 +105,13 @@ def layer2(cpu):
 
 
 def builds():
-    if not os.path.exists(SJASM):
-        return None
-    return Build(False), Build(True)
+    """build.bat's two builds: regular, hardware"""
+    return Build(prebuilt="regular"), Build(prebuilt="hardware")
 
 
 def test_boot_screens_match():
     """Booted to the attract mode, Layer 2 (both buffers) is the same"""
     b = builds()
-    if not b:
-        et.note(f"no sjasmplus ({SJASM}): skipped")
-        return
     try:
         shots = []
         for build in b:
@@ -122,9 +131,6 @@ def test_fills_match_and_are_faster():
     """l2_cls and memfill_dma: the same bytes; the hardware build in fill
     mode, and fill mode off again after each"""
     b = builds()
-    if not b:
-        et.note(f"no sjasmplus ({SJASM}): skipped")
-        return
     try:
         results, times = [], []
         for build in b:

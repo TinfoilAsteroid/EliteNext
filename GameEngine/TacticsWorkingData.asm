@@ -69,4 +69,8 @@ TacticsPadAC            DB " "
 TacticsSpeed            DS 1
 TacticsPadAD            DB " "
 
-
+; GameEngine/DockingAI.asm's (it runs in the maths banked fns at $0000, where Layer 2 write paging can be on)
+DockStationPos          DS 9                        ; the station's position (x, y, z: lo, hi, sign)
+DockStationNose         DS 6                        ; its nosev (x, y, z: lo, hi, hi lead sign, 96 * 256 = 1.0)
+DockTargetPos           DS 9                        ; the approach point
+DockNear                DB 0                        ; bit 0: within DockRangeHi, bit 1: within DockSlowHi

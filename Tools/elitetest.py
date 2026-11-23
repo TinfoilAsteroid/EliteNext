@@ -7,7 +7,8 @@ file's tests and prints PASS or FAIL for each.
 
 The game runs on Tools/nexsim.py (the Z80N emulator, from ZPolice) from the
 built EliteN.nex and its symbols, eliteN.sym (sjasmplus --sym, written by
-elitebuild.bat).  The SD card is a temporary folder holding copies of the
+build.bat), or the real hardware build, EliteNHW.nex / EliteNHW.sym, for a
+test file with the line  ELITE_BUILD = "hardware"  (see BUILDS below).  The SD card is a temporary folder holding copies of the
 files the game reads, so a test never writes to the repository (the boot
 saves Default.SAV).
 
@@ -28,8 +29,30 @@ import traceback
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(TOOLS)
-NEX = os.path.join(ROOT, "EliteN.nex")
-SYMFILE = os.path.join(ROOT, "eliteN.sym")
+# build.bat makes both builds every time: the regular one (CSpect) and the real hardware one (-DREAL_HARDWARE: DMA+).
+# A test file runs on the regular build unless it has the line  ELITE_BUILD = "hardware"  (for real hardware
+# features); ELITE_BUILD=hardware in the environment runs any file on the hardware build. use_build() switches.
+BUILDS = {"regular": (os.path.join(ROOT, "EliteN.nex"), os.path.join(ROOT, "eliteN.sym")),
+          "hardware": (os.path.join(ROOT, "EliteNHW.nex"), os.path.join(ROOT, "EliteNHW.sym"))}
+
+
+def wanted_build(script=None):
+    """the build a test file asks for: its ELITE_BUILD line, or the environment's"""
+    if os.environ.get("ELITE_BUILD"):
+        return os.environ["ELITE_BUILD"]
+    script = script or getattr(sys.modules.get("__main__"), "__file__", None)
+    try:
+        src = open(script, encoding="latin-1").read() if script else ""
+    except OSError:
+        src = ""
+    m = re.search(r'^ELITE_BUILD\s*=\s*"(\w+)"', src, re.M)
+    return m.group(1) if m else "regular"
+
+
+BUILD = wanted_build()
+if BUILD not in BUILDS:
+    raise SystemExit(f"ELITE_BUILD {BUILD!r}: not one of {', '.join(BUILDS)}")
+NEX, SYMFILE = BUILDS[BUILD]
 sys.path.insert(0, os.path.join(ROOT, "Tools"))
 import nexsim  # noqa: E402
 import sprite_writer  # noqa: E402
@@ -51,6 +74,31 @@ def load_sym(path=SYMFILE):
 
 
 sym = load_sym()
+
+
+class use_build:
+    """with use_build("hardware"): machine() loads that build and sym holds its symbols, as they were after"""
+
+    def __init__(self, name):
+        self.nex, self.symfile = BUILDS[name]
+        self.name = name
+
+    def __enter__(self):
+        global NEX
+        for f in (self.nex, self.symfile):
+            if not os.path.exists(f):
+                raise AssertionError(f"no {os.path.basename(f)}: build first (build.bat)")
+        self.old = NEX, dict(sym)
+        NEX = self.nex
+        sym.clear()
+        sym.update(load_sym(self.symfile))
+        return self
+
+    def __exit__(self, *a):
+        global NEX
+        NEX = self.old[0]
+        sym.clear()
+        sym.update(self.old[1])
 
 
 # --- the machine ------------------------------------------------------------

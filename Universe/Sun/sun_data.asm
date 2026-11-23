@@ -245,8 +245,8 @@ CreateSun:              call    ResetSBnKData
                         and     %00000011
                         ld      (SBnKxsgn),a
                         ld      (SBnKysgn),a
-                        ld      hl, $0000
-                        ld      (SBnKzhi),hl
+                        xor     a                       ; z hi 0 (a 16 bit write here also cleared SBnKzsgn, the byte
+                        ld      (SBnKzhi),a             ; after: the sun came out ahead of us, not behind; test_jump.py)
                         ld      a, $E3
                         ld      (SBnKzlo),a
                         ret

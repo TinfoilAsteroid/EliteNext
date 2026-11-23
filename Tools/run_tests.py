@@ -1,5 +1,7 @@
 """Run the regression tests: every Tools/test_*.py, at the same time (one
-process each), on the built EliteN.nex.  Run by elitebuild.bat after
+process each).  Each runs on the regular build, EliteN.nex, unless it has
+the line  ELITE_BUILD = "hardware"  (tests of real hardware features), then
+on EliteNHW.nex; build.bat makes both (elitetest.py).  Run by build.bat after
 assembling; or by hand:
 
     python Tools/run_tests.py              all of them
@@ -17,6 +19,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(TOOLS)
+sys.path.insert(0, TOOLS)
+import elitetest  # noqa: E402
 
 
 def run(path):
@@ -30,9 +34,13 @@ def main():
     want = sys.argv[1:]
     if want:
         files = [f for f in files if os.path.basename(f)[5:-3] in want or os.path.basename(f) in want]
-    for need in ("EliteN.nex", "eliteN.sym"):
-        if not os.path.exists(os.path.join(ROOT, need)):
-            raise SystemExit(f"no {need}: build first (elitebuild.bat)")
+    for name, outputs in elitetest.BUILDS.items():
+        for need in outputs:
+            if not os.path.exists(need):
+                raise SystemExit(f"no {os.path.basename(need)} (the {name} build): build first (build.bat)")
+    hw = [os.path.basename(f) for f in files if elitetest.wanted_build(f) == "hardware"]
+    if hw:
+        print(f"on the hardware build: {', '.join(hw)}", flush=True)
     t0 = time.time()
     failed = []
     with ThreadPoolExecutor(max_workers=max(1, min(len(files), os.cpu_count() or 4))) as ex:

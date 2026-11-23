@@ -1184,6 +1184,73 @@ class Cpu:
 
 
 # ----------------------------------------------------------------------------
+class Profiler:
+    """Per instruction T-states for a Cpu, keyed by (8K page, address) as page << 16 | address, so banked code that
+    shares addresses is kept apart (Tools/profile_game.py maps the keys to labels). Profiler(cpu) attaches (cpu.step and
+    cpu.interrupt are wrapped), detach() puts them back.
+
+      self_t[key]   T-states of the instructions at key (DMA time counts to the instruction that started it)
+      calls[key]    CALLs and RSTs to key (by opcode, taken: a jp to a routine isn't counted)
+      incl_t[key]   T-states from each call to key (the CALL included) until its return, less any interrupts in
+                    between; a call whose return address is popped some other way ends there. Recursion counts twice.
+      int_t, ints   T-states in the interrupt handler (from accepting it to its RETI) and how many
+      steps         instructions stepped
+    """
+    INT = -1                                # incl_t key of the interrupt handler
+
+    def __init__(self, cpu):
+        self.cpu = cpu
+        self.self_t, self.calls, self.incl_t = {}, {}, {}
+        self.int_t = self.ints = self.steps = 0
+        self.frames = []                    # (key, return address, sp after return, t at call, int_t at call)
+        self._step, self._interrupt = cpu.step, cpu.interrupt
+        cpu.step, cpu.interrupt = self.step, self.interrupt
+        self._stepi = getattr(cpu, "stepi", None)       # a test's stepi that is the plain step: profile that too
+        if self._stepi == self._step:
+            cpu.stepi = self.step
+
+    def detach(self):
+        self.cpu.step, self.cpu.interrupt = self._step, self._interrupt
+        if self.cpu.__dict__.get("stepi") == self.step:
+            self.cpu.stepi = self._stepi
+
+    def interrupt(self, bus=0xFF):
+        cpu = self.cpu
+        pc, sp, t = cpu.pc, cpu.sp, cpu.t
+        if not self._interrupt(bus):
+            return False
+        self.frames.append((self.INT, pc, sp, t, self.int_t))
+        return True
+
+    def step(self):
+        cpu = self.cpu
+        pc, sp0, t0 = cpu.pc, cpu.sp, cpu.t
+        key = cpu.mmu[pc >> 13] << 16 | pc
+        self._step()
+        st = self.self_t
+        st[key] = st.get(key, 0) + cpu.t - t0
+        self.steps += 1
+        sp = cpu.sp
+        if sp == (sp0 - 2) & 0xFFFF:       # a CALL or RST pushes the address after it, then jumps
+            op = cpu.rd(pc)
+            if op == 0xCD or op & 0xC7 in (0xC4, 0xC7):     # CALL nn, CALL cc,nn, RST n
+                ret = (pc + (1 if op & 0xC7 == 0xC7 else 3)) & 0xFFFF
+                callee = cpu.mmu[cpu.pc >> 13] << 16 | cpu.pc
+                self.calls[callee] = self.calls.get(callee, 0) + 1
+                self.frames.append((callee, ret, sp0, t0, self.int_t))
+        elif sp > sp0:                      # popped: returns, and calls whose return address went another way
+            frames = self.frames
+            while frames and sp >= frames[-1][2]:
+                k, ret, sp_ret, t_call, int_call = frames.pop()
+                spent = cpu.t - t_call - (self.int_t - int_call)
+                if k == self.INT:
+                    self.int_t += spent
+                    self.ints += 1
+                else:
+                    self.incl_t[k] = self.incl_t.get(k, 0) + spent
+
+
+# ----------------------------------------------------------------------------
 def load_nex(cpu, path):
     data = open(path, "rb").read()
     assert data[:4] == b"Next", "not a NEX file"

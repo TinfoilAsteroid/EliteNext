@@ -45,7 +45,9 @@ NormalAI:               IsAIEnabled                             ; check if AI is
 .GetEnergy:             call    RechargeEnergy                  ; TA13 if enegery <= maxumum value for blueprint then recharge energy by 1
                         IsShipTrader
                         jr      nz, .NotATrader
-.ItsATrader:            call    doRandom                        
+                        IsShipDocking                           ; a ship docking acts every AI turn (its turns are
+                        jr      nz, .NotATrader                 ; short: ShipPitchv3's 2 decays in two loops)
+.ItsATrader:            call    doRandom
                         ReturnIfALTNusng 100                    ; 61% chance do nothing
                         IFDEF DEBUGFORCEHOSTILE
                                 call SetShipHostile
@@ -271,6 +273,12 @@ ShipHeadingToUnivBody:  ld      a,(UBnKHeadingToPlanetOrSun)        ; do we have
                         call    z,SetTargetBody                     ; no preference so we head randomly towards sun or planet then fall into movement tactics code
                         cp      1
                         jp      nz, UpdateSunTracking               ; if its not 1 then must be sun
+                        call    IsSpaceStationPresent               ; heading for the planet and the station's there:
+                        jr      c,UpdatePlanetTracking              ; dock at it instead
+                        ld      a,(ShipNewBitsAddr)                 ; .
+                        or      ShipIsDocking                       ; .
+                        ld      (ShipNewBitsAddr),a                 ; .
+                        jp      UnivDocking                         ; .
 ;.. Update tracking to planet.......................................
 ; Steering to a body works as the missile does: TacticsVector = ship - body (S15.8, saturating), normalised to 96,
 ; negated so it points from the ship to the body, then the nose, roof and side dot products set pitch, roll and speed
@@ -283,8 +291,9 @@ UpdatePlanetTracking:   call    SaveMMU6                            ; save curre
                         call    UnivDistanceToTarget                ; in the planet's safe zone?
                         jp      c,.MoveToDockingPhase               ; if close enough to planet move to docking phase
                         jp      UnivSteerToBody                     ; implicit ret
-;.. If we are close enough moce to docking phase
-.MoveToDockingPhase:
+;.. At the planet's safe zone with no station to dock at (it's made only when we fly in): head for the sun instead
+.MoveToDockingPhase:    ld      a,2
+                        ld      (UBnKHeadingToPlanetOrSun),a
                         ret
 
 ;.. Close enough to start docking ..................................
@@ -300,10 +309,13 @@ UpdateSunTracking:      call    SaveMMU6
                         jp      c,UnivMoveToJump                    ; if close enough to sun then jump (i.e. destrouy object but use flash of light)
                         jp      UnivSteerToBody                     ; implicit ret
                         
-UnivDocking:            ret
+; the docking approach (GameEngine/DockingAI.asm, in the maths banked fns)
+UnivDocking:            MMUSelectMathsBankedFns
+                        jp      DockingAI                           ; implicit ret
 
-UnivMoveToJump:
-                        ret
+; at the sun: the ship jumps out, leaving the slot list (the flash of light is a TODO item)
+UnivMoveToJump:         ld      a,(SelectedUniverseSlot)
+                        jp      ClearSlotA                          ; implicit ret
 
 ;-------------------------------------------------------------------
 ; one axis of UnivBodyVector: dest = ship axis - body axis at ix+ixoff
@@ -330,7 +342,7 @@ UnivBodyVector:         MMUSelectMathsBankedFns
 
 ; TacticsVector = ship - body: normalise, point it at the body and steer (maths bank paged in)
 UnivSteerToBody:        call    NormalizeTactics                    ; S7, 96 = 1.0
-                        FlipSignMem TacticsVectorX+2                ; negate so it is body - ship, i.e. points from
+UnivSteerNormalised:    FlipSignMem TacticsVectorX+2                ; (TacticsVector already normalised) negate so it is body - ship, i.e. points from
                         FlipSignMem TacticsVectorY+2                ; the ship to the body, so +ve nose dot means
                         FlipSignMem TacticsVectorZ+2                ; facing it
                         call    ShipSeekingLogic                    ; pitch, roll and speed from the dot products

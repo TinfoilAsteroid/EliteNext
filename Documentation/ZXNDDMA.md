@@ -165,8 +165,8 @@ source moves to another 64K.
 
 (Copied from Z-Police, H:/OneDrive/ZPolice/docs/ZXNDDMA.md; this section is EliteNext's own.)
 
-- `REAL_HARDWARE` builds (`build.bat hardware` / `elitebuild.bat hardware`,
-  or `sjasmplus -DREAL_HARDWARE`) write `EliteNHW.nex`, which asks for core
+- `REAL_HARDWARE` builds (`build.bat` makes one every time, beside the
+  normal build, or `sjasmplus -DREAL_HARDWARE`) write `EliteNHW.nex`, which asks for core
   3.03.00 (`SAVENEX CORE 3,3,0`). The normal build, `EliteN.nex`, uses only
   the plain zxnDMA, for CSpect, which has no DMA+.
 - Uses of DMA+ (fill mode, `$F7` value then `$DF` fill; `$DF 0` after, so
